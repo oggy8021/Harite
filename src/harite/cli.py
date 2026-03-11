@@ -4,6 +4,7 @@ from __future__ import annotations
 import typer
 from pathlib import Path
 from typing import Optional, List
+import json
 
 from . import __version__
 from .core import optimize_wallpapers
@@ -36,6 +37,7 @@ def optimize(
     output: Path = typer.Option(Path("."), "--output", "-o", help="Output directory"),
     quality: int = typer.Option(90, "--quality", help="JPEG quality"),
     random_seed: Optional[int] = typer.Option(None, "--random-seed", help="Random seed for reproducibility"),
+    format: str = typer.Option("text", "--format", "-f", help="Output format: text|json"),
 ) -> None:
     """Optimize wallpapers.
 
@@ -65,9 +67,16 @@ def optimize(
         quality=quality,
         random_seed=random_seed,
     )
-    typer.echo(f"Saved: {saved_files}")
-    for p in placements:
-        typer.echo(f"Placement: {p}")
+    if format.lower() == "json":
+        out = {
+            "optimized_files": [str(p) for p in saved_files],
+            "layout_metadata": [p.to_dict() for p in placements],
+        }
+        typer.echo(json.dumps(out, ensure_ascii=False))
+    else:
+        typer.echo(f"Saved: {saved_files}")
+        for p in placements:
+            typer.echo(f"Placement: {p}")
 
 
 @app.command("compute-placement")
