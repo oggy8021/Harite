@@ -3,10 +3,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence, Tuple, List, Any, Optional
+from typing import Sequence, Tuple, List, Optional
 from PIL import Image
-import math
-import os
 
 
 @dataclass
@@ -20,6 +18,19 @@ class PlacementResult:
     scale: float = 1.0
     score: float = 1.0
     posit: Optional[str] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "image_path": str(self.image_path),
+            "x": int(self.x),
+            "y": int(self.y),
+            "width": int(self.width),
+            "height": int(self.height),
+            "rotation": float(self.rotation),
+            "scale": float(self.scale),
+            "score": float(self.score),
+            "posit": self.posit,
+        }
 
 
 def _parse_inputs(inputs: Sequence[Path | str]) -> List[Path]:

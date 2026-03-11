@@ -6,7 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "harite"
 version = "0.0.0"
 description = "Harite wallpaper optimizer (refactor of wallpaperoptimizer)"
-readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "typer>=0.9",
