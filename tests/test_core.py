@@ -12,6 +12,10 @@ def test_single_monitor_placeholder():
     inputs = [Path("tests/data/img_wide.jpg")]
     target_resolution = (1920, 1080)
 
+    # テスト用画像がまだ追加されていない場合はスキップ
+    if not all(p.exists() for p in inputs):
+        pytest.skip("tests/data sample images not present")
+
     optimized_files, placements = core.optimize_wallpapers(
         inputs=inputs,
         target_resolution=target_resolution,
@@ -37,6 +41,10 @@ def test_dual_monitor_placeholder():
 
     inputs = [Path("tests/data/left.jpg"), Path("tests/data/right.jpg")]
     target_resolution = (3840, 1080)
+
+    # テスト用画像がまだ追加されていない場合はスキップ
+    if not all(p.exists() for p in inputs):
+        pytest.skip("tests/data sample images not present")
 
     optimized_files, placements = core.optimize_wallpapers(
         inputs=inputs,
