@@ -9,8 +9,6 @@ import json
 from . import __version__
 from .core import optimize_wallpapers
 
-from . import __version__
-
 app = typer.Typer(help="Harite - wallpaper optimizer")
 
 
