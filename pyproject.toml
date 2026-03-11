@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "harite"
+version = "0.0.0"
+description = "Harite wallpaper optimizer (refactor of wallpaperoptimizer)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "typer>=0.9",
+    "Pillow>=10.0",
+]
+
+[project.scripts]
+harite = "harite.cli:run"
