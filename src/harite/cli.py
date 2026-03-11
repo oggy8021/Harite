@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import typer
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from . import __version__
 from .core import optimize_wallpapers
@@ -28,13 +28,19 @@ def _callback(
 
 @app.command()
 def optimize(
-    input: str = typer.Option(..., "--input", "-i", help="Input file or directory"),
+    input: List[str] = typer.Option(..., "--input", "-i", help="Input file(s) or directory(ies)"),
     resolution: str = typer.Option(..., "--resolution", "-r", help="Target resolution WxH"),
     layout: str = typer.Option("mosaic", "--layout", help="Layout mode"),
+    scaling: str = typer.Option("fit", "--scaling", help="Scaling mode (fit|fill|crop)"),
+    padding: int = typer.Option(0, "--padding", help="Padding (px) between images"),
     output: Path = typer.Option(Path("."), "--output", "-o", help="Output directory"),
     quality: int = typer.Option(90, "--quality", help="JPEG quality"),
+    random_seed: Optional[int] = typer.Option(None, "--random-seed", help="Random seed for reproducibility"),
 ) -> None:
-    """Optimize wallpapers (placeholder implementation)."""
+    """Optimize wallpapers.
+
+    `--input` は複数指定可。ディレクトリを指定するとその中の画像が対象になります。
+    """
     # parse resolution like 3840x2160
     try:
         w_str, h_str = resolution.lower().split("x")
@@ -43,16 +49,21 @@ def optimize(
         typer.echo("Invalid resolution format. Use WIDTHxHEIGHT, e.g. 3840x2160")
         raise typer.Exit(code=2)
 
-    inputs = [input]
+    # flatten inputs (allow comma-separated items too)
+    expanded_inputs: List[str] = []
+    for it in input:
+        parts = [p.strip() for p in it.split(",") if p.strip()]
+        expanded_inputs.extend(parts)
+
     saved_files, placements = optimize_wallpapers(
-        inputs=inputs,
+        inputs=expanded_inputs,
         target_resolution=(w, h),
         output_dir=output,
         layout=layout,
-        scaling="fit",
-        padding=0,
+        scaling=scaling,
+        padding=padding,
         quality=quality,
-        random_seed=None,
+        random_seed=random_seed,
     )
     typer.echo(f"Saved: {saved_files}")
     for p in placements:
