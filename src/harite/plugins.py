@@ -135,13 +135,8 @@ class LinuxPlugin:
             import shutil
             import subprocess
 
-            if shutil.which("gsettings"):
-                # Common for GNOME
-                cmd = ["gsettings", "set", "org.gnome.desktop.background", "picture-uri", f"file://{str(p)}"]
-                res = subprocess.run(cmd, check=False)
-                return res.returncode == 0
+            # Prefer enumerating XFCE properties first so dry-run can log candidates.
             if shutil.which("xfconf-query"):
-                # XFCE: try to find and set image properties under xfce4-desktop
                 try:
                     list_proc = subprocess.run(["xfconf-query", "-c", "xfce4-desktop", "-l"], check=False, capture_output=True, text=True)
                     props = []
@@ -150,34 +145,43 @@ class LinuxPlugin:
                             line = line.strip()
                             if not line:
                                 continue
-                            # common properties include names with 'last-image' or 'image'
                             if "image" in line or "last-image" in line:
                                 props.append(line)
-                    # Prefer workspace-specific last-image entries, then monitor image-paths,
-                    # then any last-image / last-single-image fallbacks.
+
                     props_workspace = [q for q in props if "workspace" in q and "last-image" in q]
                     props_monitor_image = [q for q in props if ("/monitor" in q and "image" in q and "workspace" not in q)]
                     props_last_image = [q for q in props if ("last-image" in q and "workspace" not in q)]
                     props_last_single = [q for q in props if "last-single-image" in q]
                     candidates = props_workspace + props_monitor_image + props_last_image + props_last_single
 
+                    logger.info("XFCE: discovered props count=%d", len(props))
                     if dry_run:
                         logger.info("Dry-run: xfconf candidates (in order): %s", candidates)
-                        # Indicate dry-run succeeded if there are candidates to try
-                        if candidates:
-                            return True
                     success_any = False
+                    # If dry_run, do not execute commands; only simulate logging.
                     for prop in candidates:
                         cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(p)]
-                        logger.info("Running: %s", " ".join(cmd))
-                        res = subprocess.run(cmd, check=False)
-                        if res.returncode == 0:
-                            success_any = True
-                            break
+                        logger.info("XFCE: would run: %s", " ".join(cmd))
+                        if not dry_run:
+                            res = subprocess.run(cmd, check=False)
+                            if res.returncode == 0:
+                                success_any = True
+                                break
                     if success_any:
                         return True
                 except Exception:
                     logger.exception("xfconf-query attempt failed")
+
+            # Next try GNOME gsettings (if present). For dry-run, log the command instead
+            # of executing so we don't prematurely short-circuit logging.
+            if shutil.which("gsettings"):
+                cmd = ["gsettings", "set", "org.gnome.desktop.background", "picture-uri", f"file://{str(p)}"]
+                if dry_run:
+                    logger.info("Dry-run: would run gsettings: %s", " ".join(cmd))
+                else:
+                    res = subprocess.run(cmd, check=False)
+                    if res.returncode == 0:
+                        return True
             if shutil.which("feh"):
                 # Lightweight viewers
                 cmd = ["feh", "--bg-scale", str(p)]
