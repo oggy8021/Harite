@@ -77,6 +77,17 @@ def optimize_wallpapers(
     items = _parse_inputs(inputs)
     w_target, h_target = target_resolution
 
+    # Compatibility: accept upstream-style kwargs
+    two_screen = bool(kwargs.get("two_screen", False))
+    margins = kwargs.get("margins", (0, 0, 0, 0))
+    try:
+        ml, mr, mt, mb = tuple(int(x) for x in margins)
+    except Exception:
+        ml, mr, mt, mb = (0, 0, 0, 0)
+    l_display = kwargs.get("l_display")
+    r_display = kwargs.get("r_display")
+    fixed = bool(kwargs.get("fixed", False))
+
     # Background image
     bg = Image.new("RGB", (w_target, h_target), color=(30, 30, 30))
 
@@ -84,9 +95,24 @@ def optimize_wallpapers(
     saved_files: List[Path] = []
 
     count = max(1, len(items))
-    # Simple layout: if multiple images, split horizontally
-    cell_w = max(1, (w_target - padding * (count - 1)) // count)
-    cell_h = h_target
+
+    # Compute inner available area after margins
+    inner_w = max(1, w_target - (ml + mr))
+    inner_h = max(1, h_target - (mt + mb))
+
+    # If two-screen with explicit displays, prefer those widths
+    if two_screen and l_display and r_display:
+        # Force count to 2
+        count = 2
+        left_w = int(l_display[0])
+        right_w = int(r_display[0])
+        cell_w_list = [left_w, right_w]
+        cell_h = inner_h
+    else:
+        # Simple layout: split inner width horizontally among items
+        cell_w = max(1, (inner_w - padding * (count - 1)) // count)
+        cell_h = inner_h
+        cell_w_list = [cell_w] * count
 
     for i, img_path in enumerate(items[:count]):
         try:
@@ -95,11 +121,21 @@ def optimize_wallpapers(
             # Skip unreadable images
             continue
 
-        nw, nh, scale = _scale_to_fit(img, cell_w, cell_h)
+        # determine this cell's width
+        this_cell_w = cell_w_list[i] if i < len(cell_w_list) else cell_w_list[-1]
+        nw, nh, scale = _scale_to_fit(img, this_cell_w, cell_h)
         img_resized = img.resize((nw, nh), Image.LANCZOS)
 
-        x = i * (cell_w + padding) + max(0, (cell_w - nw) // 2)
-        y = max(0, (cell_h - nh) // 2)
+        # compute x offset: start from left margin
+        if two_screen and l_display and r_display:
+            if i == 0:
+                x = ml + max(0, (this_cell_w - nw) // 2)
+            else:
+                x = ml + cell_w_list[0] + padding + max(0, (this_cell_w - nw) // 2)
+        else:
+            x = ml + i * (this_cell_w + padding) + max(0, (this_cell_w - nw) // 2)
+
+        y = mt + max(0, (cell_h - nh) // 2)
 
         bg.paste(img_resized, (x, y))
 
