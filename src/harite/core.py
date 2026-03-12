@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence, Tuple, List, Optional
 from PIL import Image
+from .workspace import Display
 
 
 @dataclass
@@ -172,3 +173,53 @@ def compute_placement(
     x = max(0, (target_resolution[0] - nw) // 2)
     y = max(0, (target_resolution[1] - nh) // 2)
     return PlacementResult(image_path=Path(image_path), x=x, y=y, width=nw, height=nh, scale=scale)
+
+
+def split_composite_for_displays(
+    composite_path: Path,
+    displays: List[Display],
+    output_dir: Path,
+) -> dict:
+    """Split a composite image into per-display files.
+
+    For each `Display` in `displays`, crop the composite at the display's
+    `x_offset` with width `display.width`, then fit the crop into the
+    display resolution preserving aspect ratio. Returns mapping
+    {display.name: Path} for the saved files.
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    comp = Image.open(composite_path).convert("RGB")
+    comp_w, comp_h = comp.size
+    result = {}
+    for d in displays:
+        left = max(0, d.x_offset)
+        right = min(comp_w, left + d.width)
+        box = (left, 0, right, comp_h)
+        try:
+            region = comp.crop(box)
+        except Exception:
+            region = comp.copy()
+
+        # Fit region into target display preserving aspect ratio (fit)
+        target_w, target_h = d.width, d.height
+        region_w, region_h = region.size
+        if region_w == 0 or region_h == 0:
+            # fallback: create blank
+            out_img = Image.new("RGB", (target_w, target_h), color=(30, 30, 30))
+        else:
+            scale = min(target_w / region_w, target_h / region_h)
+            new_w = max(1, int(region_w * scale))
+            new_h = max(1, int(region_h * scale))
+            resized = region.resize((new_w, new_h), Image.LANCZOS)
+            out_img = Image.new("RGB", (target_w, target_h), color=(30, 30, 30))
+            ox = (target_w - new_w) // 2
+            oy = (target_h - new_h) // 2
+            out_img.paste(resized, (ox, oy))
+
+        name_safe = d.name if d.name else f"display_{d.x_offset}"
+        out_path = output_dir / (composite_path.stem + f"_{name_safe}.jpg")
+        out_img.save(out_path, quality=90)
+        result[d.name] = out_path
+
+    return result

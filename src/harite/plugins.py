@@ -121,27 +121,32 @@ class LinuxPlugin:
     name = "linux"
 
     def apply(self, path: str, *, dry_run: bool = True) -> bool:
-        p = Path(path)
-        if not p.exists():
-            logger.error("Wallpaper file does not exist: %s", path)
-            return False
-        if dry_run:
-            logger.info("Dry-run: would apply wallpaper (linux): %s", path)
-            return True
+        # Support per-monitor mapping dicts: {monitor_name: path}
+        is_map = isinstance(path, dict)
+        if is_map:
+            mapping = path
+        else:
+            p = Path(path)
+            if not p.exists():
+                logger.error("Wallpaper file does not exist: %s", path)
+                return False
+            if dry_run:
+                logger.info("Dry-run: would apply wallpaper (linux): %s", path)
+                # When running a dry-run and the file exists, report success immediately.
+                # Older behavior attempted to enumerate xfconf candidates for logging,
+                # but tests and CI expect dry-run to be considered successful even when
+                # no external wallpaper setters are present on PATH.
+                return True
 
         # Try common desktop environment commands (gsettings, feh). This is a best-effort
         # and intentionally not guaranteed to work on all distributions / DEs.
+        simulated = False
         try:
             import shutil
             import subprocess
 
-            if shutil.which("gsettings"):
-                # Common for GNOME
-                cmd = ["gsettings", "set", "org.gnome.desktop.background", "picture-uri", f"file://{str(p)}"]
-                res = subprocess.run(cmd, check=False)
-                return res.returncode == 0
+            # Prefer enumerating XFCE properties first so dry-run can log candidates.
             if shutil.which("xfconf-query"):
-                # XFCE: try to find and set image properties under xfce4-desktop
                 try:
                     list_proc = subprocess.run(["xfconf-query", "-c", "xfce4-desktop", "-l"], check=False, capture_output=True, text=True)
                     props = []
@@ -150,24 +155,89 @@ class LinuxPlugin:
                             line = line.strip()
                             if not line:
                                 continue
-                            # common properties include names with 'last-image' or 'image'
                             if "image" in line or "last-image" in line:
                                 props.append(line)
+
+                    props_workspace = [q for q in props if "workspace" in q and "last-image" in q]
+                    props_monitor_image = [q for q in props if ("/monitor" in q and "image" in q and "workspace" not in q)]
+                    props_last_image = [q for q in props if ("last-image" in q and "workspace" not in q)]
+                    props_last_single = [q for q in props if "last-single-image" in q]
+                    candidates = props_workspace + props_monitor_image + props_last_image + props_last_single
+
+                    logger.info("XFCE: discovered props count=%d", len(props))
+                    simulated = False
+                    if dry_run:
+                        logger.info("Dry-run: xfconf candidates (in order): %s", candidates)
+                        # mark that we simulated work so dry-run can report success
+                        if candidates:
+                            simulated = True
                     success_any = False
-                    for prop in props:
-                        cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(p)]
-                        res = subprocess.run(cmd, check=False)
-                        if res.returncode == 0:
-                            success_any = True
+                    # If dry_run, do not execute commands; only simulate logging.
+                    # When actually applying (dry_run==False), try all candidate
+                    # properties instead of stopping at the first success so that
+                    # per-monitor properties for multiple displays are updated.
+                    # If mapping provided, apply per-monitor; otherwise apply general file
+                    if is_map:
+                        # mapping keys are monitor names (e.g., 'DP-1')
+                        for mon_name, mon_path in mapping.items():
+                            applied_any = False
+                            # select candidates that reference this monitor name
+                            mon_key = mon_name.replace("-", "")
+                            filtered = [c for c in candidates if (mon_name in c or mon_key in c or "/monitor" in c and mon_key in c)]
+                            if not filtered:
+                                # fallback to workspace entries or general entries
+                                filtered = [c for c in candidates if "workspace" in c or "last-image" in c]
+                            for prop in filtered:
+                                cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(mon_path)]
+                                logger.info("XFCE: would run: %s", " ".join(cmd))
+                                if not dry_run:
+                                    res = subprocess.run(cmd, check=False)
+                                    if res.returncode == 0:
+                                        applied_any = True
+                                    else:
+                                        logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
+                            if applied_any:
+                                success_any = True
+                    else:
+                        for prop in candidates:
+                            cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(p)]
+                            logger.info("XFCE: would run: %s", " ".join(cmd))
+                            if not dry_run:
+                                res = subprocess.run(cmd, check=False)
+                                if res.returncode == 0:
+                                    success_any = True
+                                else:
+                                    logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
                     if success_any:
                         return True
                 except Exception:
                     logger.exception("xfconf-query attempt failed")
-            if shutil.which("feh"):
+
+            # Next try GNOME gsettings (if present). For dry-run, log the command instead
+            # of executing so we don't prematurely short-circuit logging.
+            if shutil.which("gsettings") and not is_map:
+                cmd = ["gsettings", "set", "org.gnome.desktop.background", "picture-uri", f"file://{str(p)}"]
+                if dry_run:
+                    logger.info("Dry-run: would run gsettings: %s", " ".join(cmd))
+                    simulated = True
+                else:
+                    res = subprocess.run(cmd, check=False)
+                    if res.returncode == 0:
+                        return True
+            if shutil.which("feh") and not is_map:
                 # Lightweight viewers
                 cmd = ["feh", "--bg-scale", str(p)]
-                res = subprocess.run(cmd, check=False)
-                return res.returncode == 0
+                if dry_run:
+                    logger.info("Dry-run: would run feh: %s", " ".join(cmd))
+                    simulated = True
+                else:
+                    res = subprocess.run(cmd, check=False)
+                    if res.returncode == 0:
+                        return True
+            # If dry-run and we simulated any candidate/command, treat as success
+            if dry_run and simulated:
+                logger.info("Dry-run: simulated commands present, reporting success")
+                return True
             logger.error("No known wallpaper setter found on PATH")
             return False
         except Exception:  # pragma: no cover - platform specific
