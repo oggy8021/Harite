@@ -86,7 +86,7 @@ def optimize_wallpapers(
         ml, mr, mt, mb = (0, 0, 0, 0)
     l_display = kwargs.get("l_display")
     r_display = kwargs.get("r_display")
-    fixed = bool(kwargs.get("fixed", False))
+    _fixed = bool(kwargs.get("fixed", False))
 
     # Background image
     bg = Image.new("RGB", (w_target, h_target), color=(30, 30, 30))
