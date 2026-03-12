@@ -24,38 +24,45 @@ sudo apt update
 sudo apt install x11-xserver-utils xfce4-settings xfconf4-tools feh
 ```
 
+エンドユーザ向けの Python 関連パッケージ例（Debian/Ubuntu）
+```bash
+sudo apt install python3-pip python3-typer python3-pil
+# 注: Debian/Ubuntu では Pillow のパッケージ名が `python3-pil` です。ディストリビューションにより名称が異なります。
+```
+
 セットアップ（ローカル）
 --
 1. 仮想環境作成・依存インストール:
-```powershell
+```bash
 python -m venv .venv
-.venv\Scripts\python -m pip install --upgrade pip
-.venv\Scripts\python -m pip install -e .
-.venv\Scripts\python -m pip install pytest
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e .
+python -m pip install pytest
 ```
 
 2. テスト実行（全体）:
-```powershell
-.venv\Scripts\python -m pytest -q
+```bash
+.venv/bin/python -m pytest -q
 ```
 
 基本的な検証手順
 --
 1. 表示検出の確認:
-```powershell
-.venv\Scripts\python -c "from harite import workspace; print(workspace.detect_displays())"
+```bash
+.venv/bin/python -c 'from harite import workspace; print(workspace.detect_displays())'
 ```
 期待: `xrandr` が使える場合は `[(幅, 高さ), ...]` のリストが返ります。`xrandr` が無い場合は `xfconf-query` のフォールバックが試行されます。
 
 2. 最適化処理のサンプル実行（出力ファイル確認）:
-```powershell
-.venv\Scripts\harite optimize --input tests/data --resolution 3840x1080 --output out --two-screen --l-display 1920x1080 --r-display 1920x1080
+```bash
+.venv/bin/python -m harite optimize --input tests/data --resolution 3840x1080 --output out --two-screen --l-display 1920x1080 --r-display 1920x1080
 ```
 出力例: `out/harite_wallopt_<id>.jpg`
 
 3. プラグイン経由での dry-run（壁紙を変更しない）:
-```powershell
-.venv\Scripts\harite apply --plugin linux --file out/harite_wallopt_<id>.jpg
+```bash
+.venv/bin/python -m harite apply --plugin linux --file out/harite_wallopt_<id>.jpg
 ```
 ログに、実行されるコマンド（例: `xfconf-query` / `gsettings` / `feh`）が表示されます。
 
@@ -65,8 +72,8 @@ python -m venv .venv
 xfconf-query -c xfce4-desktop -l
 ```
  - ドライラン結果を確認し、問題なければ `--do-it` を付けて実行:
-```powershell
-.venv\Scripts\harite apply --plugin linux --file out/harite_wallopt_<id>.jpg --do-it
+```bash
+.venv/bin/python -m harite apply --plugin linux --file out/harite_wallopt_<id>.jpg --do-it
 ```
 
 トラブルシュート
