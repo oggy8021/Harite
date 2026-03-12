@@ -121,13 +121,18 @@ class LinuxPlugin:
     name = "linux"
 
     def apply(self, path: str, *, dry_run: bool = True) -> bool:
-        p = Path(path)
-        if not p.exists():
-            logger.error("Wallpaper file does not exist: %s", path)
-            return False
-        if dry_run:
-            logger.info("Dry-run: would apply wallpaper (linux): %s", path)
-            # continue without returning so dry-run can enumerate and log xfconf candidates
+        # Support per-monitor mapping dicts: {monitor_name: path}
+        is_map = isinstance(path, dict)
+        if is_map:
+            mapping = path
+        else:
+            p = Path(path)
+            if not p.exists():
+                logger.error("Wallpaper file does not exist: %s", path)
+                return False
+            if dry_run:
+                logger.info("Dry-run: would apply wallpaper (linux): %s", path)
+                # continue without returning so dry-run can enumerate and log xfconf candidates
 
         # Try common desktop environment commands (gsettings, feh). This is a best-effort
         # and intentionally not guaranteed to work on all distributions / DEs.
@@ -166,15 +171,38 @@ class LinuxPlugin:
                     # When actually applying (dry_run==False), try all candidate
                     # properties instead of stopping at the first success so that
                     # per-monitor properties for multiple displays are updated.
-                    for prop in candidates:
-                        cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(p)]
-                        logger.info("XFCE: would run: %s", " ".join(cmd))
-                        if not dry_run:
-                            res = subprocess.run(cmd, check=False)
-                            if res.returncode == 0:
+                    # If mapping provided, apply per-monitor; otherwise apply general file
+                    if is_map:
+                        # mapping keys are monitor names (e.g., 'DP-1')
+                        for mon_name, mon_path in mapping.items():
+                            applied_any = False
+                            # select candidates that reference this monitor name
+                            mon_key = mon_name.replace("-", "")
+                            filtered = [c for c in candidates if (mon_name in c or mon_key in c or "/monitor" in c and mon_key in c)]
+                            if not filtered:
+                                # fallback to workspace entries or general entries
+                                filtered = [c for c in candidates if "workspace" in c or "last-image" in c]
+                            for prop in filtered:
+                                cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(mon_path)]
+                                logger.info("XFCE: would run: %s", " ".join(cmd))
+                                if not dry_run:
+                                    res = subprocess.run(cmd, check=False)
+                                    if res.returncode == 0:
+                                        applied_any = True
+                                    else:
+                                        logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
+                            if applied_any:
                                 success_any = True
-                            else:
-                                logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
+                    else:
+                        for prop in candidates:
+                            cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(p)]
+                            logger.info("XFCE: would run: %s", " ".join(cmd))
+                            if not dry_run:
+                                res = subprocess.run(cmd, check=False)
+                                if res.returncode == 0:
+                                    success_any = True
+                                else:
+                                    logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
                     if success_any:
                         return True
                 except Exception:

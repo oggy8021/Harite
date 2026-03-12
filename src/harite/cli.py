@@ -9,6 +9,8 @@ import json
 from . import __version__
 from .core import optimize_wallpapers
 from .plugins import registry as plugin_registry
+from .workspace import detect_displays
+from .core import split_composite_for_displays
 
 app = typer.Typer(help="Harite - wallpaper optimizer")
 
@@ -146,6 +148,10 @@ def apply(
     plugin: str = typer.Option("windows", "--plugin", "-p", help="Plugin name to apply wallpaper with"),
     file: Path = typer.Option(..., "--file", "-f", help="Path to wallpaper image file"),
     do_it: bool = typer.Option(False, "--do-it", help="Actually change the system wallpaper (dry-run by default)"),
+    per_monitor: bool = typer.Option(False, "--per-monitor", "-m", help="Apply per-monitor files (requires --left-file/--right-file or --auto-split)"),
+    left_file: Optional[Path] = typer.Option(None, "--left-file", help="File to apply to left monitor"),
+    right_file: Optional[Path] = typer.Option(None, "--right-file", help="File to apply to right monitor"),
+    auto_split: bool = typer.Option(False, "--auto-split", help="Auto-split the composite file per detected displays"),
 ) -> None:
     """Apply a wallpaper using a registered plugin.
 
@@ -159,8 +165,33 @@ def apply(
         typer.echo(f"Available plugins: {', '.join(plugin_registry.list())}")
         raise typer.Exit(code=2)
 
-    path_str = str(file)
-    success = plugin_impl.apply(path_str, dry_run=not do_it)
+    # Determine what to pass to plugin.apply: either a string path or a dict
+    path_or_map = None
+    if auto_split:
+        displays = detect_displays()
+        if not displays:
+            typer.echo("No displays detected for --auto-split")
+            raise typer.Exit(code=2)
+        per_map = split_composite_for_displays(file, displays, output_dir=Path("."))
+        path_or_map = per_map
+    elif left_file or right_file:
+        displays = detect_displays()
+        if len(displays) < 2:
+            typer.echo("Need at least two displays to use --left-file/--right-file")
+            raise typer.Exit(code=2)
+        mapping = {}
+        if left_file:
+            mapping[displays[0].name] = str(left_file)
+        if right_file:
+            mapping[displays[1].name] = str(right_file)
+        path_or_map = mapping
+    elif per_monitor:
+        typer.echo("--per-monitor requires --left-file/--right-file or --auto-split")
+        raise typer.Exit(code=2)
+    else:
+        path_or_map = str(file)
+
+    success = plugin_impl.apply(path_or_map, dry_run=not do_it)
     if success:
         typer.echo(f"Plugin '{plugin}' applied wallpaper: {path_str} (dry_run={not do_it})")
     else:
