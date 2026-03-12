@@ -65,6 +65,7 @@ def optimize_wallpapers(
     padding: int = 0,
     quality: int = 90,
     random_seed: int | None = None,
+    **kwargs,
 ) -> Tuple[List[Path], List[PlacementResult]]:
     """Simple implementation that composes one background image and places 1..N images.
 
