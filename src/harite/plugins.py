@@ -153,12 +153,27 @@ class LinuxPlugin:
                             # common properties include names with 'last-image' or 'image'
                             if "image" in line or "last-image" in line:
                                 props.append(line)
+                    # Prefer workspace-specific last-image entries, then monitor image-paths,
+                    # then any last-image / last-single-image fallbacks.
+                    props_workspace = [q for q in props if "workspace" in q and "last-image" in q]
+                    props_monitor_image = [q for q in props if ("/monitor" in q and "image" in q and "workspace" not in q)]
+                    props_last_image = [q for q in props if ("last-image" in q and "workspace" not in q)]
+                    props_last_single = [q for q in props if "last-single-image" in q]
+                    candidates = props_workspace + props_monitor_image + props_last_image + props_last_single
+
+                    if dry_run:
+                        logger.info("Dry-run: xfconf candidates (in order): %s", candidates)
+                        # Indicate dry-run succeeded if there are candidates to try
+                        if candidates:
+                            return True
                     success_any = False
-                    for prop in props:
+                    for prop in candidates:
                         cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(p)]
+                        logger.info("Running: %s", " ".join(cmd))
                         res = subprocess.run(cmd, check=False)
                         if res.returncode == 0:
                             success_any = True
+                            break
                     if success_any:
                         return True
                 except Exception:
