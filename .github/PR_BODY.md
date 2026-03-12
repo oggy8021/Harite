@@ -1,4 +1,3 @@
-
 feat(plugins): プラグイン化による壁紙適用機能の追加 (feature/wallpaper-plugin)
 
 概要

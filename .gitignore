@@ -7,6 +7,9 @@ logs
 src/harite/__pycache__
 src/harite.egg-info
 
+# CI log files
+ci-*.log
+
 tests/*.pyc
 tests/__pycache__
 tests/out/*
