@@ -155,8 +155,12 @@ class LinuxPlugin:
                     candidates = props_workspace + props_monitor_image + props_last_image + props_last_single
 
                     logger.info("XFCE: discovered props count=%d", len(props))
+                    simulated = False
                     if dry_run:
                         logger.info("Dry-run: xfconf candidates (in order): %s", candidates)
+                        # mark that we simulated work so dry-run can report success
+                        if candidates:
+                            simulated = True
                     success_any = False
                     # If dry_run, do not execute commands; only simulate logging.
                     for prop in candidates:
@@ -178,6 +182,7 @@ class LinuxPlugin:
                 cmd = ["gsettings", "set", "org.gnome.desktop.background", "picture-uri", f"file://{str(p)}"]
                 if dry_run:
                     logger.info("Dry-run: would run gsettings: %s", " ".join(cmd))
+                    simulated = True
                 else:
                     res = subprocess.run(cmd, check=False)
                     if res.returncode == 0:
@@ -185,8 +190,17 @@ class LinuxPlugin:
             if shutil.which("feh"):
                 # Lightweight viewers
                 cmd = ["feh", "--bg-scale", str(p)]
-                res = subprocess.run(cmd, check=False)
-                return res.returncode == 0
+                if dry_run:
+                    logger.info("Dry-run: would run feh: %s", " ".join(cmd))
+                    simulated = True
+                else:
+                    res = subprocess.run(cmd, check=False)
+                    if res.returncode == 0:
+                        return True
+            # If dry-run and we simulated any candidate/command, treat as success
+            if dry_run and simulated:
+                logger.info("Dry-run: simulated commands present, reporting success")
+                return True
             logger.error("No known wallpaper setter found on PATH")
             return False
         except Exception:  # pragma: no cover - platform specific
