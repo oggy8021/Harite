@@ -7,7 +7,28 @@ on:
     branches: [ main, master ]
 
 jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install linter
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+
+      - name: Run ruff
+        run: ruff check src tests
+
   test:
+    name: Test matrix
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -40,30 +61,3 @@ jobs:
 
       - name: Run tests
         run: pytest -q
-name: CI
-
-on:
-  push:
-    branches: ["main", "feat/**"]
-  pull_request:
-    branches: ["main"]
-
-jobs:
-  lint-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .
-          pip install pytest ruff
-      - name: Lint (ruff)
-        run: |
-          ruff check src tests
-      - name: Run tests
-        run: |
-          pytest -q
