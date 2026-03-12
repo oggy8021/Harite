@@ -192,6 +192,15 @@ def apply(
         path_or_map = str(file)
 
     success = plugin_impl.apply(path_or_map, dry_run=not do_it)
+    # Prepare a human-friendly path string for logging (handle per-monitor mapping)
+    if isinstance(path_or_map, dict):
+        try:
+            path_str = json.dumps(path_or_map, ensure_ascii=False)
+        except Exception:
+            path_str = str(path_or_map)
+    else:
+        path_str = str(path_or_map)
+
     if success:
         typer.echo(f"Plugin '{plugin}' applied wallpaper: {path_str} (dry_run={not do_it})")
     else:
