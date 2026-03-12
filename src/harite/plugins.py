@@ -140,6 +140,29 @@ class LinuxPlugin:
                 cmd = ["gsettings", "set", "org.gnome.desktop.background", "picture-uri", f"file://{str(p)}"]
                 res = subprocess.run(cmd, check=False)
                 return res.returncode == 0
+            if shutil.which("xfconf-query"):
+                # XFCE: try to find and set image properties under xfce4-desktop
+                try:
+                    list_proc = subprocess.run(["xfconf-query", "-c", "xfce4-desktop", "-l"], check=False, capture_output=True, text=True)
+                    props = []
+                    if list_proc.returncode == 0 and list_proc.stdout:
+                        for line in list_proc.stdout.splitlines():
+                            line = line.strip()
+                            if not line:
+                                continue
+                            # common properties include names with 'last-image' or 'image'
+                            if "image" in line or "last-image" in line:
+                                props.append(line)
+                    success_any = False
+                    for prop in props:
+                        cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(p)]
+                        res = subprocess.run(cmd, check=False)
+                        if res.returncode == 0:
+                            success_any = True
+                    if success_any:
+                        return True
+                except Exception:
+                    logger.exception("xfconf-query attempt failed")
             if shutil.which("feh"):
                 # Lightweight viewers
                 cmd = ["feh", "--bg-scale", str(p)]
