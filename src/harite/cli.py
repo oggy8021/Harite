@@ -3,13 +3,45 @@ from __future__ import annotations
 
 import typer
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Tuple
 import json
 
 from . import __version__
 from .core import optimize_wallpapers
+from .plugins import registry as plugin_registry
 
 app = typer.Typer(help="Harite - wallpaper optimizer")
+
+
+def parse_resolution(value: str) -> Tuple[int, int]:
+    """Parse resolution strings like '1920x1080'."""
+    try:
+        w_str, h_str = value.lower().split("x")
+        w, h = int(w_str), int(h_str)
+        if w <= 0 or h <= 0:
+            raise ValueError("resolution must be positive")
+        return w, h
+    except Exception:
+        raise ValueError("Invalid resolution format. Use WIDTHxHEIGHT, e.g. 3840x2160")
+
+
+def parse_margins(value: str) -> Tuple[int, int, int, int]:
+    """Parse margins as 'left,top,right,bottom' or 'l,r,t,b' in pixels."""
+    parts = [p.strip() for p in value.split(",") if p.strip()]
+    if len(parts) != 4:
+        raise ValueError("Margins must have four comma-separated integers: l,r,top,bottom")
+    try:
+        vals = tuple(int(p) for p in parts)
+    except Exception:
+        raise ValueError("Margins must be integers")
+    if any(v < 0 for v in vals):
+        raise ValueError("Margins must be non-negative")
+    return vals
+
+
+def parse_display(value: str) -> Tuple[int, int]:
+    """Parse display size strings like '1920x1080'."""
+    return parse_resolution(value)
 
 
 @app.callback(invoke_without_command=True)
@@ -28,10 +60,15 @@ def _callback(
 @app.command()
 def optimize(
     input: List[str] = typer.Option(..., "--input", "-i", help="Input file(s) or directory(ies)"),
-    resolution: str = typer.Option(..., "--resolution", "-r", help="Target resolution WxH"),
+    resolution: str = typer.Option(..., "--resolution", "-r", help="Target resolution WxH (e.g. 3840x2160)"),
     layout: str = typer.Option("mosaic", "--layout", help="Layout mode"),
     scaling: str = typer.Option("fit", "--scaling", help="Scaling mode (fit|fill|crop)"),
     padding: int = typer.Option(0, "--padding", help="Padding (px) between images"),
+    two_screen: bool = typer.Option(False, "--two-screen", help="Enable two-screen (left/right) composition"),
+    margins: Optional[str] = typer.Option(None, "--margins", help="Margins as l,r,top,bottom in pixels (e.g. 10,0,10,0)"),
+    l_display: Optional[str] = typer.Option(None, "--l-display", help="Left display size WxH (e.g. 1920x1080)"),
+    r_display: Optional[str] = typer.Option(None, "--r-display", help="Right display size WxH (e.g. 1280x1024)"),
+    fixed: bool = typer.Option(False, "--fixed", help="Fix allocation by input order (left then right)"),
     output: Path = typer.Option(Path("."), "--output", "-o", help="Output directory"),
     quality: int = typer.Option(90, "--quality", help="JPEG quality"),
     random_seed: Optional[int] = typer.Option(None, "--random-seed", help="Random seed for reproducibility"),
@@ -41,12 +78,19 @@ def optimize(
 
     `--input` は複数指定可。ディレクトリを指定するとその中の画像が対象になります。
     """
-    # parse resolution like 3840x2160
+    # validate resolution
     try:
-        w_str, h_str = resolution.lower().split("x")
-        w, h = int(w_str), int(h_str)
-    except Exception:
-        typer.echo("Invalid resolution format. Use WIDTHxHEIGHT, e.g. 3840x2160")
+        w, h = parse_resolution(resolution)
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=2)
+
+    # validate numeric options
+    if padding < 0:
+        typer.echo("--padding must be non-negative")
+        raise typer.Exit(code=2)
+    if not (1 <= quality <= 100):
+        typer.echo("--quality must be between 1 and 100")
         raise typer.Exit(code=2)
 
     # flatten inputs (allow comma-separated items too)
@@ -64,8 +108,18 @@ def optimize(
         padding=padding,
         quality=quality,
         random_seed=random_seed,
+        two_screen=two_screen,
+        margins=(0, 0, 0, 0) if margins is None else parse_margins(margins),
+        l_display=None if l_display is None else parse_display(l_display),
+        r_display=None if r_display is None else parse_display(r_display),
+        fixed=fixed,
     )
-    if format.lower() == "json":
+    fmt = format.lower()
+    if fmt not in ("json", "text"):
+        typer.echo("Invalid --format. Use 'text' or 'json'.")
+        raise typer.Exit(code=2)
+
+    if fmt == "json":
         out = {
             "optimized_files": [str(p) for p in saved_files],
             "layout_metadata": [p.to_dict() for p in placements],
@@ -85,6 +139,33 @@ def compute_placement(
 ) -> None:
     """Compute placement for a single image (placeholder)."""
     typer.echo(f"COMPUTE: input={input} resolution={resolution} layout={layout}")
+
+
+@app.command()
+def apply(
+    plugin: str = typer.Option("windows", "--plugin", "-p", help="Plugin name to apply wallpaper with"),
+    file: Path = typer.Option(..., "--file", "-f", help="Path to wallpaper image file"),
+    do_it: bool = typer.Option(False, "--do-it", help="Actually change the system wallpaper (dry-run by default)"),
+) -> None:
+    """Apply a wallpaper using a registered plugin.
+
+    By default this performs a dry-run; pass `--do-it` to actually attempt
+    changing the system wallpaper.
+    """
+    try:
+        plugin_impl = plugin_registry.get(plugin)
+    except KeyError:
+        typer.echo(f"Unknown plugin: {plugin}")
+        typer.echo(f"Available plugins: {', '.join(plugin_registry.list())}")
+        raise typer.Exit(code=2)
+
+    path_str = str(file)
+    success = plugin_impl.apply(path_str, dry_run=not do_it)
+    if success:
+        typer.echo(f"Plugin '{plugin}' applied wallpaper: {path_str} (dry_run={not do_it})")
+    else:
+        typer.echo(f"Plugin '{plugin}' failed to apply wallpaper: {path_str}")
+        raise typer.Exit(code=3)
 
 
 def run() -> None:
