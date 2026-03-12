@@ -86,3 +86,72 @@ class WindowsPlugin:
 @registry.register("windows")
 def make_windows_plugin() -> WindowsPlugin:
     return WindowsPlugin()
+
+
+class MacOSPlugin:
+    name = "macos"
+
+    def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        p = Path(path)
+        if not p.exists():
+            logger.error("Wallpaper file does not exist: %s", path)
+            return False
+        if dry_run:
+            logger.info("Dry-run: would apply wallpaper (macOS): %s", path)
+            return True
+
+        # Attempt to set macOS wallpaper using AppleScript via osascript.
+        try:
+            import subprocess
+
+            script = f'tell application "System Events" to set picture of every desktop to "{str(p)}"'
+            res = subprocess.run(["osascript", "-e", script], check=False)
+            return res.returncode == 0
+        except Exception:  # pragma: no cover - platform specific
+            logger.exception("Failed to apply macOS wallpaper")
+            return False
+
+
+@registry.register("macos")
+def make_macos_plugin() -> MacOSPlugin:
+    return MacOSPlugin()
+
+
+class LinuxPlugin:
+    name = "linux"
+
+    def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        p = Path(path)
+        if not p.exists():
+            logger.error("Wallpaper file does not exist: %s", path)
+            return False
+        if dry_run:
+            logger.info("Dry-run: would apply wallpaper (linux): %s", path)
+            return True
+
+        # Try common desktop environment commands (gsettings, feh). This is a best-effort
+        # and intentionally not guaranteed to work on all distributions / DEs.
+        try:
+            import shutil
+            import subprocess
+
+            if shutil.which("gsettings"):
+                # Common for GNOME
+                cmd = ["gsettings", "set", "org.gnome.desktop.background", "picture-uri", f"file://{str(p)}"]
+                res = subprocess.run(cmd, check=False)
+                return res.returncode == 0
+            if shutil.which("feh"):
+                # Lightweight viewers
+                cmd = ["feh", "--bg-scale", str(p)]
+                res = subprocess.run(cmd, check=False)
+                return res.returncode == 0
+            logger.error("No known wallpaper setter found on PATH")
+            return False
+        except Exception:  # pragma: no cover - platform specific
+            logger.exception("Failed to apply linux wallpaper")
+            return False
+
+
+@registry.register("linux")
+def make_linux_plugin() -> LinuxPlugin:
+    return LinuxPlugin()
