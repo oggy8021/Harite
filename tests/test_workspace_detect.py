@@ -1,4 +1,5 @@
 import subprocess
+import platform
 
 from harite.workspace import detect_displays
 
