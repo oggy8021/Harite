@@ -49,6 +49,29 @@ def _detect_linux() -> List[Tuple[int, int]]:
                         continue
     return displays
 
+    # Fallback: some lightweight DEs like XFCE may expose display info via
+    # xfconf; try to probe common channels and parse any WxH patterns.
+    try:
+        import re
+        for channel in ("displays", "xfce4-display", "xfce4-desktop"):
+            try:
+                xf_out = subprocess.check_output(["xfconf-query", "-c", channel, "-l", "-v"], text=True, stderr=subprocess.DEVNULL)
+            except Exception:
+                continue
+            for m in re.finditer(r"(\d{2,5})x(\d{2,5})", xf_out):
+                try:
+                    w = int(m.group(1))
+                    h = int(m.group(2))
+                    displays.append((w, h))
+                except Exception:
+                    continue
+            if displays:
+                return displays
+    except Exception:
+        pass
+
+    return displays
+
 
 def _detect_macos() -> List[Tuple[int, int]]:
     """Use `system_profiler SPDisplaysDataType` and parse 'Resolution:' lines.
@@ -90,12 +113,14 @@ def _detect_windows() -> List[Tuple[int, int]]:
     unintrusive so it can be used in tests and local runs.
     """
     try:
-        import ctypes
-        from ctypes import wintypes
+        import ctypes as _ctypes
 
-        user32 = ctypes.windll.user32
-        user32.SetProcessDPIAware()
-        # Get primary monitor size
+        user32 = _ctypes.windll.user32
+        # Try to make the process DPI aware if available
+        try:
+            user32.SetProcessDPIAware()
+        except Exception:
+            pass
         width = user32.GetSystemMetrics(0)
         height = user32.GetSystemMetrics(1)
         return [(int(width), int(height))]
