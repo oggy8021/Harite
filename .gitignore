@@ -1,2 +1,12 @@
 .specify
 .vscode
+
+logs
+logs
+
+src/harite/__pycache__
+src/harite.egg-info
+
+tests/*.pyc
+tests/__pycache__
+tests/out/*
