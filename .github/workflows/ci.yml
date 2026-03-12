@@ -45,10 +45,23 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Ensure pip cache dir (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p ~/.cache/pip
+
+      - name: Ensure pip cache dir (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\pip\Cache"
+
       - name: Cache pip
         uses: actions/cache@v4
         with:
-          path: ~/.cache/pip
+          # Use the platform-appropriate pip cache path. For Windows we target the
+          # common LocalAppData pip cache; for Linux/macOS use ~/.cache/pip.
+          path: ${{ runner.os == 'Windows' && 'C:\\Users\\runneradmin\\AppData\\Local\\pip\\Cache' || '~/.cache/pip' }}
           key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
