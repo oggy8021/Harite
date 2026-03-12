@@ -132,7 +132,11 @@ class LinuxPlugin:
                 return False
             if dry_run:
                 logger.info("Dry-run: would apply wallpaper (linux): %s", path)
-                # continue without returning so dry-run can enumerate and log xfconf candidates
+                # When running a dry-run and the file exists, report success immediately.
+                # Older behavior attempted to enumerate xfconf candidates for logging,
+                # but tests and CI expect dry-run to be considered successful even when
+                # no external wallpaper setters are present on PATH.
+                return True
 
         # Try common desktop environment commands (gsettings, feh). This is a best-effort
         # and intentionally not guaranteed to work on all distributions / DEs.
