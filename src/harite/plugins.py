@@ -136,6 +136,7 @@ class LinuxPlugin:
 
         # Try common desktop environment commands (gsettings, feh). This is a best-effort
         # and intentionally not guaranteed to work on all distributions / DEs.
+        simulated = False
         try:
             import shutil
             import subprocess
@@ -210,7 +211,7 @@ class LinuxPlugin:
 
             # Next try GNOME gsettings (if present). For dry-run, log the command instead
             # of executing so we don't prematurely short-circuit logging.
-            if shutil.which("gsettings"):
+            if shutil.which("gsettings") and not is_map:
                 cmd = ["gsettings", "set", "org.gnome.desktop.background", "picture-uri", f"file://{str(p)}"]
                 if dry_run:
                     logger.info("Dry-run: would run gsettings: %s", " ".join(cmd))
@@ -219,7 +220,7 @@ class LinuxPlugin:
                     res = subprocess.run(cmd, check=False)
                     if res.returncode == 0:
                         return True
-            if shutil.which("feh"):
+            if shutil.which("feh") and not is_map:
                 # Lightweight viewers
                 cmd = ["feh", "--bg-scale", str(p)]
                 if dry_run:

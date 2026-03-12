@@ -9,6 +9,8 @@ DP-1 connected primary 1920x1080+0+0 (normal left inverted right x axis y axis) 
 HDMI-1 connected 1920x1080+1920+0 (normal left inverted right x axis y axis) 477mm x 268mm
 """
 
+    monkeypatch.setattr(platform, "system", lambda: "Linux")
+
     def fake_check_output(cmd, text=True, stderr=None):
         return sample
 

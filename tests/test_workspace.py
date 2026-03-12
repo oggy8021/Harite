@@ -18,8 +18,10 @@ DP-1 connected 2560x1440+1920+0 (normal left inverted right x axis y axis) 600mm
     monkeypatch.setattr(subprocess, "check_output", lambda *a, **k: sample)
 
     displays = workspace.detect_displays()
-    assert (1920, 1080) in displays
-    assert (2560, 1440) in displays
+    # displays now return Display objects
+    names = {(d.width, d.height) for d in displays}
+    assert (1920, 1080) in names
+    assert (2560, 1440) in names
 
 
 def test_detect_linux_returns_empty_on_error(monkeypatch):
@@ -44,8 +46,9 @@ Graphics/Displays:
     monkeypatch.setattr(subprocess, "check_output", lambda *a, **k: sample)
 
     displays = workspace.detect_displays()
-    assert (2560, 1440) in displays
-    assert (1920, 1080) in displays
+    names = {(d.width, d.height) for d in displays}
+    assert (2560, 1440) in names
+    assert (1920, 1080) in names
 
 
 def test_detect_windows_uses_ctypes(monkeypatch):
@@ -64,4 +67,5 @@ def test_detect_windows_uses_ctypes(monkeypatch):
     sys.modules["ctypes"] = fake
 
     displays = workspace.detect_displays()
-    assert displays == [(800, 600)]
+    assert len(displays) == 1
+    assert displays[0].width == 800 and displays[0].height == 600
