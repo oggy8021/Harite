@@ -163,6 +163,9 @@ class LinuxPlugin:
                             simulated = True
                     success_any = False
                     # If dry_run, do not execute commands; only simulate logging.
+                    # When actually applying (dry_run==False), try all candidate
+                    # properties instead of stopping at the first success so that
+                    # per-monitor properties for multiple displays are updated.
                     for prop in candidates:
                         cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(p)]
                         logger.info("XFCE: would run: %s", " ".join(cmd))
@@ -170,7 +173,8 @@ class LinuxPlugin:
                             res = subprocess.run(cmd, check=False)
                             if res.returncode == 0:
                                 success_any = True
-                                break
+                            else:
+                                logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
                     if success_any:
                         return True
                 except Exception:
