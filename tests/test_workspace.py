@@ -3,8 +3,6 @@ import types
 import subprocess
 import platform
 
-import pytest
-
 from harite import workspace
 
 

@@ -1,6 +1,4 @@
 from pathlib import Path
-import shutil
-import tempfile
 from harite.core import optimize_wallpapers
 
 
