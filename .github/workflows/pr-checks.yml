@@ -1,0 +1,46 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  push:
+    # ignore pushes to main to avoid blocking merges
+    branches-ignore: [ main ]
+
+jobs:
+  validate-branch-name:
+    name: Validate branch name
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate branch name
+        shell: bash
+        run: |
+          set -euo pipefail
+          # For PRs GITHUB_HEAD_REF is set; for direct pushes fall back to ref name
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+          echo "Branch: $BRANCH"
+          if [[ ! "$BRANCH" =~ ^(feature|fix|docs|chore)\/[a-z0-9_.-]+$ ]]; then
+            echo "::error ::Branch name '$BRANCH' does not match required pattern 'feature|fix|docs|chore/<name>'"
+            echo "Suggested pattern: feature/my-feature"
+            exit 1
+          fi
+
+  validate-pr-body:
+    name: Validate PR body
+    if: github.event_name == 'pull_request'
+    needs: validate-branch-name
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR body exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          PR_BODY="${{ github.event.pull_request.body }}"
+          if [ -z "$PR_BODY" ]; then
+            echo "::error ::Pull request body is empty. Please fill the PR template (概要 / やったこと / 動作確認 等)."
+            exit 1
+          fi
+          echo "PR body present."
