@@ -6,7 +6,7 @@
 
 - 主要ルール（簡略）:
  - 主要ルール（簡略）:
-   - 必須ステータスチェック: `CI / Test matrix` のみ
+  - 必須ステータスチェック: `Lint (ruff)` と `Test matrix (ubuntu-latest, 3.12)`, `Test matrix (macos-latest, 3.12)`, `Test matrix (windows-latest, 3.12)`（CI の各チェック名に正確に合わせること）
    - `Include administrators`: 有効（管理者も保護対象）
    - `strict` モード: 有効（マージ前にブランチを最新に合わせることを要求）
    - PR レビュー: 必須ではない（プロジェクト運用に応じて後で追加可）
@@ -23,3 +23,4 @@
 
 - 変更履歴:
   - 2026-03-14: 簡素化ルールを適用（作成者: repo maintainer）
+  - 2026-03-14: 必須チェックを CI の実際のチェック名に合わせて微調整（linter + OS 別テストマトリクス）
