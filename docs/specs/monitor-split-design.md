@@ -18,7 +18,7 @@
 - 互換性: 既存の単一 `--file`（従来の合成画像）ワークフローはそのまま動作すること。
 
 用語
-- Display: name (例: "DP-1"), width, height, x_offset, primary: bool
+- Display: name (例: "DP-1")、width、height、x_offset、primary: bool
 - monitor-prop: XFCE のプロパティ名に含まれる monitor 候補（例: `/backdrop/screen0/monitorDP-1/...`）
 
 設計（API / データ構造）
@@ -44,13 +44,13 @@ CLI 仕様
   - `apply(path_or_map, *, dry_run=True)` を受け、`path_or_map` が dict のときはキーをモニタ識別子（xrandr の `name`）として扱う。
   - 文字列のときは従来の全体適用。
 - XFCE プロパティの割当アルゴリズム
-  1. `xrandr` で得た `Display.name`（例: `DP-1`）をモニタ候補表示名として使用。候補として `monitor{NAME}`（例: `monitorDP-1`）をプロパティ名にマッチさせる。
-  2. `xfconf-query -c xfce4-desktop -l` の出力からプロパティリストを得る（既存処理）。
-  3. 優先ルール:
+  1.`xrandr` で得た `Display.name`（例: `DP-1`）をモニタ候補表示名として使用。候補として `monitor{NAME}`（例: `monitorDP-1`）をプロパティ名にマッチさせる。
+  2.`xfconf-query -c xfce4-desktop -l` の出力からプロパティリストを得る（既存処理）。
+  3.優先ルール:
      - monitor 固有 (/monitor.../) にマッチするプロパティへまず書き込む。
      - 次に workspace ベースの `.../workspaceX/last-image` へ書き込む（各ワークスペースに対して同じファイルを設定）。
      - どのプロパティも見つからない場合は `last-image` / `last-single-image` の一般エントリへフォールバック。
-  4. 書き込み実行:
+  4.書き込み実行:
      - `dry_run=True` の場合は実行予定コマンドをログに残すのみ。
      - `dry_run=False` の場合は、モニタ別に見つかったすべてのプロパティに対して `xfconf-query -p <prop> -s <path>` を実行し、個別の成功/失敗をログに残す。最終的には一つでも成功すれば True を返すが、個別失敗は debug/info ログで確認できるようにする。
 
@@ -64,7 +64,7 @@ CLI 仕様
 
 テスト設計
 - ユニットテスト
-  - `tests/test_workspace_detect.py` : `xrandr` 出力サンプルをパースし `Display` リストが期待通りであることを確かめる（primary, offsets を含む）。
+  - `tests/test_workspace_detect.py` : `xrandr` 出力サンプルをパースし `Display` リストが期待通りであることを確かめる（primary、offsets を含む）。
   - `tests/test_split_image.py` : ダミー合成画像（左右異なる色）を作成し `auto_split` が左右を正しく切り出すことを検証する。
   - `tests/test_plugins_linux_mapping.py` : モック subprocess の出力を用いて XFCE プロパティを解析、与えたモニタ名に対して正しい `xfconf-query` コマンドが実行されることを検証する（dry-run でコマンド列を確認）。
 - 結合テスト（手動）
@@ -76,11 +76,11 @@ CLI 仕様
 - `apply --per-monitor`（または `apply --file <composite> --auto-split --do-it`）で、linux/xfc e プラグインがモニタ別に `xfconf-query` を呼び出し、両方の画面に意図した画像が設定される（dry-run および実行時ログで確認可能）。
 
 移行計画 / 実装順序（推奨）
-1. `workspace.detect_displays()` の堅牢化（xrandr パースユニットテストを追加）
-2. 画像分割ユーティリティ実装（`harite.core.split_composite_for_displays()`）とテスト
-3. CLI フラグの追加（`apply` に `--auto-split` / `--per-monitor` / `--left-file` / `--right-file`）
-4. Linux プラグインの `apply` 拡張（dict 受け取り対応）とモックベースのテスト
-5. 実機検証（ユーザ）と docs 更新
+1.`workspace.detect_displays()` の堅牢化（xrandr パースユニットテストを追加）
+2.画像分割ユーティリティ実装（`harite.core.split_composite_for_displays()`）とテスト
+3.CLI フラグの追加（`apply` に `--auto-split` / `--per-monitor` / `--left-file` / `--right-file`）
+4.Linux プラグインの `apply` 拡張（dict 受け取り対応）とモックベースのテスト
+5.実機検証（ユーザ）と docs 更新
 
 セキュリティと安全性
 - `--do-it` は明示的に指定しない限り何もしない（dry-run）。

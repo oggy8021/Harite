@@ -16,7 +16,7 @@
 
 ## 例2: デュアルモニタ（左右分割）
 - 入力: `inputs = ['samples/left.jpg', 'samples/right.jpg']`
-- target_resolution: `(3840, 1080)`  # 左:1920x1080, 右:1920x1080
+- target_resolution: `(3840, 1080)`  # 左:1920x1080、右:1920x1080
 - layout: `mosaic`
 - scaling: `fit`
 - 期待出力:
@@ -26,28 +26,18 @@
 
 ## 例3: マージン指定と再現性
 - 入力: ディレクトリ `samples/` を指定して複数画像をランダム選出
-- オプション: `padding=10`, `random_seed=42`
+- オプション: `padding=10`、`random_seed=42`
 - 期待出力:
   - `random_seed=42` による `layout_metadata` は再現可能
   - 画像間の距離が `padding` を満たす
 
 ## メタデータ JSON 例
 {
-  "optimized_files": ["/home/user/.local/share/harite/wallopt20260312-120101.jpg"],
-  "layout_metadata": [
+  "optimized_files": ["/home/user/.local/share/harite/wallopt20260312-120101.jpg"]、"layout_metadata": [
     {
-      "image_path": "samples/left.jpg",
-      "x": 0,
-      "y": 0,
-      "width": 1920,
-      "height": 1080,
-      "rotation": 0.0,
-      "scale": 1.0,
-      "score": 0.95,
-      "posit": "left"
+      "image_path": "samples/left.jpg"、"x": 0、"y": 0、"width": 1920、"height": 1080、"rotation": 0.0、"scale": 1.0、"score": 0.95、"posit": "left"
     }
-  ],
-  "summary": {"processing_time_s": 0.42}
+  ]、"summary": {"processing_time_s": 0.42}
 }
 
 ---
