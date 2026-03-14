@@ -22,6 +22,11 @@ jobs:
           # For PRs GITHUB_HEAD_REF is set; for direct pushes fall back to ref name
           BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
           echo "Branch: $BRANCH"
+          # Skip automated checks for backup branches (e.g. save/*)
+          if [[ "$BRANCH" =~ ^save\/ ]]; then
+            echo "Skipping PR Checks for backup branch: $BRANCH"
+            exit 0
+          fi
           if [[ ! "$BRANCH" =~ ^(feature|fix|docs|chore)\/[a-z0-9_.-]+$ ]]; then
             echo "::error ::Branch name '$BRANCH' does not match required pattern 'feature|fix|docs|chore/<name>'"
             echo "Suggested pattern: feature/my-feature"
