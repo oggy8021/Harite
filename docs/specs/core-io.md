@@ -16,9 +16,9 @@
 
 ## 入力（パラメータ）
 - inputs: `list[str | Path]` — 入力画像ファイルのパス一覧、もしくは画像を列挙するディレクトリパス
-- target_resolution: `tuple[int, int]` — 出力画面解像度（幅, 高さ）
-- layout: `str` — レイアウトモード（例: `single`, `grid`, `mosaic`, `cover`）
-- scaling: `str` — リサイズモード（例: `fit`, `fill`, `crop`）
+- target_resolution: `tuple[int, int]` — 出力画面解像度（幅、高さ）
+- layout: `str` — レイアウトモード（例: `single`、`grid`、`mosaic`、`cover`）
+- scaling: `str` — リサイズモード（例: `fit`、`fill`、`crop`）
 - padding: `int` — 画像間の余白（ピクセル）
 - output_dir: `Path` — 出力先ディレクトリ
 - quality: `int` (0-100) — 出力画像の圧縮品質
@@ -105,9 +105,9 @@ harite compute-placement --input img.jpg --resolution 1920x1080 --layout cover
 - 入出力のフォーマットテスト（JSON）を用意する。
 
 ## 次のアクション
-1. 母体プログラムの該当ソース（`wallpaperoptimizer`）を解析し、代表的な入力/出力例を収集する。
-2. 本ファイルを基に `tests/test_core.py` のサンプルケースを作成する。
-3. オーナーに本草案のレビューを依頼し、許容差やレイアウトモードの細部を決定する。
+1.母体プログラムの該当ソース（`wallpaperoptimizer`）を解析し、代表的な入力/出力例を収集する。
+2.本ファイルを基に `tests/test_core.py` のサンプルケースを作成する。
+3.オーナーに本草案のレビューを依頼し、許容差やレイアウトモードの細部を決定する。
 
 ---
 

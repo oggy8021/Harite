@@ -12,7 +12,7 @@
 
 必須/推奨ツール
 --
-- 必須: Python 3.12+, `pip`
+- 必須: Python 3.12+、`pip`
 - 推奨（環境によって使用）:
   - `xrandr`（ディスプレイ検出）
   - `xfconf-query`（XFCE のプロパティ操作）
@@ -32,7 +32,7 @@ sudo apt install python3-pip python3-typer python3-pil
 
 セットアップ（ローカル）
 --
-1. 仮想環境作成・依存インストール:
+1.仮想環境作成・依存インストール:
 ```bash
 python -m venv .venv
 source .venv/bin/activate
@@ -41,32 +41,32 @@ python -m pip install -e .
 python -m pip install pytest
 ```
 
-2. テスト実行（全体）:
+2.テスト実行（全体）:
 ```bash
 .venv/bin/python -m pytest -q
 ```
 
 基本的な検証手順
 --
-1. 表示検出の確認:
+1.表示検出の確認:
 ```bash
 .venv/bin/python -c 'from harite import workspace; print(workspace.detect_displays())'
 ```
 期待: `xrandr` が使える場合は `[(幅, 高さ), ...]` のリストが返ります。`xrandr` が無い場合は `xfconf-query` のフォールバックが試行されます。
 
-2. 最適化処理のサンプル実行（出力ファイル確認）:
+2.最適化処理のサンプル実行（出力ファイル確認）:
 ```bash
 .venv/bin/python -m harite optimize --input tests/data --resolution 3840x1080 --output out --two-screen --l-display 1920x1080 --r-display 1920x1080
 ```
 出力例: `out/harite_wallopt_<id>.jpg`
 
-3. プラグイン経由での dry-run（壁紙を変更しない）:
+3.プラグイン経由での dry-run（壁紙を変更しない）:
 ```bash
 .venv/bin/python -m harite apply --plugin linux --file out/harite_wallopt_<id>.jpg
 ```
 ログに、実行されるコマンド（例: `xfconf-query` / `gsettings` / `feh`）が表示されます。
 
-4. XFCE の実際の適用（最終確認、自己責任）:
+4.XFCE の実際の適用（最終確認、自己責任）:
  - まずプロパティ一覧を確認:
 ```bash
 xfconf-query -c xfce4-desktop -l
@@ -95,7 +95,7 @@ xfconf-query -c xfce4-desktop -l
 
 次の手順
 --
-1. 上記手順を実行のうえ結果を共有してください（成功なら次に PR マージの調整を進めます）。
-2. 追加で自動化したい項目（例: `xfconf-query` のプロパティ自動検出、複数モニタの優先設定など）があれば教えてください。必要に応じて tests/ に追加のインテグレーションスクリプトを作成します。
+1.上記手順を実行のうえ結果を共有してください（成功なら次に PR マージの調整を進めます）。
+2.追加で自動化したい項目（例: `xfconf-query` のプロパティ自動検出、複数モニタの優先設定など）があれば教えてください。必要に応じて tests/ に追加のインテグレーションスクリプトを作成します。
 
 作成: Harite チーム

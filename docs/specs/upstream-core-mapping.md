@@ -36,7 +36,7 @@ Harite 側へのマッピング（設計決定）
 
 代表的振る舞い（例）
 - Two-screen モード例:
-  - target_resolution=(3840,1080), l_display=(1920,1080), r_display=(1920,1080), margins=(10,10,5,5)
+  - target_resolution=(3840,1080)、l_display=(1920,1080)、r_display=(1920,1080)、margins=(10,10,5,5)
   - 左画像は利用可能領域 (1920-10-10,1080-5-5) に合わせて `fit`/`fill` でリサイズされ、左領域の中央付近に配置される。
   - 右画像は右領域に同様に配置され、保存ファイルは 1 枚に合成される。
 
@@ -46,9 +46,9 @@ Harite 側へのマッピング（設計決定）
 - margins が与えられた場合に貼付け位置が margin を反映していること（単純数値比較）。
 
 次の作業（優先順）
-1. `tests/test_core.py` に Two-screen のユニットテストを追加して CI を通す。テストケースは小さなダミー画像を使用する。  
-2. CLI 側で `--two-screen` / `--margins` オプションを受け取れるよう `src/harite/cli.py` を調整する。  
-3. より詳細な割当ロジック（アスペクト優先、画面タイプ照合）を仕様化し、追加テストを作成する。
+1.`tests/test_core.py` に Two-screen のユニットテストを追加して CI を通す。テストケースは小さなダミー画像を使用する。  
+2.CLI 側で `--two-screen` / `--margins` オプションを受け取れるよう `src/harite/cli.py` を調整する。  
+3.より詳細な割当ロジック（アスペクト優先、画面タイプ照合）を仕様化し、追加テストを作成する。
 
 参照: 母体の実装は `wallpaperoptimizer/WallpaperOptimizer/Core.py` を参照のこと。
 
