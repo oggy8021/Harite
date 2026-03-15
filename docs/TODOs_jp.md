@@ -76,3 +76,9 @@
 - Reorganized docs per Proposal A on branch feature/docs-reorg-A
 
 - Applied final Proposal A reorg on branch feature/docs-reorg-final
+
+進捗同期
+- **現在の進行中タスク**: `Improve XFCE heuristics`（ブランチ: `feature/xfce-heuristics-001`） — 調査・修正中。`detect_displays()` の堅牢化と `LinuxPlugin` の候補マッチ改善を適用済みで、追加テストを準備中。
+- **直近の次アクション**: `feature/tests-coverage-001` を作成して `detect_displays()` の parametrize テスト群を追加する（未着手）。
+- **関連タスク**: `LinuxPlugin` 用に `xfconf-query` 出力を模した単体テストを追加する（未着手）。
+- **同期方針**: このファイルのステータスは上記の TODO 管理と一致させます。作業開始の合図を受けたら、小さな PR に分割して実装します。
