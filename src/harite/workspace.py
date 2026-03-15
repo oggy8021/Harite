@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import List
+import re
 import platform
 import subprocess
 
@@ -51,20 +52,41 @@ def _detect_linux() -> List[Display]:
             name = parts[0]
             primary = "primary" in parts
             w = h = x_off = 0
-            for p in parts:
-                if "x" in p and "+" in p:
-                    try:
-                        wh = p.split("+")[0]
-                        w_str, h_str = wh.split("x")
-                        w = int(w_str)
-                        h = int(h_str)
+            # Use regex to robustly extract geometry like 2048x1280+2048+0
+            m = re.search(r"(\d+)x(\d+)\+(\d+)\+(\d+)", line)
+            if m:
+                try:
+                    w = int(m.group(1))
+                    h = int(m.group(2))
+                    x_off = int(m.group(3))
+                except Exception:
+                    w = h = x_off = 0
+            else:
+                # Fallback: try token-based parsing to handle malformed/residual formats
+                for p in parts:
+                    if "x" in p:
                         try:
-                            x_off = int(p.split("+")[1])
+                            wh = p.split("+")[0]
+                            if "x" in wh:
+                                w_str, h_str = wh.split("x")
+                                try:
+                                    w = int(w_str)
+                                except Exception:
+                                    # try to extract leading digits
+                                    m2 = re.match(r"(\d+)", w_str)
+                                    if m2:
+                                        w = int(m2.group(1))
+                                try:
+                                    h = int(h_str)
+                                except Exception:
+                                    h = 0
+                                try:
+                                    x_off = int(p.split("+")[1])
+                                except Exception:
+                                    x_off = 0
+                                break
                         except Exception:
-                            x_off = 0
-                        break
-                    except Exception:
-                        continue
+                            continue
             displays.append(Display(name=name, width=w, height=h, x_offset=x_off, primary=primary))
     return displays
 

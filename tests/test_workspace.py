@@ -1,3 +1,25 @@
+import subprocess
+from harite import workspace
+
+
+def test_detect_displays_parses_xrandr(monkeypatch):
+    sample = '''
+Screen 0: minimum 320 x 200, current 4096 x 1280, maximum 16384 x 16384
+HDMI-1 connected primary 2048x1280+0+0 (normal)
+DP-1 connected 2048x1280+2048+0 (normal)
+'''
+
+    monkeypatch.setattr(subprocess, "check_output", lambda *a, **k: sample)
+    displays = workspace._detect_linux()
+    assert len(displays) == 2
+    names = [d.name for d in displays]
+    assert "HDMI-1" in names
+    assert "DP-1" in names
+    # check geometry for HDMI-1
+    hdmi = next(d for d in displays if d.name == "HDMI-1")
+    assert hdmi.width == 2048
+    assert hdmi.height == 1280
+    assert hdmi.x_offset == 0
 import sys
 import types
 import subprocess
