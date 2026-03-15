@@ -13,3 +13,5 @@ ci-*.log
 tests/*.pyc
 tests/__pycache__
 tests/out/*
+# Generated docs reports
+docs/*-report*.md
