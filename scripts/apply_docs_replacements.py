@@ -16,8 +16,10 @@ import difflib
 
 
 REPLACEMENTS = [
-    (re.compile(r',\s+'), '、'),
-    (re.compile(r'\.\s+'), '。'),
+    # Avoid converting commas that are part of numbers (e.g. 1,000)
+    (re.compile(r'(?<!\d),\s+'), '、'),
+    # Avoid converting periods immediately following digits (e.g. list items "1. ")
+    (re.compile(r'(?<!\d)\.\s+'), '。'),
 ]
 
 

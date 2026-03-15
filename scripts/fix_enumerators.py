@@ -25,11 +25,53 @@ def main(argv=None):
 
     md_files = list(DOCS_DIR.rglob('*.md'))
     changes = []
-    pattern = re.compile(r'(?m)^(\s*[-*]?\s*)(\d+)。')
+    # Conservative pattern: only convert when the line is a list item (has a list marker
+    # like '-', '*', '+', or an ASCII numbered list like '1. ') followed by a fullwidth dot.
+    pattern = re.compile(r'(?m)^(\s*(?:[-*+]\s*|\d+\.\s*))(\d+)。')
 
     for fp in md_files:
         text = fp.read_text(encoding='utf-8')
-        new_text = pattern.sub(r"\1\2.", text)
+        # remove fenced code blocks and inline code to avoid accidental changes inside code
+        blocks = re.findall(r'```.*?```', text, flags=re.DOTALL)
+        tmp = text
+        for i, b in enumerate(blocks):
+            tmp = tmp.replace(b, f'__BLOCK_{i}__')
+
+        inline_codes = re.findall(r'`[^`]*`', tmp)
+        for i, c in enumerate(inline_codes):
+            tmp = tmp.replace(c, f'__CODE_{i}__')
+
+        # perform conservative, line-by-line replacement
+        lines = tmp.splitlines(True)
+        out_lines = []
+        for line in lines:
+            # skip markdown table rows
+            if '|' in line:
+                out_lines.append(line)
+                continue
+            # skip diff-like lines that start with '+' or '-' without a following space
+            stripped = line.lstrip()
+            if stripped.startswith(('+', '-')) and not stripped.startswith(('+ ', '- ')):
+                out_lines.append(line)
+                continue
+            m = pattern.match(line)
+            if m:
+                prefix = m.group(1)
+                num = m.group(2)
+                new_line = f"{prefix}{num}." + line[m.end():]
+                out_lines.append(new_line)
+            else:
+                out_lines.append(line)
+
+        new_tmp = ''.join(out_lines)
+
+        # restore inline codes and code blocks
+        for i, c in enumerate(inline_codes):
+            new_tmp = new_tmp.replace(f'__CODE_{i}__', c)
+        for i, b in enumerate(blocks):
+            new_tmp = new_tmp.replace(f'__BLOCK_{i}__', b)
+
+        new_text = new_tmp
         if new_text != text:
             diff = ''.join(difflib.unified_diff(text.splitlines(True), new_text.splitlines(True), fromfile=str(fp), tofile=str(fp) + ' (fixed)'))
             changes.append((fp, diff))
