@@ -15,7 +15,7 @@
 実行方法（ローカル）:
 1. 仮想環境を有効化（Windows PowerShell の例）:
 ```
-& .venv\Scripts\Activate.ps1
+& .venv\\Scripts\\Activate.ps1
 ```
 2. 開発依存をインストール:
 ```
