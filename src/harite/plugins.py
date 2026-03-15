@@ -9,8 +9,18 @@ from typing import Callable, Dict, Protocol
 from dataclasses import dataclass
 import logging
 from pathlib import Path
+import re
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_identifier(s: str) -> str:
+    """Normalize monitor/property names for fuzzy matching.
+
+    Lowercase and strip non-alphanumeric characters so that names like
+    "HDMI-1" and "hdmi1" compare equal.
+    """
+    return re.sub(r"[^a-z0-9]", "", s.lower())
 
 
 class PluginProtocol(Protocol):
@@ -181,9 +191,11 @@ class LinuxPlugin:
                         # mapping keys are monitor names (e.g., 'DP-1')
                         for mon_name, mon_path in mapping.items():
                             applied_any = False
-                            # select candidates that reference this monitor name
-                            mon_key = mon_name.replace("-", "")
-                            filtered = [c for c in candidates if (mon_name in c or mon_key in c or "/monitor" in c and mon_key in c)]
+                            # select candidates that reference this monitor name using normalized comparison
+                            mon_norm = _normalize_identifier(mon_name)
+                            def _prop_norm(p: str) -> str:
+                                return _normalize_identifier(p)
+                            filtered = [c for c in candidates if (mon_name in c or mon_norm in _prop_norm(c) or ("/monitor" in c and mon_norm in _prop_norm(c)))]
                             if not filtered:
                                 # fallback to workspace entries or general entries
                                 filtered = [c for c in candidates if "workspace" in c or "last-image" in c]

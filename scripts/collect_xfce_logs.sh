@@ -22,16 +22,34 @@ if command -v xfce4-display-settings >/dev/null 2>&1; then
   xfce4-display-settings --version >> "$OUTDIR/display_info.txt" 2>&1 || true
 fi
 
-echo "Attempting to run harite with --verbose (if installed)..." > "$OUTDIR/harite.log"
-if command -v python3 >/dev/null 2>&1; then
+echo "Attempting to run harite (best-effort dry-run)" > "$OUTDIR/harite.log"
+
+# Create a tiny test image file to pass to `apply` (if creation tools are available)
+TMP_TEST_IMG="/tmp/harite-test-$$.jpg"
+if command -v convert >/dev/null 2>&1; then
+  convert -size 1x1 xc:gray "$TMP_TEST_IMG" 2>/dev/null || touch "$TMP_TEST_IMG"
+else
+  touch "$TMP_TEST_IMG"
+fi
+
+# Prefer calling the console script if available, otherwise try module entrypoint
+if command -v harite >/dev/null 2>&1; then
+  harite --version >> "$OUTDIR/harite.log" 2>&1 || true
+  # perform a dry-run apply to exercise XFCE plugin paths
+  harite apply --plugin linux --file "$TMP_TEST_IMG" >> "$OUTDIR/harite.log" 2>&1 || true
+elif command -v python3 >/dev/null 2>&1; then
   if python3 -m pip show harite >/dev/null 2>&1; then
-    python3 -m harite --verbose >> "$OUTDIR/harite.log" 2>&1 || true
+    # Typer-based CLI lives in harite.cli; call a specific command instead of -m harite
+    python3 -m harite.cli --version >> "$OUTDIR/harite.log" 2>&1 || true
+    python3 -m harite.cli apply --plugin linux --file "$TMP_TEST_IMG" >> "$OUTDIR/harite.log" 2>&1 || true
   else
     echo "harite not installed in current Python environment" >> "$OUTDIR/harite.log"
   fi
 else
   echo "python3 not available" >> "$OUTDIR/harite.log"
 fi
+
+rm -f "$TMP_TEST_IMG" || true
 
 # Attempt to collect system logs for display/Xorg if available
 journalctl -b _COMM=Xorg --no-pager > "$OUTDIR/xorg.log" 2>/dev/null || true
