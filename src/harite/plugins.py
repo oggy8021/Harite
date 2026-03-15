@@ -10,6 +10,7 @@ from dataclasses import dataclass
 import logging
 from pathlib import Path
 import re
+from harite import workspace
 
 logger = logging.getLogger(__name__)
 
@@ -197,8 +198,38 @@ class LinuxPlugin:
                                 return _normalize_identifier(p)
                             filtered = [c for c in candidates if (mon_name in c or mon_norm in _prop_norm(c) or ("/monitor" in c and mon_norm in _prop_norm(c)))]
                             if not filtered:
+                                # Attempt index-based matching: some xfconf properties use
+                                # monitor indices (e.g. /monitor0/, /monitor1/). If so,
+                                # map monitor index -> detected displays order and use
+                                # that to select candidate properties matching mapping keys.
+                                try:
+                                    props_with_index = []
+                                    for c in candidates:
+                                        m = re.search(r"/monitor(?:/|)(\d+)", c)
+                                        if not m:
+                                            m2 = re.search(r"monitor(\d+)", c)
+                                            m = m2
+                                        if m:
+                                            try:
+                                                props_with_index.append((int(m.group(1)), c))
+                                            except Exception:
+                                                continue
+                                    if props_with_index:
+                                        displays = workspace.detect_displays()
+                                        if displays:
+                                            for idx, prop in props_with_index:
+                                                if idx < len(displays):
+                                                    mon_name = displays[idx].name
+                                                    if mon_name in mapping:
+                                                        filtered = [prop]
+                                                        logger.info("XFCE: matched mapping key %s to prop %s by index", mon_name, prop)
+                                                        break
+                                except Exception:
+                                    logger.exception("Index-based xfconf matching attempt failed")
+
                                 # fallback to workspace entries or general entries
-                                filtered = [c for c in candidates if "workspace" in c or "last-image" in c]
+                                if not filtered:
+                                    filtered = [c for c in candidates if "workspace" in c or "last-image" in c]
                             for prop in filtered:
                                 cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(mon_path)]
                                 logger.info("XFCE: would run: %s", " ".join(cmd))
