@@ -1,3 +1,22 @@
+import pytest
+from PIL import Image
+
+
+@pytest.fixture
+def make_image(tmp_path):
+    """Return a helper that creates an image file inside the test's tmp_path.
+
+    Usage:
+        path = make_image(name="bg.png", size=(800,600))
+    """
+
+    def _make(name="img.png", size=(100, 100), color=(255, 0, 0, 255)):
+        p = tmp_path / name
+        img = Image.new("RGBA", size, color)
+        img.save(str(p))
+        return str(p)
+
+    return _make
 import base64
 from pathlib import Path
 
