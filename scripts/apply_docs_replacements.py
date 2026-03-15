@@ -10,6 +10,7 @@ Intended use: run locally on a feature branch, review the report, then commit/PR
 """
 
 import argparse
+import fnmatch
 import re
 from pathlib import Path
 import difflib
@@ -55,6 +56,7 @@ def main(argv=None):
     p.add_argument('--docs-dir', default='docs', help='Docs directory (default: docs)')
     p.add_argument('--report', default=None, help='Path to write the unified-diff report (default: docs/docs-consolidation-replacements-applied.md)')
     p.add_argument('--dry-run', action='store_true', help='Do not write changes, only show/write report')
+    p.add_argument('--skip-pattern', action='append', default=['*.en.md'], help='Filename glob pattern to skip (default: *.en.md). Can be passed multiple times.')
     args = p.parse_args(argv)
 
     DOCS_DIR = Path(args.docs_dir)
@@ -65,8 +67,14 @@ def main(argv=None):
 
     md_files = list(DOCS_DIR.rglob('*.md'))
     replacements = []
+    skip_patterns = args.skip_pattern or []
+    skipped = 0
 
     for fp in md_files:
+        # Skip files matching any configured pattern (filename matching)
+        if any(fnmatch.fnmatch(fp.name, pat) for pat in skip_patterns):
+            skipped += 1
+            continue
         original, new_text = process_file(fp)
         if new_text != original:
             diff = ''.join(difflib.unified_diff(original.splitlines(True), new_text.splitlines(True), fromfile=str(fp), tofile=str(fp) + ' (modified)'))
@@ -85,6 +93,9 @@ def main(argv=None):
                 f.write('```diff\n')
                 f.write(diff)
                 f.write('\n```\n\n')
+        if skipped:
+            f.write(f'\n# Skipped files matching patterns: {skip_patterns}\n')
+            f.write(f'Skipped {skipped} files.\n')
 
     print(f'Processed {len(md_files)} files, replacements in {len(replacements)} files. Report: {REPORT}')
 
