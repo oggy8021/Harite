@@ -21,15 +21,18 @@
 2.✅ 完了 — `docs` 統合用 PR の作成（レビュー用）。
 3.✅ 完了 — バックアップとブランチ運用ポリシーのドキュメント化。
 4.✅ 完了 — ワーキングツリー中心のチャットレビュー運用の導入 — PRは最終合意時のみ作成。チャット内でドラフトをレビューし、確定後にコミット→push→PRを行う運用を標準とする。
-5.`Improve XFCE heuristics` の調査開始（実装は別ブランチ `feature/`）。
-6.✅ 完了 — テスト強化（Docs 作成→優先ケース追加 → CI 組合せ）
+5. docs 配下ファイルの整理 — `docs/tests` のように大量のファイルをサブディレクトリに分割して構造化する。
+   - 目的: 探しやすさと維持性向上。小さな PR に分割して順次適用。
+   - 初手: `feature/docs-reorg-001` で `docs/tests` のファイル群をカテゴリ別ディレクトリへ分割する（例: `docs/tests/core/`, `docs/tests/fixtures/` など）。
+6.`Improve XFCE heuristics` の調査開始（実装は別ブランチ `feature/`）。
+7.✅ 完了 — テスト強化（Docs 作成→優先ケース追加 → CI 組合せ）
    - `docs/tests-overview.md` を作成して現状と未カバー領域を明示。
    - 優先ケースに対し parametrize した `pytest` を追加。
    - 必要なら限定的な CI ジョブを追加。
-7.CI: sdist/wheel ビルド job の追加。
-8.リリース準備チェックリスト作成。
-9.ブランチ保護・PR フローのペアセッション（スケジュール）。
-10.定期的なブランチクリーンアップ（運用ルール化）。
+8.CI: sdist/wheel ビルド job の追加。
+9.リリース準備チェックリスト作成。
+10.ブランチ保護・PR フローのペアセッション（スケジュール）。
+11.定期的なブランチクリーンアップ（運用ルール化）。
 
 追記: `docs/docs-branch-policy-followup-TODO.md` を作成し、フォローアップ用の小タスクをまとめました。関連のメンテナ PR を作成・マージ済みです（PR #23, 2026-03-15）。
 
@@ -68,3 +71,5 @@
 
 作業ステータス: feature/docs-todos-fix-001 で着手中（2026-03-15）
 
+
+- Reorganized docs per Proposal A on branch feature/docs-reorg-A
