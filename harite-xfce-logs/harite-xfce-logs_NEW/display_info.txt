@@ -1,7 +1,0 @@
-Collecting display-related logs...
-xfce4-display-settings 4.18.4 (Xfce 4.18)
-
-Copyright (c) 2004-2023
-	The Xfce development team. All rights reserved.
-
-バグの報告は <https://gitlab.xfce.org/xfce/xfce4-settings> までお願いします。

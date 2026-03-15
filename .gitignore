@@ -15,3 +15,11 @@ tests/__pycache__
 tests/out/*
 # Generated docs reports
 docs/*-report*.md
+
+# Collected XFCE logs (local archives)
+harite-xfce-logs/*
+
+# Ignore archives and local test artifacts
+*.tar.gz
+.pl-flow-test
+.pl-flow-test/*
