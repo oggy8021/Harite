@@ -60,10 +60,12 @@ gh auth login --web
 ```
 - ブランチ作成〜PR作成の一例:
 ```
-git checkout -b feat/cli-optimize
+git checkout -b feature/cli-optimize
 git add .
 git commit -m "feat: add CLI skeleton"
-git push -u origin feat/cli-optimize
-gh pr create --fill --base main --head feat/cli-optimize
+git push -u origin feature/cli-optimize
+gh pr create --fill --base main --head feature/cli-optimize
+
+[注記: コマンド例の `main` 表記は小文字で統一しています。]
 ```
 - CI や自動化でトークンが必要な場合は、`GH_TOKEN` 環境変数を設定してください。
