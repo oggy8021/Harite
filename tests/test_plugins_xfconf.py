@@ -1,0 +1,77 @@
+import types
+from types import SimpleNamespace
+import shutil
+import subprocess
+
+import pytest
+
+from harite.plugins import LinuxPlugin
+
+
+def _make_list_proc(stdout: str):
+    return SimpleNamespace(returncode=0, stdout=stdout)
+
+
+def test_linux_plugin_dryrun_with_xfconf_candidates(monkeypatch):
+    # xfconf available and lists several image-related properties
+    monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/xfconf-query" if name == "xfconf-query" else None)
+
+    sample_props = """
+/backdrop/screen0/monitor0/workspace0/last-image
+/backdrop/screen0/monitor0/image
+/backdrop/screen0/workspace0/last-image
+"""
+
+    def fake_run(cmd, check=False, capture_output=False, text=False):
+        # list invocation
+        if cmd[:3] == ["xfconf-query", "-c", "xfce4-desktop"] and "-l" in cmd:
+            return _make_list_proc(sample_props)
+        # other calls should not be executed during dry-run; return success stub
+        return SimpleNamespace(returncode=0, stdout="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    plugin = LinuxPlugin()
+    mapping = {"DP-1": "/tmp/wall1.jpg", "HDMI-1": "/tmp/wall2.jpg"}
+
+    # dry_run should return True because xfconf candidates are discovered
+    assert plugin.apply(mapping, dry_run=True) is True
+
+
+def test_linux_plugin_apply_mapping_executes_commands(monkeypatch):
+    monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/xfconf-query" if name == "xfconf-query" else None)
+
+    sample_props = "/backdrop/screen0/monitor1/image\n/backdrop/screen0/workspace0/last-image\n"
+
+    calls = []
+
+    def fake_run(cmd, check=False, capture_output=False, text=False):
+        calls.append(cmd)
+        # listing
+        if cmd[:3] == ["xfconf-query", "-c", "xfce4-desktop"] and "-l" in cmd:
+            return _make_list_proc(sample_props)
+        # apply commands -> simulate success
+        return SimpleNamespace(returncode=0, stdout="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    plugin = LinuxPlugin()
+    mapping = {"DP-1": "/tmp/wall1.jpg"}
+
+    # actual apply (dry_run=False) should attempt commands and return True
+    assert plugin.apply(mapping, dry_run=False) is True
+    # ensure at least one xfconf set command was attempted
+    assert any(isinstance(c, list) and c[0] == "xfconf-query" and "-s" in c for c in calls)
+
+
+def test_linux_plugin_no_setter_returns_false(monkeypatch, tmp_path):
+    # No xfconf, gsettings, or feh available
+    monkeypatch.setattr(shutil, "which", lambda name: None)
+
+    # create a real temporary file for non-map path
+    f = tmp_path / "wall.jpg"
+    f.write_text("x")
+
+    plugin = LinuxPlugin()
+    # with no known setter, applying should fail
+    assert plugin.apply(str(f), dry_run=False) is False
