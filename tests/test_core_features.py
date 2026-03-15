@@ -1,0 +1,61 @@
+from pathlib import Path
+from PIL import Image
+import tempfile
+
+
+def make_image(path: Path, size=(200, 200), color=(100, 150, 200)):
+    img = Image.new("RGB", size, color=color)
+    img.save(path, quality=90)
+
+
+def test_optimize_wallpapers_creates_output_and_placements(tmp_path):
+    from harite.core import optimize_wallpapers
+
+    inp_dir = tmp_path / "in"
+    out_dir = tmp_path / "out"
+    inp_dir.mkdir()
+    out_dir.mkdir()
+
+    # create two input images
+    img1 = inp_dir / "a1.jpg"
+    img2 = inp_dir / "a2.jpg"
+    make_image(img1, size=(300, 200))
+    make_image(img2, size=(100, 400))
+
+    saved, placements = optimize_wallpapers([str(img1), str(img2)], (800, 600), out_dir)
+
+    assert isinstance(saved, list) and len(saved) >= 1
+    assert saved[0].exists()
+    assert isinstance(placements, list)
+    # placement entries should reference original images
+    assert any('a1' in p.image_path.name or 'a2' in p.image_path.name for p in placements)
+
+
+def test_compute_placement_centers_and_scales(tmp_path):
+    from harite.core import compute_placement
+
+    img = tmp_path / "single.jpg"
+    make_image(img, size=(400, 300))
+    pr = compute_placement(img, (800, 600))
+    assert pr.width <= 800 and pr.height <= 600
+    assert pr.x >= 0 and pr.y >= 0
+
+
+def test_split_composite_for_displays_creates_per_display_files(tmp_path):
+    from harite.core import split_composite_for_displays
+    from harite.workspace import Display
+
+    comp = tmp_path / "comp.jpg"
+    # create a wide composite (1000x300)
+    make_image(comp, size=(1000, 300), color=(10, 20, 30))
+
+    displays = [Display(name="left", width=400, height=300, x_offset=0, primary=True),
+                Display(name="right", width=600, height=300, x_offset=400, primary=False)]
+
+    out = split_composite_for_displays(comp, displays, tmp_path / "out")
+    assert isinstance(out, dict)
+    assert "left" in out and "right" in out
+    for p in out.values():
+        assert Path(p).exists()
+        img = Image.open(p)
+        assert img.size == (displays[0].width, displays[0].height) or img.size == (displays[1].width, displays[1].height)
