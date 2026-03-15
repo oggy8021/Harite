@@ -35,17 +35,15 @@ jobs:
 
   validate-pr-body:
     name: Validate PR body
-    if: github.event_name == 'pull_request'
+    if: ${{ github.event_name == 'pull_request' }}
     needs: validate-branch-name
     runs-on: ubuntu-latest
     steps:
       - name: Check PR body exists
-        shell: bash
+        if: ${{ github.event.pull_request.body == '' }}
         run: |
-          set -euo pipefail
-          PR_BODY="${{ github.event.pull_request.body }}"
-          if [ -z "$PR_BODY" ]; then
-            echo "::error ::Pull request body is empty. Please fill the PR template (概要 / やったこと / 動作確認 等)."
-            exit 1
-          fi
-          echo "PR body present."
+          echo "::error ::Pull request body is empty. Please fill the PR template (概要 / やったこと / 動作確認 等)."
+          exit 1
+      - name: PR body present
+        if: ${{ github.event.pull_request.body != '' }}
+        run: echo "PR body present."

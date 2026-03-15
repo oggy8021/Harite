@@ -202,6 +202,10 @@ class LinuxPlugin:
                                 # monitor indices (e.g. /monitor0/, /monitor1/). If so,
                                 # map monitor index -> detected displays order and use
                                 # that to select candidate properties matching mapping keys.
+                                # Attempt index-based matching: some xfconf properties use
+                                # monitor indices (e.g. /monitor0/, /monitor1/). If so,
+                                # map monitor index -> detected displays order and use
+                                # that to select candidate properties matching mapping keys.
                                 try:
                                     props_with_index = []
                                     for c in candidates:
@@ -226,6 +230,31 @@ class LinuxPlugin:
                                                         break
                                 except Exception:
                                     logger.exception("Index-based xfconf matching attempt failed")
+
+                                # If still not matched, attempt resolution-based matching:
+                                # some xfconf properties include resolution tokens (e.g. '2048x1280')
+                                if not filtered:
+                                    try:
+                                        displays = workspace.detect_displays()
+                                        if displays:
+                                            # build map of (w,h) -> display names (may be duplicate sizes)
+                                            size_map = {(d.width, d.height): d.name for d in displays}
+                                            for c in candidates:
+                                                mres = re.search(r"(\d+)x(\d+)", c)
+                                                if mres:
+                                                    try:
+                                                        w = int(mres.group(1))
+                                                        h = int(mres.group(2))
+                                                    except Exception:
+                                                        continue
+                                                    if (w, h) in size_map:
+                                                        mon_name = size_map[(w, h)]
+                                                        if mon_name in mapping:
+                                                            filtered = [c]
+                                                            logger.info("XFCE: matched mapping key %s to prop %s by resolution", mon_name, c)
+                                                            break
+                                    except Exception:
+                                        logger.exception("Resolution-based xfconf matching attempt failed")
 
                                 # fallback to workspace entries or general entries
                                 if not filtered:
