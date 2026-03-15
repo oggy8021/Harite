@@ -73,3 +73,5 @@
 
 
 - Reorganized docs per Proposal A on branch feature/docs-reorg-A
+
+- Applied final Proposal A reorg on branch feature/docs-reorg-final
