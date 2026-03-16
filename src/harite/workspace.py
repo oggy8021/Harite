@@ -19,6 +19,7 @@ class Display:
     width: int
     height: int
     x_offset: int = 0
+    y_offset: int = 0
     primary: bool = False
 
 
@@ -52,6 +53,7 @@ def _detect_linux() -> List[Display]:
             name = parts[0]
             primary = "primary" in parts
             w = h = x_off = 0
+            y_off = 0
             # Use regex to robustly extract geometry like 2048x1280+2048+0
             m = re.search(r"(\d+)x(\d+)\+(\d+)\+(\d+)", line)
             if m:
@@ -59,8 +61,10 @@ def _detect_linux() -> List[Display]:
                     w = int(m.group(1))
                     h = int(m.group(2))
                     x_off = int(m.group(3))
+                    y_off = int(m.group(4))
                 except Exception:
                     w = h = x_off = 0
+                    y_off = 0
             else:
                 # Fallback: try token-based parsing to handle malformed/residual formats
                 for p in parts:
@@ -84,10 +88,14 @@ def _detect_linux() -> List[Display]:
                                     x_off = int(p.split("+")[1])
                                 except Exception:
                                     x_off = 0
+                                try:
+                                    y_off = int(p.split("+")[2])
+                                except Exception:
+                                    y_off = 0
                                 break
                         except Exception:
                             continue
-            displays.append(Display(name=name, width=w, height=h, x_offset=x_off, primary=primary))
+            displays.append(Display(name=name, width=w, height=h, x_offset=x_off, y_offset=y_off, primary=primary))
     return displays
 
 
