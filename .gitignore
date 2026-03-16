@@ -21,5 +21,5 @@ harite-xfce-logs/*
 
 # Ignore archives and local test artifacts
 *.tar.gz
-.pl-flow-test
-.pl-flow-test/*
+.pr-flow-test
+.pr-flow-test/*
