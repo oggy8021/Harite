@@ -127,16 +127,38 @@ def optimize_wallpapers(
         nw, nh, scale = _scale_to_fit(img, this_cell_w, cell_h)
         img_resized = img.resize((nw, nh), Image.LANCZOS)
 
+        # determine alignment offsets (defaults: center)
+        align = str(kwargs.get("align", "center")).lower()
+        valign = str(kwargs.get("valign", "center")).lower()
+
+        # horizontal offset within this cell
+        space_x = max(0, this_cell_w - nw)
+        if align == "left":
+            inner_x = 0
+        elif align == "right":
+            inner_x = space_x
+        else:
+            inner_x = space_x // 2
+
+        # vertical offset within this cell
+        space_y = max(0, cell_h - nh)
+        if valign == "top":
+            inner_y = 0
+        elif valign == "bottom":
+            inner_y = space_y
+        else:
+            inner_y = space_y // 2
+
         # compute x offset: start from left margin
         if two_screen and l_display and r_display:
             if i == 0:
-                x = ml + max(0, (this_cell_w - nw) // 2)
+                x = ml + inner_x
             else:
-                x = ml + cell_w_list[0] + padding + max(0, (this_cell_w - nw) // 2)
+                x = ml + cell_w_list[0] + padding + inner_x
         else:
-            x = ml + i * (this_cell_w + padding) + max(0, (this_cell_w - nw) // 2)
+            x = ml + i * (this_cell_w + padding) + inner_x
 
-        y = mt + max(0, (cell_h - nh) // 2)
+        y = mt + inner_y
 
         bg.paste(img_resized, (x, y))
 

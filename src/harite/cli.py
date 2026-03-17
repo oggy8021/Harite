@@ -77,6 +77,8 @@ def optimize(
     random_seed: Optional[int] = typer.Option(None, "--random-seed", help="Random seed for reproducibility"),
     format: str = typer.Option("text", "--format", "-f", help="Output format: text|json"),
     config: Optional[Path] = typer.Option(None, "--config", "-c", help="Path to JSON config file to load defaults from"),
+    align: str = typer.Option("center", "--align", help="Horizontal align: left|center|right"),
+    valign: str = typer.Option("center", "--valign", help="Vertical align: top|center|bottom"),
 ) -> None:
     """Optimize wallpapers.
 
@@ -134,6 +136,8 @@ def optimize(
         l_display=None if (l_display is None and cfg.get("l_display") is None) else parse_display(l_display or cfg.get("l_display")),
         r_display=None if (r_display is None and cfg.get("r_display") is None) else parse_display(r_display or cfg.get("r_display")),
         fixed=fixed,
+        align=align or cfg.get("align"),
+        valign=valign or cfg.get("valign"),
     )
     fmt = format.lower()
     if fmt not in ("json", "text"):
