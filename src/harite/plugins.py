@@ -99,6 +99,214 @@ def _extract_position(prop: str):
     return None
 
 
+def _match_candidates_for_mapping(mapping: dict, candidates: list) -> dict:
+    """Return filtered candidate lists per mapping key (monitor name).
+
+    Encapsulates index/resolution/position/composite heuristics used when a
+    per-monitor `mapping` is provided. Returns a dict {monitor_name: [candidates]}.
+    """
+    result: dict = {}
+    try:
+        displays = workspace.detect_displays()
+    except Exception:
+        displays = []
+
+    for mon_name in mapping.keys():
+        filtered = []
+        mon_variants = _name_variants(mon_name)
+
+        def _prop_norm(p: str) -> str:
+            return _normalize_identifier(p)
+
+        def _matches_prop(prop: str) -> bool:
+            pn = _prop_norm(prop)
+            for v in mon_variants:
+                if v and v in pn:
+                    return True
+            if mon_name in prop:
+                return True
+            return False
+
+        filtered = [c for c in candidates if _matches_prop(c)]
+
+        if not filtered:
+            # composite token matching (index+res or resolution-only)
+            try:
+                if displays:
+                    size_map = {(d.width, d.height): d.name for d in displays}
+                    for c in candidates:
+                        idx = _extract_index(c)
+                        res = _extract_resolution(c)
+                        if idx is not None and res is not None:
+                            if idx < len(displays):
+                                d = displays[idx]
+                                if d.name in mapping:
+                                    filtered = [c]
+                                    break
+                                for v in _name_variants(d.name):
+                                    if v in mapping:
+                                        filtered = [c]
+                                        break
+                                if filtered:
+                                    break
+                        if res is not None:
+                            if res in size_map and size_map[res] in mapping:
+                                filtered = [c]
+                                break
+            except Exception:
+                logger.exception("Composite-token xfconf matching attempt failed")
+
+        if not filtered:
+            # index-based matching
+            try:
+                props_with_index = []
+                for c in candidates:
+                    m = re.search(r"/monitor(?:/|)(\d+)", c)
+                    if not m:
+                        m2 = re.search(r"monitor(\d+)", c)
+                        m = m2
+                    if m:
+                        try:
+                            props_with_index.append((int(m.group(1)), c))
+                        except Exception:
+                            continue
+                if props_with_index and displays:
+                    for idx, prop in props_with_index:
+                        if idx < len(displays):
+                            mon = displays[idx].name
+                            if mon in mapping:
+                                filtered = [prop]
+                                break
+            except Exception:
+                logger.exception("Index-based xfconf matching attempt failed")
+
+        if not filtered:
+            # resolution-based matching
+            try:
+                if displays:
+                    size_map = {(d.width, d.height): d.name for d in displays}
+                    for c in candidates:
+                        mres = re.search(r"(\d+)x(\d+)", c)
+                        if mres:
+                            try:
+                                w = int(mres.group(1))
+                                h = int(mres.group(2))
+                            except Exception:
+                                continue
+                            if (w, h) in size_map:
+                                mon_name_for_res = size_map[(w, h)]
+                                if mon_name_for_res in mapping:
+                                    filtered = [c]
+                                    break
+            except Exception:
+                logger.exception("Resolution-based xfconf matching attempt failed")
+
+        if not filtered:
+            # position-based matching
+            try:
+                if displays:
+                    for c in candidates:
+                        pos = _extract_position(c)
+                        if pos is None:
+                            continue
+                        x_off, y_off = pos
+
+                        def _dist(disp):
+                            dx = (getattr(disp, "x_offset", 0) or 0) - x_off
+                            dy = (getattr(disp, "y_offset", 0) or 0) - y_off
+                            return abs(dx) + abs(dy)
+
+                        closest = min(displays, key=_dist)
+                        distance = _dist(closest)
+                        if distance <= POS_MATCH_THRESHOLD and closest.name in mapping:
+                            filtered = [c]
+                            break
+                        if distance <= POS_MATCH_THRESHOLD:
+                            for v in _name_variants(closest.name):
+                                if v in mapping:
+                                    filtered = [c]
+                                    break
+                            if filtered:
+                                break
+            except Exception:
+                logger.exception("Position-based xfconf matching attempt failed")
+
+        # fallback for single mapping pragmatics
+        if not filtered and len(mapping) == 1:
+            try:
+                idx_cand = None
+                if displays:
+                    for c in candidates:
+                        m = re.search(r"/monitor(?:/|)(\d+)", c)
+                        if not m:
+                            m2 = re.search(r"monitor(\d+)", c)
+                            m = m2
+                        if not m:
+                            continue
+                        try:
+                            idx = int(m.group(1))
+                        except Exception:
+                            continue
+                        if idx < len(displays):
+                            mon_nm = displays[idx].name
+                            if mon_nm in mapping:
+                                idx_cand = c
+                                break
+                            for v in _name_variants(mon_nm):
+                                if v in mapping:
+                                    idx_cand = c
+                                    break
+                        if idx_cand:
+                            break
+                    if idx_cand is None:
+                        any_display_matches = False
+                        for d in displays:
+                            if d.name in mapping:
+                                any_display_matches = True
+                                break
+                            for v in _name_variants(d.name):
+                                if v in mapping:
+                                    any_display_matches = True
+                                    break
+                            if any_display_matches:
+                                break
+                        if not any_display_matches:
+                            for c in candidates:
+                                if re.search(r"/monitor(?:/|)\d+", c) or re.search(r"monitor\d+", c):
+                                    pos = _extract_position(c)
+                                    if pos is not None and displays:
+                                        x_off, y_off = pos
+                                        def _dist_to_disp(d):
+                                            dx = (getattr(d, "x_offset", 0) or 0) - x_off
+                                            dy = (getattr(d, "y_offset", 0) or 0) - y_off
+                                            return abs(dx) + abs(dy)
+
+                                        min_dist = min(_dist_to_disp(d) for d in displays)
+                                        if min_dist > POS_MATCH_THRESHOLD:
+                                            continue
+                                    idx_cand = c
+                                    break
+                else:
+                    for c in candidates:
+                        if re.search(r"/monitor(?:/|)\d+", c) or re.search(r"monitor\d+", c):
+                            idx_cand = c
+                            break
+                if idx_cand:
+                    filtered = [idx_cand]
+            except Exception:
+                logger.exception("Fallback matching attempt failed")
+
+        if not filtered:
+            # For per-monitor mapping we avoid falling back to workspace-level
+            # entries (they would affect all displays). Return empty to indicate
+            # no suitable per-monitor candidate was found.
+            filtered = []
+
+        result[mon_name] = filtered
+
+    return result
+
+
 class PluginProtocol(Protocol):
     name: str
 
@@ -264,255 +472,16 @@ class LinuxPlugin:
                     # per-monitor properties for multiple displays are updated.
                     # If mapping provided, apply per-monitor; otherwise apply general file
                     if is_map:
-                        # mapping keys are monitor names (e.g., 'DP-1')
+                        # Use extracted matching helper to obtain per-monitor filtered candidates
+                        try:
+                            matched = _match_candidates_for_mapping(mapping, candidates)
+                        except Exception:
+                            logger.exception("Failed to obtain matched candidates for mapping")
+                            matched = {k: [] for k in mapping.keys()}
+
                         for mon_name, mon_path in mapping.items():
                             applied_any = False
-                            # select candidates that reference this monitor name using normalized comparison
-                            mon_norm = _normalize_identifier(mon_name)
-                            def _prop_norm(p: str) -> str:
-                                return _normalize_identifier(p)
-                            # build normalized variants for the monitor name (aliases)
-                            mon_variants = _name_variants(mon_name)
-                            def _matches_prop(prop: str) -> bool:
-                                pn = _prop_norm(prop)
-                                # match any normalized variant
-                                for v in mon_variants:
-                                    if v and v in pn:
-                                        return True
-                                # also allow raw substring match as fallback
-                                if mon_name in prop:
-                                    return True
-                                return False
-
-                            filtered = [c for c in candidates if _matches_prop(c)]
-                            if not filtered:
-
-                                # Composite-token matching: prefer properties that include
-                                # multiple tokens (e.g. monitor index + resolution) and
-                                # map them to detected displays. This helps when property
-                                # names mix tokens like '2048x1280_monitor1' or
-                                # 'monitor1_image_2048x1280'.
-                                try:
-                                    displays = workspace.detect_displays()
-                                    if displays:
-                                        size_map = {(d.width, d.height): d.name for d in displays}
-                                        # examine candidates for both index and resolution tokens
-                                        for c in candidates:
-                                            idx = _extract_index(c)
-                                            res = _extract_resolution(c)
-                                            # if both present, prefer this candidate
-                                            if idx is not None and res is not None:
-                                                if idx < len(displays):
-                                                    d = displays[idx]
-                                                    # check if mapping targets this display
-                                                    if d.name in mapping:
-                                                        filtered = [c]
-                                                        logger.info("XFCE: composite matched prop %s to mapping key %s by index+res", c, d.name)
-                                                        break
-                                                    # also allow alias variants
-                                                    for v in _name_variants(d.name):
-                                                        if v in mapping:
-                                                            filtered = [c]
-                                                            logger.info("XFCE: composite matched prop %s to alias %s by index+res", c, v)
-                                                            break
-                                                    if filtered:
-                                                        break
-                                            # if resolution-only present and maps uniquely, prefer it
-                                            if res is not None:
-                                                if res in size_map and size_map[res] in mapping:
-                                                    filtered = [c]
-                                                    logger.info("XFCE: composite matched prop %s by resolution to mapping key %s", c, size_map[res])
-                                                    break
-                                except Exception:
-                                    logger.exception("Composite-token xfconf matching attempt failed")
-
-                                # Attempt index-based matching: some xfconf properties use
-                                # monitor indices (e.g. /monitor0/, /monitor1/). If so,
-                                # map monitor index -> detected displays order and use
-                                # that to select candidate properties matching mapping keys.
-                                try:
-                                    props_with_index = []
-                                    for c in candidates:
-                                        m = re.search(r"/monitor(?:/|)(\d+)", c)
-                                        if not m:
-                                            m2 = re.search(r"monitor(\d+)", c)
-                                            m = m2
-                                        if m:
-                                            try:
-                                                props_with_index.append((int(m.group(1)), c))
-                                            except Exception:
-                                                continue
-                                    if props_with_index:
-                                        displays = workspace.detect_displays()
-                                        if displays:
-                                            for idx, prop in props_with_index:
-                                                if idx < len(displays):
-                                                    mon_name = displays[idx].name
-                                                    if mon_name in mapping:
-                                                        filtered = [prop]
-                                                        logger.info("XFCE: matched mapping key %s to prop %s by index", mon_name, prop)
-                                                        break
-                                except Exception:
-                                    logger.exception("Index-based xfconf matching attempt failed")
-
-                                # If still not matched, attempt resolution-based matching:
-                                # some xfconf properties include resolution tokens (e.g. '2048x1280')
-                                if not filtered:
-                                    try:
-                                        displays = workspace.detect_displays()
-                                        if displays:
-                                            # build map of (w,h) -> display names (may be duplicate sizes)
-                                            size_map = {(d.width, d.height): d.name for d in displays}
-                                            for c in candidates:
-                                                mres = re.search(r"(\d+)x(\d+)", c)
-                                                if mres:
-                                                    try:
-                                                        w = int(mres.group(1))
-                                                        h = int(mres.group(2))
-                                                    except Exception:
-                                                        continue
-                                                    if (w, h) in size_map:
-                                                        mon_name = size_map[(w, h)]
-                                                        if mon_name in mapping:
-                                                            filtered = [c]
-                                                            logger.info("XFCE: matched mapping key %s to prop %s by resolution", mon_name, c)
-                                                            break
-                                    except Exception:
-                                        logger.exception("Resolution-based xfconf matching attempt failed")
-
-                                # Position-based matching: some properties include offsets
-                                # like '+1024+0' or '1920x1080+1024+0'. Use those offsets
-                                # to match closest display by x offset when other
-                                # heuristics did not find a candidate.
-                                if not filtered:
-                                    try:
-                                        displays = workspace.detect_displays()
-                                        if displays:
-                                            for c in candidates:
-                                                pos = _extract_position(c)
-                                                if pos is None:
-                                                    continue
-                                                x_off, y_off = pos
-                                                # compute Manhattan distance on x/y offsets
-                                                def _dist(disp):
-                                                    dx = (getattr(disp, "x_offset", 0) or 0) - x_off
-                                                    dy = (getattr(disp, "y_offset", 0) or 0) - y_off
-                                                    return abs(dx) + abs(dy)
-
-                                                closest = min(displays, key=_dist)
-                                                distance = _dist(closest)
-                                                if distance <= POS_MATCH_THRESHOLD and closest.name in mapping:
-                                                    filtered = [c]
-                                                    logger.info("XFCE: matched mapping key %s to prop %s by position (dist=%d)", closest.name, c, distance)
-                                                    break
-                                                # also allow alias variants if within threshold
-                                                if distance <= POS_MATCH_THRESHOLD:
-                                                    for v in _name_variants(closest.name):
-                                                        if v in mapping:
-                                                            filtered = [c]
-                                                            logger.info("XFCE: matched mapping alias %s to prop %s by position (dist=%d)", v, c, distance)
-                                                            break
-                                                    if filtered:
-                                                        break
-                                    except Exception:
-                                        logger.exception("Position-based xfconf matching attempt failed")
-
-                                # fallback to workspace entries or general entries
-                                # For per-monitor mappings, avoid applying a general
-                                # workspace-level property as a fallback because that
-                                # would affect all displays; only use workspace
-                                # fallback when not running a per-monitor mapping.
-                                if not filtered:
-                                    # If a single mapping is provided and there are
-                                    # per-monitor candidates with an index token, use
-                                    # the first such candidate as a pragmatic fallback
-                                    # (helps CI/tests that expect an apply attempt).
-                                    if is_map and len(mapping) == 1:
-                                        displays = workspace.detect_displays()
-                                        idx_cand = None
-                                        if displays:
-                                            # If we have display info, only select a
-                                            # monitor candidate whose index maps to the
-                                            # requested mapping key (or alias).
-                                            for c in candidates:
-                                                m = re.search(r"/monitor(?:/|)(\d+)", c)
-                                                if not m:
-                                                    m2 = re.search(r"monitor(\d+)", c)
-                                                    m = m2
-                                                if not m:
-                                                    continue
-                                                try:
-                                                    idx = int(m.group(1))
-                                                except Exception:
-                                                    continue
-                                                if idx < len(displays):
-                                                    mon_name = displays[idx].name
-                                                    if mon_name in mapping:
-                                                        idx_cand = c
-                                                        break
-                                                    for v in _name_variants(mon_name):
-                                                        if v in mapping:
-                                                            idx_cand = c
-                                                            break
-                                                if idx_cand:
-                                                    break
-                                            # If we had displays but none matched the
-                                            # mapping keys, fall back to selecting the
-                                            # first monitor-indexed candidate as a
-                                            # pragmatic behavior to attempt apply — but
-                                            # only if no display name/alias at all matches
-                                            # the mapping keys. If a display exists that
-                                            # matches the mapping, do not fallback.
-                                            if idx_cand is None:
-                                                any_display_matches = False
-                                                for d in displays:
-                                                    if d.name in mapping:
-                                                        any_display_matches = True
-                                                        break
-                                                    for v in _name_variants(d.name):
-                                                        if v in mapping:
-                                                            any_display_matches = True
-                                                            break
-                                                    if any_display_matches:
-                                                        break
-                                                if not any_display_matches:
-                                                    for c in candidates:
-                                                        if re.search(r"/monitor(?:/|)\d+", c) or re.search(r"monitor\d+", c):
-                                                            # If the candidate encodes a position, avoid selecting
-                                                            # it when it's far away from all detected displays.
-                                                            pos = _extract_position(c)
-                                                            if pos is not None and displays:
-                                                                x_off, y_off = pos
-                                                                def _dist_to_disp(d):
-                                                                    dx = (getattr(d, "x_offset", 0) or 0) - x_off
-                                                                    dy = (getattr(d, "y_offset", 0) or 0) - y_off
-                                                                    return abs(dx) + abs(dy)
-
-                                                                min_dist = min(_dist_to_disp(d) for d in displays)
-                                                                if min_dist > POS_MATCH_THRESHOLD:
-                                                                    # skip this candidate as it's far away
-                                                                    continue
-                                                            idx_cand = c
-                                                            break
-                                        else:
-                                            # No display info available: fall back to
-                                            # selecting first monitor-indexed candidate
-                                            for c in candidates:
-                                                if re.search(r"/monitor(?:/|)\d+", c) or re.search(r"monitor\d+", c):
-                                                    idx_cand = c
-                                                    break
-                                        if idx_cand:
-                                            filtered = [idx_cand]
-                                        else:
-                                            if is_map:
-                                                filtered = []
-                                            else:
-                                                filtered = [c for c in candidates if "workspace" in c or "last-image" in c]
-                                    else:
-                                        if is_map:
-                                            filtered = []
-                                        else:
-                                            filtered = [c for c in candidates if "workspace" in c or "last-image" in c]
+                            filtered = matched.get(mon_name, [])
                             for prop in filtered:
                                 cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(mon_path)]
                                 logger.info("XFCE: would run: %s", " ".join(cmd))
