@@ -99,6 +99,36 @@ def _extract_position(prop: str):
     return None
 
 
+def _enumerate_xfconf_candidates() -> list:
+    """Return a list of XFCE-related property paths discovered via xfconf-query.
+
+    Isolated for testability: calls `xfconf-query -c xfce4-desktop -l` and
+    returns only properties that look like image/last-image entries.
+    """
+    try:
+        import subprocess
+        props = []
+        list_proc = subprocess.run(["xfconf-query", "-c", "xfce4-desktop", "-l"], check=False, capture_output=True, text=True)
+        if list_proc.returncode == 0 and list_proc.stdout:
+            for line in list_proc.stdout.splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                if "image" in line or "last-image" in line:
+                    props.append(line)
+
+        props_workspace = [q for q in props if "workspace" in q and "last-image" in q]
+        props_monitor_image = [q for q in props if ("/monitor" in q and "image" in q and "workspace" not in q)]
+        props_last_image = [q for q in props if ("last-image" in q and "workspace" not in q)]
+        props_last_single = [q for q in props if "last-single-image" in q]
+        candidates = props_workspace + props_monitor_image + props_last_image + props_last_single
+        logger.info("XFCE: discovered props count=%d", len(props))
+        return candidates
+    except Exception:
+        logger.exception("xfconf-query enumeration failed")
+        return []
+
+
 def _match_candidates_for_mapping(mapping: dict, candidates: list) -> dict:
     """Return filtered candidate lists per mapping key (monitor name).
 
@@ -307,6 +337,58 @@ def _match_candidates_for_mapping(mapping: dict, candidates: list) -> dict:
     return result
 
 
+def _apply_xfconf_candidates(is_map: bool, mapping: dict | None, candidates: list, p: Path | None, dry_run: bool) -> tuple[bool, bool]:
+    """Execute or simulate XFCE `xfconf-query` commands for candidates.
+
+    Returns (success_any, simulated) where `simulated` is True when dry_run
+    observed candidate commands to log, and `success_any` is True when any
+    command returned success (returncode == 0) during real execution.
+    """
+    import subprocess
+
+    simulated = False
+    success_any = False
+
+    if dry_run and candidates:
+        simulated = True
+
+    if is_map:
+        if mapping is None:
+            return False, simulated
+        try:
+            matched = _match_candidates_for_mapping(mapping, candidates)
+        except Exception:
+            logger.exception("Failed to obtain matched candidates for mapping")
+            matched = {k: [] for k in (mapping.keys() if mapping else [])}
+
+        for mon_name, mon_path in (mapping.items() if mapping else []):
+            applied_any = False
+            filtered = matched.get(mon_name, [])
+            for prop in filtered:
+                cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(mon_path)]
+                logger.info("XFCE: would run: %s", " ".join(cmd))
+                if not dry_run:
+                    res = subprocess.run(cmd, check=False)
+                    if res.returncode == 0:
+                        applied_any = True
+                    else:
+                        logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
+            if applied_any:
+                success_any = True
+    else:
+        for prop in candidates:
+            cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(p)]
+            logger.info("XFCE: would run: %s", " ".join(cmd))
+            if not dry_run:
+                res = subprocess.run(cmd, check=False)
+                if res.returncode == 0:
+                    success_any = True
+                else:
+                    logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
+
+    return success_any, simulated
+
+
 class PluginProtocol(Protocol):
     name: str
 
@@ -442,69 +524,12 @@ class LinuxPlugin:
             # Prefer enumerating XFCE properties first so dry-run can log candidates.
             if shutil.which("xfconf-query"):
                 try:
-                    list_proc = subprocess.run(["xfconf-query", "-c", "xfce4-desktop", "-l"], check=False, capture_output=True, text=True)
-                    props = []
-                    if list_proc.returncode == 0 and list_proc.stdout:
-                        for line in list_proc.stdout.splitlines():
-                            line = line.strip()
-                            if not line:
-                                continue
-                            if "image" in line or "last-image" in line:
-                                props.append(line)
-
-                    props_workspace = [q for q in props if "workspace" in q and "last-image" in q]
-                    props_monitor_image = [q for q in props if ("/monitor" in q and "image" in q and "workspace" not in q)]
-                    props_last_image = [q for q in props if ("last-image" in q and "workspace" not in q)]
-                    props_last_single = [q for q in props if "last-single-image" in q]
-                    candidates = props_workspace + props_monitor_image + props_last_image + props_last_single
-
-                    logger.info("XFCE: discovered props count=%d", len(props))
-                    simulated = False
-                    if dry_run:
-                        logger.info("Dry-run: xfconf candidates (in order): %s", candidates)
-                        # mark that we simulated work so dry-run can report success
-                        if candidates:
-                            simulated = True
-                    success_any = False
-                    # If dry_run, do not execute commands; only simulate logging.
-                    # When actually applying (dry_run==False), try all candidate
-                    # properties instead of stopping at the first success so that
-                    # per-monitor properties for multiple displays are updated.
-                    # If mapping provided, apply per-monitor; otherwise apply general file
-                    if is_map:
-                        # Use extracted matching helper to obtain per-monitor filtered candidates
-                        try:
-                            matched = _match_candidates_for_mapping(mapping, candidates)
-                        except Exception:
-                            logger.exception("Failed to obtain matched candidates for mapping")
-                            matched = {k: [] for k in mapping.keys()}
-
-                        for mon_name, mon_path in mapping.items():
-                            applied_any = False
-                            filtered = matched.get(mon_name, [])
-                            for prop in filtered:
-                                cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(mon_path)]
-                                logger.info("XFCE: would run: %s", " ".join(cmd))
-                                if not dry_run:
-                                    res = subprocess.run(cmd, check=False)
-                                    if res.returncode == 0:
-                                        applied_any = True
-                                    else:
-                                        logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
-                            if applied_any:
-                                success_any = True
-                    else:
-                        for prop in candidates:
-                            cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(p)]
-                            logger.info("XFCE: would run: %s", " ".join(cmd))
-                            if not dry_run:
-                                res = subprocess.run(cmd, check=False)
-                                if res.returncode == 0:
-                                    success_any = True
-                                else:
-                                    logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
+                    candidates = _enumerate_xfconf_candidates()
+                    success_any, simulated_xfce = _apply_xfconf_candidates(is_map, mapping if is_map else None, candidates, p if not is_map else None, dry_run)
                     if success_any:
                         return True
+                    if simulated_xfce:
+                        simulated = True
                 except Exception:
                     logger.exception("xfconf-query attempt failed")
 
