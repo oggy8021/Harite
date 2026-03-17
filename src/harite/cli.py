@@ -11,6 +11,7 @@ from .core import optimize_wallpapers
 from .plugins import registry as plugin_registry
 from .workspace import detect_displays
 from .core import split_composite_for_displays
+from .config import load_config
 
 app = typer.Typer(help="Harite - wallpaper optimizer")
 
@@ -61,8 +62,8 @@ def _callback(
 
 @app.command()
 def optimize(
-    input: List[str] = typer.Option(..., "--input", "-i", help="Input file(s) or directory(ies)"),
-    resolution: str = typer.Option(..., "--resolution", "-r", help="Target resolution WxH (e.g. 3840x2160)"),
+    input: Optional[List[str]] = typer.Option(None, "--input", "-i", help="Input file(s) or directory(ies)"),
+    resolution: Optional[str] = typer.Option(None, "--resolution", "-r", help="Target resolution WxH (e.g. 3840x2160)"),
     layout: str = typer.Option("mosaic", "--layout", help="Layout mode"),
     scaling: str = typer.Option("fit", "--scaling", help="Scaling mode (fit|fill|crop)"),
     padding: int = typer.Option(0, "--padding", help="Padding (px) between images"),
@@ -75,14 +76,28 @@ def optimize(
     quality: int = typer.Option(90, "--quality", help="JPEG quality"),
     random_seed: Optional[int] = typer.Option(None, "--random-seed", help="Random seed for reproducibility"),
     format: str = typer.Option("text", "--format", "-f", help="Output format: text|json"),
+    config: Optional[Path] = typer.Option(None, "--config", "-c", help="Path to JSON config file to load defaults from"),
 ) -> None:
     """Optimize wallpapers.
 
     `--input` は複数指定可。ディレクトリを指定するとその中の画像が対象になります。
     """
-    # validate resolution
+    # Load config if provided and merge defaults (CLI options override config)
+    cfg: dict = {}
+    if config is not None:
+        try:
+            cfg = load_config(config)
+        except Exception as exc:
+            typer.echo(f"Failed to load config: {exc}")
+            raise typer.Exit(code=2)
+
+    # resolve effective values: CLI > config > required check
+    eff_resolution = resolution or cfg.get("resolution")
+    if not eff_resolution:
+        typer.echo("--resolution is required (or provide in --config)")
+        raise typer.Exit(code=2)
     try:
-        w, h = parse_resolution(resolution)
+        w, h = parse_resolution(eff_resolution)
     except ValueError as exc:
         typer.echo(str(exc))
         raise typer.Exit(code=2)
@@ -95,9 +110,13 @@ def optimize(
         typer.echo("--quality must be between 1 and 100")
         raise typer.Exit(code=2)
 
-    # flatten inputs (allow comma-separated items too)
+    # determine inputs (CLI > config)
+    eff_input = input if input is not None else cfg.get("input")
+    if not eff_input:
+        typer.echo("--input is required (or provide in --config)")
+        raise typer.Exit(code=2)
     expanded_inputs: List[str] = []
-    for it in input:
+    for it in eff_input:
         parts = [p.strip() for p in it.split(",") if p.strip()]
         expanded_inputs.extend(parts)
 
@@ -111,9 +130,9 @@ def optimize(
         quality=quality,
         random_seed=random_seed,
         two_screen=two_screen,
-        margins=(0, 0, 0, 0) if margins is None else parse_margins(margins),
-        l_display=None if l_display is None else parse_display(l_display),
-        r_display=None if r_display is None else parse_display(r_display),
+        margins=(0, 0, 0, 0) if (margins is None and cfg.get("margins") is None) else parse_margins(margins or cfg.get("margins")),
+        l_display=None if (l_display is None and cfg.get("l_display") is None) else parse_display(l_display or cfg.get("l_display")),
+        r_display=None if (r_display is None and cfg.get("r_display") is None) else parse_display(r_display or cfg.get("r_display")),
         fixed=fixed,
     )
     fmt = format.lower()
