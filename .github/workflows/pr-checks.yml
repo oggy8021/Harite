@@ -39,11 +39,14 @@ jobs:
     needs: validate-branch-name
     runs-on: ubuntu-latest
     steps:
-      - name: Check PR body exists
-        if: ${{ github.event.pull_request.body == '' }}
+      - name: Validate PR body content
+        shell: bash
         run: |
-          echo "::error ::Pull request body is empty. Please fill the PR template (概要 / やったこと / 動作確認 等)."
-          exit 1
-      - name: PR body present
-        if: ${{ github.event.pull_request.body != '' }}
-        run: echo "PR body present."
+          set -euo pipefail
+          BODY=$(jq -r '.pull_request.body // ""' "$GITHUB_EVENT_PATH")
+          # Reject empty or whitespace-only PR bodies.
+          if [[ -z "${BODY//[[:space:]]/}" ]]; then
+            echo "::error ::Pull request body is empty. Please fill the PR template sections (概要 / 変更内容 / テスト手順)."
+            exit 1
+          fi
+          echo "PR body present."
