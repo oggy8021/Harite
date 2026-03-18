@@ -1,0 +1,99 @@
+name: Branch Cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Do not delete branches, only print candidates"
+        required: false
+        default: "true"
+  schedule:
+    - cron: "15 3 * * 0"
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  cleanup:
+    name: Delete merged branches
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete merged branches safely
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const dryRunInput = core.getInput('dry_run') || 'true';
+            const dryRun = String(dryRunInput).toLowerCase() !== 'false';
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const now = new Date();
+            const minAgeMs = 2 * 24 * 60 * 60 * 1000;
+            const maxDeletes = 20;
+
+            const protectedPattern = /^(main|master|save\/|discuss\/)/;
+
+            const openPrs = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const openHeadRefs = new Set(openPrs.map((pr) => pr.head.ref));
+
+            const closedPrs = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              base: 'main',
+              state: 'closed',
+              sort: 'updated',
+              direction: 'desc',
+              per_page: 100,
+            });
+
+            const candidates = [];
+            for (const pr of closedPrs) {
+              if (!pr.merged_at) continue;
+              if (!pr.head || !pr.head.ref) continue;
+              if (!pr.head.repo || pr.head.repo.fork) continue;
+
+              const ref = pr.head.ref;
+              if (protectedPattern.test(ref)) continue;
+              if (openHeadRefs.has(ref)) continue;
+
+              const mergedAt = new Date(pr.merged_at);
+              if (now - mergedAt < minAgeMs) continue;
+
+              candidates.push(ref);
+            }
+
+            const uniqueCandidates = [...new Set(candidates)].slice(0, maxDeletes);
+
+            if (uniqueCandidates.length === 0) {
+              core.info('No branch cleanup candidates found.');
+              return;
+            }
+
+            core.info(`Candidates (${uniqueCandidates.length}):`);
+            for (const ref of uniqueCandidates) {
+              core.info(`- ${ref}`);
+            }
+
+            if (dryRun) {
+              core.info('Dry run enabled. No branches were deleted.');
+              return;
+            }
+
+            for (const ref of uniqueCandidates) {
+              try {
+                await github.rest.git.deleteRef({
+                  owner,
+                  repo,
+                  ref: `heads/${ref}`,
+                });
+                core.info(`Deleted: ${ref}`);
+              } catch (error) {
+                core.warning(`Failed to delete ${ref}: ${error.message}`);
+              }
+            }
