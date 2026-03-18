@@ -48,7 +48,7 @@
 12. CI: sdist/wheel ビルド job の追加。
 
 短い作業フロー提案
-1. 各タスクを `feature/docs-consolidate-xxx` 等の小さなブランチで実装し、PR を作成します。
+1. 各タスクを `feature|fix|docs|chore/<task>-<YYYYMMDD>` 形式の小さなブランチで実装し、PR を作成します。
 2. CI が通ったらあなたが squash マージを行い、私がマージ後の最終確認を行います。
 3. 合意が得られた内容は `main` 起点で順次実装します。
 
