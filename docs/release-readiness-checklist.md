@@ -11,10 +11,10 @@
 ## 点検サマリー（2026-03-20）
 
 - 判定（XFCE 向け 1st build）: 機能面は完了扱いで進めてよい。
-- 判定（リリース準備）: 未完了。以下のブロッカーを解消してからタグ作成へ進む。
+- 判定（リリース準備）: 第6章（.venv 非依存とデリバリー）は完了。第7章（タグ作成）へ進行可能。
 - 解消済み: `pytest` は全件成功（2026-03-20 再実行）。
-- ブロッカー: ローカルで `python -m build --sdist --wheel` が失敗（`build` 未導入）。
-- 未実施: `.venv` 非依存のクリーン環境で CLI 実行確認。
+- 解消済み: `python -m build --sdist --wheel` で `sdist/wheel` 生成成功。
+- 解消済み: `.venv` 非依存のクリーン環境で CLI 実行確認成功。
 
 ## 1. コード・ブランチ状態
 
@@ -53,10 +53,12 @@
 
 ## 6. 実行環境（.venv 非依存）とデリバリー
 
-- [ ] クリーン環境で `pip install dist/*.whl` または `pipx install dist/*.whl` が成功することを確認した。
-- [ ] `.venv` を有効化しない状態で `harite optimize --help` / `harite apply --help` が実行できることを確認した。
-- [ ] 配布対象（`sdist` / `wheel`）と配布経路（GitHub Releases、社内配布先など）を確定した。
-- [ ] インストール手順とアンインストール手順（ロールバック手順を含む）を記録した。
+証跡: `docs/release-delivery.md`
+
+- [x] クリーン環境で `pip install dist/*.whl` または `pipx install dist/*.whl` が成功することを確認した。
+- [x] `.venv` を有効化しない状態で `harite optimize --help` / `harite apply --help` が実行できることを確認した。
+- [x] 配布対象（`sdist` / `wheel`）と配布経路（GitHub Releases、社内配布先など）を確定した。
+- [x] インストール手順とアンインストール手順（ロールバック手順を含む）を記録した。
 
 ## 7. リリース実施（最終）
 
