@@ -500,14 +500,17 @@ class LinuxPlugin:
         # Support per-monitor mapping dicts: {monitor_name: path}
         is_map = isinstance(path, dict)
         if is_map:
-            mapping = path
+            mapping = {
+                str(mon_name): str(Path(mon_path).expanduser().resolve())
+                for mon_name, mon_path in path.items()
+            }
         else:
-            p = Path(path)
+            p = Path(path).expanduser().resolve()
             if not p.exists():
                 logger.error("Wallpaper file does not exist: %s", path)
                 return False
             if dry_run:
-                logger.info("Dry-run: would apply wallpaper (linux): %s", path)
+                logger.info("Dry-run: would apply wallpaper (linux): %s", p)
                 # When running a dry-run and the file exists, report success immediately.
                 # Older behavior attempted to enumerate xfconf candidates for logging,
                 # but tests and CI expect dry-run to be considered successful even when
