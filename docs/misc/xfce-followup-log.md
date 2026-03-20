@@ -69,9 +69,26 @@
   - 追加 smoke（別解像度5回）は未実施
   - 現時点の運用観測では黒背景の再発なし
 
+## 追加実行結果（2026-03-20 / run2）
+
+- 実行コマンド: `scripts/run_xfce_followup.sh`（known-good + smoke 5回）
+- 出力ディレクトリ: `xfce-followup-20260320-135930`
+- known-good 画像: `/home/katsu/Develop/Repos/Harite/tests/data/img_wide.jpg`
+- 主要ログ:
+  - `xfce-followup-20260320-135930/apply-dry-run.log`
+  - `xfce-followup-20260320-135930/apply-do-it.log`
+  - `xfce-followup-20260320-135930/smoke.log`
+  - `xfce-followup-20260320-135930/last-image-after.txt`
+- summary.md の Result notes は未チェックだが、運用観測として黒背景再発なしを確認
+- 壁紙復帰の発生: 該当なし（スキップ等の発生なし）
+- 追加確認（absolute path 判定）:
+  - 入力: `xfce-followup-20260320-135930/xfconf-values-after.txt`
+  - 出力: `checked lines: 15`
+  - 出力: `result: OK (all last-image values are absolute)`
+
 ## 残タスク
 
-1. 可能であれば別解像度構成（例: 異解像度デュアル）でも 5 回程度の短時間 smoke を取得する。
+- 現時点のフォローアップ残タスクはなし（追加観測は必要時に実施）。
 
 補助:
 
