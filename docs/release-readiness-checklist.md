@@ -8,6 +8,14 @@
 - 各項目は、実施後に PR コメントまたはリリースノート草案へ証跡（コマンド結果・スクリーンショット・ログ要約）を残す。
 - ブロッカーが 1 つでもある場合は、リリースを延期し、原因と再開条件を記録する。
 
+## 点検サマリー（2026-03-20）
+
+- 判定（XFCE 向け 1st build）: 機能面は完了扱いで進めてよい。
+- 判定（リリース準備）: 未完了。以下のブロッカーを解消してからタグ作成へ進む。
+- 解消済み: `pytest` は全件成功（2026-03-20 再実行）。
+- ブロッカー: ローカルで `python -m build --sdist --wheel` が失敗（`build` 未導入）。
+- 未実施: `.venv` 非依存のクリーン環境で CLI 実行確認。
+
 ## 1. コード・ブランチ状態
 
 - [ ] `main` が `origin/main` と同期している。
@@ -43,7 +51,14 @@
 - [ ] 変更に対応するドキュメント（PR フロー、運用ルール等）が更新済み。
 - [ ] 次タスク（CI で sdist/wheel build）への引き継ぎ事項を記録した。
 
-## 6. リリース実施（最終）
+## 6. 実行環境（.venv 非依存）とデリバリー
+
+- [ ] クリーン環境で `pip install dist/*.whl` または `pipx install dist/*.whl` が成功することを確認した。
+- [ ] `.venv` を有効化しない状態で `harite optimize --help` / `harite apply --help` が実行できることを確認した。
+- [ ] 配布対象（`sdist` / `wheel`）と配布経路（GitHub Releases、社内配布先など）を確定した。
+- [ ] インストール手順とアンインストール手順（ロールバック手順を含む）を記録した。
+
+## 7. リリース実施（最終）
 
 - [ ] バージョン番号を確定した。
 - [ ] リリースノート草案（変更概要、注意点、既知の制約）を作成した。
@@ -56,5 +71,9 @@
 pytest
 python -m harite.cli optimize --help
 python -m harite.cli apply --help
+python -m build --sdist --wheel
+# .venv を使わない実行確認の例（別環境）
+pipx install dist/*.whl
+harite optimize --help
 python scripts/xfce_smoke_runner.py --input /abs/path/to/wallpapers --iterations 5
 ```

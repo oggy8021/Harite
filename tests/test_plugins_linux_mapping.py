@@ -1,5 +1,6 @@
 import shutil
 import subprocess
+from pathlib import Path
 
 from harite.plugins import LinuxPlugin
 
@@ -30,5 +31,5 @@ def test_linux_plugin_mapping_dry_run(monkeypatch, caplog):
     ok = plugin.apply(mapping, dry_run=True)
     assert ok
     assert "XFCE: would run" in caplog.text
-    assert "/tmp/left.jpg" in caplog.text
-    assert "/tmp/right.jpg" in caplog.text
+    assert str(Path("/tmp/left.jpg").resolve()) in caplog.text
+    assert str(Path("/tmp/right.jpg").resolve()) in caplog.text
