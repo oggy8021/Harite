@@ -55,9 +55,14 @@
 1. 切り戻し手順（既知の良い画像への復帰）を 1 回通しで実施し、`docs/misc/xfce-rollback-playbook.md` の記録テンプレへ追記する。
 2. 可能であれば別解像度構成（例: 異解像度デュアル）でも 5 回程度の短時間 smoke を取得する。
 
+補助:
+
+- `scripts/run_xfce_followup.sh` を使うと、切り戻し確認と短時間 smoke のログをまとめて取得できる。
+
 ## 参照
 
 - `docs/release-readiness-checklist.md`
 - `docs/misc/xfce-testing.md`
 - `docs/misc/xfce-rollback-playbook.md`
 - `docs/specs/xfce-heuristics.md`
+- `scripts/run_xfce_followup.sh`
