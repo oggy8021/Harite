@@ -48,15 +48,16 @@
   - dry-run 再実行: 実施済み（Step1/Step2）
   - 実適用で切り替え確認: 実施済み（対応後）
   - 絶対パス適用確認: 実施済み（コード修正 + テスト）
-  - 切り戻し手順確認: 未記録（次回フォロー）
+  - 切り戻し手順確認: 手順文書化済み（実施記録は次回追記）
 
 ## 残タスク
 
-1. 切り戻し手順（既知の良い画像への復帰）を 1 回通しで実施し、コマンド履歴を追記する。
+1. 切り戻し手順（既知の良い画像への復帰）を 1 回通しで実施し、`docs/misc/xfce-rollback-playbook.md` の記録テンプレへ追記する。
 2. 可能であれば別解像度構成（例: 異解像度デュアル）でも 5 回程度の短時間 smoke を取得する。
 
 ## 参照
 
 - `docs/release-readiness-checklist.md`
 - `docs/misc/xfce-testing.md`
+- `docs/misc/xfce-rollback-playbook.md`
 - `docs/specs/xfce-heuristics.md`

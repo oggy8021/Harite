@@ -62,6 +62,7 @@
 - `docs/branch-cleanup.md`
 - `docs/release-readiness-checklist.md`
 - `docs/misc/xfce-followup-log.md`
+- `docs/misc/xfce-rollback-playbook.md`
 - `.github/workflows/ci.yml`
 - `.github/workflows/pr-checks.yml`
 - `.github/workflows/branch-cleanup.yml`
