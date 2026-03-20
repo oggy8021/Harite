@@ -48,11 +48,26 @@
   - dry-run 再実行: 実施済み（Step1/Step2）
   - 実適用で切り替え確認: 実施済み（対応後）
   - 絶対パス適用確認: 実施済み（コード修正 + テスト）
-  - 切り戻し手順確認: 手順文書化済み（実施記録は次回追記）
+  - 切り戻し手順確認: 実施済み（2026-03-20 の実行ログあり）
+
+## 追加実行結果（2026-03-20）
+
+- 実行コマンド: `scripts/run_xfce_followup.sh`（known-good + smoke 5回）
+- 出力ディレクトリ: `xfce-followup-20260320-131829`
+- known-good 画像: `/home/katsu/Develop/Repos/Harite/tests/data/img_wide.jpg`
+- 主要ログ:
+  - `xfce-followup-20260320-131829/apply-dry-run.log`
+  - `xfce-followup-20260320-131829/apply-do-it.log`
+  - `xfce-followup-20260320-131829/smoke.log`
+  - `xfce-followup-20260320-131829/last-image-after.txt`
+- 目視結果: 壁紙復帰を確認（成功）
+- 未確認:
+  - `last-image` が絶対パスのみかの厳密確認
+  - 黒背景が完全に再発しないことの継続観測
 
 ## 残タスク
 
-1. 切り戻し手順（既知の良い画像への復帰）を 1 回通しで実施し、`docs/misc/xfce-rollback-playbook.md` の記録テンプレへ追記する。
+1. `xfce-followup-20260320-131829/last-image-after.txt` を確認し、絶対パス適用の確認結果を追記する。
 2. 可能であれば別解像度構成（例: 異解像度デュアル）でも 5 回程度の短時間 smoke を取得する。
 
 補助:
