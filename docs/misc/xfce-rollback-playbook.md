@@ -77,3 +77,13 @@ scripts/run_xfce_followup.sh \
 - known-good 画像:
 - 復帰結果（成功/失敗）:
 - 補足（画面構成、再現条件など）:
+
+## 実施記録（2026-03-20）
+
+- 実施日: 2026-03-20
+- 実施者: katsu
+- known-good 画像: `/home/katsu/Develop/Repos/Harite/tests/data/img_wide.jpg`
+- 復帰結果（成功/失敗）: 成功（壁紙復帰を確認）
+- 出力ディレクトリ: `xfce-followup-20260320-131829`
+- 補足:
+  - summary.md 上はチェック未記入のため、`last-image` 絶対パス確認と黒背景再発有無は継続確認とする。
