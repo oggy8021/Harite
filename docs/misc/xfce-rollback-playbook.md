@@ -92,7 +92,8 @@ python scripts/check_xfce_last_image_paths.py --file xfce-followup-YYYYmmdd-HHMM
 - 復帰結果（成功/失敗）: 成功（壁紙復帰を確認）
 - 出力ディレクトリ: `xfce-followup-20260320-131829`
 - 補足:
-  - summary.md 上はチェック未記入のため、`last-image` 絶対パス確認と黒背景再発有無は継続確認とする。
+  - summary.md 上はチェック未記入だったが、absolute path 判定は後続で OK を確認。
+  - 追加 smoke（別解像度5回）は未実施。現時点の運用観測では黒背景再発なし。
 
 - 追加確認コマンド:
   - `python scripts/check_xfce_last_image_paths.py --file xfce-followup-20260320-131829/xfconf-values-after.txt`
