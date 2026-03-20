@@ -45,6 +45,19 @@ xfconf-query -c xfce4-desktop -l -v > xfconf-values-after.txt
 
 1. 目視で壁紙が復帰したことを確認する。
 
+補助スクリプト（推奨）
+
+手動実行をまとめたい場合は、以下で切り戻し確認 + 短時間 smoke を一括実行できます。
+
+```bash
+scripts/run_xfce_followup.sh \
+  --known-good /abs/path/to/known-good.jpg \
+  --smoke-input /abs/path/to/wallpapers \
+  --smoke-iterations 5
+```
+
+出力先ディレクトリには `summary.md` と `xfconf-values-before/after`、`smoke.log` が保存されます。
+
 ## 確認ポイント
 
 - `last-image` 系プロパティが絶対パスになっている。
