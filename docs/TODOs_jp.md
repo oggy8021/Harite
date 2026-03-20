@@ -45,6 +45,8 @@
   - 表示検出の堅牢化
   - XFCE 候補選択とフォールバック
   - テスト／CI 再現性（`xfconf-query` 模擬テスト）
+- フォローアップ記録:
+  - `docs/misc/xfce-followup-log.md`
 
 ## 新しい運用ルール（短縮版）
 
@@ -59,6 +61,7 @@
 - `docs/pr-flow.md`
 - `docs/branch-cleanup.md`
 - `docs/release-readiness-checklist.md`
+- `docs/misc/xfce-followup-log.md`
 - `.github/workflows/ci.yml`
 - `.github/workflows/pr-checks.yml`
 - `.github/workflows/branch-cleanup.yml`
