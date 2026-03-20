@@ -79,7 +79,8 @@
   - `xfce-followup-20260320-135930/apply-do-it.log`
   - `xfce-followup-20260320-135930/smoke.log`
   - `xfce-followup-20260320-135930/last-image-after.txt`
-- summary.md の Result notes は未チェック（目視判定は保留）
+- summary.md の Result notes は未チェックだが、運用観測として黒背景再発なしを確認
+- 壁紙復帰の発生: 該当なし（スキップ等の発生なし）
 - 追加確認（absolute path 判定）:
   - 入力: `xfce-followup-20260320-135930/xfconf-values-after.txt`
   - 出力: `checked lines: 15`
@@ -87,7 +88,7 @@
 
 ## 残タスク
 
-1. run2（`xfce-followup-20260320-135930`）の Result notes 判定を埋める。
+- 現時点のフォローアップ残タスクはなし（追加観測は必要時に実施）。
 
 補助:
 

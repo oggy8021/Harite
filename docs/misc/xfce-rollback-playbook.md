@@ -106,11 +106,11 @@ python scripts/check_xfce_last_image_paths.py --file xfce-followup-YYYYmmdd-HHMM
 - 実施日: 2026-03-20
 - 実施者: katsu
 - known-good 画像: `/home/katsu/Develop/Repos/Harite/tests/data/img_wide.jpg`
-- 復帰結果（成功/失敗）: 判定保留（summary.md では未チェック）
+- 復帰結果（成功/失敗）: 該当なし（黒背景再発なしのため切り戻し事象なし）
 - 出力ディレクトリ: `xfce-followup-20260320-135930`
 - 補足:
   - 異解像度デュアル構成で smoke 5 回を実行。
-  - Result notes が未記入のため、視認結果は追記予定。
+  - Result notes は未記入だが、運用観測として黒背景再発なしを確認。
 
 - 追加確認コマンド:
   - `python scripts/check_xfce_last_image_paths.py --file xfce-followup-20260320-135930/xfconf-values-after.txt`
