@@ -11,7 +11,7 @@
   - タスク #10: 定期ブランチクリーンアップ運用化（反映済み）
   - タスク #12: CI に sdist/wheel ビルド job 追加（反映済み）
 - 次に着手する候補:
-  - #13: .venv 非依存実行とデリバリー手順の文書化
+  - 新規タスク整理（必要に応じて #14 以降を起票）
 
 ## 現在の優先タスク
 
@@ -32,7 +32,7 @@
 10. ✅ 完了: 定期的なブランチクリーンアップ（運用ルール化）
 11. ✅ 完了: リリース準備チェックリスト作成
 12. ✅ 完了: CI: sdist/wheel ビルド job の追加
-13. ⏳ 未着手: .venv 非依存実行とデリバリー手順の文書化
+13. ✅ 完了: .venv 非依存実行とデリバリー手順の文書化
 
 ## #6 Improve XFCE heuristics のメモ
 
@@ -63,6 +63,7 @@
 - `docs/pr-flow.md`
 - `docs/branch-cleanup.md`
 - `docs/release-readiness-checklist.md`
+- `docs/release-delivery.md`
 - `docs/misc/xfce-followup-log.md`
 - `docs/misc/xfce-rollback-playbook.md`
 - `.github/workflows/ci.yml`
