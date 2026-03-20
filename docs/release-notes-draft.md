@@ -1,7 +1,7 @@
 # Harite リリースノート草案
 
 最終更新: 2026-03-20
-対象バージョン: TBD（第7章で確定）
+対象バージョン: v0.1.0
 
 ## 概要
 
@@ -38,8 +38,8 @@
 
 ## 配布物
 
-- `harite-<version>-py3-none-any.whl`
-- `harite-<version>.tar.gz`
+- `harite-0.1.0-py3-none-any.whl`
+- `harite-0.1.0.tar.gz`
 
 ## 参照
 
