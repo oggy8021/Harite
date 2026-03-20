@@ -1,5 +1,7 @@
 .specify
 .vscode
+.venv/
+/out/
 
 logs
 logs
