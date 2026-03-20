@@ -67,7 +67,7 @@
 
 ## 残タスク
 
-1. `xfce-followup-20260320-131829/last-image-after.txt` を確認し、絶対パス適用の確認結果を追記する。
+1. `python scripts/check_xfce_last_image_paths.py --file xfce-followup-20260320-131829/xfconf-values-after.txt` を実行し、絶対パス適用の確認結果を追記する。
 2. 可能であれば別解像度構成（例: 異解像度デュアル）でも 5 回程度の短時間 smoke を取得する。
 
 補助:
@@ -81,3 +81,4 @@
 - `docs/misc/xfce-rollback-playbook.md`
 - `docs/specs/xfce-heuristics.md`
 - `scripts/run_xfce_followup.sh`
+- `scripts/check_xfce_last_image_paths.py`

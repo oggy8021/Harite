@@ -64,6 +64,12 @@ scripts/run_xfce_followup.sh \
 - 黒背景や無画像状態が解消している。
 - 複数ディスプレイ環境では、左右ともに期待画像が反映される。
 
+絶対パス確認は次の補助コマンドで機械判定できます。
+
+```bash
+python scripts/check_xfce_last_image_paths.py --file xfce-followup-YYYYmmdd-HHMMSS/xfconf-values-after.txt
+```
+
 ## 失敗時の追加対応
 
 1. `xfdesktop --replace` を実行して再読込する。
@@ -87,3 +93,6 @@ scripts/run_xfce_followup.sh \
 - 出力ディレクトリ: `xfce-followup-20260320-131829`
 - 補足:
   - summary.md 上はチェック未記入のため、`last-image` 絶対パス確認と黒背景再発有無は継続確認とする。
+
+- 追加確認コマンド:
+  - `python scripts/check_xfce_last_image_paths.py --file xfce-followup-20260320-131829/xfconf-values-after.txt`
