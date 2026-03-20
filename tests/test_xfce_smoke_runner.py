@@ -1,6 +1,17 @@
 from pathlib import Path
+import importlib.util
 
-from scripts.xfce_smoke_runner import collect_images
+
+def _load_collect_images():
+    runner_path = Path(__file__).resolve().parents[1] / "scripts" / "xfce_smoke_runner.py"
+    spec = importlib.util.spec_from_file_location("xfce_smoke_runner", runner_path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.collect_images
+
+
+collect_images = _load_collect_images()
 
 
 def test_collect_images_returns_absolute_paths():
