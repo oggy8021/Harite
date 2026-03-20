@@ -61,14 +61,17 @@
   - `xfce-followup-20260320-131829/smoke.log`
   - `xfce-followup-20260320-131829/last-image-after.txt`
 - 目視結果: 壁紙復帰を確認（成功）
+- 追加確認（absolute path 判定）:
+  - 入力: `xfce-followup-20260320-131829/xfconf-values-after.txt`
+  - 出力: `checked lines: 15`
+  - 出力: `result: OK (all last-image values are absolute)`
 - 未確認:
-  - `last-image` が絶対パスのみかの厳密確認
   - 黒背景が完全に再発しないことの継続観測
 
 ## 残タスク
 
-1. `python scripts/check_xfce_last_image_paths.py --file xfce-followup-20260320-131829/xfconf-values-after.txt` を実行し、絶対パス適用の確認結果を追記する。
-2. 可能であれば別解像度構成（例: 異解像度デュアル）でも 5 回程度の短時間 smoke を取得する。
+1. 可能であれば別解像度構成（例: 異解像度デュアル）でも 5 回程度の短時間 smoke を取得する。
+2. 黒背景が完全に再発しないことを継続観測し、結果を追記する。
 
 補助:
 

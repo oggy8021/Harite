@@ -96,3 +96,6 @@ python scripts/check_xfce_last_image_paths.py --file xfce-followup-YYYYmmdd-HHMM
 
 - 追加確認コマンド:
   - `python scripts/check_xfce_last_image_paths.py --file xfce-followup-20260320-131829/xfconf-values-after.txt`
+- 追加確認結果:
+  - `checked lines: 15`
+  - `result: OK (all last-image values are absolute)`
