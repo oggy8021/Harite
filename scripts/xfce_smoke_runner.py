@@ -37,17 +37,17 @@ def collect_images(inputs: Iterable[str]) -> List[Path]:
     for raw in inputs:
         p = Path(raw)
         if p.is_file() and p.suffix.lower() in IMAGE_EXTS:
-            images.append(p)
+            images.append(p.resolve())
             continue
         if p.is_dir():
             for child in sorted(p.rglob("*")):
                 if child.is_file() and child.suffix.lower() in IMAGE_EXTS:
-                    images.append(child)
+                    images.append(child.resolve())
     # Preserve order while removing duplicates.
     seen = set()
     uniq: List[Path] = []
     for p in images:
-        key = str(p.resolve())
+        key = str(p)
         if key in seen:
             continue
         seen.add(key)
