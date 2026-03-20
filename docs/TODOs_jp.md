@@ -1,6 +1,6 @@
 # Harite 作業予定（日本語）
 
-最終更新: 2026-03-18
+最終更新: 2026-03-20
 
 ## 先にここだけ見る（30秒版）
 
@@ -10,14 +10,12 @@
   - タスク #9: ブランチ保護・PRフロー整理（反映済み）
   - タスク #10: 定期ブランチクリーンアップ運用化（反映済み）
 - 次に着手する候補:
-  - タスク #11: リリース準備チェックリスト作成
   - タスク #12: CI に sdist/wheel ビルド job 追加
 
 ## 現在の優先タスク
 
 1. 進行中: `Improve XFCE heuristics`（#6）
-2. 未着手: リリース準備チェックリスト作成（#11）
-3. 未着手: CI: sdist/wheel ビルド job の追加（#12）
+2. 未着手: CI: sdist/wheel ビルド job の追加（#12）
 
 ## タスク一覧（状態つき）
 
@@ -31,7 +29,7 @@
 8. ✅ 完了: CI 戦略の見直し
 9. ✅ 完了: ブランチ保護・PR フローのペアセッション（スケジュール）
 10. ✅ 完了: 定期的なブランチクリーンアップ（運用ルール化）
-11. ⚪ 未着手: リリース準備チェックリスト作成
+11. ✅ 完了: リリース準備チェックリスト作成
 12. ⚪ 未着手: CI: sdist/wheel ビルド job の追加
 
 ## #6 Improve XFCE heuristics のメモ
@@ -59,6 +57,7 @@
 - `docs/branch-protection.md`
 - `docs/pr-flow.md`
 - `docs/branch-cleanup.md`
+- `docs/release-readiness-checklist.md`
 - `.github/workflows/pr-checks.yml`
 - `.github/workflows/branch-cleanup.yml`
 
@@ -76,4 +75,5 @@
 
 - 作成日: 2026-03-14
 - 2026-03-18 時点で #9/#10 は完了に更新
+- 2026-03-20 時点で #11 は完了に更新
 - 過去の詳細ログは Git 履歴と PR を参照
