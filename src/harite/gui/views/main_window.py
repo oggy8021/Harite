@@ -27,6 +27,37 @@ class MainWindow:
             output_dir=str(Path(".")),
         )
 
+    def on_pick_input(self, path: str) -> None:
+        """Legacy signal mapping: on_btnGetImg_clicked."""
+        value = (path or "").strip()
+        if not value:
+            self.last_error = "input path is empty"
+            self._log("Pick input ignored: empty path")
+            return
+
+        current = [p.strip() for p in self.form_state.input_value.split(",") if p.strip()]
+        if value not in current:
+            current.append(value)
+        self.on_change_input_text(",".join(current))
+        self._log(f"Input picked: {value}")
+
+    def on_change_margins(self, left: int, right: int, top: int, bottom: int) -> None:
+        """Legacy signal mapping: on_spnMergin_value_changed."""
+        vals = (left, right, top, bottom)
+        if any(v < 0 for v in vals):
+            self.last_error = "margins must be non-negative"
+            self._log("Margin update failed: negative value")
+            return
+
+        self.form_state.margins = f"{left},{right},{top},{bottom}"
+        self.last_error = ""
+        self._log(f"Margins updated: {self.form_state.margins}")
+
+    def on_toggle_fixed(self, enabled: bool) -> None:
+        """Legacy signal mapping: on_radFixed_toggled."""
+        self.form_state.fixed = bool(enabled)
+        self._log(f"Fixed mode: {self.form_state.fixed}")
+
     def _log(self, message: str) -> None:
         self.logs.append(message)
 
