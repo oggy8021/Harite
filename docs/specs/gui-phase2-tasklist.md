@@ -18,8 +18,8 @@
 
 - [x] Step 1: `OptimizeController` の入力検証強化（margins 形式・値の検証）
 - [x] Step 1: `OptimizeController` と `cli_mapper` の専用ユニットテスト追加
-- [ ] Step 2: `MainWindow` のフォーム更新系ハンドラで境界値の挙動を追加テスト
-- [ ] Step 3: `on_apply_dry_run` / `on_apply_do_it` の失敗パターン（plugin失敗/未登録）を拡充テスト
+- [x] Step 2: `MainWindow` のフォーム更新系ハンドラで境界値の挙動を追加テスト
+- [x] Step 3: `on_apply_dry_run` / `on_apply_do_it` の失敗パターン（plugin失敗/未登録）を拡充テスト
 - [ ] Step 4: GUI起動エントリからの最小スモーク（import/run）確認をCI向けに整理
 
 ## DoD

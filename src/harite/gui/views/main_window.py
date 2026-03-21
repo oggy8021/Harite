@@ -140,7 +140,13 @@ class MainWindow:
             self._log(f"Apply failed: unknown plugin {self.plugin_name}")
             return False
 
-        ok = bool(plugin.apply(target, dry_run=dry_run))
+        try:
+            ok = bool(plugin.apply(target, dry_run=dry_run))
+        except Exception as exc:
+            self.last_error = f"failed to apply wallpaper: {exc}"
+            self._log(f"Apply failed via plugin={self.plugin_name} dry_run={dry_run}: {exc}")
+            return False
+
         if ok:
             self.last_error = ""
             self._log(f"Applied wallpaper via plugin={self.plugin_name} dry_run={dry_run}: {target}")

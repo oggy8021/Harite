@@ -66,6 +66,16 @@ def test_on_change_margins_updates_form_state():
     assert window.last_error == "margins must be non-negative"
 
 
+def test_on_change_margins_keeps_previous_value_on_invalid_input():
+    window = MainWindow()
+    window.on_change_margins(1, 2, 3, 4)
+
+    window.on_change_margins(-1, 2, 3, 4)
+
+    assert window.form_state.margins == "1,2,3,4"
+    assert window.last_error == "margins must be non-negative"
+
+
 def test_on_toggle_fixed_updates_flag():
     window = MainWindow()
     assert window.form_state.fixed is False
@@ -154,6 +164,27 @@ def test_on_change_plugin_rejects_unknown_plugin():
     assert window.last_error == "unknown plugin: no-such-plugin"
 
 
+def test_on_change_plugin_rejects_empty_value():
+    window = MainWindow()
+    previous = window.plugin_name
+
+    ok = window.on_change_plugin("   ")
+
+    assert ok is False
+    assert window.plugin_name == previous
+    assert window.last_error == "plugin is required"
+
+
+def test_on_pick_input_empty_value_sets_error_and_keeps_input():
+    window = MainWindow()
+    window.on_change_input_text("a.jpg")
+
+    window.on_pick_input("   ")
+
+    assert window.form_state.input_value == "a.jpg"
+    assert window.last_error == "input path is empty"
+
+
 def test_build_optimize_cli_preview_contains_required_args(tmp_path):
     window = MainWindow()
     out_dir = tmp_path / "out"
@@ -234,3 +265,57 @@ def test_on_close_srcdir_dialog_logs_close_event():
     window.on_close_srcdir_dialog()
 
     assert "Source directory dialog closed" in window.logs
+
+
+def test_on_apply_dry_run_unknown_plugin_fails(monkeypatch, tmp_path):
+    def raise_key_error(_name):
+        raise KeyError(_name)
+
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", raise_key_error)
+
+    window = MainWindow()
+    wall = tmp_path / "wall.jpg"
+    wall.write_bytes(b"x")
+    window.last_saved_files = [wall]
+    window.plugin_name = "missing-plugin"
+
+    ok = window.on_apply_dry_run()
+
+    assert ok is False
+    assert window.last_error == "unknown plugin: missing-plugin"
+
+
+def test_on_apply_dry_run_when_plugin_returns_false_sets_error(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            return False
+
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+
+    window = MainWindow()
+    wall = tmp_path / "wall.jpg"
+    wall.write_bytes(b"x")
+    window.last_saved_files = [wall]
+
+    ok = window.on_apply_dry_run()
+
+    assert ok is False
+    assert window.last_error == "failed to apply wallpaper"
+
+
+def test_on_apply_dry_run_when_plugin_raises_sets_error(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+
+    window = MainWindow()
+    wall = tmp_path / "wall.jpg"
+    wall.write_bytes(b"x")
+    window.last_saved_files = [wall]
+
+    ok = window.on_apply_dry_run()
+
+    assert ok is False
+    assert window.last_error == "failed to apply wallpaper: boom"
