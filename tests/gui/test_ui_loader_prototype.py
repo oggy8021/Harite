@@ -12,6 +12,7 @@ def test_load_glade_prototype_reads_default_resource():
     assert result.root_tag == "glade-interface"
     assert result.widget_count > 0
     assert result.signal_count > 0
+    assert "on_btnSave_clicked" in result.signal_handlers
 
 
 def test_load_glade_prototype_raises_when_file_missing(tmp_path):

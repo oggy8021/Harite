@@ -17,6 +17,7 @@ class UiLoadResult:
     root_tag: str
     widget_count: int
     signal_count: int
+    signal_handlers: tuple[str, ...] = ()
 
 
 def _default_glade_path() -> Path:
@@ -32,10 +33,12 @@ def load_glade_prototype(file_path: Path | None = None) -> UiLoadResult:
     root = tree.getroot()
     widgets = root.findall(".//widget")
     signals = root.findall(".//signal")
+    handlers = sorted({sig.get("handler", "").strip() for sig in signals if sig.get("handler")})
 
     return UiLoadResult(
         file_path=path,
         root_tag=root.tag,
         widget_count=len(widgets),
         signal_count=len(signals),
+        signal_handlers=tuple(handlers),
     )
