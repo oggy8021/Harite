@@ -59,6 +59,7 @@
 - 完了: M2-1（OS別実機確認マトリクスと成果物命名ルールを `manual-validation-gate` に追加）
 - 完了: M2-2（GUI実機確認レポートテンプレートを `docs/templates/gui-manual-validation-report.md` として追加）
 - 完了: M2-3準備（`gui_layout_smoke.py` に統合レポート出力 `--report-out` / `--print-report` を追加）
+- 完了: M3-1準備（`gui_layout_smoke.py` に `--auto-artifacts` を追加し、PR添付用成果物を1コマンド出力）
 
 ## 次マイルストーン（Phase 3 後半）
 
@@ -79,6 +80,11 @@
 - [x] M2-2: 実機確認成果物の命名規則を定義（json/md/screenshot）
 - [x] M2-3a: 手動検証結果を1ファイルへ束ねるレポート出力を smoke script に追加
 - [ ] M2-3b: 1環境以上でテンプレート運用実績を作成し、PRコメントに添付
+
+## M3 詳細進捗
+
+- [x] M3-1: PRコメント用成果物（json/report/pr-comment/smoke-md）の自動出力を追加
+- [ ] M3-2: 実機確認1件分を `pr-comment` へ添付して標準フォーマット運用を確定
 
 ## 小PR分割（推奨）
 

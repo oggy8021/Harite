@@ -19,6 +19,12 @@ from harite.gui.views.main_window import MainWindow
 from harite.gui.adapters.fake_adapter import create_fake_widget_map
 
 
+def _scope_os_name(scope: str) -> str:
+    raw = (scope or "local").split("/", 1)[0].strip().lower()
+    safe = "".join(ch if (ch.isalnum() or ch in "-_") else "-" for ch in raw)
+    return safe.strip("-_") or "local"
+
+
 def collect_summary(mainwindow: Any) -> dict:
     bindings = getattr(mainwindow, "_adapter_bindings", None)
     if isinstance(bindings, dict) and "file" in bindings:
@@ -166,6 +172,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--print-pr-comment", action="store_true", help="print PR comment template to stdout")
     parser.add_argument("--report-out", type=Path, help="write full manual validation report markdown")
     parser.add_argument("--print-report", action="store_true", help="print full manual validation report to stdout")
+    parser.add_argument("--auto-artifacts", action="store_true", help="auto-generate artifact output paths for current PR/scope")
+    parser.add_argument("--artifact-dir", type=Path, default=Path("out/manual-validation"), help="base directory used with --auto-artifacts")
     parser.add_argument("--scope", default="local/gui-smoke", help="scope text used in markdown report")
     parser.add_argument("--pr-number", default="local", help="PR number text used in report")
     parser.add_argument("--date", default=date.today().isoformat(), help="date text used in report (YYYY-MM-DD)")
@@ -178,6 +186,29 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--screenshot-optimize", default="", help="path for Optimize screenshot used in report")
     parser.add_argument("--screenshot-apply", default="", help="path for Apply screenshot used in report")
     args = parser.parse_args(argv)
+
+    if args.auto_artifacts:
+        os_name = _scope_os_name(args.scope)
+        artifact_base = args.artifact_dir / f"pr-{args.pr_number}-{os_name}"
+        if args.out_file is None:
+            args.out_file = artifact_base.with_suffix(".json")
+        if args.report_out is None:
+            args.report_out = artifact_base.with_suffix(".md")
+        if args.pr_comment_out is None:
+            args.pr_comment_out = args.artifact_dir / f"pr-{args.pr_number}-{os_name}-pr-comment.md"
+        if args.markdown_out is None:
+            args.markdown_out = args.artifact_dir / f"pr-{args.pr_number}-{os_name}-smoke.md"
+
+        if not args.screenshot_mainwindow:
+            args.screenshot_mainwindow = str(args.artifact_dir / f"pr-{args.pr_number}-{os_name}-mainwindow.png")
+        if not args.screenshot_optimize:
+            args.screenshot_optimize = str(args.artifact_dir / f"pr-{args.pr_number}-{os_name}-optimize.png")
+        if not args.screenshot_apply:
+            args.screenshot_apply = str(args.artifact_dir / f"pr-{args.pr_number}-{os_name}-apply.png")
+
+        for path in (args.out_file, args.report_out, args.pr_comment_out, args.markdown_out):
+            if path is not None:
+                path.parent.mkdir(parents=True, exist_ok=True)
 
     win = MainWindow()
 
