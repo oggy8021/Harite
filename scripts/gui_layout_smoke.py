@@ -73,6 +73,32 @@ def _validate_required_screenshots(
     return True, ""
 
 
+def _validate_screenshot_files_exist(
+    *,
+    verify_screenshot_files: bool,
+    screenshot_mainwindow: str,
+    screenshot_optimize: str,
+    screenshot_apply: str,
+) -> tuple[bool, str]:
+    if not verify_screenshot_files:
+        return True, ""
+
+    missing = []
+    for label, raw in (
+        ("mainwindow", screenshot_mainwindow),
+        ("optimize", screenshot_optimize),
+        ("apply", screenshot_apply),
+    ):
+        path = Path((raw or "").strip())
+        if not path.exists():
+            missing.append(str(path))
+
+    if missing:
+        return False, "missing screenshot file(s): " + ", ".join(missing)
+
+    return True, ""
+
+
 def collect_summary(mainwindow: Any) -> dict:
     bindings = getattr(mainwindow, "_adapter_bindings", None)
     if isinstance(bindings, dict) and "file" in bindings:
@@ -234,6 +260,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--screenshot-optimize", default="", help="path for Optimize screenshot used in report")
     parser.add_argument("--screenshot-apply", default="", help="path for Apply screenshot used in report")
     parser.add_argument("--require-screenshots", action="store_true", help="fail when report/pr-comment screenshot paths are missing")
+    parser.add_argument("--verify-screenshot-files", action="store_true", help="fail when screenshot file paths do not exist")
     args = parser.parse_args(argv)
 
     try:
@@ -354,6 +381,16 @@ def main(argv: list[str] | None = None) -> int:
             print(message, file=sys.stderr)
             return 3
 
+        ok, message = _validate_screenshot_files_exist(
+            verify_screenshot_files=args.verify_screenshot_files,
+            screenshot_mainwindow=args.screenshot_mainwindow,
+            screenshot_optimize=args.screenshot_optimize,
+            screenshot_apply=args.screenshot_apply,
+        )
+        if not ok:
+            print(message, file=sys.stderr)
+            return 4
+
         report_md = build_validation_report(
             summary,
             pr_number=args.pr_number,
@@ -382,6 +419,16 @@ def main(argv: list[str] | None = None) -> int:
         if not ok:
             print(message, file=sys.stderr)
             return 3
+
+        ok, message = _validate_screenshot_files_exist(
+            verify_screenshot_files=args.verify_screenshot_files,
+            screenshot_mainwindow=args.screenshot_mainwindow,
+            screenshot_optimize=args.screenshot_optimize,
+            screenshot_apply=args.screenshot_apply,
+        )
+        if not ok:
+            print(message, file=sys.stderr)
+            return 4
 
         print(
             build_validation_report(

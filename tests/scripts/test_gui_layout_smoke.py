@@ -445,3 +445,72 @@ def test_gui_layout_smoke_require_screenshots_passes_with_paths(tmp_path: Path):
 
     assert proc.returncode == 0, proc.stderr
     assert out_report.exists()
+
+
+def test_gui_layout_smoke_verify_screenshot_files_fails_when_missing(tmp_path: Path):
+    out_json = tmp_path / "layout-verify-shot.json"
+    out_report = tmp_path / "report-verify.md"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--out-file",
+            str(out_json),
+            "--report-out",
+            str(out_report),
+            "--require-screenshots",
+            "--verify-screenshot-files",
+            "--screenshot-mainwindow",
+            "missing-mainwindow.png",
+            "--screenshot-optimize",
+            "missing-optimize.png",
+            "--screenshot-apply",
+            "missing-apply.png",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 4
+    assert "missing screenshot file(s):" in proc.stderr
+
+
+def test_gui_layout_smoke_verify_screenshot_files_passes_when_present(tmp_path: Path):
+    out_json = tmp_path / "layout-verify-shot-ok.json"
+    out_report = tmp_path / "report-verify-ok.md"
+    main = tmp_path / "mainwindow.png"
+    optimize = tmp_path / "optimize.png"
+    apply = tmp_path / "apply.png"
+    main.write_bytes(b"x")
+    optimize.write_bytes(b"x")
+    apply.write_bytes(b"x")
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--out-file",
+            str(out_json),
+            "--report-out",
+            str(out_report),
+            "--require-screenshots",
+            "--verify-screenshot-files",
+            "--screenshot-mainwindow",
+            str(main),
+            "--screenshot-optimize",
+            str(optimize),
+            "--screenshot-apply",
+            str(apply),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    assert out_report.exists()

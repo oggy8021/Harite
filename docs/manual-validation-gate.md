@@ -113,6 +113,7 @@ python scripts/gui_layout_smoke.py --simulate --validate --scope windows/gui --o
   ```
 
   - いずれかのスクリーンショットパスが未指定の場合は終了コード `3` で失敗する。
+  - `--verify-screenshot-files` を付けると、指定パスの実ファイルが存在しない場合は終了コード `4` で失敗する。
 
   - `--optimize-result` / `--apply-dry-run-result` / `--apply-do-it-result` は `pass|fail|not-available` を使う。
   - 旧表記 `n/a`, `na`, `n/a (manual)`, `n/a (if executed)` は `not-available` として扱われる。
