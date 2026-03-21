@@ -213,10 +213,34 @@ def split_composite_for_displays(
     output_dir.mkdir(parents=True, exist_ok=True)
     comp = Image.open(composite_path).convert("RGB")
     comp_w, comp_h = comp.size
+
+    if not displays:
+        return {}
+
+    # Derive virtual desktop bounds from display offsets/sizes.
+    # Cropping is then mapped by ratio so a smaller same-aspect composite can
+    # still be split in proportion to the real desktop layout.
+    min_x = min(d.x_offset for d in displays)
+    max_x = max(d.x_offset + d.width for d in displays)
+    virtual_w = max(1, max_x - min_x)
+
     result = {}
     for d in displays:
-        left = max(0, d.x_offset)
-        right = min(comp_w, left + d.width)
+        left_norm = (d.x_offset - min_x) / virtual_w
+        right_norm = (d.x_offset + d.width - min_x) / virtual_w
+
+        left = int(round(left_norm * comp_w))
+        right = int(round(right_norm * comp_w))
+
+        left = max(0, min(comp_w, left))
+        right = max(0, min(comp_w, right))
+        if right <= left:
+            if left < comp_w:
+                right = left + 1
+            else:
+                left = max(0, comp_w - 1)
+                right = comp_w
+
         box = (left, 0, right, comp_h)
         try:
             region = comp.crop(box)
