@@ -75,3 +75,56 @@ def test_on_toggle_fixed_updates_flag():
 
     window.on_toggle_fixed(False)
     assert window.form_state.fixed is False
+
+
+def test_on_apply_dry_run_uses_latest_saved_file(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def __init__(self):
+            self.calls = []
+
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            self.calls.append((path, dry_run))
+            return True
+
+    plugin = DummyPlugin()
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
+
+    window = MainWindow()
+    wall = tmp_path / "wall.jpg"
+    wall.write_bytes(b"x")
+    window.last_saved_files = [wall]
+
+    ok = window.on_apply_dry_run()
+    assert ok is True
+    assert plugin.calls == [(str(wall), True)]
+    assert any("Applied wallpaper" in line for line in window.logs)
+
+
+def test_on_apply_do_it_calls_plugin_with_non_dry_run(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def __init__(self):
+            self.calls = []
+
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            self.calls.append((path, dry_run))
+            return True
+
+    plugin = DummyPlugin()
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
+
+    window = MainWindow()
+    wall = tmp_path / "wall.jpg"
+    wall.write_bytes(b"x")
+    window.last_saved_files = [wall]
+
+    ok = window.on_apply_do_it()
+    assert ok is True
+    assert plugin.calls == [(str(wall), False)]
+
+
+def test_on_apply_without_optimized_file_fails():
+    window = MainWindow()
+    ok = window.on_apply_dry_run()
+
+    assert ok is False
+    assert window.last_error == "no optimized file to apply"

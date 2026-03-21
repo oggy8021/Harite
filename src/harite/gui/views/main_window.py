@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
+from harite.plugins import registry as plugin_registry
 
 
 class MainWindow:
@@ -21,6 +22,8 @@ class MainWindow:
         self.can_optimize = False
         self.last_error = ""
         self.logs: list[str] = []
+        self.plugin_name = "windows"
+        self.last_saved_files: list[Path] = []
         self.form_state = OptimizeFormState(
             input_value="",
             resolution="1920x1080",
@@ -81,6 +84,7 @@ class MainWindow:
 
         try:
             saved, _placements = self.controller.run_optimize(self.form_state)
+            self.last_saved_files = list(saved)
             self.last_error = ""
             self._log(f"Saved {len(saved)} file(s)")
             for path in saved:
@@ -90,6 +94,38 @@ class MainWindow:
             self.last_error = str(exc)
             self._log(f"Optimize failed: {exc}")
             return False
+
+    def _apply_latest(self, dry_run: bool) -> bool:
+        if not self.last_saved_files:
+            self.last_error = "no optimized file to apply"
+            self._log("Apply blocked: no optimized file")
+            return False
+
+        target = str(self.last_saved_files[-1])
+        try:
+            plugin = plugin_registry.get(self.plugin_name)
+        except KeyError:
+            self.last_error = f"unknown plugin: {self.plugin_name}"
+            self._log(f"Apply failed: unknown plugin {self.plugin_name}")
+            return False
+
+        ok = bool(plugin.apply(target, dry_run=dry_run))
+        if ok:
+            self.last_error = ""
+            self._log(f"Applied wallpaper via plugin={self.plugin_name} dry_run={dry_run}: {target}")
+            return True
+
+        self.last_error = "failed to apply wallpaper"
+        self._log(f"Apply failed via plugin={self.plugin_name} dry_run={dry_run}: {target}")
+        return False
+
+    def on_apply_dry_run(self) -> bool:
+        """Legacy signal mapping: on_btnSetWall_clicked (safe mode)."""
+        return self._apply_latest(dry_run=True)
+
+    def on_apply_do_it(self) -> bool:
+        """Legacy signal mapping: on_btnSetWall_clicked (execute mode)."""
+        return self._apply_latest(dry_run=False)
 
     def on_close(self) -> None:
         """Legacy signal mapping: on_WallPosit_MainWindow_delete_event."""
