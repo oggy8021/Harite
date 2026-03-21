@@ -62,27 +62,121 @@ def _callback(
 
 @app.command()
 def optimize(
-    input: Optional[List[str]] = typer.Option(None, "--input", "-i", help="Input file(s) or directory(ies)"),
-    resolution: Optional[str] = typer.Option(None, "--resolution", "-r", help="Target resolution WxH (e.g. 3840x2160)"),
-    layout: str = typer.Option("mosaic", "--layout", help="Layout mode"),
-    scaling: str = typer.Option("fit", "--scaling", help="Scaling mode (fit|fill|crop)"),
-    padding: int = typer.Option(0, "--padding", help="Padding (px) between images"),
-    two_screen: bool = typer.Option(False, "--two-screen", help="Enable two-screen (left/right) composition"),
-    margins: Optional[str] = typer.Option(None, "--margins", help="Margins as l,r,top,bottom in pixels (e.g. 10,0,10,0)"),
-    l_display: Optional[str] = typer.Option(None, "--l-display", help="Left display size WxH (e.g. 1920x1080)"),
-    r_display: Optional[str] = typer.Option(None, "--r-display", help="Right display size WxH (e.g. 1280x1024)"),
-    fixed: bool = typer.Option(False, "--fixed", help="Fix allocation by input order (left then right)"),
-    output: Path = typer.Option(Path("."), "--output", "-o", help="Output directory"),
-    quality: int = typer.Option(90, "--quality", help="JPEG quality"),
-    random_seed: Optional[int] = typer.Option(None, "--random-seed", help="Random seed for reproducibility"),
-    format: str = typer.Option("text", "--format", "-f", help="Output format: text|json"),
-    config: Optional[Path] = typer.Option(None, "--config", "-c", help="Path to JSON config file to load defaults from"),
-    align: str = typer.Option("center", "--align", help="Horizontal align: left|center|right"),
-    valign: str = typer.Option("center", "--valign", help="Vertical align: top|center|bottom"),
+    input: Optional[List[str]] = typer.Option(
+        None,
+        "--input",
+        "-i",
+        help="Input file(s) or directory(ies). Use comma-separated paths or repeat --input.",
+        rich_help_panel="必須に近い入力",
+    ),
+    resolution: Optional[str] = typer.Option(
+        None,
+        "--resolution",
+        "-r",
+        help="Target resolution WxH (e.g. 3840x2160)",
+        rich_help_panel="必須に近い入力",
+    ),
+    output: Path = typer.Option(
+        Path("."),
+        "--output",
+        "-o",
+        help="Output directory",
+        rich_help_panel="基本オプション",
+    ),
+    format: str = typer.Option(
+        "text",
+        "--format",
+        "-f",
+        help="Output format: text|json",
+        rich_help_panel="基本オプション",
+    ),
+    layout: str = typer.Option(
+        "mosaic",
+        "--layout",
+        help="Layout mode (current implementation is effectively mosaic)",
+        rich_help_panel="基本オプション",
+    ),
+    scaling: str = typer.Option(
+        "fit",
+        "--scaling",
+        help="Scaling mode (fit|fill|crop)",
+        rich_help_panel="基本オプション",
+    ),
+    two_screen: bool = typer.Option(
+        False,
+        "--two-screen",
+        help="Enable two-screen mode. For explicit left/right widths, use with --l-display and --r-display.",
+        rich_help_panel="条件付きオプション（通常は省略可）",
+    ),
+    margins: Optional[str] = typer.Option(
+        None,
+        "--margins",
+        help="Margins as l,r,top,bottom in pixels (e.g. 10,0,10,0)",
+        rich_help_panel="条件付きオプション（通常は省略可）",
+    ),
+    l_display: Optional[str] = typer.Option(
+        None,
+        "--l-display",
+        help="Left display size WxH (e.g. 1920x1080). Effective with --two-screen.",
+        rich_help_panel="条件付きオプション（通常は省略可）",
+    ),
+    r_display: Optional[str] = typer.Option(
+        None,
+        "--r-display",
+        help="Right display size WxH (e.g. 1280x1024). Effective with --two-screen.",
+        rich_help_panel="条件付きオプション（通常は省略可）",
+    ),
+    fixed: bool = typer.Option(
+        False,
+        "--fixed",
+        help="Fix allocation by input order (left then right)",
+        rich_help_panel="条件付きオプション（通常は省略可）",
+    ),
+    align: str = typer.Option(
+        "center",
+        "--align",
+        help="Horizontal align: left|center|right",
+        rich_help_panel="条件付きオプション（通常は省略可）",
+    ),
+    valign: str = typer.Option(
+        "center",
+        "--valign",
+        help="Vertical align: top|center|bottom",
+        rich_help_panel="条件付きオプション（通常は省略可）",
+    ),
+    padding: int = typer.Option(
+        0,
+        "--padding",
+        help="Padding (px) between images",
+        rich_help_panel="詳細調整",
+    ),
+    quality: int = typer.Option(
+        90,
+        "--quality",
+        help="JPEG quality",
+        rich_help_panel="詳細調整",
+    ),
+    random_seed: Optional[int] = typer.Option(
+        None,
+        "--random-seed",
+        help="Random seed for reproducibility",
+        rich_help_panel="詳細調整",
+    ),
+    config: Optional[Path] = typer.Option(
+        None,
+        "--config",
+        "-c",
+        help="Path to JSON config file to load defaults from",
+        rich_help_panel="詳細調整",
+    ),
 ) -> None:
     """Optimize wallpapers.
 
-    `--input` は複数指定可。ディレクトリを指定するとその中の画像が対象になります。
+    `--input` は複数指定可。カンマ区切りまたは `--input` の繰り返しで複数パスを指定できます。
+    ディレクトリを指定すると、その直下の画像（jpg/jpeg/png/bmp）が対象になります。
+
+    `--two-screen` は左右2画面向けモードです。
+    `--l-display` / `--r-display` を併用した場合は、先頭2入力を左・右へ割り当てます。
     """
     # Load config if provided and merge defaults (CLI options override config)
     cfg: dict = {}
