@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence, Tuple, List, Optional
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from .workspace import Display
 
 
@@ -57,6 +57,125 @@ def _scale_to_fit(img: Image.Image, max_w: int, max_h: int) -> Tuple[int, int, f
     return nw, nh, scale
 
 
+def _build_embed_lines(
+    mode: str,
+    *,
+    target_resolution: Tuple[int, int],
+    margins: Tuple[int, int, int, int],
+    align: str,
+    valign: str,
+    padding: int,
+    input_count: int,
+    two_screen: bool,
+    l_display: Optional[Tuple[int, int]],
+    r_display: Optional[Tuple[int, int]],
+    free_text: Optional[str],
+) -> List[str]:
+    mode_norm = str(mode or "none").lower()
+    if mode_norm == "none":
+        return []
+
+    params_lines: List[str] = []
+    if mode_norm in ("params", "combo"):
+        w_target, h_target = target_resolution
+        ml, mr, mt, mb = margins
+        params_lines.append(f"res={w_target}x{h_target} margins={ml},{mr},{mt},{mb}")
+        params_lines.append(f"align={align}/{valign} pad={padding} inputs={input_count}")
+        if two_screen:
+            if l_display and r_display:
+                params_lines.append(
+                    f"two_screen=1 l={l_display[0]}x{l_display[1]} r={r_display[0]}x{r_display[1]}"
+                )
+            else:
+                params_lines.append("two_screen=1")
+
+    free_lines: List[str] = []
+    if mode_norm in ("free", "combo") and free_text:
+        for line in str(free_text).splitlines():
+            v = line.strip()
+            if v:
+                free_lines.append(v)
+
+    return params_lines + free_lines
+
+
+def _truncate_to_width(draw: ImageDraw.ImageDraw, text: str, max_w: int, font: ImageFont.ImageFont) -> str:
+    if max_w <= 0:
+        return ""
+    if draw.textlength(text, font=font) <= max_w:
+        return text
+    ellipsis = "..."
+    if draw.textlength(ellipsis, font=font) > max_w:
+        return ""
+    out = ""
+    for ch in text:
+        candidate = out + ch
+        if draw.textlength(candidate + ellipsis, font=font) > max_w:
+            break
+        out = candidate
+    return out + ellipsis
+
+
+def _draw_embed_text_in_margin(
+    bg: Image.Image,
+    lines: List[str],
+    *,
+    margins: Tuple[int, int, int, int],
+    position: str,
+    max_lines: int,
+) -> None:
+    if not lines:
+        return
+
+    ml, mr, mt, mb = margins
+    w_target, h_target = bg.size
+    pos = str(position or "auto").lower()
+    if pos == "auto":
+        candidates = [("top", mt), ("bottom", mb), ("left", ml), ("right", mr)]
+        pos = max(candidates, key=lambda x: x[1])[0]
+
+    if pos == "top":
+        area = (ml, 0, max(0, w_target - mr), mt)
+    elif pos == "bottom":
+        area = (ml, max(0, h_target - mb), max(0, w_target - mr), h_target)
+    elif pos == "left":
+        area = (0, mt, ml, max(0, h_target - mb))
+    elif pos == "right":
+        area = (max(0, w_target - mr), mt, w_target, max(0, h_target - mb))
+    else:
+        return
+
+    x0, y0, x1, y1 = area
+    area_w = max(0, x1 - x0)
+    area_h = max(0, y1 - y0)
+    if area_w < 40 or area_h < 12:
+        return
+
+    draw = ImageDraw.Draw(bg)
+    font = ImageFont.load_default()
+    line_h = max(10, font.getbbox("Ag")[3] - font.getbbox("Ag")[1] + 2)
+
+    fit_lines = max(0, area_h // line_h)
+    line_limit = min(max(1, int(max_lines)), fit_lines)
+    if line_limit <= 0:
+        return
+
+    cropped_lines = lines[:line_limit]
+    if len(lines) > line_limit:
+        cropped_lines[-1] = cropped_lines[-1] + " ..."
+
+    text_x = x0 + 4
+    text_y = y0 + 2
+    max_text_w = max(0, area_w - 8)
+    for line in cropped_lines:
+        if text_y + line_h > y1:
+            break
+        one_line = _truncate_to_width(draw, line, max_text_w, font)
+        if one_line:
+            draw.text((text_x, text_y), one_line, fill=(235, 235, 235), font=font)
+        text_y += line_h
+
+
 def optimize_wallpapers(
     inputs: Sequence[Path | str],
     target_resolution: Tuple[int, int],
@@ -88,6 +207,13 @@ def optimize_wallpapers(
     l_display = kwargs.get("l_display")
     r_display = kwargs.get("r_display")
     _fixed = bool(kwargs.get("fixed", False))
+    embed_info = str(kwargs.get("embed_info", "none")).lower()
+    embed_text = kwargs.get("embed_text")
+    embed_position = str(kwargs.get("embed_position", "auto")).lower()
+    try:
+        embed_max_lines = int(kwargs.get("embed_max_lines", 3))
+    except Exception:
+        embed_max_lines = 3
 
     # Background image
     bg = Image.new("RGB", (w_target, h_target), color=(30, 30, 30))
@@ -176,6 +302,27 @@ def optimize_wallpapers(
         placements.append(pr)
 
     # Save result
+    embed_lines = _build_embed_lines(
+        embed_info,
+        target_resolution=target_resolution,
+        margins=(ml, mr, mt, mb),
+        align=str(kwargs.get("align", "center")).lower(),
+        valign=str(kwargs.get("valign", "center")).lower(),
+        padding=padding,
+        input_count=len(items),
+        two_screen=two_screen,
+        l_display=l_display,
+        r_display=r_display,
+        free_text=embed_text,
+    )
+    _draw_embed_text_in_margin(
+        bg,
+        embed_lines,
+        margins=(ml, mr, mt, mb),
+        position=embed_position,
+        max_lines=embed_max_lines,
+    )
+
     out_path = output_dir / ("harite_wallopt_" + str(abs(hash(tuple(items))))[:8] + ".jpg")
     bg.save(out_path, quality=quality)
     saved_files.append(out_path)

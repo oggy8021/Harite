@@ -169,6 +169,30 @@ def optimize(
         help="Path to JSON config file to load defaults from",
         rich_help_panel="詳細調整",
     ),
+    embed_info: str = typer.Option(
+        "none",
+        "--embed-info",
+        help="Embed info text in margins: none|params|free|combo",
+        rich_help_panel="条件付きオプション（通常は省略可）",
+    ),
+    embed_text: Optional[str] = typer.Option(
+        None,
+        "--embed-text",
+        help="Free text used by --embed-info free|combo",
+        rich_help_panel="条件付きオプション（通常は省略可）",
+    ),
+    embed_position: str = typer.Option(
+        "auto",
+        "--embed-position",
+        help="Margin side for info text: auto|top|bottom|left|right",
+        rich_help_panel="条件付きオプション（通常は省略可）",
+    ),
+    embed_max_lines: int = typer.Option(
+        3,
+        "--embed-max-lines",
+        help="Maximum lines for embedded text",
+        rich_help_panel="詳細調整",
+    ),
 ) -> None:
     """Optimize wallpapers.
 
@@ -182,6 +206,10 @@ def optimize(
     - `margins` はまず有効領域を決め、その内側で `align` / `valign` が効きます。
     - `two-screen` は `--l-display` / `--r-display` 併用時に効きが強くなります。
     - `layout` / `scaling` / `fixed` / `random-seed` は現状の optimize 実装では効きが限定的です。
+
+    余白情報埋め込み:
+    - `--embed-info` は `none|params|free|combo` を指定できます。
+    - `free` / `combo` では `--embed-text` を併用できます。
     """
     # Load config if provided and merge defaults (CLI options override config)
     cfg: dict = {}
@@ -210,6 +238,17 @@ def optimize(
     if not (1 <= quality <= 100):
         typer.echo("--quality must be between 1 and 100")
         raise typer.Exit(code=2)
+    embed_info = str(embed_info or "none").lower()
+    if embed_info not in ("none", "params", "free", "combo"):
+        typer.echo("--embed-info must be one of: none, params, free, combo")
+        raise typer.Exit(code=2)
+    embed_position = str(embed_position or "auto").lower()
+    if embed_position not in ("auto", "top", "bottom", "left", "right"):
+        typer.echo("--embed-position must be one of: auto, top, bottom, left, right")
+        raise typer.Exit(code=2)
+    if embed_max_lines <= 0:
+        typer.echo("--embed-max-lines must be positive")
+        raise typer.Exit(code=2)
 
     # determine inputs (CLI > config)
     eff_input = input if input is not None else cfg.get("input")
@@ -237,6 +276,10 @@ def optimize(
         fixed=fixed,
         align=align or cfg.get("align"),
         valign=valign or cfg.get("valign"),
+        embed_info=embed_info,
+        embed_text=embed_text,
+        embed_position=embed_position,
+        embed_max_lines=embed_max_lines,
     )
     fmt = format.lower()
     if fmt not in ("json", "text"):
