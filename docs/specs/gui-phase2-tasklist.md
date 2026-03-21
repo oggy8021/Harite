@@ -27,3 +27,7 @@
 - Phase 2 で追加した検証ロジックに対してユニットテストがある。
 - GUI経由の optimize/apply の代表失敗パターンが再現テスト化されている。
 - `docs/specs/gui-signal-mapping.md` と矛盾しない。
+
+## 次フェーズ
+
+- Phase 3 の準備タスクは `docs/specs/gui-phase3-tasklist.md` を参照。
