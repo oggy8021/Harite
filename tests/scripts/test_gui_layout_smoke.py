@@ -63,3 +63,52 @@ def test_gui_layout_smoke_validate_fails_without_input(tmp_path: Path):
     data = json.loads(out.read_text(encoding="utf-8"))
     assert data["validation"]["ok"] is False
     assert data["validation"]["input_present"] is False
+
+
+def test_gui_layout_smoke_writes_markdown_report(tmp_path: Path):
+    out_json = tmp_path / "layout-md.json"
+    out_md = tmp_path / "layout.md"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--scope",
+            "windows/gui",
+            "--out-file",
+            str(out_json),
+            "--markdown-out",
+            str(out_md),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, proc.stderr
+    text = out_md.read_text(encoding="utf-8")
+    assert "### Manual device validation" in text
+    assert "- Scope: windows/gui" in text
+    assert "- GUI smoke: pass" in text
+
+
+def test_gui_layout_smoke_markdown_report_can_fail(tmp_path: Path):
+    out_json = tmp_path / "layout-md-fail.json"
+    out_md = tmp_path / "layout-fail.md"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--validate",
+            "--out-file",
+            str(out_json),
+            "--markdown-out",
+            str(out_md),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 1
+    text = out_md.read_text(encoding="utf-8")
+    assert "- GUI smoke: fail" in text
