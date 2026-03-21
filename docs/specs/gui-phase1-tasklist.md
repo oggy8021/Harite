@@ -40,4 +40,4 @@
 - [x] `on_change_input_text` 実装
 - [x] `on_optimize` 実装
 - [x] `on_close` 実装
-- [x] 最小テスト追加（`tests/test_gui_phase1.py`）
+- [x] 最小テスト追加（`tests/gui/test_main_window_signals.py`）
