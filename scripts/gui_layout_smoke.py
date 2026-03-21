@@ -50,11 +50,32 @@ def evaluate_summary(summary: dict) -> dict:
     return checks
 
 
+def build_markdown_report(summary: dict, *, scope: str) -> str:
+    validation = summary.get("validation", {})
+
+    def as_result(value: bool) -> str:
+        return "pass" if value else "fail"
+
+    lines = [
+        "### Manual device validation",
+        f"- Scope: {scope}",
+        f"- title_present: {as_result(bool(validation.get('title_present')))}",
+        f"- plugins_available: {as_result(bool(validation.get('plugins_available')))}",
+        f"- adapter_bound: {as_result(bool(validation.get('adapter_bound')))}",
+        f"- input_present: {as_result(bool(validation.get('input_present')))}",
+        f"- can_optimize: {as_result(bool(validation.get('can_optimize')))}",
+        f"- GUI smoke: {as_result(bool(validation.get('ok')))}",
+    ]
+    return "\n".join(lines) + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="GUI layout smoke runner")
     parser.add_argument("--simulate", action="store_true", help="simulate a few widget actions")
     parser.add_argument("--validate", action="store_true", help="run built-in validation checks and return non-zero on failure")
     parser.add_argument("--out-file", type=Path, help="write JSON summary to path (default stdout)")
+    parser.add_argument("--markdown-out", type=Path, help="write PR-comment-friendly markdown report")
+    parser.add_argument("--scope", default="local/gui-smoke", help="scope text used in markdown report")
     args = parser.parse_args(argv)
 
     win = MainWindow()
@@ -90,6 +111,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.validate:
         summary["validation"] = evaluate_summary(summary)
+
+    if args.markdown_out:
+        if "validation" not in summary:
+            summary["validation"] = evaluate_summary(summary)
+        md = build_markdown_report(summary, scope=args.scope)
+        args.markdown_out.write_text(md, encoding="utf-8")
 
     out_json = json.dumps(summary, indent=2, ensure_ascii=False)
 
