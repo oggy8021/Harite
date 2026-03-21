@@ -268,3 +268,72 @@ def test_gui_layout_smoke_print_report_to_stdout(tmp_path: Path):
     assert proc.returncode == 1
     assert "# GUI Manual Validation Report" in proc.stdout
     assert "| GUI smoke | fail |" in proc.stdout
+
+
+def test_gui_layout_smoke_auto_artifacts_writes_all_outputs(tmp_path: Path):
+    artifact_dir = tmp_path / "out" / "manual-validation"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--auto-artifacts",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--pr-number",
+            "141",
+            "--scope",
+            "windows/gui",
+            "--optimize-result",
+            "pass",
+            "--apply-dry-run-result",
+            "pass",
+            "--apply-do-it-result",
+            "not-available",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    out_json = artifact_dir / "pr-141-windows.json"
+    out_report = artifact_dir / "pr-141-windows.md"
+    out_pr = artifact_dir / "pr-141-windows-pr-comment.md"
+    out_smoke = artifact_dir / "pr-141-windows-smoke.md"
+
+    assert out_json.exists()
+    assert out_report.exists()
+    assert out_pr.exists()
+    assert out_smoke.exists()
+
+    report_text = out_report.read_text(encoding="utf-8")
+    assert "- PR: 141" in report_text
+    assert "- MainWindow: " in report_text
+
+
+def test_gui_layout_smoke_auto_artifacts_uses_scope_fallback_name(tmp_path: Path):
+    artifact_dir = tmp_path / "out" / "manual-validation"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--auto-artifacts",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--pr-number",
+            "142",
+            "--scope",
+            "xfce/linux",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    # scope prefix is used as OS name for artifact keys
+    assert (artifact_dir / "pr-142-xfce.json").exists()

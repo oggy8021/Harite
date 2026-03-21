@@ -100,6 +100,18 @@ python scripts/gui_layout_smoke.py --simulate --validate --scope windows/gui --o
   - `./out/gui-layout.json` に `validation.ok: true` が記録される
   - `./out/gui-layout.md` の `Failed checks` が `none` になる
 
+  補助（推奨, 実機結果の成果物一式を自動生成）:
+
+  ```bash
+  python scripts/gui_layout_smoke.py --simulate --validate --auto-artifacts --artifact-dir out/manual-validation --pr-number 140 --scope windows/gui --operator owner --optimize-result pass --apply-dry-run-result pass --apply-do-it-result not-available
+  ```
+
+  - 生成されるファイル:
+    - `out/manual-validation/pr-140-windows.json`
+    - `out/manual-validation/pr-140-windows.md`
+    - `out/manual-validation/pr-140-windows-pr-comment.md`
+    - `out/manual-validation/pr-140-windows-smoke.md`
+
 スクリーンショット添付フォーマット（PR コメント貼り付け用）:
 
 ```md
@@ -133,12 +145,12 @@ PRごとに以下の命名で保存する。
 
 ```md
 ### Manual device validation
-- Scope: <OS/desktop/plugin>
+- Scope: [OS/desktop/plugin]
 - optimize: pass/fail
 - apply dry-run: pass/fail
 - apply do-it: pass/fail (if executed)
 - GUI smoke (if changed): pass/fail
-- Notes: <error or observation>
+- Notes: [error or observation]
 ```
 
 ## merge 判定
