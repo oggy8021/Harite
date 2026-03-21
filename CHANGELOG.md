@@ -1,41 +1,36 @@
 # CHANGELOG
 
-## Unreleased (2026-03-13)
+## Unreleased
+
+- なし
+
+## 0.1.1 (2026-03-21)
 
 ### Added
-- Monitor-split 機能: ワークスペース検出に基づくモニタ別分割と個別適用フローを追加しました。
-  - CLI フラグ: `--per-monitor`, `--left-file`, `--right-file`, `--auto-split` を実装。
-  - コア: `split_composite_for_displays()` を追加し、合成画像をディスプレイ単位で切り出します。
-  - ワークスペース検出: `detect_displays()` を追加、`Display` データクラスで構造化された情報を返します。
+- 余白情報埋め込み（MVP）を追加。
+  - `--embed-info` (`none|params|free|combo`)
+  - `--embed-text`, `--embed-position`, `--embed-max-lines`
+- スタンドアロン GUI のブートストラップを追加。
+  - `harite-gui` エントリポイント
+  - GUI 骨格 (`src/harite/gui/*`)
+  - 旧 glade 資産の取り込みと signal 対応表
 
-- Linux/XFCE プラグインの改善:
-  - `xfconf-query` の候補を列挙し、dry-run で詳細ログを出力するようにしました。
-  - モニタ名→プロパティのマッピングを受け取り、複数モニタへ個別に適用する機能を追加しました。
-  - dry-run を実行時に存在するファイルで成功を返す互換性改善を行いました（CI 親和性向上）。
-
-- CLI: `apply` コマンドの挙動を拡張し、auto-split のワイヤリングとプラグインマッピングを実装しました。
-
-- CI / 開発体験:
-  - GitHub Actions ワークフローを追加し、Linux/macOS/Windows 上でテストと lint を実行するようにしました。
-  - pip キャッシュパスの OS 別確保とワークフローの修正でキャッシュ警告を低減しました。
+### Changed
+- auto-split の分割クロップを仮想デスクトップ比率ベースへ改善。
+- `optimize --help` と仕様書を実運用フィードバックに合わせて更新。
 
 ### Fixed
-- `src/harite/cli.py` で未定義だった `path_str` の参照を修正しました。
-- Linux プラグインの dry-run 処理で起きていた UnboundLocalError を修正しました。
-- テストの未使用 import を削除して linter（ruff）エラーを解消しました。
+- 低解像度合成画像でも左右分割が破綻しにくいように補正。
+- 余白不足時の情報埋め込みは安全にスキップするように改善。
 
 ### Tests
-- ユニットテストを追加／調整:
-  - workspace 検出、画像分割、Linux プラグインのマッピング・dry-run に関するテストを追加。
-  - 現在テストスイートはローカルで 29 tests passed を確認済み。
+- 分割合成（比率マッピング）回帰テストを追加。
+- 埋め込みオプションのバリデーションと描画テストを追加。
 
-### Docs
-- モニタ分割設計ドキュメントを `docs/specs/monitor-split-design.md` に追加。
+## 0.1.0 (2026-03-20)
 
----
-PR: https://github.com/oggy8021/Harite/pull/4
+### Added
+- Linux/XFCE の適用安定化と monitor-split 系機能を導入。
+- `apply` の `--per-monitor`, `--left-file`, `--right-file`, `--auto-split` を導入。
+- CI（lint/test/build）とリリース運用ドキュメントを整備。
 
-次のステップ（候補）:
-- CHANGELOG を確定してバージョン番号を `pyproject.toml` に反映
-- sdist/wheel を作成して動作確認
-- Git タグ & GitHub Release の作成
