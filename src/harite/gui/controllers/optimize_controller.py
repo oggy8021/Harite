@@ -35,6 +35,24 @@ class OptimizeFormState:
 class OptimizeController:
     """Thin adapter from GUI form values to core.optimize_wallpapers."""
 
+    def _parse_margins(self, margins: Optional[str]) -> tuple[int, int, int, int]:
+        if not margins:
+            return (0, 0, 0, 0)
+
+        parts = [x.strip() for x in margins.split(",")]
+        if len(parts) != 4:
+            raise ValueError("margins must have 4 comma-separated integers")
+
+        try:
+            vals = tuple(int(x) for x in parts)
+        except ValueError as exc:
+            raise ValueError("margins must have 4 comma-separated integers") from exc
+
+        if any(v < 0 for v in vals):
+            raise ValueError("margins must be non-negative")
+
+        return vals
+
     def validate(self, state: OptimizeFormState) -> None:
         if not state.input_value.strip():
             raise ValueError("input is required")
@@ -45,12 +63,18 @@ class OptimizeController:
             raise ValueError("quality must be between 1 and 100")
         if state.embed_info not in ("none", "params", "free", "combo"):
             raise ValueError("embed_info must be one of: none, params, free, combo")
+        self._parse_margins(state.margins)
+        if state.l_display:
+            parse_resolution(state.l_display)
+        if state.r_display:
+            parse_resolution(state.r_display)
 
     def run_optimize(self, state: OptimizeFormState) -> tuple[list[Path], list]:
         self.validate(state)
         w, h = parse_resolution(state.resolution)
         inputs = [p.strip() for p in state.input_value.split(",") if p.strip()]
         output = Path(state.output_dir)
+        margins = self._parse_margins(state.margins)
 
         return optimize_wallpapers(
             inputs=inputs,
@@ -61,7 +85,7 @@ class OptimizeController:
             padding=state.padding,
             quality=state.quality,
             two_screen=state.two_screen,
-            margins=(0, 0, 0, 0) if not state.margins else tuple(int(x.strip()) for x in state.margins.split(",")),
+            margins=margins,
             l_display=None if not state.l_display else parse_resolution(state.l_display),
             r_display=None if not state.r_display else parse_resolution(state.r_display),
             fixed=state.fixed,
