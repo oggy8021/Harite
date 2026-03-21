@@ -23,7 +23,7 @@
 
 ## タスク
 
-- [ ] Step 1: 実UI導入の境界を固定（framework依存を adapter 層に閉じ込める設計メモ作成）
+- [x] Step 1: 実UI導入の境界を固定（framework依存を adapter 層に閉じ込める設計メモ作成）
 - [ ] Step 2: signal mapping の "dropped" 項目を Phase 3 対象/非対象に再分類
 - [ ] Step 3: MainWindow の状態モデルを UI バインド向けに明文化（入力・エラー・ログ・出力）
 - [ ] Step 4: GUI統合テスト最小セットを定義（headless smoke / signal-to-handler / apply safety）
@@ -35,6 +35,10 @@
 2. docs(gui): reclassify signal mapping for phase3
 3. test(gui): define integration smoke matrix
 4. feat(gui): add UI loader prototype behind safe entrypoint
+
+## 成果物
+
+- Step 1: `docs/specs/gui-phase3-adapter-boundary.md`
 
 ## DoD
 
