@@ -3,7 +3,7 @@ import importlib.util
 
 
 def _load_collect_images():
-    runner_path = Path(__file__).resolve().parents[1] / "scripts" / "xfce_smoke_runner.py"
+    runner_path = Path(__file__).resolve().parents[2] / "scripts" / "xfce_smoke_runner.py"
     spec = importlib.util.spec_from_file_location("xfce_smoke_runner", runner_path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
