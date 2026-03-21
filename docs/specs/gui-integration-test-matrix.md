@@ -1,6 +1,6 @@
 # GUI Integration Test Matrix（Phase 3 最小セット）
 
-最終更新: 2026-03-21
+最終更新: 2026-03-22
 
 ## 目的
 
@@ -70,3 +70,18 @@
 - 実UI adapter 追加時は、まず headless smoke が通ることを優先する。
 - backend 依存の統合テストは常時必須にせず、別ジョブまたは条件付きで運用する。
 - `MainWindow` の state contract を壊す変更は、対応する signal テストを同PRで更新する。
+
+## CI smoke と manual gate の責務分離
+
+| 項目 | CI smoke の責務 | manual gate の責務 |
+| --- | --- | --- |
+| 目的 | import/run と state contract の回帰検出 | 実機依存挙動と運用証跡の確認 |
+| 実行環境 | headless（backend 非依存） | 実機（Windows/XFCE/macOS 利用可能環境） |
+| 主対象 | `tests/gui/*` と `scripts/gui_layout_smoke.py --simulate --validate` | `scripts/gui_layout_smoke.py --auto-artifacts` または `--strict-manual` |
+| 成功基準 | pytest green, GUI smoke pass | Result matrix 記録と PR 添付証跡の整合 |
+| 失敗時対応 | 同PR内で修正必須 | 原因記録後に修正PRを先行 |
+
+運用メモ:
+
+- GUI プレースホルダ期間は `--auto-artifacts` を既定とし、スクリーンショットは `not-available` を許容する。
+- 実ウィンドウ表示が可能になったら `--strict-manual` を既定へ切り替える。
