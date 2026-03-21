@@ -19,10 +19,32 @@ from harite.gui.views.main_window import MainWindow
 from harite.gui.adapters.fake_adapter import create_fake_widget_map
 
 
+VALID_MANUAL_RESULTS = {"pass", "fail", "not-available"}
+
+
 def _scope_os_name(scope: str) -> str:
     raw = (scope or "local").split("/", 1)[0].strip().lower()
     safe = "".join(ch if (ch.isalnum() or ch in "-_") else "-" for ch in raw)
     return safe.strip("-_") or "local"
+
+
+def _normalize_manual_result(raw: str) -> str:
+    value = (raw or "").strip().lower()
+    if value in VALID_MANUAL_RESULTS:
+        return value
+
+    legacy_alias = {
+        "n/a": "not-available",
+        "na": "not-available",
+        "n/a (manual)": "not-available",
+        "n/a (if executed)": "not-available",
+    }
+    if value in legacy_alias:
+        return legacy_alias[value]
+
+    raise ValueError(
+        f"invalid manual result '{raw}'. expected one of: pass, fail, not-available"
+    )
 
 
 def collect_summary(mainwindow: Any) -> dict:
@@ -179,13 +201,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--date", default=date.today().isoformat(), help="date text used in report (YYYY-MM-DD)")
     parser.add_argument("--operator", default="", help="operator name used in report")
     parser.add_argument("--notes", default="", help="notes text used in PR comment template")
-    parser.add_argument("--optimize-result", default="n/a (manual)", help="value for optimize line in PR comment")
-    parser.add_argument("--apply-dry-run-result", default="n/a (manual)", help="value for apply dry-run line in PR comment")
-    parser.add_argument("--apply-do-it-result", default="n/a (if executed)", help="value for apply do-it line in PR comment")
+    parser.add_argument("--optimize-result", default="not-available", help="manual result: pass/fail/not-available")
+    parser.add_argument("--apply-dry-run-result", default="not-available", help="manual result: pass/fail/not-available")
+    parser.add_argument("--apply-do-it-result", default="not-available", help="manual result: pass/fail/not-available")
     parser.add_argument("--screenshot-mainwindow", default="", help="path for MainWindow screenshot used in report")
     parser.add_argument("--screenshot-optimize", default="", help="path for Optimize screenshot used in report")
     parser.add_argument("--screenshot-apply", default="", help="path for Apply screenshot used in report")
     args = parser.parse_args(argv)
+
+    try:
+        args.optimize_result = _normalize_manual_result(args.optimize_result)
+        args.apply_dry_run_result = _normalize_manual_result(args.apply_dry_run_result)
+        args.apply_do_it_result = _normalize_manual_result(args.apply_do_it_result)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
 
     if args.auto_artifacts:
         os_name = _scope_os_name(args.scope)

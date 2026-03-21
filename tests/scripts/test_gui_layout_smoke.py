@@ -158,7 +158,7 @@ def test_gui_layout_smoke_writes_pr_comment_template(tmp_path: Path):
             "--apply-dry-run-result",
             "pass",
             "--apply-do-it-result",
-            "fail (not executed)",
+            "not-available",
             "--out-file",
             str(out_json),
             "--pr-comment-out",
@@ -174,7 +174,7 @@ def test_gui_layout_smoke_writes_pr_comment_template(tmp_path: Path):
     assert "- Scope: windows/gui" in text
     assert "- optimize: pass" in text
     assert "- apply dry-run: pass" in text
-    assert "- apply do-it: fail (not executed)" in text
+    assert "- apply do-it: not-available" in text
     assert "- GUI smoke: pass" in text
     assert "- Notes: manual screenshots attached" in text
 
@@ -337,3 +337,57 @@ def test_gui_layout_smoke_auto_artifacts_uses_scope_fallback_name(tmp_path: Path
     assert proc.returncode == 0, proc.stderr
     # scope prefix is used as OS name for artifact keys
     assert (artifact_dir / "pr-142-xfce.json").exists()
+
+
+def test_gui_layout_smoke_normalizes_legacy_manual_result_aliases(tmp_path: Path):
+    out_json = tmp_path / "layout-legacy-alias.json"
+    out_pr = tmp_path / "pr-comment-legacy.md"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--optimize-result",
+            "n/a (manual)",
+            "--apply-dry-run-result",
+            "n/a",
+            "--apply-do-it-result",
+            "na",
+            "--out-file",
+            str(out_json),
+            "--pr-comment-out",
+            str(out_pr),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    text = out_pr.read_text(encoding="utf-8")
+    assert "- optimize: not-available" in text
+    assert "- apply dry-run: not-available" in text
+    assert "- apply do-it: not-available" in text
+
+
+def test_gui_layout_smoke_rejects_invalid_manual_result(tmp_path: Path):
+    out_json = tmp_path / "layout-invalid-result.json"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--optimize-result",
+            "maybe",
+            "--out-file",
+            str(out_json),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 2
+    assert "invalid manual result" in proc.stderr
