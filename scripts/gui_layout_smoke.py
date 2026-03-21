@@ -261,7 +261,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--screenshot-apply", default="", help="path for Apply screenshot used in report")
     parser.add_argument("--require-screenshots", action="store_true", help="fail when report/pr-comment screenshot paths are missing")
     parser.add_argument("--verify-screenshot-files", action="store_true", help="fail when screenshot file paths do not exist")
+    parser.add_argument("--strict-manual", action="store_true", help="enable strict manual-validation checks and artifact outputs")
     args = parser.parse_args(argv)
+
+    if args.strict_manual:
+        args.auto_artifacts = True
+        args.require_screenshots = True
+        args.verify_screenshot_files = True
 
     try:
         args.optimize_result = _normalize_manual_result(args.optimize_result)

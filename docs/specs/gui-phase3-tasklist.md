@@ -63,6 +63,7 @@
 - 完了: M3-2準備（手動結果ステータスを `pass/fail/not-available` に正規化し、旧表記を互換吸収）
 - 完了: M3-3準備（`--require-screenshots` で添付漏れを検出し、レポート運用を強制可能化）
 - 完了: M3-4準備（`--verify-screenshot-files` で添付パス実体の存在確認を追加）
+- 完了: M3-5準備（`--strict-manual` で必須チェックと成果物出力を一括有効化）
 
 ## 次マイルストーン（Phase 3 後半）
 
@@ -90,6 +91,7 @@
 - [x] M3-2a: 手動結果ステータス入力の正規化（pass/fail/not-available）
 - [x] M3-3a: スクリーンショット必須モード（`--require-screenshots`）を追加
 - [x] M3-4a: スクリーンショット実ファイル存在チェック（`--verify-screenshot-files`）を追加
+- [x] M3-5a: 厳格運用モード（`--strict-manual`）を追加
 - [ ] M3-2b: 実機確認1件分を `pr-comment` へ添付して標準フォーマット運用を確定
 
 ## 小PR分割（推奨）

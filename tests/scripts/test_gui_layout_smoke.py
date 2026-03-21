@@ -514,3 +514,63 @@ def test_gui_layout_smoke_verify_screenshot_files_passes_when_present(tmp_path: 
 
     assert proc.returncode == 0, proc.stderr
     assert out_report.exists()
+
+
+def test_gui_layout_smoke_strict_manual_fails_without_screenshots(tmp_path: Path):
+    artifact_dir = tmp_path / "out" / "manual-validation"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--strict-manual",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--pr-number",
+            "145",
+            "--scope",
+            "windows/gui",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 4
+    assert "missing screenshot file(s):" in proc.stderr
+
+
+def test_gui_layout_smoke_strict_manual_passes_with_existing_screenshots(tmp_path: Path):
+    artifact_dir = tmp_path / "out" / "manual-validation"
+    main = artifact_dir / "pr-145-windows-mainwindow.png"
+    optimize = artifact_dir / "pr-145-windows-optimize.png"
+    apply = artifact_dir / "pr-145-windows-apply.png"
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    main.write_bytes(b"x")
+    optimize.write_bytes(b"x")
+    apply.write_bytes(b"x")
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--strict-manual",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--pr-number",
+            "145",
+            "--scope",
+            "windows/gui",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    assert (artifact_dir / "pr-145-windows.json").exists()
+    assert (artifact_dir / "pr-145-windows.md").exists()
+    assert (artifact_dir / "pr-145-windows-pr-comment.md").exists()
