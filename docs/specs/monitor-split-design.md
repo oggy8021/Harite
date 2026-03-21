@@ -66,7 +66,7 @@ CLI 仕様
 - ユニットテスト
   - `tests/workspace/test_workspace_detect.py` : `xrandr` 出力サンプルをパースし `Display` リストが期待通りであることを確かめる（primary、offsets を含む）。
   - `tests/test_split_image.py` : ダミー合成画像（左右異なる色）を作成し `auto_split` が左右を正しく切り出すことを検証する。
-  - `tests/test_plugins_linux_mapping.py` : モック subprocess の出力を用いて XFCE プロパティを解析、与えたモニタ名に対して正しい `xfconf-query` コマンドが実行されることを検証する（dry-run でコマンド列を確認）。
+  - `tests/plugins/test_plugins_linux_mapping.py` : モック subprocess の出力を用いて XFCE プロパティを解析、与えたモニタ名に対して正しい `xfconf-query` コマンドが実行されることを検証する（dry-run でコマンド列を確認）。
 - 結合テスト（手動）
   - 実機で `--do-it` を指定して左右別ファイルがそれぞれのモニタに反映されることを確認する（ユーザによる検証手順を docs に記載する）。
 
