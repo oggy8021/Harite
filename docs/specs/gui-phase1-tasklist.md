@@ -5,6 +5,7 @@
 ## 目的
 
 - MVP 先行の 3 signal 実装を、短いサイクルで確実に終わらせる。
+- 本ドキュメントは Phase 1 完了後の参照用（as-built）として保持する。
 
 ## 対象 signal
 
@@ -27,7 +28,7 @@
 - DoD: 常駐プロセスを残さず終了する
 
 5. 最小テストを追加
-- DoD: controller 単体で validate と run_optimize の正常/異常ケースを確認
+- DoD: MainWindow ハンドラの主要正常/異常ケースを確認
 
 ## 完了判定
 
