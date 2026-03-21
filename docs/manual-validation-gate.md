@@ -76,6 +76,20 @@ harite apply --plugin windows --file ./out/wallpaper_001.jpg --do-it
 
 - 現状の GUI はプレースホルダ実装のため、起動時はウィンドウ表示ではなくコンソールに状態を表示する。
 
+### 暫定運用（GUIプレースホルダ期間）
+
+- `python -m harite.gui.app` で実ウィンドウが表示されない間は、3枚スクリーンショット取得を `not-available` として扱う。
+- この期間は `--strict-manual` を既定手順にしない（`--require-screenshots` / `--verify-screenshot-files` が有効になり失敗するため）。
+- 代わりに `--auto-artifacts` で JSON/Markdown/PRコメント成果物を生成し、Notes に「GUI はプレースホルダ実装のため画面取得未実施」を明記する。
+
+暫定コマンド例（XFCE）:
+
+```bash
+python scripts/gui_layout_smoke.py --simulate --validate --auto-artifacts --artifact-dir out/manual-validation --pr-number 146 --scope xfce/gui --operator owner --optimize-result pass --apply-dry-run-result pass --apply-do-it-result not-available
+```
+
+- 実ウィンドウ実装後に `--strict-manual` 運用へ戻す。
+
 ### ウィンドウ別チェックリスト（実機確認、推奨 2 分）
 
 - **MainWindow（メイン）**: タイトルが表示されること、主要ボタン（Optimize、Apply）が存在すること、入力欄が表示され値が編集可能であること。スクリーンショットを1枚取得。
@@ -122,6 +136,7 @@ python scripts/gui_layout_smoke.py --simulate --validate --scope windows/gui --o
   ```
 
   - `--strict-manual` は `--auto-artifacts` + `--require-screenshots` + `--verify-screenshot-files` をまとめて有効化する。
+  - 実ウィンドウが表示される実装フェーズで有効化する（プレースホルダ期間は暫定運用を優先）。
 
   - `--optimize-result` / `--apply-dry-run-result` / `--apply-do-it-result` は `pass|fail|not-available` を使う。
   - 旧表記 `n/a`, `na`, `n/a (manual)`, `n/a (if executed)` は `not-available` として扱われる。

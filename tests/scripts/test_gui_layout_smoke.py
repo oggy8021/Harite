@@ -310,7 +310,8 @@ def test_gui_layout_smoke_auto_artifacts_writes_all_outputs(tmp_path: Path):
 
     report_text = out_report.read_text(encoding="utf-8")
     assert "- PR: 141" in report_text
-    assert "- MainWindow: " in report_text
+    assert "## Screenshots" not in report_text
+    assert "- Screenshot(mainwindow):" not in report_text
 
 
 def test_gui_layout_smoke_auto_artifacts_uses_scope_fallback_name(tmp_path: Path):
@@ -445,6 +446,9 @@ def test_gui_layout_smoke_require_screenshots_passes_with_paths(tmp_path: Path):
 
     assert proc.returncode == 0, proc.stderr
     assert out_report.exists()
+    text = out_report.read_text(encoding="utf-8")
+    assert "## Screenshots" in text
+    assert "- MainWindow: out/manual-validation/pr-143-windows-mainwindow.png" in text
 
 
 def test_gui_layout_smoke_verify_screenshot_files_fails_when_missing(tmp_path: Path):
@@ -574,3 +578,6 @@ def test_gui_layout_smoke_strict_manual_passes_with_existing_screenshots(tmp_pat
     assert (artifact_dir / "pr-145-windows.json").exists()
     assert (artifact_dir / "pr-145-windows.md").exists()
     assert (artifact_dir / "pr-145-windows-pr-comment.md").exists()
+    report_text = (artifact_dir / "pr-145-windows.md").read_text(encoding="utf-8")
+    assert "## Screenshots" in report_text
+    assert "- Screenshot(mainwindow): out/manual-validation/pr-145-windows-mainwindow.png" in report_text
