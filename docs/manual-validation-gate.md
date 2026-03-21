@@ -28,6 +28,7 @@
 - `pass` / `fail` / `not-available` の3値で記録する。
 - `fail` は再現手順を Notes に1行以上で残す。
 - `not-available` は理由（端末なし、plugin未導入など）を Notes に残す。
+- `GUI Manual Validation Report` の Result matrix では、`optimize` / `apply dry-run` / `apply do-it` の Notes 列は `manual declaration` として出力される（手動記録であることを明示）。
 
 ## 最小ゲート（3分）
 

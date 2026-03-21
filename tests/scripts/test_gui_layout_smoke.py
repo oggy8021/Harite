@@ -241,8 +241,8 @@ def test_gui_layout_smoke_writes_full_validation_report(tmp_path: Path):
     text = out_report.read_text(encoding="utf-8")
     assert "# GUI Manual Validation Report" in text
     assert "- PR: 140" in text
-    assert "| optimize | pass | |" in text
-    assert "| apply do-it | not-available | |" in text
+    assert "| optimize | pass | manual declaration |" in text
+    assert "| apply do-it | not-available | manual declaration |" in text
     assert "- MainWindow: out/manual-validation/pr-140-windows-mainwindow.png" in text
 
 
