@@ -185,3 +185,13 @@ def test_build_optimize_cli_preview_includes_optional_flags(tmp_path):
     assert "--margins 1,2,3,4" in preview
     assert "--fixed" in preview
     assert "--embed-text hello" in preview
+
+
+def test_on_close_error_dialog_clears_last_error():
+    window = MainWindow()
+    window.last_error = "something failed"
+
+    window.on_close_error_dialog()
+
+    assert window.last_error == ""
+    assert "Error dialog closed" in window.logs
