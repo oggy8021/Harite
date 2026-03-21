@@ -27,7 +27,7 @@
 - マージ: squash-merge を推奨（履歴を簡潔にするため）。
 
 ## 既存決定のログ（要約）
-- `tests/test_cli_replacements.py` が初期失敗 → fixture を fullwidth に修正して期待値と整合化。
+- `tests/cli/test_cli_replacements.py` が初期失敗 → fixture を fullwidth に修正して期待値と整合化。
 - `apply_docs_replacements.py` に `--skip-pattern` を追加して英語ファイルの誤変換リスクを低減。
 
 ---
