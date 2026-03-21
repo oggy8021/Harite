@@ -53,6 +53,16 @@
 | wallpositapplet.glade | btnAbout | clicked | on_btnAbout_clicked | N/A | dropped | MVP後回し |
 | wallpositapplet.glade | btnHelp | clicked | (未指定) | N/A | dropped | MVP後回し |
 
+### Phase 3 での再分類（dropped 項目）
+
+| Legacy file | Widget ID | Legacy signal | Phase 3 判定 | 理由 |
+|---|---|---|---|---|
+| wallpositapplet.glade | btnDaemonize | clicked | 非対象 | 常駐機能（daemon/tray）は Phase 3 でもスコープ外 |
+| wallpositapplet.glade | btnCancelDaemonize | clicked | 非対象 | 常駐機能（daemon/tray）は Phase 3 でもスコープ外 |
+| wallpositapplet.glade | spnInterval | value_changed | 非対象 | 定期実行は常駐設計に依存するため対象外 |
+| wallpositapplet.glade | btnAbout | clicked | 対象 | 非常駐の情報ダイアログとして安全に追加可能 |
+| wallpositapplet.glade | btnHelp | clicked | 対象 | 外部ドキュメント導線としてロジック影響が小さい |
+
 ### ダイアログ系（後続）
 
 | Legacy file | Widget ID | Legacy signal | Legacy handler | New controller method | Status | Notes |
