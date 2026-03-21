@@ -27,7 +27,7 @@
 - [x] Step 2: signal mapping の "dropped" 項目を Phase 3 対象/非対象に再分類
 - [x] Step 3: MainWindow の状態モデルを UI バインド向けに明文化（入力・エラー・ログ・出力）
 - [x] Step 4: GUI統合テスト最小セットを定義（headless smoke / signal-to-handler / apply safety）
-- [ ] Step 5: 実UIの最小読み込みプロトタイプ（読み込みのみ、操作は未接続）を別PRで追加
+- [x] Step 5: 実UIの最小読み込みプロトタイプ（読み込みのみ、操作は未接続）を別PRで追加
 
 ## 小PR分割（推奨）
 
@@ -42,6 +42,7 @@
 - Step 2: `docs/specs/gui-signal-mapping.md`（Phase 3 での再分類表）
 - Step 3: `docs/specs/gui-mainwindow-state-model.md`
 - Step 4: `docs/specs/gui-integration-test-matrix.md`
+- Step 5: `src/harite/gui/adapters/ui_loader.py`, `src/harite/gui/app.py`, `tests/gui/test_ui_loader_prototype.py`
 
 ## DoD
 
