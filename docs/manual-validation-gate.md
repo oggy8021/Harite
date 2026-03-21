@@ -106,6 +106,14 @@ python scripts/gui_layout_smoke.py --simulate --validate --scope windows/gui --o
   python scripts/gui_layout_smoke.py --simulate --validate --auto-artifacts --artifact-dir out/manual-validation --pr-number 140 --scope windows/gui --operator owner --optimize-result pass --apply-dry-run-result pass --apply-do-it-result not-available
   ```
 
+  実機確認でスクリーンショット添付を必須化する場合:
+
+  ```bash
+  python scripts/gui_layout_smoke.py --simulate --validate --auto-artifacts --artifact-dir out/manual-validation --pr-number 140 --scope windows/gui --report-out out/manual-validation/pr-140-windows.md --require-screenshots --screenshot-mainwindow out/manual-validation/pr-140-windows-mainwindow.png --screenshot-optimize out/manual-validation/pr-140-windows-optimize.png --screenshot-apply out/manual-validation/pr-140-windows-apply.png
+  ```
+
+  - いずれかのスクリーンショットパスが未指定の場合は終了コード `3` で失敗する。
+
   - `--optimize-result` / `--apply-dry-run-result` / `--apply-do-it-result` は `pass|fail|not-available` を使う。
   - 旧表記 `n/a`, `na`, `n/a (manual)`, `n/a (if executed)` は `not-available` として扱われる。
 

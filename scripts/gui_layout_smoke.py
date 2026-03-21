@@ -47,6 +47,32 @@ def _normalize_manual_result(raw: str) -> str:
     )
 
 
+def _validate_required_screenshots(
+    *,
+    require_screenshots: bool,
+    screenshot_mainwindow: str,
+    screenshot_optimize: str,
+    screenshot_apply: str,
+) -> tuple[bool, str]:
+    if not require_screenshots:
+        return True, ""
+
+    missing = []
+    for label, raw in (
+        ("mainwindow", screenshot_mainwindow),
+        ("optimize", screenshot_optimize),
+        ("apply", screenshot_apply),
+    ):
+        value = (raw or "").strip()
+        if not value or "[path or attached]" in value:
+            missing.append(label)
+
+    if missing:
+        return False, f"missing required screenshot path(s): {', '.join(missing)}"
+
+    return True, ""
+
+
 def collect_summary(mainwindow: Any) -> dict:
     bindings = getattr(mainwindow, "_adapter_bindings", None)
     if isinstance(bindings, dict) and "file" in bindings:
@@ -207,6 +233,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--screenshot-mainwindow", default="", help="path for MainWindow screenshot used in report")
     parser.add_argument("--screenshot-optimize", default="", help="path for Optimize screenshot used in report")
     parser.add_argument("--screenshot-apply", default="", help="path for Apply screenshot used in report")
+    parser.add_argument("--require-screenshots", action="store_true", help="fail when report/pr-comment screenshot paths are missing")
     args = parser.parse_args(argv)
 
     try:
@@ -316,6 +343,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.report_out:
         if "validation" not in summary:
             summary["validation"] = evaluate_summary(summary)
+
+        ok, message = _validate_required_screenshots(
+            require_screenshots=args.require_screenshots,
+            screenshot_mainwindow=args.screenshot_mainwindow,
+            screenshot_optimize=args.screenshot_optimize,
+            screenshot_apply=args.screenshot_apply,
+        )
+        if not ok:
+            print(message, file=sys.stderr)
+            return 3
+
         report_md = build_validation_report(
             summary,
             pr_number=args.pr_number,
@@ -334,6 +372,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.print_report:
         if "validation" not in summary:
             summary["validation"] = evaluate_summary(summary)
+
+        ok, message = _validate_required_screenshots(
+            require_screenshots=args.require_screenshots,
+            screenshot_mainwindow=args.screenshot_mainwindow,
+            screenshot_optimize=args.screenshot_optimize,
+            screenshot_apply=args.screenshot_apply,
+        )
+        if not ok:
+            print(message, file=sys.stderr)
+            return 3
+
         print(
             build_validation_report(
                 summary,
