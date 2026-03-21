@@ -10,7 +10,7 @@ pulling in GUI toolkit dependencies.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 from .ui_loader import UiLoadResult
 
@@ -30,6 +30,60 @@ LEGACY_HANDLER_MAP: dict[str, str] = {
     "on_ColorSelectionDialog_destroy": "on_close_color_dialog",
     "on_SrcdirDialog_destroy": "on_close_srcdir_dialog",
 }
+
+
+def create_mainwindow_signal_dispatch(
+    mainwindow: Any,
+    glade_handlers: tuple[str, ...],
+    handler_map: Mapping[str, str] | None = None,
+) -> dict[str, Callable[..., Any]]:
+    """Create a legacy-handler to bound-method dispatch table.
+
+    This table is the bridge for real widget binding in later steps:
+    adapters can connect legacy signal handlers directly to callables from
+    this mapping without importing toolkit-specific code here.
+    """
+    mapping = dict(handler_map or LEGACY_HANDLER_MAP)
+    dispatch: dict[str, Callable[..., Any]] = {}
+
+    for legacy_name, method_name in mapping.items():
+        if legacy_name not in glade_handlers:
+            continue
+        target = getattr(mainwindow, method_name, None)
+        if callable(target):
+            dispatch[legacy_name] = target
+
+    return dispatch
+
+
+def connect_signal_dispatch(
+    signal_backend: Any,
+    dispatch: Mapping[str, Callable[..., Any]],
+) -> dict[str, Any]:
+    """Connect dispatch handlers to a backend-provided signal API.
+
+    Supported backend styles:
+    - `connect_signals(mapping)`
+    - `connect(handler_name, callback)`
+    """
+    if hasattr(signal_backend, "connect_signals") and callable(signal_backend.connect_signals):
+        signal_backend.connect_signals(dict(dispatch))
+        return {
+            "strategy": "connect_signals",
+            "connected_handlers": tuple(sorted(dispatch.keys())),
+            "connected_count": len(dispatch),
+        }
+
+    if hasattr(signal_backend, "connect") and callable(signal_backend.connect):
+        for handler_name, callback in dispatch.items():
+            signal_backend.connect(handler_name, callback)
+        return {
+            "strategy": "connect",
+            "connected_handlers": tuple(sorted(dispatch.keys())),
+            "connected_count": len(dispatch),
+        }
+
+    raise TypeError("signal backend must provide connect_signals(mapping) or connect(name, callback)")
 
 
 def validate_mainwindow_signal_mapping(
@@ -56,7 +110,11 @@ def validate_mainwindow_signal_mapping(
     }
 
 
-def bind_mainwindow(mainwindow: Any, ui_result: UiLoadResult) -> None:
+def bind_mainwindow(
+    mainwindow: Any,
+    ui_result: UiLoadResult,
+    signal_backend: Any | None = None,
+) -> None:
     """Bind a `MainWindow`-like object to the parsed UI prototype.
 
     For the prototype this simply stores binding metadata on the target object
@@ -74,6 +132,11 @@ def bind_mainwindow(mainwindow: Any, ui_result: UiLoadResult) -> None:
             mainwindow,
             ui_result.signal_handlers,
         )
+        dispatch = create_mainwindow_signal_dispatch(mainwindow, ui_result.signal_handlers)
+        setattr(mainwindow, "_adapter_signal_dispatch", dispatch)
+        metadata["dispatch_handlers"] = tuple(sorted(dispatch.keys()))
+        if signal_backend is not None:
+            metadata["signal_connection"] = connect_signal_dispatch(signal_backend, dispatch)
 
     # Store on the target object using a private attribute to avoid changing
     # public APIs of `MainWindow` for now.

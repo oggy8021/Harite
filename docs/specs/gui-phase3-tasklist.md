@@ -33,26 +33,29 @@
 
 - Phase 3 の初期計画（Step 1-5）は完了。
 - 追加で、実機検証運用を回しやすくする補助実装を完了。
-	- `src/harite/gui/adapters/ui_adapter.py`（最小バインド）
-	- `src/harite/gui/adapters/fake_adapter.py`（headless検証向け）
-	- `scripts/gui_layout_smoke.py`（validate / markdown / PRコメント出力）
-	- `tests/scripts/test_gui_layout_smoke.py`（運用オプションの回帰テスト）
-	- `docs/manual-validation-gate.md`（実機確認フロー更新）
+  - `src/harite/gui/adapters/ui_adapter.py`（最小バインド）
+  - `src/harite/gui/adapters/fake_adapter.py`（headless検証向け）
+  - `scripts/gui_layout_smoke.py`（validate / markdown / PRコメント出力）
+  - `tests/scripts/test_gui_layout_smoke.py`（運用オプションの回帰テスト）
+  - `docs/manual-validation-gate.md`（実機確認フロー更新）
 
 ## 進行管理ルール（この先）
 
 - このドキュメントは「完了済みタスク表」ではなく、現在地と次マイルストーンの管理に使う。
 - 小PR単位で進め、各PRは 1 目的に限定する。
 - 更新ルール:
-	- 新しい管理対象を始める時: `次マイルストーン` に項目追加。
-	- PR merge 時: 該当項目を `進捗ログ` に移し、状態を更新。
-	- 実機確認が必要な変更時: `docs/manual-validation-gate.md` のテンプレート記録を必須化。
+  - 新しい管理対象を始める時: `次マイルストーン` に項目追加。
+  - PR merge 時: 該当項目を `進捗ログ` に移し、状態を更新。
+  - 実機確認が必要な変更時: `docs/manual-validation-gate.md` のテンプレート記録を必須化。
 
 ## 進捗ログ（2026-03-21時点）
 
 - 完了: Phase 3 Step 1-5（設計固定、mapping再分類、状態モデル、統合テスト観点、UI loader試作）
 - 完了: 実機検証補助の強化（smoke validate、markdown出力、失敗チェック表示、PRコメントテンプレート）
 - 完了: `.pyc` 追跡解除と再発防止（`__pycache__/`, `*.pyc` ignore）
+- 完了: M1-1（glade signal handler 抽出 + `MainWindow` への mapping 検証）
+- 完了: M1-2（adapter dispatch API 追加 + bind metadata へ接続ハンドラ記録）
+- 完了: M1-3（backend signal connect 実装: `connect_signals(mapping)` / `connect(name, callback)` を adapter で吸収）
 
 ## 次マイルストーン（Phase 3 後半）
 
@@ -60,6 +63,12 @@
 - [ ] M2: 主要画面の配置/表示の実機確認（Windows/XFCE/macOSのうち利用可能環境）
 - [ ] M3: 実機確認結果を PR コメントに標準フォーマットで記録（スクリーンショット付き）
 - [ ] M4: 実UI導入後の最小回帰セットを固定（CI smoke + manual gate の責務分離）
+
+## M1 詳細進捗
+
+- [x] M1-1: glade の handler 抽出と legacy handler -> `MainWindow` メソッドの妥当性検証
+- [x] M1-2: present handler 向け dispatch table を生成し、bind 時に `_adapter_signal_dispatch` と metadata へ保持
+- [x] M1-3: 実UI backend 側で dispatch table を使った connect 実装（backend依存は adapter 内に限定）
 
 ## 小PR分割（推奨）
 
