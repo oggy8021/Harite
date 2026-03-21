@@ -84,6 +84,10 @@ Status 値:
 
 ## 受け入れ基準
 
-- MVP 対象 signal がすべて `mapped` 以上になっている
+- MVP 対象 signal がすべて `implemented` になっている
 - `dropped` は理由が記録されている
 - MainWindow 初期表示から optimize 実行までの signal が追跡できる
+
+## 現在ステータス
+
+- 2026-03-21 時点で、MVP 対象 signal はすべて `implemented`。
