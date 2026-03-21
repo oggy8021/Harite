@@ -198,6 +198,10 @@ def build_validation_report(
     gui_smoke = "pass" if bool(validation.get("ok")) else "fail"
     failed = ", ".join(validation.get("failed_checks", [])) or "none"
     os_name = scope.split("/", 1)[0] if "/" in scope else scope
+    has_screenshots = any(
+        (raw or "").strip()
+        for raw in (screenshot_mainwindow, screenshot_optimize, screenshot_apply)
+    )
 
     lines = [
         "# GUI Manual Validation Report",
@@ -216,22 +220,32 @@ def build_validation_report(
         f"| apply do-it | {apply_do_it_result} | |",
         f"| GUI smoke | {gui_smoke} | failed checks: {failed} |",
         "",
-        "## Screenshots",
-        f"- MainWindow: {screenshot_mainwindow or '[path or attached]'}",
-        f"- Optimize form: {screenshot_optimize or '[path or attached]'}",
-        f"- Apply area: {screenshot_apply or '[path or attached]'}",
-        "",
         "## Artifact paths",
         f"- JSON: out/manual-validation/pr-{pr_number}-{os_name}.json",
         f"- Markdown: out/manual-validation/pr-{pr_number}-{os_name}.md",
-        f"- Screenshot(mainwindow): out/manual-validation/pr-{pr_number}-{os_name}-mainwindow.png",
-        f"- Screenshot(optimize): out/manual-validation/pr-{pr_number}-{os_name}-optimize.png",
-        f"- Screenshot(apply): out/manual-validation/pr-{pr_number}-{os_name}-apply.png",
         "",
         "## Failures",
         f"- Repro steps: {'[required if status=fail]' if failed == 'none' else failed}",
         "- Follow-up issue/PR: [optional]",
     ]
+
+    if has_screenshots:
+        insert_at = lines.index("## Artifact paths")
+        lines[insert_at:insert_at] = [
+            "## Screenshots",
+            f"- MainWindow: {screenshot_mainwindow}",
+            f"- Optimize form: {screenshot_optimize}",
+            f"- Apply area: {screenshot_apply}",
+            "",
+        ]
+        artifact_at = lines.index("## Failures")
+        lines[artifact_at:artifact_at] = [
+            f"- Screenshot(mainwindow): out/manual-validation/pr-{pr_number}-{os_name}-mainwindow.png",
+            f"- Screenshot(optimize): out/manual-validation/pr-{pr_number}-{os_name}-optimize.png",
+            f"- Screenshot(apply): out/manual-validation/pr-{pr_number}-{os_name}-apply.png",
+            "",
+        ]
+
     return "\n".join(lines) + "\n"
 
 
@@ -289,12 +303,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.markdown_out is None:
             args.markdown_out = args.artifact_dir / f"pr-{args.pr_number}-{os_name}-smoke.md"
 
-        if not args.screenshot_mainwindow:
-            args.screenshot_mainwindow = str(args.artifact_dir / f"pr-{args.pr_number}-{os_name}-mainwindow.png")
-        if not args.screenshot_optimize:
-            args.screenshot_optimize = str(args.artifact_dir / f"pr-{args.pr_number}-{os_name}-optimize.png")
-        if not args.screenshot_apply:
-            args.screenshot_apply = str(args.artifact_dir / f"pr-{args.pr_number}-{os_name}-apply.png")
+        if args.require_screenshots or args.verify_screenshot_files:
+            if not args.screenshot_mainwindow:
+                args.screenshot_mainwindow = str(args.artifact_dir / f"pr-{args.pr_number}-{os_name}-mainwindow.png")
+            if not args.screenshot_optimize:
+                args.screenshot_optimize = str(args.artifact_dir / f"pr-{args.pr_number}-{os_name}-optimize.png")
+            if not args.screenshot_apply:
+                args.screenshot_apply = str(args.artifact_dir / f"pr-{args.pr_number}-{os_name}-apply.png")
 
         for path in (args.out_file, args.report_out, args.pr_comment_out, args.markdown_out):
             if path is not None:
