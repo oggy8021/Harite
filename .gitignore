@@ -2,6 +2,8 @@
 .vscode
 .venv/
 /out/
+/dist/
+/build/
 
 logs
 logs
