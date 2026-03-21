@@ -197,3 +197,74 @@ def test_gui_layout_smoke_print_pr_comment_to_stdout(tmp_path: Path):
     assert proc.returncode == 1
     assert "### Manual device validation" in proc.stdout
     assert "- GUI smoke: fail" in proc.stdout
+
+
+def test_gui_layout_smoke_writes_full_validation_report(tmp_path: Path):
+    out_json = tmp_path / "layout-report.json"
+    out_report = tmp_path / "manual-report.md"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--pr-number",
+            "140",
+            "--scope",
+            "windows/gui",
+            "--date",
+            "2026-03-21",
+            "--operator",
+            "owner",
+            "--optimize-result",
+            "pass",
+            "--apply-dry-run-result",
+            "pass",
+            "--apply-do-it-result",
+            "not-available",
+            "--screenshot-mainwindow",
+            "out/manual-validation/pr-140-windows-mainwindow.png",
+            "--screenshot-optimize",
+            "out/manual-validation/pr-140-windows-optimize.png",
+            "--screenshot-apply",
+            "out/manual-validation/pr-140-windows-apply.png",
+            "--out-file",
+            str(out_json),
+            "--report-out",
+            str(out_report),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, proc.stderr
+    text = out_report.read_text(encoding="utf-8")
+    assert "# GUI Manual Validation Report" in text
+    assert "- PR: 140" in text
+    assert "| optimize | pass | |" in text
+    assert "| apply do-it | not-available | |" in text
+    assert "- MainWindow: out/manual-validation/pr-140-windows-mainwindow.png" in text
+
+
+def test_gui_layout_smoke_print_report_to_stdout(tmp_path: Path):
+    out_json = tmp_path / "layout-report-print.json"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--validate",
+            "--out-file",
+            str(out_json),
+            "--print-report",
+            "--pr-number",
+            "local",
+            "--scope",
+            "windows/gui",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 1
+    assert "# GUI Manual Validation Report" in proc.stdout
+    assert "| GUI smoke | fail |" in proc.stdout
