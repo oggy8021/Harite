@@ -72,7 +72,15 @@ def build_markdown_report(summary: dict, *, scope: str) -> str:
     return "\n".join(lines) + "\n"
 
 
-def build_pr_comment(summary: dict, *, scope: str, notes: str) -> str:
+def build_pr_comment(
+    summary: dict,
+    *,
+    scope: str,
+    notes: str,
+    optimize_result: str,
+    apply_dry_run_result: str,
+    apply_do_it_result: str,
+) -> str:
     validation = summary.get("validation", {})
     gui_smoke = "pass" if bool(validation.get("ok")) else "fail"
     failed = ", ".join(validation.get("failed_checks", [])) or "none"
@@ -81,9 +89,9 @@ def build_pr_comment(summary: dict, *, scope: str, notes: str) -> str:
     lines = [
         "### Manual device validation",
         f"- Scope: {scope}",
-        "- optimize: n/a (manual)",
-        "- apply dry-run: n/a (manual)",
-        "- apply do-it: n/a (if executed)",
+        f"- optimize: {optimize_result}",
+        f"- apply dry-run: {apply_dry_run_result}",
+        f"- apply do-it: {apply_do_it_result}",
         f"- GUI smoke: {gui_smoke}",
         f"- Failed checks: {failed}",
         f"- Notes: {notes_text}",
@@ -102,6 +110,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--print-pr-comment", action="store_true", help="print PR comment template to stdout")
     parser.add_argument("--scope", default="local/gui-smoke", help="scope text used in markdown report")
     parser.add_argument("--notes", default="", help="notes text used in PR comment template")
+    parser.add_argument("--optimize-result", default="n/a (manual)", help="value for optimize line in PR comment")
+    parser.add_argument("--apply-dry-run-result", default="n/a (manual)", help="value for apply dry-run line in PR comment")
+    parser.add_argument("--apply-do-it-result", default="n/a (if executed)", help="value for apply do-it line in PR comment")
     args = parser.parse_args(argv)
 
     win = MainWindow()
@@ -152,13 +163,30 @@ def main(argv: list[str] | None = None) -> int:
     if args.pr_comment_out:
         if "validation" not in summary:
             summary["validation"] = evaluate_summary(summary)
-        pr_md = build_pr_comment(summary, scope=args.scope, notes=args.notes)
+        pr_md = build_pr_comment(
+            summary,
+            scope=args.scope,
+            notes=args.notes,
+            optimize_result=args.optimize_result,
+            apply_dry_run_result=args.apply_dry_run_result,
+            apply_do_it_result=args.apply_do_it_result,
+        )
         args.pr_comment_out.write_text(pr_md, encoding="utf-8")
 
     if args.print_pr_comment:
         if "validation" not in summary:
             summary["validation"] = evaluate_summary(summary)
-        print(build_pr_comment(summary, scope=args.scope, notes=args.notes), end="")
+        print(
+            build_pr_comment(
+                summary,
+                scope=args.scope,
+                notes=args.notes,
+                optimize_result=args.optimize_result,
+                apply_dry_run_result=args.apply_dry_run_result,
+                apply_do_it_result=args.apply_do_it_result,
+            ),
+            end="",
+        )
 
     out_json = json.dumps(summary, indent=2, ensure_ascii=False)
 
