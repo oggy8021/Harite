@@ -152,3 +152,36 @@ def test_on_change_plugin_rejects_unknown_plugin():
     assert ok is False
     assert window.plugin_name == previous
     assert window.last_error == "unknown plugin: no-such-plugin"
+
+
+def test_build_optimize_cli_preview_contains_required_args(tmp_path):
+    window = MainWindow()
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+
+    window.form_state.input_value = "a.jpg,b.jpg"
+    window.form_state.output_dir = str(out_dir)
+    preview = window.build_optimize_cli_preview()
+
+    assert preview.startswith("harite optimize ")
+    assert "--input a.jpg,b.jpg" in preview
+    assert f"--output {out_dir}" in preview
+
+
+def test_build_optimize_cli_preview_includes_optional_flags(tmp_path):
+    window = MainWindow()
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+
+    window.form_state.input_value = "a.jpg"
+    window.form_state.output_dir = str(out_dir)
+    window.form_state.two_screen = True
+    window.form_state.margins = "1,2,3,4"
+    window.form_state.fixed = True
+    window.form_state.embed_text = "hello"
+    preview = window.build_optimize_cli_preview()
+
+    assert "--two-screen" in preview
+    assert "--margins 1,2,3,4" in preview
+    assert "--fixed" in preview
+    assert "--embed-text hello" in preview

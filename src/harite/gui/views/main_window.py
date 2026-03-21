@@ -10,6 +10,7 @@ from pathlib import Path
 import sys
 
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
+from harite.gui.services.cli_mapper import OptimizeRequest, to_cli_args
 from harite.plugins import registry as plugin_registry
 
 
@@ -161,6 +162,32 @@ class MainWindow:
         """Legacy signal mapping: on_WallPosit_MainWindow_delete_event."""
         self.closed = True
         self._log("Window closed")
+
+    def build_optimize_cli_preview(self) -> str:
+        req = OptimizeRequest(
+            input_value=self.form_state.input_value,
+            resolution=self.form_state.resolution,
+            output_dir=Path(self.form_state.output_dir),
+            layout=self.form_state.layout,
+            scaling=self.form_state.scaling,
+            two_screen=self.form_state.two_screen,
+            margins=self.form_state.margins,
+            l_display=self.form_state.l_display,
+            r_display=self.form_state.r_display,
+            fixed=self.form_state.fixed,
+            align=self.form_state.align,
+            valign=self.form_state.valign,
+            padding=self.form_state.padding,
+            quality=self.form_state.quality,
+            embed_info=self.form_state.embed_info,
+            embed_text=self.form_state.embed_text,
+            embed_position=self.form_state.embed_position,
+            embed_max_lines=self.form_state.embed_max_lines,
+        )
+        args = to_cli_args(req)
+        preview = "harite " + " ".join(args)
+        self._log(f"CLI preview: {preview}")
+        return preview
 
     def show(self) -> None:
         print(self.title)
