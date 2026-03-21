@@ -29,6 +29,38 @@
 - [x] Step 4: GUI統合テスト最小セットを定義（headless smoke / signal-to-handler / apply safety）
 - [x] Step 5: 実UIの最小読み込みプロトタイプ（読み込みのみ、操作は未接続）を別PRで追加
 
+## 現在地（管理用）
+
+- Phase 3 の初期計画（Step 1-5）は完了。
+- 追加で、実機検証運用を回しやすくする補助実装を完了。
+	- `src/harite/gui/adapters/ui_adapter.py`（最小バインド）
+	- `src/harite/gui/adapters/fake_adapter.py`（headless検証向け）
+	- `scripts/gui_layout_smoke.py`（validate / markdown / PRコメント出力）
+	- `tests/scripts/test_gui_layout_smoke.py`（運用オプションの回帰テスト）
+	- `docs/manual-validation-gate.md`（実機確認フロー更新）
+
+## 進行管理ルール（この先）
+
+- このドキュメントは「完了済みタスク表」ではなく、現在地と次マイルストーンの管理に使う。
+- 小PR単位で進め、各PRは 1 目的に限定する。
+- 更新ルール:
+	- 新しい管理対象を始める時: `次マイルストーン` に項目追加。
+	- PR merge 時: 該当項目を `進捗ログ` に移し、状態を更新。
+	- 実機確認が必要な変更時: `docs/manual-validation-gate.md` のテンプレート記録を必須化。
+
+## 進捗ログ（2026-03-21時点）
+
+- 完了: Phase 3 Step 1-5（設計固定、mapping再分類、状態モデル、統合テスト観点、UI loader試作）
+- 完了: 実機検証補助の強化（smoke validate、markdown出力、失敗チェック表示、PRコメントテンプレート）
+- 完了: `.pyc` 追跡解除と再発防止（`__pycache__/`, `*.pyc` ignore）
+
+## 次マイルストーン（Phase 3 後半）
+
+- [ ] M1: 実UIウィジェットへの本バインド導入（adapterで signal -> `MainWindow` 接続を実装）
+- [ ] M2: 主要画面の配置/表示の実機確認（Windows/XFCE/macOSのうち利用可能環境）
+- [ ] M3: 実機確認結果を PR コメントに標準フォーマットで記録（スクリーンショット付き）
+- [ ] M4: 実UI導入後の最小回帰セットを固定（CI smoke + manual gate の責務分離）
+
 ## 小PR分割（推奨）
 
 1. docs(gui): define phase3 adapter boundaries
