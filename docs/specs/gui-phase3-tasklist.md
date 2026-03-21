@@ -56,6 +56,7 @@
 - 完了: M1-1（glade signal handler 抽出 + `MainWindow` への mapping 検証）
 - 完了: M1-2（adapter dispatch API 追加 + bind metadata へ接続ハンドラ記録）
 - 完了: M1-3（backend signal connect 実装: `connect_signals(mapping)` / `connect(name, callback)` を adapter で吸収）
+- 完了: M2-1（OS別実機確認マトリクスと成果物命名ルールを `manual-validation-gate` に追加）
 
 ## 次マイルストーン（Phase 3 後半）
 
@@ -69,6 +70,12 @@
 - [x] M1-1: glade の handler 抽出と legacy handler -> `MainWindow` メソッドの妥当性検証
 - [x] M1-2: present handler 向け dispatch table を生成し、bind 時に `_adapter_signal_dispatch` と metadata へ保持
 - [x] M1-3: 実UI backend 側で dispatch table を使った connect 実装（backend依存は adapter 内に限定）
+
+## M2 詳細進捗
+
+- [x] M2-1: OS別の実機確認マトリクスを定義（pass/fail/not-available）
+- [x] M2-2: 実機確認成果物の命名規則を定義（json/md/screenshot）
+- [ ] M2-3: 1環境以上でテンプレート運用実績を作成し、PRコメントに添付
 
 ## 小PR分割（推奨）
 
