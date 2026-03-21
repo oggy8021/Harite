@@ -13,38 +13,67 @@
 - 実施者: オーナー（実機保持者）。
 - 実施時点: CI green 後、merge 前。
 
+## 対象OSマトリクス（M2運用）
+
+各PRで利用可能な環境のみ実施し、未実施環境は `not-available` を明示する。
+
+| OS/環境 | optimize | apply dry-run | apply do-it | GUI表示確認 | 備考 |
+| --- | --- | --- | --- | --- | --- |
+| Windows | 必須 | 必須 | 任意 | GUI変更時は必須 | 既定確認環境 |
+| XFCE/Linux | 利用可能時必須 | 利用可能時必須 | 任意 | GUI変更時は推奨 | display server依存 |
+| macOS | 利用可能時必須 | 利用可能時必須 | 任意 | GUI変更時は推奨 | plugin導入状況に依存 |
+
+結果記録ルール:
+
+- `pass` / `fail` / `not-available` の3値で記録する。
+- `fail` は再現手順を Notes に1行以上で残す。
+- `not-available` は理由（端末なし、plugin未導入など）を Notes に残す。
+
 ## 最小ゲート（3分）
 
 1. optimize の正常系
+
 - コマンド例:
+
 ```bash
 harite optimize --input ./imgs --resolution 1920x1080 --output ./out
 ```
+
 - 期待:
+
   - 出力画像が生成される。
   - エラー終了しない。
 
-2. apply dry-run の安全確認
+1. apply dry-run の安全確認
+
 - コマンド例:
+
 ```bash
 harite apply --plugin windows --file ./out/wallpaper_001.jpg
 ```
+
 - 期待:
+
   - dry-run として成功する。
   - 実機設定は変更されない。
 
-3. apply do-it の実機確認（必要時のみ）
+1. apply do-it の実機確認（必要時のみ）
+
 - コマンド例:
+
 ```bash
 harite apply --plugin windows --file ./out/wallpaper_001.jpg --do-it
 ```
+
 - 期待:
+
   - 壁紙が実際に切り替わる。
   - 失敗時はロールバック手順を実施する。
 
 ## GUI 変更が入る場合の追加確認（2分）
 
 注記:
+
 - 現状の GUI はプレースホルダ実装のため、起動時はウィンドウ表示ではなくコンソールに状態を表示する。
 
 ### ウィンドウ別チェックリスト（実機確認、推奨 2 分）
@@ -75,12 +104,22 @@ python scripts/gui_layout_smoke.py --simulate --validate --scope windows/gui --o
 
 ```md
 ### Manual device validation screenshots
-- OS: <Windows|XFCE|macOS>
+- OS: [Windows|XFCE|macOS]
 - MainWindow: attached
 - Optimize form: attached
 - Apply area: attached
-- Notes: <observations>
+- Notes: [observations]
 ```
+
+## 成果物の保存ルール（M2/M3共通）
+
+PRごとに以下の命名で保存する。
+
+- JSON: `out/manual-validation/pr-<PR番号>-<os>.json`
+- Markdown: `out/manual-validation/pr-<PR番号>-<os>.md`
+- Screenshot: `out/manual-validation/pr-<PR番号>-<os>-<view>.png`
+
+`<view>` は `mainwindow` / `optimize` / `apply` を使う。
 
 ## CLI 0.1.1 宿題チェック（オーナー用）
 
