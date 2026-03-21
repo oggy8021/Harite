@@ -38,9 +38,22 @@ def collect_summary(mainwindow: Any) -> dict:
     }
 
 
+def evaluate_summary(summary: dict) -> dict:
+    checks = {
+        "title_present": bool(summary.get("title")),
+        "plugins_available": bool(summary.get("available_plugins")),
+        "adapter_bound": bool(summary.get("adapter_bindings")),
+        "input_present": bool(summary.get("form_state", {}).get("input_value")),
+        "can_optimize": bool(summary.get("can_optimize")),
+    }
+    checks["ok"] = all(checks.values())
+    return checks
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="GUI layout smoke runner")
     parser.add_argument("--simulate", action="store_true", help="simulate a few widget actions")
+    parser.add_argument("--validate", action="store_true", help="run built-in validation checks and return non-zero on failure")
     parser.add_argument("--out-file", type=Path, help="write JSON summary to path (default stdout)")
     args = parser.parse_args(argv)
 
@@ -75,12 +88,18 @@ def main(argv: list[str] | None = None) -> int:
 
     summary = collect_summary(win)
 
+    if args.validate:
+        summary["validation"] = evaluate_summary(summary)
+
     out_json = json.dumps(summary, indent=2, ensure_ascii=False)
 
     if args.out_file:
         args.out_file.write_text(out_json, encoding="utf-8")
     else:
         print(out_json)
+
+    if args.validate and not summary["validation"]["ok"]:
+        return 1
 
     return 0
 
