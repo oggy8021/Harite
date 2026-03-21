@@ -153,6 +153,12 @@ def test_gui_layout_smoke_writes_pr_comment_template(tmp_path: Path):
             "windows/gui",
             "--notes",
             "manual screenshots attached",
+            "--optimize-result",
+            "pass",
+            "--apply-dry-run-result",
+            "pass",
+            "--apply-do-it-result",
+            "fail (not executed)",
             "--out-file",
             str(out_json),
             "--pr-comment-out",
@@ -166,6 +172,9 @@ def test_gui_layout_smoke_writes_pr_comment_template(tmp_path: Path):
     text = out_pr.read_text(encoding="utf-8")
     assert "### Manual device validation" in text
     assert "- Scope: windows/gui" in text
+    assert "- optimize: pass" in text
+    assert "- apply dry-run: pass" in text
+    assert "- apply do-it: fail (not executed)" in text
     assert "- GUI smoke: pass" in text
     assert "- Notes: manual screenshots attached" in text
 
