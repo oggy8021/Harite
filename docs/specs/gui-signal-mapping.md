@@ -62,7 +62,7 @@
 | wallpositapplet.glade | SaveWallpaperDialog | destroy | on_SaveWallpaperDialog_destroy | DialogController.on_close_save | todo | 出力先選択に統合 |
 | wallpositapplet.glade | SettingDialog | destroy | on_SettingDialog_destroy | DialogController.on_close_settings | todo | 設定保存機能は後続 |
 | wallpositapplet.glade | ImgOpenDialog | destroy | on_ImgOpenDialog_destroy | DialogController.on_close_open_image | todo | 入力ファイル選択に統合 |
-| wallpositapplet.glade | ErrorDialog | destroy | on_ErrorDialog_destroy | DialogController.on_close_error | todo | エラーハンドリング設計待ち |
+| wallpositapplet.glade | ErrorDialog | destroy | on_ErrorDialog_destroy | MainWindow.on_close_error_dialog | implemented | プレースホルダでクローズ時にエラー状態をクリア |
 
 Status 値:
 - todo

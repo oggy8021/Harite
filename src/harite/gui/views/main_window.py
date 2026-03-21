@@ -163,6 +163,11 @@ class MainWindow:
         self.closed = True
         self._log("Window closed")
 
+    def on_close_error_dialog(self) -> None:
+        """Legacy signal mapping: on_ErrorDialog_destroy."""
+        self.last_error = ""
+        self._log("Error dialog closed")
+
     def build_optimize_cli_preview(self) -> str:
         req = OptimizeRequest(
             input_value=self.form_state.input_value,
