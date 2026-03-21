@@ -60,6 +60,7 @@
 - 完了: M2-2（GUI実機確認レポートテンプレートを `docs/templates/gui-manual-validation-report.md` として追加）
 - 完了: M2-3準備（`gui_layout_smoke.py` に統合レポート出力 `--report-out` / `--print-report` を追加）
 - 完了: M3-1準備（`gui_layout_smoke.py` に `--auto-artifacts` を追加し、PR添付用成果物を1コマンド出力）
+- 完了: M3-2準備（手動結果ステータスを `pass/fail/not-available` に正規化し、旧表記を互換吸収）
 
 ## 次マイルストーン（Phase 3 後半）
 
@@ -84,7 +85,8 @@
 ## M3 詳細進捗
 
 - [x] M3-1: PRコメント用成果物（json/report/pr-comment/smoke-md）の自動出力を追加
-- [ ] M3-2: 実機確認1件分を `pr-comment` へ添付して標準フォーマット運用を確定
+- [x] M3-2a: 手動結果ステータス入力の正規化（pass/fail/not-available）
+- [ ] M3-2b: 実機確認1件分を `pr-comment` へ添付して標準フォーマット運用を確定
 
 ## 小PR分割（推奨）
 

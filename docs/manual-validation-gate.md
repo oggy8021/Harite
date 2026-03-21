@@ -106,6 +106,9 @@ python scripts/gui_layout_smoke.py --simulate --validate --scope windows/gui --o
   python scripts/gui_layout_smoke.py --simulate --validate --auto-artifacts --artifact-dir out/manual-validation --pr-number 140 --scope windows/gui --operator owner --optimize-result pass --apply-dry-run-result pass --apply-do-it-result not-available
   ```
 
+  - `--optimize-result` / `--apply-dry-run-result` / `--apply-do-it-result` は `pass|fail|not-available` を使う。
+  - 旧表記 `n/a`, `na`, `n/a (manual)`, `n/a (if executed)` は `not-available` として扱われる。
+
   - 生成されるファイル:
     - `out/manual-validation/pr-140-windows.json`
     - `out/manual-validation/pr-140-windows.md`
