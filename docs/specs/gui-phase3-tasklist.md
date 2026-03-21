@@ -57,6 +57,8 @@
 - 完了: M1-2（adapter dispatch API 追加 + bind metadata へ接続ハンドラ記録）
 - 完了: M1-3（backend signal connect 実装: `connect_signals(mapping)` / `connect(name, callback)` を adapter で吸収）
 - 完了: M2-1（OS別実機確認マトリクスと成果物命名ルールを `manual-validation-gate` に追加）
+- 完了: M2-2（GUI実機確認レポートテンプレートを `docs/templates/gui-manual-validation-report.md` として追加）
+- 完了: M2-3準備（`gui_layout_smoke.py` に統合レポート出力 `--report-out` / `--print-report` を追加）
 
 ## 次マイルストーン（Phase 3 後半）
 
@@ -75,7 +77,8 @@
 
 - [x] M2-1: OS別の実機確認マトリクスを定義（pass/fail/not-available）
 - [x] M2-2: 実機確認成果物の命名規則を定義（json/md/screenshot）
-- [ ] M2-3: 1環境以上でテンプレート運用実績を作成し、PRコメントに添付
+- [x] M2-3a: 手動検証結果を1ファイルへ束ねるレポート出力を smoke script に追加
+- [ ] M2-3b: 1環境以上でテンプレート運用実績を作成し、PRコメントに添付
 
 ## 小PR分割（推奨）
 

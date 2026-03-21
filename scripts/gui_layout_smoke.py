@@ -9,6 +9,7 @@ validation or CI artifact collection.
 from __future__ import annotations
 
 import argparse
+from datetime import date
 import json
 import sys
 from pathlib import Path
@@ -99,6 +100,61 @@ def build_pr_comment(
     return "\n".join(lines) + "\n"
 
 
+def build_validation_report(
+    summary: dict,
+    *,
+    pr_number: str,
+    scope: str,
+    run_date: str,
+    operator: str,
+    optimize_result: str,
+    apply_dry_run_result: str,
+    apply_do_it_result: str,
+    screenshot_mainwindow: str,
+    screenshot_optimize: str,
+    screenshot_apply: str,
+) -> str:
+    validation = summary.get("validation", {})
+    gui_smoke = "pass" if bool(validation.get("ok")) else "fail"
+    failed = ", ".join(validation.get("failed_checks", [])) or "none"
+    os_name = scope.split("/", 1)[0] if "/" in scope else scope
+
+    lines = [
+        "# GUI Manual Validation Report",
+        "",
+        "## Manual device validation",
+        f"- PR: {pr_number}",
+        f"- Scope: {scope}",
+        f"- Date: {run_date}",
+        f"- Operator: {operator or 'n/a'}",
+        "",
+        "## Result matrix",
+        "| Check | Status | Notes |",
+        "| --- | --- | --- |",
+        f"| optimize | {optimize_result} | |",
+        f"| apply dry-run | {apply_dry_run_result} | |",
+        f"| apply do-it | {apply_do_it_result} | |",
+        f"| GUI smoke | {gui_smoke} | failed checks: {failed} |",
+        "",
+        "## Screenshots",
+        f"- MainWindow: {screenshot_mainwindow or '[path or attached]'}",
+        f"- Optimize form: {screenshot_optimize or '[path or attached]'}",
+        f"- Apply area: {screenshot_apply or '[path or attached]'}",
+        "",
+        "## Artifact paths",
+        f"- JSON: out/manual-validation/pr-{pr_number}-{os_name}.json",
+        f"- Markdown: out/manual-validation/pr-{pr_number}-{os_name}.md",
+        f"- Screenshot(mainwindow): out/manual-validation/pr-{pr_number}-{os_name}-mainwindow.png",
+        f"- Screenshot(optimize): out/manual-validation/pr-{pr_number}-{os_name}-optimize.png",
+        f"- Screenshot(apply): out/manual-validation/pr-{pr_number}-{os_name}-apply.png",
+        "",
+        "## Failures",
+        f"- Repro steps: {'[required if status=fail]' if failed == 'none' else failed}",
+        "- Follow-up issue/PR: [optional]",
+    ]
+    return "\n".join(lines) + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="GUI layout smoke runner")
     parser.add_argument("--simulate", action="store_true", help="simulate a few widget actions")
@@ -108,11 +164,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--print-markdown", action="store_true", help="print markdown report to stdout")
     parser.add_argument("--pr-comment-out", type=Path, help="write PR comment template markdown")
     parser.add_argument("--print-pr-comment", action="store_true", help="print PR comment template to stdout")
+    parser.add_argument("--report-out", type=Path, help="write full manual validation report markdown")
+    parser.add_argument("--print-report", action="store_true", help="print full manual validation report to stdout")
     parser.add_argument("--scope", default="local/gui-smoke", help="scope text used in markdown report")
+    parser.add_argument("--pr-number", default="local", help="PR number text used in report")
+    parser.add_argument("--date", default=date.today().isoformat(), help="date text used in report (YYYY-MM-DD)")
+    parser.add_argument("--operator", default="", help="operator name used in report")
     parser.add_argument("--notes", default="", help="notes text used in PR comment template")
     parser.add_argument("--optimize-result", default="n/a (manual)", help="value for optimize line in PR comment")
     parser.add_argument("--apply-dry-run-result", default="n/a (manual)", help="value for apply dry-run line in PR comment")
     parser.add_argument("--apply-do-it-result", default="n/a (if executed)", help="value for apply do-it line in PR comment")
+    parser.add_argument("--screenshot-mainwindow", default="", help="path for MainWindow screenshot used in report")
+    parser.add_argument("--screenshot-optimize", default="", help="path for Optimize screenshot used in report")
+    parser.add_argument("--screenshot-apply", default="", help="path for Apply screenshot used in report")
     args = parser.parse_args(argv)
 
     win = MainWindow()
@@ -184,6 +248,44 @@ def main(argv: list[str] | None = None) -> int:
                 optimize_result=args.optimize_result,
                 apply_dry_run_result=args.apply_dry_run_result,
                 apply_do_it_result=args.apply_do_it_result,
+            ),
+            end="",
+        )
+
+    if args.report_out:
+        if "validation" not in summary:
+            summary["validation"] = evaluate_summary(summary)
+        report_md = build_validation_report(
+            summary,
+            pr_number=args.pr_number,
+            scope=args.scope,
+            run_date=args.date,
+            operator=args.operator,
+            optimize_result=args.optimize_result,
+            apply_dry_run_result=args.apply_dry_run_result,
+            apply_do_it_result=args.apply_do_it_result,
+            screenshot_mainwindow=args.screenshot_mainwindow,
+            screenshot_optimize=args.screenshot_optimize,
+            screenshot_apply=args.screenshot_apply,
+        )
+        args.report_out.write_text(report_md, encoding="utf-8")
+
+    if args.print_report:
+        if "validation" not in summary:
+            summary["validation"] = evaluate_summary(summary)
+        print(
+            build_validation_report(
+                summary,
+                pr_number=args.pr_number,
+                scope=args.scope,
+                run_date=args.date,
+                operator=args.operator,
+                optimize_result=args.optimize_result,
+                apply_dry_run_result=args.apply_dry_run_result,
+                apply_do_it_result=args.apply_do_it_result,
+                screenshot_mainwindow=args.screenshot_mainwindow,
+                screenshot_optimize=args.screenshot_optimize,
+                screenshot_apply=args.screenshot_apply,
             ),
             end="",
         )
