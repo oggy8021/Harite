@@ -47,6 +47,30 @@ harite apply --plugin windows --file ./out/wallpaper_001.jpg --do-it
 注記:
 - 現状の GUI はプレースホルダ実装のため、起動時はウィンドウ表示ではなくコンソールに状態を表示する。
 
+### ウィンドウ別チェックリスト（実機確認、推奨 2 分）
+
+- **MainWindow（メイン）**: タイトルが表示されること、主要ボタン（Optimize、Apply）が存在すること、入力欄が表示され値が編集可能であること。スクリーンショットを1枚取得。
+- **Optimize フォーム**: 入力パス欄、解像度、出力先、プラグイン選択が表示され、`optimize` を実行できる（dry-run 環境で成功すること）。実行ログに例外や Traceback が含まれていないことを確認。
+- **Apply 領域**: 最新の保存ファイルがリストされる、`apply dry-run` が成功すること。必要なら `apply --do-it` を一度だけ実行して挙動を確認（実機でのみ）。
+- **エラーダイアログ / ログ表示**: エラー発生時にダイアログが閉じられること、`last_error` がクリアされることを手動で確認。
+
+手順:
+
+1. `python -m harite.gui.app` を起動し、上記ウィンドウを目視で確認してスクリーンショットを取る。
+2. 入力変更 -> `harite optimize` 実行（あるいは GUI 経由の optimize）-> `harite apply --plugin <os> --file <file>` の dry-run を確認。
+3. 実行ログに `Traceback` や `Exception` が残らないことを確認し、スクリーンショットを PR コメントに添付する。
+
+スクリーンショット添付フォーマット（PR コメント貼り付け用）:
+
+```md
+### Manual device validation screenshots
+- OS: <Windows|XFCE|macOS>
+- MainWindow: attached
+- Optimize form: attached
+- Apply area: attached
+- Notes: <observations>
+```
+
 1. GUI起動
 ```bash
 python -m harite.gui.app
