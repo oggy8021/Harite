@@ -4,9 +4,9 @@ from harite.core import optimize_wallpapers
 
 def test_two_screen_basic(tmp_path):
     # use existing test images in tests/data
-    repo_root = Path(__file__).resolve().parent
-    left = repo_root / "data" / "left.jpg"
-    right = repo_root / "data" / "right.jpg"
+    tests_root = Path(__file__).resolve().parent.parent
+    left = tests_root / "data" / "left.jpg"
+    right = tests_root / "data" / "right.jpg"
 
     out_dir = tmp_path / "out"
     out_dir.mkdir()

@@ -64,6 +64,6 @@
 - 既存の `src/harite/core.py` の two_screen パッチと合わせる形で API を整備する。まずは仕様にある最小限の振る舞いを満たし、テストを追加してからより複雑な割当ロジックを段階的に追加する。
 
 次の手順
-1.この仕様に基づき `tests/test_core_twoscreen.py` を追加してユニットテストを実装する。  
+1.この仕様に基づき `tests/core/test_core_twoscreen.py` を追加してユニットテストを実装する。  
 2.`src/harite` に `workspace.py`/`imgfile.py`/`changerdir.py` の骨格を追加（必要なら単体ファイルで実装）。  
 3.CI 上でテストを実行し、挙動を確認して実装を調整する。

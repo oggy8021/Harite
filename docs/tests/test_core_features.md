@@ -1,14 +1,14 @@
 **概要**
-- このドキュメントは `tests/test_core_features.py` と `tests/test_core_edgecases.py` の目的と実行方法を説明します。
+- このドキュメントは `tests/core/test_core_features.py` と `tests/core/test_core_edgecases.py` の目的と実行方法を説明します。
 
 **目的**
 - リポジトリのコア機能（壁紙最適化、画像配置、複合画像のディスプレイ分割）に対する代表的かつ詳細なユニットテストを提供します。
 - 目的は「クラッシュや主要な回帰を早期に検出すること」です。UI や外部依存はモックするか小さなファイルで代替しています。
 
 **含まれるテスト**
-- `tests/test_core_features.py`
+- `tests/core/test_core_features.py`
   - スモークおよび代表的な動作検証：`optimize_wallpapers`, `compute_placement`, `split_composite_for_displays` の基本動作。
-- `tests/test_core_edgecases.py`
+- `tests/core/test_core_edgecases.py`
   - エッジケース検証：透過 PNG、非常に大きな画像、アップスケールの取り扱い、オフスクリーン（x_offset が合成画像範囲外）のディスプレイ処理。
 
 **実行方法（ローカル）**

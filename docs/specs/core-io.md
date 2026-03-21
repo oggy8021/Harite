@@ -106,7 +106,7 @@ harite compute-placement --input img.jpg --resolution 1920x1080 --layout cover
 
 ## 次のアクション
 1.母体プログラムの該当ソース（`wallpaperoptimizer`）を解析し、代表的な入力/出力例を収集する。
-2.本ファイルを基に `tests/test_core.py` のサンプルケースを作成する。
+2.本ファイルを基に `tests/core/test_core.py` のサンプルケースを作成する。
 3.オーナーに本草案のレビューを依頼し、許容差やレイアウトモードの細部を決定する。
 
 ---
