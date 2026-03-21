@@ -93,13 +93,13 @@ def optimize(
     layout: str = typer.Option(
         "mosaic",
         "--layout",
-        help="Layout mode (current implementation is effectively mosaic)",
+        help="Layout mode (current implementation is effectively mosaic; other values are treated equivalently)",
         rich_help_panel="基本オプション",
     ),
     scaling: str = typer.Option(
         "fit",
         "--scaling",
-        help="Scaling mode (fit|fill|crop)",
+        help="Scaling mode (fit|fill|crop). Current optimize implementation has limited behavior differences.",
         rich_help_panel="基本オプション",
     ),
     two_screen: bool = typer.Option(
@@ -129,7 +129,7 @@ def optimize(
     fixed: bool = typer.Option(
         False,
         "--fixed",
-        help="Fix allocation by input order (left then right)",
+        help="Fix allocation by input order (left then right). Current optimize implementation impact is limited.",
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     align: str = typer.Option(
@@ -159,7 +159,7 @@ def optimize(
     random_seed: Optional[int] = typer.Option(
         None,
         "--random-seed",
-        help="Random seed for reproducibility",
+        help="Random seed for reproducibility (currently limited impact in optimize placement)",
         rich_help_panel="詳細調整",
     ),
     config: Optional[Path] = typer.Option(
@@ -177,6 +177,11 @@ def optimize(
 
     `--two-screen` は左右2画面向けモードです。
     `--l-display` / `--r-display` を併用した場合は、先頭2入力を左・右へ割り当てます。
+
+    パラメータの強弱（現状）:
+    - `margins` はまず有効領域を決め、その内側で `align` / `valign` が効きます。
+    - `two-screen` は `--l-display` / `--r-display` 併用時に効きが強くなります。
+    - `layout` / `scaling` / `fixed` / `random-seed` は現状の optimize 実装では効きが限定的です。
     """
     # Load config if provided and merge defaults (CLI options override config)
     cfg: dict = {}

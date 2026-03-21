@@ -60,6 +60,20 @@
 - 左右幅合計と `--resolution` の厳密整合チェックは未実装。
 - 1 件入力で two-screen + 左右幅指定の場合、片側のみ画像で反対側は背景のままになる。
 
+## パラメータ強弱（現状）
+
+- 強:
+  - `margins`: まず有効描画領域を決める。
+  - `align` / `valign`: `margins` で決まった領域内で配置位置を決める。
+  - `two-screen` + `l_display/r_display`: 左右幅を明示的に固定し、先頭2入力を左右へ割り当てる。
+- 中:
+  - `padding`: 通常分割時のセル間隔に効く（two-screen 条件では効き方が限定される）。
+- 限定的:
+  - `layout`: 現行 optimize 実装では実質 mosaic 相当。
+  - `scaling`: 指定可能だが現行 optimize 実装での挙動差は限定的。
+  - `fixed`: 指定可能だが現行 optimize 実装での影響は限定的。
+  - `random_seed`: 指定可能だが現行 optimize 実装での影響は限定的。
+
 ## 変更時の更新ルール
 
 - 次のいずれかを変更したら本書を更新する。
