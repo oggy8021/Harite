@@ -11,6 +11,10 @@ logs
 src/harite/__pycache__
 src/harite.egg-info
 
+# Python bytecode / cache
+__pycache__/
+*.pyc
+
 # CI log files
 ci-*.log
 
