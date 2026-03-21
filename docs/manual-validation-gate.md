@@ -60,6 +60,17 @@ harite apply --plugin windows --file ./out/wallpaper_001.jpg --do-it
 2. 入力変更 -> `harite optimize` 実行（あるいは GUI 経由の optimize）-> `harite apply --plugin <os> --file <file>` の dry-run を確認。
 3. 実行ログに `Traceback` や `Exception` が残らないことを確認し、スクリーンショットを PR コメントに添付する。
 
+補助（推奨, headless 検証）:
+
+```bash
+python scripts/gui_layout_smoke.py --simulate --validate --scope windows/gui --out-file ./out/gui-layout.json --markdown-out ./out/gui-layout.md --print-markdown
+```
+
+- 期待:
+  - 終了コード `0`（検証成功）
+  - `./out/gui-layout.json` に `validation.ok: true` が記録される
+  - `./out/gui-layout.md` の `Failed checks` が `none` になる
+
 スクリーンショット添付フォーマット（PR コメント貼り付け用）:
 
 ```md
@@ -70,14 +81,6 @@ harite apply --plugin windows --file ./out/wallpaper_001.jpg --do-it
 - Apply area: attached
 - Notes: <observations>
 ```
-
-1. GUI起動
-```bash
-python -m harite.gui.app
-```
-2. 入力変更 -> optimize 実行 -> apply dry-run
-3. 実行ログに失敗メッセージが残っていないこと
-4. 併せて `pytest -q tests/test_gui_phase1.py` が成功すること
 
 ## CLI 0.1.1 宿題チェック（オーナー用）
 
