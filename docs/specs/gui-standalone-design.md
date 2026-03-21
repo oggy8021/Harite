@@ -173,6 +173,28 @@
 5. apply(dry-run) 導線
 6. do-it 明示導線
 
+## MVP 先行3 signal（Phase 1）
+
+最初に実装する signal を以下の 3 本に固定する。
+
+1. `on_entPath_insert_text`（入力変更）
+- 目的: 入力欄の即時バリデーションと実行可否判定
+- 新メソッド: `MainWindow.on_change_input_text`
+
+2. `on_btnSave_clicked`（optimize 実行）
+- 目的: GUI から `optimize` を実行して結果ファイルを得る
+- 新メソッド: `MainWindow.on_optimize`
+
+3. `on_WallPosit_MainWindow_delete_event`（終了）
+- 目的: 常駐なし前提の安全終了
+- 新メソッド: `MainWindow.on_close`
+
+### Phase 1 の完了条件
+
+- 入力欄の不正値で optimize ボタンが無効化される。
+- 正常入力時に optimize を実行し、出力パスとエラーをログ表示できる。
+- ウィンドウクローズでプロセスが正常終了する（バックグラウンド常駐なし）。
+
 ## 次アクション
 
 - A. 旧母体の Glade 実体ファイル回収（可能なら最優先）
