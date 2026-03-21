@@ -227,3 +227,10 @@ def test_on_close_color_dialog_logs_close_event():
     window.on_close_color_dialog()
 
     assert "Color selection dialog closed" in window.logs
+
+
+def test_on_close_srcdir_dialog_logs_close_event():
+    window = MainWindow()
+    window.on_close_srcdir_dialog()
+
+    assert "Source directory dialog closed" in window.logs
