@@ -180,6 +180,10 @@ class MainWindow:
         """Legacy signal mapping: on_SettingDialog_destroy."""
         self._log("Settings dialog closed")
 
+    def on_close_color_dialog(self) -> None:
+        """Legacy signal mapping: on_ColorSelectionDialog_destroy."""
+        self._log("Color selection dialog closed")
+
     def build_optimize_cli_preview(self) -> str:
         req = OptimizeRequest(
             input_value=self.form_state.input_value,
