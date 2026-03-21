@@ -7,6 +7,7 @@ package remains importable in environments without GUI libraries.
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
 from harite.plugins import registry as plugin_registry
@@ -22,13 +23,42 @@ class MainWindow:
         self.can_optimize = False
         self.last_error = ""
         self.logs: list[str] = []
-        self.plugin_name = "windows"
+        self.available_plugins = tuple(plugin_registry.list())
+        self.plugin_name = self._default_plugin_name()
         self.last_saved_files: list[Path] = []
         self.form_state = OptimizeFormState(
             input_value="",
             resolution="1920x1080",
             output_dir=str(Path(".")),
         )
+
+    def _default_plugin_name(self) -> str:
+        platform_map = {
+            "win32": "windows",
+            "darwin": "macos",
+        }
+        preferred = platform_map.get(sys.platform, "linux")
+        if preferred in self.available_plugins:
+            return preferred
+        if self.available_plugins:
+            return self.available_plugins[0]
+        return "windows"
+
+    def on_change_plugin(self, plugin_name: str) -> bool:
+        name = (plugin_name or "").strip().lower()
+        if not name:
+            self.last_error = "plugin is required"
+            self._log("Plugin update failed: empty value")
+            return False
+        if name not in self.available_plugins:
+            self.last_error = f"unknown plugin: {name}"
+            self._log(f"Plugin update failed: unknown plugin {name}")
+            return False
+
+        self.plugin_name = name
+        self.last_error = ""
+        self._log(f"Plugin updated: {name}")
+        return True
 
     def on_pick_input(self, path: str) -> None:
         """Legacy signal mapping: on_btnGetImg_clicked."""

@@ -128,3 +128,27 @@ def test_on_apply_without_optimized_file_fails():
 
     assert ok is False
     assert window.last_error == "no optimized file to apply"
+
+
+def test_default_plugin_is_known():
+    window = MainWindow()
+    assert window.plugin_name in window.available_plugins
+
+
+def test_on_change_plugin_accepts_registered_plugin():
+    window = MainWindow()
+    ok = window.on_change_plugin("linux")
+
+    assert ok is True
+    assert window.plugin_name == "linux"
+    assert window.last_error == ""
+
+
+def test_on_change_plugin_rejects_unknown_plugin():
+    window = MainWindow()
+    previous = window.plugin_name
+    ok = window.on_change_plugin("no-such-plugin")
+
+    assert ok is False
+    assert window.plugin_name == previous
+    assert window.last_error == "unknown plugin: no-such-plugin"
