@@ -14,3 +14,4 @@ dependencies = [
 
 [project.scripts]
 harite = "harite.cli:run"
+harite-gui = "harite.gui.app:run"
