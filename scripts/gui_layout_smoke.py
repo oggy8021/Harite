@@ -46,7 +46,9 @@ def evaluate_summary(summary: dict) -> dict:
         "input_present": bool(summary.get("form_state", {}).get("input_value")),
         "can_optimize": bool(summary.get("can_optimize")),
     }
-    checks["ok"] = all(checks.values())
+    failed_checks = [name for name, passed in checks.items() if not passed]
+    checks["failed_checks"] = failed_checks
+    checks["ok"] = not failed_checks
     return checks
 
 
@@ -65,6 +67,7 @@ def build_markdown_report(summary: dict, *, scope: str) -> str:
         f"- input_present: {as_result(bool(validation.get('input_present')))}",
         f"- can_optimize: {as_result(bool(validation.get('can_optimize')))}",
         f"- GUI smoke: {as_result(bool(validation.get('ok')))}",
+        f"- Failed checks: {', '.join(validation.get('failed_checks', [])) or 'none'}",
     ]
     return "\n".join(lines) + "\n"
 
@@ -75,6 +78,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--validate", action="store_true", help="run built-in validation checks and return non-zero on failure")
     parser.add_argument("--out-file", type=Path, help="write JSON summary to path (default stdout)")
     parser.add_argument("--markdown-out", type=Path, help="write PR-comment-friendly markdown report")
+    parser.add_argument("--print-markdown", action="store_true", help="print markdown report to stdout")
     parser.add_argument("--scope", default="local/gui-smoke", help="scope text used in markdown report")
     args = parser.parse_args(argv)
 
@@ -117,6 +121,11 @@ def main(argv: list[str] | None = None) -> int:
             summary["validation"] = evaluate_summary(summary)
         md = build_markdown_report(summary, scope=args.scope)
         args.markdown_out.write_text(md, encoding="utf-8")
+
+    if args.print_markdown:
+        if "validation" not in summary:
+            summary["validation"] = evaluate_summary(summary)
+        print(build_markdown_report(summary, scope=args.scope), end="")
 
     out_json = json.dumps(summary, indent=2, ensure_ascii=False)
 
