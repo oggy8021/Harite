@@ -138,3 +138,53 @@ def test_gui_layout_smoke_print_markdown_to_stdout(tmp_path: Path):
     assert proc.returncode == 0, proc.stderr
     assert "### Manual device validation" in proc.stdout
     assert "- Scope: windows/gui" in proc.stdout
+
+
+def test_gui_layout_smoke_writes_pr_comment_template(tmp_path: Path):
+    out_json = tmp_path / "layout-pr-comment.json"
+    out_pr = tmp_path / "pr-comment.md"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--scope",
+            "windows/gui",
+            "--notes",
+            "manual screenshots attached",
+            "--out-file",
+            str(out_json),
+            "--pr-comment-out",
+            str(out_pr),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, proc.stderr
+    text = out_pr.read_text(encoding="utf-8")
+    assert "### Manual device validation" in text
+    assert "- Scope: windows/gui" in text
+    assert "- GUI smoke: pass" in text
+    assert "- Notes: manual screenshots attached" in text
+
+
+def test_gui_layout_smoke_print_pr_comment_to_stdout(tmp_path: Path):
+    out_json = tmp_path / "layout-pr-comment-print.json"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--validate",
+            "--out-file",
+            str(out_json),
+            "--print-pr-comment",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 1
+    assert "### Manual device validation" in proc.stdout
+    assert "- GUI smoke: fail" in proc.stdout
