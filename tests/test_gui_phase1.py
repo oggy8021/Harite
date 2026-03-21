@@ -195,3 +195,14 @@ def test_on_close_error_dialog_clears_last_error():
 
     assert window.last_error == ""
     assert "Error dialog closed" in window.logs
+
+
+def test_on_close_open_image_dialog_logs_close_event():
+    window = MainWindow()
+    previous_error = "keep this"
+    window.last_error = previous_error
+
+    window.on_close_open_image_dialog()
+
+    assert window.last_error == previous_error
+    assert "Open image dialog closed" in window.logs

@@ -168,6 +168,10 @@ class MainWindow:
         self.last_error = ""
         self._log("Error dialog closed")
 
+    def on_close_open_image_dialog(self) -> None:
+        """Legacy signal mapping: on_ImgOpenDialog_destroy."""
+        self._log("Open image dialog closed")
+
     def build_optimize_cli_preview(self) -> str:
         req = OptimizeRequest(
             input_value=self.form_state.input_value,
