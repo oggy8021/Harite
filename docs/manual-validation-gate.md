@@ -44,12 +44,16 @@ harite apply --plugin windows --file ./out/wallpaper_001.jpg --do-it
 
 ## GUI 変更が入る場合の追加確認（2分）
 
+注記:
+- 現状の GUI はプレースホルダ実装のため、起動時はウィンドウ表示ではなくコンソールに状態を表示する。
+
 1. GUI起動
 ```bash
 python -m harite.gui.app
 ```
 2. 入力変更 -> optimize 実行 -> apply dry-run
 3. 実行ログに失敗メッセージが残っていないこと
+4. 併せて `pytest -q tests/test_gui_phase1.py` が成功すること
 
 ## CLI 0.1.1 宿題チェック（オーナー用）
 
