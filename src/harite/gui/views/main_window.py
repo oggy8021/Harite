@@ -176,6 +176,10 @@ class MainWindow:
         """Legacy signal mapping: on_SaveWallpaperDialog_destroy."""
         self._log("Save dialog closed")
 
+    def on_close_settings_dialog(self) -> None:
+        """Legacy signal mapping: on_SettingDialog_destroy."""
+        self._log("Settings dialog closed")
+
     def build_optimize_cli_preview(self) -> str:
         req = OptimizeRequest(
             input_value=self.form_state.input_value,
