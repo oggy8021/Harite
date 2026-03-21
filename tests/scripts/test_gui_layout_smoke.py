@@ -391,3 +391,57 @@ def test_gui_layout_smoke_rejects_invalid_manual_result(tmp_path: Path):
 
     assert proc.returncode == 2
     assert "invalid manual result" in proc.stderr
+
+
+def test_gui_layout_smoke_require_screenshots_fails_when_missing(tmp_path: Path):
+    out_json = tmp_path / "layout-require-shot.json"
+    out_report = tmp_path / "report.md"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--out-file",
+            str(out_json),
+            "--report-out",
+            str(out_report),
+            "--require-screenshots",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 3
+    assert "missing required screenshot path(s)" in proc.stderr
+
+
+def test_gui_layout_smoke_require_screenshots_passes_with_paths(tmp_path: Path):
+    out_json = tmp_path / "layout-require-shot-ok.json"
+    out_report = tmp_path / "report-ok.md"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--out-file",
+            str(out_json),
+            "--report-out",
+            str(out_report),
+            "--require-screenshots",
+            "--screenshot-mainwindow",
+            "out/manual-validation/pr-143-windows-mainwindow.png",
+            "--screenshot-optimize",
+            "out/manual-validation/pr-143-windows-optimize.png",
+            "--screenshot-apply",
+            "out/manual-validation/pr-143-windows-apply.png",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    assert out_report.exists()
