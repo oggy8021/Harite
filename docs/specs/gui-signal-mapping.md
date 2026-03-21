@@ -30,10 +30,10 @@
 | wallpositapplet.glade | btnGetImgL / btnGetImgR | clicked | on_btnGetImg_clicked | MainWindow.on_pick_input | implemented | 左右個別入力はMVPで1入力欄へ統合も可 |
 | wallpositapplet.glade | spnTopMergin/spnLMergin/spnRMergin/spnBtmMergin | value_changed | on_spnMergin_value_changed | MainWindow.on_change_margins | implemented | `--margins` へ集約 |
 | wallpositapplet.glade | radFixed / radNoFixed | toggled | on_radFixed_toggled | MainWindow.on_toggle_fixed | implemented | `--fixed` へ反映 |
-| wallpositapplet.glade | btnSave | clicked | on_btnSave_clicked | MainWindow.on_optimize | mapped | `optimize` 実行に対応 |
+| wallpositapplet.glade | btnSave | clicked | on_btnSave_clicked | MainWindow.on_optimize | implemented | `optimize` 実行に対応 |
 | wallpositapplet.glade | btnSetWall | clicked | on_btnSetWall_clicked | MainWindow.on_apply_dry_run / on_apply_do_it | implemented | `apply` の安全導線に分離 |
-| wallpositapplet.glade | entPathL / entPathR | insert_text | on_entPath_insert_text | MainWindow.on_change_input_text | mapped | Phase 1 優先 |
-| wallpositapplet.glade | WallPosit_MainWindow | delete_event | on_WallPosit_MainWindow_delete_event | MainWindow.on_close | mapped | Phase 1 優先 |
+| wallpositapplet.glade | entPathL / entPathR | insert_text | on_entPath_insert_text | MainWindow.on_change_input_text | implemented | Phase 1 優先 |
+| wallpositapplet.glade | WallPosit_MainWindow | delete_event | on_WallPosit_MainWindow_delete_event | MainWindow.on_close | implemented | Phase 1 優先 |
 
 ## Phase 1 優先実装（3 signal）
 
