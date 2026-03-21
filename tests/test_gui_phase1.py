@@ -213,3 +213,10 @@ def test_on_close_save_dialog_logs_close_event():
     window.on_close_save_dialog()
 
     assert "Save dialog closed" in window.logs
+
+
+def test_on_close_settings_dialog_logs_close_event():
+    window = MainWindow()
+    window.on_close_settings_dialog()
+
+    assert "Settings dialog closed" in window.logs
