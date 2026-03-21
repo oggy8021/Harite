@@ -65,13 +65,14 @@
 - 完了: M3-4準備（`--verify-screenshot-files` で添付パス実体の存在確認を追加）
 - 完了: M3-5準備（`--strict-manual` で必須チェックと成果物出力を一括有効化）
 - 完了: 暫定運用実績（XFCEで `--auto-artifacts` を実行し、`pr-146-xfce-pr-comment.md` を生成。GUIプレースホルダのためスクリーンショットは未実施）
+- 完了: M4（`gui-integration-test-matrix` に CI smoke と manual gate の責務分離を明文化）
 
 ## 次マイルストーン（Phase 3 後半）
 
 - [ ] M1: 実UIウィジェットへの本バインド導入（adapterで signal -> `MainWindow` 接続を実装）
 - [ ] M2: 主要画面の配置/表示の実機確認（Windows/XFCE/macOSのうち利用可能環境）
 - [ ] M3: 実機確認結果を PR コメントに標準フォーマットで記録（スクリーンショット付き）
-- [ ] M4: 実UI導入後の最小回帰セットを固定（CI smoke + manual gate の責務分離）
+- [x] M4: 実UI導入後の最小回帰セットを固定（CI smoke + manual gate の責務分離）
 
 ## M1 詳細進捗
 
