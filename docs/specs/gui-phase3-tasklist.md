@@ -48,7 +48,7 @@
   - PR merge 時: 該当項目を `進捗ログ` に移し、状態を更新。
   - 実機確認が必要な変更時: `docs/manual-validation-gate.md` のテンプレート記録を必須化。
 
-## 進捗ログ（2026-03-21時点）
+## 進捗ログ（2026-03-22時点）
 
 - 完了: Phase 3 Step 1-5（設計固定、mapping再分類、状態モデル、統合テスト観点、UI loader試作）
 - 完了: 実機検証補助の強化（smoke validate、markdown出力、失敗チェック表示、PRコメントテンプレート）
@@ -68,10 +68,11 @@
 - 完了: M4（`gui-integration-test-matrix` に CI smoke と manual gate の責務分離を明文化）
 - 完了: M1-4（`app.run` から optional backend signal 接続導線を追加し、GTK backend 利用時の bind 実行を可能化）
 - 完了: M1-5（`app.run` に optional 実ウィンドウ表示導線を追加し、GTK 利用時は placeholder 出力から表示フローへ遷移可能化）
+- 完了: M1（実UI本バインド導入の最小要件を満たし、signal接続から window presentation までの導線を確立）
 
 ## 次マイルストーン（Phase 3 後半）
 
-- [ ] M1: 実UIウィジェットへの本バインド導入（adapterで signal -> `MainWindow` 接続を実装）
+- [x] M1: 実UIウィジェットへの本バインド導入（adapterで signal -> `MainWindow` 接続を実装）
 - [ ] M2: 主要画面の配置/表示の実機確認（Windows/XFCE/macOSのうち利用可能環境）
 - [ ] M3: 実機確認結果を PR コメントに標準フォーマットで記録（スクリーンショット付き）
 - [x] M4: 実UI導入後の最小回帰セットを固定（CI smoke + manual gate の責務分離）
