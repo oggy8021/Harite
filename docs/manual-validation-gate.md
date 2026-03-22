@@ -109,7 +109,7 @@ python scripts/gui_layout_smoke.py --simulate --validate --auto-artifacts --arti
 
 手順:
 
-1. `python -m harite.gui.app` を起動し、上記ウィンドウを目視で確認してスクリーンショットを取る。
+1. `python -m harite.gui.app --load-ui-prototype --bind-ui-backend --present-ui-window` を起動し、上記ウィンドウを目視で確認してスクリーンショットを取る。
 2. 入力変更 -> `harite optimize` 実行（あるいは GUI 経由の optimize）-> `harite apply --plugin <os> --file <file>` の dry-run を確認。
 3. 実行ログに `Traceback` や `Exception` が残らないことを確認し、スクリーンショットを PR コメントに添付する。
 
@@ -138,6 +138,8 @@ python scripts/gui_layout_smoke.py --simulate --validate --scope windows/gui --o
 
   - いずれかのスクリーンショットパスが未指定の場合は終了コード `3` で失敗する。
   - `--verify-screenshot-files` を付けると、指定パスの実ファイルが存在しない場合は終了コード `4` で失敗する。
+  - スクリーンショットパスを指定した場合、`pr-<PR>-<os>-pr-comment.md` にも `### Screenshots` セクションが自動で出力される。
+  - `--require-screenshots` / `--verify-screenshot-files` は report 出力だけでなく pr-comment 出力時にも同様に適用される。
 
   厳格モード（推奨、運用確定時）:
 

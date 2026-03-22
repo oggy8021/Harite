@@ -179,6 +179,37 @@ def test_gui_layout_smoke_writes_pr_comment_template(tmp_path: Path):
     assert "- Notes: manual screenshots attached" in text
 
 
+def test_gui_layout_smoke_pr_comment_includes_screenshots_when_provided(tmp_path: Path):
+    out_json = tmp_path / "layout-pr-comment-shots.json"
+    out_pr = tmp_path / "pr-comment-shots.md"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--out-file",
+            str(out_json),
+            "--pr-comment-out",
+            str(out_pr),
+            "--screenshot-mainwindow",
+            "out/manual-validation/pr-146-xfce-mainwindow.png",
+            "--screenshot-optimize",
+            "out/manual-validation/pr-146-xfce-optimize.png",
+            "--screenshot-apply",
+            "out/manual-validation/pr-146-xfce-apply.png",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    text = out_pr.read_text(encoding="utf-8")
+    assert "### Screenshots" in text
+    assert "- MainWindow: out/manual-validation/pr-146-xfce-mainwindow.png" in text
+
+
 def test_gui_layout_smoke_print_pr_comment_to_stdout(tmp_path: Path):
     out_json = tmp_path / "layout-pr-comment-print.json"
     proc = subprocess.run(
@@ -418,6 +449,30 @@ def test_gui_layout_smoke_require_screenshots_fails_when_missing(tmp_path: Path)
     assert "missing required screenshot path(s)" in proc.stderr
 
 
+def test_gui_layout_smoke_require_screenshots_fails_for_pr_comment_when_missing(tmp_path: Path):
+    out_json = tmp_path / "layout-require-shot-pr-comment.json"
+    out_pr = tmp_path / "pr-comment.md"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--out-file",
+            str(out_json),
+            "--pr-comment-out",
+            str(out_pr),
+            "--require-screenshots",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 3
+    assert "missing required screenshot path(s)" in proc.stderr
+
+
 def test_gui_layout_smoke_require_screenshots_passes_with_paths(tmp_path: Path):
     out_json = tmp_path / "layout-require-shot-ok.json"
     out_report = tmp_path / "report-ok.md"
@@ -464,6 +519,37 @@ def test_gui_layout_smoke_verify_screenshot_files_fails_when_missing(tmp_path: P
             str(out_json),
             "--report-out",
             str(out_report),
+            "--require-screenshots",
+            "--verify-screenshot-files",
+            "--screenshot-mainwindow",
+            "missing-mainwindow.png",
+            "--screenshot-optimize",
+            "missing-optimize.png",
+            "--screenshot-apply",
+            "missing-apply.png",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 4
+    assert "missing screenshot file(s):" in proc.stderr
+
+
+def test_gui_layout_smoke_verify_screenshot_files_fails_for_pr_comment_when_missing(tmp_path: Path):
+    out_json = tmp_path / "layout-verify-shot-pr-comment.json"
+    out_pr = tmp_path / "pr-comment.md"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/gui_layout_smoke.py",
+            "--simulate",
+            "--validate",
+            "--out-file",
+            str(out_json),
+            "--pr-comment-out",
+            str(out_pr),
             "--require-screenshots",
             "--verify-screenshot-files",
             "--screenshot-mainwindow",
@@ -579,5 +665,11 @@ def test_gui_layout_smoke_strict_manual_passes_with_existing_screenshots(tmp_pat
     assert (artifact_dir / "pr-145-windows.md").exists()
     assert (artifact_dir / "pr-145-windows-pr-comment.md").exists()
     report_text = (artifact_dir / "pr-145-windows.md").read_text(encoding="utf-8")
+    pr_comment_text = (artifact_dir / "pr-145-windows-pr-comment.md").read_text(
+        encoding="utf-8"
+    )
     assert "## Screenshots" in report_text
     assert "- Screenshot(mainwindow): out/manual-validation/pr-145-windows-mainwindow.png" in report_text
+    assert "### Screenshots" in pr_comment_text
+    assert "- MainWindow:" in pr_comment_text
+    assert "pr-145-windows-mainwindow.png" in pr_comment_text
