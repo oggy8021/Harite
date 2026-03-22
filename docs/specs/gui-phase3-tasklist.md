@@ -67,6 +67,7 @@
 - 完了: 暫定運用実績（XFCEで `--auto-artifacts` を実行し、`pr-146-xfce-pr-comment.md` を生成。GUIプレースホルダのためスクリーンショットは未実施）
 - 完了: M4（`gui-integration-test-matrix` に CI smoke と manual gate の責務分離を明文化）
 - 完了: M1-4（`app.run` から optional backend signal 接続導線を追加し、GTK backend 利用時の bind 実行を可能化）
+- 完了: M1-5（`app.run` に optional 実ウィンドウ表示導線を追加し、GTK 利用時は placeholder 出力から表示フローへ遷移可能化）
 
 ## 次マイルストーン（Phase 3 後半）
 
@@ -81,6 +82,7 @@
 - [x] M1-2: present handler 向け dispatch table を生成し、bind 時に `_adapter_signal_dispatch` と metadata へ保持
 - [x] M1-3: 実UI backend 側で dispatch table を使った connect 実装（backend依存は adapter 内に限定）
 - [x] M1-4: `app.run` に optional backend signal binding（`HARITE_GUI_BIND_SIGNALS` / `bind_ui_backend`）を導入
+- [x] M1-5: `app.run` に optional window presentation（`HARITE_GUI_PRESENT_WINDOW` / `present_ui_window`）を導入
 
 ## M2 詳細進捗
 
