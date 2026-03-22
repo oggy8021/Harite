@@ -23,13 +23,31 @@ def _should_bind_ui_backend(bind_ui_backend: bool | None) -> bool:
     return raw in ("1", "true", "yes", "on")
 
 
+def _should_present_ui_window(present_ui_window: bool | None) -> bool:
+    if present_ui_window is not None:
+        return present_ui_window
+    raw = os.getenv("HARITE_GUI_PRESENT_WINDOW", "0").strip().lower()
+    return raw in ("1", "true", "yes", "on")
+
+
 def _load_ui_signal_backend(ui_file: Path) -> Any:
     from .adapters.gtk_backend import load_gtk_builder_signal_backend
 
     return load_gtk_builder_signal_backend(ui_file)
 
 
-def run(*, load_ui_prototype: bool | None = None, bind_ui_backend: bool | None = None) -> None:
+def _present_ui_window(signal_backend: Any) -> bool:
+    from .adapters.gtk_backend import present_gtk_window
+
+    return bool(present_gtk_window(signal_backend))
+
+
+def run(
+    *,
+    load_ui_prototype: bool | None = None,
+    bind_ui_backend: bool | None = None,
+    present_ui_window: bool | None = None,
+) -> None:
     """Run standalone GUI skeleton.
 
     For now this is a placeholder entrypoint to keep CI green while
@@ -53,6 +71,7 @@ def run(*, load_ui_prototype: bool | None = None, bind_ui_backend: bool | None =
 
     if loaded_result is not None:
         signal_backend = None
+        presented = False
         if _should_bind_ui_backend(bind_ui_backend):
             try:
                 signal_backend = _load_ui_signal_backend(loaded_result.file_path)
@@ -68,6 +87,16 @@ def run(*, load_ui_prototype: bool | None = None, bind_ui_backend: bool | None =
         except Exception as exc:
             # Non-fatal: adapter binding is optional for prototype flow.
             print(f"UI adapter binding skipped: {exc}")
+
+        if signal_backend is not None and _should_present_ui_window(present_ui_window):
+            try:
+                presented = _present_ui_window(signal_backend)
+                if presented:
+                    return
+                print("UI window presentation skipped: target window not found")
+            except Exception as exc:
+                # Non-fatal in headless CI or partial GTK environments.
+                print(f"UI window presentation skipped: {exc}")
 
     window.show()
 

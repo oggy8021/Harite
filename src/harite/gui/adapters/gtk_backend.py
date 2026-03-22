@@ -30,3 +30,30 @@ def load_gtk_builder_signal_backend(ui_file: Path):
         raise RuntimeError(f"failed to load GTK builder from {ui_file}: {exc}") from exc
 
     return builder
+
+
+def present_gtk_window(signal_backend, *, window_id: str = "WallPosit_MainWindow") -> bool:
+    """Present the real GTK window and enter the main loop.
+
+    Returns True when the target window object is found and shown.
+    """
+    try:
+        import gi
+
+        gi.require_version("Gtk", "3.0")
+        from gi.repository import Gtk
+    except Exception as exc:  # pragma: no cover - depends on host GTK runtime.
+        raise RuntimeError(f"GTK runtime unavailable: {exc}") from exc
+
+    if not hasattr(signal_backend, "get_object"):
+        raise TypeError("signal backend must provide get_object(name)")
+
+    window = signal_backend.get_object(window_id)
+    if window is None:
+        return False
+
+    if hasattr(window, "show_all"):
+        window.show_all()
+
+    Gtk.main()
+    return True
