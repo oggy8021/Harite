@@ -209,3 +209,47 @@ def test_run_falls_back_when_window_presentation_fails(monkeypatch):
 
     assert called["present"] == 1
     assert called["show"] == 1
+
+
+def test_main_parses_cli_flags_and_calls_run(monkeypatch):
+    called = {}
+
+    def fake_run(*, load_ui_prototype=None, bind_ui_backend=None, present_ui_window=None):
+        called["load_ui_prototype"] = load_ui_prototype
+        called["bind_ui_backend"] = bind_ui_backend
+        called["present_ui_window"] = present_ui_window
+
+    monkeypatch.setattr(app, "run", fake_run)
+
+    exit_code = app.main([
+        "--load-ui-prototype",
+        "--bind-ui-backend",
+        "--present-ui-window",
+    ])
+
+    assert exit_code == 0
+    assert called == {
+        "load_ui_prototype": True,
+        "bind_ui_backend": True,
+        "present_ui_window": True,
+    }
+
+
+def test_main_uses_none_defaults_without_cli_flags(monkeypatch):
+    called = {}
+
+    def fake_run(*, load_ui_prototype=None, bind_ui_backend=None, present_ui_window=None):
+        called["load_ui_prototype"] = load_ui_prototype
+        called["bind_ui_backend"] = bind_ui_backend
+        called["present_ui_window"] = present_ui_window
+
+    monkeypatch.setattr(app, "run", fake_run)
+
+    exit_code = app.main([])
+
+    assert exit_code == 0
+    assert called == {
+        "load_ui_prototype": None,
+        "bind_ui_backend": None,
+        "present_ui_window": None,
+    }

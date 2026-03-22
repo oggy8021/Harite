@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import os
 from pathlib import Path
 from typing import Any
@@ -101,5 +102,38 @@ def run(
     window.show()
 
 
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Run Harite standalone GUI app")
+    parser.add_argument(
+        "--load-ui-prototype",
+        dest="load_ui_prototype",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="load staged Glade UI prototype (default: follow HARITE_GUI_LOAD_UI)",
+    )
+    parser.add_argument(
+        "--bind-ui-backend",
+        dest="bind_ui_backend",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="bind backend signals to MainWindow dispatch (default: follow HARITE_GUI_BIND_SIGNALS)",
+    )
+    parser.add_argument(
+        "--present-ui-window",
+        dest="present_ui_window",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="present real GTK window when backend is available (default: follow HARITE_GUI_PRESENT_WINDOW)",
+    )
+    args = parser.parse_args(argv)
+
+    run(
+        load_ui_prototype=args.load_ui_prototype,
+        bind_ui_backend=args.bind_ui_backend,
+        present_ui_window=args.present_ui_window,
+    )
+    return 0
+
+
 if __name__ == "__main__":
-    run()
+    raise SystemExit(main())
