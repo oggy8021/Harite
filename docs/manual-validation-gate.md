@@ -1,6 +1,6 @@
 # 実機検証ゲート（軽量運用）
 
-最終更新: 2026-03-21
+最終更新: 2026-03-22
 
 ## 目的
 
@@ -76,6 +76,15 @@ harite apply --plugin windows --file ./out/wallpaper_001.jpg --do-it
 注記:
 
 - 現状の GUI はプレースホルダ実装のため、起動時はウィンドウ表示ではなくコンソールに状態を表示する。
+
+実ウィンドウ起動（GTK 利用可能環境）:
+
+```bash
+HARITE_GUI_LOAD_UI=1 HARITE_GUI_BIND_SIGNALS=1 HARITE_GUI_PRESENT_WINDOW=1 python -m harite.gui.app
+```
+
+- 上記でウィンドウ表示できる環境では、スクリーンショット 3 枚取得運用へ進む。
+- 表示できない場合は従来どおり暫定運用（`--auto-artifacts` + Notes 記録）を適用する。
 
 ### 暫定運用（GUIプレースホルダ期間）
 
