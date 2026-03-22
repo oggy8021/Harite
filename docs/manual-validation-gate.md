@@ -80,7 +80,7 @@ harite apply --plugin windows --file ./out/wallpaper_001.jpg --do-it
 実ウィンドウ起動（GTK 利用可能環境）:
 
 ```bash
-HARITE_GUI_LOAD_UI=1 HARITE_GUI_BIND_SIGNALS=1 HARITE_GUI_PRESENT_WINDOW=1 python -m harite.gui.app
+python -m harite.gui.app --load-ui-prototype --bind-ui-backend --present-ui-window
 ```
 
 - 上記でウィンドウ表示できる環境では、スクリーンショット 3 枚取得運用へ進む。
