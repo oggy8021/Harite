@@ -64,6 +64,7 @@
 - 完了: M3-3準備（`--require-screenshots` で添付漏れを検出し、レポート運用を強制可能化）
 - 完了: M3-4準備（`--verify-screenshot-files` で添付パス実体の存在確認を追加）
 - 完了: M3-5準備（`--strict-manual` で必須チェックと成果物出力を一括有効化）
+- 完了: M3-6準備（`pr-comment` にスクリーンショットセクションを自動出力し、`--require-screenshots` / `--verify-screenshot-files` を report/pr-comment 両方に適用）
 - 完了: 暫定運用実績（XFCEで `--auto-artifacts` を実行し、`pr-146-xfce-pr-comment.md` を生成。GUIプレースホルダのためスクリーンショットは未実施）
 - 完了: M4（`gui-integration-test-matrix` に CI smoke と manual gate の責務分離を明文化）
 - 完了: M1-4（`app.run` から optional backend signal 接続導線を追加し、GTK backend 利用時の bind 実行を可能化）
@@ -101,6 +102,7 @@
 - [x] M3-3a: スクリーンショット必須モード（`--require-screenshots`）を追加
 - [x] M3-4a: スクリーンショット実ファイル存在チェック（`--verify-screenshot-files`）を追加
 - [x] M3-5a: 厳格運用モード（`--strict-manual`）を追加
+- [x] M3-6a: `pr-comment` 出力に `### Screenshots` を追加し、スクリーンショット検証を report/pr-comment 両方で強制可能化
 - [ ] M3-2b: 実機確認1件分を `pr-comment` へ添付して標準フォーマット運用を確定（スクリーンショット付きは実ウィンドウ実装後）
 
 ## 小PR分割（推奨）
