@@ -61,3 +61,71 @@ def test_run_continues_when_ui_loader_fails(monkeypatch):
     app.run(load_ui_prototype=True)
 
     assert called["show"] == 1
+
+
+def test_run_binds_signal_backend_when_enabled(monkeypatch):
+    called = {"show": 0, "signal_backend": None}
+
+    class DummyWindow:
+        def show(self) -> None:
+            called["show"] += 1
+
+    class Result:
+        file_path = "dummy.glade"
+        widget_count = 1
+        signal_count = 1
+
+    class DummyBackend:
+        def connect_signals(self, mapping):
+            self.mapping = dict(mapping)
+
+    def fake_loader():
+        return Result()
+
+    def fake_backend_loader(_ui_file):
+        return DummyBackend()
+
+    def fake_bind(mainwindow, ui_result, signal_backend=None):
+        called["signal_backend"] = signal_backend
+
+    monkeypatch.setattr(app, "MainWindow", DummyWindow)
+    monkeypatch.setattr("harite.gui.adapters.ui_loader.load_glade_prototype", fake_loader)
+    monkeypatch.setattr(app, "_load_ui_signal_backend", fake_backend_loader)
+    monkeypatch.setattr("harite.gui.adapters.ui_adapter.bind_mainwindow", fake_bind)
+
+    app.run(load_ui_prototype=True, bind_ui_backend=True)
+
+    assert called["show"] == 1
+    assert called["signal_backend"] is not None
+
+
+def test_run_continues_when_signal_backend_load_fails(monkeypatch):
+    called = {"show": 0, "signal_backend": "unset"}
+
+    class DummyWindow:
+        def show(self) -> None:
+            called["show"] += 1
+
+    class Result:
+        file_path = "dummy.glade"
+        widget_count = 1
+        signal_count = 1
+
+    def fake_loader():
+        return Result()
+
+    def fake_backend_loader(_ui_file):
+        raise RuntimeError("backend missing")
+
+    def fake_bind(mainwindow, ui_result, signal_backend=None):
+        called["signal_backend"] = signal_backend
+
+    monkeypatch.setattr(app, "MainWindow", DummyWindow)
+    monkeypatch.setattr("harite.gui.adapters.ui_loader.load_glade_prototype", fake_loader)
+    monkeypatch.setattr(app, "_load_ui_signal_backend", fake_backend_loader)
+    monkeypatch.setattr("harite.gui.adapters.ui_adapter.bind_mainwindow", fake_bind)
+
+    app.run(load_ui_prototype=True, bind_ui_backend=True)
+
+    assert called["show"] == 1
+    assert called["signal_backend"] is None
