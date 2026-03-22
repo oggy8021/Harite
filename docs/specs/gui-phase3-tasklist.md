@@ -1,6 +1,6 @@
 # GUI Phase 3 タスクリスト（実UI統合の準備）
 
-最終更新: 2026-03-21
+最終更新: 2026-03-22
 
 ## 目的
 
@@ -66,6 +66,7 @@
 - 完了: M3-5準備（`--strict-manual` で必須チェックと成果物出力を一括有効化）
 - 完了: 暫定運用実績（XFCEで `--auto-artifacts` を実行し、`pr-146-xfce-pr-comment.md` を生成。GUIプレースホルダのためスクリーンショットは未実施）
 - 完了: M4（`gui-integration-test-matrix` に CI smoke と manual gate の責務分離を明文化）
+- 完了: M1-4（`app.run` から optional backend signal 接続導線を追加し、GTK backend 利用時の bind 実行を可能化）
 
 ## 次マイルストーン（Phase 3 後半）
 
@@ -79,6 +80,7 @@
 - [x] M1-1: glade の handler 抽出と legacy handler -> `MainWindow` メソッドの妥当性検証
 - [x] M1-2: present handler 向け dispatch table を生成し、bind 時に `_adapter_signal_dispatch` と metadata へ保持
 - [x] M1-3: 実UI backend 側で dispatch table を使った connect 実装（backend依存は adapter 内に限定）
+- [x] M1-4: `app.run` に optional backend signal binding（`HARITE_GUI_BIND_SIGNALS` / `bind_ui_backend`）を導入
 
 ## M2 詳細進捗
 
