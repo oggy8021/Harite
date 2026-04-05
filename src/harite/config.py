@@ -6,10 +6,21 @@ import json
 
 
 def load_config(path: Path) -> dict[str, Any]:
-    """Load a JSON config file and return as dict.
+    """JSON 設定ファイルを読み込み辞書で返す。
 
-    The config file is expected to be a JSON object containing keys
-    matching CLI option names (e.g. "resolution": "3840x2160").
+    Summary:
+        指定したパスの JSON ファイルを読み込み、CLI のデフォルト設定を表す
+        辞書を返す。ファイルが見つからない場合や JSON が不正な場合は例外を投げる。
+
+    Args:
+        path: 読み込む設定ファイルのパス。
+
+    Returns:
+        設定を格納した辞書。
+
+    Raises:
+        FileNotFoundError: ファイルが存在しない場合。
+        ValueError: JSON が不正な場合。
     """
     p = Path(path)
     if not p.exists():

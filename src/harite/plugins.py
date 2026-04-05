@@ -19,20 +19,31 @@ POS_MATCH_THRESHOLD = 200
 
 
 def _normalize_identifier(s: str) -> str:
-    """Normalize monitor/property names for fuzzy matching.
+    """識別子文字列を正規化する。
 
-    Lowercase and strip non-alphanumeric characters so that names like
-    "HDMI-1" and "hdmi1" compare equal.
+    Summary:
+        小文字化して英数字以外を削除し、'HDMI-1' と 'hdmi1' のような差を吸収する。
+
+    Args:
+        s: 元の文字列。
+
+    Returns:
+        正規化済み文字列。
     """
     return re.sub(r"[^a-z0-9]", "", s.lower())
 
 
 def _name_variants(name: str) -> set[str]:
-    """Return normalized name variants to handle common aliases.
+    """名前の派生バリアントを返す。
 
-    Examples:
-    - "DP-1" -> {"dp1", "displayport1"}
-    - "HDMI-1" -> {"hdmi1"}
+    Summary:
+        通常の略称や展開形を含む正規化バリアント集合を返す。
+
+    Args:
+        name: モニタ名などの文字列。
+
+    Returns:
+        バリアントの集合。
     """
     norm = _normalize_identifier(name)
     # split into alpha prefix and numeric suffix
@@ -54,6 +65,14 @@ def _name_variants(name: str) -> set[str]:
 
 
 def _extract_resolution(prop: str):
+    """文字列から幅×高さの解像度を抽出する。
+
+    Args:
+        prop: 解析対象文字列。
+
+    Returns:
+        (width, height) のタプル、抽出できない場合は None。
+    """
     m = re.search(r"(\d+)x(\d+)", prop)
     if not m:
         return None
@@ -64,6 +83,11 @@ def _extract_resolution(prop: str):
 
 
 def _extract_index(prop: str):
+    """文字列からモニタインデックスを抽出する。
+
+    Returns:
+        インデックス整数または None。
+    """
     m = re.search(r"/monitor(?:/|)(\d+)", prop)
     if not m:
         m2 = re.search(r"monitor(?:_|-|)(\d+)", prop)
@@ -77,10 +101,10 @@ def _extract_index(prop: str):
 
 
 def _extract_position(prop: str):
-    """Extract position offsets (x, y) from property strings.
+    """プロパティ文字列から位置オフセット (x, y) を抽出する。
 
-    Supports patterns like `1920x1080+1024+0` and simple `+1024+0` offsets.
-    Returns tuple (x, y) or None.
+    サポート: `1920x1080+1024+0` や `+1024+0` など。
+    抽出できなければ None を返す。
     """
     # try common geometry pattern with resolution and offsets (support signed offsets)
     m = re.search(r"(\d+)x(\d+)([+-]\d+)([+-]\d+)", prop)
@@ -100,10 +124,9 @@ def _extract_position(prop: str):
 
 
 def _enumerate_xfconf_candidates() -> list:
-    """Return a list of XFCE-related property paths discovered via xfconf-query.
+    """`xfconf-query` で列挙される XFCE 関連のプロパティ候補を返す。
 
-    Isolated for testability: calls `xfconf-query -c xfce4-desktop -l` and
-    returns only properties that look like image/last-image entries.
+    テスト容易性のため分離。外部コマンドを呼ぶため失敗時は空リストを返す。
     """
     try:
         import subprocess
@@ -130,10 +153,17 @@ def _enumerate_xfconf_candidates() -> list:
 
 
 def _match_candidates_for_mapping(mapping: dict, candidates: list) -> dict:
-    """Return filtered candidate lists per mapping key (monitor name).
+    """与えられたモニタマッピングに対して候補をフィルタリングする。
 
-    Encapsulates index/resolution/position/composite heuristics used when a
-    per-monitor `mapping` is provided. Returns a dict {monitor_name: [candidates]}.
+    Summary:
+        インデックス、解像度、位置などのヒューリスティックを使って候補を絞る。
+
+    Args:
+        mapping: ユーザ提供のモニタ名 -> パス マッピング。
+        candidates: 列挙されたプロパティ候補リスト。
+
+    Returns:
+        モニタ名 -> 候補リストの辞書。
     """
     result: dict = {}
     try:
@@ -338,11 +368,17 @@ def _match_candidates_for_mapping(mapping: dict, candidates: list) -> dict:
 
 
 def _apply_xfconf_candidates(is_map: bool, mapping: dict | None, candidates: list, p: Path | None, dry_run: bool) -> tuple[bool, bool]:
-    """Execute or simulate XFCE `xfconf-query` commands for candidates.
+    """XFCE 候補に対して `xfconf-query` を実行またはシミュレートする。
 
-    Returns (success_any, simulated) where `simulated` is True when dry_run
-    observed candidate commands to log, and `success_any` is True when any
-    command returned success (returncode == 0) during real execution.
+    Args:
+        is_map: path 引数がマッピング(dict)か。
+        mapping: マッピング（is_map=True のとき）。
+        candidates: 候補パスリスト。
+        p: 単一パス（is_map=False のとき）。
+        dry_run: 実行の代わりにログ出力するか。
+
+    Returns:
+        (success_any, simulated)
     """
     import subprocess
 
