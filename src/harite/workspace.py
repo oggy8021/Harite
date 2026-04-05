@@ -40,6 +40,12 @@ def detect_displays() -> List[Display]:
 
 
 def _detect_linux() -> List[Display]:
+    """Linux ホストでディスプレイ情報を検出する。
+
+    Summary:
+        `xrandr --query` の出力を解析して接続中のディスプレイ名、解像度、オフセットを
+        抽出し `Display` のリストを返す。失敗時は空リストを返す。
+    """
     try:
         out = subprocess.check_output(["xrandr", "--query"], text=True, stderr=subprocess.DEVNULL)
     except Exception:
@@ -100,6 +106,10 @@ def _detect_linux() -> List[Display]:
 
 
 def _detect_macos() -> List[Display]:
+    """macOS で表示解像度を検出する（system_profiler を使用）。
+
+    解析に失敗した場合は空リストを返す。
+    """
     try:
         out = subprocess.check_output(["system_profiler", "SPDisplaysDataType"], text=True, stderr=subprocess.DEVNULL)
     except Exception:
@@ -126,6 +136,10 @@ def _detect_macos() -> List[Display]:
 
 
 def _detect_windows() -> List[Display]:
+    """Windows で画面解像度を取得する（Win32 API 呼び出し）。
+
+    失敗時は空リストを返す。
+    """
     try:
         import ctypes as _ctypes
 

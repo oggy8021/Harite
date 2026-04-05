@@ -21,6 +21,14 @@ class PlacementResult:
     posit: Optional[str] = None
 
     def to_dict(self) -> dict:
+        """Convert placement result to serializable dictionary.
+
+        Summary:
+            `PlacementResult` の内容を JSON 直列化可能な辞書に変換して返す。
+
+        Returns:
+            辞書表現。
+        """
         return {
             "image_path": str(self.image_path),
             "x": int(self.x),
@@ -35,6 +43,17 @@ class PlacementResult:
 
 
 def _parse_inputs(inputs: Sequence[Path | str]) -> List[Path]:
+    """入力パス群を展開してファイル一覧を返す。
+
+    Summary:
+        ディレクトリ指定があれば中の画像ファイルを列挙し、ファイルはそのまま返す。
+
+    Args:
+        inputs: Path または文字列の列。
+
+    Returns:
+        `Path` のリスト。
+    """
     paths: List[Path] = []
     for p in inputs:
         pp = Path(p)
@@ -48,6 +67,16 @@ def _parse_inputs(inputs: Sequence[Path | str]) -> List[Path]:
 
 
 def _scale_to_fit(img: Image.Image, max_w: int, max_h: int) -> Tuple[int, int, float]:
+    """画像を指定領域に収めるスケールを計算して新サイズを返す。
+
+    Args:
+        img: Pillow 画像オブジェクト。
+        max_w: 最大幅。
+        max_h: 最大高さ。
+
+    Returns:
+        (new_width, new_height, scale_factor)
+    """
     w, h = img.size
     if w == 0 or h == 0:
         return 1, 1, 1.0
@@ -71,6 +100,27 @@ def _build_embed_lines(
     r_display: Optional[Tuple[int, int]],
     free_text: Optional[str],
 ) -> List[str]:
+    """余白に埋め込む情報行を構築する。
+
+    Summary:
+        埋め込みモードに応じてパラメータ行やフリーテキストを生成する。
+
+    Args:
+        mode: 埋め込みモード文字列。
+        target_resolution: 目標解像度 (w, h)。
+        margins: (l, r, t, b) の各余白。
+        align: 横寄せ。
+        valign: 縦寄せ。
+        padding: 画像間パディング(px)。
+        input_count: 入力画像数。
+        two_screen: 2画面モードフラグ。
+        l_display: 左画面解像度。
+        r_display: 右画面解像度。
+        free_text: フリーテキスト。
+
+    Returns:
+        表示用の行リスト。
+    """
     mode_norm = str(mode or "none").lower()
     if mode_norm == "none":
         return []
@@ -100,6 +150,17 @@ def _build_embed_lines(
 
 
 def _truncate_to_width(draw: ImageDraw.ImageDraw, text: str, max_w: int, font: ImageFont.ImageFont) -> str:
+    """テキストを最大幅に収まるよう切り詰める（末尾に省略記号）。
+
+    Args:
+        draw: `ImageDraw` インスタンス。
+        text: 元のテキスト。
+        max_w: 最大幅(px)。
+        font: 使用フォント。
+
+    Returns:
+        切り詰めたテキスト。
+    """
     if max_w <= 0:
         return ""
     if draw.textlength(text, font=font) <= max_w:
@@ -124,6 +185,18 @@ def _draw_embed_text_in_margin(
     position: str,
     max_lines: int,
 ) -> None:
+    """余白に埋め込みテキストを描画する。
+
+    Args:
+        bg: 背景画像。
+        lines: 描画する行リスト。
+        margins: 余白 (l, r, t, b)。
+        position: 描画位置指定。
+        max_lines: 最大行数。
+
+    Returns:
+        None
+    """
     if not lines:
         return
 
@@ -187,9 +260,26 @@ def optimize_wallpapers(
     random_seed: int | None = None,
     **kwargs,
 ) -> Tuple[List[Path], List[PlacementResult]]:
-    """Simple implementation that composes one background image and places 1..N images.
+    """壁紙最適化（簡易実装）。
 
-    This is a minimal, well-documented stub intended for early integration and tests.
+    Summary:
+        複数の入力画像を受け取り、指定解像度に合わせて合成背景を生成し、
+        配置情報と保存ファイル一覧を返す簡易実装。
+
+    Args:
+        inputs: 入力ファイルパス列。
+        target_resolution: 出力解像度 (w, h)。
+        output_dir: 出力先ディレクトリ。
+        layout: レイアウトモード。
+        scaling: スケーリングモード。
+        padding: 画像間のパディング(px)。
+        quality: JPEG 品質。
+        random_seed: 乱数シード（任意）。
+        **kwargs: 互換性のための追加オプション（two_screen, margins, 等）。
+
+    Returns:
+        (saved_files, placements) を返す。`saved_files` は生成画像のパス一覧、
+        `placements` は `PlacementResult` のリスト。
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -337,6 +427,18 @@ def compute_placement(
     scaling: str = "fit",
     padding: int = 0,
 ) -> PlacementResult:
+    """単一画像の中央配置を計算して `PlacementResult` を返す。
+
+    Args:
+        image_path: 画像ファイルのパス。
+        target_resolution: (w, h) の目標解像度。
+        layout: レイアウトモード（現状未使用）。
+        scaling: スケーリングモード（現状未使用）。
+        padding: パディング（現状未使用）。
+
+    Returns:
+        `PlacementResult`。
+    """
     img = Image.open(image_path).convert("RGB")
     nw, nh, scale = _scale_to_fit(img, target_resolution[0], target_resolution[1])
     x = max(0, (target_resolution[0] - nw) // 2)
@@ -349,12 +451,20 @@ def split_composite_for_displays(
     displays: List[Display],
     output_dir: Path,
 ) -> dict:
-    """Split a composite image into per-display files.
+    """合成画像を各ディスプレイ向けに分割してファイルを作成する。
 
-    For each `Display` in `displays`, crop the composite at the display's
-    `x_offset` with width `display.width`, then fit the crop into the
-    display resolution preserving aspect ratio. Returns mapping
-    {display.name: Path} for the saved files.
+    Summary:
+        各 `Display` の `x_offset` と幅に基づいて合成画像をクロップし、
+        表示解像度に合わせてリサイズして保存する。保存先のパスを
+        {display.name: Path} の辞書で返す。
+
+    Args:
+        composite_path: 合成画像のパス。
+        displays: `Display` オブジェクトのリスト。
+        output_dir: 出力ディレクトリ。
+
+    Returns:
+        ディスプレイ名 -> 出力ファイルパスの辞書。
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
