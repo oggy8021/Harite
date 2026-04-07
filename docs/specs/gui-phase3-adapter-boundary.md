@@ -17,16 +17,19 @@
 ## レイヤ責務
 
 1. Domain/Controller 層
+
 - 対象: `OptimizeController`, `OptimizeFormState`, `MainWindow` ロジック
 - 役割: 入力検証、最適化実行、apply導線、ログ/エラー状態管理
 - 制約: UIライブラリ（GTK/PySide 等）を import しない
 
-2. Adapter 層（新設）
+1. Adapter 層（新設）
+
 - 対象: 例 `src/harite/gui/adapters/gtk_main_window.py`
 - 役割: UIイベントを `MainWindow` ハンドラへ中継、View state を widget へ反映
 - 制約: business logic を持たない
 
-3. Entrypoint 層
+1. Entrypoint 層
+
 - 対象: `src/harite/gui/app.py`
 - 役割: 実行モード選択（headless-safe / adapter enabled）
 - 制約: adapter import 失敗時にクラッシュしない

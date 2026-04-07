@@ -10,6 +10,7 @@
 ## テストレイヤ
 
 1. Headless Smoke
+
 - 目的: GUI backend 未導入環境でも import/run が壊れないことを保証
 - 対象:
   - `tests/gui/test_app_entrypoint.py`
@@ -17,7 +18,8 @@
   - `harite.gui.app` の import が成功
   - `run()` が `MainWindow.show()` まで到達
 
-2. Signal-to-Handler Contract
+1. Signal-to-Handler Contract
+
 - 目的: signal 相当イベントから `MainWindow` state 更新が壊れていないことを保証
 - 対象:
   - `tests/gui/test_main_window_signals.py`
@@ -27,7 +29,8 @@
   - plugin 選択の正常/異常
   - dialog close ログ反映
 
-3. Optimize/Apply Safety
+1. Optimize/Apply Safety
+
 - 目的: optimize と apply の失敗パスを安全に扱えることを保証
 - 対象:
   - `tests/gui/test_main_window_signals.py`
@@ -37,7 +40,8 @@
   - plugin 未登録/false return/例外
   - margins/display パース異常
 
-4. Mapper Consistency
+1. Mapper Consistency
+
 - 目的: GUI state から CLI 引数への変換が壊れていないことを保証
 - 対象:
   - `tests/gui/test_cli_mapper.py`

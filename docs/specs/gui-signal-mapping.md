@@ -75,6 +75,7 @@
 | wallpositapplet.glade | ErrorDialog | destroy | on_ErrorDialog_destroy | MainWindow.on_close_error_dialog | implemented | プレースホルダでクローズ時にエラー状態をクリア |
 
 Status 値:
+
 - todo
 - mapped
 - implemented

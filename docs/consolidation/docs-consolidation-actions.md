@@ -9,6 +9,7 @@
 4.`docs/docs-consolidation-scan.md` と `docs/docs-consolidation-progress.md` を更新して作業ログを残す。
 
 ワークフロー:
+
 - 全てワーキングツリーでドラフト編集 → あなたがローカルで確認 → 承認を受けて commit→push→PR を実行。
 
 備考: このファイルはローカルドラフトです。不要なら削除してください。

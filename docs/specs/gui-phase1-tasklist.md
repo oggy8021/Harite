@@ -16,18 +16,23 @@
 ## 実装タスク
 
 1. MainWindow に入力欄状態と実行可否フラグを追加
+
 - DoD: 入力が空なら実行不可、入力ありで実行可
 
-2. `on_change_input_text` を実装
+1. `on_change_input_text` を実装
+
 - DoD: 入力変更時にバリデーションが走り、ログまたは状態表示が更新される
 
-3. `on_optimize` を実装
+1. `on_optimize` を実装
+
 - DoD: `OptimizeController.run_optimize` 呼び出しで成功時に出力パス、失敗時に例外メッセージを表示
 
-4. `on_close` を実装
+1. `on_close` を実装
+
 - DoD: 常駐プロセスを残さず終了する
 
-5. 最小テストを追加
+1. 最小テストを追加
+
 - DoD: MainWindow ハンドラの主要正常/異常ケースを確認
 
 ## 完了判定
