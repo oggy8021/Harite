@@ -14,8 +14,8 @@ Two-screen (left/right) composition:
 
 ```bash
 harite optimize --input left.jpg,right.jpg --resolution 3840x1080 \
-	--two-screen --l-display 1920x1080 --r-display 1920x1080 \
-	--margins 10,10,5,5 --fixed --output ./out
+ --two-screen --l-display 1920x1080 --r-display 1920x1080 \
+ --margins 10,10,5,5 --fixed --output ./out
 ```
 
 Save JSON metadata:

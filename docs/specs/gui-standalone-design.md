@@ -70,6 +70,7 @@
   - 理由: クロスプラットフォーム性は高いが、Glade資産との親和は低い。
 
 設計決定（現時点）:
+
 - MVP は GTK 系前提で仕様を記述する。
 - 実装前に依存導入可否（配布難易度、CI負荷）を再確認する。
 
@@ -95,6 +96,7 @@
 ## 画面構成（MVP）
 
 1. MainWindow
+
 - 入力画像/ディレクトリ選択
 - 出力先選択
 - 解像度、レイアウト、スケーリング、品質、padding
@@ -102,11 +104,13 @@
 - 余白情報埋め込み設定（embed 系）
 - 実行ボタン（Preview / Optimize / Apply dry-run / Apply do-it）
 
-2. PreviewPane
+1. PreviewPane
+
 - 生成予定画像のサムネイル表示
 - 配置情報（矩形、スケール、左右割当）の要約表示
 
-3. LogPane
+1. LogPane
+
 - 実行ログ
 - 失敗時の原因表示（入力不足、解像度不正、plugin 不一致等）
 
@@ -144,11 +148,12 @@
 
 1. 旧母体から `.glade` / `.ui` / signal 定義を回収
 2. 画面要素を次の3種に分類
+
 - 再利用（概念維持）: 入力、設定、プレビュー、実行
 - 改変（現行CLI準拠）: two-screen、embed、apply dry-run
 - 廃止（MVP非対象）: indicator/tray/daemon
-3. 旧 signal 名と新 controller メソッドの対応表を作る
-4. 1:1 再現ではなく「操作意図」を優先して UI を再設計
+1. 旧 signal 名と新 controller メソッドの対応表を作る
+2. 1:1 再現ではなく「操作意図」を優先して UI を再設計
 
 ## 受け入れ基準（MVP）
 
@@ -178,14 +183,17 @@
 最初に実装する signal を以下の 3 本に固定する。
 
 1. `on_entPath_insert_text`（入力変更）
+
 - 目的: 入力欄の即時バリデーションと実行可否判定
 - 新メソッド: `MainWindow.on_change_input_text`
 
-2. `on_btnSave_clicked`（optimize 実行）
+1. `on_btnSave_clicked`（optimize 実行）
+
 - 目的: GUI から `optimize` を実行して結果ファイルを得る
 - 新メソッド: `MainWindow.on_optimize`
 
-3. `on_WallPosit_MainWindow_delete_event`（終了）
+1. `on_WallPosit_MainWindow_delete_event`（終了）
+
 - 目的: 常駐なし前提の安全終了
 - 新メソッド: `MainWindow.on_close`
 

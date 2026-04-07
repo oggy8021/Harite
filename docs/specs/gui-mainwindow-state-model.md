@@ -68,11 +68,13 @@
 ## 状態遷移（主要フロー）
 
 1. 入力更新
+
 - `on_change_input_text` -> `form_state.input_value` 更新
 - `can_optimize` を再計算
 - 不正時は `last_error` に反映
 
-2. optimize 実行
+1. optimize 実行
+
 - `on_optimize` 成功:
   - `last_saved_files` 更新
   - `last_error` クリア
@@ -81,7 +83,8 @@
   - `last_error` 更新
   - `logs` に失敗理由追記
 
-3. apply 実行
+1. apply 実行
+
 - `_apply_latest` 成功:
   - `last_error` クリア
   - `logs` に適用ログ追記
@@ -89,7 +92,8 @@
   - `last_error` 更新
   - `logs` に失敗ログ追記
 
-4. dialog close
+1. dialog close
+
 - `on_close_error_dialog`: `last_error` クリア
 - その他 dialog close: `logs` のみ更新
 

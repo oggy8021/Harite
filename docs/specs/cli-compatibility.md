@@ -1,9 +1,11 @@
 # CLI 互換マッピング（旧: WallpaperOptimizer → 現行: Harite）
 
 目的
+
 - 旧 `wallpaperoptimizer`（母体） の CLI オプション／機能と、現行 `Harite` CLI の対応関係を明示し、優先復元候補と移植手順を示す。
 
 概要
+
 - 旧実装は `Options.py`/`OptionsBase.py` により多くの細かなオプションを提供し、`Core.py` により合成〜適用までを一括で実行していた。
 - 現行は `src/harite/cli.py`（`typer`）で主要コマンドを `optimize`, `compute-placement`, `apply` として提供しており、機能は概ねカバー済みだが一部細目とデーモン機能が未移植。
 
@@ -42,12 +44,14 @@
     → 現行: 一部は core の API で賄えるが、CLI 名称での 1:1 対応は乏しい。
 
 優先復元項目（推奨順）
+
 1. 設定ファイル読み込み (`.walloptrc`) — ユーザ移行の摩擦を下げる。実装は `--config` オプション + デフォルト自動読み込み。  
 2. `ChangerDir` 相当（ランダム/順次列挙） — `harite watch` サブコマンドで限定的に実装。  
 3. 旧 CLI の代表的細オプション（`align`/`valign`） — 需要が高ければ `optimize` に追加。  
 4. デーモン/Applet（低優先） — GUI/常駐の要件が出た段階で設計。
 
 移植手順（短期）
+
 1. `docs/specs/cli-compatibility.md` をレビュー・承認（済）。  
 2. `tests/compat/` に旧 CLI の代表コマンドライン事例を YAML/JSON で追加（期待出力を記述）。  
 3. `--config` オプションを `src/harite/cli.py` に追加し、既存のオプションで上書き可能にする。  
@@ -55,10 +59,12 @@
 5. 必要に応じて既存 `core` API を拡張して `align` 等を透過的にサポート。
 
 検証
+
 - 各移植ステップごとに unit test を追加し、CI が通ること。  
 - `tests/compat/` の代表ケースがローカルで再現できること。
 
 次のアクション
+
 - `--config` の実装を最初に行います。よろしければ私が `PR` を作成します。
 
 作成日: 2026-03-17

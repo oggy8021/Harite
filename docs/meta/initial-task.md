@@ -13,9 +13,11 @@
 推定所要時間: 1~3日（解析量による）。
 
 成果物:
+
 - `docs/specs/core-io.md`（オーナー承認が必要）
 - 初期プロジェクト構造（`pyproject.toml`、`src/harite/`、`tests/`）
 - 最小CLIとCI設定
 
 次のアクションの提案:
+
 - 私がステップ1の解析を行い、`docs/specs/core-io.md` の草案を作成します。実施してよいですか？

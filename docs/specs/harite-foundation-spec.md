@@ -3,9 +3,11 @@
 最終更新: 2026-03-12
 
 目的
+
 - `wallpaperoptimizer` の基盤概念（スクリーン、矩形、画像ラッパ、画像ソース列挙）を Harite 側で安全かつテスト可能に再実装するための仕様。C（実装）段階の設計図となる。
 
 設計方針
+
 - Python 3 (3.11+) を前提とする。Pillow を画像処理に使用する。
 - 副作用は最小にし、ライブラリ呼び出しは出力を返すだけとする。壁紙への反映は CLI レイヤで行う。
 - 上流の振る舞いは API とテストで再現する（左右スクリーン、マージン、アスペクト判定、2 画像合成）。
@@ -43,10 +45,12 @@
   - エラー: ディレクトリに画像がなければ `FileCountZeroError` を投げる。
 
 拡張オプション（Harite API 用）
+
 - `optimize_wallpapers(..., two_screen: bool=False, l_display:Optional[Tuple[int,int]]=None, r_display:Optional[Tuple[int,int]]=None, margins: Tuple[int,int,int,int]=(0,0,0,0), fixed: bool=False)`
   - two_screen=True の場合、左/右割当を行い `PlacementResult.posit` を `left`/`right` とする。`fixed` が True なら入力順序で固定する。
 
 テストケース設計（必須）
+
 - compute_placement `fit`/`fill`:
   - 入力: 小さな画像（例 200x100）、ターゲット (1920,1080)
   - 期待: `fit` の場合幅または高さがターゲット内に収まり、`fill` の場合少なくともターゲットを覆う（nw>=target_w or nh>=target_h）
@@ -61,6 +65,7 @@
   - 期待: `get_imgfile_seq()` が順次同じ画像をループで返す、`get_imgfile_rand()` がディレクトリの範囲内を返す。
 
 実装ノート
+
 - 既存の `src/harite/core.py` の two_screen パッチと合わせる形で API を整備する。まずは仕様にある最小限の振る舞いを満たし、テストを追加してからより複雑な割当ロジックを段階的に追加する。
 
 次の手順
