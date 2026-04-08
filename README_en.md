@@ -26,8 +26,7 @@ harite optimize --input ./imgs --resolution 1920x1080 --output ./out --format js
 
 Use `harite optimize --help` to see all available options.
 
-Note on `apply --do-it` safety
---------------------------------
+## Note on `apply --do-it` safety
 
 The CLI `apply` command defaults to a dry-run: it will simulate applying a wallpaper
 without changing system settings. To actually change the system wallpaper, pass
@@ -52,8 +51,7 @@ harite apply --plugin linux --file out/wallpaper.jpg
 harite apply --plugin linux --file out/wallpaper.jpg --do-it
 ```
 
-Dependencies
---------
+## Dependencies
 
 This project runs on Python but the platform-specific "set wallpaper" features
 depend on external system commands.
