@@ -1,4 +1,5 @@
 from harite.gui import app
+from types import SimpleNamespace
 
 
 def test_run_constructs_main_window_and_calls_show(monkeypatch):
@@ -209,6 +210,22 @@ def test_run_falls_back_when_window_presentation_fails(monkeypatch):
 
     assert called["present"] == 1
     assert called["show"] == 1
+
+
+def test_present_ui_window_uses_env_window_id(monkeypatch):
+    captured = {}
+
+    def fake_present(signal_backend, *, window_id="WallPosit_MainWindow"):
+        captured["backend"] = signal_backend
+        captured["window_id"] = window_id
+        return True
+
+    monkeypatch.setenv("HARITE_GUI_WINDOW_ID", "Custom_Main_Window")
+    monkeypatch.setattr("harite.gui.adapters.gtk_backend.present_gtk_window", fake_present)
+
+    result = app._present_ui_window(SimpleNamespace(name="dummy"))
+    assert result is True
+    assert captured["window_id"] == "Custom_Main_Window"
 
 
 def test_main_parses_cli_flags_and_calls_run(monkeypatch):
