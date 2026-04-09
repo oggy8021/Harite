@@ -72,6 +72,8 @@
 - 完了: M1（実UI本バインド導入の最小要件を満たし、signal接続から window presentation までの導線を確立）
 - 完了: M1-6（`python -m harite.gui.app` に CLI 起動フラグを追加し、環境変数なしでも load/bind/present の切替を可能化）
 - 完了: R1（Windows scope で baseline 成果物を生成: `pr-local-windows.json` / `pr-local-windows.md` / `pr-local-windows-pr-comment.md`）
+- 完了: R2（PR146/XFCE と PR162/Windows で `Manual device validation` コメント添付を実施）
+- 完了: 実ウィンドウ導線安定化（`feature/gui-real-window-minbind` を merge）
 
 ## 次マイルストーン（Phase 3 後半）
 
@@ -83,8 +85,8 @@
 ## 再開タスク（2026-04-09）
 
 - [x] R1: 1環境分の実機検証成果物を作成（`json` / `report md` / `pr-comment md`）
-- [ ] R2: PRコメントへ `Manual device validation` を添付し、運用実績を1件確定
-- [ ] R3: R1/R2 の実施後に `M2-3b` と `M3-2b` を完了へ更新
+- [x] R2: PRコメントへ `Manual device validation` を添付し、運用実績を1件確定
+- [x] R3: R1/R2 の実施後に `M2-3b` と `M3-2b` を完了へ更新
 
 Exit Criteria（この再開PRの完了条件）:
 
@@ -107,7 +109,7 @@ Exit Criteria（この再開PRの完了条件）:
 - [x] M2-1: OS別の実機確認マトリクスを定義（pass/fail/not-available）
 - [x] M2-2: 実機確認成果物の命名規則を定義（json/md/screenshot）
 - [x] M2-3a: 手動検証結果を1ファイルへ束ねるレポート出力を smoke script に追加
-- [ ] M2-3b: 1環境以上でテンプレート運用実績を作成し、PRコメントに添付（スクリーンショット付きは実ウィンドウ実装後）
+- [x] M2-3b: 1環境以上でテンプレート運用実績を作成し、PRコメントに添付（PR146/XFCE, PR162/Windows）
 
 ## M3 詳細進捗
 
@@ -117,7 +119,7 @@ Exit Criteria（この再開PRの完了条件）:
 - [x] M3-4a: スクリーンショット実ファイル存在チェック（`--verify-screenshot-files`）を追加
 - [x] M3-5a: 厳格運用モード（`--strict-manual`）を追加
 - [x] M3-6a: `pr-comment` 出力に `### Screenshots` を追加し、スクリーンショット検証を report/pr-comment 両方で強制可能化
-- [ ] M3-2b: 実機確認1件分を `pr-comment` へ添付して標準フォーマット運用を確定（スクリーンショット付きは実ウィンドウ実装後）
+- [x] M3-2b: 実機確認1件分を `pr-comment` へ添付して標準フォーマット運用を確定（PR146/XFCE, PR162/Windows）
 
 ## 小PR分割（推奨）
 
