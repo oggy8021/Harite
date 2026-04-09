@@ -205,6 +205,16 @@ PRごとに以下の命名で保存する。
 - 実機対象のPRは、上記テンプレートの `pass` 記録がある場合に merge 可。
 - `fail` の場合は merge 保留。修正PRを先行する。
 
+## Phase 3 再開時の完了条件（M2-3b / M3-2b）
+
+- 1環境以上で、次の3成果物を同じ `PR番号` と `os` で生成する。
+  - `out/manual-validation/pr-<PR番号>-<os>.json`
+  - `out/manual-validation/pr-<PR番号>-<os>.md`
+  - `out/manual-validation/pr-<PR番号>-<os>-pr-comment.md`
+- PR本文またはコメントに `pr-comment.md` の内容を添付する。
+- `not-available` を使った項目は Notes に理由を明記する。
+- `docs/specs/gui-phase3-tasklist.md` の `M2-3b` / `M3-2b` を `[x]` に更新する。
+
 ## 参照
 
 - docs/release-readiness-checklist.md
