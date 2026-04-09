@@ -1,6 +1,6 @@
 # GUI Phase 3 タスクリスト（実UI統合の準備）
 
-最終更新: 2026-03-22
+最終更新: 2026-04-09
 
 ## 目的
 
@@ -71,6 +71,7 @@
 - 完了: M1-5（`app.run` に optional 実ウィンドウ表示導線を追加し、GTK 利用時は placeholder 出力から表示フローへ遷移可能化）
 - 完了: M1（実UI本バインド導入の最小要件を満たし、signal接続から window presentation までの導線を確立）
 - 完了: M1-6（`python -m harite.gui.app` に CLI 起動フラグを追加し、環境変数なしでも load/bind/present の切替を可能化）
+- 完了: R1（Windows scope で baseline 成果物を生成: `pr-local-windows.json` / `pr-local-windows.md` / `pr-local-windows-pr-comment.md`）
 
 ## 次マイルストーン（Phase 3 後半）
 
@@ -78,6 +79,19 @@
 - [ ] M2: 主要画面の配置/表示の実機確認（Windows/XFCE/macOSのうち利用可能環境）
 - [ ] M3: 実機確認結果を PR コメントに標準フォーマットで記録（スクリーンショット付き）
 - [x] M4: 実UI導入後の最小回帰セットを固定（CI smoke + manual gate の責務分離）
+
+## 再開タスク（2026-04-09）
+
+- [x] R1: 1環境分の実機検証成果物を作成（`json` / `report md` / `pr-comment md`）
+- [ ] R2: PRコメントへ `Manual device validation` を添付し、運用実績を1件確定
+- [ ] R3: R1/R2 の実施後に `M2-3b` と `M3-2b` を完了へ更新
+
+Exit Criteria（この再開PRの完了条件）:
+
+- `out/manual-validation/pr-<PR番号>-<os>.json` が生成されている。
+- `out/manual-validation/pr-<PR番号>-<os>.md` が生成されている。
+- `out/manual-validation/pr-<PR番号>-<os>-pr-comment.md` が生成され、PRへ添付されている。
+- `M2-3b` / `M3-2b` が本ファイル上で `[x]` になっている。
 
 ## M1 詳細進捗
 
