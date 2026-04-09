@@ -31,6 +31,11 @@ def _should_present_ui_window(present_ui_window: bool | None) -> bool:
     return raw in ("1", "true", "yes", "on")
 
 
+def _get_ui_window_id() -> str:
+    raw = os.getenv("HARITE_GUI_WINDOW_ID", "WallPosit_MainWindow").strip()
+    return raw or "WallPosit_MainWindow"
+
+
 def _load_ui_signal_backend(ui_file: Path) -> Any:
     from .adapters.gtk_backend import load_gtk_builder_signal_backend
 
@@ -40,7 +45,8 @@ def _load_ui_signal_backend(ui_file: Path) -> Any:
 def _present_ui_window(signal_backend: Any) -> bool:
     from .adapters.gtk_backend import present_gtk_window
 
-    return bool(present_gtk_window(signal_backend))
+    window_id = _get_ui_window_id()
+    return bool(present_gtk_window(signal_backend, window_id=window_id))
 
 
 def run(
@@ -91,10 +97,11 @@ def run(
 
         if signal_backend is not None and _should_present_ui_window(present_ui_window):
             try:
+                window_id = _get_ui_window_id()
                 presented = _present_ui_window(signal_backend)
                 if presented:
                     return
-                print("UI window presentation skipped: target window not found")
+                print(f"UI window presentation skipped: target window not found (id={window_id})")
             except Exception as exc:
                 # Non-fatal in headless CI or partial GTK environments.
                 print(f"UI window presentation skipped: {exc}")
