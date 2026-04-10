@@ -69,3 +69,5 @@
 
 作成日: 2026-03-17
 作成者: 作業エージェント
+
+補足: 上位5オプションの確定仕様は `docs/specs/cli-top5-priority-options.md` を参照。
