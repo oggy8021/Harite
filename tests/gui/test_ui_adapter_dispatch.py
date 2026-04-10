@@ -19,6 +19,41 @@ class DummyWindow:
         self.calls.append(("apply_dry", True))
         return True
 
+    def on_change_margins(self, left: int, right: int, top: int, bottom: int) -> None:
+        self.calls.append(("margins", (left, right, top, bottom)))
+
+    def on_toggle_fixed(self, enabled: bool) -> None:
+        self.calls.append(("fixed", enabled))
+
+
+class _SpinValue:
+    def __init__(self, value: int) -> None:
+        self._value = value
+
+    def get_value_as_int(self) -> int:
+        return self._value
+
+
+class _ToggleWidget:
+    def __init__(self, active: bool) -> None:
+        self._active = active
+
+    def get_active(self) -> bool:
+        return self._active
+
+
+class _BackendWithGetObject:
+    def __init__(self) -> None:
+        self.widgets = {
+            "spnLMergin": _SpinValue(10),
+            "spnRMergin": _SpinValue(20),
+            "spnTopMergin": _SpinValue(30),
+            "spnBtmMergin": _SpinValue(40),
+        }
+
+    def get_object(self, name: str):
+        return self.widgets.get(name)
+
 
 def test_create_mainwindow_signal_dispatch_maps_input_optimize_apply_handlers():
     win = DummyWindow()
@@ -92,3 +127,22 @@ def test_bind_mainwindow_stores_dispatch_handlers_metadata_and_table():
         "on_btnSave_clicked",
         "on_btnSetWall_clicked",
     }
+
+
+def test_dispatch_handles_margins_and_fixed_toggle_signals():
+    win = DummyWindow()
+    backend = _BackendWithGetObject()
+    handlers = (
+        "on_spnMergin_value_changed",
+        "on_radFixed_toggled",
+    )
+
+    dispatch = create_mainwindow_signal_dispatch(win, handlers, signal_backend=backend)
+
+    dispatch["on_spnMergin_value_changed"](object())
+    dispatch["on_radFixed_toggled"](_ToggleWidget(True))
+
+    assert win.calls == [
+        ("margins", (10, 20, 30, 40)),
+        ("fixed", True),
+    ]

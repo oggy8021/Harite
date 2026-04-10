@@ -35,6 +35,8 @@ LEGACY_HANDLER_MAP: dict[str, str] = {
 def _build_dispatch_callback(
     legacy_name: str,
     target: Callable[..., Any],
+    *,
+    signal_backend: Any | None = None,
 ) -> Callable[..., Any]:
     """Build a GTK-tolerant callback for selected legacy handlers.
 
@@ -62,6 +64,44 @@ def _build_dispatch_callback(
 
         return _on_clicked
 
+    if legacy_name == "on_spnMergin_value_changed":
+
+        def _read_int(name: str) -> int:
+            if signal_backend is None or not hasattr(signal_backend, "get_object"):
+                return 0
+            widget = signal_backend.get_object(name)
+            if widget is None:
+                return 0
+            if hasattr(widget, "get_value_as_int"):
+                return int(widget.get_value_as_int())
+            if hasattr(widget, "get_value"):
+                return int(widget.get_value())
+            return 0
+
+        def _on_margin_changed(*args: Any) -> Any:
+            # Fallback for tests without backend: allow direct numeric arguments.
+            if len(args) >= 4 and all(isinstance(v, (int, float)) for v in args[:4]):
+                return target(int(args[0]), int(args[1]), int(args[2]), int(args[3]))
+
+            left = _read_int("spnLMergin")
+            right = _read_int("spnRMergin")
+            top = _read_int("spnTopMergin")
+            bottom = _read_int("spnBtmMergin")
+            return target(left, right, top, bottom)
+
+        return _on_margin_changed
+
+    if legacy_name == "on_radFixed_toggled":
+
+        def _on_fixed_toggled(*args: Any) -> Any:
+            if args and hasattr(args[0], "get_active"):
+                return target(bool(args[0].get_active()))
+            if args:
+                return target(bool(args[0]))
+            return target(False)
+
+        return _on_fixed_toggled
+
     return target
 
 
@@ -69,6 +109,8 @@ def create_mainwindow_signal_dispatch(
     mainwindow: Any,
     glade_handlers: tuple[str, ...],
     handler_map: Mapping[str, str] | None = None,
+    *,
+    signal_backend: Any | None = None,
 ) -> dict[str, Callable[..., Any]]:
     """Create a legacy-handler to bound-method dispatch table.
 
@@ -84,7 +126,11 @@ def create_mainwindow_signal_dispatch(
             continue
         target = getattr(mainwindow, method_name, None)
         if callable(target):
-            dispatch[legacy_name] = _build_dispatch_callback(legacy_name, target)
+            dispatch[legacy_name] = _build_dispatch_callback(
+                legacy_name,
+                target,
+                signal_backend=signal_backend,
+            )
 
     return dispatch
 
@@ -165,7 +211,11 @@ def bind_mainwindow(
             mainwindow,
             ui_result.signal_handlers,
         )
-        dispatch = create_mainwindow_signal_dispatch(mainwindow, ui_result.signal_handlers)
+        dispatch = create_mainwindow_signal_dispatch(
+            mainwindow,
+            ui_result.signal_handlers,
+            signal_backend=signal_backend,
+        )
         setattr(mainwindow, "_adapter_signal_dispatch", dispatch)
         metadata["dispatch_handlers"] = tuple(sorted(dispatch.keys()))
         if signal_backend is not None:
