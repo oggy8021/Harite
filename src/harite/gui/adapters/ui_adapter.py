@@ -32,6 +32,39 @@ LEGACY_HANDLER_MAP: dict[str, str] = {
 }
 
 
+def _build_dispatch_callback(
+    legacy_name: str,
+    target: Callable[..., Any],
+) -> Callable[..., Any]:
+    """Build a GTK-tolerant callback for selected legacy handlers.
+
+    Why:
+        GtkBuilder から来るシグナル引数は handler ごとに形が異なるため、
+        `MainWindow` の簡潔なメソッド署名へ最小限の変換が必要。
+    """
+
+    if legacy_name == "on_entPath_insert_text":
+
+        def _on_insert_text(*args: Any) -> Any:
+            # GTK insert-text commonly passes (editable, new_text, new_text_length, position)
+            if len(args) >= 2 and isinstance(args[1], str):
+                return target(args[1])
+            if args and isinstance(args[0], str):
+                return target(args[0])
+            return target("")
+
+        return _on_insert_text
+
+    if legacy_name in ("on_btnSave_clicked", "on_btnSetWall_clicked"):
+
+        def _on_clicked(*_args: Any) -> Any:
+            return target()
+
+        return _on_clicked
+
+    return target
+
+
 def create_mainwindow_signal_dispatch(
     mainwindow: Any,
     glade_handlers: tuple[str, ...],
@@ -51,7 +84,7 @@ def create_mainwindow_signal_dispatch(
             continue
         target = getattr(mainwindow, method_name, None)
         if callable(target):
-            dispatch[legacy_name] = target
+            dispatch[legacy_name] = _build_dispatch_callback(legacy_name, target)
 
     return dispatch
 

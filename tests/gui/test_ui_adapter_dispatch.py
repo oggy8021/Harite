@@ -41,6 +41,29 @@ def test_create_mainwindow_signal_dispatch_maps_input_optimize_apply_handlers():
     ]
 
 
+def test_dispatch_handles_gtk_style_signal_arguments():
+    win = DummyWindow()
+    handlers = (
+        "on_entPath_insert_text",
+        "on_btnSave_clicked",
+        "on_btnSetWall_clicked",
+    )
+
+    dispatch = create_mainwindow_signal_dispatch(win, handlers)
+
+    # GTK style: (editable, new_text, new_text_length, position)
+    dispatch["on_entPath_insert_text"](object(), "gtk.jpg", 7, None)
+    # GTK clicked style often passes widget instance
+    assert dispatch["on_btnSave_clicked"](object()) is True
+    assert dispatch["on_btnSetWall_clicked"](object()) is True
+
+    assert win.calls == [
+        ("input", "gtk.jpg"),
+        ("optimize", True),
+        ("apply_dry", True),
+    ]
+
+
 def test_bind_mainwindow_stores_dispatch_handlers_metadata_and_table():
     win = DummyWindow()
     result = UiLoadResult(
