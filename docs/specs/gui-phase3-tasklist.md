@@ -78,7 +78,7 @@
 ## 次マイルストーン（Phase 3 後半）
 
 - [x] M1: 実UIウィジェットへの本バインド導入（adapterで signal -> `MainWindow` 接続を実装）
-- [ ] M2: 主要画面の配置/表示の実機確認（Windows/XFCE/macOSのうち利用可能環境）
+- [ ] M2: 主要画面の配置/表示の実機確認（Windows/XFCE/macOSのうち利用可能環境、最小操作セットは `docs/manual-validation-gate.md` を基準とする）
 - [ ] M3: 実機確認結果を PR コメントに標準フォーマットで記録（スクリーンショット付き）
 - [x] M4: 実UI導入後の最小回帰セットを固定（CI smoke + manual gate の責務分離）
 
