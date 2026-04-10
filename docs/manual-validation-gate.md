@@ -86,6 +86,21 @@ python -m harite.gui.app --load-ui-prototype --bind-ui-backend --present-ui-wind
 - 上記でウィンドウ表示できる環境では、スクリーンショット 3 枚取得運用へ進む。
 - 表示できない場合は従来どおり暫定運用（`--auto-artifacts` + Notes 記録）を適用する。
 
+### Phase 3 完了判定の最小操作セット（固定）
+
+以下 5 操作を 1 セッションで実施し、すべて `pass` であることを Phase 3 の実機受け入れ基準とする。
+
+1. GUI を `--load-ui-prototype --bind-ui-backend --present-ui-window` で起動し、実ウィンドウが表示される。
+2. MainWindow で入力欄を編集し、値更新が反映される（空入力ではない）。
+3. Optimize 操作を実行し、例外なく完了する（`Traceback` / `Exception` が残らない）。
+4. Apply 領域で dry-run を実行し、成功する。
+5. MainWindow / Optimize / Apply の 3 画面スクリーンショットを保存し、PR コメントへ添付する。
+
+補足:
+
+- 実行環境はオーナーの Linux Mint (Xfce) 現行環境を基準とする。
+- 実ウィンドウが出せない時期は暫定運用を適用し、Phase 3 完了判定には使わない。
+
 ### 暫定運用（GUIプレースホルダ期間）
 
 - `python -m harite.gui.app` で実ウィンドウが表示されない間は、3枚スクリーンショット取得を `not-available` として扱う。
