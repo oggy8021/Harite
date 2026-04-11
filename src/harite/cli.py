@@ -428,6 +428,7 @@ def watch(
     input: Path = typer.Option(..., "--input", help="Input directory containing images"),
     interval_sec: int = typer.Option(..., "--interval-sec", help="Cycle interval in seconds (>=1)"),
     mode: str = typer.Option("sequential", "--mode", help="Selection mode: sequential|random"),
+    plugin: str = typer.Option("windows", "--plugin", "-p", help="Plugin name used when --do-it is enabled"),
     dry_run: bool = typer.Option(True, "--dry-run/--do-it", help="Dry-run by default; pass --do-it to apply"),
     iterations: Optional[int] = typer.Option(None, "--iterations", help="Maximum cycles; omit for unbounded"),
 ) -> None:
@@ -453,14 +454,41 @@ def watch(
 
     typer.echo(
         f"WATCH start: input={input} images={len(images)} interval_sec={interval_sec} "
-        f"mode={mode} dry_run={dry_run} iterations={iterations}"
+        f"mode={mode} plugin={plugin} dry_run={dry_run} iterations={iterations}"
     )
 
+    plugin_impl = None
+    if not dry_run:
+        try:
+            plugin_impl = plugin_registry.get(plugin)
+        except KeyError:
+            typer.echo(f"Unknown plugin: {plugin}")
+            typer.echo(f"Available plugins: {', '.join(plugin_registry.list())}")
+            raise typer.Exit(code=2)
+
     def _on_cycle(selected: Path, cycle_index: int) -> None:
-        # Apply integration is a later phase; for now we emit deterministic cycle logs.
-        typer.echo(
-            f"WATCH cycle={cycle_index + 1} selected={selected} dry_run={dry_run}"
-        )
+        if dry_run:
+            typer.echo(
+                f"WATCH cycle={cycle_index + 1} selected={selected} dry_run=True"
+            )
+            return
+
+        try:
+            success = bool(plugin_impl.apply(str(selected), dry_run=False))
+        except Exception as exc:
+            typer.echo(
+                f"WATCH cycle={cycle_index + 1} selected={selected} apply=error message={exc}"
+            )
+            return
+
+        if success:
+            typer.echo(
+                f"WATCH cycle={cycle_index + 1} selected={selected} apply=ok dry_run=False"
+            )
+        else:
+            typer.echo(
+                f"WATCH cycle={cycle_index + 1} selected={selected} apply=failed dry_run=False"
+            )
 
     try:
         completed = run_watch_cycles(
