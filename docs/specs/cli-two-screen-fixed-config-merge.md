@@ -44,7 +44,7 @@
 
 注記:
 
-- Typer の bool フラグ仕様により、CLI から明示的に false を指定できない構成である場合、`config=true` を CLI で false に上書きできない。必要なら別PRで `--no-two-screen` / `--no-fixed` を導入して解決する。
+- `--two-screen/--no-two-screen` と `--fixed/--no-fixed` により、CLI から明示的に false を指定できる。
 
 ## 受け入れ基準
 
@@ -68,4 +68,3 @@
 ## オープン事項
 
 - bool 不正値を厳格エラーとする方針で承認するか。
-- `--no-two-screen` / `--no-fixed` を同PRで導入するか、別PRに分離するか。

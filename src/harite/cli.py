@@ -146,7 +146,7 @@ def optimize(
     ),
     two_screen: bool = typer.Option(
         False,
-        "--two-screen",
+        "--two-screen/--no-two-screen",
         help="Enable two-screen mode. For explicit left/right widths, use with --l-display and --r-display.",
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
@@ -170,7 +170,7 @@ def optimize(
     ),
     fixed: bool = typer.Option(
         False,
-        "--fixed",
+        "--fixed/--no-fixed",
         help="Fix allocation by input order (left then right). Current optimize implementation impact is limited.",
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),

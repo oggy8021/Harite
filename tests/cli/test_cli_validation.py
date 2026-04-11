@@ -289,6 +289,45 @@ def test_optimize_cli_two_screen_and_fixed_override_config_false(tmp_path, monke
     assert captured["fixed"] is True
 
 
+def test_optimize_cli_no_flags_override_config_true(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    cfg = tmp_path / "config.json"
+    cfg.write_text(
+        json.dumps(
+            {
+                "input": ["from_config.jpg"],
+                "resolution": "1600x900",
+                "two_screen": True,
+                "fixed": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--config",
+            str(cfg),
+            "--no-two-screen",
+            "--no-fixed",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["two_screen"] is False
+    assert captured["fixed"] is False
+
+
 def test_optimize_rejects_invalid_bool_in_config(tmp_path, monkeypatch):
     runner = CliRunner()
 
