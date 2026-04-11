@@ -96,6 +96,27 @@ def run(
         except Exception as exc:
             # Non-fatal: adapter binding is optional for prototype flow.
             print(f"UI adapter binding skipped: {exc}")
+    elif signal_backend is not None:
+        try:
+            from .adapters.ui_adapter import (
+                LEGACY_HANDLER_MAP,
+                connect_signal_dispatch,
+                create_mainwindow_signal_dispatch,
+            )
+
+            handlers = tuple(LEGACY_HANDLER_MAP.keys())
+            dispatch = create_mainwindow_signal_dispatch(
+                window,
+                handlers,
+                signal_backend=signal_backend,
+            )
+            if dispatch:
+                connect_signal_dispatch(signal_backend, dispatch)
+                setattr(window, "_adapter_signal_dispatch", dispatch)
+                print(f"UI runtime fallback dispatch ready: handlers={len(dispatch)}")
+        except Exception as exc:
+            # Non-fatal: runtime fallback should remain usable in partial environments.
+            print(f"UI runtime fallback dispatch skipped: {exc}")
 
     if signal_backend is not None and _should_present_ui_window(present_ui_window):
         try:
