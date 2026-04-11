@@ -10,14 +10,23 @@ def _require_watch_command(runner: CliRunner) -> None:
         pytest.skip("watch command is not implemented yet")
 
 
-def test_watch_requires_required_options() -> None:
+def test_watch_requires_input_option() -> None:
     runner = CliRunner()
     _require_watch_command(runner)
 
-    result = runner.invoke(cli.app, ["watch"])
+    result = runner.invoke(cli.app, ["watch", "--interval-sec", "1"])
 
     assert result.exit_code == 2
     assert "--input" in result.output
+
+
+def test_watch_requires_interval_option() -> None:
+    runner = CliRunner()
+    _require_watch_command(runner)
+
+    result = runner.invoke(cli.app, ["watch", "--input", "."])
+
+    assert result.exit_code == 2
     assert "--interval-sec" in result.output
 
 

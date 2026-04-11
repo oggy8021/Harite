@@ -13,6 +13,7 @@ from .plugins import registry as plugin_registry
 from .workspace import detect_displays
 from .core import split_composite_for_displays
 from .config import load_config
+from .watch import collect_watch_input_images
 
 app = typer.Typer(help="Harite - wallpaper optimizer")
 
@@ -420,6 +421,40 @@ def apply(
     else:
         typer.echo(f"Plugin '{plugin}' failed to apply wallpaper: {path_str}")
         raise typer.Exit(code=3)
+
+
+@app.command()
+def watch(
+    input: Path = typer.Option(..., "--input", help="Input directory containing images"),
+    interval_sec: int = typer.Option(..., "--interval-sec", help="Cycle interval in seconds (>=1)"),
+    mode: str = typer.Option("sequential", "--mode", help="Selection mode: sequential|random"),
+    dry_run: bool = typer.Option(True, "--dry-run/--do-it", help="Dry-run by default; pass --do-it to apply"),
+    iterations: Optional[int] = typer.Option(None, "--iterations", help="Maximum cycles; omit for unbounded"),
+) -> None:
+    """Watch a directory and rotate wallpapers (minimum skeleton)."""
+    if interval_sec < 1:
+        typer.echo("--interval-sec must be >= 1")
+        raise typer.Exit(code=2)
+
+    mode = mode.lower().strip()
+    if mode not in ("sequential", "random"):
+        typer.echo("--mode must be one of: sequential, random")
+        raise typer.Exit(code=2)
+
+    if iterations is not None and iterations < 1:
+        typer.echo("--iterations must be >= 1")
+        raise typer.Exit(code=2)
+
+    try:
+        images = collect_watch_input_images(input)
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=2)
+
+    typer.echo(
+        f"WATCH skeleton: input={input} images={len(images)} interval_sec={interval_sec} "
+        f"mode={mode} dry_run={dry_run} iterations={iterations}"
+    )
 
 
 def run() -> None:
