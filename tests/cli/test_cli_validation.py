@@ -352,3 +352,49 @@ def test_optimize_rejects_invalid_bool_in_config(tmp_path, monkeypatch):
 
     assert result.exit_code == 2
     assert "invalid config bool for two_screen" in result.output
+
+
+def test_optimize_combined_two_screen_fixed_margins_displays(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    cfg = tmp_path / "config.json"
+    cfg.write_text(
+        json.dumps(
+            {
+                "input": ["from_config.jpg"],
+                "resolution": "1600x900",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--config",
+            str(cfg),
+            "--two-screen",
+            "--fixed",
+            "--margins",
+            "10,20,30,40",
+            "--l-display",
+            "1920x1080",
+            "--r-display",
+            "1280x1024",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["two_screen"] is True
+    assert captured["fixed"] is True
+    assert captured["margins"] == (10, 20, 30, 40)
+    assert captured["l_display"] == (1920, 1080)
+    assert captured["r_display"] == (1280, 1024)
