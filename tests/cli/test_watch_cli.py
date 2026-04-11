@@ -140,3 +140,85 @@ def test_watch_handles_keyboard_interrupt_as_normal_exit(tmp_path, monkeypatch) 
 
     assert result.exit_code == 0
     assert "watch interrupted by user" in output
+
+
+def test_watch_dry_run_does_not_resolve_plugin(tmp_path, monkeypatch) -> None:
+    runner = CliRunner()
+    _require_watch_command(runner)
+
+    img_dir = tmp_path / "imgs"
+    img_dir.mkdir()
+    (img_dir / "a.jpg").write_bytes(b"x")
+
+    def fake_get_plugin(_name):
+        raise AssertionError("plugin lookup should not happen in dry-run")
+
+    monkeypatch.setattr(cli.plugin_registry, "get", fake_get_plugin)
+
+    def fake_run_watch_cycles(*, images, mode, interval_sec, iterations, on_cycle, sleep_fn=None):
+        on_cycle(images[0], 0)
+        return 1
+
+    monkeypatch.setattr(cli, "run_watch_cycles", fake_run_watch_cycles)
+
+    result = runner.invoke(
+        cli.app,
+        ["watch", "--input", str(img_dir), "--interval-sec", "1", "--iterations", "1"],
+    )
+    output = _normalize_cli_output(result.output)
+
+    assert result.exit_code == 0
+    assert "dry_run=true" in output
+
+
+def test_watch_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch) -> None:
+    runner = CliRunner()
+    _require_watch_command(runner)
+
+    img_dir = tmp_path / "imgs"
+    img_dir.mkdir()
+    (img_dir / "a.jpg").write_bytes(b"x")
+    (img_dir / "b.jpg").write_bytes(b"x")
+
+    class FakePlugin:
+        def __init__(self):
+            self.calls = []
+
+        def apply(self, path_or_map, dry_run=False):
+            self.calls.append((path_or_map, dry_run))
+            return len(self.calls) != 1
+
+    fake_plugin = FakePlugin()
+
+    monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: fake_plugin)
+
+    def fake_run_watch_cycles(*, images, mode, interval_sec, iterations, on_cycle, sleep_fn=None):
+        on_cycle(images[0], 0)
+        on_cycle(images[1], 1)
+        return 2
+
+    monkeypatch.setattr(cli, "run_watch_cycles", fake_run_watch_cycles)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "watch",
+            "--input",
+            str(img_dir),
+            "--interval-sec",
+            "1",
+            "--iterations",
+            "2",
+            "--do-it",
+            "--plugin",
+            "windows",
+        ],
+    )
+    output = _normalize_cli_output(result.output)
+
+    assert result.exit_code == 0
+    assert len(fake_plugin.calls) == 2
+    assert fake_plugin.calls[0][1] is False
+    assert fake_plugin.calls[1][1] is False
+    assert "apply=failed" in output
+    assert "apply=ok" in output
