@@ -107,6 +107,6 @@
 - `.walloptrc` 自動読み込みを次フェーズ対象に含めるか。
 - `--fixed` と将来の高度割り当てロジックが競合した際の優先順位。
 
-関連ドラフト:
+関連仕様:
 
 - `docs/specs/cli-two-screen-fixed-config-merge.md`
