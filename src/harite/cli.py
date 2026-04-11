@@ -13,7 +13,7 @@ from .plugins import registry as plugin_registry
 from .workspace import detect_displays
 from .core import split_composite_for_displays
 from .config import load_config
-from .watch import collect_watch_input_images
+from .watch import collect_watch_input_images, run_watch_cycles
 
 app = typer.Typer(help="Harite - wallpaper optimizer")
 
@@ -431,7 +431,7 @@ def watch(
     dry_run: bool = typer.Option(True, "--dry-run/--do-it", help="Dry-run by default; pass --do-it to apply"),
     iterations: Optional[int] = typer.Option(None, "--iterations", help="Maximum cycles; omit for unbounded"),
 ) -> None:
-    """Watch a directory and rotate wallpapers (minimum skeleton)."""
+    """Watch a directory and rotate wallpapers (minimum execution control)."""
     if interval_sec < 1:
         typer.echo("--interval-sec must be >= 1")
         raise typer.Exit(code=2)
@@ -452,9 +452,32 @@ def watch(
         raise typer.Exit(code=2)
 
     typer.echo(
-        f"WATCH skeleton: input={input} images={len(images)} interval_sec={interval_sec} "
+        f"WATCH start: input={input} images={len(images)} interval_sec={interval_sec} "
         f"mode={mode} dry_run={dry_run} iterations={iterations}"
     )
+
+    def _on_cycle(selected: Path, cycle_index: int) -> None:
+        # Apply integration is a later phase; for now we emit deterministic cycle logs.
+        typer.echo(
+            f"WATCH cycle={cycle_index + 1} selected={selected} dry_run={dry_run}"
+        )
+
+    try:
+        completed = run_watch_cycles(
+            images=images,
+            mode=mode,
+            interval_sec=interval_sec,
+            iterations=iterations,
+            on_cycle=_on_cycle,
+        )
+    except KeyboardInterrupt:
+        typer.echo("WATCH interrupted by user")
+        raise typer.Exit(code=0)
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=2)
+
+    typer.echo(f"WATCH completed cycles={completed}")
 
 
 def run() -> None:
