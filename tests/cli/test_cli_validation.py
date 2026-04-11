@@ -141,3 +141,110 @@ def test_optimize_cli_values_override_config(tmp_path, monkeypatch):
     assert result.exit_code == 0
     assert captured["inputs"] == ["from_cli.jpg"]
     assert captured["target_resolution"] == (1920, 1080)
+
+
+def test_optimize_uses_config_for_margins_and_displays(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    cfg = tmp_path / "config.json"
+    cfg.write_text(
+        json.dumps(
+            {
+                "input": ["from_config.jpg"],
+                "resolution": "1600x900",
+                "margins": "1,2,3,4",
+                "l_display": "1920x1080",
+                "r_display": "1280x1024",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+
+    result = runner.invoke(cli.app, ["optimize", "--config", str(cfg)])
+
+    assert result.exit_code == 0
+    assert captured["margins"] == (1, 2, 3, 4)
+    assert captured["l_display"] == (1920, 1080)
+    assert captured["r_display"] == (1280, 1024)
+
+
+def test_optimize_cli_values_override_config_for_margins_and_displays(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    cfg = tmp_path / "config.json"
+    cfg.write_text(
+        json.dumps(
+            {
+                "input": ["from_config.jpg"],
+                "resolution": "1600x900",
+                "margins": "1,2,3,4",
+                "l_display": "1920x1080",
+                "r_display": "1280x1024",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--config",
+            str(cfg),
+            "--margins",
+            "10,20,30,40",
+            "--l-display",
+            "2560x1440",
+            "--r-display",
+            "1920x1200",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["margins"] == (10, 20, 30, 40)
+    assert captured["l_display"] == (2560, 1440)
+    assert captured["r_display"] == (1920, 1200)
+
+
+def test_optimize_does_not_read_two_screen_or_fixed_from_config(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    cfg = tmp_path / "config.json"
+    cfg.write_text(
+        json.dumps(
+            {
+                "input": ["from_config.jpg"],
+                "resolution": "1600x900",
+                "two_screen": True,
+                "fixed": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+
+    result = runner.invoke(cli.app, ["optimize", "--config", str(cfg)])
+
+    assert result.exit_code == 0
+    assert captured["two_screen"] is False
+    assert captured["fixed"] is False
