@@ -21,7 +21,7 @@
 
 - 2画面／左右指定
   - 旧: `--two-screen` / `--left`/`--right` オプション（Config 経由含む）  
-    → 現行: `--two-screen`（`optimize`）、`apply` の `--left-file`/`--right-file`、および `--auto-split`
+    → 現行: `--two-screen/--no-two-screen`（`optimize`）、`apply` の `--left-file`/`--right-file`、および `--auto-split`
 
 - 自動分割／適用
   - 旧: Core が内部で分割・適用を実行  
@@ -43,20 +43,29 @@
   - 旧: optparse で多数の細かい配置オプションを提供  
     → 現行: 一部は core の API で賄えるが、CLI 名称での 1:1 対応は乏しい。
 
+- fixed 指定
+  - 旧: fixed 相当の入力順固定運用（左右割り当て）  
+    → 現行: `--fixed/--no-fixed` をサポートし、`two_screen` と併用時の入力順固定を維持
+
 優先復元項目（推奨順）
 
-1. 設定ファイル読み込み (`.walloptrc`) — ユーザ移行の摩擦を下げる。実装は `--config` オプション + デフォルト自動読み込み。  
-2. `ChangerDir` 相当（ランダム/順次列挙） — `harite watch` サブコマンドで限定的に実装。  
-3. 旧 CLI の代表的細オプション（`align`/`valign`） — 需要が高ければ `optimize` に追加。  
-4. デーモン/Applet（低優先） — GUI/常駐の要件が出た段階で設計。
+1. `ChangerDir` 相当（ランダム/順次列挙） — `harite watch` サブコマンドで限定的に実装。  
+2. 旧 CLI の代表的細オプション（`align`/`valign`） — 需要が高ければ `optimize` に追加。  
+3. デーモン/Applet（低優先） — GUI/常駐の要件が出た段階で設計。
+
+完了済み項目（2026-04-11時点）
+
+- `--config` 優先順位（CLI > config > default）を実装・テスト固定済み。
+- `--two-screen` / `--fixed` の config 連携を実装・テスト固定済み。
+- `--no-two-screen` / `--no-fixed` を導入し、CLI から明示 false 指定を可能化。
+- `--two-screen` + `--l-display` + `--r-display` + `--margins` + `--fixed` の組み合わせケースを CLI テストで固定済み。
 
 移植手順（短期）
 
 1. `docs/specs/cli-compatibility.md` をレビュー・承認（済）。  
 2. `tests/compat/` に旧 CLI の代表コマンドライン事例を YAML/JSON で追加（期待出力を記述）。  
-3. `--config` オプションを `src/harite/cli.py` に追加し、既存のオプションで上書き可能にする。  
-4. `ChangerDir` 軽量実装を `src/harite/watch.py`（`harite watch`）として追加し、単体テストを用意。  
-5. 必要に応じて既存 `core` API を拡張して `align` 等を透過的にサポート。
+3. `ChangerDir` 軽量実装を `src/harite/watch.py`（`harite watch`）として追加し、単体テストを用意。  
+4. 必要に応じて既存 `core` API を拡張して `align` 等を透過的にサポート。
 
 検証
 
@@ -65,7 +74,8 @@
 
 次のアクション
 
-- `--config` の実装を最初に行います。よろしければ私が `PR` を作成します。
+- `.walloptrc` 自動探索読込は現時点で非採用を維持し、`--config` 明示指定運用を継続する。
+- 次の実装候補は `harite watch`（`ChangerDir` 相当）の最小導入。
 
 作成日: 2026-03-17
 作成者: 作業エージェント
