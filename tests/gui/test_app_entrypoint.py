@@ -212,6 +212,37 @@ def test_run_falls_back_when_window_presentation_fails(monkeypatch):
     assert called["show"] == 1
 
 
+def test_run_can_present_without_glade_load(monkeypatch):
+    called = {"show": 0, "present": 0}
+
+    class DummyWindow:
+        def show(self) -> None:
+            called["show"] += 1
+
+    class DummyBackend:
+        pass
+
+    def boom_loader():
+        raise RuntimeError("legacy glade parse failed")
+
+    def fake_backend_loader(_ui_file):
+        return DummyBackend()
+
+    def fake_present(_signal_backend):
+        called["present"] += 1
+        return True
+
+    monkeypatch.setattr(app, "MainWindow", DummyWindow)
+    monkeypatch.setattr("harite.gui.adapters.ui_loader.load_glade_prototype", boom_loader)
+    monkeypatch.setattr(app, "_load_ui_signal_backend", fake_backend_loader)
+    monkeypatch.setattr(app, "_present_ui_window", fake_present)
+
+    app.run(load_ui_prototype=True, bind_ui_backend=True, present_ui_window=True)
+
+    assert called["present"] == 1
+    assert called["show"] == 0
+
+
 def test_present_ui_window_uses_env_window_id(monkeypatch):
     captured = {}
 

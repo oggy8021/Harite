@@ -7,13 +7,57 @@ where PyGObject/GTK is available.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, Callable
 
 
-def load_gtk_builder_signal_backend(ui_file: Path):
+class GtkRuntimeSignalBackend:
+    """Minimal GTK runtime backend that does not require Glade parsing.
+
+    This fallback keeps present/bind flows usable even when a legacy Glade
+    resource cannot be consumed by Gtk.Builder at runtime.
+    """
+
+    def __init__(self, gtk_module: Any) -> None:
+        self._gtk = gtk_module
+        self._signal_handlers: dict[str, Callable[..., Any]] = {}
+
+        window = gtk_module.Window(title="Harite GUI (MVP)")
+        if hasattr(window, "set_default_size"):
+            window.set_default_size(960, 640)
+
+        if hasattr(gtk_module, "Box") and hasattr(gtk_module, "Label"):
+            box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
+            label = gtk_module.Label(label="Harite GUI runtime fallback window")
+            if hasattr(box, "pack_start"):
+                box.pack_start(label, True, True, 8)
+            if hasattr(window, "add"):
+                window.add(box)
+
+        self._objects = {
+            "WallPosit_MainWindow": window,
+            "main_window": window,
+            "window1": window,
+        }
+
+    def connect_signals(self, mapping: dict[str, Callable[..., Any]]) -> None:
+        self._signal_handlers.update(mapping)
+
+    def connect(self, handler_name: str, callback: Callable[..., Any]) -> None:
+        self._signal_handlers[handler_name] = callback
+
+    def get_object(self, name: str) -> Any:
+        return self._objects.get(name)
+
+    def get_objects(self) -> list[Any]:
+        return list(self._objects.values())
+
+
+def load_gtk_builder_signal_backend(ui_file: Path | None = None):
     """Return a GTK Builder object that supports `connect_signals(mapping)`.
 
-    Raises RuntimeError when GTK bindings are unavailable or the UI file cannot
-    be loaded.
+    When the UI file is incompatible with Gtk.Builder, a minimal runtime
+    backend is returned so present/bind flows can continue without runtime
+    Glade dependency.
     """
     try:
         import gi
@@ -23,11 +67,16 @@ def load_gtk_builder_signal_backend(ui_file: Path):
     except Exception as exc:  # pragma: no cover - depends on host GTK runtime.
         raise RuntimeError(f"GTK backend unavailable: {exc}") from exc
 
+    if ui_file is None:
+        return GtkRuntimeSignalBackend(Gtk)
+
     builder = Gtk.Builder()
     try:
         builder.add_from_file(str(ui_file))
     except Exception as exc:  # pragma: no cover - requires GTK runtime.
-        raise RuntimeError(f"failed to load GTK builder from {ui_file}: {exc}") from exc
+        # Why: legacy resources may use old Glade schema (<glade-interface>).
+        # Keep runtime path alive by falling back to a minimal GTK window backend.
+        return GtkRuntimeSignalBackend(Gtk)
 
     return builder
 

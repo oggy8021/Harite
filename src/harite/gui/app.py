@@ -36,7 +36,7 @@ def _get_ui_window_id() -> str:
     return raw or "WallPosit_MainWindow"
 
 
-def _load_ui_signal_backend(ui_file: Path) -> Any:
+def _load_ui_signal_backend(ui_file: Path | None) -> Any:
     from .adapters.gtk_backend import load_gtk_builder_signal_backend
 
     return load_gtk_builder_signal_backend(ui_file)
@@ -76,17 +76,19 @@ def run(
 
     window = MainWindow()
 
-    if loaded_result is not None:
-        signal_backend = None
-        presented = False
-        if _should_bind_ui_backend(bind_ui_backend):
-            try:
-                signal_backend = _load_ui_signal_backend(loaded_result.file_path)
-                print("UI signal backend ready")
-            except Exception as exc:
-                # Keep entrypoint safe when GTK/PyGObject is unavailable.
-                print(f"UI signal backend skipped: {exc}")
+    signal_backend = None
+    presented = False
 
+    if _should_bind_ui_backend(bind_ui_backend):
+        try:
+            ui_file = loaded_result.file_path if loaded_result is not None else None
+            signal_backend = _load_ui_signal_backend(ui_file)
+            print("UI signal backend ready")
+        except Exception as exc:
+            # Keep entrypoint safe when GTK/PyGObject is unavailable.
+            print(f"UI signal backend skipped: {exc}")
+
+    if loaded_result is not None:
         try:
             from .adapters.ui_adapter import bind_mainwindow
 
@@ -95,16 +97,16 @@ def run(
             # Non-fatal: adapter binding is optional for prototype flow.
             print(f"UI adapter binding skipped: {exc}")
 
-        if signal_backend is not None and _should_present_ui_window(present_ui_window):
-            try:
-                window_id = _get_ui_window_id()
-                presented = _present_ui_window(signal_backend)
-                if presented:
-                    return
-                print(f"UI window presentation skipped: target window not found (id={window_id})")
-            except Exception as exc:
-                # Non-fatal in headless CI or partial GTK environments.
-                print(f"UI window presentation skipped: {exc}")
+    if signal_backend is not None and _should_present_ui_window(present_ui_window):
+        try:
+            window_id = _get_ui_window_id()
+            presented = _present_ui_window(signal_backend)
+            if presented:
+                return
+            print(f"UI window presentation skipped: target window not found (id={window_id})")
+        except Exception as exc:
+            # Non-fatal in headless CI or partial GTK environments.
+            print(f"UI window presentation skipped: {exc}")
 
     window.show()
 
