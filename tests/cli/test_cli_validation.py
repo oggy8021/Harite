@@ -220,7 +220,7 @@ def test_optimize_cli_values_override_config_for_margins_and_displays(tmp_path, 
     assert captured["r_display"] == (1920, 1200)
 
 
-def test_optimize_does_not_read_two_screen_or_fixed_from_config(tmp_path, monkeypatch):
+def test_optimize_reads_two_screen_and_fixed_from_config(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -246,5 +246,70 @@ def test_optimize_does_not_read_two_screen_or_fixed_from_config(tmp_path, monkey
     result = runner.invoke(cli.app, ["optimize", "--config", str(cfg)])
 
     assert result.exit_code == 0
-    assert captured["two_screen"] is False
-    assert captured["fixed"] is False
+    assert captured["two_screen"] is True
+    assert captured["fixed"] is True
+
+
+def test_optimize_cli_two_screen_and_fixed_override_config_false(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    cfg = tmp_path / "config.json"
+    cfg.write_text(
+        json.dumps(
+            {
+                "input": ["from_config.jpg"],
+                "resolution": "1600x900",
+                "two_screen": False,
+                "fixed": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--config",
+            str(cfg),
+            "--two-screen",
+            "--fixed",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["two_screen"] is True
+    assert captured["fixed"] is True
+
+
+def test_optimize_rejects_invalid_bool_in_config(tmp_path, monkeypatch):
+    runner = CliRunner()
+
+    def fake_optimize_wallpapers(**kwargs):
+        return [], []
+
+    cfg = tmp_path / "config.json"
+    cfg.write_text(
+        json.dumps(
+            {
+                "input": ["from_config.jpg"],
+                "resolution": "1600x900",
+                "two_screen": "maybe",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+
+    result = runner.invoke(cli.app, ["optimize", "--config", str(cfg)])
+
+    assert result.exit_code == 2
+    assert "invalid config bool for two_screen" in result.output
