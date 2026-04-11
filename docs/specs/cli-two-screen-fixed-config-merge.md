@@ -1,4 +1,4 @@
-# CLI: two_screen / fixed の config 連携仕様（ドラフト）
+# CLI: two_screen / fixed の config 連携仕様
 
 最終更新: 2026-04-11
 
@@ -9,8 +9,8 @@
 
 ## 背景
 
-- 現状は `margins` / `l_display` / `r_display` は config 連携される一方、`two_screen` / `fixed` は CLI フラグ値のみが使用される。
-- 旧CLI互換の上位5仕様では `--two-screen` / `--fixed` が優先復元対象に含まれるため、config 連携の有無を明示する必要がある。
+- `margins` / `l_display` / `r_display` に加え、`two_screen` / `fixed` も config 連携対象として実装した。
+- 旧CLI互換の上位5仕様で定義した優先順位（CLI > config > default）を bool オプションにも適用し、挙動を統一した。
 
 ## 対象範囲
 
@@ -20,7 +20,7 @@
   - `src/harite/cli.py`
   - `tests/cli/test_cli_validation.py`
 
-## 提案仕様
+## 仕様
 
 ### 優先順位
 
@@ -67,4 +67,4 @@
 
 ## オープン事項
 
-- bool 不正値を厳格エラーとする方針で承認するか。
+- なし（本仕様の対象範囲は実装とテストで反映済み）。
