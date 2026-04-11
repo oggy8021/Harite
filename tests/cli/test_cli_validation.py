@@ -1,4 +1,5 @@
 import pytest
+import json
 
 from harite import cli
 from typer.testing import CliRunner
@@ -73,3 +74,70 @@ def test_optimize_rejects_invalid_embed_position(tmp_path):
     )
     assert result.exit_code == 2
     assert "--embed-position must be one of" in result.output
+
+
+def test_optimize_uses_config_for_required_values(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    cfg = tmp_path / "config.json"
+    cfg.write_text(
+        json.dumps(
+            {
+                "input": ["from_config.jpg"],
+                "resolution": "1600x900",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+
+    result = runner.invoke(cli.app, ["optimize", "--config", str(cfg)])
+
+    assert result.exit_code == 0
+    assert captured["inputs"] == ["from_config.jpg"]
+    assert captured["target_resolution"] == (1600, 900)
+
+
+def test_optimize_cli_values_override_config(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    cfg = tmp_path / "config.json"
+    cfg.write_text(
+        json.dumps(
+            {
+                "input": ["from_config.jpg"],
+                "resolution": "1600x900",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--config",
+            str(cfg),
+            "--input",
+            "from_cli.jpg",
+            "--resolution",
+            "1920x1080",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["inputs"] == ["from_cli.jpg"]
+    assert captured["target_resolution"] == (1920, 1080)
