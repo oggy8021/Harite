@@ -106,3 +106,7 @@
 - 旧CLI互換の上位5を最終確定として承認するか。
 - `.walloptrc` 自動読み込みを次フェーズ対象に含めるか。
 - `--fixed` と将来の高度割り当てロジックが競合した際の優先順位。
+
+関連ドラフト:
+
+- `docs/specs/cli-two-screen-fixed-config-merge.md`

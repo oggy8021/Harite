@@ -5,6 +5,7 @@ import typer
 from pathlib import Path
 from typing import Optional, List, Tuple
 import json
+from click.core import ParameterSource
 
 from . import __version__
 from .core import optimize_wallpapers
@@ -47,6 +48,46 @@ def parse_display(value: str) -> Tuple[int, int]:
     return parse_resolution(value)
 
 
+def parse_config_bool(name: str, value: object) -> bool:
+    """Parse a bool-like config value strictly.
+
+    Accepted values:
+    - bool: True/False
+    - int: 1/0
+    - str: true/false/1/0/yes/no/on/off
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        if value in (0, 1):
+            return bool(value)
+        raise ValueError(f"invalid config bool for {name}: {value}")
+    if isinstance(value, str):
+        raw = value.strip().lower()
+        truthy = {"1", "true", "yes", "on"}
+        falsy = {"0", "false", "no", "off"}
+        if raw in truthy:
+            return True
+        if raw in falsy:
+            return False
+        raise ValueError(f"invalid config bool for {name}: {value}")
+    raise ValueError(f"invalid config bool for {name}: {value}")
+
+
+def resolve_bool_option(
+    name: str,
+    cli_value: bool,
+    cfg: dict,
+    ctx: typer.Context,
+) -> bool:
+    """Resolve a bool option with priority CLI > config > default."""
+    if ctx.get_parameter_source(name) == ParameterSource.COMMANDLINE:
+        return bool(cli_value)
+    if name in cfg:
+        return parse_config_bool(name, cfg[name])
+    return bool(cli_value)
+
+
 @app.callback(invoke_without_command=True)
 def _callback(
     ctx: typer.Context,
@@ -62,6 +103,7 @@ def _callback(
 
 @app.command()
 def optimize(
+    ctx: typer.Context,
     input: Optional[List[str]] = typer.Option(
         None,
         "--input",
@@ -260,6 +302,13 @@ def optimize(
         parts = [p.strip() for p in it.split(",") if p.strip()]
         expanded_inputs.extend(parts)
 
+    try:
+        eff_two_screen = resolve_bool_option("two_screen", two_screen, cfg, ctx)
+        eff_fixed = resolve_bool_option("fixed", fixed, cfg, ctx)
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=2)
+
     saved_files, placements = optimize_wallpapers(
         inputs=expanded_inputs,
         target_resolution=(w, h),
@@ -269,11 +318,11 @@ def optimize(
         padding=padding,
         quality=quality,
         random_seed=random_seed,
-        two_screen=two_screen,
+        two_screen=eff_two_screen,
         margins=(0, 0, 0, 0) if (margins is None and cfg.get("margins") is None) else parse_margins(margins or cfg.get("margins")),
         l_display=None if (l_display is None and cfg.get("l_display") is None) else parse_display(l_display or cfg.get("l_display")),
         r_display=None if (r_display is None and cfg.get("r_display") is None) else parse_display(r_display or cfg.get("r_display")),
-        fixed=fixed,
+        fixed=eff_fixed,
         align=align or cfg.get("align"),
         valign=valign or cfg.get("valign"),
         embed_info=embed_info,
