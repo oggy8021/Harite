@@ -212,6 +212,75 @@ def test_run_falls_back_when_window_presentation_fails(monkeypatch):
     assert called["show"] == 1
 
 
+def test_run_can_present_without_glade_load(monkeypatch):
+    called = {"show": 0, "present": 0}
+
+    class DummyWindow:
+        def show(self) -> None:
+            called["show"] += 1
+
+    class DummyBackend:
+        pass
+
+    def boom_loader():
+        raise RuntimeError("legacy glade parse failed")
+
+    def fake_backend_loader(_ui_file):
+        return DummyBackend()
+
+    def fake_present(_signal_backend):
+        called["present"] += 1
+        return True
+
+    monkeypatch.setattr(app, "MainWindow", DummyWindow)
+    monkeypatch.setattr("harite.gui.adapters.ui_loader.load_glade_prototype", boom_loader)
+    monkeypatch.setattr(app, "_load_ui_signal_backend", fake_backend_loader)
+    monkeypatch.setattr(app, "_present_ui_window", fake_present)
+
+    app.run(load_ui_prototype=True, bind_ui_backend=True, present_ui_window=True)
+
+    assert called["present"] == 1
+    assert called["show"] == 0
+
+
+def test_run_runtime_fallback_dispatch_ready_log_when_glade_load_fails(monkeypatch, capsys):
+    class DummyWindow:
+        def show(self) -> None:
+            return None
+
+        # Provide minimum handlers so runtime fallback can build dispatch.
+        def on_change_input_text(self, _text: str) -> None:
+            return None
+
+        def on_optimize(self) -> bool:
+            return True
+
+        def on_apply_dry_run(self) -> bool:
+            return True
+
+    class DummyBackend:
+        def __init__(self):
+            self.mapping = {}
+
+        def connect_signals(self, mapping):
+            self.mapping.update(mapping)
+
+    def boom_loader():
+        raise RuntimeError("legacy glade parse failed")
+
+    def fake_backend_loader(_ui_file):
+        return DummyBackend()
+
+    monkeypatch.setattr(app, "MainWindow", DummyWindow)
+    monkeypatch.setattr("harite.gui.adapters.ui_loader.load_glade_prototype", boom_loader)
+    monkeypatch.setattr(app, "_load_ui_signal_backend", fake_backend_loader)
+
+    app.run(load_ui_prototype=True, bind_ui_backend=True, present_ui_window=False)
+
+    out = capsys.readouterr().out
+    assert "UI runtime fallback dispatch ready" in out
+
+
 def test_present_ui_window_uses_env_window_id(monkeypatch):
     captured = {}
 

@@ -7,13 +7,137 @@ where PyGObject/GTK is available.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, Callable
 
 
-def load_gtk_builder_signal_backend(ui_file: Path):
+class GtkRuntimeSignalBackend:
+    """Minimal GTK runtime backend that does not require Glade parsing.
+
+    This fallback keeps present/bind flows usable even when a legacy Glade
+    resource cannot be consumed by Gtk.Builder at runtime.
+    """
+
+    def __init__(self, gtk_module: Any) -> None:
+        self._gtk = gtk_module
+        self._signal_handlers: dict[str, Callable[..., Any]] = {}
+
+        window = gtk_module.Window(title="Harite GUI (MVP)")
+        if hasattr(window, "set_default_size"):
+            window.set_default_size(960, 640)
+
+        if hasattr(gtk_module, "Box") and hasattr(gtk_module, "Label"):
+            box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
+            box.set_border_width(12)
+
+            title = gtk_module.Label(label="Harite GUI runtime fallback window")
+            if hasattr(title, "set_xalign"):
+                title.set_xalign(0.0)
+            if hasattr(box, "pack_start"):
+                box.pack_start(title, False, False, 0)
+
+            input_label = gtk_module.Label(label="Input path")
+            if hasattr(input_label, "set_xalign"):
+                input_label.set_xalign(0.0)
+            box.pack_start(input_label, False, False, 0)
+
+            input_entry = gtk_module.Entry()
+            input_entry.set_placeholder_text("/path/to/image_or_directory")
+            box.pack_start(input_entry, False, False, 0)
+
+            button_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
+            optimize_btn = gtk_module.Button(label="Optimize")
+            apply_btn = gtk_module.Button(label="Apply (dry-run)")
+            button_row.pack_start(optimize_btn, False, False, 0)
+            button_row.pack_start(apply_btn, False, False, 0)
+            box.pack_start(button_row, False, False, 0)
+
+            status_label = gtk_module.Label(label="Ready")
+            if hasattr(status_label, "set_xalign"):
+                status_label.set_xalign(0.0)
+            box.pack_start(status_label, False, False, 0)
+
+            if hasattr(window, "add"):
+                window.add(box)
+
+            self._objects = {
+                "WallPosit_MainWindow": window,
+                "main_window": window,
+                "window1": window,
+                "entPathL": input_entry,
+                "btnSave": optimize_btn,
+                "btnSetWall": apply_btn,
+                "lblStatus": status_label,
+            }
+
+            # Why: fallback window must still exercise MainWindow handlers even when
+            # legacy glade cannot be parsed at runtime.
+            input_entry.connect("changed", self._on_input_changed)
+            optimize_btn.connect("clicked", self._on_optimize_clicked)
+            apply_btn.connect("clicked", self._on_apply_clicked)
+        else:
+            self._objects = {
+                "WallPosit_MainWindow": window,
+                "main_window": window,
+                "window1": window,
+            }
+
+    def connect_signals(self, mapping: dict[str, Callable[..., Any]]) -> None:
+        self._signal_handlers.update(mapping)
+
+    def connect(self, handler_name: str, callback: Callable[..., Any]) -> None:
+        self._signal_handlers[handler_name] = callback
+
+    def get_object(self, name: str) -> Any:
+        return self._objects.get(name)
+
+    def get_objects(self) -> list[Any]:
+        return list(self._objects.values())
+
+    def _set_status(self, message: str) -> None:
+        status = self._objects.get("lblStatus")
+        if status is not None and hasattr(status, "set_text"):
+            status.set_text(message)
+
+    def _on_input_changed(self, entry: Any) -> None:
+        callback = self._signal_handlers.get("on_entPath_insert_text")
+        if callback is None:
+            return
+        text = entry.get_text() if hasattr(entry, "get_text") else ""
+        try:
+            callback(text)
+            self._set_status("Input updated")
+        except Exception as exc:
+            self._set_status(f"Input failed: {exc}")
+
+    def _on_optimize_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_btnSave_clicked")
+        if callback is None:
+            self._set_status("Optimize handler not connected")
+            return
+        try:
+            ok = callback()
+            self._set_status("Optimize ok" if ok else "Optimize failed")
+        except Exception as exc:
+            self._set_status(f"Optimize error: {exc}")
+
+    def _on_apply_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_btnSetWall_clicked")
+        if callback is None:
+            self._set_status("Apply handler not connected")
+            return
+        try:
+            ok = callback()
+            self._set_status("Apply dry-run ok" if ok else "Apply dry-run failed")
+        except Exception as exc:
+            self._set_status(f"Apply error: {exc}")
+
+
+def load_gtk_builder_signal_backend(ui_file: Path | None = None):
     """Return a GTK Builder object that supports `connect_signals(mapping)`.
 
-    Raises RuntimeError when GTK bindings are unavailable or the UI file cannot
-    be loaded.
+    When the UI file is incompatible with Gtk.Builder, a minimal runtime
+    backend is returned so present/bind flows can continue without runtime
+    Glade dependency.
     """
     try:
         import gi
@@ -23,11 +147,16 @@ def load_gtk_builder_signal_backend(ui_file: Path):
     except Exception as exc:  # pragma: no cover - depends on host GTK runtime.
         raise RuntimeError(f"GTK backend unavailable: {exc}") from exc
 
+    if ui_file is None:
+        return GtkRuntimeSignalBackend(Gtk)
+
     builder = Gtk.Builder()
     try:
         builder.add_from_file(str(ui_file))
     except Exception as exc:  # pragma: no cover - requires GTK runtime.
-        raise RuntimeError(f"failed to load GTK builder from {ui_file}: {exc}") from exc
+        # Why: legacy resources may use old Glade schema (<glade-interface>).
+        # Keep runtime path alive by falling back to a minimal GTK window backend.
+        return GtkRuntimeSignalBackend(Gtk)
 
     return builder
 
