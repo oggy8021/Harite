@@ -59,11 +59,12 @@
 - two-screen の配置アルゴリズム変更。
 - watch/daemon 系機能。
 
-## 実装PR案（最小）
+## 実装履歴（完了）
 
 1. `src/harite/cli.py` に bool config 解決ヘルパを追加。
 2. `two_screen` / `fixed` の解決ロジックを helper 経由に変更。
-3. `tests/cli/test_cli_validation.py` に優先順位テストを追加・更新。
+3. `--two-screen/--no-two-screen` と `--fixed/--no-fixed` を導入。
+4. `tests/cli/test_cli_validation.py` に優先順位テストと no フラグ上書きテストを追加。
 
 ## オープン事項
 

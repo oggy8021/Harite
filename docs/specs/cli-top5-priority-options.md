@@ -77,6 +77,13 @@
 - `--config` 指定時、CLI明示値が設定値を上書きすることをテストで確認する。
 - ヘルプ文言と実装挙動に矛盾がない。
 
+## 達成状況（2026-04-11）
+
+- [x] `--config` の優先順位（CLI > config > default）を CLI テストで固定。
+- [x] `--two-screen` / `--fixed` の config 連携を実装し、優先順位を CLI テストで固定。
+- [x] `--no-two-screen` / `--no-fixed` を導入し、config true を CLI で false 上書き可能化。
+- [x] `--two-screen` + `--l-display` + `--r-display` + `--margins` + `--fixed` の組み合わせケースを CLI テストで固定。
+
 ## テスト観点
 
 - 単体:
@@ -103,7 +110,6 @@
 
 ## オープン事項
 
-- 旧CLI互換の上位5を最終確定として承認するか。
 - `.walloptrc` 自動読み込みを次フェーズ対象に含めるか。
 - `--fixed` と将来の高度割り当てロジックが競合した際の優先順位。
 
