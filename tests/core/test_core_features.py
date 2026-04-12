@@ -109,3 +109,23 @@ def test_embed_text_drawn_on_top_margin(tmp_path):
     # top margin area should include text pixels not equal to pure background.
     sample_area = out.crop((12, 2, 200, 30))
     assert any(px != (30, 30, 30) for px in sample_area.getdata())
+
+
+def test_load_preferred_font_tries_explicit_path_first(monkeypatch):
+    import harite.core as core
+
+    tried = []
+    base_font = Image.new("RGB", (1, 1))
+    fallback = core.ImageFont.load_default()
+
+    def fake_truetype(path, size):
+        tried.append((path, size))
+        if path == "custom-font.ttf":
+            return fallback
+        raise OSError("font not found")
+
+    monkeypatch.setattr(core.ImageFont, "truetype", fake_truetype)
+
+    font = core._load_preferred_font(14, explicit_path="custom-font.ttf")
+    assert font is fallback
+    assert tried[0][0] == "custom-font.ttf"

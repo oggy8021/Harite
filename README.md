@@ -28,6 +28,23 @@ JSON メタデータを保存:
 harite optimize --input ./imgs --resolution 1920x1080 --output ./out --format json
 ```
 
+日本語テキストを余白に埋め込む（自動フォント判定）:
+
+```bash
+harite optimize --input ./imgs --resolution 1920x1080 --output ./out \
+  --embed-info free --embed-text "こんにちは Harite"
+```
+
+必要な場合のみフォントを明示指定:
+
+```bash
+harite optimize --input ./imgs --resolution 1920x1080 --output ./out \
+  --embed-info free --embed-text "こんにちは Harite" \
+  --embed-font "C:\\Windows\\Fonts\\meiryo.ttc"
+```
+
+`--embed-font` を指定しない場合は、システムの一般的なCJKフォント候補を順に試し、見つからなければ Pillow のデフォルトフォントへフォールバックします。
+
 詳細オプションは `harite optimize --help` を参照してください。
 
 ### `apply --do-it` の安全性について
