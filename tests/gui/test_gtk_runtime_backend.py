@@ -121,18 +121,24 @@ def test_runtime_backend_optimize_result_controls_apply_button_state():
     optimize_btn = backend.get_object("btnSave")
     apply_btn = backend.get_object("btnSetWall")
     status = backend.get_object("lblStatus")
+    optimize_result = backend.get_object("lblOptimizeResult")
+    apply_target = backend.get_object("lblApplyTarget")
 
     backend.connect_signals({"on_btnSave_clicked": lambda: True})
     optimize_btn.click()
 
     assert apply_btn.sensitive is True
     assert status.text == "Optimize ok"
+    assert optimize_result.text == "Optimize result: success"
+    assert apply_target.text == "Apply target: ready"
 
     backend.connect_signals({"on_btnSave_clicked": lambda: False})
     optimize_btn.click()
 
     assert apply_btn.sensitive is False
     assert status.text == "Optimize failed"
+    assert optimize_result.text == "Optimize result: failed"
+    assert apply_target.text == "Apply target: not-ready"
 
 
 def test_runtime_backend_exposes_main_optimize_apply_sections():
@@ -143,5 +149,25 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("boxMainSection") is not None
     assert backend.get_object("lblOptimizeSection") is not None
     assert backend.get_object("boxOptimizeSection") is not None
+    assert backend.get_object("lblOptimizeResult") is not None
     assert backend.get_object("lblApplySection") is not None
     assert backend.get_object("boxApplySection") is not None
+    assert backend.get_object("lblApplyTarget") is not None
+
+
+def test_runtime_backend_apply_success_updates_apply_target():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    optimize_btn = backend.get_object("btnSave")
+    apply_btn = backend.get_object("btnSetWall")
+    apply_target = backend.get_object("lblApplyTarget")
+    status = backend.get_object("lblStatus")
+
+    backend.connect_signals({"on_btnSave_clicked": lambda: True})
+    backend.connect_signals({"on_btnSetWall_clicked": lambda: True})
+
+    optimize_btn.click()
+    apply_btn.click()
+
+    assert status.text == "Apply dry-run ok"
+    assert apply_target.text == "Apply target: consumed"

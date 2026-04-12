@@ -91,6 +91,11 @@ class GtkRuntimeSignalBackend:
                 optimize_hint.set_xalign(0.0)
             optimize_section.pack_start(optimize_hint, False, False, 0)
 
+            optimize_result = gtk_module.Label(label="Optimize result: not-run")
+            if hasattr(optimize_result, "set_xalign"):
+                optimize_result.set_xalign(0.0)
+            optimize_section.pack_start(optimize_result, False, False, 0)
+
             apply_section_label = gtk_module.Label(label="Apply")
             if hasattr(apply_section_label, "set_xalign"):
                 apply_section_label.set_xalign(0.0)
@@ -113,6 +118,11 @@ class GtkRuntimeSignalBackend:
             if hasattr(apply_hint, "set_xalign"):
                 apply_hint.set_xalign(0.0)
             apply_section.pack_start(apply_hint, False, False, 0)
+
+            apply_target = gtk_module.Label(label="Apply target: not-ready")
+            if hasattr(apply_target, "set_xalign"):
+                apply_target.set_xalign(0.0)
+            apply_section.pack_start(apply_target, False, False, 0)
 
             status_label = gtk_module.Label(label="Ready")
             if hasattr(status_label, "set_xalign"):
@@ -137,10 +147,12 @@ class GtkRuntimeSignalBackend:
                 "boxOptimizeSection": optimize_section,
                 "btnSave": optimize_btn,
                 "lblOptimizeHint": optimize_hint,
+                "lblOptimizeResult": optimize_result,
                 "lblApplySection": apply_section_label,
                 "boxApplySection": apply_section,
                 "btnSetWall": apply_btn,
                 "lblApplyHint": apply_hint,
+                "lblApplyTarget": apply_target,
                 "lblStatus": status_label,
             }
 
@@ -173,6 +185,11 @@ class GtkRuntimeSignalBackend:
         if status is not None and hasattr(status, "set_text"):
             status.set_text(message)
 
+    def _set_label_text(self, object_name: str, message: str) -> None:
+        label = self._objects.get(object_name)
+        if label is not None and hasattr(label, "set_text"):
+            label.set_text(message)
+
     def _set_button_enabled(self, object_name: str, enabled: bool) -> None:
         button = self._objects.get(object_name)
         if button is not None and hasattr(button, "set_sensitive"):
@@ -185,6 +202,8 @@ class GtkRuntimeSignalBackend:
         # Why: avoid invalid optimize/apply calls when the input field is empty.
         self._set_button_enabled("btnSave", has_input)
         self._set_button_enabled("btnSetWall", False)
+        self._set_label_text("lblOptimizeResult", "Optimize result: not-run")
+        self._set_label_text("lblApplyTarget", "Apply target: not-ready")
 
         if callback is None:
             return
@@ -200,23 +219,36 @@ class GtkRuntimeSignalBackend:
         if callback is None:
             self._set_status("Optimize handler not connected")
             self._set_button_enabled("btnSetWall", False)
+            self._set_label_text("lblOptimizeResult", "Optimize result: handler-missing")
+            self._set_label_text("lblApplyTarget", "Apply target: not-ready")
             return
         try:
             ok = callback()
             self._set_button_enabled("btnSetWall", bool(ok))
             self._set_status("Optimize ok" if ok else "Optimize failed")
+            if ok:
+                self._set_label_text("lblOptimizeResult", "Optimize result: success")
+                self._set_label_text("lblApplyTarget", "Apply target: ready")
+            else:
+                self._set_label_text("lblOptimizeResult", "Optimize result: failed")
+                self._set_label_text("lblApplyTarget", "Apply target: not-ready")
         except Exception as exc:
             self._set_button_enabled("btnSetWall", False)
             self._set_status(f"Optimize error: {exc}")
+            self._set_label_text("lblOptimizeResult", "Optimize result: error")
+            self._set_label_text("lblApplyTarget", "Apply target: not-ready")
 
     def _on_apply_clicked(self, *_args: Any) -> None:
         callback = self._signal_handlers.get("on_btnSetWall_clicked")
         if callback is None:
             self._set_status("Apply handler not connected")
+            self._set_label_text("lblApplyTarget", "Apply target: handler-missing")
             return
         try:
             ok = callback()
             self._set_status("Apply dry-run ok" if ok else "Apply dry-run failed")
+            if ok:
+                self._set_label_text("lblApplyTarget", "Apply target: consumed")
         except Exception as exc:
             self._set_status(f"Apply error: {exc}")
 
