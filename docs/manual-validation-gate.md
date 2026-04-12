@@ -276,3 +276,48 @@ pytest -q tests/gui/test_main_window_signals.py tests/gui/test_gtk_runtime_backe
 - docs/release-readiness-checklist.md
 - docs/release-delivery.md
 - README.md
+
+## Phase 4 UI差分判定ゲート（P4-6 同期）
+
+対象:
+
+- `docs/specs/gui/gui-phase4-diff-checklist.md` の A〜D 必須項目
+- `tests/gui/test_phase4_regression.py`（Phase4 回帰）
+
+判定ルール:
+
+- A〜D は `pass/fail/not-available` で記録する。
+- 最終受け入れは A〜D の必須項目がすべて `pass`。
+- `fail` は再現手順を Notes に 1 行以上記録する。
+- `not-available` は理由を Notes に明記する。
+
+Phase4 の最小実施セット（手動）:
+
+1. GUI起動（実ウィンドウ表示または runtime fallback）
+2. 入力更新 -> Optimize 実行
+3. Apply dry-run 実行
+4. 状態表示（running/success/error）を確認
+5. 画面証跡（MainWindow/Optimize/Apply）を添付
+
+推奨テスト（オーナー実行）:
+
+```bash
+pytest -q tests/gui/test_phase4_regression.py tests/gui/test_main_window_signals.py
+```
+
+PRコメント追記テンプレート（Phase4）:
+
+```md
+### Phase4 UI Diff Checklist
+- Scope: [OS/desktop]
+- A. 画面構造: pass/fail/not-available
+- B. 状態表示: pass/fail/not-available
+- C. 操作効率: pass/fail/not-available
+- D. 品質運用: pass/fail/not-available
+- Notes: [差分・課題・再現手順]
+```
+
+備考:
+
+- Phase4 では UI調整PRごとに上記テンプレートを添付する。
+- `docs/specs/gui/gui-phase4-diff-checklist.md` と本セクションの項目差分が出た場合は、先に docs を同期してから実装を進める。
