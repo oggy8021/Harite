@@ -1,6 +1,6 @@
 # GUI Integration Test Matrix（Phase 3 最小セット）
 
-最終更新: 2026-03-22
+最終更新: 2026-04-12
 
 ## 目的
 
@@ -49,10 +49,22 @@
   - 必須引数が常に出力される
   - optional 引数は設定時のみ出力される
 
+1. Runtime Fallback UI Contract
+
+- 目的: GTK runtime fallback の主要表示/導線が MainWindow ハンドラ契約と整合することを保証
+- 対象:
+  - `tests/gui/test_gtk_runtime_backend.py`
+- 重点ケース:
+  - Main/Optimize/Apply セクションのオブジェクト公開
+  - 入力更新 -> Optimize有効化 -> Apply有効化の状態遷移
+  - 実行中/成功/失敗/handler-missing のメッセージ規約
+  - `on_btnSave_clicked` / `on_btnSetWall_clicked` の signal-to-handler 経路
+
 ## 推奨 pytest 実行セット
 
 - 最小セット（CI常時）
   - `pytest -q tests/gui/test_app_entrypoint.py tests/gui/test_main_window_signals.py tests/gui/test_optimize_controller.py tests/gui/test_cli_mapper.py`
+  - `pytest -q tests/gui/test_gtk_runtime_backend.py`
 
 - 拡張セット（実UI adapter 導入後）
   - `tests/gui/integration/` を新設し、backend 依存テストを分離
@@ -89,3 +101,4 @@
 
 - GUI プレースホルダ期間は `--auto-artifacts` を既定とし、スクリーンショットは `not-available` を許容する。
 - 実ウィンドウ表示が可能になったら `--strict-manual` を既定へ切り替える。
+- runtime fallback で UI 契約を検証した場合も、本UI（正式配置）で Step1-5 と 3画面添付を再実施して最終判定する。
