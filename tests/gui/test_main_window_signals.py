@@ -34,6 +34,9 @@ def test_layout_blueprint_defines_grouping_and_flow():
         "apply_do_it",
     )
     assert bp["suggested_next_action"] == "input"
+    assert bp["status"]["level"] == "idle"
+    assert bp["status"]["phase"] == "init"
+    assert bp["status"]["message"] == "ready"
 
 
 def test_on_optimize_runs_and_logs(tmp_path):
@@ -51,6 +54,9 @@ def test_on_optimize_runs_and_logs(tmp_path):
     ok = window.on_optimize()
     assert ok is True
     assert window.can_apply is True
+    assert window.status_level == "success"
+    assert window.status_phase == "optimize"
+    assert window.status_message == "optimize completed"
     assert any(line.startswith("Saved ") for line in window.logs)
     assert any(line.startswith("Saved: ") for line in window.logs)
     assert any("Next action: apply dry-run" in line for line in window.logs)
@@ -159,6 +165,8 @@ def test_on_apply_without_optimized_file_fails():
 
     assert ok is False
     assert window.last_error == "no optimized file to apply"
+    assert window.status_level == "error"
+    assert window.status_phase == "apply"
 
 
 def test_suggest_next_action_transitions(tmp_path):
@@ -207,8 +215,27 @@ def test_run_primary_flow_step_runs_optimize_then_apply(monkeypatch, tmp_path):
 
     # second step should run apply dry-run
     assert window.run_primary_flow_step() is True
+    assert window.status_level == "success"
+    assert window.status_phase == "apply"
+    assert window.status_message == "apply completed"
     assert plugin.calls
     assert plugin.calls[-1][1] is True
+
+
+def test_status_unified_for_input_transitions():
+    window = MainWindow()
+
+    window.on_change_input_text("")
+    assert window.status_level == "error"
+    assert window.status_phase == "input"
+    assert window.status_message == "input is required"
+    assert window.last_error == "input is required"
+
+    window.on_change_input_text("a.jpg")
+    assert window.status_level == "idle"
+    assert window.status_phase == "input"
+    assert window.status_message == "input ready"
+    assert window.last_error == ""
 
 
 def test_default_plugin_is_known():

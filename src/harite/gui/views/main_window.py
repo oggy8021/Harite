@@ -25,6 +25,9 @@ class MainWindow:
         self.can_optimize = False
         self.can_apply = False
         self.last_error = ""
+        self.status_level = "idle"
+        self.status_phase = "init"
+        self.status_message = "ready"
         self.logs: list[str] = []
         self.available_plugins = tuple(plugin_registry.list())
         self.plugin_name = self._default_plugin_name()
@@ -111,6 +114,13 @@ class MainWindow:
     def _log(self, message: str) -> None:
         self.logs.append(message)
 
+    def _set_status(self, level: str, phase: str, message: str, *, error: str = "") -> None:
+        """Set unified UI status fields and keep legacy last_error in sync."""
+        self.status_level = level
+        self.status_phase = phase
+        self.status_message = message
+        self.last_error = error
+
     def on_change_input_text(self, text: str) -> None:
         """Legacy signal mapping: on_entPath_insert_text."""
         self.form_state.input_value = text
@@ -119,25 +129,27 @@ class MainWindow:
             # Input changed to empty; reset apply readiness to avoid stale flow.
             self.can_apply = False
             self.last_saved_files = []
+            self._set_status("error", "input", "input is required", error="input is required")
         if self.can_optimize:
-            self.last_error = ""
+            self._set_status("idle", "input", "input ready")
             self._log("Input updated")
         else:
-            self.last_error = "input is required"
             self._log("Input is empty")
 
     def on_optimize(self) -> bool:
         """Legacy signal mapping: on_btnSave_clicked."""
         if not self.can_optimize:
-            self.last_error = "input is required"
+            self._set_status("error", "optimize", "input is required", error="input is required")
             self._log("Optimize blocked: input is required")
             return False
+
+        self._set_status("running", "optimize", "optimizing")
 
         try:
             saved, _placements = self.controller.run_optimize(self.form_state)
             self.last_saved_files = list(saved)
             self.can_apply = bool(self.last_saved_files)
-            self.last_error = ""
+            self._set_status("success", "optimize", "optimize completed")
             self._log(f"Saved {len(saved)} file(s)")
             for path in saved:
                 self._log(f"Saved: {path}")
@@ -146,37 +158,44 @@ class MainWindow:
             return True
         except Exception as exc:
             self.can_apply = False
-            self.last_error = str(exc)
+            self._set_status("error", "optimize", "optimize failed", error=str(exc))
             self._log(f"Optimize failed: {exc}")
             return False
 
     def _apply_latest(self, dry_run: bool) -> bool:
         if not self.last_saved_files:
-            self.last_error = "no optimized file to apply"
+            self._set_status("error", "apply", "no optimized file to apply", error="no optimized file to apply")
             self._log("Apply blocked: no optimized file")
             return False
+
+        self._set_status("running", "apply", "applying wallpaper")
 
         target = str(self.last_saved_files[-1])
         try:
             plugin = plugin_registry.get(self.plugin_name)
         except KeyError:
-            self.last_error = f"unknown plugin: {self.plugin_name}"
+            self._set_status(
+                "error",
+                "apply",
+                "unknown plugin",
+                error=f"unknown plugin: {self.plugin_name}",
+            )
             self._log(f"Apply failed: unknown plugin {self.plugin_name}")
             return False
 
         try:
             ok = bool(plugin.apply(target, dry_run=dry_run))
         except Exception as exc:
-            self.last_error = f"failed to apply wallpaper: {exc}"
+            self._set_status("error", "apply", "apply failed", error=f"failed to apply wallpaper: {exc}")
             self._log(f"Apply failed via plugin={self.plugin_name} dry_run={dry_run}: {exc}")
             return False
 
         if ok:
-            self.last_error = ""
+            self._set_status("success", "apply", "apply completed")
             self._log(f"Applied wallpaper via plugin={self.plugin_name} dry_run={dry_run}: {target}")
             return True
 
-        self.last_error = "failed to apply wallpaper"
+        self._set_status("error", "apply", "apply failed", error="failed to apply wallpaper")
         self._log(f"Apply failed via plugin={self.plugin_name} dry_run={dry_run}: {target}")
         return False
 
@@ -265,7 +284,7 @@ class MainWindow:
             return self.on_optimize()
         if step == "apply_dry_run":
             return self.on_apply_dry_run()
-        self.last_error = "input is required"
+        self._set_status("error", "flow", "input is required", error="input is required")
         self._log("Flow step blocked: input is required")
         return False
 
@@ -277,6 +296,12 @@ class MainWindow:
             "sections": self.layout_sections,
             "primary_action_flow": self.primary_action_flow,
             "suggested_next_action": self.suggest_next_action(),
+            "status": {
+                "level": self.status_level,
+                "phase": self.status_phase,
+                "message": self.status_message,
+                "last_error": self.last_error,
+            },
         }
 
     def show(self) -> None:
@@ -284,3 +309,4 @@ class MainWindow:
         print(self.subtitle)
         print("GUI skeleton is ready. Next step: bind real GTK widgets.")
         print(f"Can optimize: {self.can_optimize}")
+        print(f"Status: {self.status_level}/{self.status_phase} - {self.status_message}")
