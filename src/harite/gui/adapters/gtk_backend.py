@@ -26,50 +26,121 @@ class GtkRuntimeSignalBackend:
             window.set_default_size(960, 640)
 
         if hasattr(gtk_module, "Box") and hasattr(gtk_module, "Label"):
-            box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
-            box.set_border_width(12)
+            root = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=10)
+            root.set_border_width(12)
 
-            title = gtk_module.Label(label="Harite GUI runtime fallback window")
+            title = gtk_module.Label(label="Harite GUI runtime fallback")
             if hasattr(title, "set_xalign"):
                 title.set_xalign(0.0)
-            if hasattr(box, "pack_start"):
-                box.pack_start(title, False, False, 0)
+            root.pack_start(title, False, False, 0)
+
+            subtitle = gtk_module.Label(
+                label="Layout baseline: Main / Optimize / Apply sections"
+            )
+            if hasattr(subtitle, "set_xalign"):
+                subtitle.set_xalign(0.0)
+            root.pack_start(subtitle, False, False, 0)
+
+            main_section_label = gtk_module.Label(label="Main")
+            if hasattr(main_section_label, "set_xalign"):
+                main_section_label.set_xalign(0.0)
+            root.pack_start(main_section_label, False, False, 0)
+
+            main_section = gtk_module.Box(
+                orientation=gtk_module.Orientation.VERTICAL,
+                spacing=6,
+            )
+            root.pack_start(main_section, False, False, 0)
 
             input_label = gtk_module.Label(label="Input path")
             if hasattr(input_label, "set_xalign"):
                 input_label.set_xalign(0.0)
-            box.pack_start(input_label, False, False, 0)
+            main_section.pack_start(input_label, False, False, 0)
 
             input_entry = gtk_module.Entry()
             input_entry.set_placeholder_text("/path/to/image_or_directory")
-            box.pack_start(input_entry, False, False, 0)
+            main_section.pack_start(input_entry, False, False, 0)
 
-            button_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
+            input_hint = gtk_module.Label(
+                label="Comma-separated paths are also accepted."
+            )
+            if hasattr(input_hint, "set_xalign"):
+                input_hint.set_xalign(0.0)
+            main_section.pack_start(input_hint, False, False, 0)
+
+            optimize_section_label = gtk_module.Label(label="Optimize")
+            if hasattr(optimize_section_label, "set_xalign"):
+                optimize_section_label.set_xalign(0.0)
+            root.pack_start(optimize_section_label, False, False, 0)
+
+            optimize_section = gtk_module.Box(
+                orientation=gtk_module.Orientation.VERTICAL,
+                spacing=6,
+            )
+            root.pack_start(optimize_section, False, False, 0)
+
             optimize_btn = gtk_module.Button(label="Optimize")
-            apply_btn = gtk_module.Button(label="Apply (dry-run)")
             if hasattr(optimize_btn, "set_sensitive"):
                 optimize_btn.set_sensitive(False)
+            optimize_section.pack_start(optimize_btn, False, False, 0)
+
+            optimize_hint = gtk_module.Label(
+                label="Run optimize first to prepare apply target."
+            )
+            if hasattr(optimize_hint, "set_xalign"):
+                optimize_hint.set_xalign(0.0)
+            optimize_section.pack_start(optimize_hint, False, False, 0)
+
+            apply_section_label = gtk_module.Label(label="Apply")
+            if hasattr(apply_section_label, "set_xalign"):
+                apply_section_label.set_xalign(0.0)
+            root.pack_start(apply_section_label, False, False, 0)
+
+            apply_section = gtk_module.Box(
+                orientation=gtk_module.Orientation.VERTICAL,
+                spacing=6,
+            )
+            root.pack_start(apply_section, False, False, 0)
+
+            apply_btn = gtk_module.Button(label="Apply (dry-run)")
             if hasattr(apply_btn, "set_sensitive"):
                 apply_btn.set_sensitive(False)
-            button_row.pack_start(optimize_btn, False, False, 0)
-            button_row.pack_start(apply_btn, False, False, 0)
-            box.pack_start(button_row, False, False, 0)
+            apply_section.pack_start(apply_btn, False, False, 0)
+
+            apply_hint = gtk_module.Label(
+                label="Apply is enabled after successful optimize."
+            )
+            if hasattr(apply_hint, "set_xalign"):
+                apply_hint.set_xalign(0.0)
+            apply_section.pack_start(apply_hint, False, False, 0)
 
             status_label = gtk_module.Label(label="Ready")
             if hasattr(status_label, "set_xalign"):
                 status_label.set_xalign(0.0)
-            box.pack_start(status_label, False, False, 0)
+            root.pack_start(status_label, False, False, 0)
 
             if hasattr(window, "add"):
-                window.add(box)
+                window.add(root)
 
             self._objects = {
                 "WallPosit_MainWindow": window,
                 "main_window": window,
                 "window1": window,
+                "boxRoot": root,
+                "lblTitle": title,
+                "lblSubtitle": subtitle,
+                "lblMainSection": main_section_label,
+                "boxMainSection": main_section,
                 "entPathL": input_entry,
+                "lblInputHint": input_hint,
+                "lblOptimizeSection": optimize_section_label,
+                "boxOptimizeSection": optimize_section,
                 "btnSave": optimize_btn,
+                "lblOptimizeHint": optimize_hint,
+                "lblApplySection": apply_section_label,
+                "boxApplySection": apply_section,
                 "btnSetWall": apply_btn,
+                "lblApplyHint": apply_hint,
                 "lblStatus": status_label,
             }
 
