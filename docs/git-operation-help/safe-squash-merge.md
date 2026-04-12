@@ -1,3 +1,87 @@
+# squash merge後の整合確認チェック（追補）
+
+**目的**
+
+- squash merge 後に「コミットハッシュが変わった」ことと「内容が異なる」ことを混同しないよう、確認手順と判定ルールを明確にする。
+
+**適用範囲**
+
+- 対象: squash でマージされた PR の確認、または squash 前後で "浮いて見えるコミット" を判定する場面
+
+---
+
+## 判定（速攻チェック）
+
+1. リモートとブランチの差分を確認
+
+```bash
+git fetch origin
+git diff --name-status origin/main..HEAD
+```
+
+2. コミット存在の整合（ハッシュ差を見る）
+
+```bash
+git log --oneline origin/main..HEAD
+git cherry -v origin/main HEAD
+```
+
+判定の要点:
+- `git diff origin/main..branch` が空であれば内容は同一（ハッシュだけ違う可能性あり）
+- `git cherry` は内容ベースでコミットが既に存在するかどうかを示す（+/- 記号）
+
+---
+
+## 実行（確認手順と判断ルール）
+
+1. まず内容差を優先して確認する
+
+```bash
+git fetch origin
+git diff origin/main..branch   # 内容ベースの差分
+```
+
+判断:
+- 差分が無ければ → 内容は同一、ハッシュ差は squash 等の結果。運用上は問題なし。
+- 差分があれば → 内容が異なるので修正または再確認が必要。
+
+2. `git cherry` で既存コミット判定
+
+```bash
+git cherry -v origin/main branch
+```
+
+解釈:
+- 出力に `+` があれば branch 上のコミットは origin に未反映（内容差あり）
+- 出力に `-` があれば origin に同等のコミットが既に存在（ハッシュ差のみ）
+
+---
+
+## 修正案（差分がある場合）
+
+- 差分がある場合は、まず作業ブランチにて修正を行い、再度 PR を作成するか、必要なら revert を実行する。
+- squash 後に「同一内容だがハッシュが違う」だけなら通常は放置で良い（コミット履歴の見た目のみの問題）。
+
+---
+
+## 確認（操作後）
+
+```bash
+git fetch origin
+git diff origin/main..branch || echo "no content diff"
+git cherry -v origin/main branch
+```
+
+期待結果:
+- 内容差が無ければ `git diff` が空、`git cherry` に `-` が多く出る場合があるが運用上問題なし
+
+---
+
+## クイックチェックリスト（PR/Issue 用短文）
+
+- 判定: `git diff origin/main..branch` で内容差確認
+- 実行: 差分あり→修正ブランチで対応、差分無→ハッシュ差のみで運用問題なし
+- 確認: `git cherry -v origin/main branch` で同等コミットの有無を判断
 
 # main に安全に戻る手順
 
