@@ -78,8 +78,10 @@
 ## 次マイルストーン（Phase 3 後半）
 
 - [x] M1: 実UIウィジェットへの本バインド導入（adapterで signal -> `MainWindow` 接続を実装）
-- [x] M2: 主要画面の配置/表示の実機確認（Windows/XFCE/macOSのうち利用可能環境、最小操作セットは `docs/manual-validation-gate.md` を基準とする）
-- [x] M3: 実機確認結果を PR コメントに標準フォーマットで記録（スクリーンショット付き）
+- [x] M2-ops: 実機確認運用の確立（テンプレート運用、成果物命名、PR添付）
+- [x] M3-ops: 実機確認記録の標準化（`pr-comment` / screenshot 添付運用）
+- [ ] M2-ui: 本UI（正式配置）での主要画面配置・導線の最終確定
+- [ ] M3-ui: 本UI（正式配置）での Step1-5 再検証と最終記録
 - [x] M4: 実UI導入後の最小回帰セットを固定（CI smoke + manual gate の責務分離）
 
 ## 再開タスク（2026-04-09）
@@ -127,6 +129,41 @@ Exit Criteria（この再開PRの完了条件）:
 
 - legacy glade の runtime 非互換を回避するため、GTK runtime fallback window 経路で実機検証を実施した。
 - fallback 経路で Step1-5 は達成済み。次段では本UI配置で同手順を再確認し、最終収束する。
+
+## 追い込み計画（M2/M3 UI品質収束, 2026-04-12 起票）
+
+目的:
+
+- M2/M3 の「運用達成」と「UI品質達成」を分離し、本UI（正式配置）での完了条件を満たす。
+- fallback 検証で進めた暫定合格を、本UIの配置・操作・記録品質で最終合格へ置き換える。
+
+優先タスク（小PR順）:
+
+- [x] P1 docs: M2/M3 の完了条件を UI品質基準込みで再定義（本UI合格を必須化）
+- [x] P2 docs: fallback と本UIの扱いを明確化（fallback は継続運用用、本UIを最終判定用に固定）
+- [ ] P3 feat(gui): MainWindow の正式レイアウトを確定（主要ボタン、入力欄、状態表示の配置統一）
+- [ ] P4 feat(gui): Optimize/Apply 領域の配置と導線を統一（操作順が迷わない構成）
+- [ ] P5 feat(gui): 成功/失敗/実行中メッセージとエラー表示の一元化（表示ルール固定）
+- [ ] P6 test/docs: GUI回帰観点と手動ゲートの品質項目を同期（表示・操作・証跡）
+- [ ] P7 validate: 本UIで Step1-5 + 3画面添付を再実施し、PRコメントへ標準フォーマットで記録
+
+現時点の判定:
+
+- Phase 3 は未完了（`M2-ui` / `M3-ui` が未達）。
+- fallback 経路での実績は暫定合格として扱い、本UI（正式配置）での再確認完了を最終合格条件とする。
+
+実施ルール:
+
+- 1PR 1目的を厳守する（UI配置と運用docs更新を同一PRに混在させない）。
+- 実機検証はオーナー実施とし、未実施項目は `not-available` と理由を記録する。
+- 本UIでの再検証が完了するまで、Phase 3 完了判定は「保留」扱いとする。
+
+完了条件（追い込みの DoD）:
+
+- [ ] MainWindow/Optimize/Apply の本UI配置が固定され、主要操作で迷いがない。
+- [ ] dry-run 実行時に例外なく操作が完結し、状態表示とログ表示が整合する。
+- [ ] 3画面スクリーンショット（MainWindow/Optimize/Apply）を本UIで取得し、PRへ添付済み。
+- [ ] `docs/manual-validation-gate.md` と本タスクリストの判定条件が一致している。
 
 ## 小PR分割（推奨）
 

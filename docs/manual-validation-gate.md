@@ -91,6 +91,7 @@ python -m harite.gui.app --load-ui-prototype --bind-ui-backend --present-ui-wind
 - legacy glade（`<glade-interface>`）を runtime で直接読めない環境では、GTK runtime fallback window を使用して Step1-5 を実施してよい。
 - fallback window での Step2-4 判定は、入力更新・Optimize・Apply(dry-run) のステータス表示で行う。
 - 本UI（正式部品配置）へ移行後は、同じ 5 操作を本UI上で再確認する。
+- fallback window での pass は暫定合格として扱い、Phase 3 最終完了判定は本UI（正式部品配置）での実施結果を優先する。
 
 ### Phase 3 完了判定の最小操作セット（固定）
 
@@ -106,6 +107,12 @@ python -m harite.gui.app --load-ui-prototype --bind-ui-backend --present-ui-wind
 
 - 実行環境はオーナーの Linux Mint (Xfce) 現行環境を基準とする。
 - 実ウィンドウが出せない時期は暫定運用を適用し、Phase 3 完了判定には使わない。
+
+### Phase 3 UI品質収束の判定ルール（2026-04-12 確定）
+
+- M2/M3 の運用面（成果物生成・PR添付）が達成済みでも、`M2-ui` / `M3-ui` が未達の間は Phase 3 を未完了として扱う。
+- 最終完了条件は本UI（正式部品配置）での Step1-5 pass + 3画面添付 + PR記録の3点セット。
+- fallback window は継続運用の補助手段として扱い、最終完了判定の代替にはしない。
 
 ### 暫定運用（GUIプレースホルダ期間）
 
