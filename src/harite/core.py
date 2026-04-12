@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from pathlib import Path
 from typing import Sequence, Tuple, List, Optional
 from PIL import Image, ImageDraw, ImageFont
@@ -177,6 +178,66 @@ def _truncate_to_width(draw: ImageDraw.ImageDraw, text: str, max_w: int, font: I
     return out + ellipsis
 
 
+def _load_preferred_font(size: int, explicit_path: Optional[str] = None) -> ImageFont.ImageFont:
+    """Load a preferred font for embed text with CJK-capable candidates.
+
+    Args:
+        size: Font size in px.
+        explicit_path: Optional explicit font path from CLI.
+
+    Returns:
+        Loaded PIL font object. Falls back to `ImageFont.load_default()`.
+    """
+    font_size = max(8, int(size))
+
+    candidates: List[str] = []
+    if explicit_path:
+        candidates.append(str(explicit_path))
+
+    # Common CJK-capable fonts by platform (best effort).
+    candidates.extend(
+        [
+            # Windows
+            r"C:\Windows\Fonts\meiryo.ttc",
+            r"C:\Windows\Fonts\msgothic.ttc",
+            r"C:\Windows\Fonts\YuGothM.ttc",
+            # Linux
+            "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/truetype/noto/NotoSansJP-Regular.otf",
+            # macOS
+            "/System/Library/Fonts/Hiragino Sans GB.ttc",
+            "/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc",
+        ]
+    )
+
+    # Keep order while removing duplicates.
+    deduped: List[str] = []
+    seen = set()
+    for c in candidates:
+        if c and c not in seen:
+            deduped.append(c)
+            seen.add(c)
+
+    for path in deduped:
+        # Explicit path should be tried even if existence check is unreliable.
+        if explicit_path and path == str(explicit_path):
+            try:
+                return ImageFont.truetype(path, font_size)
+            except Exception:
+                pass
+            continue
+
+        if not os.path.exists(path):
+            continue
+        try:
+            return ImageFont.truetype(path, font_size)
+        except Exception:
+            continue
+
+    return ImageFont.load_default()
+
+
 def _draw_embed_text_in_margin(
     bg: Image.Image,
     lines: List[str],
@@ -184,6 +245,7 @@ def _draw_embed_text_in_margin(
     margins: Tuple[int, int, int, int],
     position: str,
     max_lines: int,
+    embed_font: Optional[str] = None,
 ) -> None:
     """余白に埋め込みテキストを描画する。
 
@@ -225,7 +287,8 @@ def _draw_embed_text_in_margin(
         return
 
     draw = ImageDraw.Draw(bg)
-    font = ImageFont.load_default()
+    preferred_size = max(12, min(24, area_h // max(1, max_lines + 1)))
+    font = _load_preferred_font(preferred_size, explicit_path=embed_font)
     line_h = max(10, font.getbbox("Ag")[3] - font.getbbox("Ag")[1] + 2)
 
     fit_lines = max(0, area_h // line_h)
@@ -411,6 +474,7 @@ def optimize_wallpapers(
         margins=(ml, mr, mt, mb),
         position=embed_position,
         max_lines=embed_max_lines,
+        embed_font=kwargs.get("embed_font"),
     )
 
     out_path = output_dir / ("harite_wallopt_" + str(abs(hash(tuple(items))))[:8] + ".jpg")

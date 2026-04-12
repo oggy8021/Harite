@@ -398,3 +398,41 @@ def test_optimize_combined_two_screen_fixed_margins_displays(tmp_path, monkeypat
     assert captured["margins"] == (10, 20, 30, 40)
     assert captured["l_display"] == (1920, 1080)
     assert captured["r_display"] == (1280, 1024)
+
+
+def test_optimize_passes_embed_font_to_core(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    img = tmp_path / "a.jpg"
+    from PIL import Image
+
+    Image.new("RGB", (10, 10), (100, 100, 100)).save(img)
+    font = tmp_path / "font.ttf"
+    font.write_bytes(b"dummy")
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--input",
+            str(img),
+            "--resolution",
+            "100x100",
+            "--embed-info",
+            "free",
+            "--embed-text",
+            "テスト",
+            "--embed-font",
+            str(font),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["embed_font"] == str(font)

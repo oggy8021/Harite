@@ -236,6 +236,12 @@ def optimize(
         help="Maximum lines for embedded text",
         rich_help_panel="詳細調整",
     ),
+    embed_font: Optional[Path] = typer.Option(
+        None,
+        "--embed-font",
+        help="Font file path (.ttf/.otf/.ttc) used for --embed-text rendering",
+        rich_help_panel="詳細調整",
+    ),
 ) -> None:
     """Optimize wallpapers.
 
@@ -253,6 +259,7 @@ def optimize(
     余白情報埋め込み:
     - `--embed-info` は `none|params|free|combo` を指定できます。
     - `free` / `combo` では `--embed-text` を併用できます。
+    - `--embed-font` は任意指定です。既定では自動的に利用可能なフォントを探索します。
     """
     # Load config if provided and merge defaults (CLI options override config)
     cfg: dict = {}
@@ -330,6 +337,7 @@ def optimize(
         embed_text=embed_text,
         embed_position=embed_position,
         embed_max_lines=embed_max_lines,
+        embed_font=(str(embed_font) if embed_font is not None else None),
     )
     fmt = format.lower()
     if fmt not in ("json", "text"):
