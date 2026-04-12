@@ -428,6 +428,7 @@ def watch(
     input: Path = typer.Option(..., "--input", help="Input directory containing images"),
     interval_sec: int = typer.Option(..., "--interval-sec", help="Cycle interval in seconds (>=1)"),
     mode: str = typer.Option("sequential", "--mode", help="Selection mode: sequential|random"),
+    log_level: str = typer.Option("normal", "--log-level", help="Log level: normal|detail"),
     plugin: str = typer.Option("windows", "--plugin", "-p", help="Plugin name used when --do-it is enabled"),
     dry_run: bool = typer.Option(True, "--dry-run/--do-it", help="Dry-run by default; pass --do-it to apply"),
     iterations: Optional[int] = typer.Option(None, "--iterations", help="Maximum cycles; omit for unbounded"),
@@ -442,6 +443,11 @@ def watch(
         typer.echo("--mode must be one of: sequential, random")
         raise typer.Exit(code=2)
 
+    log_level = log_level.lower().strip()
+    if log_level not in ("normal", "detail"):
+        typer.echo("--log-level must be one of: normal, detail")
+        raise typer.Exit(code=2)
+
     if iterations is not None and iterations < 1:
         typer.echo("--iterations must be >= 1")
         raise typer.Exit(code=2)
@@ -454,7 +460,7 @@ def watch(
 
     typer.echo(
         f"WATCH start: input={input} images={len(images)} interval_sec={interval_sec} "
-        f"mode={mode} "
+        f"mode={mode} log_level={log_level} "
         f"plugin={plugin} dry_run={dry_run} iterations={iterations}"
     )
 
@@ -477,9 +483,10 @@ def watch(
     def _on_cycle(selected: Path, cycle_index: int) -> None:
         if dry_run:
             stats["dry_run_cycles"] += 1
-            typer.echo(
-                f"WATCH cycle={cycle_index + 1} selected={selected} dry_run=True"
-            )
+            if log_level == "detail":
+                typer.echo(
+                    f"WATCH cycle={cycle_index + 1} selected={selected} dry_run=True"
+                )
             return
 
         try:
@@ -494,9 +501,10 @@ def watch(
 
         if success:
             stats["apply_ok"] += 1
-            typer.echo(
-                f"WATCH cycle={cycle_index + 1} selected={selected} apply=ok dry_run=False"
-            )
+            if log_level == "detail":
+                typer.echo(
+                    f"WATCH cycle={cycle_index + 1} selected={selected} apply=ok dry_run=False"
+                )
         else:
             stats["apply_failed"] += 1
             typer.echo(

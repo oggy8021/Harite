@@ -37,13 +37,14 @@
 
 ## インターフェース案（最小）
 
-- `harite watch --input <dir> --interval-sec <int> [--mode sequential|random] [--dry-run|--do-it] [--iterations <int>]`
+- `harite watch --input <dir> --interval-sec <int> [--mode sequential|random] [--log-level normal|detail] [--dry-run|--do-it] [--iterations <int>]`
 
 オプション意味（最小）:
 
 - `--input`: 画像ディレクトリ（必須）。
 - `--interval-sec`: サイクル間隔秒（必須、1以上）。
 - `--mode`: 列挙戦略。既定は `sequential`。
+- `--log-level`: ログ出力レベル。`normal`（既定）または `detail`。
 - `--dry-run/--do-it`: 既定は `--dry-run`。実適用は `--do-it` 明示時のみ。
 - `--iterations`: 実行回数上限。未指定時は無限実行。
 
@@ -85,6 +86,12 @@
   - 失敗時はエラーを表示し、watch は継続する。
 
 ### ログとサマリ（最小標準）
+
+- `--log-level normal`:
+  - start 行と completed 行を出力する。
+  - サイクル行は失敗時（`apply=failed` / `apply=error`）のみ出力する。
+- `--log-level detail`:
+  - start 行と completed 行に加え、全サイクル行を出力する。
 
 - 1サイクル失敗時のログ理由は固定文字列で出力する。
   - plugin が `False` を返した場合: `reason=plugin-returned-false`
