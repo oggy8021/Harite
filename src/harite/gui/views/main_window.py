@@ -23,6 +23,7 @@ class MainWindow:
         self.controller = OptimizeController()
         self.closed = False
         self.can_optimize = False
+        self.can_apply = False
         self.last_error = ""
         self.logs: list[str] = []
         self.available_plugins = tuple(plugin_registry.list())
@@ -114,6 +115,10 @@ class MainWindow:
         """Legacy signal mapping: on_entPath_insert_text."""
         self.form_state.input_value = text
         self.can_optimize = bool(text and text.strip())
+        if not self.can_optimize:
+            # Input changed to empty; reset apply readiness to avoid stale flow.
+            self.can_apply = False
+            self.last_saved_files = []
         if self.can_optimize:
             self.last_error = ""
             self._log("Input updated")
@@ -131,12 +136,16 @@ class MainWindow:
         try:
             saved, _placements = self.controller.run_optimize(self.form_state)
             self.last_saved_files = list(saved)
+            self.can_apply = bool(self.last_saved_files)
             self.last_error = ""
             self._log(f"Saved {len(saved)} file(s)")
             for path in saved:
                 self._log(f"Saved: {path}")
+            if self.can_apply:
+                self._log("Next action: apply dry-run")
             return True
         except Exception as exc:
+            self.can_apply = False
             self.last_error = str(exc)
             self._log(f"Optimize failed: {exc}")
             return False
@@ -235,6 +244,31 @@ class MainWindow:
         self._log(f"CLI preview: {preview}")
         return preview
 
+    def suggest_next_action(self) -> str:
+        """Return the recommended next operation in the Optimize/Apply flow."""
+        if not self.can_optimize:
+            return "input"
+        if self.can_optimize and not self.can_apply:
+            return "optimize"
+        return "apply_dry_run"
+
+    def run_primary_flow_step(self) -> bool:
+        """Execute one safe step of the primary flow.
+
+        Order:
+        - input missing -> no-op (False)
+        - optimize ready -> optimize
+        - apply ready -> apply dry-run
+        """
+        step = self.suggest_next_action()
+        if step == "optimize":
+            return self.on_optimize()
+        if step == "apply_dry_run":
+            return self.on_apply_dry_run()
+        self.last_error = "input is required"
+        self._log("Flow step blocked: input is required")
+        return False
+
     def get_layout_blueprint(self) -> dict[str, object]:
         """Return UI grouping metadata used by layout checks and tests."""
         return {
@@ -242,6 +276,7 @@ class MainWindow:
             "subtitle": self.subtitle,
             "sections": self.layout_sections,
             "primary_action_flow": self.primary_action_flow,
+            "suggested_next_action": self.suggest_next_action(),
         }
 
     def show(self) -> None:
