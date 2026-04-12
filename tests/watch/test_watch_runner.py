@@ -33,6 +33,38 @@ def test_select_next_image_random_stays_in_candidates() -> None:
     assert index == 5
 
 
+def test_select_next_image_random_avoids_repeat_if_possible() -> None:
+    images = [Path("a.jpg"), Path("b.jpg"), Path("c.jpg")]
+    rng = random.Random(1)
+
+    selected, index = select_next_image(
+        images,
+        "random",
+        0,
+        previous_selected=Path("a.jpg"),
+        rng=rng,
+    )
+
+    assert selected in (Path("b.jpg"), Path("c.jpg"))
+    assert index == 0
+
+
+def test_select_next_image_random_allows_repeat_with_single_image() -> None:
+    images = [Path("a.jpg")]
+    rng = random.Random(1)
+
+    selected, index = select_next_image(
+        images,
+        "random",
+        0,
+        previous_selected=Path("a.jpg"),
+        rng=rng,
+    )
+
+    assert selected == Path("a.jpg")
+    assert index == 0
+
+
 def test_select_next_image_rejects_empty_images() -> None:
     with pytest.raises(ValueError, match="images must not be empty"):
         select_next_image([], "sequential", 0)

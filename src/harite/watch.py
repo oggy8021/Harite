@@ -30,6 +30,7 @@ def select_next_image(
     images: List[Path],
     mode: str,
     index: int,
+    previous_selected: Path | None = None,
     rng: random.Random | None = None,
 ) -> tuple[Path, int]:
     """Select the next image for a watch cycle.
@@ -46,6 +47,9 @@ def select_next_image(
 
     if normalized_mode == "random":
         chooser = rng if rng is not None else random
+        if len(images) > 1 and previous_selected in images:
+            candidates = [img for img in images if img != previous_selected]
+            return chooser.choice(candidates), index
         return chooser.choice(images), index
 
     raise ValueError("mode must be one of: sequential, random")
@@ -67,10 +71,17 @@ def run_watch_cycles(
 
     index = 0
     completed = 0
+    previous_selected: Path | None = None
 
     while iterations is None or completed < iterations:
-        selected, index = select_next_image(images, mode, index)
+        selected, index = select_next_image(
+            images,
+            mode,
+            index,
+            previous_selected=previous_selected,
+        )
         on_cycle(selected, completed)
+        previous_selected = selected
         completed += 1
 
         # Sleep only if another cycle may follow.
