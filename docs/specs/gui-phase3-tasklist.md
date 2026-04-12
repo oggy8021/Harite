@@ -80,8 +80,8 @@
 - [x] M1: 実UIウィジェットへの本バインド導入（adapterで signal -> `MainWindow` 接続を実装）
 - [x] M2-ops: 実機確認運用の確立（テンプレート運用、成果物命名、PR添付）
 - [x] M3-ops: 実機確認記録の標準化（`pr-comment` / screenshot 添付運用）
-- [ ] M2-ui: 本UI（正式配置）での主要画面配置・導線の最終確定
-- [ ] M3-ui: 本UI（正式配置）での Step1-5 再検証と最終記録
+- [x] M2-ui: 本UI（正式配置）での主要画面配置・導線の最終確定
+- [x] M3-ui: 本UI（正式配置）での Step1-5 再検証と最終記録
 - [x] M4: 実UI導入後の最小回帰セットを固定（CI smoke + manual gate の責務分離）
 
 ## 再開タスク（2026-04-09）
@@ -144,26 +144,26 @@ Exit Criteria（この再開PRの完了条件）:
 - [x] P3 feat(gui): MainWindow の正式レイアウトを確定（主要ボタン、入力欄、状態表示の配置統一）
 - [x] P4 feat(gui): Optimize/Apply 領域の配置と導線を統一（操作順が迷わない構成）
 - [x] P5 feat(gui): 成功/失敗/実行中メッセージとエラー表示の一元化（表示ルール固定）
-- [ ] P6 test/docs: GUI回帰観点と手動ゲートの品質項目を同期（表示・操作・証跡）
-- [ ] P7 validate: 本UIで Step1-5 + 3画面添付を再実施し、PRコメントへ標準フォーマットで記録
+- [x] P6 test/docs: GUI回帰観点と手動ゲートの品質項目を同期（表示・操作・証跡）
+- [x] P7 validate: 本UIで Step1-5 + 3画面添付を再実施し、PRコメントへ標準フォーマットで記録
 
 現時点の判定:
 
-- Phase 3 は未完了（`M2-ui` / `M3-ui` が未達）。
-- fallback 経路での実績は暫定合格として扱い、本UI（正式配置）での再確認完了を最終合格条件とする。
+- Phase 3 は完了（`M2-ui` / `M3-ui` を達成）。
+- 最終判定は本UI（正式配置）での Step1-5 pass + 3画面添付 + PR記録で確定済み。
 
 実施ルール:
 
 - 1PR 1目的を厳守する（UI配置と運用docs更新を同一PRに混在させない）。
 - 実機検証はオーナー実施とし、未実施項目は `not-available` と理由を記録する。
-- 本UIでの再検証が完了するまで、Phase 3 完了判定は「保留」扱いとする。
+- 本UIでの再検証完了後は `docs/gui-phase3-final-validation-record-20260412.md` を最終判定記録として扱う。
 
 完了条件（追い込みの DoD）:
 
-- [ ] MainWindow/Optimize/Apply の本UI配置が固定され、主要操作で迷いがない。
-- [ ] dry-run 実行時に例外なく操作が完結し、状態表示とログ表示が整合する。
-- [ ] 3画面スクリーンショット（MainWindow/Optimize/Apply）を本UIで取得し、PRへ添付済み。
-- [ ] `docs/manual-validation-gate.md` と本タスクリストの判定条件が一致している。
+- [x] MainWindow/Optimize/Apply の本UI配置が固定され、主要操作で迷いがない。
+- [x] dry-run 実行時に例外なく操作が完結し、状態表示とログ表示が整合する。
+- [x] 3画面スクリーンショット（MainWindow/Optimize/Apply）を本UIで取得し、PRへ添付済み。
+- [x] `docs/manual-validation-gate.md` と本タスクリストの判定条件が一致している。
 
 ## 小PR分割（推奨）
 
