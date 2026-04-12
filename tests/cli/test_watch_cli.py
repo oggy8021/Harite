@@ -87,7 +87,15 @@ def test_watch_runs_iterations_and_reports_completion(tmp_path, monkeypatch) -> 
 
     captured = {}
 
-    def fake_run_watch_cycles(*, images, mode, interval_sec, iterations, on_cycle, sleep_fn=None):
+    def fake_run_watch_cycles(
+        *,
+        images,
+        mode,
+        interval_sec,
+        iterations,
+        on_cycle,
+        sleep_fn=None,
+    ):
         captured["images"] = images
         captured["mode"] = mode
         captured["interval_sec"] = interval_sec
@@ -156,7 +164,15 @@ def test_watch_dry_run_does_not_resolve_plugin(tmp_path, monkeypatch) -> None:
 
     monkeypatch.setattr(cli.plugin_registry, "get", fake_get_plugin)
 
-    def fake_run_watch_cycles(*, images, mode, interval_sec, iterations, on_cycle, sleep_fn=None):
+    def fake_run_watch_cycles(
+        *,
+        images,
+        mode,
+        interval_sec,
+        iterations,
+        on_cycle,
+        sleep_fn=None,
+    ):
         on_cycle(images[0], 0)
         return 1
 
@@ -193,7 +209,15 @@ def test_watch_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch) -> 
 
     monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: fake_plugin)
 
-    def fake_run_watch_cycles(*, images, mode, interval_sec, iterations, on_cycle, sleep_fn=None):
+    def fake_run_watch_cycles(
+        *,
+        images,
+        mode,
+        interval_sec,
+        iterations,
+        on_cycle,
+        sleep_fn=None,
+    ):
         on_cycle(images[0], 0)
         on_cycle(images[1], 1)
         return 2
@@ -246,7 +270,15 @@ def test_watch_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch) ->
 
     monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
 
-    def fake_run_watch_cycles(*, images, mode, interval_sec, iterations, on_cycle, sleep_fn=None):
+    def fake_run_watch_cycles(
+        *,
+        images,
+        mode,
+        interval_sec,
+        iterations,
+        on_cycle,
+        sleep_fn=None,
+    ):
         on_cycle(images[0], 0)
         return 1
 

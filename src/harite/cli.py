@@ -454,7 +454,8 @@ def watch(
 
     typer.echo(
         f"WATCH start: input={input} images={len(images)} interval_sec={interval_sec} "
-        f"mode={mode} plugin={plugin} dry_run={dry_run} iterations={iterations}"
+        f"mode={mode} "
+        f"plugin={plugin} dry_run={dry_run} iterations={iterations}"
     )
 
     plugin_impl = None
