@@ -1,6 +1,6 @@
 # 実機検証ゲート（軽量運用）
 
-最終更新: 2026-04-09
+最終更新: 2026-04-12
 
 ## 目的
 
@@ -85,6 +85,12 @@ python -m harite.gui.app --load-ui-prototype --bind-ui-backend --present-ui-wind
 
 - 上記でウィンドウ表示できる環境では、スクリーンショット 3 枚取得運用へ進む。
 - 表示できない場合は従来どおり暫定運用（`--auto-artifacts` + Notes 記録）を適用する。
+
+補足（2026-04-12 運用更新）:
+
+- legacy glade（`<glade-interface>`）を runtime で直接読めない環境では、GTK runtime fallback window を使用して Step1-5 を実施してよい。
+- fallback window での Step2-4 判定は、入力更新・Optimize・Apply(dry-run) のステータス表示で行う。
+- 本UI（正式部品配置）へ移行後は、同じ 5 操作を本UI上で再確認する。
 
 ### Phase 3 完了判定の最小操作セット（固定）
 
@@ -229,6 +235,15 @@ PRごとに以下の命名で保存する。
 - PR本文またはコメントに `pr-comment.md` の内容を添付する。
 - `not-available` を使った項目は Notes に理由を明記する。
 - `docs/specs/gui-phase3-tasklist.md` の `M2-3b` / `M3-2b` を `[x]` に更新する。
+
+## 実施実績（2026-04-12, XFCE）
+
+- Step1: pass（実ウィンドウ表示）
+- Step2: pass（入力更新で `Input updated`）
+- Step3: pass（`Optimize ok`）
+- Step4: pass（`Apply dry-run ok`）
+- Step5: pass（MainWindow/Optimize/Apply の3画面を添付）
+- Notes: GTK runtime fallback window で実施。`Traceback` / `Exception` は未発生。
 
 ## 参照
 

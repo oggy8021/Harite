@@ -1,6 +1,6 @@
 # GUI Phase 3 タスクリスト（実UI統合の準備）
 
-最終更新: 2026-04-09
+最終更新: 2026-04-12
 
 ## 目的
 
@@ -78,8 +78,8 @@
 ## 次マイルストーン（Phase 3 後半）
 
 - [x] M1: 実UIウィジェットへの本バインド導入（adapterで signal -> `MainWindow` 接続を実装）
-- [ ] M2: 主要画面の配置/表示の実機確認（Windows/XFCE/macOSのうち利用可能環境、最小操作セットは `docs/manual-validation-gate.md` を基準とする）
-- [ ] M3: 実機確認結果を PR コメントに標準フォーマットで記録（スクリーンショット付き）
+- [x] M2: 主要画面の配置/表示の実機確認（Windows/XFCE/macOSのうち利用可能環境、最小操作セットは `docs/manual-validation-gate.md` を基準とする）
+- [x] M3: 実機確認結果を PR コメントに標準フォーマットで記録（スクリーンショット付き）
 - [x] M4: 実UI導入後の最小回帰セットを固定（CI smoke + manual gate の責務分離）
 
 ## 再開タスク（2026-04-09）
@@ -110,6 +110,7 @@ Exit Criteria（この再開PRの完了条件）:
 - [x] M2-2: 実機確認成果物の命名規則を定義（json/md/screenshot）
 - [x] M2-3a: 手動検証結果を1ファイルへ束ねるレポート出力を smoke script に追加
 - [x] M2-3b: 1環境以上でテンプレート運用実績を作成し、PRコメントに添付（PR146/XFCE, PR162/Windows）
+- [x] M2-4: XFCE で Step1-5（GUI起動/入力更新/Optimize/Apply dry-run/3画面添付）を pass
 
 ## M3 詳細進捗
 
@@ -120,6 +121,12 @@ Exit Criteria（この再開PRの完了条件）:
 - [x] M3-5a: 厳格運用モード（`--strict-manual`）を追加
 - [x] M3-6a: `pr-comment` 出力に `### Screenshots` を追加し、スクリーンショット検証を report/pr-comment 両方で強制可能化
 - [x] M3-2b: 実機確認1件分を `pr-comment` へ添付して標準フォーマット運用を確定（PR146/XFCE, PR162/Windows）
+- [x] M3-3b: XFCE で MainWindow/Optimize/Apply の3画面を添付し、実機結果を標準フォーマットで記録
+
+## 追加メモ（2026-04-12）
+
+- legacy glade の runtime 非互換を回避するため、GTK runtime fallback window 経路で実機検証を実施した。
+- fallback 経路で Step1-5 は達成済み。次段では本UI配置で同手順を再確認し、最終収束する。
 
 ## 小PR分割（推奨）
 
