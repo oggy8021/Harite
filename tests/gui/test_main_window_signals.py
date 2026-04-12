@@ -17,6 +17,24 @@ def test_on_change_input_text_updates_state():
     assert window.last_error == ""
 
 
+def test_layout_blueprint_defines_grouping_and_flow():
+    window = MainWindow()
+
+    bp = window.get_layout_blueprint()
+
+    assert bp["title"] == "Harite GUI (MVP)"
+    assert bp["subtitle"] == "Input -> Optimize -> Apply"
+    assert isinstance(bp["sections"], tuple)
+    assert bp["sections"][0][0] == "input"
+    assert bp["sections"][-1][0] == "status"
+    assert bp["primary_action_flow"] == (
+        "input",
+        "optimize",
+        "apply_dry_run",
+        "apply_do_it",
+    )
+
+
 def test_on_optimize_runs_and_logs(tmp_path):
     window = MainWindow()
 

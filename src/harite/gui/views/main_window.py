@@ -19,6 +19,7 @@ class MainWindow:
 
     def __init__(self) -> None:
         self.title = "Harite GUI (MVP)"
+        self.subtitle = "Input -> Optimize -> Apply"
         self.controller = OptimizeController()
         self.closed = False
         self.can_optimize = False
@@ -31,6 +32,20 @@ class MainWindow:
             input_value="",
             resolution="1920x1080",
             output_dir=str(Path(".")),
+        )
+        # P4-2: keep UI grouping and primary flow explicit for layout consistency.
+        self.layout_sections: tuple[tuple[str, tuple[str, ...]], ...] = (
+            ("input", ("input_value", "resolution", "output_dir")),
+            ("options", ("plugin", "margins", "align", "valign", "padding", "quality")),
+            ("optimize", ("optimize", "saved_files")),
+            ("apply", ("apply_dry_run", "apply_do_it")),
+            ("status", ("last_error", "logs")),
+        )
+        self.primary_action_flow: tuple[str, ...] = (
+            "input",
+            "optimize",
+            "apply_dry_run",
+            "apply_do_it",
         )
 
     def _default_plugin_name(self) -> str:
@@ -220,7 +235,17 @@ class MainWindow:
         self._log(f"CLI preview: {preview}")
         return preview
 
+    def get_layout_blueprint(self) -> dict[str, object]:
+        """Return UI grouping metadata used by layout checks and tests."""
+        return {
+            "title": self.title,
+            "subtitle": self.subtitle,
+            "sections": self.layout_sections,
+            "primary_action_flow": self.primary_action_flow,
+        }
+
     def show(self) -> None:
         print(self.title)
+        print(self.subtitle)
         print("GUI skeleton is ready. Next step: bind real GTK widgets.")
         print(f"Can optimize: {self.can_optimize}")
