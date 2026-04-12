@@ -101,6 +101,7 @@ def test_runtime_backend_input_controls_optimize_button_state():
     optimize_btn = backend.get_object("btnSave")
     apply_btn = backend.get_object("btnSetWall")
     status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
 
     backend.connect_signals({"on_entPath_insert_text": lambda _text: None})
 
@@ -112,7 +113,8 @@ def test_runtime_backend_input_controls_optimize_button_state():
 
     assert optimize_btn.sensitive is True
     assert apply_btn.sensitive is False
-    assert status.text == "Input updated"
+    assert status.text == "Input: updated"
+    assert error.text == "Error: none"
 
 
 def test_runtime_backend_optimize_result_controls_apply_button_state():
@@ -121,6 +123,7 @@ def test_runtime_backend_optimize_result_controls_apply_button_state():
     optimize_btn = backend.get_object("btnSave")
     apply_btn = backend.get_object("btnSetWall")
     status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
     optimize_result = backend.get_object("lblOptimizeResult")
     apply_target = backend.get_object("lblApplyTarget")
 
@@ -128,7 +131,8 @@ def test_runtime_backend_optimize_result_controls_apply_button_state():
     optimize_btn.click()
 
     assert apply_btn.sensitive is True
-    assert status.text == "Optimize ok"
+    assert status.text == "Optimize: ok"
+    assert error.text == "Error: none"
     assert optimize_result.text == "Optimize result: success"
     assert apply_target.text == "Apply target: ready"
 
@@ -136,7 +140,8 @@ def test_runtime_backend_optimize_result_controls_apply_button_state():
     optimize_btn.click()
 
     assert apply_btn.sensitive is False
-    assert status.text == "Optimize failed"
+    assert status.text == "Optimize: failed"
+    assert error.text == "Error: optimize returned false"
     assert optimize_result.text == "Optimize result: failed"
     assert apply_target.text == "Apply target: not-ready"
 
@@ -153,6 +158,7 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("lblApplySection") is not None
     assert backend.get_object("boxApplySection") is not None
     assert backend.get_object("lblApplyTarget") is not None
+    assert backend.get_object("lblError") is not None
 
 
 def test_runtime_backend_apply_success_updates_apply_target():
@@ -162,6 +168,7 @@ def test_runtime_backend_apply_success_updates_apply_target():
     apply_btn = backend.get_object("btnSetWall")
     apply_target = backend.get_object("lblApplyTarget")
     status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
 
     backend.connect_signals({"on_btnSave_clicked": lambda: True})
     backend.connect_signals({"on_btnSetWall_clicked": lambda: True})
@@ -169,5 +176,38 @@ def test_runtime_backend_apply_success_updates_apply_target():
     optimize_btn.click()
     apply_btn.click()
 
-    assert status.text == "Apply dry-run ok"
+    assert status.text == "Apply: dry-run-ok"
+    assert error.text == "Error: none"
     assert apply_target.text == "Apply target: consumed"
+
+
+def test_runtime_backend_optimize_sets_running_state_before_handler_call():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    optimize_btn = backend.get_object("btnSave")
+    status = backend.get_object("lblStatus")
+
+    observed = {}
+
+    def on_optimize_clicked():
+        observed["status_when_called"] = status.text
+        return True
+
+    backend.connect_signals({"on_btnSave_clicked": on_optimize_clicked})
+    optimize_btn.click()
+
+    assert observed["status_when_called"] == "Optimize: running"
+
+
+def test_runtime_backend_apply_failure_updates_error_message():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    apply_btn = backend.get_object("btnSetWall")
+    status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+
+    backend.connect_signals({"on_btnSetWall_clicked": lambda: False})
+    apply_btn.click()
+
+    assert status.text == "Apply: dry-run-failed"
+    assert error.text == "Error: apply returned false"

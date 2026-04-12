@@ -129,6 +129,11 @@ class GtkRuntimeSignalBackend:
                 status_label.set_xalign(0.0)
             root.pack_start(status_label, False, False, 0)
 
+            error_label = gtk_module.Label(label="Error: none")
+            if hasattr(error_label, "set_xalign"):
+                error_label.set_xalign(0.0)
+            root.pack_start(error_label, False, False, 0)
+
             if hasattr(window, "add"):
                 window.add(root)
 
@@ -154,6 +159,7 @@ class GtkRuntimeSignalBackend:
                 "lblApplyHint": apply_hint,
                 "lblApplyTarget": apply_target,
                 "lblStatus": status_label,
+                "lblError": error_label,
             }
 
             # Why: fallback window must still exercise MainWindow handlers even when
@@ -185,6 +191,16 @@ class GtkRuntimeSignalBackend:
         if status is not None and hasattr(status, "set_text"):
             status.set_text(message)
 
+    def _set_error(self, message: str | None) -> None:
+        if not message:
+            self._set_label_text("lblError", "Error: none")
+            return
+        self._set_label_text("lblError", f"Error: {message}")
+
+    def _set_feedback(self, *, phase: str, state: str, error: str | None = None) -> None:
+        self._set_status(f"{phase}: {state}")
+        self._set_error(error)
+
     def _set_label_text(self, object_name: str, message: str) -> None:
         label = self._objects.get(object_name)
         if label is not None and hasattr(label, "set_text"):
@@ -210,47 +226,68 @@ class GtkRuntimeSignalBackend:
 
         try:
             callback(text)
-            self._set_status("Input updated")
+            self._set_feedback(phase="Input", state="updated")
         except Exception as exc:
-            self._set_status(f"Input failed: {exc}")
+            self._set_feedback(phase="Input", state="failed", error=str(exc))
 
     def _on_optimize_clicked(self, *_args: Any) -> None:
         callback = self._signal_handlers.get("on_btnSave_clicked")
         if callback is None:
-            self._set_status("Optimize handler not connected")
+            self._set_feedback(
+                phase="Optimize",
+                state="handler-missing",
+                error="handler not connected",
+            )
             self._set_button_enabled("btnSetWall", False)
             self._set_label_text("lblOptimizeResult", "Optimize result: handler-missing")
             self._set_label_text("lblApplyTarget", "Apply target: not-ready")
             return
         try:
+            self._set_feedback(phase="Optimize", state="running")
             ok = callback()
             self._set_button_enabled("btnSetWall", bool(ok))
-            self._set_status("Optimize ok" if ok else "Optimize failed")
             if ok:
+                self._set_feedback(phase="Optimize", state="ok")
                 self._set_label_text("lblOptimizeResult", "Optimize result: success")
                 self._set_label_text("lblApplyTarget", "Apply target: ready")
             else:
+                self._set_feedback(
+                    phase="Optimize",
+                    state="failed",
+                    error="optimize returned false",
+                )
                 self._set_label_text("lblOptimizeResult", "Optimize result: failed")
                 self._set_label_text("lblApplyTarget", "Apply target: not-ready")
         except Exception as exc:
             self._set_button_enabled("btnSetWall", False)
-            self._set_status(f"Optimize error: {exc}")
+            self._set_feedback(phase="Optimize", state="error", error=str(exc))
             self._set_label_text("lblOptimizeResult", "Optimize result: error")
             self._set_label_text("lblApplyTarget", "Apply target: not-ready")
 
     def _on_apply_clicked(self, *_args: Any) -> None:
         callback = self._signal_handlers.get("on_btnSetWall_clicked")
         if callback is None:
-            self._set_status("Apply handler not connected")
+            self._set_feedback(
+                phase="Apply",
+                state="handler-missing",
+                error="handler not connected",
+            )
             self._set_label_text("lblApplyTarget", "Apply target: handler-missing")
             return
         try:
+            self._set_feedback(phase="Apply", state="running")
             ok = callback()
-            self._set_status("Apply dry-run ok" if ok else "Apply dry-run failed")
             if ok:
+                self._set_feedback(phase="Apply", state="dry-run-ok")
                 self._set_label_text("lblApplyTarget", "Apply target: consumed")
+            else:
+                self._set_feedback(
+                    phase="Apply",
+                    state="dry-run-failed",
+                    error="apply returned false",
+                )
         except Exception as exc:
-            self._set_status(f"Apply error: {exc}")
+            self._set_feedback(phase="Apply", state="error", error=str(exc))
 
 
 def load_gtk_builder_signal_backend(ui_file: Path | None = None):
