@@ -117,6 +117,7 @@ def test_watch_runs_iterations_and_reports_completion(tmp_path, monkeypatch) -> 
     assert captured["iterations"] == 1
     assert len(captured["images"]) == 1
     assert "watch completed cycles=1" in output
+    assert "dry_run_cycles=1" in output
 
 
 def test_watch_handles_keyboard_interrupt_as_normal_exit(tmp_path, monkeypatch) -> None:
@@ -221,4 +222,59 @@ def test_watch_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch) -> 
     assert fake_plugin.calls[0][1] is False
     assert fake_plugin.calls[1][1] is False
     assert "apply=failed" in output
+    assert "reason=plugin-returned-false" in output
     assert "apply=ok" in output
+    assert "watch completed cycles=2" in output
+    assert "apply_ok=1" in output
+    assert "apply_failed=1" in output
+    assert "apply_error=0" in output
+    assert "apply_failed_total=1" in output
+
+
+def test_watch_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch) -> None:
+    runner = CliRunner()
+    _require_watch_command(runner)
+
+    img_dir = tmp_path / "imgs"
+    img_dir.mkdir()
+    (img_dir / "a.jpg").write_bytes(b"x")
+
+    class FakePlugin:
+        def apply(self, _path_or_map, dry_run=False):
+            assert dry_run is False
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
+
+    def fake_run_watch_cycles(*, images, mode, interval_sec, iterations, on_cycle, sleep_fn=None):
+        on_cycle(images[0], 0)
+        return 1
+
+    monkeypatch.setattr(cli, "run_watch_cycles", fake_run_watch_cycles)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "watch",
+            "--input",
+            str(img_dir),
+            "--interval-sec",
+            "1",
+            "--iterations",
+            "1",
+            "--do-it",
+            "--plugin",
+            "windows",
+        ],
+    )
+    output = _normalize_cli_output(result.output)
+
+    assert result.exit_code == 0
+    assert "apply=error" in output
+    assert "reason=plugin-exception" in output
+    assert "error_type=runtimeerror" in output
+    assert "watch completed cycles=1" in output
+    assert "apply_ok=0" in output
+    assert "apply_failed=0" in output
+    assert "apply_error=1" in output
+    assert "apply_failed_total=1" in output
