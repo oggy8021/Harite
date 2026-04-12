@@ -75,6 +75,35 @@ def test_watch_help_includes_dry_run_and_do_it() -> None:
     assert result.exit_code == 0
     assert "dry-run" in output
     assert "do-it" in output
+    assert "log-level" in output
+
+
+def test_watch_rejects_unknown_log_level(tmp_path) -> None:
+    runner = CliRunner()
+    _require_watch_command(runner)
+
+    img_dir = tmp_path / "imgs"
+    img_dir.mkdir()
+    (img_dir / "a.jpg").write_bytes(b"x")
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "watch",
+            "--input",
+            str(img_dir),
+            "--interval-sec",
+            "1",
+            "--log-level",
+            "verbose",
+            "--iterations",
+            "1",
+        ],
+    )
+    output = _normalize_cli_output(result.output)
+
+    assert result.exit_code == 2
+    assert "--log-level must be one of: normal, detail" in output
 
 
 def test_watch_runs_iterations_and_reports_completion(tmp_path, monkeypatch) -> None:
@@ -234,6 +263,8 @@ def test_watch_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch) -> 
             "1",
             "--iterations",
             "2",
+            "--log-level",
+            "detail",
             "--do-it",
             "--plugin",
             "windows",
@@ -253,6 +284,102 @@ def test_watch_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch) -> 
     assert "apply_failed=1" in output
     assert "apply_error=0" in output
     assert "apply_failed_total=1" in output
+
+
+def test_watch_normal_log_level_suppresses_success_cycle_line(tmp_path, monkeypatch) -> None:
+    runner = CliRunner()
+    _require_watch_command(runner)
+
+    img_dir = tmp_path / "imgs"
+    img_dir.mkdir()
+    (img_dir / "a.jpg").write_bytes(b"x")
+
+    class FakePlugin:
+        def apply(self, _path_or_map, dry_run=False):
+            assert dry_run is False
+            return True
+
+    monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
+
+    def fake_run_watch_cycles(
+        *,
+        images,
+        mode,
+        interval_sec,
+        iterations,
+        on_cycle,
+        sleep_fn=None,
+    ):
+        on_cycle(images[0], 0)
+        return 1
+
+    monkeypatch.setattr(cli, "run_watch_cycles", fake_run_watch_cycles)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "watch",
+            "--input",
+            str(img_dir),
+            "--interval-sec",
+            "1",
+            "--iterations",
+            "1",
+            "--log-level",
+            "normal",
+            "--do-it",
+            "--plugin",
+            "windows",
+        ],
+    )
+    output = _normalize_cli_output(result.output)
+
+    assert result.exit_code == 0
+    assert "apply=ok" not in output
+    assert "watch completed cycles=1" in output
+
+
+def test_watch_detail_log_level_emits_dry_run_cycle_line(tmp_path, monkeypatch) -> None:
+    runner = CliRunner()
+    _require_watch_command(runner)
+
+    img_dir = tmp_path / "imgs"
+    img_dir.mkdir()
+    (img_dir / "a.jpg").write_bytes(b"x")
+
+    def fake_run_watch_cycles(
+        *,
+        images,
+        mode,
+        interval_sec,
+        iterations,
+        on_cycle,
+        sleep_fn=None,
+    ):
+        on_cycle(images[0], 0)
+        return 1
+
+    monkeypatch.setattr(cli, "run_watch_cycles", fake_run_watch_cycles)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "watch",
+            "--input",
+            str(img_dir),
+            "--interval-sec",
+            "1",
+            "--iterations",
+            "1",
+            "--log-level",
+            "detail",
+        ],
+    )
+    output = _normalize_cli_output(result.output)
+
+    assert result.exit_code == 0
+    assert "watch cycle=1" in output
+    assert "dry_run=true" in output
 
 
 def test_watch_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch) -> None:
