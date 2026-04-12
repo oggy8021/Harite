@@ -141,7 +141,7 @@ Exit Criteria（この再開PRの完了条件）:
 
 - [x] P1 docs: M2/M3 の完了条件を UI品質基準込みで再定義（本UI合格を必須化）
 - [x] P2 docs: fallback と本UIの扱いを明確化（fallback は継続運用用、本UIを最終判定用に固定）
-- [ ] P3 feat(gui): MainWindow の正式レイアウトを確定（主要ボタン、入力欄、状態表示の配置統一）
+- [x] P3 feat(gui): MainWindow の正式レイアウトを確定（主要ボタン、入力欄、状態表示の配置統一）
 - [ ] P4 feat(gui): Optimize/Apply 領域の配置と導線を統一（操作順が迷わない構成）
 - [ ] P5 feat(gui): 成功/失敗/実行中メッセージとエラー表示の一元化（表示ルール固定）
 - [ ] P6 test/docs: GUI回帰観点と手動ゲートの品質項目を同期（表示・操作・証跡）

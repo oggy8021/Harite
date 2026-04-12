@@ -133,3 +133,15 @@ def test_runtime_backend_optimize_result_controls_apply_button_state():
 
     assert apply_btn.sensitive is False
     assert status.text == "Optimize failed"
+
+
+def test_runtime_backend_exposes_main_optimize_apply_sections():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    assert backend.get_object("boxRoot") is not None
+    assert backend.get_object("lblMainSection") is not None
+    assert backend.get_object("boxMainSection") is not None
+    assert backend.get_object("lblOptimizeSection") is not None
+    assert backend.get_object("boxOptimizeSection") is not None
+    assert backend.get_object("lblApplySection") is not None
+    assert backend.get_object("boxApplySection") is not None
