@@ -47,6 +47,10 @@ class GtkRuntimeSignalBackend:
             button_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
             optimize_btn = gtk_module.Button(label="Optimize")
             apply_btn = gtk_module.Button(label="Apply (dry-run)")
+            if hasattr(optimize_btn, "set_sensitive"):
+                optimize_btn.set_sensitive(False)
+            if hasattr(apply_btn, "set_sensitive"):
+                apply_btn.set_sensitive(False)
             button_row.pack_start(optimize_btn, False, False, 0)
             button_row.pack_start(apply_btn, False, False, 0)
             box.pack_start(button_row, False, False, 0)
@@ -98,11 +102,22 @@ class GtkRuntimeSignalBackend:
         if status is not None and hasattr(status, "set_text"):
             status.set_text(message)
 
+    def _set_button_enabled(self, object_name: str, enabled: bool) -> None:
+        button = self._objects.get(object_name)
+        if button is not None and hasattr(button, "set_sensitive"):
+            button.set_sensitive(bool(enabled))
+
     def _on_input_changed(self, entry: Any) -> None:
         callback = self._signal_handlers.get("on_entPath_insert_text")
+        text = entry.get_text() if hasattr(entry, "get_text") else ""
+        has_input = bool(text and str(text).strip())
+        # Why: avoid invalid optimize/apply calls when the input field is empty.
+        self._set_button_enabled("btnSave", has_input)
+        self._set_button_enabled("btnSetWall", False)
+
         if callback is None:
             return
-        text = entry.get_text() if hasattr(entry, "get_text") else ""
+
         try:
             callback(text)
             self._set_status("Input updated")
@@ -113,11 +128,14 @@ class GtkRuntimeSignalBackend:
         callback = self._signal_handlers.get("on_btnSave_clicked")
         if callback is None:
             self._set_status("Optimize handler not connected")
+            self._set_button_enabled("btnSetWall", False)
             return
         try:
             ok = callback()
+            self._set_button_enabled("btnSetWall", bool(ok))
             self._set_status("Optimize ok" if ok else "Optimize failed")
         except Exception as exc:
+            self._set_button_enabled("btnSetWall", False)
             self._set_status(f"Optimize error: {exc}")
 
     def _on_apply_clicked(self, *_args: Any) -> None:
