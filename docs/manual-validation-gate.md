@@ -252,6 +252,25 @@ PRごとに以下の命名で保存する。
 - Step5: pass（MainWindow/Optimize/Apply の3画面を添付）
 - Notes: GTK runtime fallback window で実施。`Traceback` / `Exception` は未発生。
 
+## P6 同期チェック（test/docs）
+
+Phase 3 P6 では、GUI の表示品質だけでなく signal-to-handler 経路の回帰観点を docs と tests で同期する。
+
+- signal 再監査対象:
+  - `on_entPath_insert_text`（入力変更時の状態更新）
+  - `on_btnSave_clicked`（Optimize 実行時の running/ok/failed/error）
+  - `on_btnSetWall_clicked`（Apply 実行時の running/dry-run-ok/dry-run-failed/error）
+- ローカル検証コマンド:
+
+```bash
+pytest -q tests/gui/test_main_window_signals.py tests/gui/test_gtk_runtime_backend.py
+```
+
+- 受け入れ基準:
+  - runtime fallback でのラベル規約（Status/Error/Optimize result/Apply target）が固定されている。
+  - handler 未接続時に `handler-missing` が表示され、例外クラッシュしない。
+  - 本項目の確認結果が PR 本文またはコメントに記録されている。
+
 ## 参照
 
 - docs/release-readiness-checklist.md

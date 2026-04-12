@@ -211,3 +211,35 @@ def test_runtime_backend_apply_failure_updates_error_message():
 
     assert status.text == "Apply: dry-run-failed"
     assert error.text == "Error: apply returned false"
+
+
+def test_runtime_backend_optimize_handler_missing_sets_status_and_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    optimize_btn = backend.get_object("btnSave")
+    status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+    optimize_result = backend.get_object("lblOptimizeResult")
+    apply_target = backend.get_object("lblApplyTarget")
+
+    optimize_btn.click()
+
+    assert status.text == "Optimize: handler-missing"
+    assert error.text == "Error: handler not connected"
+    assert optimize_result.text == "Optimize result: handler-missing"
+    assert apply_target.text == "Apply target: not-ready"
+
+
+def test_runtime_backend_apply_handler_missing_sets_status_and_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    apply_btn = backend.get_object("btnSetWall")
+    status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+    apply_target = backend.get_object("lblApplyTarget")
+
+    apply_btn.click()
+
+    assert status.text == "Apply: handler-missing"
+    assert error.text == "Error: handler not connected"
+    assert apply_target.text == "Apply target: handler-missing"
