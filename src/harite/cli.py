@@ -466,8 +466,16 @@ def watch(
             typer.echo(f"Available plugins: {', '.join(plugin_registry.list())}")
             raise typer.Exit(code=2)
 
+    stats = {
+        "dry_run_cycles": 0,
+        "apply_ok": 0,
+        "apply_failed": 0,
+        "apply_error": 0,
+    }
+
     def _on_cycle(selected: Path, cycle_index: int) -> None:
         if dry_run:
+            stats["dry_run_cycles"] += 1
             typer.echo(
                 f"WATCH cycle={cycle_index + 1} selected={selected} dry_run=True"
             )
@@ -476,18 +484,23 @@ def watch(
         try:
             success = bool(plugin_impl.apply(str(selected), dry_run=False))
         except Exception as exc:
+            stats["apply_error"] += 1
             typer.echo(
-                f"WATCH cycle={cycle_index + 1} selected={selected} apply=error message={exc}"
+                f"WATCH cycle={cycle_index + 1} selected={selected} "
+                f"apply=error reason=plugin-exception error_type={type(exc).__name__} message={exc}"
             )
             return
 
         if success:
+            stats["apply_ok"] += 1
             typer.echo(
                 f"WATCH cycle={cycle_index + 1} selected={selected} apply=ok dry_run=False"
             )
         else:
+            stats["apply_failed"] += 1
             typer.echo(
-                f"WATCH cycle={cycle_index + 1} selected={selected} apply=failed dry_run=False"
+                f"WATCH cycle={cycle_index + 1} selected={selected} "
+                "apply=failed reason=plugin-returned-false dry_run=False"
             )
 
     try:
@@ -505,7 +518,17 @@ def watch(
         typer.echo(str(exc))
         raise typer.Exit(code=2)
 
-    typer.echo(f"WATCH completed cycles={completed}")
+    if dry_run:
+        typer.echo(
+            f"WATCH completed cycles={completed} dry_run_cycles={stats['dry_run_cycles']}"
+        )
+    else:
+        apply_failed_total = stats["apply_failed"] + stats["apply_error"]
+        typer.echo(
+            f"WATCH completed cycles={completed} apply_ok={stats['apply_ok']} "
+            f"apply_failed={stats['apply_failed']} apply_error={stats['apply_error']} "
+            f"apply_failed_total={apply_failed_total}"
+        )
 
 
 def run() -> None:

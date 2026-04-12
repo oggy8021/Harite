@@ -1,6 +1,6 @@
 # harite watch 最小仕様
 
-最終更新: 2026-04-11
+最終更新: 2026-04-12
 
 ## 目的
 
@@ -82,6 +82,18 @@
 - `--do-it`:
   - 既存 apply 経路で実適用する。
   - 失敗時はエラーを表示し、watch は継続する。
+
+### ログとサマリ（最小標準）
+
+- 1サイクル失敗時のログ理由は固定文字列で出力する。
+  - plugin が `False` を返した場合: `reason=plugin-returned-false`
+  - plugin が例外を送出した場合: `reason=plugin-exception`
+- `--do-it` 時の終了行で以下を出力する。
+  - `apply_ok`（成功サイクル数）
+  - `apply_failed`（plugin戻り値 `False` の件数）
+  - `apply_error`（plugin例外の件数）
+  - `apply_failed_total`（`apply_failed + apply_error`）
+- `--dry-run` 時の終了行で `dry_run_cycles` を出力する。
 
 ## 受け入れ基準
 
