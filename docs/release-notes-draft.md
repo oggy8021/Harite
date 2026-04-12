@@ -1,34 +1,36 @@
 # Harite リリースノート
 
-最終更新: 2026-03-21
-対象バージョン: v0.1.1
+最終更新: 2026-04-12
+対象バージョン: v0.1.2
 
 ## 概要
 
-このリリースでは、実運用フィードバックを反映し、2画面分割の堅牢性と余白活用の改善を行いました。特に、低解像度合成画像でも破綻しにくい auto-split の改善と、余白への情報埋め込み（MVP）を追加しています。
+このリリースでは、`embed-text` の日本語描画改善（Issue #158）とライセンス整備（MIT）を中心に、配布品質を更新しました。`watch` を含む既存CLI機能への回帰確認も実施対象としています。
 
 ## 主な変更
 
-- optimize UX/仕様整理:
-  - `--input` 複数指定と `--two-screen` の実効仕様を `--help` と仕様書に反映
-  - パラメータの効きの強弱を明文化
-- auto-split 改善:
-  - 仮想デスクトップ座標を比率マッピングするクロップへ変更
-  - 低解像度合成でも左右分割が破綻しにくい挙動へ改善
-  - 回帰テストを追加
-- 余白情報埋め込み（MVP）:
-  - `--embed-info` (`none|params|free|combo`) を追加
-  - `--embed-text` / `--embed-position` / `--embed-max-lines` を追加
-  - 余白不足時は安全にスキップし、画像本体には重ね描画しない
+- Issue #158 対応（embed-text 日本語/CJK）:
+  - 描画フォントを固定の `ImageFont.load_default()` から改善
+  - 既定でシステムの CJK フォント候補を自動探索
+  - 必要時のみ `--embed-font` で明示指定可能
+- テスト追加:
+  - CLI: `--embed-font` 受け渡しテスト
+  - Core: 明示フォントパス優先ロードテスト
+- 配布整備:
+  - `LICENSE`（MIT）追加
+  - `pyproject.toml` に license metadata を追記
 
 ## 既知の制約
 
 - Linux の壁紙設定はデスクトップ環境依存です。XFCE 以外では環境差分により挙動が異なる場合があります。
-- 余白情報埋め込みは余白量に依存します。余白不足時は意図的に描画をスキップします。
+- CJK フォントが環境に存在しない場合、埋め込みテキストはデフォルトフォントにフォールバックするため、文字集合によっては表示制限があります。
 
 ## 検証サマリー
 
-- ローカルテスト: `pytest` 全件成功
+- ローカルテスト:
+  - `c:/Users/oggy_/Develop/Repos/Harite/.venv/Scripts/python.exe -m pytest tests/core/test_core_features.py tests/cli/test_cli_validation.py -q` 成功
+- 回帰確認:
+  - `watch` 関連テストを含む既存チェックをリリース前に再実施
 - CI: 必須チェック成功
 - 配布検証:
   - `python -m build --sdist --wheel` 成功
@@ -37,8 +39,8 @@
 
 ## 配布物
 
-- `harite-0.1.1-py3-none-any.whl`
-- `harite-0.1.1.tar.gz`
+- `harite-0.1.2-py3-none-any.whl`
+- `harite-0.1.2.tar.gz`
 
 ## 参照
 
