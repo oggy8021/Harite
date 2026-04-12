@@ -33,6 +33,7 @@ def test_layout_blueprint_defines_grouping_and_flow():
         "apply_dry_run",
         "apply_do_it",
     )
+    assert bp["suggested_next_action"] == "input"
 
 
 def test_on_optimize_runs_and_logs(tmp_path):
@@ -49,8 +50,10 @@ def test_on_optimize_runs_and_logs(tmp_path):
 
     ok = window.on_optimize()
     assert ok is True
+    assert window.can_apply is True
     assert any(line.startswith("Saved ") for line in window.logs)
     assert any(line.startswith("Saved: ") for line in window.logs)
+    assert any("Next action: apply dry-run" in line for line in window.logs)
 
 
 def test_on_close_marks_window_closed():
@@ -156,6 +159,56 @@ def test_on_apply_without_optimized_file_fails():
 
     assert ok is False
     assert window.last_error == "no optimized file to apply"
+
+
+def test_suggest_next_action_transitions(tmp_path):
+    window = MainWindow()
+    assert window.suggest_next_action() == "input"
+
+    img_path = tmp_path / "in.jpg"
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    Image.new("RGB", (120, 80), color=(10, 20, 30)).save(img_path)
+
+    window.form_state.output_dir = str(out_dir)
+    window.form_state.resolution = "320x180"
+    window.on_change_input_text(str(img_path))
+    assert window.suggest_next_action() == "optimize"
+
+    assert window.on_optimize() is True
+    assert window.suggest_next_action() == "apply_dry_run"
+
+
+def test_run_primary_flow_step_runs_optimize_then_apply(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def __init__(self):
+            self.calls = []
+
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            self.calls.append((path, dry_run))
+            return True
+
+    plugin = DummyPlugin()
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
+
+    window = MainWindow()
+    img_path = tmp_path / "in.jpg"
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    Image.new("RGB", (120, 80), color=(10, 20, 30)).save(img_path)
+
+    window.form_state.output_dir = str(out_dir)
+    window.form_state.resolution = "320x180"
+    window.on_change_input_text(str(img_path))
+
+    # first step should run optimize
+    assert window.run_primary_flow_step() is True
+    assert window.can_apply is True
+
+    # second step should run apply dry-run
+    assert window.run_primary_flow_step() is True
+    assert plugin.calls
+    assert plugin.calls[-1][1] is True
 
 
 def test_default_plugin_is_known():
