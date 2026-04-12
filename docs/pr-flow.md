@@ -50,6 +50,6 @@
 
 ## 関連資料
 
-- `docs/branch-protection.md`
+- `docs/branch-policy/branch-operations-policy.md`
 - `.github/workflows/pr-checks.yml`
 - `.github/PULL_REQUEST_TEMPLATE.md`
