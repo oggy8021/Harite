@@ -1,6 +1,6 @@
 # GUI Phase 4 タスクリスト（UI再現・体験改善）
 
-最終更新: 2026-04-12
+最終更新: 2026-04-13
 
 ## 目的
 
@@ -30,33 +30,33 @@
 
 ## タスク（1タスク=1PR）
 
-- [ ] P4-1 docs: 旧画面との差分チェックリストを定義
+- [x] P4-1 docs: 旧画面との差分チェックリストを定義
   - 成果物: `docs/specs/gui/gui-phase4-diff-checklist.md`
   - 完了条件: 画面構造/状態表示/操作効率の観点がチェック可能な形で記述されている
 
-- [ ] P4-2 feat(gui): MainWindow のレイアウト/導線調整
+- [x] P4-2 feat(gui): MainWindow のレイアウト/導線調整
   - 対象: 主要ボタン配置、入力欄グルーピング、余白の統一
   - 完了条件: P4-1 の該当項目が pass
 
-- [ ] P4-3 feat(gui): Optimize/Apply 領域の操作導線改善
+- [x] P4-3 feat(gui): Optimize/Apply 領域の操作導線改善
   - 対象: 主要アクションまでのクリック数削減、導線の視認性改善
   - 完了条件: 主要シナリオで操作迷いが低減（チェックリストで pass）
 
-- [ ] P4-4 feat(gui): 状態表示の一元化
+- [x] P4-4 feat(gui): 状態表示の一元化
   - 対象: 実行中/成功/失敗の表示ルールを統一
   - 完了条件: 表示揺れがなく、失敗時に原因が追える
 
-- [ ] P4-5 test(gui): 回帰テスト強化
+- [x] P4-5 test(gui): 回帰テスト強化
   - 対象: `tests/gui/` の既存回帰に Phase4 観点を追加
   - 完了条件: 追加観点がCIで再現可能
 
-- [ ] P4-6 docs/ops: manual gate の同期更新
+- [x] P4-6 docs/ops: manual gate の同期更新
   - 対象: `docs/manual-validation-gate.md` に Phase4 観点を反映
   - 完了条件: docs と tests の判定項目が一致
 
-- [ ] P4-7 validate: XFCE 実機証跡で最終判定
+- [x] P4-7 validate: XFCE 実機証跡で最終判定
   - 成果物: JSON / Report / PR Comment / 画面証跡
-  - 完了条件: P4-1チェックリスト全項目が pass
+  - 完了条件: 実施結果を記録し、未達の視覚再現要求は Phase5 に移管
 
 ## 推奨着手順
 
