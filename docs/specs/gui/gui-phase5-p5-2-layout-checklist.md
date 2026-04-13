@@ -40,6 +40,17 @@
 - [ ] D-2 XFCE 実機で MainWindow スクリーンショットを取得している
 - [ ] D-3 PR本文に判定結果と差分説明を貼り付けている
 
+## E. 上流制約の見直し（必須）
+
+- [x] E-1 `docs/specs/upstream-full-analysis.md` を参照し、P5-2 で採用するUI制約を明記している
+- [x] E-2 Window は `resizable=True` を採用し、旧Glade（False）との差分理由を記録している
+- [ ] E-3 旧Glade資産で重要な操作制約（誤操作防止、操作到達性）の維持/変更理由を記録している
+
+進捗メモ（2026-04-13）:
+
+- `resizable=True` は `src/harite/gui/adapters/gtk_backend.py` に反映済み。
+- E-3 は PR本文の最終Notesで維持/変更理由を明文化して完了とする。
+
 ## 証跡テンプレート（PR貼り付け用）
 
 ```md
@@ -49,12 +60,13 @@
 - B. 余白と視線導線: pass/fail/not-available
 - C. 体験差分の可視化: pass/fail/not-available
 - D. 品質運用: pass/fail/not-available
+- E. 上流制約の見直し: pass/fail/not-available
 - Before/After: attached
 - Notes: [差分要点・再現メモ]
 ```
 
 ## Exit Criteria
 
-- [ ] A〜D 必須項目がすべて `pass`
+- [ ] A〜E 必須項目がすべて `pass`
 - [ ] MainWindow before/after 添付済み
 - [ ] PR本文にテンプレート記録済み

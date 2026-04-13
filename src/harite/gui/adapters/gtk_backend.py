@@ -22,109 +22,189 @@ class GtkRuntimeSignalBackend:
         self._signal_handlers: dict[str, Callable[..., Any]] = {}
 
         window = gtk_module.Window(title="Harite Studio")
+        if hasattr(window, "set_resizable"):
+            # P5-2 policy: modern desktop UX expects a resizable main window.
+            window.set_resizable(True)
         if hasattr(window, "set_default_size"):
             window.set_default_size(960, 640)
 
         if hasattr(gtk_module, "Box") and hasattr(gtk_module, "Label"):
-            root = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=10)
-            root.set_border_width(12)
+            root = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
+            root.set_border_width(10)
 
-            title = gtk_module.Label(label="Harite Studio")
+            # Row 0: top margin row (Glade hbox11 equivalent)
+            top_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
+            root.pack_start(top_row, False, False, 0)
+
+            top_spacer_l = gtk_module.Label(label="")
+            top_row.pack_start(top_spacer_l, True, True, 0)
+
+            top_margin_label = gtk_module.Label(label="上マージン(px)")
+            if hasattr(top_margin_label, "set_xalign"):
+                top_margin_label.set_xalign(0.0)
+            top_row.pack_start(top_margin_label, False, False, 0)
+
+            top_margin_spin = gtk_module.SpinButton()
+            if hasattr(top_margin_spin, "set_numeric"):
+                top_margin_spin.set_numeric(True)
+            top_row.pack_start(top_margin_spin, False, False, 0)
+
+            top_spacer_r = gtk_module.Label(label="")
+            top_row.pack_start(top_spacer_r, True, True, 0)
+
+            # Row 1: center body (Glade hbox2 equivalent)
+            center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=10)
+            root.pack_start(center_row, True, True, 0)
+
+            left_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            center_row.pack_start(left_margin_col, False, False, 0)
+
+            left_margin_label = gtk_module.Label(label="左マージン(px)")
+            if hasattr(left_margin_label, "set_xalign"):
+                left_margin_label.set_xalign(0.0)
+            left_margin_col.pack_start(left_margin_label, False, False, 0)
+
+            left_margin_spin = gtk_module.SpinButton()
+            if hasattr(left_margin_spin, "set_numeric"):
+                left_margin_spin.set_numeric(True)
+            left_margin_col.pack_start(left_margin_spin, False, False, 0)
+
+            main_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            center_row.pack_start(main_col, True, True, 0)
+
+            title = gtk_module.Label(label="Wallpaper Optimizer")
             if hasattr(title, "set_xalign"):
                 title.set_xalign(0.0)
-            root.pack_start(title, False, False, 0)
+            main_col.pack_start(title, False, False, 0)
 
-            subtitle = gtk_module.Label(label="Compose -> Optimize -> Apply")
+            subtitle = gtk_module.Label(label="Glade-like layout (Phase5 P5-2)")
             if hasattr(subtitle, "set_xalign"):
                 subtitle.set_xalign(0.0)
-            root.pack_start(subtitle, False, False, 0)
+            main_col.pack_start(subtitle, False, False, 0)
 
-            main_section_label = gtk_module.Label(label="Compose")
-            if hasattr(main_section_label, "set_xalign"):
-                main_section_label.set_xalign(0.0)
-            root.pack_start(main_section_label, False, False, 0)
+            upper_toggle_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            main_col.pack_start(upper_toggle_row, False, False, 0)
+            tgl_upper_l = gtk_module.ToggleButton(label="Upper-L")
+            tgl_upper_r = gtk_module.ToggleButton(label="Upper-R")
+            upper_toggle_row.pack_start(tgl_upper_l, False, False, 0)
+            upper_toggle_row.pack_start(tgl_upper_r, False, False, 0)
 
-            main_section = gtk_module.Box(
-                orientation=gtk_module.Orientation.VERTICAL,
-                spacing=6,
-            )
-            root.pack_start(main_section, False, False, 0)
+            file_pick_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            main_col.pack_start(file_pick_row, False, False, 0)
+            btn_get_img_l = gtk_module.Button(label="Open-L")
+            btn_get_img_r = gtk_module.Button(label="Open-R")
+            file_pick_row.pack_start(btn_get_img_l, False, False, 0)
+            file_pick_row.pack_start(btn_get_img_r, False, False, 0)
 
-            input_label = gtk_module.Label(label="Input sources")
-            if hasattr(input_label, "set_xalign"):
-                input_label.set_xalign(0.0)
-            main_section.pack_start(input_label, False, False, 0)
-
+            input_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            main_col.pack_start(input_row, False, False, 0)
             input_entry = gtk_module.Entry()
             input_entry.set_placeholder_text("/path/to/image_or_directory")
-            main_section.pack_start(input_entry, False, False, 0)
+            btn_clr_path_l = gtk_module.Button(label="Clear-L")
+            btn_clr_path_r = gtk_module.Button(label="Clear-R")
+            input_row.pack_start(input_entry, True, True, 0)
+            input_row.pack_start(btn_clr_path_l, False, False, 0)
+            input_row.pack_start(btn_clr_path_r, False, False, 0)
 
-            input_hint = gtk_module.Label(label="Use one or multiple comma-separated sources.")
-            if hasattr(input_hint, "set_xalign"):
-                input_hint.set_xalign(0.0)
-            main_section.pack_start(input_hint, False, False, 0)
+            fixed_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            main_col.pack_start(fixed_row, False, False, 0)
+            rad_fixed = gtk_module.RadioButton.new_with_label(None, "入替不可")
+            rad_no_fixed = gtk_module.RadioButton.new_with_label_from_widget(rad_fixed, "入替可")
+            fixed_row.pack_start(rad_fixed, False, False, 0)
+            fixed_row.pack_start(rad_no_fixed, False, False, 0)
 
+            optimize_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            main_col.pack_start(optimize_row, False, False, 0)
             optimize_section_label = gtk_module.Label(label="Optimize")
             if hasattr(optimize_section_label, "set_xalign"):
                 optimize_section_label.set_xalign(0.0)
-            root.pack_start(optimize_section_label, False, False, 0)
-
-            optimize_section = gtk_module.Box(
-                orientation=gtk_module.Orientation.VERTICAL,
-                spacing=6,
-            )
-            root.pack_start(optimize_section, False, False, 0)
-
-            optimize_btn = gtk_module.Button(label="Optimize")
-            if hasattr(optimize_btn, "set_sensitive"):
-                optimize_btn.set_sensitive(False)
-            optimize_section.pack_start(optimize_btn, False, False, 0)
-
-            optimize_hint = gtk_module.Label(label="Optimize prepares the final candidate for apply.")
-            if hasattr(optimize_hint, "set_xalign"):
-                optimize_hint.set_xalign(0.0)
-            optimize_section.pack_start(optimize_hint, False, False, 0)
-
-            optimize_result = gtk_module.Label(label="Optimize result: waiting")
+            optimize_row.pack_start(optimize_section_label, False, False, 0)
+            optimize_result = gtk_module.Label(label="Optimize result: not-run")
             if hasattr(optimize_result, "set_xalign"):
                 optimize_result.set_xalign(0.0)
-            optimize_section.pack_start(optimize_result, False, False, 0)
+            optimize_row.pack_start(optimize_result, True, True, 0)
 
+            apply_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            main_col.pack_start(apply_row, False, False, 0)
             apply_section_label = gtk_module.Label(label="Apply")
             if hasattr(apply_section_label, "set_xalign"):
                 apply_section_label.set_xalign(0.0)
-            root.pack_start(apply_section_label, False, False, 0)
-
-            apply_section = gtk_module.Box(
-                orientation=gtk_module.Orientation.VERTICAL,
-                spacing=6,
-            )
-            root.pack_start(apply_section, False, False, 0)
-
-            apply_btn = gtk_module.Button(label="Apply (dry-run)")
-            if hasattr(apply_btn, "set_sensitive"):
-                apply_btn.set_sensitive(False)
-            apply_section.pack_start(apply_btn, False, False, 0)
-
-            apply_hint = gtk_module.Label(label="Apply becomes available after optimize succeeds.")
-            if hasattr(apply_hint, "set_xalign"):
-                apply_hint.set_xalign(0.0)
-            apply_section.pack_start(apply_hint, False, False, 0)
-
-            apply_target = gtk_module.Label(label="Apply target: waiting")
+            apply_row.pack_start(apply_section_label, False, False, 0)
+            apply_target = gtk_module.Label(label="Apply target: not-ready")
             if hasattr(apply_target, "set_xalign"):
                 apply_target.set_xalign(0.0)
-            apply_section.pack_start(apply_target, False, False, 0)
+            apply_row.pack_start(apply_target, True, True, 0)
 
-            status_label = gtk_module.Label(label="Ready")
+            right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            center_row.pack_start(right_margin_col, False, False, 0)
+
+            right_margin_label = gtk_module.Label(label="右マージン(px)")
+            if hasattr(right_margin_label, "set_xalign"):
+                right_margin_label.set_xalign(0.0)
+            right_margin_col.pack_start(right_margin_label, False, False, 0)
+
+            right_margin_spin = gtk_module.SpinButton()
+            if hasattr(right_margin_spin, "set_numeric"):
+                right_margin_spin.set_numeric(True)
+            right_margin_col.pack_start(right_margin_spin, False, False, 0)
+
+            # Row 2: bottom margin row (Glade hbox12 equivalent)
+            bottom_margin_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
+            root.pack_start(bottom_margin_row, False, False, 0)
+            btm_spacer_l = gtk_module.Label(label="")
+            bottom_margin_row.pack_start(btm_spacer_l, True, True, 0)
+            bottom_margin_label = gtk_module.Label(label="下マージン(px)")
+            if hasattr(bottom_margin_label, "set_xalign"):
+                bottom_margin_label.set_xalign(0.0)
+            bottom_margin_row.pack_start(bottom_margin_label, False, False, 0)
+            bottom_margin_spin = gtk_module.SpinButton()
+            if hasattr(bottom_margin_spin, "set_numeric"):
+                bottom_margin_spin.set_numeric(True)
+            bottom_margin_row.pack_start(bottom_margin_spin, False, False, 0)
+            btm_spacer_r = gtk_module.Label(label="")
+            bottom_margin_row.pack_start(btm_spacer_r, True, True, 0)
+
+            # Row 3: command bar (Glade hbox14 equivalent)
+            command_bar = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            root.pack_start(command_bar, False, False, 0)
+            btn_setting = gtk_module.Button(label="Prefs")
+            btn_set_color = gtk_module.Button(label="Color")
+            optimize_btn = gtk_module.Button(label="Save")
+            if hasattr(optimize_btn, "set_sensitive"):
+                optimize_btn.set_sensitive(False)
+            apply_btn = gtk_module.Button(label="Apply")
+            if hasattr(apply_btn, "set_sensitive"):
+                apply_btn.set_sensitive(False)
+            interval_spin = gtk_module.SpinButton()
+            if hasattr(interval_spin, "set_numeric"):
+                interval_spin.set_numeric(True)
+            interval_label = gtk_module.Label(label="秒")
+            btn_daemonize = gtk_module.Button(label="Execute")
+            btn_cancel_daemonize = gtk_module.Button(label="Stop")
+            btn_about = gtk_module.Button(label="About")
+            btn_help = gtk_module.Button(label="Help")
+            command_bar.pack_start(btn_setting, False, False, 0)
+            command_bar.pack_start(btn_set_color, False, False, 0)
+            command_bar.pack_start(optimize_btn, False, False, 0)
+            command_bar.pack_start(apply_btn, False, False, 0)
+            command_bar.pack_start(interval_spin, False, False, 0)
+            command_bar.pack_start(interval_label, False, False, 0)
+            command_bar.pack_start(btn_daemonize, False, False, 0)
+            command_bar.pack_start(btn_cancel_daemonize, False, False, 0)
+            command_bar.pack_start(btn_about, False, False, 0)
+            command_bar.pack_start(btn_help, False, False, 0)
+
+            # Row 4: status row (Glade statusbar equivalent)
+            status_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
+            root.pack_start(status_row, False, False, 0)
+            status_label = gtk_module.Label(label="Status: ready")
             if hasattr(status_label, "set_xalign"):
                 status_label.set_xalign(0.0)
-            root.pack_start(status_label, False, False, 0)
-
+            status_row.pack_start(status_label, False, False, 0)
             error_label = gtk_module.Label(label="Error: none")
             if hasattr(error_label, "set_xalign"):
                 error_label.set_xalign(0.0)
-            root.pack_start(error_label, False, False, 0)
+            status_row.pack_start(error_label, False, False, 0)
 
             if hasattr(window, "add"):
                 window.add(root)
@@ -134,22 +214,46 @@ class GtkRuntimeSignalBackend:
                 "main_window": window,
                 "window1": window,
                 "boxRoot": root,
+                "hbox11": top_row,
+                "lblTopMergin": top_margin_label,
+                "spnTopMergin": top_margin_spin,
+                "hbox2": center_row,
+                "vbox4": left_margin_col,
+                "lblLMergin": left_margin_label,
+                "spnLMergin": left_margin_spin,
                 "lblTitle": title,
                 "lblSubtitle": subtitle,
                 "lblMainSection": main_section_label,
                 "boxMainSection": main_section,
+                "btnGetImgL": btn_get_img_l,
+                "btnGetImgR": btn_get_img_r,
                 "entPathL": input_entry,
-                "lblInputHint": input_hint,
+                "btnClrPathL": btn_clr_path_l,
+                "btnClrPathR": btn_clr_path_r,
+                "radFixed": rad_fixed,
+                "radNoFixed": rad_no_fixed,
+                "vbox5": right_margin_col,
+                "lblRMergin": right_margin_label,
+                "spnRMergin": right_margin_spin,
+                "hbox12": bottom_margin_row,
+                "lblBtmMergin": bottom_margin_label,
+                "spnBtmMergin": bottom_margin_spin,
                 "lblOptimizeSection": optimize_section_label,
-                "boxOptimizeSection": optimize_section,
                 "btnSave": optimize_btn,
-                "lblOptimizeHint": optimize_hint,
                 "lblOptimizeResult": optimize_result,
                 "lblApplySection": apply_section_label,
-                "boxApplySection": apply_section,
                 "btnSetWall": apply_btn,
-                "lblApplyHint": apply_hint,
                 "lblApplyTarget": apply_target,
+                "hbox14": command_bar,
+                "btnSetting": btn_setting,
+                "btnSetColor": btn_set_color,
+                "spnInterval": interval_spin,
+                "lblInterval": interval_label,
+                "btnDaemonize": btn_daemonize,
+                "btnCancelDaemonize": btn_cancel_daemonize,
+                "btnAbout": btn_about,
+                "btnHelp": btn_help,
+                "statusbar": status_row,
                 "lblStatus": status_label,
                 "lblError": error_label,
             }

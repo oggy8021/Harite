@@ -31,12 +31,29 @@
 - 体験差分: 各PRで before/after 比較により差分が説明できる。
 - 品質運用: `tests/gui/` 回帰 + XFCE 実機証跡を継続提出する。
 
+## 現在の進捗スナップショット（2026-04-13）
+
+- P5-2 は実装進行中（`[-]`）。
+- 実装済み:
+  - `src/harite/gui/views/main_window.py` に Phase5 レイアウトメタデータ（`layout_version`, `layout_sections`）を反映。
+  - `src/harite/gui/adapters/gtk_backend.py` を Glade近似の縦5段/中央3列構成へ再編。
+  - Window 方針を `resizable=True` に確定。
+- ドキュメント済み:
+  - Glade再現基準: `docs/specs/gui/gui-glade-layout-reconstruction.md`
+  - P5-2判定基準: `docs/specs/gui/gui-phase5-p5-2-layout-checklist.md`
+- 未完了:
+  - before/after 最終判定記録
+  - P5-2 チェックリスト A〜E の最終 `pass` 確定
+  - PR本文最終化
+
 ## タスク（1タスク=1PR）
 
 - [-] P5-2 feat(gui): MainWindow の大胆レイアウト再構成
+  - Glade基準配置: `docs/specs/gui/gui-glade-layout-reconstruction.md`
+  - 上流解析参照: `docs/specs/upstream-full-analysis.md`
   - チェックリスト: `docs/specs/gui/gui-phase5-p5-2-layout-checklist.md`
-  - 対象: セクション再配置、余白設計の再調整、視線導線の再設計
-  - 完了条件: before/after で構造差分が明確で、P5-1 の MainWindow 観点が pass
+  - 対象: セクション再配置、余白設計の再調整、視線導線の再設計、Windowポリシー（例: `resizable`）見直し
+  - 完了条件: before/after で構造差分が明確で、P5-1 の MainWindow 観点が pass、上流由来のUI制約の採否理由が記録される
 
 - [ ] P5-3 feat(gui): Optimize / Apply のレイアウト分離強化
   - 対象: 情報階層、操作ブロック、見出し体系、アクション位置の差別化
