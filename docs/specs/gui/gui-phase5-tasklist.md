@@ -90,7 +90,7 @@
   - 完了条件: 現行導線のみで回帰が通り、互換維持のためだけの分岐が削減される
 
 - [x] P5-4 feat(gui): レトロフィット + 現代化のスタイル統一
-  - 仕様メモ: `docs/specs/gui/gui-phase5-p5-4-iconset-plan.md`
+  - 仕様メモ: `docs/specs/gui/gui-phase5-p5-4-retrofit-modernize.md`
   - 対象: 旧デザイン意図の復元と、読みやすさ向上の同時達成
   - 進捗: P5-8 完了を受けて P5-4 着手（2026-04-13）
   - 初手スコープ: MainWindow / Optimize / Apply の見出し・主要ボタン・補助ボタンで visual token を統一
@@ -119,6 +119,7 @@
 
 - [ ] P5-1 docs: 見た目再現チェックリスト定義
   - 成果物: `docs/specs/gui/gui-phase5-visual-checklist.md`
+  - 進捗: P5-4 完了を受けて P5-1 着手（2026-04-13）
   - 完了条件: MainWindow/Optimize/Apply の比較観点がチェック可能な形で記述される
 
 - [ ] P5-5 test(gui): 視覚回帰テストとスモーク補強
