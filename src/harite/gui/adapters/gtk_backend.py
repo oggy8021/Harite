@@ -82,6 +82,11 @@ class GtkRuntimeSignalBackend:
                 subtitle.set_xalign(0.0)
             main_col.pack_start(subtitle, False, False, 0)
 
+            main_section_label = gtk_module.Label(label="Main")
+            if hasattr(main_section_label, "set_xalign"):
+                main_section_label.set_xalign(0.0)
+            main_col.pack_start(main_section_label, False, False, 0)
+
             upper_toggle_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             main_col.pack_start(upper_toggle_row, False, False, 0)
             tgl_upper_l = gtk_module.ToggleButton(label="Upper-L")
@@ -224,7 +229,7 @@ class GtkRuntimeSignalBackend:
                 "lblTitle": title,
                 "lblSubtitle": subtitle,
                 "lblMainSection": main_section_label,
-                "boxMainSection": main_section,
+                "boxMainSection": main_col,
                 "btnGetImgL": btn_get_img_l,
                 "btnGetImgR": btn_get_img_r,
                 "entPathL": input_entry,
@@ -239,9 +244,11 @@ class GtkRuntimeSignalBackend:
                 "lblBtmMergin": bottom_margin_label,
                 "spnBtmMergin": bottom_margin_spin,
                 "lblOptimizeSection": optimize_section_label,
+                "boxOptimizeSection": optimize_row,
                 "btnSave": optimize_btn,
                 "lblOptimizeResult": optimize_result,
                 "lblApplySection": apply_section_label,
+                "boxApplySection": apply_row,
                 "btnSetWall": apply_btn,
                 "lblApplyTarget": apply_target,
                 "hbox14": command_bar,
