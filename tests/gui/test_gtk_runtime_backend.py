@@ -29,6 +29,9 @@ class _Window(_WidgetBase):
     def set_default_size(self, *_args):
         return None
 
+    def set_resizable(self, _enabled):
+        return None
+
     def add(self, child):
         self.child = child
 
@@ -85,6 +88,29 @@ class _Button(_WidgetBase):
         self.emit("clicked", self)
 
 
+class _ToggleButton(_Button):
+    pass
+
+
+class _SpinButton(_WidgetBase):
+    def __init__(self):
+        super().__init__()
+        self.numeric = False
+
+    def set_numeric(self, enabled):
+        self.numeric = bool(enabled)
+
+
+class _RadioButton(_ToggleButton):
+    @classmethod
+    def new_with_label(cls, _group, label):
+        return cls(label=label)
+
+    @classmethod
+    def new_with_label_from_widget(cls, _widget, label):
+        return cls(label=label)
+
+
 class _FakeGtk:
     Orientation = _Orientation
     Window = _Window
@@ -92,6 +118,9 @@ class _FakeGtk:
     Label = _Label
     Entry = _Entry
     Button = _Button
+    ToggleButton = _ToggleButton
+    SpinButton = _SpinButton
+    RadioButton = _RadioButton
 
 
 def test_runtime_backend_input_controls_optimize_button_state():
