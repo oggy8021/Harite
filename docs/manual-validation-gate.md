@@ -1,6 +1,6 @@
 # 実機検証ゲート（軽量運用）
 
-最終更新: 2026-04-12
+最終更新: 2026-04-13
 
 ## 目的
 
@@ -279,6 +279,48 @@ python.exe -m pytest -q tests/gui/test_ui_adapter_dispatch.py tests/gui/test_ui_
   - runtime fallback でのラベル規約（Status/Error/Optimize result/Apply target）が固定されている。
   - handler 未接続時に `handler-missing` が表示され、例外クラッシュしない。
   - 本項目の確認結果が PR 本文またはコメントに記録されている。
+
+## Phase 5 manual gate 同期（P5-6）
+
+対象:
+
+- `docs/specs/gui/gui-phase5-visual-checklist.md`
+- `tests/gui/test_phase5_visual_regression.py`
+- `tests/gui/test_ui_adapter_dispatch.py`
+- `tests/gui/test_ui_adapter_mapping_validation.py`
+- `tests/gui/test_main_window_signals.py`
+- `tests/gui/test_gtk_runtime_backend.py`
+
+判定ルール:
+
+- MainWindow / Optimize / Apply / スタイル統一を `pass/warn/fail` で記録する。
+- 総合判定は 4 観点すべて `pass` のときのみ `pass`。
+- `warn` は理由と次アクション（P5-7 で確認する項目）を Notes に残す。
+- `fail` が 1 つでもある場合は merge 保留とする。
+
+Owner 実行コマンド（固定回帰 + P5-5）:
+
+```bash
+python.exe -m pytest -q tests/gui/test_ui_adapter_dispatch.py tests/gui/test_ui_adapter_mapping_validation.py tests/gui/test_main_window_signals.py tests/gui/test_gtk_runtime_backend.py tests/gui/test_phase5_visual_regression.py
+```
+
+実機証跡（P5-7 へ引き継ぐ最小セット）:
+
+- MainWindow / Optimize / Apply の 3 画面スクリーンショット
+- 判定テンプレート記入済みメモ（`pass/warn/fail` と備考）
+- PR コメントに判定結果と差分要点を記録
+
+PRコメント追記テンプレート（Phase5）:
+
+```md
+### Phase5 visual/manual gate
+- MainWindow: pass/warn/fail
+- Optimize: pass/warn/fail
+- Apply: pass/warn/fail
+- Style consistency: pass/warn/fail
+- Overall: pass/fail
+- Notes: [warn/fail reason and next action]
+```
 
 ## 参照
 
