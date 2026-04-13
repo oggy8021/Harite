@@ -18,8 +18,8 @@ class MainWindow:
     """Framework-neutral placeholder for the first standalone GUI window."""
 
     def __init__(self) -> None:
-        self.title = "Harite GUI (MVP)"
-        self.subtitle = "Input -> Optimize -> Apply"
+        self.title = "Harite Studio"
+        self.subtitle = "Compose -> Optimize -> Apply"
         self.controller = OptimizeController()
         self.closed = False
         self.can_optimize = False
@@ -37,16 +37,16 @@ class MainWindow:
             resolution="1920x1080",
             output_dir=str(Path(".")),
         )
-        # P4-2: keep UI grouping and primary flow explicit for layout consistency.
+        self.layout_version = "phase5-radical-mainwindow"
+        # P5-2: move to a stronger hero + action-panel layout for clearer first glance.
         self.layout_sections: tuple[tuple[str, tuple[str, ...]], ...] = (
-            ("input", ("input_value", "resolution", "output_dir")),
-            ("options", ("plugin", "margins", "align", "valign", "padding", "quality")),
-            ("optimize", ("optimize", "saved_files")),
-            ("apply", ("apply_dry_run", "apply_do_it")),
-            ("status", ("last_error", "logs")),
+            ("hero", ("input_value", "resolution", "output_dir", "plugin")),
+            ("optimize_panel", ("margins", "align", "valign", "padding", "quality", "optimize")),
+            ("apply_panel", ("saved_files", "apply_dry_run", "apply_do_it")),
+            ("status_panel", ("status_message", "last_error", "logs")),
         )
         self.primary_action_flow: tuple[str, ...] = (
-            "input",
+            "hero",
             "optimize",
             "apply_dry_run",
             "apply_do_it",
@@ -293,8 +293,14 @@ class MainWindow:
         return {
             "title": self.title,
             "subtitle": self.subtitle,
+            "layout_version": self.layout_version,
             "sections": self.layout_sections,
             "primary_action_flow": self.primary_action_flow,
+            "layout_highlights": (
+                "hero-first",
+                "optimize-apply-separation",
+                "status-persistent-footer",
+            ),
             "suggested_next_action": self.suggest_next_action(),
             "status": {
                 "level": self.status_level,

@@ -22,13 +22,15 @@ def test_layout_blueprint_defines_grouping_and_flow():
 
     bp = window.get_layout_blueprint()
 
-    assert bp["title"] == "Harite GUI (MVP)"
-    assert bp["subtitle"] == "Input -> Optimize -> Apply"
+    assert bp["title"] == "Harite Studio"
+    assert bp["subtitle"] == "Compose -> Optimize -> Apply"
+    assert bp["layout_version"] == "phase5-radical-mainwindow"
     assert isinstance(bp["sections"], tuple)
-    assert bp["sections"][0][0] == "input"
-    assert bp["sections"][-1][0] == "status"
+    assert bp["sections"][0][0] == "hero"
+    assert bp["sections"][-1][0] == "status_panel"
+    assert "hero-first" in bp["layout_highlights"]
     assert bp["primary_action_flow"] == (
-        "input",
+        "hero",
         "optimize",
         "apply_dry_run",
         "apply_do_it",

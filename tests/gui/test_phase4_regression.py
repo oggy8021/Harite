@@ -21,14 +21,15 @@ def test_phase4_a_layout_structure_sections_are_stable():
     bp = win.get_layout_blueprint()
 
     section_names = [name for name, _items in bp["sections"]]
-    assert section_names == ["input", "options", "optimize", "apply", "status"]
+    assert section_names == ["hero", "optimize_panel", "apply_panel", "status_panel"]
 
     section_items = {name: items for name, items in bp["sections"]}
-    assert "input_value" in section_items["input"]
-    assert "resolution" in section_items["input"]
-    assert "output_dir" in section_items["input"]
-    assert "apply_dry_run" in section_items["apply"]
-    assert "apply_do_it" in section_items["apply"]
+    assert "input_value" in section_items["hero"]
+    assert "resolution" in section_items["hero"]
+    assert "output_dir" in section_items["hero"]
+    assert "plugin" in section_items["hero"]
+    assert "apply_dry_run" in section_items["apply_panel"]
+    assert "apply_do_it" in section_items["apply_panel"]
 
 
 def test_phase4_b_status_running_success_on_optimize(tmp_path):
