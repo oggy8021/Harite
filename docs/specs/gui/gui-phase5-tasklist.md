@@ -123,8 +123,12 @@
   - 完了記録: `docs/specs/gui/gui-phase5-visual-checklist.md` を作成し、MainWindow/Optimize/Apply の比較観点と判定テンプレートを固定（2026-04-13）
   - 完了条件: MainWindow/Optimize/Apply の比較観点がチェック可能な形で記述される
 
-- [ ] P5-5 test(gui): 視覚回帰テストとスモーク補強
+- [x] P5-5 test(gui): 視覚回帰テストとスモーク補強
   - 対象: `tests/gui/` に Phase5 観点を追加
+  - 進捗: `tests/gui/test_phase5_visual_regression.py` を追加し、Main/Optimize/Apply の視覚トークン固定と optimize->apply スモーク導線を回帰化（2026-04-13）
+  - 進捗: MainWindow の `layout_version` / sections / primary flow を Phase5 観点で検証するスモークを追加（2026-04-13）
+  - 進捗: 固定回帰コマンドに `tests/gui/test_phase5_visual_regression.py` を加えた実行がローカルで pass（2026-04-13）
+  - 完了記録: Phase5 の視覚トークン固定・主要導線スモーク・MainWindow 青写真検証が CI で再現可能な形で回帰化された（2026-04-13）
   - 完了条件: CI で再現可能な形で回帰検知できる
 
 - [ ] P5-6 docs/ops: manual gate の Phase5 同期
