@@ -11,8 +11,8 @@ class DummyWindow:
     def on_change_input_text(self, text: str) -> None:
         self.calls.append(("input", text))
 
-    def on_optimize(self) -> bool:
-        self.calls.append(("optimize", True))
+    def on_save_legacy(self) -> bool:
+        self.calls.append(("save_legacy", True))
         return True
 
     def on_apply_dry_run(self) -> bool:
@@ -24,6 +24,38 @@ class DummyWindow:
 
     def on_toggle_fixed(self, enabled: bool) -> None:
         self.calls.append(("fixed", enabled))
+
+    def on_watch_start(self) -> bool:
+        self.calls.append(("watch_start", True))
+        return False
+
+    def on_watch_stop(self) -> bool:
+        self.calls.append(("watch_stop", True))
+        return False
+
+    def on_watch_interval_change(self, seconds: int) -> bool:
+        self.calls.append(("watch_interval", seconds))
+        return True
+
+    def on_clear_input(self) -> bool:
+        self.calls.append(("clear_input", True))
+        return True
+
+    def on_about(self) -> bool:
+        self.calls.append(("about", True))
+        return False
+
+    def on_set_color(self) -> bool:
+        self.calls.append(("set_color", True))
+        return False
+
+    def on_save_dialog_cancel(self) -> bool:
+        self.calls.append(("save_dialog_cancel", True))
+        return True
+
+    def on_save_dialog_confirm(self, path: str | None = None) -> bool:
+        self.calls.append(("save_dialog_confirm", path or True))
+        return True
 
 
 class _SpinValue:
@@ -55,6 +87,24 @@ class _BackendWithGetObject:
         return self.widgets.get(name)
 
 
+class _SaveDialogWidget:
+    def __init__(self, path: str) -> None:
+        self._path = path
+
+    def get_filename(self) -> str:
+        return self._path
+
+
+class _BackendWithSaveDialog:
+    def __init__(self, path: str) -> None:
+        self.widgets = {
+            "SaveWallpaperDialog": _SaveDialogWidget(path),
+        }
+
+    def get_object(self, name: str):
+        return self.widgets.get(name)
+
+
 def test_create_mainwindow_signal_dispatch_maps_input_optimize_apply_handlers():
     win = DummyWindow()
     handlers = (
@@ -71,7 +121,7 @@ def test_create_mainwindow_signal_dispatch_maps_input_optimize_apply_handlers():
     assert dispatch["on_btnSetWall_clicked"]() is True
     assert win.calls == [
         ("input", "a.jpg"),
-        ("optimize", True),
+        ("save_legacy", True),
         ("apply_dry", True),
     ]
 
@@ -94,7 +144,7 @@ def test_dispatch_handles_gtk_style_signal_arguments():
 
     assert win.calls == [
         ("input", "gtk.jpg"),
-        ("optimize", True),
+        ("save_legacy", True),
         ("apply_dry", True),
     ]
 
@@ -146,3 +196,64 @@ def test_dispatch_handles_margins_and_fixed_toggle_signals():
         ("margins", (10, 20, 30, 40)),
         ("fixed", True),
     ]
+
+
+def test_dispatch_handles_watch_signals():
+    win = DummyWindow()
+    handlers = (
+        "on_btnDaemonize_clicked",
+        "on_btnCancelDaemonize_clicked",
+        "on_spnInterval_value_changed",
+    )
+
+    dispatch = create_mainwindow_signal_dispatch(win, handlers)
+
+    assert dispatch["on_btnDaemonize_clicked"](object()) is False
+    assert dispatch["on_btnCancelDaemonize_clicked"](object()) is False
+    assert dispatch["on_spnInterval_value_changed"](90) is True
+
+    assert win.calls == [
+        ("watch_start", True),
+        ("watch_stop", True),
+        ("watch_interval", 90),
+    ]
+
+
+def test_dispatch_handles_about_clear_and_save_dialog_button_signals():
+    win = DummyWindow()
+    handlers = (
+        "on_btnClrPath_clicked",
+        "on_btnAbout_clicked",
+        "on_btnSetColor_clicked",
+        "on_btnCancelSave_clicked",
+        "on_btnOpenSave_clicked",
+    )
+
+    dispatch = create_mainwindow_signal_dispatch(win, handlers)
+
+    assert dispatch["on_btnClrPath_clicked"](object()) is True
+    assert dispatch["on_btnAbout_clicked"](object()) is False
+    assert dispatch["on_btnSetColor_clicked"](object()) is False
+    assert dispatch["on_btnCancelSave_clicked"](object()) is True
+    assert dispatch["on_btnOpenSave_clicked"](object()) is True
+    assert dispatch["on_btnOpenSave_clicked"]("/tmp/out.jpg") is True
+
+    assert win.calls == [
+        ("clear_input", True),
+        ("about", True),
+        ("set_color", True),
+        ("save_dialog_cancel", True),
+        ("save_dialog_confirm", True),
+        ("save_dialog_confirm", "/tmp/out.jpg"),
+    ]
+
+
+def test_dispatch_reads_save_path_from_backend_dialog_when_clicked_arg_has_no_path():
+    win = DummyWindow()
+    backend = _BackendWithSaveDialog("/tmp/from-dialog.jpg")
+    handlers = ("on_btnOpenSave_clicked",)
+
+    dispatch = create_mainwindow_signal_dispatch(win, handlers, signal_backend=backend)
+
+    assert dispatch["on_btnOpenSave_clicked"](object()) is True
+    assert win.calls == [("save_dialog_confirm", "/tmp/from-dialog.jpg")]

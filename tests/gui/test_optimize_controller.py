@@ -64,3 +64,27 @@ def test_run_optimize_passes_parsed_margins(monkeypatch, tmp_path):
     assert saved
     assert placements == []
     assert captured["margins"] == (10, 20, 30, 40)
+
+
+def test_run_optimize_passes_save_path(monkeypatch, tmp_path):
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        out = kwargs.get("output_path") or (Path(kwargs["output_dir"]) / "dummy.jpg")
+        return [Path(out)], []
+
+    monkeypatch.setattr(
+        "harite.gui.controllers.optimize_controller.optimize_wallpapers",
+        fake_optimize_wallpapers,
+    )
+
+    controller = OptimizeController()
+    state = _base_state(tmp_path)
+    state.save_path = str(tmp_path / "picked" / "legacy-save.jpg")
+
+    saved, placements = controller.run_optimize(state)
+
+    assert saved
+    assert placements == []
+    assert captured["output_path"] == Path(state.save_path)

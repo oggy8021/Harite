@@ -10,6 +10,32 @@ from pathlib import Path
 from typing import Any, Callable
 
 
+class _SaveDialogProxy:
+    """Minimal file chooser-like object used by runtime fallback backend."""
+
+    def __init__(self, on_filename_change: Callable[[str], None] | None = None) -> None:
+        self._filename = ""
+        self._visible = False
+        self._on_filename_change = on_filename_change
+
+    def set_filename(self, filename: str) -> None:
+        self._filename = str(filename or "")
+        if self._on_filename_change is not None:
+            self._on_filename_change(self._filename)
+
+    def get_filename(self) -> str:
+        return self._filename
+
+    def show(self) -> None:
+        self._visible = True
+
+    def hide(self) -> None:
+        self._visible = False
+
+    def is_visible(self) -> bool:
+        return self._visible
+
+
 class GtkRuntimeSignalBackend:
     """Minimal GTK runtime backend that does not require Glade parsing.
 
@@ -124,6 +150,14 @@ class GtkRuntimeSignalBackend:
             if hasattr(optimize_section_label, "set_xalign"):
                 optimize_section_label.set_xalign(0.0)
             optimize_row.pack_start(optimize_section_label, False, False, 0)
+            optimize_btn = gtk_module.Button(label="Save")
+            if hasattr(optimize_btn, "set_sensitive"):
+                optimize_btn.set_sensitive(False)
+            optimize_row.pack_start(optimize_btn, False, False, 0)
+            optimize_modern_btn = gtk_module.Button(label="Optimize (provisional)")
+            if hasattr(optimize_modern_btn, "set_sensitive"):
+                optimize_modern_btn.set_sensitive(False)
+            optimize_row.pack_start(optimize_modern_btn, False, False, 0)
             optimize_result = gtk_module.Label(label="Optimize result: not-run")
             if hasattr(optimize_result, "set_xalign"):
                 optimize_result.set_xalign(0.0)
@@ -135,10 +169,31 @@ class GtkRuntimeSignalBackend:
             if hasattr(apply_section_label, "set_xalign"):
                 apply_section_label.set_xalign(0.0)
             apply_row.pack_start(apply_section_label, False, False, 0)
+            apply_btn = gtk_module.Button(label="Apply (dry-run)")
+            if hasattr(apply_btn, "set_sensitive"):
+                apply_btn.set_sensitive(False)
+            apply_row.pack_start(apply_btn, False, False, 0)
             apply_target = gtk_module.Label(label="Apply target: not-ready")
             if hasattr(apply_target, "set_xalign"):
                 apply_target.set_xalign(0.0)
             apply_row.pack_start(apply_target, True, True, 0)
+
+            do_it_plan_label = gtk_module.Label(label="do-it: planned")
+            if hasattr(do_it_plan_label, "set_xalign"):
+                do_it_plan_label.set_xalign(0.0)
+            main_col.pack_start(do_it_plan_label, False, False, 0)
+
+            save_dialog_state_label = gtk_module.Label(label="SaveDialog: closed")
+            if hasattr(save_dialog_state_label, "set_xalign"):
+                save_dialog_state_label.set_xalign(0.0)
+            main_col.pack_start(save_dialog_state_label, False, False, 0)
+
+            priority_note_label = gtk_module.Label(
+                label="Rule: fixed > margin > toggles"
+            )
+            if hasattr(priority_note_label, "set_xalign"):
+                priority_note_label.set_xalign(0.0)
+            main_col.pack_start(priority_note_label, False, False, 0)
 
             right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
             center_row.pack_start(right_margin_col, False, False, 0)
@@ -173,25 +228,28 @@ class GtkRuntimeSignalBackend:
             command_bar = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             root.pack_start(command_bar, False, False, 0)
             btn_setting = gtk_module.Button(label="Prefs")
-            btn_set_color = gtk_module.Button(label="Color")
-            optimize_btn = gtk_module.Button(label="Save")
-            if hasattr(optimize_btn, "set_sensitive"):
-                optimize_btn.set_sensitive(False)
-            apply_btn = gtk_module.Button(label="Apply")
-            if hasattr(apply_btn, "set_sensitive"):
-                apply_btn.set_sensitive(False)
+            btn_set_color = gtk_module.Button(label="Color (planned)")
+            save_dialog_proxy = _SaveDialogProxy(self._on_save_dialog_filename_changed)
+            btn_open_save = gtk_module.Button(label="Save Confirm")
+            if hasattr(btn_open_save, "set_sensitive"):
+                btn_open_save.set_sensitive(False)
+            btn_cancel_save = gtk_module.Button(label="Save Cancel")
+            if hasattr(btn_cancel_save, "set_sensitive"):
+                btn_cancel_save.set_sensitive(False)
+            watch_label = gtk_module.Label(label="Watch (planned)")
             interval_spin = gtk_module.SpinButton()
             if hasattr(interval_spin, "set_numeric"):
                 interval_spin.set_numeric(True)
-            interval_label = gtk_module.Label(label="秒")
-            btn_daemonize = gtk_module.Button(label="Execute")
-            btn_cancel_daemonize = gtk_module.Button(label="Stop")
+            interval_label = gtk_module.Label(label="Interval (planned)")
+            btn_daemonize = gtk_module.Button(label="Watch Start (planned)")
+            btn_cancel_daemonize = gtk_module.Button(label="Watch Stop (planned)")
             btn_about = gtk_module.Button(label="About")
             btn_help = gtk_module.Button(label="Help")
             command_bar.pack_start(btn_setting, False, False, 0)
             command_bar.pack_start(btn_set_color, False, False, 0)
-            command_bar.pack_start(optimize_btn, False, False, 0)
-            command_bar.pack_start(apply_btn, False, False, 0)
+            command_bar.pack_start(btn_open_save, False, False, 0)
+            command_bar.pack_start(btn_cancel_save, False, False, 0)
+            command_bar.pack_start(watch_label, False, False, 0)
             command_bar.pack_start(interval_spin, False, False, 0)
             command_bar.pack_start(interval_label, False, False, 0)
             command_bar.pack_start(btn_daemonize, False, False, 0)
@@ -246,14 +304,22 @@ class GtkRuntimeSignalBackend:
                 "lblOptimizeSection": optimize_section_label,
                 "boxOptimizeSection": optimize_row,
                 "btnSave": optimize_btn,
+                "btnOptimize": optimize_modern_btn,
                 "lblOptimizeResult": optimize_result,
                 "lblApplySection": apply_section_label,
                 "boxApplySection": apply_row,
                 "btnSetWall": apply_btn,
                 "lblApplyTarget": apply_target,
+                "lblDoItPlanned": do_it_plan_label,
+                "lblSaveDialogState": save_dialog_state_label,
+                "lblPriorityRule": priority_note_label,
                 "hbox14": command_bar,
                 "btnSetting": btn_setting,
                 "btnSetColor": btn_set_color,
+                "SaveWallpaperDialog": save_dialog_proxy,
+                "btnOpenSave": btn_open_save,
+                "btnCancelSave": btn_cancel_save,
+                "lblWatchSection": watch_label,
                 "spnInterval": interval_spin,
                 "lblInterval": interval_label,
                 "btnDaemonize": btn_daemonize,
@@ -268,8 +334,12 @@ class GtkRuntimeSignalBackend:
             # Why: fallback window must still exercise MainWindow handlers even when
             # legacy glade cannot be parsed at runtime.
             input_entry.connect("changed", self._on_input_changed)
-            optimize_btn.connect("clicked", self._on_optimize_clicked)
+            optimize_btn.connect("clicked", self._on_save_clicked)
+            optimize_modern_btn.connect("clicked", self._on_optimize_clicked)
             apply_btn.connect("clicked", self._on_apply_clicked)
+            btn_set_color.connect("clicked", self._on_color_clicked)
+            btn_open_save.connect("clicked", self._on_save_dialog_confirm_clicked)
+            btn_cancel_save.connect("clicked", self._on_save_dialog_cancel_clicked)
         else:
             self._objects = {
                 "WallPosit_MainWindow": window,
@@ -314,13 +384,55 @@ class GtkRuntimeSignalBackend:
         if button is not None and hasattr(button, "set_sensitive"):
             button.set_sensitive(bool(enabled))
 
+    def _current_save_dialog_filename(self) -> str:
+        dialog = self._objects.get("SaveWallpaperDialog")
+        if dialog is None or not hasattr(dialog, "get_filename"):
+            return ""
+        return str(dialog.get_filename() or "").strip()
+
+    def _update_save_dialog_action_buttons(self) -> None:
+        opened = self._is_save_dialog_open()
+        has_path = bool(self._current_save_dialog_filename())
+        self._set_button_enabled("btnCancelSave", opened)
+        self._set_button_enabled("btnOpenSave", opened and has_path)
+
+    def _set_save_dialog_open_state(self, opened: bool, *, state_text: str | None = None) -> None:
+        dialog = self._objects.get("SaveWallpaperDialog")
+        if dialog is not None:
+            if opened and hasattr(dialog, "show"):
+                dialog.show()
+            if not opened and hasattr(dialog, "hide"):
+                dialog.hide()
+        self._update_save_dialog_action_buttons()
+
+        if state_text is not None:
+            self._set_label_text("lblSaveDialogState", state_text)
+
+    def _on_save_dialog_filename_changed(self, filename: str) -> None:
+        if not self._is_save_dialog_open():
+            return
+        self._update_save_dialog_action_buttons()
+        if str(filename or "").strip():
+            self._set_label_text("lblSaveDialogState", "SaveDialog: open(path-ready)")
+        else:
+            self._set_label_text("lblSaveDialogState", "SaveDialog: open(path-required)")
+
+    def _is_save_dialog_open(self) -> bool:
+        dialog = self._objects.get("SaveWallpaperDialog")
+        if dialog is None or not hasattr(dialog, "is_visible"):
+            return False
+        return bool(dialog.is_visible())
+
     def _on_input_changed(self, entry: Any) -> None:
         callback = self._signal_handlers.get("on_entPath_insert_text")
         text = entry.get_text() if hasattr(entry, "get_text") else ""
         has_input = bool(text and str(text).strip())
         # Why: avoid invalid optimize/apply calls when the input field is empty.
         self._set_button_enabled("btnSave", has_input)
+        self._set_button_enabled("btnOptimize", has_input)
         self._set_button_enabled("btnSetWall", False)
+        if not has_input:
+            self._set_save_dialog_open_state(False, state_text="SaveDialog: closed(input-reset)")
         self._set_label_text("lblOptimizeResult", "Optimize result: not-run")
         self._set_label_text("lblApplyTarget", "Apply target: not-ready")
 
@@ -333,8 +445,7 @@ class GtkRuntimeSignalBackend:
         except Exception as exc:
             self._set_feedback(phase="Input", state="failed", error=str(exc))
 
-    def _on_optimize_clicked(self, *_args: Any) -> None:
-        callback = self._signal_handlers.get("on_btnSave_clicked")
+    def _run_optimize_path(self, callback: Callable[..., Any] | None) -> None:
         if callback is None:
             self._set_feedback(
                 phase="Optimize",
@@ -367,6 +478,17 @@ class GtkRuntimeSignalBackend:
             self._set_label_text("lblOptimizeResult", "Optimize result: error")
             self._set_label_text("lblApplyTarget", "Apply target: not-ready")
 
+    def _on_save_clicked(self, *_args: Any) -> None:
+        # P5-3 split: Save opens save-dialog; generation continues on confirm.
+        self._set_save_dialog_open_state(True, state_text="SaveDialog: open")
+
+    def _on_optimize_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_btnOptimize_clicked")
+        if callback is None:
+            # Migration-safe fallback when modern handler is not available.
+            callback = self._signal_handlers.get("on_btnSave_clicked")
+        self._run_optimize_path(callback)
+
     def _on_apply_clicked(self, *_args: Any) -> None:
         callback = self._signal_handlers.get("on_btnSetWall_clicked")
         if callback is None:
@@ -391,6 +513,63 @@ class GtkRuntimeSignalBackend:
                 )
         except Exception as exc:
             self._set_feedback(phase="Apply", state="error", error=str(exc))
+
+    def _on_color_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_btnSetColor_clicked")
+        if callback is None:
+            self._set_feedback(phase="Color", state="planned")
+            return
+        try:
+            callback()
+            self._set_feedback(phase="Color", state="planned")
+        except Exception as exc:
+            self._set_feedback(phase="Color", state="error", error=str(exc))
+
+    def _on_save_dialog_confirm_clicked(self, *_args: Any) -> None:
+        if not self._is_save_dialog_open():
+            self._set_label_text("lblSaveDialogState", "SaveDialog: closed")
+            self._set_feedback(phase="SaveDialog", state="ignored-closed")
+            return
+        callback = self._signal_handlers.get("on_btnOpenSave_clicked")
+        if callback is None:
+            self._set_feedback(phase="SaveDialog", state="handler-missing", error="handler not connected")
+            return
+        try:
+            dialog = self._objects.get("SaveWallpaperDialog")
+            filename = ""
+            if dialog is not None and hasattr(dialog, "get_filename"):
+                filename = str(dialog.get_filename() or "").strip()
+            if not filename:
+                self._set_label_text("lblSaveDialogState", "SaveDialog: open(path-required)")
+                self._set_feedback(phase="SaveDialog", state="confirm-pending-path", error="save path is required")
+                return
+            ok = callback(dialog)
+            if ok:
+                self._set_save_dialog_open_state(False, state_text="SaveDialog: closed(confirm)")
+                self._set_feedback(phase="SaveDialog", state="confirm-ok")
+            else:
+                self._set_feedback(phase="SaveDialog", state="confirm-failed", error="confirm returned false")
+        except Exception as exc:
+            self._set_feedback(phase="SaveDialog", state="error", error=str(exc))
+
+    def _on_save_dialog_cancel_clicked(self, *_args: Any) -> None:
+        if not self._is_save_dialog_open():
+            self._set_label_text("lblSaveDialogState", "SaveDialog: closed")
+            self._set_feedback(phase="SaveDialog", state="ignored-closed")
+            return
+        callback = self._signal_handlers.get("on_btnCancelSave_clicked")
+        if callback is None:
+            self._set_feedback(phase="SaveDialog", state="handler-missing", error="handler not connected")
+            return
+        try:
+            ok = callback()
+            if ok:
+                self._set_save_dialog_open_state(False, state_text="SaveDialog: closed(cancel)")
+                self._set_feedback(phase="SaveDialog", state="cancel-ok")
+            else:
+                self._set_feedback(phase="SaveDialog", state="cancel-failed", error="cancel returned false")
+        except Exception as exc:
+            self._set_feedback(phase="SaveDialog", state="error", error=str(exc))
 
 
 def load_gtk_builder_signal_backend(ui_file: Path | None = None):

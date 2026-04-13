@@ -10,7 +10,7 @@ class DummyWindow:
     def on_change_input_text(self, text: str) -> None:
         self.last_input = text
 
-    def on_optimize(self) -> bool:
+    def on_save_legacy(self) -> bool:
         self.optimized = True
         return True
 
