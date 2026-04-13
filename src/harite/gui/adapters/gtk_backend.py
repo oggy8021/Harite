@@ -484,9 +484,6 @@ class GtkRuntimeSignalBackend:
 
     def _on_optimize_clicked(self, *_args: Any) -> None:
         callback = self._signal_handlers.get("on_btnOptimize_clicked")
-        if callback is None:
-            # Migration-safe fallback when modern handler is not available.
-            callback = self._signal_handlers.get("on_btnSave_clicked")
         self._run_optimize_path(callback)
 
     def _on_apply_clicked(self, *_args: Any) -> None:

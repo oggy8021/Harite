@@ -20,7 +20,7 @@ def test_on_change_input_text_updates_state():
 def test_on_clear_input_resets_optimize_state():
     window = MainWindow()
     window.on_change_input_text("a.jpg")
-    assert window.on_save_legacy() is True
+    assert window.on_save() is True
     assert window.save_dialog_open is True
 
     ok = window.on_clear_input()
@@ -62,7 +62,7 @@ def test_save_dialog_confirm_and_cancel_have_distinct_meanings():
     assert window.status_phase == "save_dialog"
     assert window.status_message == "save dialog ignored (closed)"
 
-    assert window.on_save_legacy() is True
+    assert window.on_save() is True
     assert window.save_dialog_open is True
     assert window.status_level == "idle"
     assert window.status_phase == "save_dialog"
@@ -79,7 +79,7 @@ def test_save_dialog_confirm_and_cancel_have_distinct_meanings():
     assert window.status_phase == "save_dialog"
     assert window.status_message == "save dialog ignored (closed)"
 
-    assert window.on_save_legacy() is True
+    assert window.on_save() is True
     assert window.on_save_dialog_confirm() is False
     assert window.status_level == "error"
     assert window.status_phase == "save_dialog"
@@ -138,7 +138,7 @@ def test_save_dialog_confirm_runs_legacy_save_flow_when_input_ready(monkeypatch,
     window = MainWindow()
     window.controller = DummyController()
     window.on_change_input_text("a.jpg")
-    assert window.on_save_legacy() is True
+    assert window.on_save() is True
     assert window.save_dialog_open is True
 
     picked = tmp_path / "picked" / "legacy-save.jpg"
@@ -150,7 +150,7 @@ def test_save_dialog_confirm_runs_legacy_save_flow_when_input_ready(monkeypatch,
     assert window.status_level == "success"
     assert window.status_phase == "optimize"
     assert window.status_message == "optimize completed"
-    assert any("Save dialog confirm: running legacy save flow" in line for line in window.logs)
+    assert any("Save dialog confirm: running save flow" in line for line in window.logs)
 
 
 def test_layout_blueprint_defines_grouping_and_flow():
