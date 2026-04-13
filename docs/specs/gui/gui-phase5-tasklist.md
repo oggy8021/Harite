@@ -33,7 +33,7 @@
 
 ## 現在の進捗スナップショット（2026-04-13）
 
-- P5-2 は実装進行中（`[-]`）。
+- P5-2 はクローズ済み（`[x]`）。
 - 実装済み:
   - `src/harite/gui/views/main_window.py` に Phase5 レイアウトメタデータ（`layout_version`, `layout_sections`）を反映。
   - `src/harite/gui/adapters/gtk_backend.py` を Glade近似の縦5段/中央3列構成へ再編。
@@ -41,14 +41,13 @@
 - ドキュメント済み:
   - Glade再現基準: `docs/specs/gui/gui-glade-layout-reconstruction.md`
   - P5-2判定基準: `docs/specs/gui/gui-phase5-p5-2-layout-checklist.md`
+  - 手動検証メモ: `out/manual-validation/gui-phase5-pr2-memo.md`
 - 未完了:
-  - before/after 最終判定記録
-  - P5-2 チェックリスト A〜E の最終 `pass` 確定
-  - PR本文最終化
+  - PR5-2 メモで上がった後続項目の分配（P5-3 / P5-4 / 将来拡張）
 
 ## タスク（1タスク=1PR）
 
-- [-] P5-2 feat(gui): MainWindow の大胆レイアウト再構成
+- [x] P5-2 feat(gui): MainWindow の大胆レイアウト再構成
   - Glade基準配置: `docs/specs/gui/gui-glade-layout-reconstruction.md`
   - 上流解析参照: `docs/specs/upstream-full-analysis.md`
   - チェックリスト: `docs/specs/gui/gui-phase5-p5-2-layout-checklist.md`
