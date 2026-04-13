@@ -11,6 +11,9 @@ class DummyWindow:
     def on_change_input_text(self, text: str) -> None:
         self.calls.append(("input", text))
 
+    def on_pick_input(self, path: str) -> None:
+        self.calls.append(("input", path))
+
     def on_save(self) -> bool:
         self.calls.append(("save", True))
         return True
@@ -99,6 +102,24 @@ class _BackendWithSaveDialog:
     def __init__(self, path: str) -> None:
         self.widgets = {
             "SaveWallpaperDialog": _SaveDialogWidget(path),
+        }
+
+    def get_object(self, name: str):
+        return self.widgets.get(name)
+
+
+class _EntryWidget:
+    def __init__(self, text: str) -> None:
+        self._text = text
+
+    def get_text(self) -> str:
+        return self._text
+
+
+class _BackendWithEntry:
+    def __init__(self, text: str) -> None:
+        self.widgets = {
+            "entPathL": _EntryWidget(text),
         }
 
     def get_object(self, name: str):
@@ -265,3 +286,14 @@ def test_dispatch_reads_save_path_from_backend_dialog_when_clicked_arg_has_no_pa
 
     assert dispatch["on_btnOpenSave_clicked"](object()) is True
     assert win.calls == [("save_dialog_confirm", "/tmp/from-dialog.jpg")]
+
+
+def test_dispatch_reads_pick_path_from_backend_entry_when_clicked_arg_has_no_path():
+    win = DummyWindow()
+    backend = _BackendWithEntry("/tmp/from-entry.jpg")
+    handlers = ("on_btnGetImg_clicked",)
+
+    dispatch = create_mainwindow_signal_dispatch(win, handlers, signal_backend=backend)
+
+    assert dispatch["on_btnGetImg_clicked"](object()) is None
+    assert win.calls == [("input", "/tmp/from-entry.jpg")]

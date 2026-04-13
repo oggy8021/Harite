@@ -106,6 +106,33 @@ def _build_dispatch_callback(
 
         return _on_open_save
 
+    if legacy_name == "on_btnGetImg_clicked":
+
+        def _extract_path(value: Any) -> str | None:
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+            if hasattr(value, "get_text"):
+                candidate = value.get_text()
+                if isinstance(candidate, str) and candidate.strip():
+                    return candidate.strip()
+            return None
+
+        def _on_pick_clicked(*args: Any) -> Any:
+            for arg in args:
+                selected = _extract_path(arg)
+                if selected:
+                    return target(selected)
+
+            if signal_backend is not None and hasattr(signal_backend, "get_object"):
+                entry = signal_backend.get_object("entPathL")
+                selected = _extract_path(entry)
+                if selected:
+                    return target(selected)
+
+            return False
+
+        return _on_pick_clicked
+
     if legacy_name == "on_spnMergin_value_changed":
 
         def _read_int(name: str) -> int:

@@ -89,8 +89,32 @@
   - 完了記録: Optimize の旧 fallback 撤去、Save confirm の過剰委譲撤去、`on_save` 正規化で互換維持専用分岐を段階削減
   - 完了条件: 現行導線のみで回帰が通り、互換維持のためだけの分岐が削減される
 
-- [ ] P5-4 feat(gui): レトロフィット + 現代化のスタイル統一
+- [x] P5-4 feat(gui): レトロフィット + 現代化のスタイル統一
+  - 仕様メモ: `docs/specs/gui/gui-phase5-p5-4-iconset-plan.md`
   - 対象: 旧デザイン意図の復元と、読みやすさ向上の同時達成
+  - 進捗: P5-8 完了を受けて P5-4 着手（2026-04-13）
+  - 初手スコープ: MainWindow / Optimize / Apply の見出し・主要ボタン・補助ボタンで visual token を統一
+  - 初手スコープ: `gtk_backend` の button/label face を「主操作・副操作・planned」の3階層で再定義
+  - 初手スコープ: before/after の体感差分を残すため、command bar と status 表示の視認性を優先改善
+  - 進捗: `gtk_backend` に `tglPush*` / `tglLower*` を追加し、MainWindow の配置トグルIDを Glade 準拠で取得可能化（2026-04-13）
+  - 進捗: `test_gtk_runtime_backend` に toggle/open ボタン存在チェックを追加し、欠落の再発を回帰固定（2026-04-13）
+  - 完了記録（部分）: Owner 実行の固定回帰コマンドが 100% pass（2026-04-13）
+  - 進捗: `Open-L/Open-R` を fallback backend で結線し、入力欄値を `on_btnGetImg_clicked` へ渡す最小導線を実装（2026-04-13）
+  - 進捗: `ui_adapter` に `on_btnGetImg_clicked` の path解決（clicked引数/`entPathL`）を追加し、clicked引数依存の誤動作を抑制（2026-04-13）
+  - 進捗: runtime backend / dispatch テストへ Open-L/Open-R の状態遷移・コールバック経路を追加（2026-04-13）
+  - 完了記録（部分）: Open-L/Open-R 導線追加後も Owner 実行の固定回帰コマンドが 100% pass（2026-04-13）
+  - 進捗: fallback UI に `Style tiers` / `Commands (tiered)` / `Flow` ラベルを追加し、主操作・副操作・planned の視覚階層を明示（2026-04-13）
+  - 進捗: `Prefs/About/Help` のボタンフェイスを secondary 表記へ統一し、主要操作との視認差を拡大（2026-04-13）
+  - 進捗: `test_gtk_runtime_backend` に visual tier ラベル/secondaryフェイスの回帰チェックを追加（2026-04-13）
+  - 完了記録（部分）: visual tier 整備後も Owner 実行の固定回帰コマンドが 100% pass（2026-04-13）
+  - 進捗: `Save/Optimize/Apply` のボタンフェイスを primary 表記へ統一し、主操作の視認優先度を強化（2026-04-13）
+  - 進捗: `test_gtk_runtime_backend` に primaryボタン文言の回帰チェックを追加（2026-04-13）
+  - 完了記録（部分）: primary フェイス統一後も Owner 実行の固定回帰コマンドが 100% pass（2026-04-13）
+  - 進捗: `tgl` 系ボタンの語彙を `Top/Bottom/Left/Right` へ統一し、左右対称の見た目ルールを固定（2026-04-13）
+  - 進捗: `test_gtk_runtime_backend` に `tgl` ラベル語彙の回帰チェックを追加（2026-04-13）
+  - 完了記録（部分）: `tgl` 語彙統一後も Owner 実行の固定回帰コマンドが 100% pass（2026-04-13）
+  - 完了記録: fallback UI の style tier（primary/secondary/planned）と flow 表示を整備し、旧版らしさの説明軸を仕様化（2026-04-13）
+  - 完了記録: Owner 実行の固定回帰コマンド `python.exe -m pytest -q tests/gui/test_ui_adapter_dispatch.py tests/gui/test_ui_adapter_mapping_validation.py tests/gui/test_main_window_signals.py tests/gui/test_gtk_runtime_backend.py` が継続して 100% pass（2026-04-13）
   - 完了条件: 同種要素の見た目ゆれがなく、旧版らしさが説明可能
 
 - [ ] P5-1 docs: 見た目再現チェックリスト定義
