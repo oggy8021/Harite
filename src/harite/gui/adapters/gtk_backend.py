@@ -21,7 +21,7 @@ class GtkRuntimeSignalBackend:
         self._gtk = gtk_module
         self._signal_handlers: dict[str, Callable[..., Any]] = {}
 
-        window = gtk_module.Window(title="Harite GUI (MVP)")
+        window = gtk_module.Window(title="Harite Studio")
         if hasattr(window, "set_default_size"):
             window.set_default_size(960, 640)
 
@@ -29,19 +29,17 @@ class GtkRuntimeSignalBackend:
             root = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=10)
             root.set_border_width(12)
 
-            title = gtk_module.Label(label="Harite GUI runtime fallback")
+            title = gtk_module.Label(label="Harite Studio")
             if hasattr(title, "set_xalign"):
                 title.set_xalign(0.0)
             root.pack_start(title, False, False, 0)
 
-            subtitle = gtk_module.Label(
-                label="Layout baseline: Main / Optimize / Apply sections"
-            )
+            subtitle = gtk_module.Label(label="Compose -> Optimize -> Apply")
             if hasattr(subtitle, "set_xalign"):
                 subtitle.set_xalign(0.0)
             root.pack_start(subtitle, False, False, 0)
 
-            main_section_label = gtk_module.Label(label="Main")
+            main_section_label = gtk_module.Label(label="Compose")
             if hasattr(main_section_label, "set_xalign"):
                 main_section_label.set_xalign(0.0)
             root.pack_start(main_section_label, False, False, 0)
@@ -52,7 +50,7 @@ class GtkRuntimeSignalBackend:
             )
             root.pack_start(main_section, False, False, 0)
 
-            input_label = gtk_module.Label(label="Input path")
+            input_label = gtk_module.Label(label="Input sources")
             if hasattr(input_label, "set_xalign"):
                 input_label.set_xalign(0.0)
             main_section.pack_start(input_label, False, False, 0)
@@ -61,9 +59,7 @@ class GtkRuntimeSignalBackend:
             input_entry.set_placeholder_text("/path/to/image_or_directory")
             main_section.pack_start(input_entry, False, False, 0)
 
-            input_hint = gtk_module.Label(
-                label="Comma-separated paths are also accepted."
-            )
+            input_hint = gtk_module.Label(label="Use one or multiple comma-separated sources.")
             if hasattr(input_hint, "set_xalign"):
                 input_hint.set_xalign(0.0)
             main_section.pack_start(input_hint, False, False, 0)
@@ -84,14 +80,12 @@ class GtkRuntimeSignalBackend:
                 optimize_btn.set_sensitive(False)
             optimize_section.pack_start(optimize_btn, False, False, 0)
 
-            optimize_hint = gtk_module.Label(
-                label="Run optimize first to prepare apply target."
-            )
+            optimize_hint = gtk_module.Label(label="Optimize prepares the final candidate for apply.")
             if hasattr(optimize_hint, "set_xalign"):
                 optimize_hint.set_xalign(0.0)
             optimize_section.pack_start(optimize_hint, False, False, 0)
 
-            optimize_result = gtk_module.Label(label="Optimize result: not-run")
+            optimize_result = gtk_module.Label(label="Optimize result: waiting")
             if hasattr(optimize_result, "set_xalign"):
                 optimize_result.set_xalign(0.0)
             optimize_section.pack_start(optimize_result, False, False, 0)
@@ -112,14 +106,12 @@ class GtkRuntimeSignalBackend:
                 apply_btn.set_sensitive(False)
             apply_section.pack_start(apply_btn, False, False, 0)
 
-            apply_hint = gtk_module.Label(
-                label="Apply is enabled after successful optimize."
-            )
+            apply_hint = gtk_module.Label(label="Apply becomes available after optimize succeeds.")
             if hasattr(apply_hint, "set_xalign"):
                 apply_hint.set_xalign(0.0)
             apply_section.pack_start(apply_hint, False, False, 0)
 
-            apply_target = gtk_module.Label(label="Apply target: not-ready")
+            apply_target = gtk_module.Label(label="Apply target: waiting")
             if hasattr(apply_target, "set_xalign"):
                 apply_target.set_xalign(0.0)
             apply_section.pack_start(apply_target, False, False, 0)
