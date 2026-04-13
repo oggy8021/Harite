@@ -184,6 +184,16 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("boxRoot") is not None
     assert backend.get_object("lblMainSection") is not None
     assert backend.get_object("boxMainSection") is not None
+    assert backend.get_object("tglUpperL") is not None
+    assert backend.get_object("tglUpperR") is not None
+    assert backend.get_object("tglPushLeftL") is not None
+    assert backend.get_object("tglPushRightL") is not None
+    assert backend.get_object("tglLowerL") is not None
+    assert backend.get_object("tglPushLeftR") is not None
+    assert backend.get_object("tglPushRightR") is not None
+    assert backend.get_object("tglLowerR") is not None
+    assert backend.get_object("btnGetImgL") is not None
+    assert backend.get_object("btnGetImgR") is not None
     assert backend.get_object("lblOptimizeSection") is not None
     assert backend.get_object("boxOptimizeSection") is not None
     assert backend.get_object("btnOptimize") is not None
@@ -194,6 +204,9 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("lblDoItPlanned") is not None
     assert backend.get_object("lblSaveDialogState") is not None
     assert backend.get_object("lblPriorityRule") is not None
+    assert backend.get_object("lblStyleLegend") is not None
+    assert backend.get_object("lblCommandSection") is not None
+    assert backend.get_object("lblFlowLegend") is not None
     assert backend.get_object("lblWatchSection") is not None
     assert backend.get_object("lblError") is not None
 
@@ -212,6 +225,24 @@ def test_runtime_backend_shows_p5_3_planned_and_priority_labels():
     save_dialog_state = backend.get_object("lblSaveDialogState")
     watch_start = backend.get_object("btnDaemonize")
     watch_stop = backend.get_object("btnCancelDaemonize")
+    pick_state = backend.get_object("lblPickState")
+    style_legend = backend.get_object("lblStyleLegend")
+    command_section = backend.get_object("lblCommandSection")
+    flow_legend = backend.get_object("lblFlowLegend")
+    prefs_btn = backend.get_object("btnSetting")
+    about_btn = backend.get_object("btnAbout")
+    help_btn = backend.get_object("btnHelp")
+    save_btn = backend.get_object("btnSave")
+    optimize_btn = backend.get_object("btnOptimize")
+    apply_btn = backend.get_object("btnSetWall")
+    tgl_upper_l = backend.get_object("tglUpperL")
+    tgl_upper_r = backend.get_object("tglUpperR")
+    tgl_push_left_l = backend.get_object("tglPushLeftL")
+    tgl_push_right_l = backend.get_object("tglPushRightL")
+    tgl_lower_l = backend.get_object("tglLowerL")
+    tgl_push_left_r = backend.get_object("tglPushLeftR")
+    tgl_push_right_r = backend.get_object("tglPushRightR")
+    tgl_lower_r = backend.get_object("tglLowerR")
 
     assert do_it.text == "do-it: planned"
     assert priority.text == "Rule: fixed > margin > toggles"
@@ -227,6 +258,62 @@ def test_runtime_backend_shows_p5_3_planned_and_priority_labels():
     assert save_dialog_state.text == "SaveDialog: closed"
     assert watch_start.label == "Watch Start (planned)"
     assert watch_stop.label == "Watch Stop (planned)"
+    assert pick_state.text == "Picker: idle"
+    assert style_legend.text == "Style tiers: primary | secondary | planned"
+    assert command_section.text == "Commands (tiered)"
+    assert flow_legend.text == "Flow: Compose -> Optimize -> Apply"
+    assert prefs_btn.label == "Prefs (secondary)"
+    assert about_btn.label == "About (secondary)"
+    assert help_btn.label == "Help (secondary)"
+    assert save_btn.label == "Save (primary)"
+    assert optimize_btn.label == "Optimize (primary)"
+    assert apply_btn.label == "Apply (primary dry-run)"
+    assert tgl_upper_l.label == "Top-L"
+    assert tgl_upper_r.label == "Top-R"
+    assert tgl_push_left_l.label == "Left-L"
+    assert tgl_push_right_l.label == "Right-L"
+    assert tgl_lower_l.label == "Bottom-L"
+    assert tgl_push_left_r.label == "Left-R"
+    assert tgl_push_right_r.label == "Right-R"
+    assert tgl_lower_r.label == "Bottom-R"
+
+
+def test_runtime_backend_open_l_uses_entry_path_and_calls_pick_handler():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    entry = backend.get_object("entPathL")
+    open_l = backend.get_object("btnGetImgL")
+    pick_state = backend.get_object("lblPickState")
+    status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+    observed = {"path": None}
+
+    def on_pick(path):
+        observed["path"] = path
+
+    backend.connect_signals({"on_btnGetImg_clicked": on_pick})
+    entry.set_text("/tmp/left.jpg")
+    open_l.click()
+
+    assert observed["path"] == "/tmp/left.jpg"
+    assert pick_state.text == "Open-L: selected"
+    assert status.text == "Open-L: selected"
+    assert error.text == "Error: none"
+
+
+def test_runtime_backend_open_r_without_entry_path_marks_planned():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    open_r = backend.get_object("btnGetImgR")
+    pick_state = backend.get_object("lblPickState")
+    status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+
+    open_r.click()
+
+    assert pick_state.text == "Open-R: planned(path-required)"
+    assert status.text == "Open-R: planned"
+    assert error.text == "Error: path input required"
 
 
 def test_runtime_backend_color_click_sets_planned_status():
