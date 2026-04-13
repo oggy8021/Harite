@@ -142,6 +142,7 @@
   - 成果物: JSON / Report / PR Comment / 3画面スクリーンショット
   - 進捗: XFCE 実機判定用テンプレート `docs/specs/gui/gui-phase5-p5-7-xfce-validation-template.md` を追加（2026-04-13）
   - 進捗: P5-1 観点（MainWindow/Optimize/Apply/Style）の `pass/warn/fail` 記録欄と PR 貼り付け用コメント雛形を用意（2026-04-13）
+  - 進捗: Owner 実行の固定回帰コマンドが 100% pass（2026-04-13）
   - 完了条件: P5-1 チェックリスト必須項目がすべて pass
 
 ## 推奨着手順
