@@ -26,7 +26,7 @@
 - 実装状況: confirm 時に保存先未選択なら `path-required` を表示して dialog を閉じない（誤確定防止）。
 - 実装状況: MainWindow でも confirm の保存先必須を適用し、空confirmは `save path is required` として失敗させる。
 - 実装状況: MainWindow の confirm は既存 `save_path` がある場合、引数なしでも既存値で続行可能（再試行時の透過性向上）。
-- 実装状況: MainWindow の `on_save_legacy` は SaveDialog open 専用、生成実行は confirm 経由（`on_save_dialog_confirm -> on_optimize`）へ統一。
+- 実装状況: MainWindow の `on_save` は SaveDialog open 専用、生成実行は confirm 経由（`on_save_dialog_confirm -> on_optimize`）へ統一。
 - 実装状況: confirm/cancel が closed 状態で呼ばれた場合は `ignored-closed` として無視し、副作用を起こさない。
 - 実装状況: MainWindow でも closed 状態の confirm/cancel は `save dialog ignored (closed)` として無視する。
 - 実装状況: 入力が空へ戻った場合は SaveDialog を自動で closed に戻し、confirm/cancel を非活性化する。

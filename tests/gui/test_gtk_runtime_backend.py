@@ -532,22 +532,27 @@ def test_runtime_backend_save_button_opens_dialog_without_optimize_handler_call(
     assert status.text == "Status: ready"
 
 
-def test_runtime_backend_optimize_button_prefers_modern_handler():
+def test_runtime_backend_optimize_button_does_not_fallback_to_save_handler():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     optimize_btn = backend.get_object("btnOptimize")
     status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+    optimize_result = backend.get_object("lblOptimizeResult")
+    apply_target = backend.get_object("lblApplyTarget")
     calls = []
 
     backend.connect_signals({
         "on_btnSave_clicked": lambda: calls.append("save") or True,
-        "on_btnOptimize_clicked": lambda: calls.append("optimize") or True,
     })
 
     optimize_btn.click()
 
-    assert calls == ["optimize"]
-    assert status.text == "Optimize: ok"
+    assert calls == []
+    assert status.text == "Optimize: handler-missing"
+    assert error.text == "Error: handler not connected"
+    assert optimize_result.text == "Optimize result: handler-missing"
+    assert apply_target.text == "Apply target: not-ready"
 
 
 def test_runtime_backend_apply_handler_missing_sets_status_and_error():

@@ -23,5 +23,5 @@ def test_validate_mainwindow_signal_mapping_detects_missing_methods():
     )
 
     assert validation["ok"] is False
-    assert "on_save_legacy" in validation["missing_methods"]
+    assert "on_save" in validation["missing_methods"]
     assert "on_apply_dry_run" in validation["missing_methods"]

@@ -58,7 +58,7 @@
   - 仕様メモ: `docs/specs/gui/gui-phase5-p5-3-flow-policy.md`
   - 回帰必須: `Apply` は Optimize 未実行時に非活性、`Apply dry-run` 既定を維持
   - 対象: 情報階層、操作ブロック、見出し体系、アクション位置の差別化
-  - 進捗: `on_btnSave_clicked` は `on_save_legacy` に分離し、旧Save導線を保持したまま `Optimize (provisional)` を Save 近傍に仮置き
+  - 進捗: `on_btnSave_clicked` は `on_save` に分離し、旧Save導線を保持したまま `Optimize (provisional)` を Save 近傍に仮置き
   - 進捗: SaveDialog confirm で保存先を受けた場合、入力準備済みなら旧Save導線（選択+生成）を連続実行
   - 進捗: `on_btnOpenSave_clicked` は clicked引数だけでなく `SaveWallpaperDialog` から `get_filename()` を解決可能（実Glade経路の保存先取得を補強）
   - 進捗: GTK fallback で SaveDialog プロキシの open/hide 状態遷移（Saveでopen、confirm/cancelでhide）を実装
@@ -67,7 +67,7 @@
   - 進捗: MainWindow の `on_save_dialog_confirm` でも保存先必須を適用し、空confirmを失敗（`save path is required`）として統一
   - 進捗: MainWindow の confirm は既存 `save_path` を再利用可能（引数なしconfirmの再試行導線を確保）
   - 進捗: MainWindow でも closed 状態の confirm/cancel は `save dialog ignored (closed)` として無視（backendと意味統一）
-  - 進捗: MainWindow の `on_save_legacy` は dialog open 専用へ変更し、生成は confirm（`on_save_dialog_confirm -> on_optimize`）へ統一
+  - 進捗: MainWindow の `on_save` は dialog open 専用へ変更し、生成は confirm（`on_save_dialog_confirm -> on_optimize`）へ統一
   - 進捗: SaveDialog closed 状態での confirm/cancel 呼び出しは `ignored-closed` として無視（誤発火ガード）
   - 進捗: 入力クリア時は SaveDialog を自動で closed へ戻し、confirm/cancel を非活性化（状態整合）
   - 進捗: MainWindow でも入力クリア時に SaveDialog 状態を closed へ戻す（fallbackとの意味統一）
@@ -78,9 +78,15 @@
   - 完了記録: Save/Optimize 分離、SaveDialog 状態遷移、confirm/cancel ガード、MainWindow/GTK fallback の意味統一を達成
   - 完了条件（新規成果）: 一目で画面意図の違いが分かり、優先順位ルール（`fixed > margin > toggles`）が Notes/ヘルプで確認でき、P5-1 の Optimize/Apply 区別観点が pass
 
-- [ ] P5-8 refactor(gui): 旧互換シグナル/Glade依存の段階撤去（P5-3完了後）
+- [x] P5-8 refactor(gui): 旧互換シグナル/Glade依存の段階撤去（P5-3完了後）
   - 前提: P5-3 が `done` へ遷移し、Save/Optimize/Apply/SaveDialog の新導線が回帰で安定していること
   - 対象: legacy handler名への過剰フォールバック、旧Glade互換前提の分岐、互換専用テストの整理
+  - 進捗: `gtk_backend` の `btnOptimize -> on_btnSave_clicked` fallback を削除し、Optimize は `on_btnOptimize_clicked` のみを受け付けるよう統一（2026-04-13）
+  - 進捗: `ui_adapter` の `on_btnSave_clicked` マップ先を `on_save` へ変更し、`MainWindow` も `on_save` を正規エンドポイントへ統一（2026-04-13）
+  - 進捗: `MainWindow` の signal docstring を `Signal endpoint` 表記へ統一し、互換中心の注記を最小化（2026-04-13）
+  - 進捗: `on_save_legacy` と `legacy save flow` の実参照を撤去し、コード/テスト/仕様文書の表記を `on_save` へ一本化（2026-04-13）
+  - 完了記録: Owner 実行の固定回帰コマンド `python.exe -m pytest -q tests/gui/test_ui_adapter_dispatch.py tests/gui/test_ui_adapter_mapping_validation.py tests/gui/test_main_window_signals.py tests/gui/test_gtk_runtime_backend.py` が 100% pass（2026-04-13）
+  - 完了記録: Optimize の旧 fallback 撤去、Save confirm の過剰委譲撤去、`on_save` 正規化で互換維持専用分岐を段階削減
   - 完了条件: 現行導線のみで回帰が通り、互換維持のためだけの分岐が削減される
 
 - [ ] P5-4 feat(gui): レトロフィット + 現代化のスタイル統一

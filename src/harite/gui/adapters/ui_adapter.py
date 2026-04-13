@@ -20,7 +20,7 @@ LEGACY_HANDLER_MAP: dict[str, str] = {
     "on_spnMergin_value_changed": "on_change_margins",
     "on_radFixed_toggled": "on_toggle_fixed",
     "on_entPath_insert_text": "on_change_input_text",
-    "on_btnSave_clicked": "on_save_legacy",
+    "on_btnSave_clicked": "on_save",
     "on_btnSetWall_clicked": "on_apply_dry_run",
     "on_btnDaemonize_clicked": "on_watch_start",
     "on_btnCancelDaemonize_clicked": "on_watch_stop",
@@ -102,7 +102,7 @@ def _build_dispatch_callback(
                 selected = _extract_path(dialog)
                 if selected:
                     return target(selected)
-            return target()
+            return False
 
         return _on_open_save
 

@@ -11,8 +11,8 @@ class DummyWindow:
     def on_change_input_text(self, text: str) -> None:
         self.calls.append(("input", text))
 
-    def on_save_legacy(self) -> bool:
-        self.calls.append(("save_legacy", True))
+    def on_save(self) -> bool:
+        self.calls.append(("save", True))
         return True
 
     def on_apply_dry_run(self) -> bool:
@@ -121,7 +121,7 @@ def test_create_mainwindow_signal_dispatch_maps_input_optimize_apply_handlers():
     assert dispatch["on_btnSetWall_clicked"]() is True
     assert win.calls == [
         ("input", "a.jpg"),
-        ("save_legacy", True),
+        ("save", True),
         ("apply_dry", True),
     ]
 
@@ -144,7 +144,7 @@ def test_dispatch_handles_gtk_style_signal_arguments():
 
     assert win.calls == [
         ("input", "gtk.jpg"),
-        ("save_legacy", True),
+        ("save", True),
         ("apply_dry", True),
     ]
 
@@ -235,7 +235,7 @@ def test_dispatch_handles_about_clear_and_save_dialog_button_signals():
     assert dispatch["on_btnAbout_clicked"](object()) is False
     assert dispatch["on_btnSetColor_clicked"](object()) is False
     assert dispatch["on_btnCancelSave_clicked"](object()) is True
-    assert dispatch["on_btnOpenSave_clicked"](object()) is True
+    assert dispatch["on_btnOpenSave_clicked"](object()) is False
     assert dispatch["on_btnOpenSave_clicked"]("/tmp/out.jpg") is True
 
     assert win.calls == [
@@ -243,9 +243,17 @@ def test_dispatch_handles_about_clear_and_save_dialog_button_signals():
         ("about", True),
         ("set_color", True),
         ("save_dialog_cancel", True),
-        ("save_dialog_confirm", True),
         ("save_dialog_confirm", "/tmp/out.jpg"),
     ]
+
+
+def test_dispatch_open_save_returns_false_when_no_path_is_resolved():
+    win = DummyWindow()
+    handlers = ("on_btnOpenSave_clicked",)
+    dispatch = create_mainwindow_signal_dispatch(win, handlers)
+
+    assert dispatch["on_btnOpenSave_clicked"](object()) is False
+    assert win.calls == []
 
 
 def test_dispatch_reads_save_path_from_backend_dialog_when_clicked_arg_has_no_path():

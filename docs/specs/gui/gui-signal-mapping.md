@@ -67,7 +67,7 @@
 | wallpositapplet.glade | btnGetImgL / btnGetImgR | clicked | on_btnGetImg_clicked | MainWindow.on_pick_input | implemented | 左右個別入力はMVPで1入力欄へ統合も可 |
 | wallpositapplet.glade | spnTopMergin/spnLMergin/spnRMergin/spnBtmMergin | value_changed | on_spnMergin_value_changed | MainWindow.on_change_margins | implemented | `--margins` へ集約 |
 | wallpositapplet.glade | radFixed / radNoFixed | toggled | on_radFixed_toggled | MainWindow.on_toggle_fixed | implemented | `--fixed` へ反映 |
-| wallpositapplet.glade | btnSave | clicked | on_btnSave_clicked | MainWindow.on_save_legacy | implemented | 旧MainWindowの Save 導線。Optimize ボタン同義として扱わない |
+| wallpositapplet.glade | btnSave | clicked | on_btnSave_clicked | MainWindow.on_save | implemented | 旧MainWindowの Save 導線。Optimize ボタン同義として扱わない |
 | wallpositapplet.glade | btnSetWall | clicked | on_btnSetWall_clicked | MainWindow.on_apply_dry_run / on_apply_do_it | implemented | `apply` の安全導線に分離 |
 | wallpositapplet.glade | btnSetColor | clicked | on_btnSetColor_clicked | MainWindow.on_set_color | implemented | 現時点は `planned` 明示（非透過化のため状態表示のみ先行） |
 | wallpositapplet.glade | entPathL / entPathR | insert_text | on_entPath_insert_text | MainWindow.on_change_input_text | implemented | Phase 1 優先 |
@@ -78,7 +78,7 @@
 | Legacy file | Widget ID | Legacy signal | Legacy handler | New controller method | Status | Notes |
 |---|---|---|---|---|---|---|
 | wallpositapplet.glade | entPathL / entPathR | insert_text | on_entPath_insert_text | MainWindow.on_change_input_text | implemented | 入力バリデーション |
-| wallpositapplet.glade | btnSave | clicked | on_btnSave_clicked | MainWindow.on_save_legacy | implemented | Save（保存先選択+生成）導線 |
+| wallpositapplet.glade | btnSave | clicked | on_btnSave_clicked | MainWindow.on_save | implemented | Save（保存先選択+生成）導線 |
 | wallpositapplet.glade | WallPosit_MainWindow | delete_event | on_WallPosit_MainWindow_delete_event | MainWindow.on_close | implemented | 常駐なし終了 |
 
 ### MVP では非対象（dropped）

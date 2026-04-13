@@ -83,7 +83,7 @@ class MainWindow:
         return True
 
     def on_pick_input(self, path: str) -> None:
-        """Legacy signal mapping: on_btnGetImg_clicked."""
+        """Signal endpoint: on_btnGetImg_clicked."""
         value = (path or "").strip()
         if not value:
             self.last_error = "input path is empty"
@@ -97,7 +97,7 @@ class MainWindow:
         self._log(f"Input picked: {value}")
 
     def on_change_margins(self, left: int, right: int, top: int, bottom: int) -> None:
-        """Legacy signal mapping: on_spnMergin_value_changed."""
+        """Signal endpoint: on_spnMergin_value_changed."""
         vals = (left, right, top, bottom)
         if any(v < 0 for v in vals):
             self.last_error = "margins must be non-negative"
@@ -109,7 +109,7 @@ class MainWindow:
         self._log(f"Margins updated: {self.form_state.margins}")
 
     def on_toggle_fixed(self, enabled: bool) -> None:
-        """Legacy signal mapping: on_radFixed_toggled."""
+        """Signal endpoint: on_radFixed_toggled."""
         self.form_state.fixed = bool(enabled)
         self._log(f"Fixed mode: {self.form_state.fixed}")
 
@@ -117,14 +117,14 @@ class MainWindow:
         self.logs.append(message)
 
     def _set_status(self, level: str, phase: str, message: str, *, error: str = "") -> None:
-        """Set unified UI status fields and keep legacy last_error in sync."""
+        """Set unified UI status fields and keep last_error in sync."""
         self.status_level = level
         self.status_phase = phase
         self.status_message = message
         self.last_error = error
 
     def on_change_input_text(self, text: str) -> None:
-        """Legacy signal mapping: on_entPath_insert_text."""
+        """Signal endpoint: on_entPath_insert_text."""
         self.form_state.input_value = text
         self.can_optimize = bool(text and text.strip())
         if not self.can_optimize:
@@ -140,12 +140,8 @@ class MainWindow:
         else:
             self._log("Input is empty")
 
-    def on_save_legacy(self) -> bool:
-        """Legacy signal mapping: on_btnSave_clicked.
-
-        The old MainWindow had a Save action (save target selection + generation),
-        not an explicit button named Optimize.
-        """
+    def on_save(self) -> bool:
+        """Save action: open save dialog before confirm-driven generation."""
         self.save_dialog_open = True
         self._set_status("idle", "save_dialog", "save dialog opened")
         self._log("Save dialog opened")
@@ -215,33 +211,33 @@ class MainWindow:
         return False
 
     def on_apply_dry_run(self) -> bool:
-        """Legacy signal mapping: on_btnSetWall_clicked (safe mode)."""
+        """Signal endpoint: on_btnSetWall_clicked (safe mode)."""
         return self._apply_latest(dry_run=True)
 
     def on_apply_do_it(self) -> bool:
-        """Legacy signal mapping: on_btnSetWall_clicked (execute mode)."""
+        """Signal endpoint: on_btnSetWall_clicked (execute mode)."""
         return self._apply_latest(dry_run=False)
 
     def on_clear_input(self) -> bool:
-        """Legacy signal mapping: on_btnClrPath_clicked."""
+        """Signal endpoint: on_btnClrPath_clicked."""
         self.on_change_input_text("")
         self._log("Input cleared")
         return True
 
     def on_about(self) -> bool:
-        """Legacy signal mapping: on_btnAbout_clicked (planned)."""
+        """Signal endpoint: on_btnAbout_clicked (planned)."""
         self._set_status("planned", "about", "about dialog is planned")
         self._log("About requested: planned")
         return False
 
     def on_set_color(self) -> bool:
-        """Legacy signal mapping: on_btnSetColor_clicked (planned)."""
+        """Signal endpoint: on_btnSetColor_clicked (planned)."""
         self._set_status("planned", "color", "color picker is planned")
         self._log("Color picker requested: planned")
         return False
 
     def on_save_dialog_confirm(self, save_path: str | None = None) -> bool:
-        """Legacy signal mapping: on_btnOpenSave_clicked."""
+        """Signal endpoint: on_btnOpenSave_clicked."""
         value = (save_path or "").strip()
         if not self.save_dialog_open and not value:
             self._set_status("idle", "save_dialog", "save dialog ignored (closed)")
@@ -255,8 +251,8 @@ class MainWindow:
             self._set_status("idle", "save_dialog", "save path selected")
             self._log(f"Save path selected: {value}")
             if self.can_optimize:
-                # Legacy expectation: save path confirm can continue into generation.
-                self._log("Save dialog confirm: running legacy save flow")
+                # Save path confirm continues into generation when input is ready.
+                self._log("Save dialog confirm: running save flow")
                 return self.on_optimize()
             return True
         self._set_status("error", "save_dialog", "save path is required", error="save path is required")
@@ -264,7 +260,7 @@ class MainWindow:
         return False
 
     def on_save_dialog_cancel(self) -> bool:
-        """Legacy signal mapping: on_btnCancelSave_clicked."""
+        """Signal endpoint: on_btnCancelSave_clicked."""
         if not self.save_dialog_open:
             self._set_status("idle", "save_dialog", "save dialog ignored (closed)")
             self._log("Save dialog cancel ignored: dialog is closed")
@@ -275,19 +271,19 @@ class MainWindow:
         return True
 
     def on_watch_start(self) -> bool:
-        """Legacy signal mapping: on_btnDaemonize_clicked (planned)."""
+        """Signal endpoint: on_btnDaemonize_clicked (planned)."""
         self._set_status("planned", "watch", "watch start is planned")
         self._log("Watch start requested: planned")
         return False
 
     def on_watch_stop(self) -> bool:
-        """Legacy signal mapping: on_btnCancelDaemonize_clicked (planned)."""
+        """Signal endpoint: on_btnCancelDaemonize_clicked (planned)."""
         self._set_status("planned", "watch", "watch stop is planned")
         self._log("Watch stop requested: planned")
         return False
 
     def on_watch_interval_change(self, seconds: int) -> bool:
-        """Legacy signal mapping: on_spnInterval_value_changed (planned)."""
+        """Signal endpoint: on_spnInterval_value_changed (planned)."""
         value = int(seconds)
         if value <= 0:
             self._set_status("error", "watch", "watch interval must be positive", error="watch interval must be positive")
@@ -299,33 +295,33 @@ class MainWindow:
         return True
 
     def on_close(self) -> None:
-        """Legacy signal mapping: on_WallPosit_MainWindow_delete_event."""
+        """Signal endpoint: on_WallPosit_MainWindow_delete_event."""
         self.closed = True
         self._log("Window closed")
 
     def on_close_error_dialog(self) -> None:
-        """Legacy signal mapping: on_ErrorDialog_destroy."""
+        """Signal endpoint: on_ErrorDialog_destroy."""
         self.last_error = ""
         self._log("Error dialog closed")
 
     def on_close_open_image_dialog(self) -> None:
-        """Legacy signal mapping: on_ImgOpenDialog_destroy."""
+        """Signal endpoint: on_ImgOpenDialog_destroy."""
         self._log("Open image dialog closed")
 
     def on_close_save_dialog(self) -> None:
-        """Legacy signal mapping: on_SaveWallpaperDialog_destroy."""
+        """Signal endpoint: on_SaveWallpaperDialog_destroy."""
         self._log("Save dialog closed")
 
     def on_close_settings_dialog(self) -> None:
-        """Legacy signal mapping: on_SettingDialog_destroy."""
+        """Signal endpoint: on_SettingDialog_destroy."""
         self._log("Settings dialog closed")
 
     def on_close_color_dialog(self) -> None:
-        """Legacy signal mapping: on_ColorSelectionDialog_destroy."""
+        """Signal endpoint: on_ColorSelectionDialog_destroy."""
         self._log("Color selection dialog closed")
 
     def on_close_srcdir_dialog(self) -> None:
-        """Legacy signal mapping: on_SrcdirDialog_destroy."""
+        """Signal endpoint: on_SrcdirDialog_destroy."""
         self._log("Source directory dialog closed")
 
     def build_optimize_cli_preview(self) -> str:
