@@ -15,6 +15,7 @@ class OptimizeFormState:
     input_value: str
     resolution: str
     output_dir: str
+    save_path: Optional[str] = None
     layout: str = "mosaic"
     scaling: str = "fit"
     two_screen: bool = False
@@ -74,12 +75,16 @@ class OptimizeController:
         w, h = parse_resolution(state.resolution)
         inputs = [p.strip() for p in state.input_value.split(",") if p.strip()]
         output = Path(state.output_dir)
+        output_path = None
+        if state.save_path and state.save_path.strip():
+            output_path = Path(state.save_path.strip())
         margins = self._parse_margins(state.margins)
 
         return optimize_wallpapers(
             inputs=inputs,
             target_resolution=(w, h),
             output_dir=output,
+            output_path=output_path,
             layout=state.layout,
             scaling=state.scaling,
             padding=state.padding,

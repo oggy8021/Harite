@@ -20,9 +20,17 @@ LEGACY_HANDLER_MAP: dict[str, str] = {
     "on_spnMergin_value_changed": "on_change_margins",
     "on_radFixed_toggled": "on_toggle_fixed",
     "on_entPath_insert_text": "on_change_input_text",
-    "on_btnSave_clicked": "on_optimize",
+    "on_btnSave_clicked": "on_save_legacy",
     "on_btnSetWall_clicked": "on_apply_dry_run",
+    "on_btnDaemonize_clicked": "on_watch_start",
+    "on_btnCancelDaemonize_clicked": "on_watch_stop",
+    "on_spnInterval_value_changed": "on_watch_interval_change",
     "on_btnGetImg_clicked": "on_pick_input",
+    "on_btnClrPath_clicked": "on_clear_input",
+    "on_btnAbout_clicked": "on_about",
+    "on_btnSetColor_clicked": "on_set_color",
+    "on_btnCancelSave_clicked": "on_save_dialog_cancel",
+    "on_btnOpenSave_clicked": "on_save_dialog_confirm",
     "on_ErrorDialog_destroy": "on_close_error_dialog",
     "on_ImgOpenDialog_destroy": "on_close_open_image_dialog",
     "on_SaveWallpaperDialog_destroy": "on_close_save_dialog",
@@ -57,12 +65,46 @@ def _build_dispatch_callback(
 
         return _on_insert_text
 
-    if legacy_name in ("on_btnSave_clicked", "on_btnSetWall_clicked"):
+    if legacy_name in (
+        "on_btnSave_clicked",
+        "on_btnSetWall_clicked",
+        "on_btnDaemonize_clicked",
+        "on_btnCancelDaemonize_clicked",
+        "on_btnClrPath_clicked",
+        "on_btnAbout_clicked",
+        "on_btnSetColor_clicked",
+        "on_btnCancelSave_clicked",
+    ):
 
         def _on_clicked(*_args: Any) -> Any:
             return target()
 
         return _on_clicked
+
+    if legacy_name == "on_btnOpenSave_clicked":
+
+        def _extract_path(value: Any) -> str | None:
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+            if hasattr(value, "get_filename"):
+                candidate = value.get_filename()
+                if isinstance(candidate, str) and candidate.strip():
+                    return candidate.strip()
+            return None
+
+        def _on_open_save(*args: Any) -> Any:
+            for arg in args:
+                selected = _extract_path(arg)
+                if selected:
+                    return target(selected)
+            if signal_backend is not None and hasattr(signal_backend, "get_object"):
+                dialog = signal_backend.get_object("SaveWallpaperDialog")
+                selected = _extract_path(dialog)
+                if selected:
+                    return target(selected)
+            return target()
+
+        return _on_open_save
 
     if legacy_name == "on_spnMergin_value_changed":
 
@@ -101,6 +143,31 @@ def _build_dispatch_callback(
             return target(False)
 
         return _on_fixed_toggled
+
+    if legacy_name == "on_spnInterval_value_changed":
+
+        def _read_interval() -> int:
+            if signal_backend is None or not hasattr(signal_backend, "get_object"):
+                return 0
+            widget = signal_backend.get_object("spnInterval")
+            if widget is None:
+                return 0
+            if hasattr(widget, "get_value_as_int"):
+                return int(widget.get_value_as_int())
+            if hasattr(widget, "get_value"):
+                return int(widget.get_value())
+            return 0
+
+        def _on_interval_changed(*args: Any) -> Any:
+            if args and hasattr(args[0], "get_value_as_int"):
+                return target(int(args[0].get_value_as_int()))
+            if args and hasattr(args[0], "get_value"):
+                return target(int(args[0].get_value()))
+            if args and isinstance(args[0], (int, float)):
+                return target(int(args[0]))
+            return target(_read_interval())
+
+        return _on_interval_changed
 
     return target
 

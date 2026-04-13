@@ -93,6 +93,13 @@ python -m harite.gui.app --load-ui-prototype --bind-ui-backend --present-ui-wind
 - 本UI（正式部品配置）へ移行後は、同じ 5 操作を本UI上で再確認する。
 - fallback window での pass は暫定合格として扱い、Phase 3 最終完了判定は本UI（正式部品配置）での実施結果を優先する。
 
+補足（2026-04-13, P5-3 反映）:
+
+- fallback window では Save/Optimize を分離運用する。
+- `Save` は SaveDialog を開く操作であり、生成は `Save confirm`（`on_btnOpenSave_clicked`）経由で続行する。
+- SaveDialog の confirm は保存先選択後のみ活性化され、未選択時は `path-required` として確定を拒否する。
+- SaveDialog の confirm/cancel は dialog open 中のみ有効で、closed 状態呼び出しは `ignored-closed` として無視する。
+
 ### Phase 3 完了判定の最小操作セット（固定）
 
 以下 5 操作を 1 セッションで実施し、すべて `pass` であることを Phase 3 の実機受け入れ基準とする。
@@ -258,12 +265,14 @@ Phase 3 P6 では、GUI の表示品質だけでなく signal-to-handler 経路�
 
 - signal 再監査対象:
   - `on_entPath_insert_text`（入力変更時の状態更新）
-  - `on_btnSave_clicked`（Optimize 実行時の running/ok/failed/error）
+  - `on_btnSave_clicked`（SaveDialog open 操作、生成は直接実行しない）
+  - `on_btnOpenSave_clicked` / `on_btnCancelSave_clicked`（SaveDialog confirm/cancel の open/close とガード）
+  - `on_btnOptimize_clicked`（Optimize 実行時の running/ok/failed/error）
   - `on_btnSetWall_clicked`（Apply 実行時の running/dry-run-ok/dry-run-failed/error）
 - ローカル検証コマンド:
 
 ```bash
-pytest -q tests/gui/test_main_window_signals.py tests/gui/test_gtk_runtime_backend.py
+python.exe -m pytest -q tests/gui/test_ui_adapter_dispatch.py tests/gui/test_ui_adapter_mapping_validation.py tests/gui/test_main_window_signals.py tests/gui/test_gtk_runtime_backend.py
 ```
 
 - 受け入れ基準:

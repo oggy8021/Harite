@@ -17,6 +17,142 @@ def test_on_change_input_text_updates_state():
     assert window.last_error == ""
 
 
+def test_on_clear_input_resets_optimize_state():
+    window = MainWindow()
+    window.on_change_input_text("a.jpg")
+    assert window.on_save_legacy() is True
+    assert window.save_dialog_open is True
+
+    ok = window.on_clear_input()
+
+    assert ok is True
+    assert window.can_optimize is False
+    assert window.save_dialog_open is False
+    assert window.status_phase == "input"
+    assert window.status_message == "input is required"
+
+
+def test_on_about_is_planned():
+    window = MainWindow()
+
+    ok = window.on_about()
+
+    assert ok is False
+    assert window.status_level == "planned"
+    assert window.status_phase == "about"
+    assert window.status_message == "about dialog is planned"
+
+
+def test_on_set_color_is_planned():
+    window = MainWindow()
+
+    ok = window.on_set_color()
+
+    assert ok is False
+    assert window.status_level == "planned"
+    assert window.status_phase == "color"
+    assert window.status_message == "color picker is planned"
+
+
+def test_save_dialog_confirm_and_cancel_have_distinct_meanings():
+    window = MainWindow()
+
+    assert window.on_save_dialog_cancel() is False
+    assert window.status_level == "idle"
+    assert window.status_phase == "save_dialog"
+    assert window.status_message == "save dialog ignored (closed)"
+
+    assert window.on_save_legacy() is True
+    assert window.save_dialog_open is True
+    assert window.status_level == "idle"
+    assert window.status_phase == "save_dialog"
+    assert window.status_message == "save dialog opened"
+
+    assert window.on_save_dialog_cancel() is True
+    assert window.save_dialog_open is False
+    assert window.status_level == "idle"
+    assert window.status_phase == "save_dialog"
+    assert window.status_message == "save dialog canceled (path unchanged)"
+
+    assert window.on_save_dialog_confirm() is False
+    assert window.status_level == "idle"
+    assert window.status_phase == "save_dialog"
+    assert window.status_message == "save dialog ignored (closed)"
+
+    assert window.on_save_legacy() is True
+    assert window.on_save_dialog_confirm() is False
+    assert window.status_level == "error"
+    assert window.status_phase == "save_dialog"
+    assert window.status_message == "save path is required"
+    assert window.last_error == "save path is required"
+
+    assert window.on_save_dialog_confirm("/tmp/result.jpg") is True
+    assert window.form_state.save_path == "/tmp/result.jpg"
+    assert window.status_level == "idle"
+    assert window.status_phase == "save_dialog"
+    assert window.status_message == "save path selected"
+
+
+def test_save_dialog_confirm_without_argument_uses_existing_path():
+    window = MainWindow()
+    window.form_state.save_path = "/tmp/existing-save.jpg"
+    window.save_dialog_open = True
+
+    ok = window.on_save_dialog_confirm()
+
+    assert ok is True
+    assert window.save_dialog_open is False
+    assert window.form_state.save_path == "/tmp/existing-save.jpg"
+    assert window.status_level == "idle"
+    assert window.status_phase == "save_dialog"
+    assert window.status_message == "save path selected"
+
+
+def test_save_dialog_cancel_keeps_existing_save_path():
+    window = MainWindow()
+    window.form_state.save_path = "/tmp/existing-save.jpg"
+    window.save_dialog_open = True
+
+    ok = window.on_save_dialog_cancel()
+
+    assert ok is True
+    assert window.save_dialog_open is False
+    assert window.form_state.save_path == "/tmp/existing-save.jpg"
+    assert window.status_level == "idle"
+    assert window.status_phase == "save_dialog"
+    assert window.status_message == "save dialog canceled (path unchanged)"
+
+
+def test_save_dialog_confirm_runs_legacy_save_flow_when_input_ready(monkeypatch, tmp_path):
+    class DummyController:
+        def __init__(self) -> None:
+            self.calls = []
+
+        def run_optimize(self, form_state):
+            self.calls.append(form_state.save_path)
+            out = Path(form_state.save_path)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_bytes(b"x")
+            return [out], []
+
+    window = MainWindow()
+    window.controller = DummyController()
+    window.on_change_input_text("a.jpg")
+    assert window.on_save_legacy() is True
+    assert window.save_dialog_open is True
+
+    picked = tmp_path / "picked" / "legacy-save.jpg"
+    ok = window.on_save_dialog_confirm(str(picked))
+
+    assert ok is True
+    assert window.save_dialog_open is False
+    assert window.form_state.save_path == str(picked)
+    assert window.status_level == "success"
+    assert window.status_phase == "optimize"
+    assert window.status_message == "optimize completed"
+    assert any("Save dialog confirm: running legacy save flow" in line for line in window.logs)
+
+
 def test_layout_blueprint_defines_grouping_and_flow():
     window = MainWindow()
 
@@ -169,6 +305,31 @@ def test_on_apply_without_optimized_file_fails():
     assert window.last_error == "no optimized file to apply"
     assert window.status_level == "error"
     assert window.status_phase == "apply"
+
+
+def test_watch_handlers_are_planned_and_interval_is_validated():
+    window = MainWindow()
+
+    assert window.on_watch_start() is False
+    assert window.status_level == "planned"
+    assert window.status_phase == "watch"
+    assert window.status_message == "watch start is planned"
+
+    assert window.on_watch_stop() is False
+    assert window.status_level == "planned"
+    assert window.status_phase == "watch"
+    assert window.status_message == "watch stop is planned"
+
+    assert window.on_watch_interval_change(120) is True
+    assert window.watch_interval_seconds == 120
+    assert window.status_level == "planned"
+    assert window.status_phase == "watch"
+    assert window.status_message == "watch interval planned: 120s"
+
+    assert window.on_watch_interval_change(0) is False
+    assert window.status_level == "error"
+    assert window.status_phase == "watch"
+    assert window.last_error == "watch interval must be positive"
 
 
 def test_suggest_next_action_transitions(tmp_path):

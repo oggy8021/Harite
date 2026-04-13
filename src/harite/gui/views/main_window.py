@@ -32,6 +32,8 @@ class MainWindow:
         self.available_plugins = tuple(plugin_registry.list())
         self.plugin_name = self._default_plugin_name()
         self.last_saved_files: list[Path] = []
+        self.watch_interval_seconds = 60
+        self.save_dialog_open = False
         self.form_state = OptimizeFormState(
             input_value="",
             resolution="1920x1080",
@@ -129,15 +131,28 @@ class MainWindow:
             # Input changed to empty; reset apply readiness to avoid stale flow.
             self.can_apply = False
             self.last_saved_files = []
+            self.save_dialog_open = False
             self._set_status("error", "input", "input is required", error="input is required")
+            self._log("Save dialog closed by input reset")
         if self.can_optimize:
             self._set_status("idle", "input", "input ready")
             self._log("Input updated")
         else:
             self._log("Input is empty")
 
+    def on_save_legacy(self) -> bool:
+        """Legacy signal mapping: on_btnSave_clicked.
+
+        The old MainWindow had a Save action (save target selection + generation),
+        not an explicit button named Optimize.
+        """
+        self.save_dialog_open = True
+        self._set_status("idle", "save_dialog", "save dialog opened")
+        self._log("Save dialog opened")
+        return True
+
     def on_optimize(self) -> bool:
-        """Legacy signal mapping: on_btnSave_clicked."""
+        """Modern optimize action used by current flow/UI."""
         if not self.can_optimize:
             self._set_status("error", "optimize", "input is required", error="input is required")
             self._log("Optimize blocked: input is required")
@@ -206,6 +221,82 @@ class MainWindow:
     def on_apply_do_it(self) -> bool:
         """Legacy signal mapping: on_btnSetWall_clicked (execute mode)."""
         return self._apply_latest(dry_run=False)
+
+    def on_clear_input(self) -> bool:
+        """Legacy signal mapping: on_btnClrPath_clicked."""
+        self.on_change_input_text("")
+        self._log("Input cleared")
+        return True
+
+    def on_about(self) -> bool:
+        """Legacy signal mapping: on_btnAbout_clicked (planned)."""
+        self._set_status("planned", "about", "about dialog is planned")
+        self._log("About requested: planned")
+        return False
+
+    def on_set_color(self) -> bool:
+        """Legacy signal mapping: on_btnSetColor_clicked (planned)."""
+        self._set_status("planned", "color", "color picker is planned")
+        self._log("Color picker requested: planned")
+        return False
+
+    def on_save_dialog_confirm(self, save_path: str | None = None) -> bool:
+        """Legacy signal mapping: on_btnOpenSave_clicked."""
+        value = (save_path or "").strip()
+        if not self.save_dialog_open and not value:
+            self._set_status("idle", "save_dialog", "save dialog ignored (closed)")
+            self._log("Save dialog confirm ignored: dialog is closed")
+            return False
+        if not value:
+            value = (self.form_state.save_path or "").strip()
+        if value:
+            self.form_state.save_path = value
+            self.save_dialog_open = False
+            self._set_status("idle", "save_dialog", "save path selected")
+            self._log(f"Save path selected: {value}")
+            if self.can_optimize:
+                # Legacy expectation: save path confirm can continue into generation.
+                self._log("Save dialog confirm: running legacy save flow")
+                return self.on_optimize()
+            return True
+        self._set_status("error", "save_dialog", "save path is required", error="save path is required")
+        self._log("Save dialog confirm rejected: save path is required")
+        return False
+
+    def on_save_dialog_cancel(self) -> bool:
+        """Legacy signal mapping: on_btnCancelSave_clicked."""
+        if not self.save_dialog_open:
+            self._set_status("idle", "save_dialog", "save dialog ignored (closed)")
+            self._log("Save dialog cancel ignored: dialog is closed")
+            return False
+        self.save_dialog_open = False
+        self._set_status("idle", "save_dialog", "save dialog canceled (path unchanged)")
+        self._log("Save dialog canceled")
+        return True
+
+    def on_watch_start(self) -> bool:
+        """Legacy signal mapping: on_btnDaemonize_clicked (planned)."""
+        self._set_status("planned", "watch", "watch start is planned")
+        self._log("Watch start requested: planned")
+        return False
+
+    def on_watch_stop(self) -> bool:
+        """Legacy signal mapping: on_btnCancelDaemonize_clicked (planned)."""
+        self._set_status("planned", "watch", "watch stop is planned")
+        self._log("Watch stop requested: planned")
+        return False
+
+    def on_watch_interval_change(self, seconds: int) -> bool:
+        """Legacy signal mapping: on_spnInterval_value_changed (planned)."""
+        value = int(seconds)
+        if value <= 0:
+            self._set_status("error", "watch", "watch interval must be positive", error="watch interval must be positive")
+            self._log(f"Watch interval rejected: {value}")
+            return False
+        self.watch_interval_seconds = value
+        self._set_status("planned", "watch", f"watch interval planned: {value}s")
+        self._log(f"Watch interval updated (planned): {value}s")
+        return True
 
     def on_close(self) -> None:
         """Legacy signal mapping: on_WallPosit_MainWindow_delete_event."""

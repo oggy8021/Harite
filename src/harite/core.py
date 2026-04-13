@@ -321,6 +321,7 @@ def optimize_wallpapers(
     padding: int = 0,
     quality: int = 90,
     random_seed: int | None = None,
+    output_path: Path | None = None,
     **kwargs,
 ) -> Tuple[List[Path], List[PlacementResult]]:
     """壁紙最適化（簡易実装）。
@@ -333,6 +334,7 @@ def optimize_wallpapers(
         inputs: 入力ファイルパス列。
         target_resolution: 出力解像度 (w, h)。
         output_dir: 出力先ディレクトリ。
+        output_path: 出力先ファイルパス（指定時は自動命名より優先）。
         layout: レイアウトモード。
         scaling: スケーリングモード。
         padding: 画像間のパディング(px)。
@@ -477,7 +479,13 @@ def optimize_wallpapers(
         embed_font=kwargs.get("embed_font"),
     )
 
-    out_path = output_dir / ("harite_wallopt_" + str(abs(hash(tuple(items))))[:8] + ".jpg")
+    if output_path is not None:
+        out_path = Path(output_path)
+        if not out_path.suffix:
+            out_path = out_path.with_suffix(".jpg")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        out_path = output_dir / ("harite_wallopt_" + str(abs(hash(tuple(items))))[:8] + ".jpg")
     bg.save(out_path, quality=quality)
     saved_files.append(out_path)
 
