@@ -131,8 +131,11 @@
   - 完了記録: Phase5 の視覚トークン固定・主要導線スモーク・MainWindow 青写真検証が CI で再現可能な形で回帰化された（2026-04-13）
   - 完了条件: CI で再現可能な形で回帰検知できる
 
-- [ ] P5-6 docs/ops: manual gate の Phase5 同期
+- [x] P5-6 docs/ops: manual gate の Phase5 同期
   - 対象: `docs/manual-validation-gate.md` の観点更新
+  - 進捗: `docs/manual-validation-gate.md` に `Phase 5 manual gate 同期（P5-6）` を追加し、P5-1 視覚チェックリスト観点（Main/Optimize/Apply/Style）の判定ルールを固定（2026-04-13）
+  - 進捗: 固定回帰コマンドへ `tests/gui/test_phase5_visual_regression.py` を含めた Owner 実行手順を manual gate に同期（2026-04-13）
+  - 完了記録: docs / tests / 実機記録（3画面 + 判定テンプレート + PRコメント）の突合ルールを manual gate 上で統一（2026-04-13）
   - 完了条件: docs / tests / 実機記録の判定項目が一致
 
 - [ ] P5-7 validate: XFCE 実機で最終判定
