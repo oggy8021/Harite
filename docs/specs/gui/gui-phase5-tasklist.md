@@ -117,9 +117,10 @@
   - 完了記録: Owner 実行の固定回帰コマンド `python.exe -m pytest -q tests/gui/test_ui_adapter_dispatch.py tests/gui/test_ui_adapter_mapping_validation.py tests/gui/test_main_window_signals.py tests/gui/test_gtk_runtime_backend.py` が継続して 100% pass（2026-04-13）
   - 完了条件: 同種要素の見た目ゆれがなく、旧版らしさが説明可能
 
-- [ ] P5-1 docs: 見た目再現チェックリスト定義
+- [x] P5-1 docs: 見た目再現チェックリスト定義
   - 成果物: `docs/specs/gui/gui-phase5-visual-checklist.md`
   - 進捗: P5-4 完了を受けて P5-1 着手（2026-04-13）
+  - 完了記録: `docs/specs/gui/gui-phase5-visual-checklist.md` を作成し、MainWindow/Optimize/Apply の比較観点と判定テンプレートを固定（2026-04-13）
   - 完了条件: MainWindow/Optimize/Apply の比較観点がチェック可能な形で記述される
 
 - [ ] P5-5 test(gui): 視覚回帰テストとスモーク補強
