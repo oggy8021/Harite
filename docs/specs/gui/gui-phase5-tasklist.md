@@ -125,6 +125,9 @@
 
 - [ ] P5-5 test(gui): 視覚回帰テストとスモーク補強
   - 対象: `tests/gui/` に Phase5 観点を追加
+  - 進捗: `tests/gui/test_phase5_visual_regression.py` を追加し、Main/Optimize/Apply の視覚トークン固定と optimize->apply スモーク導線を回帰化（2026-04-13）
+  - 進捗: MainWindow の `layout_version` / sections / primary flow を Phase5 観点で検証するスモークを追加（2026-04-13）
+  - 進捗: 固定回帰コマンドに `tests/gui/test_phase5_visual_regression.py` を加えた実行がローカルで pass（2026-04-13）
   - 完了条件: CI で再現可能な形で回帰検知できる
 
 - [ ] P5-6 docs/ops: manual gate の Phase5 同期
