@@ -54,6 +54,7 @@ python scripts/gui_layout_smoke.py --simulate --validate --auto-artifacts --arti
   - 母体プログラムを explain し、確認してください。
   - 最終的に Core などに渡す際に 1 つへまとめることは問題ありません。
   - watch 用の左右画像向けパスは `srcdirL`, `srcdirR` で指定します。未指定も許容します。
+  - 実施先PR: P5-9 `feat(gui): watch 導線の実処理導入（srcdirL/srcdirR）`
 
 - Optimize
   - `Optimize result: handler-missing`

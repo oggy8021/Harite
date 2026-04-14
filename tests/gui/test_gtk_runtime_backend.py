@@ -194,6 +194,8 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("tglLowerR") is not None
     assert backend.get_object("btnGetImgL") is not None
     assert backend.get_object("btnGetImgR") is not None
+    assert backend.get_object("entPathL") is not None
+    assert backend.get_object("entPathR") is not None
     assert backend.get_object("lblOptimizeSection") is not None
     assert backend.get_object("boxOptimizeSection") is not None
     assert backend.get_object("btnOptimize") is not None
@@ -314,6 +316,49 @@ def test_runtime_backend_open_r_without_entry_path_marks_planned():
     assert pick_state.text == "Open-R: planned(path-required)"
     assert status.text == "Open-R: planned"
     assert error.text == "Error: path input required"
+
+
+def test_runtime_backend_open_r_uses_right_entry_path_and_calls_pick_handler():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    entry_l = backend.get_object("entPathL")
+    entry_r = backend.get_object("entPathR")
+    open_r = backend.get_object("btnGetImgR")
+    pick_state = backend.get_object("lblPickState")
+    status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+    observed = {"path": None}
+
+    def on_pick(path):
+        observed["path"] = path
+
+    backend.connect_signals({"on_btnGetImg_clicked": on_pick})
+    entry_l.set_text("/tmp/left.jpg")
+    entry_r.set_text("/tmp/right.jpg")
+    open_r.click()
+
+    assert observed["path"] == "/tmp/right.jpg"
+    assert pick_state.text == "Open-R: selected"
+    assert status.text == "Open-R: selected"
+    assert error.text == "Error: none"
+
+
+def test_runtime_backend_right_input_enables_optimize_buttons():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    entry_l = backend.get_object("entPathL")
+    entry_r = backend.get_object("entPathR")
+    optimize_btn = backend.get_object("btnSave")
+    optimize_modern_btn = backend.get_object("btnOptimize")
+
+    backend.connect_signals({"on_entPath_insert_text": lambda _text: None})
+
+    entry_l.set_text("")
+    entry_r.set_text("/tmp/right-only.jpg")
+    entry_r.emit("changed", entry_r)
+
+    assert optimize_btn.sensitive is True
+    assert optimize_modern_btn.sensitive is True
 
 
 def test_runtime_backend_color_click_sets_planned_status():

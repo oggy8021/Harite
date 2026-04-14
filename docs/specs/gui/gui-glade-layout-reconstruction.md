@@ -8,6 +8,25 @@
 - 既存 `docs/specs/gui/` には、Glade の実ウィジェット配置を画面内構造として固定した文書はなかった。
 - 本書は `WallPosit_MainWindow` の配置を再現するための基準ドキュメント。
 
+## 元プログラム由来の一次根拠（参照専用資産）
+
+`docs/legacy-ui/` は、旧母体からコピーした UI 資産の参照専用ステージングであり、
+本書の仕様根拠は以下を一次資料として扱う。
+
+- `docs/legacy-ui/wallpositapplet.glade`
+  - `btnGetImgL` / `btnGetImgR` の `clicked` は共通で `on_btnGetImg_clicked` に接続される。
+  - `entPathL` / `entPathR` が独立エントリとして定義され、`insert_text` は `on_entPath_insert_text` に接続される。
+  - `btnSave` は `on_btnSave_clicked`、`btnSetWall` は `on_btnSetWall_clicked` に接続される。
+- `docs/legacy-ui/Glade.py`
+  - `addPos()` はウィジェット名の末尾 `L` / `R` を読み取り、`Position(0/1)` を付与する。
+  - 旧 UI が左系/右系を命名規約で区別していたことを示す根拠であり、
+    `btnGetImgL/R` と `entPathL/R` を対に扱う設計意図の裏付けとなる。
+
+運用ルール:
+
+- 原本は `docs/legacy-ui/README.md` の規約どおり「参照専用」とし、直接編集しない。
+- 実装調整は `src/harite/gui/resources/` 側で行い、差分理由を本書または tasklist に記録する。
+
 ## 画面全体の骨格
 
 `GtkWindow(WallPosit_MainWindow)`
@@ -189,7 +208,8 @@ Phase5 方針メモ:
 ## Glade再現時の配置ルール（Phase5向け）
 
 - ルール1: 縦5段（上マージン行 / 中央本体 / 下マージン行 / コマンドバー / statusbar）を維持する。
-- ルール2: 中央本体は「左マージン列 + 中央操作群 + 右マージン列」の3列を維持する。
+- ルール2: 中央本体は「十字配置（上下左右の独立指示 + 中央操作）」の再現を最優先とし、実装しやすさを優先する。
+- 補足: 十字配置の再現性を担保できるなら、列/行の増減やネスト再編を許容する（3列固定を必須にしない）。
 - ルール3: 下部コマンドは1行バーに集約し、`save` と `apply` は中央寄りの主要ボタンとして視認可能にする。
 - ルール4: 旧IDに紐づく操作意図（取得、クリア、固定、適用）を欠落させない。
 
@@ -204,7 +224,7 @@ Phase5 方針メモ:
 
 このPRで実施できること:
 
-- MainWindow の骨格（縦5段 + 中央3列）を Glade 近似へ寄せる。
+- MainWindow の骨格（縦5段 + 中央十字配置）を Glade 近似へ寄せる（必要に応じて列/行を増減）。
 - 主要ウィジェットIDの互換導線（`btnSave`, `btnSetWall`, `entPathL` など）を維持する。
 - `resizable=True` を採用し、旧制約との差分理由を記録する。
 

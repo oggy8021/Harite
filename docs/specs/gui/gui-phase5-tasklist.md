@@ -36,7 +36,7 @@
 - P5-2 はクローズ済み（`[x]`）。
 - 実装済み:
   - `src/harite/gui/views/main_window.py` に Phase5 レイアウトメタデータ（`layout_version`, `layout_sections`）を反映。
-  - `src/harite/gui/adapters/gtk_backend.py` を Glade近似の縦5段/中央3列構成へ再編。
+  - `src/harite/gui/adapters/gtk_backend.py` を Glade近似の縦5段/中央十字配置を軸に再編（列/行増減を許容）。
   - Window 方針を `resizable=True` に確定。
 - ドキュメント済み:
   - Glade再現基準: `docs/specs/gui/gui-glade-layout-reconstruction.md`
@@ -44,6 +44,10 @@
   - 手動検証メモ: `out/manual-validation/gui-phase5-pr2-memo.md`
 - 未完了:
   - PR5-2 メモで上がった後続項目の分配（P5-3 / P5-4 / 将来拡張）
+
+方針決定ログ（2026-04-14）:
+
+- 中央レイアウトは「3列固定」より「十字配置再現 + 実装しやすさ」を優先し、列/行増減を許容する。
 
 ## タスク（1タスク=1PR）
 
@@ -143,7 +147,16 @@
   - 進捗: XFCE 実機判定用テンプレート `docs/specs/gui/gui-phase5-p5-7-xfce-validation-template.md` を追加（2026-04-13）
   - 進捗: P5-1 観点（MainWindow/Optimize/Apply/Style）の `pass/warn/fail` 記録欄と PR 貼り付け用コメント雛形を用意（2026-04-13）
   - 進捗: Owner 実行の固定回帰コマンドが 100% pass（2026-04-13）
+  - 進捗: `docs/specs/gui/gui-glade-layout-reconstruction.md` に `docs/legacy-ui/wallpositapplet.glade` / `docs/legacy-ui/Glade.py` を一次根拠として明記（2026-04-14）
+  - 進捗: `gtk_backend` で `entPathR` を実体化し、`Open-R -> entPathR` の入力反映導線を復旧（2026-04-14）
+  - 進捗: `ui_adapter.bind_mainwindow` で `on_btnOptimize_clicked -> on_optimize` の補完接続を追加し、runtime fallback の handler-missing を抑制（2026-04-14）
   - 完了条件: P5-1 チェックリスト必須項目がすべて pass
+
+- [ ] P5-9 feat(gui): watch 導線の実処理導入（srcdirL/srcdirR）
+  - 対象: watch start/stop/interval の planned 導線を実処理へ昇格
+  - 要件: watch 用の左右画像向けパスは `srcdirL`, `srcdirR` で指定可能、未指定も許容
+  - 補足: MainWindow の `entPathL` / `entPathR` とは責務を分離（watch 用入力と通常入力を混同しない）
+  - 完了条件: watch 実行時に `srcdirL` / `srcdirR` の有無に応じた分岐が回帰テストで固定される
 
 ## 推奨着手順
 
