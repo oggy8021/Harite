@@ -8,6 +8,11 @@
 - XFCE 実機で Phase5 の最終判定を行い、PR 添付物を揃える。
 - P5-1 観点（MainWindow / Optimize / Apply / Style）を `pass/warn/fail` で記録する。
 
+補足（履歴保持運用）:
+
+- 前回結果を保持したまま P5-x の再判定を追記する場合は、
+  `docs/specs/gui/gui-phase5-p5-7-xfce-rejudge-template.md` を使用する。
+
 ## 成果物チェック
 
 - [ ] JSON: `out/manual-validation/pr-<PR番号>-xfce.json`

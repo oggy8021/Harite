@@ -29,10 +29,10 @@
 
 | 旧意図 | 現行fallback表現 | 目的 |
 | --- | --- | --- |
-| Save系主操作 | `Save (primary)` | 主操作の視認優先 |
-| Optimize系主操作 | `Optimize (primary)` | 主操作の視認優先 |
-| Apply系主操作 | `Apply (primary dry-run)` | 安全既定の明示 |
-| 設定/補助導線 | `Prefs/About/Help (secondary)` | 主操作との差別化 |
+| Save系主操作 | `Save` | 主要導線を簡潔に表示 |
+| Optimize系主操作 | `Optimize` | 主要導線を簡潔に表示 |
+| Apply系主操作 | `Apply (dry-run)` | 安全既定の明示 |
+| 設定/補助導線 | `Prefs` / `About (secondary)` / `Help (secondary)` | About/Help のみ補助導線として強調 |
 | 未実装導線 | `(... planned)` | 非透過状態の回避 |
 | 位置トグル | `Top/Bottom/Left/Right` + `-L/-R` | 左右対称・意味対称 |
 

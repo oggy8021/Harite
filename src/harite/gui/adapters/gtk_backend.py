@@ -179,11 +179,11 @@ class GtkRuntimeSignalBackend:
             if hasattr(optimize_section_label, "set_xalign"):
                 optimize_section_label.set_xalign(0.0)
             optimize_row.pack_start(optimize_section_label, False, False, 0)
-            optimize_btn = gtk_module.Button(label="Save (primary)")
+            optimize_btn = gtk_module.Button(label="Save")
             if hasattr(optimize_btn, "set_sensitive"):
                 optimize_btn.set_sensitive(False)
             optimize_row.pack_start(optimize_btn, False, False, 0)
-            optimize_modern_btn = gtk_module.Button(label="Optimize (primary)")
+            optimize_modern_btn = gtk_module.Button(label="Optimize")
             if hasattr(optimize_modern_btn, "set_sensitive"):
                 optimize_modern_btn.set_sensitive(False)
             optimize_row.pack_start(optimize_modern_btn, False, False, 0)
@@ -198,7 +198,7 @@ class GtkRuntimeSignalBackend:
             if hasattr(apply_section_label, "set_xalign"):
                 apply_section_label.set_xalign(0.0)
             apply_row.pack_start(apply_section_label, False, False, 0)
-            apply_btn = gtk_module.Button(label="Apply (primary dry-run)")
+            apply_btn = gtk_module.Button(label="Apply (dry-run)")
             if hasattr(apply_btn, "set_sensitive"):
                 apply_btn.set_sensitive(False)
             apply_row.pack_start(apply_btn, False, False, 0)
@@ -225,7 +225,7 @@ class GtkRuntimeSignalBackend:
             main_col.pack_start(priority_note_label, False, False, 0)
 
             style_legend_label = gtk_module.Label(
-                label="Style tiers: primary | secondary | planned"
+                label="Style cues: secondary(about/help) | planned"
             )
             if hasattr(style_legend_label, "set_xalign"):
                 style_legend_label.set_xalign(0.0)
@@ -261,14 +261,14 @@ class GtkRuntimeSignalBackend:
             bottom_margin_row.pack_start(btm_spacer_r, True, True, 0)
 
             # Row 3: command bar (Glade hbox14 equivalent)
-            command_section_label = gtk_module.Label(label="Commands (tiered)")
+            command_section_label = gtk_module.Label(label="Commands")
             if hasattr(command_section_label, "set_xalign"):
                 command_section_label.set_xalign(0.0)
             root.pack_start(command_section_label, False, False, 0)
 
             command_bar = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             root.pack_start(command_bar, False, False, 0)
-            btn_setting = gtk_module.Button(label="Prefs (secondary)")
+            btn_setting = gtk_module.Button(label="Prefs")
             btn_set_color = gtk_module.Button(label="Color (planned)")
             save_dialog_proxy = _SaveDialogProxy(self._on_save_dialog_filename_changed)
             btn_open_save = gtk_module.Button(label="Save Confirm")
