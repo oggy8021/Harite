@@ -154,6 +154,9 @@
 - [ ] P5-8 feat(gui): トグル排他と margin 反映の実装確定
   - 対象: `Top/Bottom`、`Left/Right` の同時押下矛盾を排除し、片側有効時は反対側を復帰
   - 要件: margin +/- 操作の反映を可視化し、優先順位ルール（fixed > margin > toggles）と整合
+  - 進捗: runtime fallback にトグル排他（上下/左右）の即時復帰ロジックを追加し、同時押下矛盾を抑止（2026-04-14）
+  - 進捗: margin spin の値変更を `on_spnMergin_value_changed` へ集約伝播する処理を追加（2026-04-14）
+  - 進捗: `tests/gui/test_gtk_runtime_backend.py` にトグル排他・margin伝播の回帰ケースを追加（2026-04-14）
   - 完了条件: トグル排他・margin反映・優先順位の挙動が回帰テストと実機メモで一致
 
 - [ ] P5-9 feat(gui): Open 導線を Dialog 主体へ復元（ImgOpenDialog 相当）

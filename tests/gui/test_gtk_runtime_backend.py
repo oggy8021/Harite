@@ -89,16 +89,34 @@ class _Button(_WidgetBase):
 
 
 class _ToggleButton(_Button):
-    pass
+    def __init__(self, label=""):
+        super().__init__(label=label)
+        self._active = False
+
+    def set_active(self, active):
+        self._active = bool(active)
+
+    def get_active(self):
+        return self._active
 
 
 class _SpinButton(_WidgetBase):
     def __init__(self):
         super().__init__()
         self.numeric = False
+        self._value = 0
 
     def set_numeric(self, enabled):
         self.numeric = bool(enabled)
+
+    def set_value(self, value):
+        self._value = int(value)
+
+    def get_value(self):
+        return self._value
+
+    def get_value_as_int(self):
+        return int(self._value)
 
 
 class _RadioButton(_ToggleButton):
@@ -700,3 +718,56 @@ def test_runtime_backend_apply_handler_missing_sets_status_and_error():
     assert status.text == "Apply: handler-missing"
     assert error.text == "Error: handler not connected"
     assert apply_target.text == "Apply target: handler-missing"
+
+
+def test_runtime_backend_toggle_exclusivity_for_left_vertical_direction():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    upper = backend.get_object("tglUpperL")
+    lower = backend.get_object("tglLowerL")
+
+    upper.click()
+    assert upper.get_active() is True
+    assert lower.get_active() is False
+
+    lower.click()
+    assert lower.get_active() is True
+    assert upper.get_active() is False
+
+
+def test_runtime_backend_toggle_exclusivity_for_right_horizontal_direction():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    left = backend.get_object("tglPushLeftR")
+    right = backend.get_object("tglPushRightR")
+
+    left.click()
+    assert left.get_active() is True
+    assert right.get_active() is False
+
+    right.click()
+    assert right.get_active() is True
+    assert left.get_active() is False
+
+
+def test_runtime_backend_margin_change_propagates_all_values():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.get_object("spnLMergin").set_value(11)
+    backend.get_object("spnRMergin").set_value(22)
+    backend.get_object("spnTopMergin").set_value(33)
+    backend.get_object("spnBtmMergin").set_value(44)
+
+    status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+    captured = {}
+
+    def on_margins(left, right, top, bottom):
+        captured["vals"] = (left, right, top, bottom)
+
+    backend.connect_signals({"on_spnMergin_value_changed": on_margins})
+    backend.get_object("spnLMergin").emit("value-changed", backend.get_object("spnLMergin"))
+
+    assert captured["vals"] == (11, 22, 33, 44)
+    assert status.text == "Margins: updated"
+    assert error.text == "Error: none"

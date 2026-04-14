@@ -73,6 +73,8 @@ class GtkRuntimeSignalBackend:
             top_margin_spin = gtk_module.SpinButton()
             if hasattr(top_margin_spin, "set_numeric"):
                 top_margin_spin.set_numeric(True)
+            if hasattr(top_margin_spin, "set_value"):
+                top_margin_spin.set_value(0)
             top_row.pack_start(top_margin_spin, False, False, 0)
 
             top_spacer_r = gtk_module.Label(label="")
@@ -93,6 +95,8 @@ class GtkRuntimeSignalBackend:
             left_margin_spin = gtk_module.SpinButton()
             if hasattr(left_margin_spin, "set_numeric"):
                 left_margin_spin.set_numeric(True)
+            if hasattr(left_margin_spin, "set_value"):
+                left_margin_spin.set_value(0)
             left_margin_col.pack_start(left_margin_spin, False, False, 0)
 
             main_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
@@ -242,6 +246,8 @@ class GtkRuntimeSignalBackend:
             right_margin_spin = gtk_module.SpinButton()
             if hasattr(right_margin_spin, "set_numeric"):
                 right_margin_spin.set_numeric(True)
+            if hasattr(right_margin_spin, "set_value"):
+                right_margin_spin.set_value(0)
             right_margin_col.pack_start(right_margin_spin, False, False, 0)
 
             # Row 2: bottom margin row (Glade hbox12 equivalent)
@@ -256,6 +262,8 @@ class GtkRuntimeSignalBackend:
             bottom_margin_spin = gtk_module.SpinButton()
             if hasattr(bottom_margin_spin, "set_numeric"):
                 bottom_margin_spin.set_numeric(True)
+            if hasattr(bottom_margin_spin, "set_value"):
+                bottom_margin_spin.set_value(0)
             bottom_margin_row.pack_start(bottom_margin_spin, False, False, 0)
             btm_spacer_r = gtk_module.Label(label="")
             bottom_margin_row.pack_start(btm_spacer_r, True, True, 0)
@@ -393,8 +401,20 @@ class GtkRuntimeSignalBackend:
             # legacy glade cannot be parsed at runtime.
             input_entry_l.connect("changed", self._on_input_changed)
             input_entry_r.connect("changed", self._on_input_changed)
+            tgl_upper_l.connect("clicked", lambda *_args: self._on_direction_toggled("vertical", "L", "top"))
+            tgl_lower_l.connect("clicked", lambda *_args: self._on_direction_toggled("vertical", "L", "bottom"))
+            tgl_upper_r.connect("clicked", lambda *_args: self._on_direction_toggled("vertical", "R", "top"))
+            tgl_lower_r.connect("clicked", lambda *_args: self._on_direction_toggled("vertical", "R", "bottom"))
+            tgl_push_left_l.connect("clicked", lambda *_args: self._on_direction_toggled("horizontal", "L", "left"))
+            tgl_push_right_l.connect("clicked", lambda *_args: self._on_direction_toggled("horizontal", "L", "right"))
+            tgl_push_left_r.connect("clicked", lambda *_args: self._on_direction_toggled("horizontal", "R", "left"))
+            tgl_push_right_r.connect("clicked", lambda *_args: self._on_direction_toggled("horizontal", "R", "right"))
             btn_get_img_l.connect("clicked", lambda *_args: self._on_pick_input_clicked("L"))
             btn_get_img_r.connect("clicked", lambda *_args: self._on_pick_input_clicked("R"))
+            top_margin_spin.connect("value-changed", self._on_margin_changed)
+            left_margin_spin.connect("value-changed", self._on_margin_changed)
+            right_margin_spin.connect("value-changed", self._on_margin_changed)
+            bottom_margin_spin.connect("value-changed", self._on_margin_changed)
             optimize_btn.connect("clicked", self._on_save_clicked)
             optimize_modern_btn.connect("clicked", self._on_optimize_clicked)
             apply_btn.connect("clicked", self._on_apply_clicked)
@@ -547,6 +567,66 @@ class GtkRuntimeSignalBackend:
         except Exception as exc:
             self._set_label_text("lblPickState", f"Open-{side}: error")
             self._set_feedback(phase=f"Open-{side}", state="error", error=str(exc))
+
+    def _set_toggle_active(self, object_name: str, active: bool) -> None:
+        toggle = self._objects.get(object_name)
+        if toggle is None:
+            return
+        if hasattr(toggle, "set_active"):
+            toggle.set_active(bool(active))
+            return
+        setattr(toggle, "active", bool(active))
+
+    def _on_direction_toggled(self, axis: str, side: str, direction: str) -> None:
+        if axis == "vertical":
+            if direction == "top":
+                self._set_toggle_active(f"tglUpper{side}", True)
+                self._set_toggle_active(f"tglLower{side}", False)
+            else:
+                self._set_toggle_active(f"tglLower{side}", True)
+                self._set_toggle_active(f"tglUpper{side}", False)
+        elif axis == "horizontal":
+            if direction == "left":
+                self._set_toggle_active(f"tglPushLeft{side}", True)
+                self._set_toggle_active(f"tglPushRight{side}", False)
+            else:
+                self._set_toggle_active(f"tglPushRight{side}", True)
+                self._set_toggle_active(f"tglPushLeft{side}", False)
+
+        callback = self._signal_handlers.get("on_radFixed_toggled")
+        if callback is not None:
+            try:
+                callback(False)
+            except Exception:
+                # Keep UI response even when fixed callback is absent or strict.
+                pass
+
+    def _read_spin_int(self, object_name: str) -> int:
+        spin = self._objects.get(object_name)
+        if spin is None:
+            return 0
+        if hasattr(spin, "get_value_as_int"):
+            return int(spin.get_value_as_int())
+        if hasattr(spin, "get_value"):
+            return int(spin.get_value())
+        return 0
+
+    def _on_margin_changed(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_spnMergin_value_changed")
+        left = self._read_spin_int("spnLMergin")
+        right = self._read_spin_int("spnRMergin")
+        top = self._read_spin_int("spnTopMergin")
+        bottom = self._read_spin_int("spnBtmMergin")
+
+        if callback is None:
+            self._set_feedback(phase="Margins", state="planned")
+            return
+
+        try:
+            callback(left, right, top, bottom)
+            self._set_feedback(phase="Margins", state="updated")
+        except Exception as exc:
+            self._set_feedback(phase="Margins", state="error", error=str(exc))
 
     def _run_optimize_path(self, callback: Callable[..., Any] | None) -> None:
         if callback is None:
