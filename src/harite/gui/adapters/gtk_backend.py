@@ -120,16 +120,26 @@ class GtkRuntimeSignalBackend:
             upper_toggle_row.pack_start(tgl_upper_l, False, False, 0)
             upper_toggle_row.pack_start(tgl_upper_r, False, False, 0)
 
-            push_toggle_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            main_col.pack_start(push_toggle_row, False, False, 0)
+            cross_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=12)
+            main_col.pack_start(cross_center_row, False, False, 0)
+
+            push_toggle_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            cross_center_row.pack_start(push_toggle_row_l, False, False, 0)
             tgl_push_left_l = gtk_module.ToggleButton(label="Left-L")
             tgl_push_right_l = gtk_module.ToggleButton(label="Right-L")
+            btn_get_img_l = gtk_module.Button(label="Open-L")
+            push_toggle_row_l.pack_start(tgl_push_left_l, False, False, 0)
+            push_toggle_row_l.pack_start(btn_get_img_l, False, False, 0)
+            push_toggle_row_l.pack_start(tgl_push_right_l, False, False, 0)
+
+            push_toggle_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            cross_center_row.pack_start(push_toggle_row_r, False, False, 0)
             tgl_push_left_r = gtk_module.ToggleButton(label="Left-R")
             tgl_push_right_r = gtk_module.ToggleButton(label="Right-R")
-            push_toggle_row.pack_start(tgl_push_left_l, False, False, 0)
-            push_toggle_row.pack_start(tgl_push_right_l, False, False, 0)
-            push_toggle_row.pack_start(tgl_push_left_r, False, False, 0)
-            push_toggle_row.pack_start(tgl_push_right_r, False, False, 0)
+            btn_get_img_r = gtk_module.Button(label="Open-R")
+            push_toggle_row_r.pack_start(tgl_push_left_r, False, False, 0)
+            push_toggle_row_r.pack_start(btn_get_img_r, False, False, 0)
+            push_toggle_row_r.pack_start(tgl_push_right_r, False, False, 0)
 
             lower_toggle_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             main_col.pack_start(lower_toggle_row, False, False, 0)
@@ -138,13 +148,6 @@ class GtkRuntimeSignalBackend:
             lower_toggle_row.pack_start(tgl_lower_l, False, False, 0)
             lower_toggle_row.pack_start(tgl_lower_r, False, False, 0)
 
-            file_pick_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            main_col.pack_start(file_pick_row, False, False, 0)
-            btn_get_img_l = gtk_module.Button(label="Open-L")
-            btn_get_img_r = gtk_module.Button(label="Open-R")
-            file_pick_row.pack_start(btn_get_img_l, False, False, 0)
-            file_pick_row.pack_start(btn_get_img_r, False, False, 0)
-
             pick_state_label = gtk_module.Label(label="Picker: idle")
             if hasattr(pick_state_label, "set_xalign"):
                 pick_state_label.set_xalign(0.0)
@@ -152,12 +155,15 @@ class GtkRuntimeSignalBackend:
 
             input_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             main_col.pack_start(input_row, False, False, 0)
-            input_entry = gtk_module.Entry()
-            input_entry.set_placeholder_text("/path/to/image_or_directory")
+            input_entry_l = gtk_module.Entry()
+            input_entry_l.set_placeholder_text("/path/to/left_image_or_directory")
             btn_clr_path_l = gtk_module.Button(label="Clear-L")
+            input_entry_r = gtk_module.Entry()
+            input_entry_r.set_placeholder_text("/path/to/right_image_or_directory")
             btn_clr_path_r = gtk_module.Button(label="Clear-R")
-            input_row.pack_start(input_entry, True, True, 0)
+            input_row.pack_start(input_entry_l, True, True, 0)
             input_row.pack_start(btn_clr_path_l, False, False, 0)
+            input_row.pack_start(input_entry_r, True, True, 0)
             input_row.pack_start(btn_clr_path_r, False, False, 0)
 
             fixed_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
@@ -173,11 +179,11 @@ class GtkRuntimeSignalBackend:
             if hasattr(optimize_section_label, "set_xalign"):
                 optimize_section_label.set_xalign(0.0)
             optimize_row.pack_start(optimize_section_label, False, False, 0)
-            optimize_btn = gtk_module.Button(label="Save (primary)")
+            optimize_btn = gtk_module.Button(label="Save")
             if hasattr(optimize_btn, "set_sensitive"):
                 optimize_btn.set_sensitive(False)
             optimize_row.pack_start(optimize_btn, False, False, 0)
-            optimize_modern_btn = gtk_module.Button(label="Optimize (primary)")
+            optimize_modern_btn = gtk_module.Button(label="Optimize")
             if hasattr(optimize_modern_btn, "set_sensitive"):
                 optimize_modern_btn.set_sensitive(False)
             optimize_row.pack_start(optimize_modern_btn, False, False, 0)
@@ -192,7 +198,7 @@ class GtkRuntimeSignalBackend:
             if hasattr(apply_section_label, "set_xalign"):
                 apply_section_label.set_xalign(0.0)
             apply_row.pack_start(apply_section_label, False, False, 0)
-            apply_btn = gtk_module.Button(label="Apply (primary dry-run)")
+            apply_btn = gtk_module.Button(label="Apply (dry-run)")
             if hasattr(apply_btn, "set_sensitive"):
                 apply_btn.set_sensitive(False)
             apply_row.pack_start(apply_btn, False, False, 0)
@@ -219,7 +225,7 @@ class GtkRuntimeSignalBackend:
             main_col.pack_start(priority_note_label, False, False, 0)
 
             style_legend_label = gtk_module.Label(
-                label="Style tiers: primary | secondary | planned"
+                label="Style cues: secondary(about/help) | planned"
             )
             if hasattr(style_legend_label, "set_xalign"):
                 style_legend_label.set_xalign(0.0)
@@ -255,14 +261,14 @@ class GtkRuntimeSignalBackend:
             bottom_margin_row.pack_start(btm_spacer_r, True, True, 0)
 
             # Row 3: command bar (Glade hbox14 equivalent)
-            command_section_label = gtk_module.Label(label="Commands (tiered)")
+            command_section_label = gtk_module.Label(label="Commands")
             if hasattr(command_section_label, "set_xalign"):
                 command_section_label.set_xalign(0.0)
             root.pack_start(command_section_label, False, False, 0)
 
             command_bar = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             root.pack_start(command_bar, False, False, 0)
-            btn_setting = gtk_module.Button(label="Prefs (secondary)")
+            btn_setting = gtk_module.Button(label="Prefs")
             btn_set_color = gtk_module.Button(label="Color (planned)")
             save_dialog_proxy = _SaveDialogProxy(self._on_save_dialog_filename_changed)
             btn_open_save = gtk_module.Button(label="Save Confirm")
@@ -338,8 +344,9 @@ class GtkRuntimeSignalBackend:
                 "btnGetImgL": btn_get_img_l,
                 "btnGetImgR": btn_get_img_r,
                 "lblPickState": pick_state_label,
-                "entPathL": input_entry,
+                "entPathL": input_entry_l,
                 "btnClrPathL": btn_clr_path_l,
+                "entPathR": input_entry_r,
                 "btnClrPathR": btn_clr_path_r,
                 "radFixed": rad_fixed,
                 "radNoFixed": rad_no_fixed,
@@ -384,7 +391,8 @@ class GtkRuntimeSignalBackend:
 
             # Why: fallback window must still exercise MainWindow handlers even when
             # legacy glade cannot be parsed at runtime.
-            input_entry.connect("changed", self._on_input_changed)
+            input_entry_l.connect("changed", self._on_input_changed)
+            input_entry_r.connect("changed", self._on_input_changed)
             btn_get_img_l.connect("clicked", lambda *_args: self._on_pick_input_clicked("L"))
             btn_get_img_r.connect("clicked", lambda *_args: self._on_pick_input_clicked("R"))
             optimize_btn.connect("clicked", self._on_save_clicked)
@@ -478,8 +486,20 @@ class GtkRuntimeSignalBackend:
 
     def _on_input_changed(self, entry: Any) -> None:
         callback = self._signal_handlers.get("on_entPath_insert_text")
-        text = entry.get_text() if hasattr(entry, "get_text") else ""
-        has_input = bool(text and str(text).strip())
+        text_l = ""
+        text_r = ""
+
+        entry_l = self._objects.get("entPathL")
+        if entry_l is not None and hasattr(entry_l, "get_text"):
+            text_l = str(entry_l.get_text() or "").strip()
+
+        entry_r = self._objects.get("entPathR")
+        if entry_r is not None and hasattr(entry_r, "get_text"):
+            text_r = str(entry_r.get_text() or "").strip()
+
+        input_values = [value for value in (text_l, text_r) if value]
+        text = ",".join(input_values)
+        has_input = bool(input_values)
         # Why: avoid invalid optimize/apply calls when the input field is empty.
         self._set_button_enabled("btnSave", has_input)
         self._set_button_enabled("btnOptimize", has_input)
@@ -500,7 +520,8 @@ class GtkRuntimeSignalBackend:
 
     def _on_pick_input_clicked(self, side: str) -> None:
         callback = self._signal_handlers.get("on_btnGetImg_clicked")
-        entry = self._objects.get("entPathL")
+        entry_name = "entPathL" if side == "L" else "entPathR"
+        entry = self._objects.get(entry_name)
         value = ""
         if entry is not None and hasattr(entry, "get_text"):
             value = str(entry.get_text() or "").strip()

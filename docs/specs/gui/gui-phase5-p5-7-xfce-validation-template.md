@@ -8,6 +8,11 @@
 - XFCE 実機で Phase5 の最終判定を行い、PR 添付物を揃える。
 - P5-1 観点（MainWindow / Optimize / Apply / Style）を `pass/warn/fail` で記録する。
 
+補足（履歴保持運用）:
+
+- 前回結果を保持したまま P5-x の再判定を追記する場合は、
+  `docs/specs/gui/gui-phase5-p5-7-xfce-rejudge-template.md` を使用する。
+
 ## 成果物チェック
 
 - [ ] JSON: `out/manual-validation/pr-<PR番号>-xfce.json`
@@ -54,6 +59,7 @@ python scripts/gui_layout_smoke.py --simulate --validate --auto-artifacts --arti
   - 母体プログラムを explain し、確認してください。
   - 最終的に Core などに渡す際に 1 つへまとめることは問題ありません。
   - watch 用の左右画像向けパスは `srcdirL`, `srcdirR` で指定します。未指定も許容します。
+  - 実施先PR: P5-9 `feat(gui): watch 導線の実処理導入（srcdirL/srcdirR）`
 
 - Optimize
   - `Optimize result: handler-missing`

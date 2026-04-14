@@ -18,6 +18,10 @@ class DummyWindow:
         self.calls.append(("save", True))
         return True
 
+    def on_optimize(self) -> bool:
+        self.calls.append(("optimize", True))
+        return True
+
     def on_apply_dry_run(self) -> bool:
         self.calls.append(("apply_dry", True))
         return True
@@ -192,12 +196,31 @@ def test_bind_mainwindow_stores_dispatch_handlers_metadata_and_table():
         "on_entPath_insert_text",
         "on_btnSave_clicked",
         "on_btnSetWall_clicked",
+        "on_btnOptimize_clicked",
     }
     assert set(win._adapter_signal_dispatch.keys()) == {
         "on_entPath_insert_text",
         "on_btnSave_clicked",
         "on_btnSetWall_clicked",
+        "on_btnOptimize_clicked",
     }
+
+
+def test_bind_mainwindow_adds_optimize_dispatch_when_mainwindow_supports_it():
+    win = DummyWindow()
+    result = UiLoadResult(
+        file_path=Path("/tmp/fake.glade"),
+        root_tag="interface",
+        widget_count=1,
+        signal_count=1,
+        signal_handlers=("on_btnSave_clicked",),
+    )
+
+    bind_mainwindow(win, result)
+
+    assert "on_btnOptimize_clicked" in win._adapter_signal_dispatch
+    assert win._adapter_signal_dispatch["on_btnOptimize_clicked"]() is True
+    assert ("optimize", True) in win.calls
 
 
 def test_dispatch_handles_margins_and_fixed_toggle_signals():

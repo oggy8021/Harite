@@ -36,7 +36,7 @@
 - P5-2 はクローズ済み（`[x]`）。
 - 実装済み:
   - `src/harite/gui/views/main_window.py` に Phase5 レイアウトメタデータ（`layout_version`, `layout_sections`）を反映。
-  - `src/harite/gui/adapters/gtk_backend.py` を Glade近似の縦5段/中央3列構成へ再編。
+  - `src/harite/gui/adapters/gtk_backend.py` を Glade近似の縦5段/中央十字配置を軸に再編（列/行増減を許容）。
   - Window 方針を `resizable=True` に確定。
 - ドキュメント済み:
   - Glade再現基準: `docs/specs/gui/gui-glade-layout-reconstruction.md`
@@ -44,6 +44,10 @@
   - 手動検証メモ: `out/manual-validation/gui-phase5-pr2-memo.md`
 - 未完了:
   - PR5-2 メモで上がった後続項目の分配（P5-3 / P5-4 / 将来拡張）
+
+方針決定ログ（2026-04-14）:
+
+- 中央レイアウトは「3列固定」より「十字配置再現 + 実装しやすさ」を優先し、列/行増減を許容する。
 
 ## タスク（1タスク=1PR）
 
@@ -103,13 +107,11 @@
   - 進捗: `ui_adapter` に `on_btnGetImg_clicked` の path解決（clicked引数/`entPathL`）を追加し、clicked引数依存の誤動作を抑制（2026-04-13）
   - 進捗: runtime backend / dispatch テストへ Open-L/Open-R の状態遷移・コールバック経路を追加（2026-04-13）
   - 完了記録（部分）: Open-L/Open-R 導線追加後も Owner 実行の固定回帰コマンドが 100% pass（2026-04-13）
-  - 進捗: fallback UI に `Style tiers` / `Commands (tiered)` / `Flow` ラベルを追加し、主操作・副操作・planned の視覚階層を明示（2026-04-13）
-  - 進捗: `Prefs/About/Help` のボタンフェイスを secondary 表記へ統一し、主要操作との視認差を拡大（2026-04-13）
-  - 進捗: `test_gtk_runtime_backend` に visual tier ラベル/secondaryフェイスの回帰チェックを追加（2026-04-13）
+  - 進捗: fallback UI に `Style cues` / `Commands` / `Flow` ラベルを追加し、`About/Help (secondary)` と `planned` の視認軸を明示（2026-04-13, 2026-04-14更新）
+  - 進捗: `About/Help` のみ secondary 表記を維持し、`Save/Optimize/Apply/Prefs` からは primary/secondary 区別語彙を除去（2026-04-14）
+  - 進捗: `test_gtk_runtime_backend` / `test_phase5_visual_regression` に新語彙（`Style cues`, `Commands`, ボタンラベル簡素化）の回帰チェックを反映（2026-04-14）
   - 完了記録（部分）: visual tier 整備後も Owner 実行の固定回帰コマンドが 100% pass（2026-04-13）
-  - 進捗: `Save/Optimize/Apply` のボタンフェイスを primary 表記へ統一し、主操作の視認優先度を強化（2026-04-13）
-  - 進捗: `test_gtk_runtime_backend` に primaryボタン文言の回帰チェックを追加（2026-04-13）
-  - 完了記録（部分）: primary フェイス統一後も Owner 実行の固定回帰コマンドが 100% pass（2026-04-13）
+  - 進捗: `Save/Optimize/Apply` は機能名中心の簡潔ラベルへ移行し、`About/Help` 以外の secondary/primary 表記ノイズを削減（2026-04-14）
   - 進捗: `tgl` 系ボタンの語彙を `Top/Bottom/Left/Right` へ統一し、左右対称の見た目ルールを固定（2026-04-13）
   - 進捗: `test_gtk_runtime_backend` に `tgl` ラベル語彙の回帰チェックを追加（2026-04-13）
   - 完了記録（部分）: `tgl` 語彙統一後も Owner 実行の固定回帰コマンドが 100% pass（2026-04-13）
@@ -143,7 +145,36 @@
   - 進捗: XFCE 実機判定用テンプレート `docs/specs/gui/gui-phase5-p5-7-xfce-validation-template.md` を追加（2026-04-13）
   - 進捗: P5-1 観点（MainWindow/Optimize/Apply/Style）の `pass/warn/fail` 記録欄と PR 貼り付け用コメント雛形を用意（2026-04-13）
   - 進捗: Owner 実行の固定回帰コマンドが 100% pass（2026-04-13）
+  - 進捗: `docs/specs/gui/gui-glade-layout-reconstruction.md` に `docs/legacy-ui/wallpositapplet.glade` / `docs/legacy-ui/Glade.py` を一次根拠として明記（2026-04-14）
+  - 進捗: `gtk_backend` で `entPathR` を実体化し、`Open-R -> entPathR` の入力反映導線を復旧（2026-04-14）
+  - 進捗: `ui_adapter.bind_mainwindow` で `on_btnOptimize_clicked -> on_optimize` の補完接続を追加し、runtime fallback の handler-missing を抑制（2026-04-14）
+  - 進捗: Owner 実行の固定回帰コマンドが 100% pass（2026-04-14）
   - 完了条件: P5-1 チェックリスト必須項目がすべて pass
+
+- [ ] P5-8 feat(gui): トグル排他と margin 反映の実装確定
+  - 対象: `Top/Bottom`、`Left/Right` の同時押下矛盾を排除し、片側有効時は反対側を復帰
+  - 要件: margin +/- 操作の反映を可視化し、優先順位ルール（fixed > margin > toggles）と整合
+  - 完了条件: トグル排他・margin反映・優先順位の挙動が回帰テストと実機メモで一致
+
+- [ ] P5-9 feat(gui): Open 導線を Dialog 主体へ復元（ImgOpenDialog 相当）
+  - 対象: `Open-L` / `Open-R` 押下でファイル選択ダイアログを開き、選択結果を `entPathL` / `entPathR` へ反映
+  - 要件: 直入力前提の承認UXではなく、旧導線準拠の「選択結果を表示」へ戻す
+  - 要件: 拡張子制限など旧 `ImgOpenDialog` 相当の制御を段階導入
+  - 完了条件: Open 押下が `planned` 表示で終わらず、選択/キャンセルの状態遷移がUIで確認できる
+
+- [ ] P5-10 feat(gui): watch 導線の実処理導入（srcdirL/srcdirR）
+  - 対象: watch start/stop/interval の planned 導線を実処理へ昇格
+  - 要件: watch 用の左右画像向けパスは `srcdirL`, `srcdirR` で指定可能、未指定も許容
+  - 補足: MainWindow の `entPathL` / `entPathR` とは責務を分離（watch 用入力と通常入力を混同しない）
+  - 完了条件: watch 実行時に `srcdirL` / `srcdirR` の有無に応じた分岐が回帰テストで固定される
+
+- [ ] P5-11 chore(gui): Save 体験改善（低優先 / SaveWallpaperDialog 相当）
+  - 対象: 保存先・保存名の明示、confirm/cancel の排他制御、完了後の保存先表示
+  - 優先度方針: `Optimize / Apply / do-it` の導線安定化より後に着手する
+  - 背景: 保存場所選定を除く本体処理は `Optimize` と重なるため、緊急課題とは切り分ける
+  - 要件: `Save Cancel` が `cancel-failed` とならない導線を保証
+  - 要件: どこに何という名前で保存されたかを MainWindow 側で追跡可能にする
+  - 完了条件: Save 体験が「行き先不明」にならず、保存先情報が実機で確認できる
 
 ## 推奨着手順
 
@@ -155,6 +186,10 @@
 6. P5-5（回帰テスト）
 7. P5-6（manual gate 同期）
 8. P5-7（実機最終判定）
+9. P5-8（トグル排他 + margin 反映）
+10. P5-9（Open Dialog 導線復元）
+11. P5-10（watch 導線実処理）
+12. P5-11（Save 体験改善・低優先）
 
 ## ブランチ命名（例）
 
@@ -165,3 +200,22 @@
 5. P5-5: `test/gui-phase5-visual-regression-20260413`
 6. P5-6: `docs/gui-phase5-manual-gate-sync-20260413`
 7. P5-7: `chore/gui-phase5-xfce-validation-20260413`
+8. P5-8: `feature/gui-phase5-p5-8-toggle-exclusion-margin-sync-20260414`
+9. P5-9: `feature/gui-phase5-p5-9-open-dialog-restore-20260414`
+10. P5-10: `feature/gui-phase5-p5-10-watch-flow-srcdir-20260414`
+11. P5-11: `chore/gui-phase5-p5-11-save-ux-improvement-20260414`
+
+## P5-8以降のPR運用（明示）
+
+- P5-8
+  - PRタイトル案: `feat(gui): enforce toggle exclusivity and margin sync (P5-8)`
+  - PRTXT short: `P5-8でトグル排他とmargin反映を実装。Top/Bottom・Left/Rightの同時押下矛盾を解消し、fixed>margin>toggles優先順位に整合。`
+- P5-9
+  - PRタイトル案: `feat(gui): restore Open-L/Open-R dialog flow (P5-9)`
+  - PRTXT short: `P5-9でOpen-L/Open-RをDialog主体へ復元。選択結果をentPathL/Rへ反映し、直入力前提の暫定導線を置換。`
+- P5-10
+  - PRタイトル案: `feat(gui): implement watch flow with srcdirL/srcdirR (P5-10)`
+  - PRTXT short: `P5-10でwatch導線を実処理化。srcdirL/srcdirR指定（未指定許容）を導入し、MainWindow入力責務と分離。`
+- P5-11
+  - PRタイトル案: `chore(gui): improve save UX and dialog clarity (P5-11)`
+  - PRTXT short: `P5-11でSave体験を低優先で改善。保存先/保存名の可視化とconfirm/cancel整合を強化し、行き先不明を解消。`

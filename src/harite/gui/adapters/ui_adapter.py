@@ -310,6 +310,13 @@ def bind_mainwindow(
             ui_result.signal_handlers,
             signal_backend=signal_backend,
         )
+
+        # Runtime fallback UI adds a provisional Optimize button that does not
+        # exist in legacy glade handlers. Wire it when available.
+        optimize_target = getattr(mainwindow, "on_optimize", None)
+        if callable(optimize_target) and "on_btnOptimize_clicked" not in dispatch:
+            dispatch["on_btnOptimize_clicked"] = optimize_target
+
         setattr(mainwindow, "_adapter_signal_dispatch", dispatch)
         metadata["dispatch_handlers"] = tuple(sorted(dispatch.keys()))
         if signal_backend is not None:
