@@ -729,10 +729,12 @@ def test_runtime_backend_toggle_exclusivity_for_left_vertical_direction():
     upper.click()
     assert upper.get_active() is True
     assert lower.get_active() is False
+    assert upper.sensitive is True
+    assert lower.sensitive is False
 
     lower.click()
-    assert lower.get_active() is True
-    assert upper.get_active() is False
+    assert lower.get_active() is False
+    assert upper.get_active() is True
 
 
 def test_runtime_backend_toggle_exclusivity_for_right_horizontal_direction():
@@ -744,10 +746,29 @@ def test_runtime_backend_toggle_exclusivity_for_right_horizontal_direction():
     left.click()
     assert left.get_active() is True
     assert right.get_active() is False
+    assert left.sensitive is True
+    assert right.sensitive is False
 
     right.click()
-    assert right.get_active() is True
-    assert left.get_active() is False
+    assert right.get_active() is False
+    assert left.get_active() is True
+
+
+def test_runtime_backend_same_direction_on_other_side_remains_enabled():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    upper_l = backend.get_object("tglUpperL")
+    upper_r = backend.get_object("tglUpperR")
+
+    upper_l.click()
+
+    assert upper_l.get_active() is True
+    assert upper_r.sensitive is True
+
+    upper_r.click()
+
+    assert upper_r.get_active() is True
+    assert upper_l.get_active() is True
 
 
 def test_runtime_backend_margin_change_propagates_all_values():

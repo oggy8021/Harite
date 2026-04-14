@@ -411,6 +411,8 @@ class GtkRuntimeSignalBackend:
             tgl_push_right_r.connect("clicked", lambda *_args: self._on_direction_toggled("horizontal", "R", "right"))
             btn_get_img_l.connect("clicked", lambda *_args: self._on_pick_input_clicked("L"))
             btn_get_img_r.connect("clicked", lambda *_args: self._on_pick_input_clicked("R"))
+            self._sync_direction_toggle_availability("L")
+            self._sync_direction_toggle_availability("R")
             top_margin_spin.connect("value-changed", self._on_margin_changed)
             left_margin_spin.connect("value-changed", self._on_margin_changed)
             right_margin_spin.connect("value-changed", self._on_margin_changed)
@@ -464,6 +466,16 @@ class GtkRuntimeSignalBackend:
         button = self._objects.get(object_name)
         if button is not None and hasattr(button, "set_sensitive"):
             button.set_sensitive(bool(enabled))
+
+    def _is_widget_enabled(self, object_name: str) -> bool:
+        widget = self._objects.get(object_name)
+        if widget is None:
+            return True
+        if hasattr(widget, "get_sensitive"):
+            return bool(widget.get_sensitive())
+        if hasattr(widget, "sensitive"):
+            return bool(getattr(widget, "sensitive"))
+        return True
 
     def _current_save_dialog_filename(self) -> str:
         dialog = self._objects.get("SaveWallpaperDialog")
@@ -577,7 +589,35 @@ class GtkRuntimeSignalBackend:
             return
         setattr(toggle, "active", bool(active))
 
+    def _is_toggle_active(self, object_name: str) -> bool:
+        toggle = self._objects.get(object_name)
+        if toggle is None:
+            return False
+        if hasattr(toggle, "get_active"):
+            return bool(toggle.get_active())
+        return bool(getattr(toggle, "active", False))
+
+    def _sync_mutually_exclusive_pair(self, primary_name: str, secondary_name: str) -> None:
+        primary_active = self._is_toggle_active(primary_name)
+        secondary_active = self._is_toggle_active(secondary_name)
+
+        # Keep impossible combinations non-clickable in UX state.
+        self._set_button_enabled(primary_name, not secondary_active)
+        self._set_button_enabled(secondary_name, not primary_active)
+
+    def _sync_direction_toggle_availability(self, side: str) -> None:
+        self._sync_mutually_exclusive_pair(f"tglUpper{side}", f"tglLower{side}")
+        self._sync_mutually_exclusive_pair(f"tglPushLeft{side}", f"tglPushRight{side}")
+
     def _on_direction_toggled(self, axis: str, side: str, direction: str) -> None:
+        if axis == "vertical":
+            target_name = f"tglUpper{side}" if direction == "top" else f"tglLower{side}"
+        else:
+            target_name = f"tglPushLeft{side}" if direction == "left" else f"tglPushRight{side}"
+
+        if not self._is_widget_enabled(target_name):
+            return
+
         if axis == "vertical":
             if direction == "top":
                 self._set_toggle_active(f"tglUpper{side}", True)
@@ -592,6 +632,8 @@ class GtkRuntimeSignalBackend:
             else:
                 self._set_toggle_active(f"tglPushRight{side}", True)
                 self._set_toggle_active(f"tglPushLeft{side}", False)
+
+        self._sync_direction_toggle_availability(side)
 
         callback = self._signal_handlers.get("on_radFixed_toggled")
         if callback is not None:

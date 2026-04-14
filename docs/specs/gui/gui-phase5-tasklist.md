@@ -1,6 +1,6 @@
 # GUI Phase 5 タスクリスト（見た目・レイアウト再現）
 
-最終更新: 2026-04-13
+最終更新: 2026-04-15
 
 ## 目的
 
@@ -50,6 +50,23 @@
 - 中央レイアウトは「3列固定」より「十字配置再現 + 実装しやすさ」を優先し、列/行増減を許容する。
 
 ## タスク（1タスク=1PR）
+
+### P5-8以降の共通ゲート（必須）
+
+- 対象: P5-8 / P5-9 / P5-10 / P5-11 の全PR。
+- 参照正本: `docs/specs/gui/gui-phase5-upstream-traceability-checklist.md`
+- 着手条件:
+  - 母体プログラム（`wallpaperoptimizer`）の該当機能を読解し、対応関係を文書化する。
+  - `docs/specs/gui/gui-phase5-upstream-traceability-checklist.md` をPR単位で作成し、差分・非対応・保留理由を明記する。
+  - 実装前レビューで合意（Approve）を得る。
+- 停止条件:
+  - 上記チェック未充足のPRは `Draft` 維持、`merge禁止` とする。
+- 実装条件:
+  - 合意済みドキュメントにない挙動を先行実装しない。
+  - MainWindow暫定ロジックへの寄せ集めを避け、Dialog/責務分割方針に沿う。
+- 完了条件:
+  - 実機結果（pass/warn/fail）と上流対応表の整合が取れている。
+  - レビューコメントで「上流対応OK」または「差分を合意済み」と明示されている。
 
 - [x] P5-2 feat(gui): MainWindow の大胆レイアウト再構成
   - Glade基準配置: `docs/specs/gui/gui-glade-layout-reconstruction.md`
@@ -152,23 +169,29 @@
   - 完了条件: P5-1 チェックリスト必須項目がすべて pass
 
 - [ ] P5-8 feat(gui): トグル排他と margin 反映の実装確定
-  - 対象: `Top/Bottom`、`Left/Right` の同時押下矛盾を排除し、片側有効時は反対側を復帰
+  - 対象: 同一side内の `Top/Bottom`、`Left/Right` の同時成立矛盾を排除する
+  - 例示: `tglUpperL` がONのとき `tglLowerL` は押せない状態にする
+  - 例示: `tglUpperL` がONでも `tglUpperR` は押せるままにする
+  - 例示: `tglPushLeftR` がONのとき `tglPushRightR` は押せない状態にする
   - 要件: margin +/- 操作の反映を可視化し、優先順位ルール（fixed > margin > toggles）と整合
-  - 進捗: runtime fallback にトグル排他（上下/左右）の即時復帰ロジックを追加し、同時押下矛盾を抑止（2026-04-14）
+  - 進捗: runtime fallback に同一side内だけを対象とするトグル排他制御を追加し、対向方向の同時成立矛盾を抑止（2026-04-14, 2026-04-15文言更新）
   - 進捗: margin spin の値変更を `on_spnMergin_value_changed` へ集約伝播する処理を追加（2026-04-14）
-  - 進捗: `tests/gui/test_gtk_runtime_backend.py` にトグル排他・margin伝播の回帰ケースを追加（2026-04-14）
+  - 進捗: `tests/gui/test_gtk_runtime_backend.py` に同一side排他・反対side独立・margin伝播の回帰ケースを追加（2026-04-14, 2026-04-15更新）
+  - 追加条件: 旧 `WindowBase` のトグル相互排他（押下/復帰）仕様の対応表を提出し、実装前レビュー合意を得る
   - 完了条件: トグル排他・margin反映・優先順位の挙動が回帰テストと実機メモで一致
 
 - [ ] P5-9 feat(gui): Open 導線を Dialog 主体へ復元（ImgOpenDialog 相当）
   - 対象: `Open-L` / `Open-R` 押下でファイル選択ダイアログを開き、選択結果を `entPathL` / `entPathR` へ反映
   - 要件: 直入力前提の承認UXではなく、旧導線準拠の「選択結果を表示」へ戻す
   - 要件: 拡張子制限など旧 `ImgOpenDialog` 相当の制御を段階導入
+  - 追加条件: 旧 `Widget/ImgOpenDialog.py` の挙動対応表（選択/キャンセル/拡張子制限）を提出し、実装前レビュー合意を得る
   - 完了条件: Open 押下が `planned` 表示で終わらず、選択/キャンセルの状態遷移がUIで確認できる
 
 - [ ] P5-10 feat(gui): watch 導線の実処理導入（srcdirL/srcdirR）
   - 対象: watch start/stop/interval の planned 導線を実処理へ昇格
   - 要件: watch 用の左右画像向けパスは `srcdirL`, `srcdirR` で指定可能、未指定も許容
   - 補足: MainWindow の `entPathL` / `entPathR` とは責務を分離（watch 用入力と通常入力を混同しない）
+  - 追加条件: 旧 `SettingDialog` / `SrcdirDialog` の導線対応表を提出し、実装前レビュー合意を得る
   - 完了条件: watch 実行時に `srcdirL` / `srcdirR` の有無に応じた分岐が回帰テストで固定される
 
 - [ ] P5-11 chore(gui): Save 体験改善（低優先 / SaveWallpaperDialog 相当）
@@ -177,6 +200,7 @@
   - 背景: 保存場所選定を除く本体処理は `Optimize` と重なるため、緊急課題とは切り分ける
   - 要件: `Save Cancel` が `cancel-failed` とならない導線を保証
   - 要件: どこに何という名前で保存されたかを MainWindow 側で追跡可能にする
+  - 追加条件: 旧 `Widget/SaveWallpaperDialog.py` の挙動対応表（保存先確定/キャンセル/表示）を提出し、実装前レビュー合意を得る
   - 完了条件: Save 体験が「行き先不明」にならず、保存先情報が実機で確認できる
 
 ## 推奨着手順
@@ -212,7 +236,7 @@
 
 - P5-8
   - PRタイトル案: `feat(gui): enforce toggle exclusivity and margin sync (P5-8)`
-  - PRTXT short: `P5-8でトグル排他とmargin反映を実装。Top/Bottom・Left/Rightの同時押下矛盾を解消し、fixed>margin>toggles優先順位に整合。`
+  - PRTXT short: `P5-8で同一side内のトグル排他とmargin反映を実装。tglUpperL/tglLowerL、tglPushLeftR/tglPushRightR などの矛盾を防ぎつつ、反対sideは独立維持、fixed>margin>toggles優先順位に整合。`
 - P5-9
   - PRタイトル案: `feat(gui): restore Open-L/Open-R dialog flow (P5-9)`
   - PRTXT short: `P5-9でOpen-L/Open-RをDialog主体へ復元。選択結果をentPathL/Rへ反映し、直入力前提の暫定導線を置換。`
