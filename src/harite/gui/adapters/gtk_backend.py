@@ -174,6 +174,8 @@ class GtkRuntimeSignalBackend:
             main_col.pack_start(fixed_row, False, False, 0)
             rad_fixed = gtk_module.RadioButton.new_with_label(None, "入替不可")
             rad_no_fixed = gtk_module.RadioButton.new_with_label_from_widget(rad_fixed, "入替可")
+            if hasattr(rad_no_fixed, "set_active"):
+                rad_no_fixed.set_active(True)
             fixed_row.pack_start(rad_fixed, False, False, 0)
             fixed_row.pack_start(rad_no_fixed, False, False, 0)
 
@@ -234,6 +236,31 @@ class GtkRuntimeSignalBackend:
             if hasattr(style_legend_label, "set_xalign"):
                 style_legend_label.set_xalign(0.0)
             main_col.pack_start(style_legend_label, False, False, 0)
+
+            current_state_section_label = gtk_module.Label(label="Current state")
+            if hasattr(current_state_section_label, "set_xalign"):
+                current_state_section_label.set_xalign(0.0)
+            main_col.pack_start(current_state_section_label, False, False, 0)
+
+            current_fixed_label = gtk_module.Label(label="Current fixed: off")
+            if hasattr(current_fixed_label, "set_xalign"):
+                current_fixed_label.set_xalign(0.0)
+            main_col.pack_start(current_fixed_label, False, False, 0)
+
+            current_margins_label = gtk_module.Label(label="Current margins: 0,0,0,0")
+            if hasattr(current_margins_label, "set_xalign"):
+                current_margins_label.set_xalign(0.0)
+            main_col.pack_start(current_margins_label, False, False, 0)
+
+            current_left_label = gtk_module.Label(label="Current L: align=center valign=center")
+            if hasattr(current_left_label, "set_xalign"):
+                current_left_label.set_xalign(0.0)
+            main_col.pack_start(current_left_label, False, False, 0)
+
+            current_right_label = gtk_module.Label(label="Current R: align=center valign=center")
+            if hasattr(current_right_label, "set_xalign"):
+                current_right_label.set_xalign(0.0)
+            main_col.pack_start(current_right_label, False, False, 0)
 
             right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
             center_row.pack_start(right_margin_col, False, False, 0)
@@ -377,6 +404,11 @@ class GtkRuntimeSignalBackend:
                 "lblSaveDialogState": save_dialog_state_label,
                 "lblPriorityRule": priority_note_label,
                 "lblStyleLegend": style_legend_label,
+                "lblCurrentStateSection": current_state_section_label,
+                "lblCurrentFixed": current_fixed_label,
+                "lblCurrentMargins": current_margins_label,
+                "lblCurrentStateL": current_left_label,
+                "lblCurrentStateR": current_right_label,
                 "lblCommandSection": command_section_label,
                 "hbox14": command_bar,
                 "btnSetting": btn_setting,
@@ -433,6 +465,8 @@ class GtkRuntimeSignalBackend:
             tgl_push_right_r.connect("released", lambda *_args: self._on_direction_released("tglPushRightR"))
             btn_get_img_l.connect("clicked", lambda *_args: self._on_pick_input_clicked("L"))
             btn_get_img_r.connect("clicked", lambda *_args: self._on_pick_input_clicked("R"))
+            rad_fixed.connect("clicked", lambda *_args: self._on_fixed_selection(True))
+            rad_no_fixed.connect("clicked", lambda *_args: self._on_fixed_selection(False))
             top_margin_spin.connect("value-changed", self._on_margin_changed)
             left_margin_spin.connect("value-changed", self._on_margin_changed)
             right_margin_spin.connect("value-changed", self._on_margin_changed)
@@ -443,6 +477,7 @@ class GtkRuntimeSignalBackend:
             btn_set_color.connect("clicked", self._on_color_clicked)
             btn_open_save.connect("clicked", self._on_save_dialog_confirm_clicked)
             btn_cancel_save.connect("clicked", self._on_save_dialog_cancel_clicked)
+            self._refresh_current_state_labels()
         else:
             self._objects = {
                 "WallPosit_MainWindow": window,
@@ -599,6 +634,60 @@ class GtkRuntimeSignalBackend:
             return
         setattr(toggle, "active", bool(active))
 
+    def _is_toggle_active(self, object_name: str) -> bool:
+        toggle = self._objects.get(object_name)
+        if toggle is None:
+            return False
+        if hasattr(toggle, "get_active"):
+            return bool(toggle.get_active())
+        return bool(getattr(toggle, "active", False))
+
+    def _current_side_state(self, side: str) -> tuple[str, str]:
+        align = "center"
+        valign = "center"
+
+        if self._is_toggle_active(f"tglPushLeft{side}"):
+            align = "left"
+        elif self._is_toggle_active(f"tglPushRight{side}"):
+            align = "right"
+
+        if self._is_toggle_active(f"tglUpper{side}"):
+            valign = "top"
+        elif self._is_toggle_active(f"tglLower{side}"):
+            valign = "bottom"
+
+        return align, valign
+
+    def _refresh_current_state_labels(self) -> None:
+        fixed_widget = self._objects.get("radFixed")
+        fixed_enabled = False
+        if fixed_widget is not None and hasattr(fixed_widget, "get_active"):
+            fixed_enabled = bool(fixed_widget.get_active())
+
+        left = self._read_spin_int("spnLMergin")
+        right = self._read_spin_int("spnRMergin")
+        top = self._read_spin_int("spnTopMergin")
+        bottom = self._read_spin_int("spnBtmMergin")
+        align_l, valign_l = self._current_side_state("L")
+        align_r, valign_r = self._current_side_state("R")
+
+        self._set_label_text("lblCurrentFixed", f"Current fixed: {'on' if fixed_enabled else 'off'}")
+        self._set_label_text("lblCurrentMargins", f"Current margins: {left},{right},{top},{bottom}")
+        self._set_label_text("lblCurrentStateL", f"Current L: align={align_l} valign={valign_l}")
+        self._set_label_text("lblCurrentStateR", f"Current R: align={align_r} valign={valign_r}")
+
+    def _on_fixed_selection(self, fixed_enabled: bool) -> None:
+        self._set_toggle_active("radFixed", fixed_enabled)
+        self._set_toggle_active("radNoFixed", not fixed_enabled)
+        self._refresh_current_state_labels()
+
+        callback = self._signal_handlers.get("on_radFixed_toggled")
+        if callback is not None:
+            try:
+                callback(bool(fixed_enabled))
+            except Exception:
+                pass
+
     def _opposite_toggle_name(self, object_name: str) -> str | None:
         opposites = {
             "tglPushLeftL": "tglPushRightL",
@@ -619,6 +708,7 @@ class GtkRuntimeSignalBackend:
             if opposite_toggle is not None and hasattr(opposite_toggle, "get_active"):
                 if bool(opposite_toggle.get_active()):
                     self._set_toggle_active(opposite_name, False)
+        self._refresh_current_state_labels()
 
         callback = self._signal_handlers.get("on_tglBtn_pressed")
         if callback is not None:
@@ -629,6 +719,7 @@ class GtkRuntimeSignalBackend:
                 pass
 
     def _on_direction_toggled(self, object_name: str) -> None:
+        self._refresh_current_state_labels()
         callback = self._signal_handlers.get("on_tglBtn_toggled")
         if callback is None:
             return
@@ -640,6 +731,7 @@ class GtkRuntimeSignalBackend:
             pass
 
     def _on_direction_released(self, object_name: str) -> None:
+        self._refresh_current_state_labels()
         callback = self._signal_handlers.get("on_tglBtn_released")
         if callback is None:
             return
@@ -661,6 +753,7 @@ class GtkRuntimeSignalBackend:
         return 0
 
     def _on_margin_changed(self, widget: Any) -> None:
+        self._refresh_current_state_labels()
         callback = self._signal_handlers.get("on_spnMergin_value_changed")
 
         if callback is None:

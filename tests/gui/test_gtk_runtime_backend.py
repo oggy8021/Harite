@@ -239,10 +239,25 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("lblSaveDialogState") is not None
     assert backend.get_object("lblPriorityRule") is not None
     assert backend.get_object("lblStyleLegend") is not None
+    assert backend.get_object("lblCurrentStateSection") is not None
+    assert backend.get_object("lblCurrentFixed") is not None
+    assert backend.get_object("lblCurrentMargins") is not None
+    assert backend.get_object("lblCurrentStateL") is not None
+    assert backend.get_object("lblCurrentStateR") is not None
     assert backend.get_object("lblCommandSection") is not None
     assert backend.get_object("lblFlowLegend") is not None
     assert backend.get_object("lblWatchSection") is not None
     assert backend.get_object("lblError") is not None
+
+
+def test_runtime_backend_current_state_panel_defaults_are_visible():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    assert backend.get_object("lblCurrentStateSection").text == "Current state"
+    assert backend.get_object("lblCurrentFixed").text == "Current fixed: off"
+    assert backend.get_object("lblCurrentMargins").text == "Current margins: 0,0,0,0"
+    assert backend.get_object("lblCurrentStateL").text == "Current L: align=center valign=center"
+    assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=center"
 
 
 def test_runtime_backend_shows_p5_3_planned_and_priority_labels():
@@ -837,3 +852,16 @@ def test_runtime_backend_margin_change_propagates_all_values():
     assert captured == {"name": "spnLMergin", "value": 11}
     assert status.text == "Margins: updated"
     assert error.text == "Error: none"
+    assert backend.get_object("lblCurrentMargins").text == "Current margins: 11,22,33,44"
+
+
+def test_runtime_backend_current_state_panel_updates_for_toggle_and_fixed():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.get_object("tglPushRightL").click()
+    backend.get_object("tglUpperR").click()
+    backend.get_object("radFixed").click()
+
+    assert backend.get_object("lblCurrentFixed").text == "Current fixed: on"
+    assert backend.get_object("lblCurrentStateL").text == "Current L: align=right valign=center"
+    assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=top"
