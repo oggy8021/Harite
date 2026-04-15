@@ -177,7 +177,7 @@
   - 進捗: runtime fallback を母体 `WindowBase.py` の `pressed / toggled / released` semantics へ寄せ、same-side の切替と both-off 復帰の土台を再現（2026-04-15）
   - 進捗: margin spin は changed された widget を起点に現在値を更新できるよう整理し、母体の単項目更新に寄せる方向を確定（2026-04-15）
   - 進捗: margin の `- / +` は独立ボタンではなく `GtkSpinButton` 内蔵ステッパと判明。fallback 側へ upstream 相当の range/increment 設定を補完し、実機の不発要因を是正（2026-04-15）
-  - 進捗: `Current state` パネルを追加し、`fixed / margins / align / valign` の採用中値を fallback UI 上で常時確認可能にした（2026-04-15）
+  - 進捗: `Current state` パネルを `Configured` / `Effective` へ拡張し、widget の現在形と signal 処理後に採用される global state を見分けられるようにした（2026-04-15）
   - 進捗: `tests/gui/test_gtk_runtime_backend.py` と `tests/gui/test_phase5_visual_regression.py` を含む GUI 回帰が 100% pass（2026-04-15, owner実行）
   - 進捗: XFCE 実機で toggle 挙動と見た目の再現を確認済み。次の焦点は margin の扱い整理（2026-04-15, owner確認）
   - 追加条件: 旧 `WindowBase` のトグル相互排他（押下/復帰）仕様の対応表を提出し、実装前レビュー合意を得る
