@@ -241,6 +241,16 @@ def test_on_change_margins_keeps_previous_value_on_invalid_input():
     assert window.last_error == "margins must be non-negative"
 
 
+def test_on_change_margins_supports_single_widget_update():
+    window = MainWindow()
+
+    window.on_change_margins(1, 2, 3, 4)
+    window.on_change_margins("spnTopMergin", 99)
+
+    assert window.form_state.margins == "1,2,99,4"
+    assert window.last_error == ""
+
+
 def test_on_toggle_fixed_updates_flag():
     window = MainWindow()
     assert window.form_state.fixed is False
@@ -250,6 +260,22 @@ def test_on_toggle_fixed_updates_flag():
 
     window.on_toggle_fixed(False)
     assert window.form_state.fixed is False
+
+
+def test_on_toggle_position_updates_alignment_and_reset():
+    window = MainWindow()
+
+    window.on_toggle_position("tglPushRightL", True)
+    window.on_toggle_position("tglUpperR", True)
+
+    assert window.form_state.align == "right"
+    assert window.form_state.valign == "top"
+
+    window.on_toggle_position_reset("tglPushRightL")
+    window.on_toggle_position_reset("tglUpperR")
+
+    assert window.form_state.align == "center"
+    assert window.form_state.valign == "center"
 
 
 def test_on_apply_dry_run_uses_latest_saved_file(monkeypatch, tmp_path):

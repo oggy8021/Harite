@@ -26,11 +26,20 @@ class DummyWindow:
         self.calls.append(("apply_dry", True))
         return True
 
-    def on_change_margins(self, left: int, right: int, top: int, bottom: int) -> None:
-        self.calls.append(("margins", (left, right, top, bottom)))
+    def on_change_margins(self, *args) -> None:
+        self.calls.append(("margins", args))
 
     def on_toggle_fixed(self, enabled: bool) -> None:
         self.calls.append(("fixed", enabled))
+
+    def on_toggle_position_pressed(self, widget_name: str) -> None:
+        self.calls.append(("toggle_pressed", widget_name))
+
+    def on_toggle_position(self, widget_name: str, active: bool) -> None:
+        self.calls.append(("toggle_toggled", (widget_name, active)))
+
+    def on_toggle_position_reset(self, widget_name: str) -> None:
+        self.calls.append(("toggle_reset", widget_name))
 
     def on_watch_start(self) -> bool:
         self.calls.append(("watch_start", True))
@@ -74,11 +83,18 @@ class _SpinValue:
 
 
 class _ToggleWidget:
-    def __init__(self, active: bool) -> None:
+    def __init__(self, active: bool, name: str = "tglUpperL") -> None:
         self._active = active
+        self._name = name
 
     def get_active(self) -> bool:
         return self._active
+
+    def set_active(self, active: bool) -> None:
+        self._active = active
+
+    def get_name(self) -> str:
+        return self._name
 
 
 class _BackendWithGetObject:
@@ -233,12 +249,43 @@ def test_dispatch_handles_margins_and_fixed_toggle_signals():
 
     dispatch = create_mainwindow_signal_dispatch(win, handlers, signal_backend=backend)
 
-    dispatch["on_spnMergin_value_changed"](object())
+    margin_widget = backend.get_object("spnLMergin")
+    setattr(margin_widget, "get_name", lambda: "spnLMergin")
+
+    dispatch["on_spnMergin_value_changed"](margin_widget)
     dispatch["on_radFixed_toggled"](_ToggleWidget(True))
 
     assert win.calls == [
-        ("margins", (10, 20, 30, 40)),
+        ("margins", ("spnLMergin", 10)),
         ("fixed", True),
+    ]
+
+
+def test_dispatch_handles_toggle_pressed_toggled_and_released_signals():
+    win = DummyWindow()
+    backend = _BackendWithGetObject()
+    backend.widgets["tglUpperL"] = _ToggleWidget(False, "tglUpperL")
+    backend.widgets["tglLowerL"] = _ToggleWidget(True, "tglLowerL")
+    handlers = (
+        "on_tglBtn_pressed",
+        "on_tglBtn_toggled",
+        "on_tglBtn_released",
+    )
+
+    dispatch = create_mainwindow_signal_dispatch(win, handlers, signal_backend=backend)
+
+    widget = backend.get_object("tglUpperL")
+    dispatch["on_tglBtn_pressed"](widget)
+    widget.set_active(True)
+    dispatch["on_tglBtn_toggled"](widget)
+    widget.set_active(False)
+    dispatch["on_tglBtn_released"](widget)
+
+    assert backend.get_object("tglLowerL").get_active() is False
+    assert win.calls == [
+        ("toggle_pressed", "tglUpperL"),
+        ("toggle_toggled", ("tglUpperL", True)),
+        ("toggle_reset", "tglUpperL"),
     ]
 
 

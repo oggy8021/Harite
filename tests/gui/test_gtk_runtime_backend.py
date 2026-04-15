@@ -11,6 +11,7 @@ class _Orientation:
 class _WidgetBase:
     def __init__(self):
         self._signals = {}
+        self._name = ""
 
     def connect(self, name, callback):
         self._signals.setdefault(name, []).append(callback)
@@ -18,6 +19,12 @@ class _WidgetBase:
     def emit(self, name, *args):
         for cb in self._signals.get(name, []):
             cb(*args)
+
+    def set_name(self, name):
+        self._name = name
+
+    def get_name(self):
+        return self._name
 
 
 class _Window(_WidgetBase):
@@ -89,16 +96,53 @@ class _Button(_WidgetBase):
 
 
 class _ToggleButton(_Button):
-    pass
+    def __init__(self, label=""):
+        super().__init__(label=label)
+        self._active = False
+
+    def set_active(self, active):
+        self._active = bool(active)
+
+    def get_active(self):
+        return self._active
+
+    def click(self):
+        self.emit("pressed", self)
+        self._active = not self._active
+        self.emit("toggled", self)
+        self.emit("released", self)
+        self.emit("clicked", self)
 
 
 class _SpinButton(_WidgetBase):
     def __init__(self):
         super().__init__()
         self.numeric = False
+        self._value = 0
+        self.minimum = None
+        self.maximum = None
+        self.step_increment = None
+        self.page_increment = None
 
     def set_numeric(self, enabled):
         self.numeric = bool(enabled)
+
+    def set_range(self, minimum, maximum):
+        self.minimum = int(minimum)
+        self.maximum = int(maximum)
+
+    def set_increments(self, step, page):
+        self.step_increment = int(step)
+        self.page_increment = int(page)
+
+    def set_value(self, value):
+        self._value = int(value)
+
+    def get_value(self):
+        return self._value
+
+    def get_value_as_int(self):
+        return int(self._value)
 
 
 class _RadioButton(_ToggleButton):
@@ -207,13 +251,28 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("lblSaveDialogState") is not None
     assert backend.get_object("lblPriorityRule") is not None
     assert backend.get_object("lblStyleLegend") is not None
+    assert backend.get_object("lblCurrentStateSection") is not None
+    assert backend.get_object("lblCurrentFixed") is not None
+    assert backend.get_object("lblCurrentMargins") is not None
+    assert backend.get_object("lblCurrentStateL") is not None
+    assert backend.get_object("lblCurrentStateR") is not None
     assert backend.get_object("lblCommandSection") is not None
     assert backend.get_object("lblFlowLegend") is not None
     assert backend.get_object("lblWatchSection") is not None
     assert backend.get_object("lblError") is not None
 
 
-def test_runtime_backend_shows_p5_3_planned_and_priority_labels():
+def test_runtime_backend_current_state_panel_defaults_are_visible():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    assert backend.get_object("lblCurrentStateSection").text == "Current state"
+    assert backend.get_object("lblCurrentFixed").text == "Current fixed: off"
+    assert backend.get_object("lblCurrentMargins").text == "Current margins: 0,0,0,0"
+    assert backend.get_object("lblCurrentStateL").text == "Current L: align=center valign=center"
+    assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=center"
+
+
+def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     do_it = backend.get_object("lblDoItPlanned")
@@ -247,7 +306,7 @@ def test_runtime_backend_shows_p5_3_planned_and_priority_labels():
     tgl_lower_r = backend.get_object("tglLowerR")
 
     assert do_it.text == "do-it: planned"
-    assert priority.text == "Rule: fixed > margin > toggles"
+    assert priority.text == "Rule: margins define area; align/valign act inside it; fixed binds L/R"
     assert watch_section.text == "Watch (planned)"
     assert interval.text == "Interval (planned)"
     assert color_btn.label == "Color (planned)"
@@ -700,3 +759,167 @@ def test_runtime_backend_apply_handler_missing_sets_status_and_error():
     assert status.text == "Apply: handler-missing"
     assert error.text == "Error: handler not connected"
     assert apply_target.text == "Apply target: handler-missing"
+
+
+def test_runtime_backend_toggle_exclusivity_for_left_vertical_direction():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    upper = backend.get_object("tglUpperL")
+    lower = backend.get_object("tglLowerL")
+
+    upper.click()
+    assert upper.get_active() is True
+    assert lower.get_active() is False
+
+    lower.click()
+    assert lower.get_active() is True
+    assert upper.get_active() is False
+
+    lower.click()
+    assert lower.get_active() is False
+    assert upper.get_active() is False
+
+
+def test_runtime_backend_toggle_exclusivity_for_right_horizontal_direction():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    left = backend.get_object("tglPushLeftR")
+    right = backend.get_object("tglPushRightR")
+
+    left.click()
+    assert left.get_active() is True
+    assert right.get_active() is False
+
+    right.click()
+    assert right.get_active() is True
+    assert left.get_active() is False
+
+    right.click()
+    assert right.get_active() is False
+    assert left.get_active() is False
+
+
+def test_runtime_backend_same_direction_on_other_side_remains_enabled():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    upper_l = backend.get_object("tglUpperL")
+    upper_r = backend.get_object("tglUpperR")
+
+    upper_l.click()
+
+    assert upper_l.get_active() is True
+    assert upper_r.sensitive is True
+
+    upper_r.click()
+
+    assert upper_r.get_active() is True
+    assert upper_l.get_active() is True
+
+
+def test_runtime_backend_toggle_callbacks_follow_upstream_order():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    calls = []
+
+    backend.connect_signals(
+        {
+            "on_tglBtn_pressed": lambda widget: calls.append(("pressed", widget.get_name())),
+            "on_tglBtn_toggled": lambda widget: calls.append(("toggled", widget.get_name(), widget.get_active())),
+            "on_tglBtn_released": lambda widget: calls.append(("released", widget.get_name())),
+        }
+    )
+
+    toggle = backend.get_object("tglUpperL")
+    toggle.click()
+    toggle.click()
+
+    assert calls == [
+        ("pressed", "tglUpperL"),
+        ("toggled", "tglUpperL", True),
+        ("released", "tglUpperL"),
+        ("pressed", "tglUpperL"),
+        ("toggled", "tglUpperL", False),
+        ("released", "tglUpperL"),
+    ]
+
+
+def test_runtime_backend_margin_change_propagates_all_values():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.get_object("spnLMergin").set_value(11)
+    backend.get_object("spnRMergin").set_value(22)
+    backend.get_object("spnTopMergin").set_value(33)
+    backend.get_object("spnBtmMergin").set_value(44)
+
+    status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+    captured = {}
+
+    def on_margins(widget):
+        captured["name"] = widget.get_name()
+        captured["value"] = widget.get_value_as_int()
+
+    backend.connect_signals({"on_spnMergin_value_changed": on_margins})
+    backend.get_object("spnLMergin").emit("value-changed", backend.get_object("spnLMergin"))
+
+    assert captured == {"name": "spnLMergin", "value": 11}
+    assert status.text == "Margins: updated"
+    assert error.text == "Error: none"
+    assert backend.get_object("lblCurrentMargins").text == "Current margins: 11,22,33,44"
+
+
+def test_runtime_backend_margin_spin_matches_upstream_adjustments():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    top = backend.get_object("spnTopMergin")
+    left = backend.get_object("spnLMergin")
+    right = backend.get_object("spnRMergin")
+    bottom = backend.get_object("spnBtmMergin")
+
+    assert (top.minimum, top.maximum, top.step_increment, top.page_increment) == (0, 250, 1, 10)
+    assert (bottom.minimum, bottom.maximum, bottom.step_increment, bottom.page_increment) == (0, 250, 1, 10)
+    assert (left.minimum, left.maximum, left.step_increment, left.page_increment) == (0, 500, 1, 10)
+    assert (right.minimum, right.maximum, right.step_increment, right.page_increment) == (0, 500, 1, 10)
+
+
+def test_runtime_backend_interval_spin_matches_upstream_adjustments():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    interval = backend.get_object("spnInterval")
+
+    assert (interval.minimum, interval.maximum, interval.step_increment, interval.page_increment) == (1, 86400, 1, 10)
+    assert interval.get_value_as_int() == 60
+
+
+def test_runtime_backend_current_state_panel_updates_for_toggle_and_fixed():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.get_object("tglPushRightL").click()
+    backend.get_object("tglUpperR").click()
+    backend.get_object("radFixed").click()
+
+    assert backend.get_object("lblCurrentFixed").text == "Current fixed: on"
+    assert backend.get_object("lblCurrentStateL").text == "Current L: align=right valign=center"
+    assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=top"
+
+
+def test_runtime_backend_current_state_margin_labels_follow_spin_values():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.get_object("spnLMergin").set_value(5)
+    backend.get_object("spnRMergin").set_value(15)
+    backend.get_object("spnTopMergin").set_value(25)
+    backend.get_object("spnBtmMergin").set_value(35)
+    backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
+
+    assert backend.get_object("lblCurrentMargins").text == "Current margins: 5,15,25,35"
+
+
+def test_runtime_backend_margin_and_top_alignment_coexist_in_current_state():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.get_object("spnTopMergin").set_value(5)
+    backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
+    backend.get_object("tglUpperL").click()
+
+    assert backend.get_object("lblCurrentMargins").text == "Current margins: 0,0,5,0"
+    assert backend.get_object("lblCurrentStateL").text == "Current L: align=center valign=top"

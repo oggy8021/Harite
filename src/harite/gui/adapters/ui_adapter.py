@@ -17,6 +17,9 @@ from .ui_loader import UiLoadResult
 
 LEGACY_HANDLER_MAP: dict[str, str] = {
     "on_WallPosit_MainWindow_delete_event": "on_close",
+    "on_tglBtn_pressed": "on_toggle_position_pressed",
+    "on_tglBtn_released": "on_toggle_position_reset",
+    "on_tglBtn_toggled": "on_toggle_position",
     "on_spnMergin_value_changed": "on_change_margins",
     "on_radFixed_toggled": "on_toggle_fixed",
     "on_entPath_insert_text": "on_change_input_text",
@@ -37,6 +40,17 @@ LEGACY_HANDLER_MAP: dict[str, str] = {
     "on_SettingDialog_destroy": "on_close_settings_dialog",
     "on_ColorSelectionDialog_destroy": "on_close_color_dialog",
     "on_SrcdirDialog_destroy": "on_close_srcdir_dialog",
+}
+
+TOGGLE_OPPOSITE_MAP: dict[str, str] = {
+    "tglPushLeftL": "tglPushRightL",
+    "tglPushRightL": "tglPushLeftL",
+    "tglUpperL": "tglLowerL",
+    "tglLowerL": "tglUpperL",
+    "tglPushLeftR": "tglPushRightR",
+    "tglPushRightR": "tglPushLeftR",
+    "tglUpperR": "tglLowerR",
+    "tglLowerR": "tglUpperR",
 }
 
 
@@ -133,6 +147,98 @@ def _build_dispatch_callback(
 
         return _on_pick_clicked
 
+    if legacy_name == "on_tglBtn_pressed":
+
+        def _extract_toggle_name(value: Any) -> str | None:
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+            if hasattr(value, "get_name"):
+                candidate = value.get_name()
+                if isinstance(candidate, str) and candidate.strip():
+                    return candidate.strip()
+            return None
+
+        def _on_toggle_pressed(*args: Any) -> Any:
+            widget_name = _extract_toggle_name(args[0]) if args else None
+            if not widget_name:
+                return None
+
+            opposite_name = TOGGLE_OPPOSITE_MAP.get(widget_name)
+            if signal_backend is not None and opposite_name and hasattr(signal_backend, "get_object"):
+                opposite_widget = signal_backend.get_object(opposite_name)
+                if opposite_widget is not None and hasattr(opposite_widget, "get_active"):
+                    if bool(opposite_widget.get_active()) and hasattr(opposite_widget, "set_active"):
+                        opposite_widget.set_active(False)
+
+            return target(widget_name)
+
+        return _on_toggle_pressed
+
+    if legacy_name == "on_tglBtn_toggled":
+
+        def _extract_toggle_name(value: Any) -> str | None:
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+            if hasattr(value, "get_name"):
+                candidate = value.get_name()
+                if isinstance(candidate, str) and candidate.strip():
+                    return candidate.strip()
+            return None
+
+        def _extract_toggle_active(value: Any) -> bool:
+            if hasattr(value, "get_active"):
+                return bool(value.get_active())
+            if isinstance(value, bool):
+                return value
+            return False
+
+        def _on_toggle_toggled(*args: Any) -> Any:
+            widget_name = _extract_toggle_name(args[0]) if args else None
+            active = _extract_toggle_active(args[0]) if args else False
+            if not widget_name:
+                return None
+            return target(widget_name, active)
+
+        return _on_toggle_toggled
+
+    if legacy_name == "on_tglBtn_released":
+
+        def _extract_toggle_name(value: Any) -> str | None:
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+            if hasattr(value, "get_name"):
+                candidate = value.get_name()
+                if isinstance(candidate, str) and candidate.strip():
+                    return candidate.strip()
+            return None
+
+        def _extract_toggle_active(value: Any) -> bool:
+            if hasattr(value, "get_active"):
+                return bool(value.get_active())
+            if isinstance(value, bool):
+                return value
+            return False
+
+        def _is_opposite_active(widget_name: str) -> bool:
+            opposite_name = TOGGLE_OPPOSITE_MAP.get(widget_name)
+            if not opposite_name or signal_backend is None or not hasattr(signal_backend, "get_object"):
+                return False
+            opposite_widget = signal_backend.get_object(opposite_name)
+            if opposite_widget is None or not hasattr(opposite_widget, "get_active"):
+                return False
+            return bool(opposite_widget.get_active())
+
+        def _on_toggle_released(*args: Any) -> Any:
+            widget_name = _extract_toggle_name(args[0]) if args else None
+            active = _extract_toggle_active(args[0]) if args else False
+            if not widget_name:
+                return None
+            if (not active) and (not _is_opposite_active(widget_name)):
+                return target(widget_name)
+            return None
+
+        return _on_toggle_released
+
     if legacy_name == "on_spnMergin_value_changed":
 
         def _read_int(name: str) -> int:
@@ -148,6 +254,14 @@ def _build_dispatch_callback(
             return 0
 
         def _on_margin_changed(*args: Any) -> Any:
+            if args and hasattr(args[0], "get_name"):
+                widget = args[0]
+                name = widget.get_name()
+                if hasattr(widget, "get_value_as_int"):
+                    return target(name, int(widget.get_value_as_int()))
+                if hasattr(widget, "get_value"):
+                    return target(name, int(widget.get_value()))
+
             # Fallback for tests without backend: allow direct numeric arguments.
             if len(args) >= 4 and all(isinstance(v, (int, float)) for v in args[:4]):
                 return target(int(args[0]), int(args[1]), int(args[2]), int(args[3]))

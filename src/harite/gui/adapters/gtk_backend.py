@@ -71,8 +71,7 @@ class GtkRuntimeSignalBackend:
             top_row.pack_start(top_margin_label, False, False, 0)
 
             top_margin_spin = gtk_module.SpinButton()
-            if hasattr(top_margin_spin, "set_numeric"):
-                top_margin_spin.set_numeric(True)
+            self._configure_spin_button(top_margin_spin, minimum=0, maximum=250, step=1, page=10)
             top_row.pack_start(top_margin_spin, False, False, 0)
 
             top_spacer_r = gtk_module.Label(label="")
@@ -91,8 +90,7 @@ class GtkRuntimeSignalBackend:
             left_margin_col.pack_start(left_margin_label, False, False, 0)
 
             left_margin_spin = gtk_module.SpinButton()
-            if hasattr(left_margin_spin, "set_numeric"):
-                left_margin_spin.set_numeric(True)
+            self._configure_spin_button(left_margin_spin, minimum=0, maximum=500, step=1, page=10)
             left_margin_col.pack_start(left_margin_spin, False, False, 0)
 
             main_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
@@ -170,6 +168,8 @@ class GtkRuntimeSignalBackend:
             main_col.pack_start(fixed_row, False, False, 0)
             rad_fixed = gtk_module.RadioButton.new_with_label(None, "入替不可")
             rad_no_fixed = gtk_module.RadioButton.new_with_label_from_widget(rad_fixed, "入替可")
+            if hasattr(rad_no_fixed, "set_active"):
+                rad_no_fixed.set_active(True)
             fixed_row.pack_start(rad_fixed, False, False, 0)
             fixed_row.pack_start(rad_no_fixed, False, False, 0)
 
@@ -218,7 +218,7 @@ class GtkRuntimeSignalBackend:
             main_col.pack_start(save_dialog_state_label, False, False, 0)
 
             priority_note_label = gtk_module.Label(
-                label="Rule: fixed > margin > toggles"
+                label="Rule: margins define area; align/valign act inside it; fixed binds L/R"
             )
             if hasattr(priority_note_label, "set_xalign"):
                 priority_note_label.set_xalign(0.0)
@@ -231,6 +231,31 @@ class GtkRuntimeSignalBackend:
                 style_legend_label.set_xalign(0.0)
             main_col.pack_start(style_legend_label, False, False, 0)
 
+            current_state_section_label = gtk_module.Label(label="Current state")
+            if hasattr(current_state_section_label, "set_xalign"):
+                current_state_section_label.set_xalign(0.0)
+            main_col.pack_start(current_state_section_label, False, False, 0)
+
+            current_fixed_label = gtk_module.Label(label="Current fixed: off")
+            if hasattr(current_fixed_label, "set_xalign"):
+                current_fixed_label.set_xalign(0.0)
+            main_col.pack_start(current_fixed_label, False, False, 0)
+
+            current_margins_label = gtk_module.Label(label="Current margins: 0,0,0,0")
+            if hasattr(current_margins_label, "set_xalign"):
+                current_margins_label.set_xalign(0.0)
+            main_col.pack_start(current_margins_label, False, False, 0)
+
+            current_left_label = gtk_module.Label(label="Current L: align=center valign=center")
+            if hasattr(current_left_label, "set_xalign"):
+                current_left_label.set_xalign(0.0)
+            main_col.pack_start(current_left_label, False, False, 0)
+
+            current_right_label = gtk_module.Label(label="Current R: align=center valign=center")
+            if hasattr(current_right_label, "set_xalign"):
+                current_right_label.set_xalign(0.0)
+            main_col.pack_start(current_right_label, False, False, 0)
+
             right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
             center_row.pack_start(right_margin_col, False, False, 0)
 
@@ -240,8 +265,7 @@ class GtkRuntimeSignalBackend:
             right_margin_col.pack_start(right_margin_label, False, False, 0)
 
             right_margin_spin = gtk_module.SpinButton()
-            if hasattr(right_margin_spin, "set_numeric"):
-                right_margin_spin.set_numeric(True)
+            self._configure_spin_button(right_margin_spin, minimum=0, maximum=500, step=1, page=10)
             right_margin_col.pack_start(right_margin_spin, False, False, 0)
 
             # Row 2: bottom margin row (Glade hbox12 equivalent)
@@ -254,8 +278,7 @@ class GtkRuntimeSignalBackend:
                 bottom_margin_label.set_xalign(0.0)
             bottom_margin_row.pack_start(bottom_margin_label, False, False, 0)
             bottom_margin_spin = gtk_module.SpinButton()
-            if hasattr(bottom_margin_spin, "set_numeric"):
-                bottom_margin_spin.set_numeric(True)
+            self._configure_spin_button(bottom_margin_spin, minimum=0, maximum=250, step=1, page=10)
             bottom_margin_row.pack_start(bottom_margin_spin, False, False, 0)
             btm_spacer_r = gtk_module.Label(label="")
             bottom_margin_row.pack_start(btm_spacer_r, True, True, 0)
@@ -279,8 +302,7 @@ class GtkRuntimeSignalBackend:
                 btn_cancel_save.set_sensitive(False)
             watch_label = gtk_module.Label(label="Watch (planned)")
             interval_spin = gtk_module.SpinButton()
-            if hasattr(interval_spin, "set_numeric"):
-                interval_spin.set_numeric(True)
+            self._configure_spin_button(interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
             interval_label = gtk_module.Label(label="Interval (planned)")
             btn_daemonize = gtk_module.Button(label="Watch Start (planned)")
             btn_cancel_daemonize = gtk_module.Button(label="Watch Stop (planned)")
@@ -369,6 +391,11 @@ class GtkRuntimeSignalBackend:
                 "lblSaveDialogState": save_dialog_state_label,
                 "lblPriorityRule": priority_note_label,
                 "lblStyleLegend": style_legend_label,
+                "lblCurrentStateSection": current_state_section_label,
+                "lblCurrentFixed": current_fixed_label,
+                "lblCurrentMargins": current_margins_label,
+                "lblCurrentStateL": current_left_label,
+                "lblCurrentStateR": current_right_label,
                 "lblCommandSection": command_section_label,
                 "hbox14": command_bar,
                 "btnSetting": btn_setting,
@@ -389,18 +416,55 @@ class GtkRuntimeSignalBackend:
                 "lblError": error_label,
             }
 
+            for object_name, widget in self._objects.items():
+                if hasattr(widget, "set_name"):
+                    widget.set_name(object_name)
+                elif not hasattr(widget, "get_name"):
+                    setattr(widget, "name", object_name)
+
             # Why: fallback window must still exercise MainWindow handlers even when
             # legacy glade cannot be parsed at runtime.
             input_entry_l.connect("changed", self._on_input_changed)
             input_entry_r.connect("changed", self._on_input_changed)
+            tgl_upper_l.connect("pressed", lambda *_args: self._on_direction_pressed("tglUpperL"))
+            tgl_upper_l.connect("toggled", lambda *_args: self._on_direction_toggled("tglUpperL"))
+            tgl_upper_l.connect("released", lambda *_args: self._on_direction_released("tglUpperL"))
+            tgl_lower_l.connect("pressed", lambda *_args: self._on_direction_pressed("tglLowerL"))
+            tgl_lower_l.connect("toggled", lambda *_args: self._on_direction_toggled("tglLowerL"))
+            tgl_lower_l.connect("released", lambda *_args: self._on_direction_released("tglLowerL"))
+            tgl_upper_r.connect("pressed", lambda *_args: self._on_direction_pressed("tglUpperR"))
+            tgl_upper_r.connect("toggled", lambda *_args: self._on_direction_toggled("tglUpperR"))
+            tgl_upper_r.connect("released", lambda *_args: self._on_direction_released("tglUpperR"))
+            tgl_lower_r.connect("pressed", lambda *_args: self._on_direction_pressed("tglLowerR"))
+            tgl_lower_r.connect("toggled", lambda *_args: self._on_direction_toggled("tglLowerR"))
+            tgl_lower_r.connect("released", lambda *_args: self._on_direction_released("tglLowerR"))
+            tgl_push_left_l.connect("pressed", lambda *_args: self._on_direction_pressed("tglPushLeftL"))
+            tgl_push_left_l.connect("toggled", lambda *_args: self._on_direction_toggled("tglPushLeftL"))
+            tgl_push_left_l.connect("released", lambda *_args: self._on_direction_released("tglPushLeftL"))
+            tgl_push_right_l.connect("pressed", lambda *_args: self._on_direction_pressed("tglPushRightL"))
+            tgl_push_right_l.connect("toggled", lambda *_args: self._on_direction_toggled("tglPushRightL"))
+            tgl_push_right_l.connect("released", lambda *_args: self._on_direction_released("tglPushRightL"))
+            tgl_push_left_r.connect("pressed", lambda *_args: self._on_direction_pressed("tglPushLeftR"))
+            tgl_push_left_r.connect("toggled", lambda *_args: self._on_direction_toggled("tglPushLeftR"))
+            tgl_push_left_r.connect("released", lambda *_args: self._on_direction_released("tglPushLeftR"))
+            tgl_push_right_r.connect("pressed", lambda *_args: self._on_direction_pressed("tglPushRightR"))
+            tgl_push_right_r.connect("toggled", lambda *_args: self._on_direction_toggled("tglPushRightR"))
+            tgl_push_right_r.connect("released", lambda *_args: self._on_direction_released("tglPushRightR"))
             btn_get_img_l.connect("clicked", lambda *_args: self._on_pick_input_clicked("L"))
             btn_get_img_r.connect("clicked", lambda *_args: self._on_pick_input_clicked("R"))
+            rad_fixed.connect("clicked", lambda *_args: self._on_fixed_selection(True))
+            rad_no_fixed.connect("clicked", lambda *_args: self._on_fixed_selection(False))
+            top_margin_spin.connect("value-changed", self._on_margin_changed)
+            left_margin_spin.connect("value-changed", self._on_margin_changed)
+            right_margin_spin.connect("value-changed", self._on_margin_changed)
+            bottom_margin_spin.connect("value-changed", self._on_margin_changed)
             optimize_btn.connect("clicked", self._on_save_clicked)
             optimize_modern_btn.connect("clicked", self._on_optimize_clicked)
             apply_btn.connect("clicked", self._on_apply_clicked)
             btn_set_color.connect("clicked", self._on_color_clicked)
             btn_open_save.connect("clicked", self._on_save_dialog_confirm_clicked)
             btn_cancel_save.connect("clicked", self._on_save_dialog_cancel_clicked)
+            self._refresh_current_state_labels()
         else:
             self._objects = {
                 "WallPosit_MainWindow": window,
@@ -413,6 +477,25 @@ class GtkRuntimeSignalBackend:
 
     def connect(self, handler_name: str, callback: Callable[..., Any]) -> None:
         self._signal_handlers[handler_name] = callback
+
+    def _configure_spin_button(
+        self,
+        spin: Any,
+        *,
+        minimum: int,
+        maximum: int,
+        step: int,
+        page: int,
+        initial: int | None = None,
+    ) -> None:
+        if hasattr(spin, "set_numeric"):
+            spin.set_numeric(True)
+        if hasattr(spin, "set_range"):
+            spin.set_range(minimum, maximum)
+        if hasattr(spin, "set_increments"):
+            spin.set_increments(step, page)
+        if hasattr(spin, "set_value"):
+            spin.set_value(minimum if initial is None else initial)
 
     def get_object(self, name: str) -> Any:
         return self._objects.get(name)
@@ -547,6 +630,147 @@ class GtkRuntimeSignalBackend:
         except Exception as exc:
             self._set_label_text("lblPickState", f"Open-{side}: error")
             self._set_feedback(phase=f"Open-{side}", state="error", error=str(exc))
+
+    def _set_toggle_active(self, object_name: str, active: bool) -> None:
+        toggle = self._objects.get(object_name)
+        if toggle is None:
+            return
+        if hasattr(toggle, "set_active"):
+            toggle.set_active(bool(active))
+            return
+        setattr(toggle, "active", bool(active))
+
+    def _is_toggle_active(self, object_name: str) -> bool:
+        toggle = self._objects.get(object_name)
+        if toggle is None:
+            return False
+        if hasattr(toggle, "get_active"):
+            return bool(toggle.get_active())
+        return bool(getattr(toggle, "active", False))
+
+    def _current_side_state(self, side: str) -> tuple[str, str]:
+        align = "center"
+        valign = "center"
+
+        if self._is_toggle_active(f"tglPushLeft{side}"):
+            align = "left"
+        elif self._is_toggle_active(f"tglPushRight{side}"):
+            align = "right"
+
+        if self._is_toggle_active(f"tglUpper{side}"):
+            valign = "top"
+        elif self._is_toggle_active(f"tglLower{side}"):
+            valign = "bottom"
+
+        return align, valign
+
+    def _refresh_current_state_labels(self) -> None:
+        fixed_widget = self._objects.get("radFixed")
+        fixed_enabled = False
+        if fixed_widget is not None and hasattr(fixed_widget, "get_active"):
+            fixed_enabled = bool(fixed_widget.get_active())
+
+        left = self._read_spin_int("spnLMergin")
+        right = self._read_spin_int("spnRMergin")
+        top = self._read_spin_int("spnTopMergin")
+        bottom = self._read_spin_int("spnBtmMergin")
+        align_l, valign_l = self._current_side_state("L")
+        align_r, valign_r = self._current_side_state("R")
+
+        self._set_label_text("lblCurrentFixed", f"Current fixed: {'on' if fixed_enabled else 'off'}")
+        self._set_label_text("lblCurrentMargins", f"Current margins: {left},{right},{top},{bottom}")
+        self._set_label_text("lblCurrentStateL", f"Current L: align={align_l} valign={valign_l}")
+        self._set_label_text("lblCurrentStateR", f"Current R: align={align_r} valign={valign_r}")
+
+    def _on_fixed_selection(self, fixed_enabled: bool) -> None:
+        self._set_toggle_active("radFixed", fixed_enabled)
+        self._set_toggle_active("radNoFixed", not fixed_enabled)
+        self._refresh_current_state_labels()
+
+        callback = self._signal_handlers.get("on_radFixed_toggled")
+        if callback is not None:
+            try:
+                callback(bool(fixed_enabled))
+            except Exception:
+                pass
+
+    def _opposite_toggle_name(self, object_name: str) -> str | None:
+        opposites = {
+            "tglPushLeftL": "tglPushRightL",
+            "tglPushRightL": "tglPushLeftL",
+            "tglUpperL": "tglLowerL",
+            "tglLowerL": "tglUpperL",
+            "tglPushLeftR": "tglPushRightR",
+            "tglPushRightR": "tglPushLeftR",
+            "tglUpperR": "tglLowerR",
+            "tglLowerR": "tglUpperR",
+        }
+        return opposites.get(object_name)
+
+    def _on_direction_pressed(self, object_name: str) -> None:
+        opposite_name = self._opposite_toggle_name(object_name)
+        if opposite_name is not None:
+            opposite_toggle = self._objects.get(opposite_name)
+            if opposite_toggle is not None and hasattr(opposite_toggle, "get_active"):
+                if bool(opposite_toggle.get_active()):
+                    self._set_toggle_active(opposite_name, False)
+        self._refresh_current_state_labels()
+
+        callback = self._signal_handlers.get("on_tglBtn_pressed")
+        if callback is not None:
+            widget = self._objects.get(object_name)
+            try:
+                callback(widget)
+            except Exception:
+                pass
+
+    def _on_direction_toggled(self, object_name: str) -> None:
+        self._refresh_current_state_labels()
+        callback = self._signal_handlers.get("on_tglBtn_toggled")
+        if callback is None:
+            return
+
+        widget = self._objects.get(object_name)
+        try:
+            callback(widget)
+        except Exception:
+            pass
+
+    def _on_direction_released(self, object_name: str) -> None:
+        self._refresh_current_state_labels()
+        callback = self._signal_handlers.get("on_tglBtn_released")
+        if callback is None:
+            return
+
+        widget = self._objects.get(object_name)
+        try:
+            callback(widget)
+        except Exception:
+            pass
+
+    def _read_spin_int(self, object_name: str) -> int:
+        spin = self._objects.get(object_name)
+        if spin is None:
+            return 0
+        if hasattr(spin, "get_value_as_int"):
+            return int(spin.get_value_as_int())
+        if hasattr(spin, "get_value"):
+            return int(spin.get_value())
+        return 0
+
+    def _on_margin_changed(self, widget: Any) -> None:
+        self._refresh_current_state_labels()
+        callback = self._signal_handlers.get("on_spnMergin_value_changed")
+
+        if callback is None:
+            self._set_feedback(phase="Margins", state="planned")
+            return
+
+        try:
+            callback(widget)
+            self._set_feedback(phase="Margins", state="updated")
+        except Exception as exc:
+            self._set_feedback(phase="Margins", state="error", error=str(exc))
 
     def _run_optimize_path(self, callback: Callable[..., Any] | None) -> None:
         if callback is None:

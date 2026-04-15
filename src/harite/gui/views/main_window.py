@@ -96,8 +96,51 @@ class MainWindow:
         self.on_change_input_text(",".join(current))
         self._log(f"Input picked: {value}")
 
-    def on_change_margins(self, left: int, right: int, top: int, bottom: int) -> None:
+    def _current_margin_values(self) -> tuple[int, int, int, int]:
+        value = (self.form_state.margins or "").strip()
+        if not value:
+            return (0, 0, 0, 0)
+
+        parts = [part.strip() for part in value.split(",")]
+        if len(parts) != 4:
+            return (0, 0, 0, 0)
+
+        try:
+            return tuple(int(part) for part in parts)
+        except ValueError:
+            return (0, 0, 0, 0)
+
+    def _margin_index_for_widget(self, widget_name: str) -> int | None:
+        if "LMergin" in widget_name:
+            return 0
+        if "RMergin" in widget_name:
+            return 1
+        if "TopMergin" in widget_name:
+            return 2
+        if "BtmMergin" in widget_name:
+            return 3
+        return None
+
+    def on_change_margins(self, *args: int | str) -> None:
         """Signal endpoint: on_spnMergin_value_changed."""
+        if len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], (int, float)):
+            margin_index = self._margin_index_for_widget(args[0])
+            if margin_index is None:
+                self.last_error = f"unknown margin widget: {args[0]}"
+                self._log(f"Margin update failed: unknown widget {args[0]}")
+                return
+
+            current = list(self._current_margin_values())
+            current[margin_index] = int(args[1])
+            self.on_change_margins(*current)
+            return
+
+        if len(args) != 4 or not all(isinstance(value, (int, float)) for value in args):
+            self.last_error = "invalid margin signal"
+            self._log("Margin update failed: invalid signal")
+            return
+
+        left, right, top, bottom = (int(args[0]), int(args[1]), int(args[2]), int(args[3]))
         vals = (left, right, top, bottom)
         if any(v < 0 for v in vals):
             self.last_error = "margins must be non-negative"
@@ -112,6 +155,41 @@ class MainWindow:
         """Signal endpoint: on_radFixed_toggled."""
         self.form_state.fixed = bool(enabled)
         self._log(f"Fixed mode: {self.form_state.fixed}")
+
+    def on_toggle_position_pressed(self, widget_name: str) -> None:
+        """Signal endpoint: on_tglBtn_pressed."""
+        self._log(f"Toggle pressed: {widget_name}")
+
+    def on_toggle_position(self, widget_name: str, active: bool) -> None:
+        """Signal endpoint: on_tglBtn_toggled."""
+        if not active:
+            return
+
+        if "PushLeft" in widget_name:
+            self.form_state.align = "left"
+            self._log(f"Align updated from {widget_name}: left")
+            return
+        if "PushRight" in widget_name:
+            self.form_state.align = "right"
+            self._log(f"Align updated from {widget_name}: right")
+            return
+        if "Upper" in widget_name:
+            self.form_state.valign = "top"
+            self._log(f"Valign updated from {widget_name}: top")
+            return
+        if "Lower" in widget_name:
+            self.form_state.valign = "bottom"
+            self._log(f"Valign updated from {widget_name}: bottom")
+
+    def on_toggle_position_reset(self, widget_name: str) -> None:
+        """Signal endpoint: on_tglBtn_released."""
+        if "Push" in widget_name:
+            self.form_state.align = "center"
+            self._log(f"Align reset from {widget_name}: center")
+            return
+        if "Upper" in widget_name or "Lower" in widget_name:
+            self.form_state.valign = "center"
+            self._log(f"Valign reset from {widget_name}: center")
 
     def _log(self, message: str) -> None:
         self.logs.append(message)
