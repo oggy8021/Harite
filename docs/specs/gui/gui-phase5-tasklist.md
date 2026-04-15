@@ -194,6 +194,7 @@
   - 対象: watch start/stop/interval の planned 導線を実処理へ昇格
   - 要件: watch 用の左右画像向けパスは `srcdirL`, `srcdirR` で指定可能、未指定も許容
   - 補足: MainWindow の `entPathL` / `entPathR` とは責務を分離（watch 用入力と通常入力を混同しない）
+  - 進捗: `spnInterval` も upstream では `GtkSpinButton` の adjustment (`60 1 86400 1 10 0`) で駆動されると確認。fallback 側へ同等の range/increment/初期値を補完し、margin と同種のステッパ不発を予防（2026-04-15）
   - 追加条件: 旧 `SettingDialog` / `SrcdirDialog` の導線対応表を提出し、実装前レビュー合意を得る
   - 完了条件: watch 実行時に `srcdirL` / `srcdirR` の有無に応じた分岐が回帰テストで固定される
 

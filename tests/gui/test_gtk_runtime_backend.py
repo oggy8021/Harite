@@ -881,6 +881,15 @@ def test_runtime_backend_margin_spin_matches_upstream_adjustments():
     assert (right.minimum, right.maximum, right.step_increment, right.page_increment) == (0, 500, 1, 10)
 
 
+def test_runtime_backend_interval_spin_matches_upstream_adjustments():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    interval = backend.get_object("spnInterval")
+
+    assert (interval.minimum, interval.maximum, interval.step_increment, interval.page_increment) == (1, 86400, 1, 10)
+    assert interval.get_value_as_int() == 60
+
+
 def test_runtime_backend_current_state_panel_updates_for_toggle_and_fixed():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 

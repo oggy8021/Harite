@@ -302,8 +302,7 @@ class GtkRuntimeSignalBackend:
                 btn_cancel_save.set_sensitive(False)
             watch_label = gtk_module.Label(label="Watch (planned)")
             interval_spin = gtk_module.SpinButton()
-            if hasattr(interval_spin, "set_numeric"):
-                interval_spin.set_numeric(True)
+            self._configure_spin_button(interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
             interval_label = gtk_module.Label(label="Interval (planned)")
             btn_daemonize = gtk_module.Button(label="Watch Start (planned)")
             btn_cancel_daemonize = gtk_module.Button(label="Watch Stop (planned)")
@@ -487,6 +486,7 @@ class GtkRuntimeSignalBackend:
         maximum: int,
         step: int,
         page: int,
+        initial: int | None = None,
     ) -> None:
         if hasattr(spin, "set_numeric"):
             spin.set_numeric(True)
@@ -495,7 +495,7 @@ class GtkRuntimeSignalBackend:
         if hasattr(spin, "set_increments"):
             spin.set_increments(step, page)
         if hasattr(spin, "set_value"):
-            spin.set_value(minimum)
+            spin.set_value(minimum if initial is None else initial)
 
     def get_object(self, name: str) -> Any:
         return self._objects.get(name)
