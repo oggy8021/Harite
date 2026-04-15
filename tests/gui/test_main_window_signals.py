@@ -220,6 +220,19 @@ def test_on_pick_input_appends_unique_paths():
     assert window.can_optimize is True
 
 
+def test_on_pick_input_updates_side_specific_paths():
+    window = MainWindow()
+
+    window.on_pick_input("left-a.jpg", "L")
+    window.on_pick_input("right-a.jpg", "R")
+    window.on_pick_input("left-b.jpg", "L")
+
+    assert window.input_path_l == "left-b.jpg"
+    assert window.input_path_r == "right-a.jpg"
+    assert window.form_state.input_value == "left-b.jpg,right-a.jpg"
+    assert window.can_optimize is True
+
+
 def test_on_change_margins_updates_form_state():
     window = MainWindow()
 

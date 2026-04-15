@@ -187,8 +187,16 @@
 - [ ] P5-9 feat(gui): Open 導線を Dialog 主体へ復元（ImgOpenDialog 相当）
   - 対象: `Open-L` / `Open-R` 押下でファイル選択ダイアログを開き、選択結果を `entPathL` / `entPathR` へ反映
   - 要件: 直入力前提の承認UXではなく、旧導線準拠の「選択結果を表示」へ戻す
+  - 要件: 当時の Gtk 部品そのものの再現には拘らず、Dialog 主体の導線と責務が再現できるなら部品差し替えを許容する
+  - 要件: `entPathL` / `entPathR` は GUI で人が手入力する欄として扱わず、左右に読み込んだ画像がどのパスにあるかを表示する欄として扱う
+  - 要件: Open dialog の選択結果が `entPathL` / `entPathR` と直結し、GUI 上は「いずれかのユーザに分かる位置にあればよい」が分かることを優先する
+  - 要件: `entPathL` / `entPathR` の現在位置には強く拘らず、`Current state` に近い補助表示として扱ってよい
+  - 要件: 将来 Open dialog 近傍へプレビューを置く場合、パス表示は縮退または欄外へ退避できる構成を許容する
   - 要件: 拡張子制限など旧 `ImgOpenDialog` 相当の制御を段階導入
-  - 追加条件: 旧 `Widget/ImgOpenDialog.py` の挙動対応表（選択/キャンセル/拡張子制限）を提出し、実装前レビュー合意を得る
+  - 進捗: fallback backend に `ImgOpenDialog` proxy を追加し、`Open-L/R` 押下で dialog-open、confirm/cancel で selected/canceled へ遷移する経路へ更新。旧 `entPath*` 事前入力依存と `planned(path-required)` は撤去した（2026-04-15）
+  - 進捗: `ui_adapter` は Open 選択値を `ImgOpenDialog` から解決し、`MainWindow.on_pick_input(path, side)` で左右別の表示パスを保持したうえで `input_value` を再構成するよう更新した（2026-04-15）
+  - 進捗: 旧 `Widget/ImgOpenDialog.py` と `DialogBase.py`、呼び出し元 `WindowBase.btnGetImg_clicked` の挙動対応表を traceability へ追記した。選択/キャンセル/拡張子制限の差分整理を実施し、full path 表示は意図差分、filter UI と空入力時のホーム初期化は暫定差分として切り分けた（2026-04-16）
+  - 完了記録（部分）: owner 実行の固定 GUI 回帰コマンドが pass。Open dialog proxy 導線の回帰を含めて green を確認した（2026-04-16）
   - 完了条件: Open 押下が `planned` 表示で終わらず、選択/キャンセルの状態遷移がUIで確認できる
 
 - [ ] P5-10 feat(gui): watch 導線の実処理導入（srcdirL/srcdirR）

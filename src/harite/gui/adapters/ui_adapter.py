@@ -122,25 +122,50 @@ def _build_dispatch_callback(
 
     if legacy_name == "on_btnGetImg_clicked":
 
-        def _extract_path(value: Any) -> str | None:
+        def _extract_path_and_side(value: Any) -> tuple[str | None, str | None]:
+            side = None
+            if hasattr(value, "get_side"):
+                candidate = value.get_side()
+                if isinstance(candidate, str) and candidate.strip():
+                    side = candidate.strip().upper()
+            elif isinstance(getattr(value, "side", None), str) and getattr(value, "side").strip():
+                side = getattr(value, "side").strip().upper()
+
             if isinstance(value, str) and value.strip():
-                return value.strip()
+                return value.strip(), side
+            if hasattr(value, "get_filename"):
+                candidate = value.get_filename()
+                if isinstance(candidate, str) and candidate.strip():
+                    return candidate.strip(), side
             if hasattr(value, "get_text"):
                 candidate = value.get_text()
                 if isinstance(candidate, str) and candidate.strip():
-                    return candidate.strip()
-            return None
+                    return candidate.strip(), side
+            return None, side
 
         def _on_pick_clicked(*args: Any) -> Any:
+            if (
+                len(args) >= 2
+                and isinstance(args[0], str)
+                and args[0].strip()
+                and isinstance(args[1], str)
+                and args[1].strip().upper() in {"L", "R"}
+            ):
+                return target(args[0].strip(), args[1].strip().upper())
+
             for arg in args:
-                selected = _extract_path(arg)
+                selected, side = _extract_path_and_side(arg)
                 if selected:
+                    if side:
+                        return target(selected, side)
                     return target(selected)
 
             if signal_backend is not None and hasattr(signal_backend, "get_object"):
-                entry = signal_backend.get_object("entPathL")
-                selected = _extract_path(entry)
+                dialog = signal_backend.get_object("ImgOpenDialog")
+                selected, side = _extract_path_and_side(dialog)
                 if selected:
+                    if side:
+                        return target(selected, side)
                     return target(selected)
 
             return False

@@ -1,6 +1,6 @@
 # GUI Phase5 Upstream Traceability Checklist
 
-最終更新: 2026-04-15
+最終更新: 2026-04-16
 対象: P5-8 以降の各PR（必須）
 
 ## 目的
@@ -188,6 +188,7 @@
 - P5-9（Open Dialog）
   - Open-L/Open-R で選択ダイアログが開く
   - 選択/キャンセルが `entPathL/R` と状態表示に反映される
+  - `entPathL/R` の事前入力を要求せず、dialog の選択結果を左右別に反映する
 - P5-10（watch）
   - `srcdirL/srcdirR` 指定あり/なしの双方が意図どおり動く
   - MainWindow通常入力導線と責務が混在しない
@@ -311,3 +312,117 @@
 - [x] P5-8 の受け入れ条件を満たした
 - [x] 非対応差分は `warn` として合意済み
 - [x] 次タスク（P5-9）へ進行可
+
+## 13. P5-9 最低記入（Open Dialog）
+
+本節は P5-9（Open-L/Open-R の Dialog 主体導線復元）のための最低限記入済みブロック。
+母体 `ImgOpenDialog` の return semantics と、Harite 側の意図差分を同時に固定する。
+
+### 13-1. 対象PR情報（P5-9）
+
+- PR番号: TBD
+- タスク番号: P5-9
+- ブランチ名: `feature/gui-phase5-p5-9-open-dialog-restore-20260414`
+- 担当: owner
+- レビュー担当: TBD
+- 予定実機環境: XFCE
+- 判定対象導線: `btnGetImgL`, `btnGetImgR`, `ImgOpenDialog`, `entPathL`, `entPathR`
+
+### 13-2. 上流読解ソース（P5-9）
+
+- 参照ファイル1: `wallpaperoptimizer/WallpaperOptimizer/Widget/ImgOpenDialog.py`
+- 参照観点1: `openDialog(path, addlr)` の初期ディレクトリ、タイトル、戻り値
+- 参照観点2: `__init__` の image filter / all files filter
+- 参照ファイル2: `wallpaperoptimizer/WallpaperOptimizer/Widget/DialogBase.py`
+- 参照観点3: `btnCancel_clicked` の `gtk.RESPONSE_CANCEL`
+- 参照ファイル3: `wallpaperoptimizer/WallpaperOptimizer/WindowBase.py`
+- 参照観点4: `btnGetImg_clicked` の `ImgOpenDialog.openDialog(...)` 呼び出しと `entPath.set_text(os.path.basename(path))`
+- 読解メモ1: upstream は `btnOpen_clicked -> RESPONSE_OK`、cancel/destroy は `RESPONSE_CANCEL` として扱い、`openDialog` は OK 時だけ filename を返し、それ以外は `False` を返す
+- 読解メモ2: 初期 path が空なら home directory、非空なら `abspath(path)` を初期位置に使う
+- 読解メモ3: title は既定タイトルへ `(<L/R>)` を付けて side を区別する
+- 読解メモ4: filter は `image/png`, `image/jpeg`, `image/bmp`, `image/gif` と `*.png`, `*.jpeg`, `*.jpg`, `*.bmp`, `*.gif`、および all files で構成される
+- 読解メモ5: caller は選択 path を内部 args に保持し、entry には basename のみを表示する
+
+### 13-3. 対応関係マトリクス（P5-9）
+
+| 機能項目 | 上流挙動（要約） | 現行挙動（実装前） | 実装方針 | 受け入れ条件 |
+| --- | --- | --- | --- | --- |
+| Open-L/Open-R 起動 | `WindowBase.btnGetImg_clicked` が side ごとに `ImgOpenDialog.openDialog(current_path, Caps)` を呼ぶ | entry に値がないと `planned(path-required)` で停止 | `src/harite/gui/adapters/gtk_backend.py` に `ImgOpenDialog` proxy を追加し、button 押下で side-aware に dialog-open へ遷移させる | Open-L/Open-R 押下で dialog が開き、owner 回帰で `dialog-open` 状態が固定される |
+| 選択確定 | `ImgOpenDialog.btnOpen_clicked` は `RESPONSE_OK`、`openDialog` は `get_filename()` を返す | entry の文字列をそのまま handler へ渡していた | `src/harite/gui/adapters/ui_adapter.py` と `src/harite/gui/views/main_window.py` で `path, side` を受け、左右別 path を保持しつつ `input_value` を再構成する | 選択確定で selected へ遷移し、左右の path が上書き更新され、owner 回帰が pass する |
+| cancel / destroy | `DialogBase.btnCancel_clicked` は `RESPONSE_CANCEL`、`openDialog` は `False` を返して caller 側 path を更新しない | close semantics が未定義で、MainWindow は destroy をログするだけ | fallback proxy では cancel/close を `canceled` / `closed` 状態へ明示し、既存 path を保持したまま `on_ImgOpenDialog_destroy` を通知する | cancel/close 後に path が変化せず、状態表示が `canceled` または `closed` になる |
+| title / 初期位置 | upstream は title に side suffix を付け、空 path 時は home、非空 path 時は absolute path 起点 | title/初期位置ともに未整理 | title suffix は fallback proxy で再現し、初期位置の home fallback は後続差分として記録する | title に side が表示される。home fallback 未実装は warn として明記される |
+| filter 制御 | upstream は image filter と all files filter を dialog へ追加する | filter 制御なし | filter 種別は traceability に固定し、fallback proxy では metadata 再現から段階導入する | filter 差分が文書化され、後続実装の対象集合が固定される |
+| entry 表示内容 | caller は `os.path.basename(path)` のみ表示する | path-required 前提で entry を入力欄として扱っていた | Harite では user 合意に従い、`entPathL/R` を表示欄として full path を保持する | GUI 上で選択元 path が判読でき、仕様差分として合意済みである |
+
+### 13-4. 非対応・差分（P5-9）
+
+- 非対応項目1: `entPathL/R` への basename-only 表示
+  - 理由: user 合意は「選択されたソース path を表示する」ことであり、basename のみでは情報量が足りない
+  - 代替挙動: full path を表示し、左右別 path を MainWindow 側でも保持する
+  - 後続タスク: 必要なら preview 導入時に path 表示の縮退方針を再設計する
+  - 差分分類: `仕様差分（意図的）`
+- 非対応項目2: empty path 時の home directory 初期化
+  - 理由: fallback proxy は実 chooser を持たず、ディレクトリ初期化の UI 意味がまだ薄い
+  - 代替挙動: 既存 path があればそれを再利用し、空なら空のまま dialog-open とする
+  - 後続タスク: 実 chooser 導入時に home 初期化を再現する
+  - 差分分類: `暫定差分（期限付き）`
+- 非対応項目3: image/all-files filter の UI 再現
+  - 理由: 現行 fallback proxy は選択状態機械の復旧を優先し、chooser widget 自体は未導入
+  - 代替挙動: 対応対象の MIME/pattern 集合だけ先に本書へ固定する
+  - 後続タスク: P5-9 follow-up または実 chooser 導入時に filter UI を反映する
+  - 差分分類: `暫定差分（期限付き）`
+
+### 13-5. 実装前レビュー合意（P5-9）
+
+- [x] 13-2 と 13-3 の内容をレビュー可能な形で記入した
+- [x] 差分分類と後続タスクを明記した
+- [ ] Approve を得た
+
+### 13-6. 実装スコープ境界（P5-9）
+
+- In scope:
+  - Open-L/Open-R 押下で dialog-open へ遷移すること
+  - confirm/cancel/close の状態遷移
+  - 左右別 path の保持と `input_value` 再構成
+- Out of scope:
+  - 実 chooser widget による filter UI の完全再現
+  - home directory 初期化の実 UI 再現
+  - save dialog の挙動整理
+- 逸脱禁止:
+  - Save/watch の仕様変更を本タスクへ混入させない
+
+### 13-7. 未解決点（P5-9）
+
+- [x] cancel と destroy を同一の「未選択」意味として扱えるか
+  - upstream はどちらも `RESPONSE_CANCEL` 経由で `False` を返す。Harite では状態表示だけ `canceled` / `closed` に分け、path 非更新という本質は一致させる
+- [x] `entPathL/R` を basename 表示へ寄せるか、source path 表示へ寄せるか
+  - user 合意に従い source path 表示へ寄せる。upstream caller の basename-only は意図差分として扱う
+- [x] filter 対象の最小集合は何か
+  - upstream 定義どおり `png/jpeg/jpg/bmp/gif` と all files を最小集合として固定する
+- [x] title 側の L/R 区別はどの強度で再現するか
+  - fallback proxy でも `Open image (L/R)` として side を明示する
+
+### 13-8. 実装後エビデンス記録（P5-9）
+
+#### 回帰（Owner実行）
+
+- 実行日: 2026-04-16
+- 実行者: owner
+- コマンド: `python.exe -m pytest -q tests/gui/test_main_window_signals.py tests/gui/test_ui_adapter_dispatch.py tests/gui/test_ui_adapter_mapping_validation.py tests/gui/test_gtk_runtime_backend.py tests/gui/test_phase5_visual_regression.py`
+- 結果: pass
+
+#### 実機（XFCE）
+
+| 観点 | 判定 | 根拠（スクリーンショット/ログ） |
+| --- | --- | --- |
+| Open dialog 起動 | blocked | 実機確認未記入 |
+| confirm/cancel 状態遷移 | blocked | 実機確認未記入 |
+| path 表示 | blocked | 実機確認未記入 |
+| filter UI | warn | fallback proxy では未実装、traceability へ差分記録済み |
+
+#### 最終合意
+
+- [x] P5-9 の上流対応表を記入した
+- [x] 回帰 pass を記録した
+- [ ] 実機確認を完了した
+- [ ] P5-9 を Go 判定できる

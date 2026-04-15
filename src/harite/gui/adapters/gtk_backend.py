@@ -36,6 +36,64 @@ class _SaveDialogProxy:
         return self._visible
 
 
+class _OpenDialogProxy:
+    """Minimal image chooser-like object used by runtime fallback backend."""
+
+    def __init__(
+        self,
+        on_confirm: Callable[[], None] | None = None,
+        on_cancel: Callable[[bool], None] | None = None,
+    ) -> None:
+        self._filename = ""
+        self._visible = False
+        self._side = ""
+        self._title = "Open image"
+        self._on_confirm = on_confirm
+        self._on_cancel = on_cancel
+
+    def open_for_side(self, side: str, filename: str = "") -> None:
+        self._side = str(side or "").upper()
+        self._filename = str(filename or "")
+        self._title = f"Open image ({self._side})"
+        self._visible = True
+
+    def set_filename(self, filename: str) -> None:
+        self._filename = str(filename or "")
+
+    def get_filename(self) -> str:
+        return self._filename
+
+    def get_side(self) -> str:
+        return self._side
+
+    def set_title(self, title: str) -> None:
+        self._title = str(title or "")
+
+    def get_title(self) -> str:
+        return self._title
+
+    def show(self) -> None:
+        self._visible = True
+
+    def hide(self) -> None:
+        self._visible = False
+
+    def is_visible(self) -> bool:
+        return self._visible
+
+    def confirm(self) -> None:
+        if self._on_confirm is not None:
+            self._on_confirm()
+
+    def cancel(self) -> None:
+        if self._on_cancel is not None:
+            self._on_cancel(False)
+
+    def destroy(self) -> None:
+        if self._on_cancel is not None:
+            self._on_cancel(True)
+
+
 class GtkRuntimeSignalBackend:
     """Minimal GTK runtime backend that does not require Glade parsing.
 
@@ -293,6 +351,7 @@ class GtkRuntimeSignalBackend:
             root.pack_start(command_bar, False, False, 0)
             btn_setting = gtk_module.Button(label="Prefs")
             btn_set_color = gtk_module.Button(label="Color (planned)")
+            open_dialog_proxy = _OpenDialogProxy(self._on_open_dialog_confirmed, self._on_open_dialog_canceled)
             save_dialog_proxy = _SaveDialogProxy(self._on_save_dialog_filename_changed)
             btn_open_save = gtk_module.Button(label="Save Confirm")
             if hasattr(btn_open_save, "set_sensitive"):
@@ -400,6 +459,7 @@ class GtkRuntimeSignalBackend:
                 "hbox14": command_bar,
                 "btnSetting": btn_setting,
                 "btnSetColor": btn_set_color,
+                "ImgOpenDialog": open_dialog_proxy,
                 "SaveWallpaperDialog": save_dialog_proxy,
                 "btnOpenSave": btn_open_save,
                 "btnCancelSave": btn_cancel_save,
@@ -602,18 +662,59 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Input", state="failed", error=str(exc))
 
     def _on_pick_input_clicked(self, side: str) -> None:
-        callback = self._signal_handlers.get("on_btnGetImg_clicked")
         entry_name = "entPathL" if side == "L" else "entPathR"
         entry = self._objects.get(entry_name)
         value = ""
         if entry is not None and hasattr(entry, "get_text"):
             value = str(entry.get_text() or "").strip()
 
-        if not value:
-            self._set_label_text("lblPickState", f"Open-{side}: planned(path-required)")
-            self._set_feedback(phase=f"Open-{side}", state="planned", error="path input required")
+        dialog = self._objects.get("ImgOpenDialog")
+        if dialog is None or not hasattr(dialog, "open_for_side"):
+            self._set_label_text("lblPickState", f"Open-{side}: handler-missing")
+            self._set_feedback(
+                phase=f"Open-{side}",
+                state="handler-missing",
+                error="open dialog not available",
+            )
             return
 
+        dialog.open_for_side(side, value)
+        self._set_label_text("lblPickState", f"Open-{side}: dialog-open")
+        self._set_feedback(phase=f"Open-{side}", state="dialog-open")
+
+    def _notify_open_dialog_destroy(self) -> None:
+        callback = self._signal_handlers.get("on_ImgOpenDialog_destroy")
+        if callback is None:
+            return
+        try:
+            callback()
+        except Exception:
+            pass
+
+    def _on_open_dialog_confirmed(self) -> None:
+        dialog = self._objects.get("ImgOpenDialog")
+        if dialog is None:
+            self._set_feedback(phase="Open", state="error", error="open dialog not available")
+            return
+
+        side = "L"
+        if hasattr(dialog, "get_side"):
+            side = str(dialog.get_side() or "L").upper()
+
+        filename = ""
+        if hasattr(dialog, "get_filename"):
+            filename = str(dialog.get_filename() or "").strip()
+
+        if not filename:
+            self._set_label_text("lblPickState", f"Open-{side}: awaiting-selection")
+            self._set_feedback(
+                phase=f"Open-{side}",
+                state="awaiting-selection",
+                error="image selection required",
+            )
+            return
+
+        callback = self._signal_handlers.get("on_btnGetImg_clicked")
         if callback is None:
             self._set_label_text("lblPickState", f"Open-{side}: handler-missing")
             self._set_feedback(
@@ -624,12 +725,37 @@ class GtkRuntimeSignalBackend:
             return
 
         try:
-            callback(value)
+            callback(filename, side)
+            entry_name = "entPathL" if side == "L" else "entPathR"
+            entry = self._objects.get(entry_name)
+            if entry is not None and hasattr(entry, "set_text"):
+                entry.set_text(filename)
+                if hasattr(entry, "emit"):
+                    entry.emit("changed", entry)
+                else:
+                    self._on_input_changed(entry)
+            if hasattr(dialog, "hide"):
+                dialog.hide()
             self._set_label_text("lblPickState", f"Open-{side}: selected")
             self._set_feedback(phase=f"Open-{side}", state="selected")
+            self._notify_open_dialog_destroy()
         except Exception as exc:
             self._set_label_text("lblPickState", f"Open-{side}: error")
             self._set_feedback(phase=f"Open-{side}", state="error", error=str(exc))
+
+    def _on_open_dialog_canceled(self, destroyed: bool = False) -> None:
+        dialog = self._objects.get("ImgOpenDialog")
+        side = "L"
+        if dialog is not None:
+            if hasattr(dialog, "get_side"):
+                side = str(dialog.get_side() or "L").upper()
+            if hasattr(dialog, "hide"):
+                dialog.hide()
+
+        state = "closed" if destroyed else "canceled"
+        self._set_label_text("lblPickState", f"Open-{side}: {state}")
+        self._set_feedback(phase=f"Open-{side}", state=state)
+        self._notify_open_dialog_destroy()
 
     def _set_toggle_active(self, object_name: str, active: bool) -> None:
         toggle = self._objects.get(object_name)
