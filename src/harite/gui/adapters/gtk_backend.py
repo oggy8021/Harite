@@ -71,10 +71,7 @@ class GtkRuntimeSignalBackend:
             top_row.pack_start(top_margin_label, False, False, 0)
 
             top_margin_spin = gtk_module.SpinButton()
-            if hasattr(top_margin_spin, "set_numeric"):
-                top_margin_spin.set_numeric(True)
-            if hasattr(top_margin_spin, "set_value"):
-                top_margin_spin.set_value(0)
+            self._configure_spin_button(top_margin_spin, minimum=0, maximum=250, step=1, page=10)
             top_row.pack_start(top_margin_spin, False, False, 0)
 
             top_spacer_r = gtk_module.Label(label="")
@@ -93,10 +90,7 @@ class GtkRuntimeSignalBackend:
             left_margin_col.pack_start(left_margin_label, False, False, 0)
 
             left_margin_spin = gtk_module.SpinButton()
-            if hasattr(left_margin_spin, "set_numeric"):
-                left_margin_spin.set_numeric(True)
-            if hasattr(left_margin_spin, "set_value"):
-                left_margin_spin.set_value(0)
+            self._configure_spin_button(left_margin_spin, minimum=0, maximum=500, step=1, page=10)
             left_margin_col.pack_start(left_margin_spin, False, False, 0)
 
             main_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
@@ -271,10 +265,7 @@ class GtkRuntimeSignalBackend:
             right_margin_col.pack_start(right_margin_label, False, False, 0)
 
             right_margin_spin = gtk_module.SpinButton()
-            if hasattr(right_margin_spin, "set_numeric"):
-                right_margin_spin.set_numeric(True)
-            if hasattr(right_margin_spin, "set_value"):
-                right_margin_spin.set_value(0)
+            self._configure_spin_button(right_margin_spin, minimum=0, maximum=500, step=1, page=10)
             right_margin_col.pack_start(right_margin_spin, False, False, 0)
 
             # Row 2: bottom margin row (Glade hbox12 equivalent)
@@ -287,10 +278,7 @@ class GtkRuntimeSignalBackend:
                 bottom_margin_label.set_xalign(0.0)
             bottom_margin_row.pack_start(bottom_margin_label, False, False, 0)
             bottom_margin_spin = gtk_module.SpinButton()
-            if hasattr(bottom_margin_spin, "set_numeric"):
-                bottom_margin_spin.set_numeric(True)
-            if hasattr(bottom_margin_spin, "set_value"):
-                bottom_margin_spin.set_value(0)
+            self._configure_spin_button(bottom_margin_spin, minimum=0, maximum=250, step=1, page=10)
             bottom_margin_row.pack_start(bottom_margin_spin, False, False, 0)
             btm_spacer_r = gtk_module.Label(label="")
             bottom_margin_row.pack_start(btm_spacer_r, True, True, 0)
@@ -490,6 +478,24 @@ class GtkRuntimeSignalBackend:
 
     def connect(self, handler_name: str, callback: Callable[..., Any]) -> None:
         self._signal_handlers[handler_name] = callback
+
+    def _configure_spin_button(
+        self,
+        spin: Any,
+        *,
+        minimum: int,
+        maximum: int,
+        step: int,
+        page: int,
+    ) -> None:
+        if hasattr(spin, "set_numeric"):
+            spin.set_numeric(True)
+        if hasattr(spin, "set_range"):
+            spin.set_range(minimum, maximum)
+        if hasattr(spin, "set_increments"):
+            spin.set_increments(step, page)
+        if hasattr(spin, "set_value"):
+            spin.set_value(minimum)
 
     def get_object(self, name: str) -> Any:
         return self._objects.get(name)

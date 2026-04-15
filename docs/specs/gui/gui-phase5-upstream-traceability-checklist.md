@@ -227,6 +227,7 @@
 - 読解メモ2: `tglBtn_toggled` は active になったトグル名から `align/valign` を `left/right/top/bottom` へ設定する
 - 読解メモ3: `tglBtn_released` は「自分も対向もOFF」のときだけ `align=center` または `valign=middle` へ戻す
 - 読解メモ4: `spnMergin_value_changed` は changed された単一 widget 名から index を決め、`option.opts.mergin[idx]` だけを更新する
+- 読解メモ5: margin の `- / +` は独立 button ではなく `GtkSpinButton` 自身のステッパで、Glade 上は `adjustment="0 0 250 1 10 0"` / `"0 0 500 1 10 0"` により step/range が与えられている
 - 備考: margin優先（`fixed > margin > toggles`）は現行仕様との整合を確認する
 
 ### 12-3. 対応関係マトリクス（P5-8）
@@ -276,27 +277,31 @@
 - [x] 排他制御と `align/valign` 更新順序の依存有無
   - 母体は `pressed -> toggled(active時のみ) -> released(両方OFFならcenter/middle)` の責務分離になっている
 - [ ] 例外導線（初期状態/未選択状態）での上流既定値
-- [ ] 現行 fallback 実装の「対向ボタン無効化」は母体差分として維持するか、`pressed/released` ベースへ寄せ直すか
-- [ ] 現行 fallback 実装は `on_radFixed_toggled(False)` を呼んでいるが、母体のトグル処理は `align/valign` 更新であり、責務が一致していない
+- [x] 現行 fallback 実装の「対向ボタン無効化」は母体差分として維持するか、`pressed/released` ベースへ寄せ直すか
+  - 母体寄せへ変更済み。無効化UXは廃止した
+- [x] 現行 fallback 実装は `on_radFixed_toggled(False)` を呼んでいるが、母体のトグル処理は `align/valign` 更新であり、責務が一致していない
+  - `align/valign` 更新へ置き換え済み
+- [x] margin の `- / +` が機能しない直接原因は何か
+  - 母体は `GtkSpinButton` の adjustment で step/range を持つが、fallback は `set_value(0)` だけで range/increment 未設定だった。母体値へ合わせて補完する
 - [ ] 現行 margin 実装の「4値一括 callback」が、母体の単項目更新と比べて仕様差分として許容されるか
 
 ### 12-8. 実装後エビデンス記録（P5-8）
 
 #### 回帰（Owner実行）
 
-- 実行日:
-- 実行者:
-- コマンド:
-- 結果:
+- 実行日: 2026-04-15
+- 実行者: owner
+- コマンド: `python.exe -m pytest -q tests/gui/test_main_window_signals.py tests/gui/test_ui_adapter_dispatch.py tests/gui/test_ui_adapter_mapping_validation.py tests/gui/test_gtk_runtime_backend.py tests/gui/test_phase5_visual_regression.py`
+- 結果: pass（100%）
 
 #### 実機（XFCE）
 
 | 観点 | 判定 | 根拠（スクリーンショット/ログ） |
 | --- | --- | --- |
-| Vertical toggle exclusion（same-side only） | pass/warn/fail/blocked | |
-| Horizontal toggle exclusion（same-side only） | pass/warn/fail/blocked | |
-| Margin reflect（UI表示） | pass/warn/fail/blocked | |
-| Margin reflect（内部状態） | pass/warn/fail/blocked | |
+| Vertical toggle exclusion（same-side only） | pass | 母体寄せの切替挙動を確認 |
+| Horizontal toggle exclusion（same-side only） | pass | 母体寄せの切替挙動を確認 |
+| Margin reflect（UI表示） | warn | 現在値は `Current state` で確認可能。最終的な margin の取り扱い整理は継続 |
+| Margin reflect（内部状態） | pass | GUI回帰 100% pass |
 
 #### 最終合意
 

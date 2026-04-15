@@ -119,9 +119,21 @@ class _SpinButton(_WidgetBase):
         super().__init__()
         self.numeric = False
         self._value = 0
+        self.minimum = None
+        self.maximum = None
+        self.step_increment = None
+        self.page_increment = None
 
     def set_numeric(self, enabled):
         self.numeric = bool(enabled)
+
+    def set_range(self, minimum, maximum):
+        self.minimum = int(minimum)
+        self.maximum = int(maximum)
+
+    def set_increments(self, step, page):
+        self.step_increment = int(step)
+        self.page_increment = int(page)
 
     def set_value(self, value):
         self._value = int(value)
@@ -853,6 +865,20 @@ def test_runtime_backend_margin_change_propagates_all_values():
     assert status.text == "Margins: updated"
     assert error.text == "Error: none"
     assert backend.get_object("lblCurrentMargins").text == "Current margins: 11,22,33,44"
+
+
+def test_runtime_backend_margin_spin_matches_upstream_adjustments():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    top = backend.get_object("spnTopMergin")
+    left = backend.get_object("spnLMergin")
+    right = backend.get_object("spnRMergin")
+    bottom = backend.get_object("spnBtmMergin")
+
+    assert (top.minimum, top.maximum, top.step_increment, top.page_increment) == (0, 250, 1, 10)
+    assert (bottom.minimum, bottom.maximum, bottom.step_increment, bottom.page_increment) == (0, 250, 1, 10)
+    assert (left.minimum, left.maximum, left.step_increment, left.page_increment) == (0, 500, 1, 10)
+    assert (right.minimum, right.maximum, right.step_increment, right.page_increment) == (0, 500, 1, 10)
 
 
 def test_runtime_backend_current_state_panel_updates_for_toggle_and_fixed():
