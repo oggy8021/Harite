@@ -397,22 +397,42 @@ class GtkRuntimeSignalBackend:
                 "lblError": error_label,
             }
 
+            for object_name, widget in self._objects.items():
+                if hasattr(widget, "set_name"):
+                    widget.set_name(object_name)
+                elif not hasattr(widget, "get_name"):
+                    setattr(widget, "name", object_name)
+
             # Why: fallback window must still exercise MainWindow handlers even when
             # legacy glade cannot be parsed at runtime.
             input_entry_l.connect("changed", self._on_input_changed)
             input_entry_r.connect("changed", self._on_input_changed)
-            tgl_upper_l.connect("clicked", lambda *_args: self._on_direction_toggled("vertical", "L", "top"))
-            tgl_lower_l.connect("clicked", lambda *_args: self._on_direction_toggled("vertical", "L", "bottom"))
-            tgl_upper_r.connect("clicked", lambda *_args: self._on_direction_toggled("vertical", "R", "top"))
-            tgl_lower_r.connect("clicked", lambda *_args: self._on_direction_toggled("vertical", "R", "bottom"))
-            tgl_push_left_l.connect("clicked", lambda *_args: self._on_direction_toggled("horizontal", "L", "left"))
-            tgl_push_right_l.connect("clicked", lambda *_args: self._on_direction_toggled("horizontal", "L", "right"))
-            tgl_push_left_r.connect("clicked", lambda *_args: self._on_direction_toggled("horizontal", "R", "left"))
-            tgl_push_right_r.connect("clicked", lambda *_args: self._on_direction_toggled("horizontal", "R", "right"))
+            tgl_upper_l.connect("pressed", lambda *_args: self._on_direction_pressed("tglUpperL"))
+            tgl_upper_l.connect("toggled", lambda *_args: self._on_direction_toggled("tglUpperL"))
+            tgl_upper_l.connect("released", lambda *_args: self._on_direction_released("tglUpperL"))
+            tgl_lower_l.connect("pressed", lambda *_args: self._on_direction_pressed("tglLowerL"))
+            tgl_lower_l.connect("toggled", lambda *_args: self._on_direction_toggled("tglLowerL"))
+            tgl_lower_l.connect("released", lambda *_args: self._on_direction_released("tglLowerL"))
+            tgl_upper_r.connect("pressed", lambda *_args: self._on_direction_pressed("tglUpperR"))
+            tgl_upper_r.connect("toggled", lambda *_args: self._on_direction_toggled("tglUpperR"))
+            tgl_upper_r.connect("released", lambda *_args: self._on_direction_released("tglUpperR"))
+            tgl_lower_r.connect("pressed", lambda *_args: self._on_direction_pressed("tglLowerR"))
+            tgl_lower_r.connect("toggled", lambda *_args: self._on_direction_toggled("tglLowerR"))
+            tgl_lower_r.connect("released", lambda *_args: self._on_direction_released("tglLowerR"))
+            tgl_push_left_l.connect("pressed", lambda *_args: self._on_direction_pressed("tglPushLeftL"))
+            tgl_push_left_l.connect("toggled", lambda *_args: self._on_direction_toggled("tglPushLeftL"))
+            tgl_push_left_l.connect("released", lambda *_args: self._on_direction_released("tglPushLeftL"))
+            tgl_push_right_l.connect("pressed", lambda *_args: self._on_direction_pressed("tglPushRightL"))
+            tgl_push_right_l.connect("toggled", lambda *_args: self._on_direction_toggled("tglPushRightL"))
+            tgl_push_right_l.connect("released", lambda *_args: self._on_direction_released("tglPushRightL"))
+            tgl_push_left_r.connect("pressed", lambda *_args: self._on_direction_pressed("tglPushLeftR"))
+            tgl_push_left_r.connect("toggled", lambda *_args: self._on_direction_toggled("tglPushLeftR"))
+            tgl_push_left_r.connect("released", lambda *_args: self._on_direction_released("tglPushLeftR"))
+            tgl_push_right_r.connect("pressed", lambda *_args: self._on_direction_pressed("tglPushRightR"))
+            tgl_push_right_r.connect("toggled", lambda *_args: self._on_direction_toggled("tglPushRightR"))
+            tgl_push_right_r.connect("released", lambda *_args: self._on_direction_released("tglPushRightR"))
             btn_get_img_l.connect("clicked", lambda *_args: self._on_pick_input_clicked("L"))
             btn_get_img_r.connect("clicked", lambda *_args: self._on_pick_input_clicked("R"))
-            self._sync_direction_toggle_availability("L")
-            self._sync_direction_toggle_availability("R")
             top_margin_spin.connect("value-changed", self._on_margin_changed)
             left_margin_spin.connect("value-changed", self._on_margin_changed)
             right_margin_spin.connect("value-changed", self._on_margin_changed)
@@ -466,16 +486,6 @@ class GtkRuntimeSignalBackend:
         button = self._objects.get(object_name)
         if button is not None and hasattr(button, "set_sensitive"):
             button.set_sensitive(bool(enabled))
-
-    def _is_widget_enabled(self, object_name: str) -> bool:
-        widget = self._objects.get(object_name)
-        if widget is None:
-            return True
-        if hasattr(widget, "get_sensitive"):
-            return bool(widget.get_sensitive())
-        if hasattr(widget, "sensitive"):
-            return bool(getattr(widget, "sensitive"))
-        return True
 
     def _current_save_dialog_filename(self) -> str:
         dialog = self._objects.get("SaveWallpaperDialog")
@@ -589,59 +599,56 @@ class GtkRuntimeSignalBackend:
             return
         setattr(toggle, "active", bool(active))
 
-    def _is_toggle_active(self, object_name: str) -> bool:
-        toggle = self._objects.get(object_name)
-        if toggle is None:
-            return False
-        if hasattr(toggle, "get_active"):
-            return bool(toggle.get_active())
-        return bool(getattr(toggle, "active", False))
+    def _opposite_toggle_name(self, object_name: str) -> str | None:
+        opposites = {
+            "tglPushLeftL": "tglPushRightL",
+            "tglPushRightL": "tglPushLeftL",
+            "tglUpperL": "tglLowerL",
+            "tglLowerL": "tglUpperL",
+            "tglPushLeftR": "tglPushRightR",
+            "tglPushRightR": "tglPushLeftR",
+            "tglUpperR": "tglLowerR",
+            "tglLowerR": "tglUpperR",
+        }
+        return opposites.get(object_name)
 
-    def _sync_mutually_exclusive_pair(self, primary_name: str, secondary_name: str) -> None:
-        primary_active = self._is_toggle_active(primary_name)
-        secondary_active = self._is_toggle_active(secondary_name)
+    def _on_direction_pressed(self, object_name: str) -> None:
+        opposite_name = self._opposite_toggle_name(object_name)
+        if opposite_name is not None:
+            opposite_toggle = self._objects.get(opposite_name)
+            if opposite_toggle is not None and hasattr(opposite_toggle, "get_active"):
+                if bool(opposite_toggle.get_active()):
+                    self._set_toggle_active(opposite_name, False)
 
-        # Keep impossible combinations non-clickable in UX state.
-        self._set_button_enabled(primary_name, not secondary_active)
-        self._set_button_enabled(secondary_name, not primary_active)
+        callback = self._signal_handlers.get("on_tglBtn_pressed")
+        if callback is not None:
+            widget = self._objects.get(object_name)
+            try:
+                callback(widget)
+            except Exception:
+                pass
 
-    def _sync_direction_toggle_availability(self, side: str) -> None:
-        self._sync_mutually_exclusive_pair(f"tglUpper{side}", f"tglLower{side}")
-        self._sync_mutually_exclusive_pair(f"tglPushLeft{side}", f"tglPushRight{side}")
-
-    def _on_direction_toggled(self, axis: str, side: str, direction: str) -> None:
-        if axis == "vertical":
-            target_name = f"tglUpper{side}" if direction == "top" else f"tglLower{side}"
-        else:
-            target_name = f"tglPushLeft{side}" if direction == "left" else f"tglPushRight{side}"
-
-        if not self._is_widget_enabled(target_name):
+    def _on_direction_toggled(self, object_name: str) -> None:
+        callback = self._signal_handlers.get("on_tglBtn_toggled")
+        if callback is None:
             return
 
-        if axis == "vertical":
-            if direction == "top":
-                self._set_toggle_active(f"tglUpper{side}", True)
-                self._set_toggle_active(f"tglLower{side}", False)
-            else:
-                self._set_toggle_active(f"tglLower{side}", True)
-                self._set_toggle_active(f"tglUpper{side}", False)
-        elif axis == "horizontal":
-            if direction == "left":
-                self._set_toggle_active(f"tglPushLeft{side}", True)
-                self._set_toggle_active(f"tglPushRight{side}", False)
-            else:
-                self._set_toggle_active(f"tglPushRight{side}", True)
-                self._set_toggle_active(f"tglPushLeft{side}", False)
+        widget = self._objects.get(object_name)
+        try:
+            callback(widget)
+        except Exception:
+            pass
 
-        self._sync_direction_toggle_availability(side)
+    def _on_direction_released(self, object_name: str) -> None:
+        callback = self._signal_handlers.get("on_tglBtn_released")
+        if callback is None:
+            return
 
-        callback = self._signal_handlers.get("on_radFixed_toggled")
-        if callback is not None:
-            try:
-                callback(False)
-            except Exception:
-                # Keep UI response even when fixed callback is absent or strict.
-                pass
+        widget = self._objects.get(object_name)
+        try:
+            callback(widget)
+        except Exception:
+            pass
 
     def _read_spin_int(self, object_name: str) -> int:
         spin = self._objects.get(object_name)
@@ -653,19 +660,15 @@ class GtkRuntimeSignalBackend:
             return int(spin.get_value())
         return 0
 
-    def _on_margin_changed(self, *_args: Any) -> None:
+    def _on_margin_changed(self, widget: Any) -> None:
         callback = self._signal_handlers.get("on_spnMergin_value_changed")
-        left = self._read_spin_int("spnLMergin")
-        right = self._read_spin_int("spnRMergin")
-        top = self._read_spin_int("spnTopMergin")
-        bottom = self._read_spin_int("spnBtmMergin")
 
         if callback is None:
             self._set_feedback(phase="Margins", state="planned")
             return
 
         try:
-            callback(left, right, top, bottom)
+            callback(widget)
             self._set_feedback(phase="Margins", state="updated")
         except Exception as exc:
             self._set_feedback(phase="Margins", state="error", error=str(exc))

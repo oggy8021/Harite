@@ -222,21 +222,26 @@
 - 参照観点1: `tglBtn_pressed`（対向トグル復帰）
 - 参照観点2: `tglBtn_released`（両方OFF時の復帰ルール）
 - 参照観点3: `tglBtn_toggled`（align/valign 反映）
+- 備考: ローカル正本は `..\wallpaperoptimizer` を参照する
+- 読解メモ1: `tglBtn_pressed` は同一side内の対向トグルが active のときだけ `set_active(False)` を行う
+- 読解メモ2: `tglBtn_toggled` は active になったトグル名から `align/valign` を `left/right/top/bottom` へ設定する
+- 読解メモ3: `tglBtn_released` は「自分も対向もOFF」のときだけ `align=center` または `valign=middle` へ戻す
+- 読解メモ4: `spnMergin_value_changed` は changed された単一 widget 名から index を決め、`option.opts.mergin[idx]` だけを更新する
 - 備考: margin優先（`fixed > margin > toggles`）は現行仕様との整合を確認する
 
 ### 12-3. 対応関係マトリクス（P5-8）
 
 | 機能項目 | 上流挙動（要約） | 現行挙動（実装前） | 実装方針 | 受け入れ条件 |
 | --- | --- | --- | --- | --- |
-| Toggle exclusion（vertical） | 同一side内で上下は同時有効にしない | 同時有効が起こり得る | 同一side内の対向トグルだけを排他制御する | `tglUpperL` と `tglLowerL`、`tglUpperR` と `tglLowerR` が各side内で同時にONにならない |
-| Toggle exclusion（horizontal） | 同一side内で左右は同時有効にしない | 同時有効が起こり得る | 同一side内の対向トグルだけを排他制御する | `tglPushLeftL` と `tglPushRightL`、`tglPushLeftR` と `tglPushRightR` が各side内で同時にONにならない |
-| Margin reflect | margin値を最終配置へ反映 | 反映経路が不明瞭 | `on_spnMergin_value_changed` へ4値を集約伝播 | left/right/top/bottom が1回の更新で渡る |
+| Toggle exclusion（vertical） | `pressed` で対向を落とし、`released` で両方OFF時は `valign=middle` に戻す | 同時有効が起こり得る | 同一side内の対向トグルだけを排他制御しつつ、母体の `both-off -> middle` を再現できるか確認する | `tglUpperL` と `tglLowerL`、`tglUpperR` と `tglLowerR` が各side内で同時にONにならず、両方OFF時の復帰先が母体と一致する |
+| Toggle exclusion（horizontal） | `pressed` で対向を落とし、`released` で両方OFF時は `align=center` に戻す | 同時有効が起こり得る | 同一side内の対向トグルだけを排他制御しつつ、母体の `both-off -> center` を再現できるか確認する | `tglPushLeftL` と `tglPushRightL`、`tglPushLeftR` と `tglPushRightR` が各side内で同時にONにならず、両方OFF時の復帰先が母体と一致する |
+| Margin reflect | changed された1 widget に応じて `mergin[idx]` を単独更新する | 反映経路が不明瞭 | 現行の4値集約伝播を維持するか、母体同様の単項目更新へ寄せるかをレビューで確定する | left/right/top/bottom の内部状態更新が母体意図と矛盾しない |
 
 例示:
 
-- `tglUpperL` がONのとき、`tglLowerL` は押せない状態にする
+- `tglUpperL` がONのとき、`tglLowerL` を押すと `tglUpperL` が落ちて `tglLowerL` へ切り替わる
 - `tglUpperL` がONでも、`tglUpperR` は押せるままにする
-- `tglPushLeftR` がONのとき、`tglPushRightR` は押せない状態にする
+- `tglPushLeftR` がONのとき、`tglPushRightR` を押すと `tglPushLeftR` が落ちて切り替わる
 
 ### 12-4. 非対応・差分（P5-8初版）
 
@@ -265,10 +270,15 @@
 
 ### 12-7. 未解決点（Ownerソース解析で補完）
 
-- [ ] `tglBtn_released` の「両方OFF時の復帰先」優先順位
+- [x] `tglBtn_released` の「両方OFF時の復帰先」優先順位
+  - vertical は `middle`、horizontal は `center`
 - [ ] `fixed > margin > toggles` の厳密適用条件（左右/上下の個別差）
-- [ ] 排他制御と `align/valign` 更新順序の依存有無
+- [x] 排他制御と `align/valign` 更新順序の依存有無
+  - 母体は `pressed -> toggled(active時のみ) -> released(両方OFFならcenter/middle)` の責務分離になっている
 - [ ] 例外導線（初期状態/未選択状態）での上流既定値
+- [ ] 現行 fallback 実装の「対向ボタン無効化」は母体差分として維持するか、`pressed/released` ベースへ寄せ直すか
+- [ ] 現行 fallback 実装は `on_radFixed_toggled(False)` を呼んでいるが、母体のトグル処理は `align/valign` 更新であり、責務が一致していない
+- [ ] 現行 margin 実装の「4値一括 callback」が、母体の単項目更新と比べて仕様差分として許容されるか
 
 ### 12-8. 実装後エビデンス記録（P5-8）
 

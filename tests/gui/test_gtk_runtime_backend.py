@@ -11,6 +11,7 @@ class _Orientation:
 class _WidgetBase:
     def __init__(self):
         self._signals = {}
+        self._name = ""
 
     def connect(self, name, callback):
         self._signals.setdefault(name, []).append(callback)
@@ -18,6 +19,12 @@ class _WidgetBase:
     def emit(self, name, *args):
         for cb in self._signals.get(name, []):
             cb(*args)
+
+    def set_name(self, name):
+        self._name = name
+
+    def get_name(self):
+        return self._name
 
 
 class _Window(_WidgetBase):
@@ -98,6 +105,13 @@ class _ToggleButton(_Button):
 
     def get_active(self):
         return self._active
+
+    def click(self):
+        self.emit("pressed", self)
+        self._active = not self._active
+        self.emit("toggled", self)
+        self.emit("released", self)
+        self.emit("clicked", self)
 
 
 class _SpinButton(_WidgetBase):
@@ -729,12 +743,14 @@ def test_runtime_backend_toggle_exclusivity_for_left_vertical_direction():
     upper.click()
     assert upper.get_active() is True
     assert lower.get_active() is False
-    assert upper.sensitive is True
-    assert lower.sensitive is False
+
+    lower.click()
+    assert lower.get_active() is True
+    assert upper.get_active() is False
 
     lower.click()
     assert lower.get_active() is False
-    assert upper.get_active() is True
+    assert upper.get_active() is False
 
 
 def test_runtime_backend_toggle_exclusivity_for_right_horizontal_direction():
@@ -746,12 +762,14 @@ def test_runtime_backend_toggle_exclusivity_for_right_horizontal_direction():
     left.click()
     assert left.get_active() is True
     assert right.get_active() is False
-    assert left.sensitive is True
-    assert right.sensitive is False
+
+    right.click()
+    assert right.get_active() is True
+    assert left.get_active() is False
 
     right.click()
     assert right.get_active() is False
-    assert left.get_active() is True
+    assert left.get_active() is False
 
 
 def test_runtime_backend_same_direction_on_other_side_remains_enabled():
@@ -771,6 +789,32 @@ def test_runtime_backend_same_direction_on_other_side_remains_enabled():
     assert upper_l.get_active() is True
 
 
+def test_runtime_backend_toggle_callbacks_follow_upstream_order():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    calls = []
+
+    backend.connect_signals(
+        {
+            "on_tglBtn_pressed": lambda widget: calls.append(("pressed", widget.get_name())),
+            "on_tglBtn_toggled": lambda widget: calls.append(("toggled", widget.get_name(), widget.get_active())),
+            "on_tglBtn_released": lambda widget: calls.append(("released", widget.get_name())),
+        }
+    )
+
+    toggle = backend.get_object("tglUpperL")
+    toggle.click()
+    toggle.click()
+
+    assert calls == [
+        ("pressed", "tglUpperL"),
+        ("toggled", "tglUpperL", True),
+        ("released", "tglUpperL"),
+        ("pressed", "tglUpperL"),
+        ("toggled", "tglUpperL", False),
+        ("released", "tglUpperL"),
+    ]
+
+
 def test_runtime_backend_margin_change_propagates_all_values():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
@@ -783,12 +827,13 @@ def test_runtime_backend_margin_change_propagates_all_values():
     error = backend.get_object("lblError")
     captured = {}
 
-    def on_margins(left, right, top, bottom):
-        captured["vals"] = (left, right, top, bottom)
+    def on_margins(widget):
+        captured["name"] = widget.get_name()
+        captured["value"] = widget.get_value_as_int()
 
     backend.connect_signals({"on_spnMergin_value_changed": on_margins})
     backend.get_object("spnLMergin").emit("value-changed", backend.get_object("spnLMergin"))
 
-    assert captured["vals"] == (11, 22, 33, 44)
+    assert captured == {"name": "spnLMergin", "value": 11}
     assert status.text == "Margins: updated"
     assert error.text == "Error: none"
