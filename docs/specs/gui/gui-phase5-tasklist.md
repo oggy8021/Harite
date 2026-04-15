@@ -97,7 +97,7 @@
   - 進捗: `watch planned`（start/stop/interval）と `save_dialog_confirm/cancel` の正規結線を実装済み
   - 完了記録: 固定回帰コマンド `python.exe -m pytest -q tests/gui/test_ui_adapter_dispatch.py tests/gui/test_ui_adapter_mapping_validation.py tests/gui/test_main_window_signals.py tests/gui/test_gtk_runtime_backend.py` が継続して pass（2026-04-13）
   - 完了記録: Save/Optimize 分離、SaveDialog 状態遷移、confirm/cancel ガード、MainWindow/GTK fallback の意味統一を達成
-  - 完了条件（新規成果）: 一目で画面意図の違いが分かり、優先順位ルール（`fixed > margin > toggles`）が Notes/ヘルプで確認でき、P5-1 の Optimize/Apply 区別観点が pass
+  - 完了条件（新規成果）: 一目で画面意図の違いが分かり、margin と align/valign の関係、fixed の役割が Notes/ヘルプで確認でき、P5-1 の Optimize/Apply 区別観点が pass
 
 - [x] P5-8 refactor(gui): 旧互換シグナル/Glade依存の段階撤去（P5-3完了後）
   - 前提: P5-3 が `done` へ遷移し、Save/Optimize/Apply/SaveDialog の新導線が回帰で安定していること
@@ -168,18 +168,19 @@
   - 進捗: Owner 実行の固定回帰コマンドが 100% pass（2026-04-14）
   - 完了条件: P5-1 チェックリスト必須項目がすべて pass
 
-- [ ] P5-8 feat(gui): トグル排他と margin 反映の実装確定
+- [x] P5-8 feat(gui): トグル排他と margin 反映の実装確定
   - 対象: 同一side内の `Top/Bottom`、`Left/Right` の同時成立矛盾を排除する
   - 例示: `tglUpperL` がONのとき `tglLowerL` を押すと `tglUpperL` が落ちて切り替わる
   - 例示: `tglUpperL` がONでも `tglUpperR` は押せるままにする
   - 例示: `tglPushLeftR` がONのとき `tglPushRightR` を押すと `tglPushLeftR` が落ちて切り替わる
-  - 要件: margin +/- 操作の反映を可視化し、優先順位ルール（fixed > margin > toggles）と整合
+  - 要件: margin +/- 操作の反映を可視化し、margin が有効領域を決め、その内側で align/valign が効く母体挙動と整合
   - 進捗: runtime fallback を母体 `WindowBase.py` の `pressed / toggled / released` semantics へ寄せ、same-side の切替と both-off 復帰の土台を再現（2026-04-15）
   - 進捗: margin spin は changed された widget を起点に現在値を更新できるよう整理し、母体の単項目更新に寄せる方向を確定（2026-04-15）
   - 進捗: margin の `- / +` は独立ボタンではなく `GtkSpinButton` 内蔵ステッパと判明。fallback 側へ upstream 相当の range/increment 設定を補完し、実機の不発要因を是正（2026-04-15）
-  - 進捗: `Current state` パネルを `Configured` / `Effective` へ拡張し、widget の現在形と signal 処理後に採用される global state を見分けられるようにした（2026-04-15）
+  - 進捗: `Current state` パネルは一度 `Configured` / `Effective` へ拡張したが、母体再確認で区別不要と判明したため、単一の現在値表示へ整理した（2026-04-15）
+  - 進捗: 母体 `Core.py` を再確認し、margin は有効領域を作り、その内側で `align/valign` が効くと確定。`fixed > margin > toggles` という強度ルール前提は撤回し、Notes/回帰を母体説明へ修正（2026-04-15）
   - 進捗: `tests/gui/test_gtk_runtime_backend.py` と `tests/gui/test_phase5_visual_regression.py` を含む GUI 回帰が 100% pass（2026-04-15, owner実行）
-  - 進捗: XFCE 実機で toggle 挙動と見た目の再現を確認済み。次の焦点は margin の扱い整理（2026-04-15, owner確認）
+  - 完了記録: XFCE 実機で toggle / margin / 現在値表示を確認済み。母体 `WindowBase.py` / `Core.py` と矛盾しない状態で P5-8 をクローズ可能（2026-04-15, owner確認）
   - 追加条件: 旧 `WindowBase` のトグル相互排他（押下/復帰）仕様の対応表を提出し、実装前レビュー合意を得る
   - 完了条件: トグル排他・margin反映・優先順位の挙動が回帰テストと実機メモで一致
 
@@ -240,7 +241,7 @@
 
 - P5-8
   - PRタイトル案: `feat(gui): enforce toggle exclusivity and margin sync (P5-8)`
-  - PRTXT short: `P5-8で同一side内のトグル排他とmargin反映を実装。tglUpperL/tglLowerL、tglPushLeftR/tglPushRightR などの矛盾を防ぎつつ、反対sideは独立維持、fixed>margin>toggles優先順位に整合。`
+  - PRTXT short: `P5-8で同一side内のトグル排他とmargin反映を実装。tglUpperL/tglLowerL、tglPushLeftR/tglPushRightR などの矛盾を防ぎつつ、反対sideは独立維持、margin が有効領域を決め、その内側で align/valign が効く母体挙動へ整合。`
 - P5-9
   - PRタイトル案: `feat(gui): restore Open-L/Open-R dialog flow (P5-9)`
   - PRTXT short: `P5-9でOpen-L/Open-RをDialog主体へ復元。選択結果をentPathL/Rへ反映し、直入力前提の暫定導線を置換。`

@@ -228,7 +228,7 @@
 - 読解メモ3: `tglBtn_released` は「自分も対向もOFF」のときだけ `align=center` または `valign=middle` へ戻す
 - 読解メモ4: `spnMergin_value_changed` は changed された単一 widget 名から index を決め、`option.opts.mergin[idx]` だけを更新する
 - 読解メモ5: margin の `- / +` は独立 button ではなく `GtkSpinButton` 自身のステッパで、Glade 上は `adjustment="0 0 250 1 10 0"` / `"0 0 500 1 10 0"` により step/range が与えられている
-- 備考: margin優先（`fixed > margin > toggles`）は現行仕様との整合を確認する
+- 備考: 母体 `Core.py` では margin は表示可能領域を縮め、その後に `align/valign` で配置を決める。`fixed` は左右画像の割当方針であり、margin/align を打ち消す優先順位ルールは見当たらない
 
 ### 12-3. 対応関係マトリクス（P5-8）
 
@@ -273,17 +273,20 @@
 
 - [x] `tglBtn_released` の「両方OFF時の復帰先」優先順位
   - vertical は `middle`、horizontal は `center`
-- [ ] `fixed > margin > toggles` の厳密適用条件（左右/上下の個別差）
+- [x] `fixed > margin > toggles` の厳密適用条件（左右/上下の個別差）
+  - 母体にはそのような強度ルールは見当たらない。`fixed` は L/R 割当、margin は有効領域、toggle はその内側の寄せ位置として同時成立する
 - [x] 排他制御と `align/valign` 更新順序の依存有無
   - 母体は `pressed -> toggled(active時のみ) -> released(両方OFFならcenter/middle)` の責務分離になっている
-- [ ] 例外導線（初期状態/未選択状態）での上流既定値
+- [x] 例外導線（初期状態/未選択状態）での上流既定値
+  - `Options.py` の既定値は `align=center`, `valign=middle`, `mergin=0,0,0,0`, `fixed=False`, `interval=60`。Harite 側では vertical の `middle` を `center` 表現へ正規化している
 - [x] 現行 fallback 実装の「対向ボタン無効化」は母体差分として維持するか、`pressed/released` ベースへ寄せ直すか
   - 母体寄せへ変更済み。無効化UXは廃止した
 - [x] 現行 fallback 実装は `on_radFixed_toggled(False)` を呼んでいるが、母体のトグル処理は `align/valign` 更新であり、責務が一致していない
   - `align/valign` 更新へ置き換え済み
 - [x] margin の `- / +` が機能しない直接原因は何か
   - 母体は `GtkSpinButton` の adjustment で step/range を持つが、fallback は `set_value(0)` だけで range/increment 未設定だった。母体値へ合わせて補完する
-- [ ] 現行 margin 実装の「4値一括 callback」が、母体の単項目更新と比べて仕様差分として許容されるか
+- [x] 現行 margin 実装の「4値一括 callback」が、母体の単項目更新と比べて仕様差分として許容されるか
+  - UI adapter / fallback は母体どおり changed widget 起点で更新している。MainWindow 内部で最終的に `l,r,t,b` 文字列へ再集約して保持するのは Harite の状態表現であり、母体の単項目更新導線とは矛盾しない
 
 ### 12-8. 実装後エビデンス記録（P5-8）
 
@@ -300,11 +303,11 @@
 | --- | --- | --- |
 | Vertical toggle exclusion（same-side only） | pass | 母体寄せの切替挙動を確認 |
 | Horizontal toggle exclusion（same-side only） | pass | 母体寄せの切替挙動を確認 |
-| Margin reflect（UI表示） | warn | 現在値は `Current state` で確認可能。最終的な margin の取り扱い整理は継続 |
+| Margin reflect（UI表示） | pass | `Current state` で現在値を確認可能。Top + Top Margin の同時成立も母体 `Core.py` と整合 |
 | Margin reflect（内部状態） | pass | GUI回帰 100% pass |
 
 #### 最終合意
 
-- [ ] P5-8 の受け入れ条件を満たした
-- [ ] 非対応差分は `warn` として合意済み
-- [ ] 次タスク（P5-9）へ進行可
+- [x] P5-8 の受け入れ条件を満たした
+- [x] 非対応差分は `warn` として合意済み
+- [x] 次タスク（P5-9）へ進行可

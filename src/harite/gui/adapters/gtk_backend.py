@@ -46,10 +46,6 @@ class GtkRuntimeSignalBackend:
     def __init__(self, gtk_module: Any) -> None:
         self._gtk = gtk_module
         self._signal_handlers: dict[str, Callable[..., Any]] = {}
-        self._effective_fixed = False
-        self._effective_margins = (0, 0, 0, 0)
-        self._effective_align = "center"
-        self._effective_valign = "center"
 
         window = gtk_module.Window(title="Harite Studio")
         if hasattr(window, "set_resizable"):
@@ -222,7 +218,7 @@ class GtkRuntimeSignalBackend:
             main_col.pack_start(save_dialog_state_label, False, False, 0)
 
             priority_note_label = gtk_module.Label(
-                label="Rule: fixed > margin > toggles"
+                label="Rule: margins define area; align/valign act inside it; fixed binds L/R"
             )
             if hasattr(priority_note_label, "set_xalign"):
                 priority_note_label.set_xalign(0.0)
@@ -240,50 +236,25 @@ class GtkRuntimeSignalBackend:
                 current_state_section_label.set_xalign(0.0)
             main_col.pack_start(current_state_section_label, False, False, 0)
 
-            configured_section_label = gtk_module.Label(label="Configured")
-            if hasattr(configured_section_label, "set_xalign"):
-                configured_section_label.set_xalign(0.0)
-            main_col.pack_start(configured_section_label, False, False, 0)
-
-            current_fixed_label = gtk_module.Label(label="Configured fixed: off")
+            current_fixed_label = gtk_module.Label(label="Current fixed: off")
             if hasattr(current_fixed_label, "set_xalign"):
                 current_fixed_label.set_xalign(0.0)
             main_col.pack_start(current_fixed_label, False, False, 0)
 
-            current_margins_label = gtk_module.Label(label="Configured margins: 0,0,0,0")
+            current_margins_label = gtk_module.Label(label="Current margins: 0,0,0,0")
             if hasattr(current_margins_label, "set_xalign"):
                 current_margins_label.set_xalign(0.0)
             main_col.pack_start(current_margins_label, False, False, 0)
 
-            current_left_label = gtk_module.Label(label="Configured L: align=center valign=center")
+            current_left_label = gtk_module.Label(label="Current L: align=center valign=center")
             if hasattr(current_left_label, "set_xalign"):
                 current_left_label.set_xalign(0.0)
             main_col.pack_start(current_left_label, False, False, 0)
 
-            current_right_label = gtk_module.Label(label="Configured R: align=center valign=center")
+            current_right_label = gtk_module.Label(label="Current R: align=center valign=center")
             if hasattr(current_right_label, "set_xalign"):
                 current_right_label.set_xalign(0.0)
             main_col.pack_start(current_right_label, False, False, 0)
-
-            effective_section_label = gtk_module.Label(label="Effective")
-            if hasattr(effective_section_label, "set_xalign"):
-                effective_section_label.set_xalign(0.0)
-            main_col.pack_start(effective_section_label, False, False, 0)
-
-            effective_fixed_label = gtk_module.Label(label="Effective fixed: off")
-            if hasattr(effective_fixed_label, "set_xalign"):
-                effective_fixed_label.set_xalign(0.0)
-            main_col.pack_start(effective_fixed_label, False, False, 0)
-
-            effective_margins_label = gtk_module.Label(label="Effective margins: 0,0,0,0")
-            if hasattr(effective_margins_label, "set_xalign"):
-                effective_margins_label.set_xalign(0.0)
-            main_col.pack_start(effective_margins_label, False, False, 0)
-
-            effective_placement_label = gtk_module.Label(label="Effective placement: align=center valign=center")
-            if hasattr(effective_placement_label, "set_xalign"):
-                effective_placement_label.set_xalign(0.0)
-            main_col.pack_start(effective_placement_label, False, False, 0)
 
             right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
             center_row.pack_start(right_margin_col, False, False, 0)
@@ -421,15 +392,10 @@ class GtkRuntimeSignalBackend:
                 "lblPriorityRule": priority_note_label,
                 "lblStyleLegend": style_legend_label,
                 "lblCurrentStateSection": current_state_section_label,
-                "lblConfiguredSection": configured_section_label,
                 "lblCurrentFixed": current_fixed_label,
                 "lblCurrentMargins": current_margins_label,
                 "lblCurrentStateL": current_left_label,
                 "lblCurrentStateR": current_right_label,
-                "lblEffectiveSection": effective_section_label,
-                "lblEffectiveFixed": effective_fixed_label,
-                "lblEffectiveMargins": effective_margins_label,
-                "lblEffectivePlacement": effective_placement_label,
                 "lblCommandSection": command_section_label,
                 "hbox14": command_bar,
                 "btnSetting": btn_setting,
@@ -711,25 +677,14 @@ class GtkRuntimeSignalBackend:
         align_l, valign_l = self._current_side_state("L")
         align_r, valign_r = self._current_side_state("R")
 
-        self._set_label_text("lblCurrentFixed", f"Configured fixed: {'on' if fixed_enabled else 'off'}")
-        self._set_label_text("lblCurrentMargins", f"Configured margins: {left},{right},{top},{bottom}")
-        self._set_label_text("lblCurrentStateL", f"Configured L: align={align_l} valign={valign_l}")
-        self._set_label_text("lblCurrentStateR", f"Configured R: align={align_r} valign={valign_r}")
-        self._set_label_text("lblEffectiveFixed", f"Effective fixed: {'on' if self._effective_fixed else 'off'}")
-        effective_left, effective_right, effective_top, effective_bottom = self._effective_margins
-        self._set_label_text(
-            "lblEffectiveMargins",
-            f"Effective margins: {effective_left},{effective_right},{effective_top},{effective_bottom}",
-        )
-        self._set_label_text(
-            "lblEffectivePlacement",
-            f"Effective placement: align={self._effective_align} valign={self._effective_valign}",
-        )
+        self._set_label_text("lblCurrentFixed", f"Current fixed: {'on' if fixed_enabled else 'off'}")
+        self._set_label_text("lblCurrentMargins", f"Current margins: {left},{right},{top},{bottom}")
+        self._set_label_text("lblCurrentStateL", f"Current L: align={align_l} valign={valign_l}")
+        self._set_label_text("lblCurrentStateR", f"Current R: align={align_r} valign={valign_r}")
 
     def _on_fixed_selection(self, fixed_enabled: bool) -> None:
         self._set_toggle_active("radFixed", fixed_enabled)
         self._set_toggle_active("radNoFixed", not fixed_enabled)
-        self._effective_fixed = bool(fixed_enabled)
         self._refresh_current_state_labels()
 
         callback = self._signal_handlers.get("on_radFixed_toggled")
@@ -770,15 +725,6 @@ class GtkRuntimeSignalBackend:
                 pass
 
     def _on_direction_toggled(self, object_name: str) -> None:
-        if self._is_toggle_active(object_name):
-            if "PushLeft" in object_name:
-                self._effective_align = "left"
-            elif "PushRight" in object_name:
-                self._effective_align = "right"
-            elif "Upper" in object_name:
-                self._effective_valign = "top"
-            elif "Lower" in object_name:
-                self._effective_valign = "bottom"
         self._refresh_current_state_labels()
         callback = self._signal_handlers.get("on_tglBtn_toggled")
         if callback is None:
@@ -791,12 +737,6 @@ class GtkRuntimeSignalBackend:
             pass
 
     def _on_direction_released(self, object_name: str) -> None:
-        opposite_name = self._opposite_toggle_name(object_name)
-        if not self._is_toggle_active(object_name) and (opposite_name is None or not self._is_toggle_active(opposite_name)):
-            if "Push" in object_name:
-                self._effective_align = "center"
-            elif "Upper" in object_name or "Lower" in object_name:
-                self._effective_valign = "center"
         self._refresh_current_state_labels()
         callback = self._signal_handlers.get("on_tglBtn_released")
         if callback is None:
@@ -819,12 +759,6 @@ class GtkRuntimeSignalBackend:
         return 0
 
     def _on_margin_changed(self, widget: Any) -> None:
-        self._effective_margins = (
-            self._read_spin_int("spnLMergin"),
-            self._read_spin_int("spnRMergin"),
-            self._read_spin_int("spnTopMergin"),
-            self._read_spin_int("spnBtmMergin"),
-        )
         self._refresh_current_state_labels()
         callback = self._signal_handlers.get("on_spnMergin_value_changed")
 

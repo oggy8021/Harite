@@ -252,15 +252,10 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("lblPriorityRule") is not None
     assert backend.get_object("lblStyleLegend") is not None
     assert backend.get_object("lblCurrentStateSection") is not None
-    assert backend.get_object("lblConfiguredSection") is not None
     assert backend.get_object("lblCurrentFixed") is not None
     assert backend.get_object("lblCurrentMargins") is not None
     assert backend.get_object("lblCurrentStateL") is not None
     assert backend.get_object("lblCurrentStateR") is not None
-    assert backend.get_object("lblEffectiveSection") is not None
-    assert backend.get_object("lblEffectiveFixed") is not None
-    assert backend.get_object("lblEffectiveMargins") is not None
-    assert backend.get_object("lblEffectivePlacement") is not None
     assert backend.get_object("lblCommandSection") is not None
     assert backend.get_object("lblFlowLegend") is not None
     assert backend.get_object("lblWatchSection") is not None
@@ -271,18 +266,13 @@ def test_runtime_backend_current_state_panel_defaults_are_visible():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     assert backend.get_object("lblCurrentStateSection").text == "Current state"
-    assert backend.get_object("lblConfiguredSection").text == "Configured"
-    assert backend.get_object("lblCurrentFixed").text == "Configured fixed: off"
-    assert backend.get_object("lblCurrentMargins").text == "Configured margins: 0,0,0,0"
-    assert backend.get_object("lblCurrentStateL").text == "Configured L: align=center valign=center"
-    assert backend.get_object("lblCurrentStateR").text == "Configured R: align=center valign=center"
-    assert backend.get_object("lblEffectiveSection").text == "Effective"
-    assert backend.get_object("lblEffectiveFixed").text == "Effective fixed: off"
-    assert backend.get_object("lblEffectiveMargins").text == "Effective margins: 0,0,0,0"
-    assert backend.get_object("lblEffectivePlacement").text == "Effective placement: align=center valign=center"
+    assert backend.get_object("lblCurrentFixed").text == "Current fixed: off"
+    assert backend.get_object("lblCurrentMargins").text == "Current margins: 0,0,0,0"
+    assert backend.get_object("lblCurrentStateL").text == "Current L: align=center valign=center"
+    assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=center"
 
 
-def test_runtime_backend_shows_p5_3_planned_and_priority_labels():
+def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     do_it = backend.get_object("lblDoItPlanned")
@@ -316,7 +306,7 @@ def test_runtime_backend_shows_p5_3_planned_and_priority_labels():
     tgl_lower_r = backend.get_object("tglLowerR")
 
     assert do_it.text == "do-it: planned"
-    assert priority.text == "Rule: fixed > margin > toggles"
+    assert priority.text == "Rule: margins define area; align/valign act inside it; fixed binds L/R"
     assert watch_section.text == "Watch (planned)"
     assert interval.text == "Interval (planned)"
     assert color_btn.label == "Color (planned)"
@@ -874,7 +864,7 @@ def test_runtime_backend_margin_change_propagates_all_values():
     assert captured == {"name": "spnLMergin", "value": 11}
     assert status.text == "Margins: updated"
     assert error.text == "Error: none"
-    assert backend.get_object("lblCurrentMargins").text == "Configured margins: 11,22,33,44"
+    assert backend.get_object("lblCurrentMargins").text == "Current margins: 11,22,33,44"
 
 
 def test_runtime_backend_margin_spin_matches_upstream_adjustments():
@@ -907,26 +897,12 @@ def test_runtime_backend_current_state_panel_updates_for_toggle_and_fixed():
     backend.get_object("tglUpperR").click()
     backend.get_object("radFixed").click()
 
-    assert backend.get_object("lblCurrentFixed").text == "Configured fixed: on"
-    assert backend.get_object("lblCurrentStateL").text == "Configured L: align=right valign=center"
-    assert backend.get_object("lblCurrentStateR").text == "Configured R: align=center valign=top"
-    assert backend.get_object("lblEffectiveFixed").text == "Effective fixed: on"
-    assert backend.get_object("lblEffectivePlacement").text == "Effective placement: align=right valign=top"
+    assert backend.get_object("lblCurrentFixed").text == "Current fixed: on"
+    assert backend.get_object("lblCurrentStateL").text == "Current L: align=right valign=center"
+    assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=top"
 
 
-def test_runtime_backend_effective_state_can_diverge_from_configured_toggles():
-    backend = GtkRuntimeSignalBackend(_FakeGtk)
-
-    backend.get_object("tglPushRightL").click()
-    backend.get_object("tglPushLeftR").click()
-    backend.get_object("tglPushLeftR").click()
-
-    assert backend.get_object("lblCurrentStateL").text == "Configured L: align=right valign=center"
-    assert backend.get_object("lblCurrentStateR").text == "Configured R: align=center valign=center"
-    assert backend.get_object("lblEffectivePlacement").text == "Effective placement: align=center valign=center"
-
-
-def test_runtime_backend_effective_margin_labels_follow_current_spin_values():
+def test_runtime_backend_current_state_margin_labels_follow_spin_values():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     backend.get_object("spnLMergin").set_value(5)
@@ -935,5 +911,15 @@ def test_runtime_backend_effective_margin_labels_follow_current_spin_values():
     backend.get_object("spnBtmMergin").set_value(35)
     backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
 
-    assert backend.get_object("lblCurrentMargins").text == "Configured margins: 5,15,25,35"
-    assert backend.get_object("lblEffectiveMargins").text == "Effective margins: 5,15,25,35"
+    assert backend.get_object("lblCurrentMargins").text == "Current margins: 5,15,25,35"
+
+
+def test_runtime_backend_margin_and_top_alignment_coexist_in_current_state():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.get_object("spnTopMergin").set_value(5)
+    backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
+    backend.get_object("tglUpperL").click()
+
+    assert backend.get_object("lblCurrentMargins").text == "Current margins: 0,0,5,0"
+    assert backend.get_object("lblCurrentStateL").text == "Current L: align=center valign=top"
