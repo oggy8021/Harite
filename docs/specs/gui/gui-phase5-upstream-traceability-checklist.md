@@ -405,17 +405,17 @@
 
 | 観点 | 判定 | 根拠（スクリーンショット/ログ） |
 | --- | --- | --- |
-| Open dialog 起動 | blocked | 2026-04-16 初回XFCE確認では status は `dialog-open` だが chooser 非表示。runtime fallback の native dialog 起動を実装済みで、再確認待ち |
-| confirm/cancel 状態遷移 | blocked | chooser 非表示により初回確認不能。native dialog 化後の再確認待ち |
-| path 表示 | blocked | 実機確認未記入 |
-| filter UI | blocked | native chooser へ filter 実装済み。実機での表示確認待ち |
+| Open dialog 起動 | pass | owner が XFCE 実機で chooser 起動を確認 |
+| confirm/cancel 状態遷移 | pass | owner が XFCE 実機で confirm/cancel の双方を確認 |
+| path 表示 | pass | owner が XFCE 実機で選択 path 表示を確認 |
+| filter UI | pass | owner が XFCE 実機で image/all-files filter を確認 |
 
 #### 最終合意
 
 - [x] P5-9 の上流対応表を記入した
 - [x] 回帰 pass を記録した
-- [ ] 実機確認を完了した
-- [ ] P5-9 を Go 判定できる
+- [x] 実機確認を完了した
+- [x] P5-9 を Go 判定できる
 
 ## 14. P5-11 最低記入（Save Dialog）
 

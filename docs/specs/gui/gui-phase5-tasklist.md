@@ -184,7 +184,7 @@
   - 追加条件: 旧 `WindowBase` のトグル相互排他（押下/復帰）仕様の対応表を提出し、実装前レビュー合意を得る
   - 完了条件: トグル排他・margin反映・優先順位の挙動が回帰テストと実機メモで一致
 
-- [ ] P5-9 feat(gui): Open 導線を Dialog 主体へ復元（ImgOpenDialog 相当）
+- [x] P5-9 feat(gui): Open 導線を Dialog 主体へ復元（ImgOpenDialog 相当）
   - 対象: `Open-L` / `Open-R` 押下でファイル選択ダイアログを開き、選択結果を `entPathL` / `entPathR` へ反映
   - 要件: 直入力前提の承認UXではなく、旧導線準拠の「選択結果を表示」へ戻す
   - 要件: 当時の Gtk 部品そのものの再現には拘らず、Dialog 主体の導線と責務が再現できるなら部品差し替えを許容する
@@ -198,6 +198,7 @@
   - 進捗: 旧 `Widget/ImgOpenDialog.py` と `DialogBase.py`、呼び出し元 `WindowBase.btnGetImg_clicked` の挙動対応表を traceability へ追記した。選択/キャンセル/拡張子制限の差分整理を実施し、full path 表示は意図差分、filter UI と空入力時のホーム初期化は暫定差分として切り分けた（2026-04-16）
   - 進捗: XFCE 実機では fallback backend の status が `dialog-open` へ進む一方で chooser 自体は表示されない不具合を確認。runtime fallback の `ImgOpenDialog` proxy を実 GTK 環境では `Gtk.FileChooserDialog` を開く実装へ補強し、title suffix、home 初期位置、image/all-files filter も同時に復旧した。実機判定は再確認待ち（2026-04-16）
   - 完了記録（部分）: owner 実行の固定 GUI 回帰コマンドが pass。Open dialog proxy 導線の回帰を含めて green を確認した（2026-04-16）
+  - 完了記録: XFCE 実機で Open dialog 起動、confirm/cancel 状態遷移、path 表示、filter UI の4点を確認し、P5-9 の受け入れ条件を満たした（2026-04-16, owner確認）
   - 完了条件: Open 押下が `planned` 表示で終わらず、選択/キャンセルの状態遷移がUIで確認できる
 
 - [ ] P5-10 feat(gui): watch 導線の実処理導入（srcdirL/srcdirR）
