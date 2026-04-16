@@ -41,9 +41,13 @@ class _OpenDialogProxy:
 
     def __init__(
         self,
+        gtk_module: Any | None = None,
+        parent_window: Any | None = None,
         on_confirm: Callable[[], None] | None = None,
         on_cancel: Callable[[bool], None] | None = None,
     ) -> None:
+        self._gtk = gtk_module
+        self._parent_window = parent_window
         self._filename = ""
         self._visible = False
         self._side = ""
@@ -55,7 +59,96 @@ class _OpenDialogProxy:
         self._side = str(side or "").upper()
         self._filename = str(filename or "")
         self._title = f"Open image ({self._side})"
+        if self._supports_native_dialog():
+            self._run_native_dialog()
+            return
         self._visible = True
+
+    def _supports_native_dialog(self) -> bool:
+        gtk = self._gtk
+        return bool(
+            gtk is not None
+            and hasattr(gtk, "FileChooserDialog")
+            and hasattr(gtk, "FileChooserAction")
+            and hasattr(gtk, "ResponseType")
+            and hasattr(gtk, "FileFilter")
+        )
+
+    def _build_native_dialog(self) -> Any:
+        gtk = self._gtk
+        assert gtk is not None
+        dialog = gtk.FileChooserDialog(
+            title=self._title,
+            parent=self._parent_window,
+            action=gtk.FileChooserAction.OPEN,
+        )
+        if hasattr(dialog, "add_buttons"):
+            dialog.add_buttons(
+                getattr(gtk, "STOCK_CANCEL", "gtk-cancel"),
+                gtk.ResponseType.CANCEL,
+                getattr(gtk, "STOCK_OPEN", "gtk-open"),
+                gtk.ResponseType.OK,
+            )
+        if hasattr(dialog, "set_modal"):
+            dialog.set_modal(True)
+        if hasattr(dialog, "set_transient_for") and self._parent_window is not None:
+            dialog.set_transient_for(self._parent_window)
+        if hasattr(dialog, "set_destroy_with_parent"):
+            dialog.set_destroy_with_parent(True)
+        if hasattr(dialog, "set_show_hidden"):
+            dialog.set_show_hidden(True)
+
+        image_filter = gtk.FileFilter()
+        image_filter.set_name("画像")
+        for mime_type in ("image/png", "image/jpeg", "image/bmp", "image/gif"):
+            image_filter.add_mime_type(mime_type)
+        for pattern in ("*.png", "*.jpeg", "*.jpg", "*.bmp", "*.gif"):
+            image_filter.add_pattern(pattern)
+        if hasattr(dialog, "add_filter"):
+            dialog.add_filter(image_filter)
+
+        all_files_filter = gtk.FileFilter()
+        all_files_filter.set_name("全て")
+        all_files_filter.add_pattern("*")
+        if hasattr(dialog, "add_filter"):
+            dialog.add_filter(all_files_filter)
+
+        return dialog
+
+    def _run_native_dialog(self) -> None:
+        gtk = self._gtk
+        if gtk is None:
+            self._visible = True
+            return
+
+        dialog = self._build_native_dialog()
+        self._visible = True
+        try:
+            if self._filename:
+                if hasattr(dialog, "set_filename"):
+                    dialog.set_filename(str(Path(self._filename).expanduser().resolve()))
+            else:
+                home_dir = str(Path.home())
+                if hasattr(dialog, "set_current_folder"):
+                    dialog.set_current_folder(home_dir)
+
+            if hasattr(dialog, "show_all"):
+                dialog.show_all()
+            response = dialog.run() if hasattr(dialog, "run") else None
+            if response == gtk.ResponseType.OK:
+                if hasattr(dialog, "get_filename"):
+                    self._filename = str(dialog.get_filename() or "")
+                self._visible = False
+                if self._on_confirm is not None:
+                    self._on_confirm()
+                return
+
+            self._visible = False
+            if self._on_cancel is not None:
+                self._on_cancel(False)
+        finally:
+            if hasattr(dialog, "destroy"):
+                dialog.destroy()
 
     def set_filename(self, filename: str) -> None:
         self._filename = str(filename or "")
@@ -351,7 +444,12 @@ class GtkRuntimeSignalBackend:
             root.pack_start(command_bar, False, False, 0)
             btn_setting = gtk_module.Button(label="Prefs")
             btn_set_color = gtk_module.Button(label="Color (planned)")
-            open_dialog_proxy = _OpenDialogProxy(self._on_open_dialog_confirmed, self._on_open_dialog_canceled)
+            open_dialog_proxy = _OpenDialogProxy(
+                gtk_module,
+                window,
+                self._on_open_dialog_confirmed,
+                self._on_open_dialog_canceled,
+            )
             save_dialog_proxy = _SaveDialogProxy(self._on_save_dialog_filename_changed)
             btn_open_save = gtk_module.Button(label="Save Confirm")
             if hasattr(btn_open_save, "set_sensitive"):

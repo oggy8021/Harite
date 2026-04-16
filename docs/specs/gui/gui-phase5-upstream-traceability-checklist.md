@@ -350,8 +350,8 @@
 | Open-L/Open-R 起動 | `WindowBase.btnGetImg_clicked` が side ごとに `ImgOpenDialog.openDialog(current_path, Caps)` を呼ぶ | entry に値がないと `planned(path-required)` で停止 | `src/harite/gui/adapters/gtk_backend.py` に `ImgOpenDialog` proxy を追加し、button 押下で side-aware に dialog-open へ遷移させる | Open-L/Open-R 押下で dialog が開き、owner 回帰で `dialog-open` 状態が固定される |
 | 選択確定 | `ImgOpenDialog.btnOpen_clicked` は `RESPONSE_OK`、`openDialog` は `get_filename()` を返す | entry の文字列をそのまま handler へ渡していた | `src/harite/gui/adapters/ui_adapter.py` と `src/harite/gui/views/main_window.py` で `path, side` を受け、左右別 path を保持しつつ `input_value` を再構成する | 選択確定で selected へ遷移し、左右の path が上書き更新され、owner 回帰が pass する |
 | cancel / destroy | `DialogBase.btnCancel_clicked` は `RESPONSE_CANCEL`、`openDialog` は `False` を返して caller 側 path を更新しない | close semantics が未定義で、MainWindow は destroy をログするだけ | fallback proxy では cancel/close を `canceled` / `closed` 状態へ明示し、既存 path を保持したまま `on_ImgOpenDialog_destroy` を通知する | cancel/close 後に path が変化せず、状態表示が `canceled` または `closed` になる |
-| title / 初期位置 | upstream は title に side suffix を付け、空 path 時は home、非空 path 時は absolute path 起点 | title/初期位置ともに未整理 | title suffix は fallback proxy で再現し、初期位置の home fallback は後続差分として記録する | title に side が表示される。home fallback 未実装は warn として明記される |
-| filter 制御 | upstream は image filter と all files filter を dialog へ追加する | filter 制御なし | filter 種別は traceability に固定し、fallback proxy では metadata 再現から段階導入する | filter 差分が文書化され、後続実装の対象集合が固定される |
+| title / 初期位置 | upstream は title に side suffix を付け、空 path 時は home、非空 path 時は absolute path 起点 | title/初期位置ともに未整理 | `src/harite/gui/adapters/gtk_backend.py` の runtime fallback で native `Gtk.FileChooserDialog` を起動し、side suffix、home 初期位置、既存 path の absolute path 再利用を再現する | 実機で dialog title に side が表示され、空 path でも dialog が開く |
+| filter 制御 | upstream は image filter と all files filter を dialog へ追加する | filter 制御なし | runtime fallback の native chooser に `png/jpeg/jpg/bmp/gif` と all files filter を追加する | 実機で filter 選択肢が表示され、対象集合が upstream と一致する |
 | entry 表示内容 | caller は `os.path.basename(path)` のみ表示する | path-required 前提で entry を入力欄として扱っていた | Harite では user 合意に従い、`entPathL/R` を表示欄として full path を保持する | GUI 上で選択元 path が判読でき、仕様差分として合意済みである |
 
 ### 13-4. 非対応・差分（P5-9）
@@ -361,16 +361,6 @@
   - 代替挙動: full path を表示し、左右別 path を MainWindow 側でも保持する
   - 後続タスク: 必要なら preview 導入時に path 表示の縮退方針を再設計する
   - 差分分類: `仕様差分（意図的）`
-- 非対応項目2: empty path 時の home directory 初期化
-  - 理由: fallback proxy は実 chooser を持たず、ディレクトリ初期化の UI 意味がまだ薄い
-  - 代替挙動: 既存 path があればそれを再利用し、空なら空のまま dialog-open とする
-  - 後続タスク: 実 chooser 導入時に home 初期化を再現する
-  - 差分分類: `暫定差分（期限付き）`
-- 非対応項目3: image/all-files filter の UI 再現
-  - 理由: 現行 fallback proxy は選択状態機械の復旧を優先し、chooser widget 自体は未導入
-  - 代替挙動: 対応対象の MIME/pattern 集合だけ先に本書へ固定する
-  - 後続タスク: P5-9 follow-up または実 chooser 導入時に filter UI を反映する
-  - 差分分類: `暫定差分（期限付き）`
 
 ### 13-5. 実装前レビュー合意（P5-9）
 
@@ -415,10 +405,10 @@
 
 | 観点 | 判定 | 根拠（スクリーンショット/ログ） |
 | --- | --- | --- |
-| Open dialog 起動 | blocked | 実機確認未記入 |
-| confirm/cancel 状態遷移 | blocked | 実機確認未記入 |
+| Open dialog 起動 | blocked | 2026-04-16 初回XFCE確認では status は `dialog-open` だが chooser 非表示。runtime fallback の native dialog 起動を実装済みで、再確認待ち |
+| confirm/cancel 状態遷移 | blocked | chooser 非表示により初回確認不能。native dialog 化後の再確認待ち |
 | path 表示 | blocked | 実機確認未記入 |
-| filter UI | warn | fallback proxy では未実装、traceability へ差分記録済み |
+| filter UI | blocked | native chooser へ filter 実装済み。実機での表示確認待ち |
 
 #### 最終合意
 
@@ -426,3 +416,106 @@
 - [x] 回帰 pass を記録した
 - [ ] 実機確認を完了した
 - [ ] P5-9 を Go 判定できる
+
+## 14. P5-11 最低記入（Save Dialog）
+
+本節は P5-11（Save 体験改善）のための事前整理ブロック。
+upstream の save path 確定責務は維持しつつ、dialog 実体は modern GTK chooser へ置換可能とする。
+
+### 14-1. 対象PR情報（P5-11）
+
+- PR番号: TBD
+- タスク番号: P5-11
+- ブランチ名: `chore/gui-phase5-p5-11-save-ux-improvement-20260414`
+- 担当: owner
+- レビュー担当: TBD
+- 予定実機環境: XFCE
+- 判定対象導線: `btnSave`, `SaveWallpaperDialog`, `btnOpenSave`, `btnCancelSave`, save path 表示
+
+### 14-2. 上流読解ソース（P5-11）
+
+- 参照ファイル1: `wallpaperoptimizer/WallpaperOptimizer/Widget/SaveWallpaperDialog.py`
+- 参照観点1: `openDialog()` の戻り値と dialog lifecycle
+- 参照ファイル2: `wallpaperoptimizer/WallpaperOptimizer/Widget/DialogBase.py`
+- 参照観点2: `btnCancel_clicked` の `gtk.RESPONSE_CANCEL`
+- 参照ファイル3: `wallpaperoptimizer/WallpaperOptimizer/WindowBase.py`
+- 参照観点3: `btnSave_clicked` が `SaveWallpaperDialog.openDialog()` の戻り値を `option.opts.save` へ入れ、その後 `core.option.getSavePath()` を見て `singlerun()` する流れ
+- 読解メモ1: upstream save dialog は openDialog 一発で完了し、OK 時は `get_filename()`、cancel/destroy 時は `None` を返す
+- 読解メモ2: save path の確定後に本体処理を続行する責務は caller 側にある
+- 読解メモ3: upstream には Harite 現行のような confirm/cancel ボタン別の状態機械や `path-required` ラベル管理は見当たらない
+
+### 14-3. 対応関係マトリクス（P5-11）
+
+| 機能項目 | 上流挙動（要約） | 現行挙動（実装前） | 実装方針 | 受け入れ条件 |
+| --- | --- | --- | --- | --- |
+| Save 起動 | `WindowBase.btnSave_clicked` が `SaveWallpaperDialog.openDialog()` を呼ぶ | fallback backend が内部 proxy を開き、MainWindow 側にも `save_dialog_open` 状態を持つ | Save 押下で native save chooser または同等の modal dialog を開き、状態機械を単純化する | Save 押下で chooser が開き、閉じた後の状態が一意に定まる |
+| confirm | upstream は `openDialog()` が save filename を返し、caller が `singlerun()` を続行する | `on_save_dialog_confirm(save_path)` が path を設定し、`can_optimize` なら `on_optimize()` を呼ぶ | 「save path を返す」と「caller が optimize 続行」の責務は維持しつつ、dialog 確定経路を1本化する | confirm 後に save path が保持され、保存処理が一度だけ続行する |
+| cancel / destroy | upstream は `None` を返し、保存処理を継続しない | cancel が dialog open state に依存し、条件次第で `cancel-failed` になり得る | cancel/destroy は常に non-destructive に閉じ、保存処理を継続しない経路へ寄せる | cancel 後に save path が不用意に変化せず、`cancel-failed` が発生しない |
+| path 表示 | upstream caller は path を内部 option に保持するが、MainWindow 上の見せ方は強く規定されない | `lblSaveDialogState` など複数ラベルへ状態が分散 | 保存先 path と保存名を MainWindow 側で追跡し、1箇所で確認できる表示へ寄せる | 実機で「どこに何という名前で保存されるか」が判読できる |
+| dialog 実体 | upstream は legacy Glade の `GtkFileChooserDialog` | Harite fallback は独自 `_SaveDialogProxy` と補助ボタン群 | dialog 実体は native save chooser へ modernize 可。戻り値 semantics を優先し widget 再現は要求しない | 実 GTK 環境で save chooser が開き、古い Glade 依存なしに成立する |
+| overwrite / 既定保存先 UX | upstream 実装詳細は薄い | 現行 Harite は path-required 表示中心で、保存先 UX が不明瞭 | modern GTK chooser の overwrite confirmation や current folder UX を活用してよい | 行き先不明が解消され、overwrite 時の事故を減らせる |
+
+### 14-4. 非対応・差分（P5-11 事前整理）
+
+- 非対応項目1: upstream の dialog 実体そのものの再現
+  - 理由: 旧 Glade/legacy chooser への依存は現環境で不安定であり、P5-9 と同様に fallback/native chooser 併用が現実的
+  - 代替挙動: native save chooser を採用し、戻り値 semantics と caller 責務を維持する
+  - 後続タスク: P5-11 実装時に chooser abstraction を save/open で共通化できるか検討する
+  - 差分分類: `仕様差分（意図的）`
+- 非対応項目2: 現行の SaveDialog 状態ラベル群の完全維持
+  - 理由: upstream は modal-return 型であり、現在の多段ラベルは Harite 独自複雑化の可能性が高い
+  - 代替挙動: 保存先表示と保存結果表示を整理し、不要な `path-required` / `cancel-failed` 状態を縮退させる
+  - 後続タスク: P5-11 実装時に最低限必要な status vocabulary を再定義する
+  - 差分分類: `仕様差分（意図的）`
+
+### 14-5. 実装前レビュー合意（P5-11）
+
+- [x] 14-2 と 14-3 の事前整理を記入した
+- [x] 維持点と modernize 点を分離した
+- [ ] Approve を得た
+
+### 14-6. 実装スコープ境界（P5-11）
+
+- In scope:
+  - save path の confirm/cancel semantics
+  - 保存先の可視化
+  - native save chooser への modernize
+- Out of scope:
+  - optimize 本体アルゴリズムの変更
+  - apply/watch 導線の変更
+  - Open dialog の追加差分修正
+- 逸脱禁止:
+  - save chooser 導入に乗じて unrelated な MainWindow state を増やしすぎない
+
+### 14-7. 未解決点（P5-11）
+
+- [x] 何を upstream 互換として最優先で守るか
+  - save path の戻り値 semantics と caller 側続行責務を最優先とする
+- [x] 何を modernize してよいか
+  - dialog 実体、overwrite confirmation、current folder UX、保存先表示 UI は modern GTK chooser に寄せてよい
+- [x] 何を削ってよいか
+  - upstream に根拠の薄い独自の SaveDialog 状態機械や `cancel-failed` 語彙は整理対象とする
+
+### 14-8. 実装後エビデンス記録（P5-11）
+
+#### 回帰（Owner実行）
+
+- 実行日: TBD
+- 実行者: owner
+- コマンド: TBD
+- 結果: TBD
+
+#### 実機（XFCE）
+
+| 観点 | 判定 | 根拠（スクリーンショット/ログ） |
+| --- | --- | --- |
+| Save chooser 起動 | blocked | 未着手 |
+| confirm/cancel 状態遷移 | blocked | 未着手 |
+| 保存先表示 | blocked | 未着手 |
+| overwrite UX | blocked | 未着手 |
+
+#### 最終合意
+
+- [x] P5-11 の事前対応表を記入した
+- [ ] 実装方針の Approve を得た
+- [ ] P5-11 着手可と判定した

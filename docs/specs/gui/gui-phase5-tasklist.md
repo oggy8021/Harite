@@ -196,6 +196,7 @@
   - 進捗: fallback backend に `ImgOpenDialog` proxy を追加し、`Open-L/R` 押下で dialog-open、confirm/cancel で selected/canceled へ遷移する経路へ更新。旧 `entPath*` 事前入力依存と `planned(path-required)` は撤去した（2026-04-15）
   - 進捗: `ui_adapter` は Open 選択値を `ImgOpenDialog` から解決し、`MainWindow.on_pick_input(path, side)` で左右別の表示パスを保持したうえで `input_value` を再構成するよう更新した（2026-04-15）
   - 進捗: 旧 `Widget/ImgOpenDialog.py` と `DialogBase.py`、呼び出し元 `WindowBase.btnGetImg_clicked` の挙動対応表を traceability へ追記した。選択/キャンセル/拡張子制限の差分整理を実施し、full path 表示は意図差分、filter UI と空入力時のホーム初期化は暫定差分として切り分けた（2026-04-16）
+  - 進捗: XFCE 実機では fallback backend の status が `dialog-open` へ進む一方で chooser 自体は表示されない不具合を確認。runtime fallback の `ImgOpenDialog` proxy を実 GTK 環境では `Gtk.FileChooserDialog` を開く実装へ補強し、title suffix、home 初期位置、image/all-files filter も同時に復旧した。実機判定は再確認待ち（2026-04-16）
   - 完了記録（部分）: owner 実行の固定 GUI 回帰コマンドが pass。Open dialog proxy 導線の回帰を含めて green を確認した（2026-04-16）
   - 完了条件: Open 押下が `planned` 表示で終わらず、選択/キャンセルの状態遷移がUIで確認できる
 
@@ -213,6 +214,10 @@
   - 背景: 保存場所選定を除く本体処理は `Optimize` と重なるため、緊急課題とは切り分ける
   - 要件: `Save Cancel` が `cancel-failed` とならない導線を保証
   - 要件: どこに何という名前で保存されたかを MainWindow 側で追跡可能にする
+  - 方針: upstream `SaveWallpaperDialog.openDialog()` の責務は維持しつつ、dialog 部品自体が古い場合は native save chooser へ modernize してよい
+  - 方針: 維持対象は「confirm で save path を返す」「cancel/destroy で保存を継続しない」「caller 側で optimize/singlerun を続行する」の3点とする
+  - 方針: modernize 対象は basename/見た目ではなく、dialog 実体、初期保存先 UX、overwrite 確認、保存先表示の強化とする
+  - 懸念: 現行 Harite は Save dialog 状態機械が MainWindow と fallback backend に分散しており、upstream の単純な modal-return 型より複雑化している
   - 追加条件: 旧 `Widget/SaveWallpaperDialog.py` の挙動対応表（保存先確定/キャンセル/表示）を提出し、実装前レビュー合意を得る
   - 完了条件: Save 体験が「行き先不明」にならず、保存先情報が実機で確認できる
 
