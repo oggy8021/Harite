@@ -339,32 +339,38 @@ def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
     assert tgl_lower_r.label == "Bottom-R"
 
 
-def test_runtime_backend_open_l_uses_entry_path_and_calls_pick_handler():
+def test_runtime_backend_open_l_uses_dialog_selection_and_calls_pick_handler():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
+    dialog = backend.get_object("ImgOpenDialog")
     entry = backend.get_object("entPathL")
     open_l = backend.get_object("btnGetImgL")
     pick_state = backend.get_object("lblPickState")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
-    observed = {"path": None}
+    observed = {"path": None, "side": None}
 
-    def on_pick(path):
+    def on_pick(path, side=None):
         observed["path"] = path
+        observed["side"] = side
 
     backend.connect_signals({"on_btnGetImg_clicked": on_pick})
-    entry.set_text("/tmp/left.jpg")
     open_l.click()
+    dialog.set_filename("/tmp/left.jpg")
+    dialog.confirm()
 
     assert observed["path"] == "/tmp/left.jpg"
+    assert observed["side"] == "L"
+    assert entry.get_text() == "/tmp/left.jpg"
     assert pick_state.text == "Open-L: selected"
     assert status.text == "Open-L: selected"
     assert error.text == "Error: none"
 
 
-def test_runtime_backend_open_r_without_entry_path_marks_planned():
+def test_runtime_backend_open_r_opens_dialog_without_entry_path_requirement():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
+    dialog = backend.get_object("ImgOpenDialog")
     open_r = backend.get_object("btnGetImgR")
     pick_state = backend.get_object("lblPickState")
     status = backend.get_object("lblStatus")
@@ -372,33 +378,29 @@ def test_runtime_backend_open_r_without_entry_path_marks_planned():
 
     open_r.click()
 
-    assert pick_state.text == "Open-R: planned(path-required)"
-    assert status.text == "Open-R: planned"
-    assert error.text == "Error: path input required"
+    assert dialog.is_visible() is True
+    assert dialog.get_side() == "R"
+    assert dialog.get_title() == "Open image (R)"
+    assert pick_state.text == "Open-R: dialog-open"
+    assert status.text == "Open-R: dialog-open"
+    assert error.text == "Error: none"
 
 
-def test_runtime_backend_open_r_uses_right_entry_path_and_calls_pick_handler():
+def test_runtime_backend_open_r_cancel_updates_status_and_closes_dialog():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    entry_l = backend.get_object("entPathL")
-    entry_r = backend.get_object("entPathR")
+    dialog = backend.get_object("ImgOpenDialog")
     open_r = backend.get_object("btnGetImgR")
     pick_state = backend.get_object("lblPickState")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
-    observed = {"path": None}
 
-    def on_pick(path):
-        observed["path"] = path
-
-    backend.connect_signals({"on_btnGetImg_clicked": on_pick})
-    entry_l.set_text("/tmp/left.jpg")
-    entry_r.set_text("/tmp/right.jpg")
     open_r.click()
+    dialog.cancel()
 
-    assert observed["path"] == "/tmp/right.jpg"
-    assert pick_state.text == "Open-R: selected"
-    assert status.text == "Open-R: selected"
+    assert dialog.is_visible() is False
+    assert pick_state.text == "Open-R: canceled"
+    assert status.text == "Open-R: canceled"
     assert error.text == "Error: none"
 
 

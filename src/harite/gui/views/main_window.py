@@ -33,7 +33,11 @@ class MainWindow:
         self.plugin_name = self._default_plugin_name()
         self.last_saved_files: list[Path] = []
         self.watch_interval_seconds = 60
+        self.open_image_dialog_open = False
+        self.open_image_dialog_side: str | None = None
         self.save_dialog_open = False
+        self.input_path_l = ""
+        self.input_path_r = ""
         self.form_state = OptimizeFormState(
             input_value="",
             resolution="1920x1080",
@@ -82,7 +86,7 @@ class MainWindow:
         self._log(f"Plugin updated: {name}")
         return True
 
-    def on_pick_input(self, path: str) -> None:
+    def on_pick_input(self, path: str, side: str | None = None) -> None:
         """Signal endpoint: on_btnGetImg_clicked."""
         value = (path or "").strip()
         if not value:
@@ -90,11 +94,24 @@ class MainWindow:
             self._log("Pick input ignored: empty path")
             return
 
-        current = [p.strip() for p in self.form_state.input_value.split(",") if p.strip()]
-        if value not in current:
-            current.append(value)
-        self.on_change_input_text(",".join(current))
-        self._log(f"Input picked: {value}")
+        normalized_side = (side or "").strip().upper()
+        if normalized_side == "L":
+            self.input_path_l = value
+        elif normalized_side == "R":
+            self.input_path_r = value
+        else:
+            current = [p.strip() for p in self.form_state.input_value.split(",") if p.strip()]
+            if value not in current:
+                current.append(value)
+            self.input_path_l = current[0] if len(current) >= 1 else ""
+            self.input_path_r = current[1] if len(current) >= 2 else ""
+
+        combined = ",".join(path for path in (self.input_path_l, self.input_path_r) if path)
+        self.on_change_input_text(combined)
+        if normalized_side in {"L", "R"}:
+            self._log(f"Input picked ({normalized_side}): {value}")
+        else:
+            self._log(f"Input picked: {value}")
 
     def _current_margin_values(self) -> tuple[int, int, int, int]:
         value = (self.form_state.margins or "").strip()
@@ -203,12 +220,18 @@ class MainWindow:
 
     def on_change_input_text(self, text: str) -> None:
         """Signal endpoint: on_entPath_insert_text."""
-        self.form_state.input_value = text
+        normalized = text.strip()
+        parts = [part.strip() for part in normalized.split(",") if part.strip()]
+        self.input_path_l = parts[0] if len(parts) >= 1 else ""
+        self.input_path_r = parts[1] if len(parts) >= 2 else ""
+        self.form_state.input_value = ",".join(parts)
         self.can_optimize = bool(text and text.strip())
         if not self.can_optimize:
             # Input changed to empty; reset apply readiness to avoid stale flow.
             self.can_apply = False
             self.last_saved_files = []
+            self.input_path_l = ""
+            self.input_path_r = ""
             self.save_dialog_open = False
             self._set_status("error", "input", "input is required", error="input is required")
             self._log("Save dialog closed by input reset")
@@ -298,6 +321,8 @@ class MainWindow:
 
     def on_clear_input(self) -> bool:
         """Signal endpoint: on_btnClrPath_clicked."""
+        self.input_path_l = ""
+        self.input_path_r = ""
         self.on_change_input_text("")
         self._log("Input cleared")
         return True
@@ -384,6 +409,8 @@ class MainWindow:
 
     def on_close_open_image_dialog(self) -> None:
         """Signal endpoint: on_ImgOpenDialog_destroy."""
+        self.open_image_dialog_open = False
+        self.open_image_dialog_side = None
         self._log("Open image dialog closed")
 
     def on_close_save_dialog(self) -> None:
