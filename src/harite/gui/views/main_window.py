@@ -12,6 +12,7 @@ import sys
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
 from harite.gui.services.cli_mapper import OptimizeRequest, to_cli_args
 from harite.plugins import registry as plugin_registry
+from harite.watch import collect_watch_input_images, select_next_image
 
 
 class MainWindow:
@@ -34,6 +35,15 @@ class MainWindow:
         self.last_saved_files: list[Path] = []
         self.save_target_display = "Save target: not-selected"
         self.watch_interval_seconds = 60
+        self.watch_srcdir_l = ""
+        self.watch_srcdir_r = ""
+        self.watch_source_display = "Watch srcdirs: L=- | R=-"
+        self.watch_current_display = "Watch current: idle"
+        self.watch_running = False
+        self._watch_index_l = 0
+        self._watch_index_r = 0
+        self._watch_previous_l: Path | None = None
+        self._watch_previous_r: Path | None = None
         self.open_image_dialog_open = False
         self.open_image_dialog_side: str | None = None
         self.save_dialog_open = False
@@ -50,7 +60,7 @@ class MainWindow:
             ("hero", ("input_value", "resolution", "output_dir", "plugin")),
             ("optimize_panel", ("margins", "align", "valign", "padding", "quality", "optimize")),
             ("apply_panel", ("saved_files", "apply_dry_run", "apply_do_it")),
-            ("status_panel", ("status_message", "save_target", "last_error", "logs")),
+            ("status_panel", ("status_message", "save_target", "watch_sources", "watch_current", "last_error", "logs")),
         )
         self.primary_action_flow: tuple[str, ...] = (
             "hero",
@@ -113,6 +123,27 @@ class MainWindow:
             self._log(f"Input picked ({normalized_side}): {value}")
         else:
             self._log(f"Input picked: {value}")
+
+    def on_pick_watch_srcdir(self, path: str, side: str | None = None) -> bool:
+        """Signal endpoint: on_btnOpenSrcdir_clicked."""
+        value = (path or "").strip()
+        normalized_side = (side or "").strip().upper()
+        if not value:
+            self.last_error = "watch srcdir is empty"
+            self._log("Watch srcdir ignored: empty path")
+            return False
+        if normalized_side == "L":
+            self.watch_srcdir_l = value
+        elif normalized_side == "R":
+            self.watch_srcdir_r = value
+        else:
+            self.last_error = "watch srcdir side is required"
+            self._log("Watch srcdir ignored: missing side")
+            return False
+        self._update_watch_source_display()
+        self._set_status("idle", "watch", f"watch srcdir {normalized_side} selected")
+        self._log(f"Watch srcdir selected ({normalized_side}): {value}")
+        return True
 
     def _current_margin_values(self) -> tuple[int, int, int, int]:
         value = (self.form_state.margins or "").strip()
@@ -218,6 +249,19 @@ class MainWindow:
             self.save_target_display = f"Save target: {value}"
             return
         self.save_target_display = "Save target: not-selected"
+
+    def _update_watch_source_display(self) -> None:
+        left = self.watch_srcdir_l or "-"
+        right = self.watch_srcdir_r or "-"
+        self.watch_source_display = f"Watch srcdirs: L={left} | R={right}"
+
+    def _update_watch_current_display(self, left: str | None = None, right: str | None = None) -> None:
+        current_left = left if left is not None else (str(self._watch_previous_l) if self._watch_previous_l else "-")
+        current_right = right if right is not None else (str(self._watch_previous_r) if self._watch_previous_r else "-")
+        if not self.watch_running and current_left == "-" and current_right == "-":
+            self.watch_current_display = "Watch current: idle"
+            return
+        self.watch_current_display = f"Watch current: L={current_left} | R={current_right}"
 
     def _set_status(self, level: str, phase: str, message: str, *, error: str = "") -> None:
         """Set unified UI status fields and keep last_error in sync."""
@@ -384,27 +428,77 @@ class MainWindow:
         return True
 
     def on_watch_start(self) -> bool:
-        """Signal endpoint: on_btnDaemonize_clicked (planned)."""
-        self._set_status("planned", "watch", "watch start is planned")
-        self._log("Watch start requested: planned")
-        return False
+        """Signal endpoint: on_btnDaemonize_clicked."""
+        sources: list[tuple[str, Path]] = []
+        if self.watch_srcdir_l.strip():
+            sources.append(("L", Path(self.watch_srcdir_l.strip())))
+        if self.watch_srcdir_r.strip():
+            sources.append(("R", Path(self.watch_srcdir_r.strip())))
+        if not sources:
+            self._set_status("error", "watch", "watch srcdir is required", error="watch srcdir is required")
+            self._log("Watch start blocked: watch srcdir is required")
+            return False
+
+        selected_left = "-"
+        selected_right = "-"
+        for side, source_dir in sources:
+            try:
+                images = collect_watch_input_images(source_dir)
+            except ValueError as exc:
+                self._set_status("error", "watch", f"watch srcdir {side} invalid", error=str(exc))
+                self._log(f"Watch start failed ({side}): {exc}")
+                return False
+
+            if side == "L":
+                selected, self._watch_index_l = select_next_image(
+                    images,
+                    "sequential",
+                    self._watch_index_l,
+                    previous_selected=self._watch_previous_l,
+                )
+                self._watch_previous_l = selected
+                selected_left = str(selected)
+            else:
+                selected, self._watch_index_r = select_next_image(
+                    images,
+                    "sequential",
+                    self._watch_index_r,
+                    previous_selected=self._watch_previous_r,
+                )
+                self._watch_previous_r = selected
+                selected_right = str(selected)
+
+        self.watch_running = True
+        self._update_watch_source_display()
+        self._update_watch_current_display(selected_left, selected_right)
+        self._set_status("success", "watch", "watch started")
+        self._log(
+            f"Watch started: interval={self.watch_interval_seconds}s L={selected_left} R={selected_right}"
+        )
+        return True
 
     def on_watch_stop(self) -> bool:
-        """Signal endpoint: on_btnCancelDaemonize_clicked (planned)."""
-        self._set_status("planned", "watch", "watch stop is planned")
-        self._log("Watch stop requested: planned")
-        return False
+        """Signal endpoint: on_btnCancelDaemonize_clicked."""
+        if not self.watch_running:
+            self._set_status("idle", "watch", "watch stop ignored (idle)")
+            self._log("Watch stop ignored: watch is idle")
+            return False
+        self.watch_running = False
+        self._update_watch_current_display()
+        self._set_status("idle", "watch", "watch stopped")
+        self._log("Watch stopped")
+        return True
 
     def on_watch_interval_change(self, seconds: int) -> bool:
-        """Signal endpoint: on_spnInterval_value_changed (planned)."""
+        """Signal endpoint: on_spnInterval_value_changed."""
         value = int(seconds)
         if value <= 0:
             self._set_status("error", "watch", "watch interval must be positive", error="watch interval must be positive")
             self._log(f"Watch interval rejected: {value}")
             return False
         self.watch_interval_seconds = value
-        self._set_status("planned", "watch", f"watch interval planned: {value}s")
-        self._log(f"Watch interval updated (planned): {value}s")
+        self._set_status("idle", "watch", f"watch interval updated: {value}s")
+        self._log(f"Watch interval updated: {value}s")
         return True
 
     def on_close(self) -> None:
@@ -511,6 +605,8 @@ class MainWindow:
                 "message": self.status_message,
                 "last_error": self.last_error,
                 "save_target": self.save_target_display,
+                "watch_sources": self.watch_source_display,
+                "watch_current": self.watch_current_display,
             },
         }
 

@@ -532,3 +532,89 @@ upstream の save path 確定責務は維持しつつ、dialog 実体は modern 
 - [x] 実装方針の Approve を得た
 - [x] P5-11 着手可と判定した
 - [x] P5-11 を Go 判定できる
+
+## 15. P5-10 最低記入（watch / srcdir）
+
+本節は P5-10（watch 導線実処理）のための事前整理ブロック。
+watch 用 `srcdirL/srcdirR` は通常入力 `entPathL/R` と責務分離しつつ、upstream の dialog-led semantics と interval 更新責務を優先する。
+
+### 15-1. 対象PR情報（P5-10）
+
+- PR番号: TBD
+- タスク番号: P5-10
+- ブランチ名: `feature/gui-phase5-p5-10-watch-flow-srcdir-20260414`
+- 担当: owner
+- レビュー担当: TBD
+- 予定実機環境: XFCE
+- 判定対象導線: `btnSetting`, `btnOpenSrcdirL/R`, `SrcdirDialog`, `spnInterval`, `btnDaemonize`, `btnCancelDaemonize`
+
+### 15-2. 上流読解ソース（P5-10）
+
+- 参照ファイル1: `wallpaperoptimizer/WallpaperOptimizer/Widget/SettingDialog.py`
+- 参照観点1: `btnOpenSrcdir_clicked` が `SrcdirDialog.openDialog(current_srcdir, side)` を呼び、OK 時だけ `srcdirs[idx]` と entry を更新すること
+- 参照ファイル2: `wallpaperoptimizer/WallpaperOptimizer/Widget/SrcdirDialog.py`
+- 参照観点2: side suffix 付き title、current folder 初期化、OK で folder path を返し cancel で `False` を返すこと
+- 参照ファイル3: `wallpaperoptimizer/WallpaperOptimizer/WindowBase.py`
+- 参照観点3: `spnInterval_value_changed` が option interval と statusbar を更新し、watch start/stop は caller 側責務であること
+- 読解メモ1: upstream watch 用 source dir は通常入力 path とは別管理で、dialog 選択結果が設定 state へ反映される
+- 読解メモ2: `spnInterval` は `GtkSpinButton` adjustment (`60 1 86400 1 10 0`) 前提で扱う
+- 読解メモ3: `btnDaemonize_clicked` / `btnCancelDaemonize_clicked` 自体は base class では空実装だが、watch 導線の入口として独立している
+
+### 15-3. 対応関係マトリクス（P5-10）
+
+| 機能項目 | 上流挙動（要約） | Harite 実装方針 | 受け入れ条件 |
+| --- | --- | --- | --- |
+| watch source 選択 | `SettingDialog` から `SrcdirDialog` を開き、OK 時だけ `srcdirs[idx]` を更新 | MainWindow に `watch_srcdir_l/r` を追加し、fallback backend でも `SrcdirDialog` proxy と `Srcdir-L/R` 導線を持つ | `srcdirL/srcdirR` が通常入力と混線せず保持される |
+| interval 更新 | `spnInterval_value_changed` が interval を即時更新 | MainWindow / fallback backend ともに spin の更新を actual 化する | 正の秒数で interval が更新され、0 以下は reject される |
+| watch start | caller が watch 用 source dir をもとに実処理を開始 | `collect_watch_input_images` / `select_next_image` を使って初回選択を確定し、status へ反映する | source dir 指定あり/なしの分岐がテストで固定される |
+| watch stop | caller が watch 状態を停止へ遷移 | running/idle を分けて停止状態を返す | idle stop は無害、running stop は stopped へ遷移する |
+
+- 実装メモ1: MainWindow は `watch_srcdir_l/r`, `watch_source_display`, `watch_current_display`, `watch_running` を保持し、watch 専用 state を通常入力から分離した（2026-04-16）
+- 実装メモ2: fallback backend は `SrcdirDialog` proxy と `btnOpenSrcdirL/R`、`lblWatchSources`、`lblWatchCurrent` を追加し、実 GTK では native folder chooser を優先、fallback では proxy state で回せる形にした（2026-04-16）
+- 実装メモ3: 回帰テストでは `srcdirL/srcdirR` 指定あり/なし、watch interval 更新、fallback watch labels を固定し始めた。owner 実行は未実施（2026-04-16）
+
+### 15-4. 非対応・差分（P5-10 事前整理）
+
+- 非対応項目1: upstream `SettingDialog` 全体の legacy Glade 再現
+  - 理由: 現段階で必要なのは watch source 選択 semantics であり、設定 dialog 全面復元はスコープ過大
+  - 代替挙動: watch source 選択に必要な `SrcdirDialog` semantics を fallback/backend へ先行導入する
+  - 差分分類: `仕様差分（意図的）`
+- 非対応項目2: watch の長時間 daemon 実行ループそのもの
+  - 理由: P5-10 の主眼は導線 actual 化と source dir 分岐固定であり、持続実行 orchestration は別責務
+  - 代替挙動: start 時点の source dir 検証と初回選択結果の可視化までを今回の確定範囲とする
+  - 差分分類: `段階実装`
+
+### 15-5. 実装前レビュー合意（P5-10）
+
+- [x] 15-2 と 15-3 の事前整理を記入した
+- [x] `srcdirL/srcdirR` を通常入力と分離する方針を明記した
+- [ ] Approve を得た
+
+### 15-6. 実装スコープ境界（P5-10）
+
+- In scope:
+  - `srcdirL/srcdirR` 選択導線
+  - watch interval 更新
+  - watch start/stop の status と初回選択可視化
+- Out of scope:
+  - 長時間 daemon 実行 orchestration
+  - apply/save 導線の追加変更
+  - `SettingDialog` 全体の完全復元
+
+### 15-7. 実装後エビデンス記録（P5-10）
+
+#### 回帰（Owner実行）
+
+- 実行日: 未実施
+- 実行者: owner
+- コマンド: `python.exe -m pytest -q tests/gui/test_main_window_signals.py tests/gui/test_ui_adapter_dispatch.py tests/gui/test_ui_adapter_mapping_validation.py tests/gui/test_gtk_runtime_backend.py tests/gui/test_phase5_visual_regression.py`
+- 結果: pending
+
+#### 実機（XFCE）
+
+| 観点 | 判定 | 根拠（スクリーンショット/ログ） |
+| --- | --- | --- |
+| Srcdir chooser 起動 | pending | owner 実機確認待ち |
+| `srcdirL/srcdirR` 反映 | pending | owner 実機確認待ち |
+| watch start/stop 表示 | pending | owner 実機確認待ち |
+| interval 更新 | pending | owner 実機確認待ち |

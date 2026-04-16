@@ -28,6 +28,7 @@ LEGACY_HANDLER_MAP: dict[str, str] = {
     "on_btnDaemonize_clicked": "on_watch_start",
     "on_btnCancelDaemonize_clicked": "on_watch_stop",
     "on_spnInterval_value_changed": "on_watch_interval_change",
+    "on_btnOpenSrcdir_clicked": "on_pick_watch_srcdir",
     "on_btnGetImg_clicked": "on_pick_input",
     "on_btnClrPath_clicked": "on_clear_input",
     "on_btnAbout_clicked": "on_about",
@@ -171,6 +172,60 @@ def _build_dispatch_callback(
             return False
 
         return _on_pick_clicked
+
+    if legacy_name == "on_btnOpenSrcdir_clicked":
+
+        def _extract_path_and_side(value: Any) -> tuple[str | None, str | None]:
+            side = None
+            if hasattr(value, "get_side"):
+                candidate = value.get_side()
+                if isinstance(candidate, str) and candidate.strip():
+                    side = candidate.strip().upper()
+            elif isinstance(getattr(value, "side", None), str) and getattr(value, "side").strip():
+                side = getattr(value, "side").strip().upper()
+            elif hasattr(value, "get_name"):
+                name = str(value.get_name() or "")
+                if name.endswith("L"):
+                    side = "L"
+                elif name.endswith("R"):
+                    side = "R"
+
+            if isinstance(value, str) and value.strip():
+                return value.strip(), side
+            if hasattr(value, "get_filename"):
+                candidate = value.get_filename()
+                if isinstance(candidate, str) and candidate.strip():
+                    return candidate.strip(), side
+            if hasattr(value, "get_current_folder"):
+                candidate = value.get_current_folder()
+                if isinstance(candidate, str) and candidate.strip():
+                    return candidate.strip(), side
+            return None, side
+
+        def _on_pick_srcdir(*args: Any) -> Any:
+            if (
+                len(args) >= 2
+                and isinstance(args[0], str)
+                and args[0].strip()
+                and isinstance(args[1], str)
+                and args[1].strip().upper() in {"L", "R"}
+            ):
+                return target(args[0].strip(), args[1].strip().upper())
+
+            for arg in args:
+                selected, side = _extract_path_and_side(arg)
+                if selected and side:
+                    return target(selected, side)
+
+            if signal_backend is not None and hasattr(signal_backend, "get_object"):
+                dialog = signal_backend.get_object("SrcdirDialog")
+                selected, side = _extract_path_and_side(dialog)
+                if selected and side:
+                    return target(selected, side)
+
+            return False
+
+        return _on_pick_srcdir
 
     if legacy_name == "on_tglBtn_pressed":
 

@@ -14,6 +14,10 @@ class DummyWindow:
     def on_pick_input(self, path: str, side: str | None = None) -> None:
         self.calls.append(("input", (path, side)))
 
+    def on_pick_watch_srcdir(self, path: str, side: str | None = None) -> bool:
+        self.calls.append(("watch_srcdir", (path, side)))
+        return True
+
     def on_save(self) -> bool:
         self.calls.append(("save", True))
         return True
@@ -144,6 +148,28 @@ class _BackendWithOpenDialog:
     def __init__(self, path: str, side: str) -> None:
         self.widgets = {
             "ImgOpenDialog": _OpenDialogWidget(path, side),
+        }
+
+    def get_object(self, name: str):
+        return self.widgets.get(name)
+
+
+class _SrcdirDialogWidget:
+    def __init__(self, path: str, side: str) -> None:
+        self._path = path
+        self._side = side
+
+    def get_current_folder(self) -> str:
+        return self._path
+
+    def get_side(self) -> str:
+        return self._side
+
+
+class _BackendWithSrcdirDialog:
+    def __init__(self, path: str, side: str) -> None:
+        self.widgets = {
+            "SrcdirDialog": _SrcdirDialogWidget(path, side),
         }
 
     def get_object(self, name: str):
@@ -312,6 +338,22 @@ def test_dispatch_handles_watch_signals():
         ("watch_stop", True),
         ("watch_interval", 90),
     ]
+
+
+def test_dispatch_handles_watch_srcdir_selection_from_args_and_backend_dialog():
+    win = DummyWindow()
+    handlers = ("on_btnOpenSrcdir_clicked",)
+    dispatch = create_mainwindow_signal_dispatch(win, handlers)
+
+    assert dispatch["on_btnOpenSrcdir_clicked"]("/tmp/watch-left", "L") is True
+    assert win.calls == [("watch_srcdir", ("/tmp/watch-left", "L"))]
+
+    win = DummyWindow()
+    backend = _BackendWithSrcdirDialog("/tmp/watch-right", "R")
+    dispatch = create_mainwindow_signal_dispatch(win, handlers, signal_backend=backend)
+
+    assert dispatch["on_btnOpenSrcdir_clicked"](object()) is True
+    assert win.calls == [("watch_srcdir", ("/tmp/watch-right", "R"))]
 
 
 def test_dispatch_handles_about_clear_and_save_dialog_button_signals():

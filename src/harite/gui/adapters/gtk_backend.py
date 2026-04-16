@@ -9,6 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Callable
 
+from harite.watch import collect_watch_input_images, select_next_image
+
 
 class _SaveDialogProxy:
     """Minimal file chooser-like object used by runtime fallback backend."""
@@ -274,6 +276,131 @@ class _OpenDialogProxy:
             self._on_cancel(True)
 
 
+class _SrcdirDialogProxy:
+    """Minimal folder chooser-like object used by runtime fallback backend."""
+
+    def __init__(
+        self,
+        gtk_module: Any | None = None,
+        parent_window: Any | None = None,
+        on_confirm: Callable[[], None] | None = None,
+        on_cancel: Callable[[bool], None] | None = None,
+    ) -> None:
+        self._gtk = gtk_module
+        self._parent_window = parent_window
+        self._current_folder = ""
+        self._visible = False
+        self._side = ""
+        self._title = "Source directory"
+        self._on_confirm = on_confirm
+        self._on_cancel = on_cancel
+
+    def open_for_side(self, side: str, current_folder: str = "") -> None:
+        self._side = str(side or "").upper()
+        self._current_folder = str(current_folder or "")
+        self._title = f"Source directory ({self._side})"
+        if self._supports_native_dialog():
+            self._run_native_dialog()
+            return
+        self._visible = True
+
+    def _supports_native_dialog(self) -> bool:
+        gtk = self._gtk
+        return bool(
+            gtk is not None
+            and hasattr(gtk, "FileChooserDialog")
+            and hasattr(gtk, "FileChooserAction")
+            and hasattr(gtk.FileChooserAction, "SELECT_FOLDER")
+            and hasattr(gtk, "ResponseType")
+        )
+
+    def _build_native_dialog(self) -> Any:
+        gtk = self._gtk
+        assert gtk is not None
+        dialog = gtk.FileChooserDialog(
+            title=self._title,
+            parent=self._parent_window,
+            action=gtk.FileChooserAction.SELECT_FOLDER,
+        )
+        if hasattr(dialog, "add_buttons"):
+            dialog.add_buttons(
+                getattr(gtk, "STOCK_CANCEL", "gtk-cancel"),
+                gtk.ResponseType.CANCEL,
+                getattr(gtk, "STOCK_OPEN", "gtk-open"),
+                gtk.ResponseType.OK,
+            )
+        if hasattr(dialog, "set_modal"):
+            dialog.set_modal(True)
+        if hasattr(dialog, "set_transient_for") and self._parent_window is not None:
+            dialog.set_transient_for(self._parent_window)
+        if hasattr(dialog, "set_destroy_with_parent"):
+            dialog.set_destroy_with_parent(True)
+        return dialog
+
+    def _run_native_dialog(self) -> None:
+        gtk = self._gtk
+        if gtk is None:
+            self._visible = True
+            return
+
+        dialog = self._build_native_dialog()
+        self._visible = True
+        try:
+            target_folder = self._current_folder or str(Path.home())
+            if hasattr(dialog, "set_current_folder"):
+                dialog.set_current_folder(target_folder)
+
+            if hasattr(dialog, "show_all"):
+                dialog.show_all()
+            response = dialog.run() if hasattr(dialog, "run") else None
+            if response == gtk.ResponseType.OK:
+                if hasattr(dialog, "get_filename"):
+                    self._current_folder = str(dialog.get_filename() or "")
+                elif hasattr(dialog, "get_current_folder"):
+                    self._current_folder = str(dialog.get_current_folder() or "")
+                self._visible = False
+                if self._on_confirm is not None:
+                    self._on_confirm()
+                return
+
+            self._visible = False
+            if self._on_cancel is not None:
+                self._on_cancel(False)
+        finally:
+            if hasattr(dialog, "destroy"):
+                dialog.destroy()
+
+    def set_current_folder(self, folder: str) -> None:
+        self._current_folder = str(folder or "")
+
+    def get_current_folder(self) -> str:
+        return self._current_folder
+
+    def get_side(self) -> str:
+        return self._side
+
+    def show(self) -> None:
+        self._visible = True
+
+    def hide(self) -> None:
+        self._visible = False
+
+    def is_visible(self) -> bool:
+        return self._visible
+
+    def confirm(self) -> None:
+        if self._on_confirm is not None:
+            self._on_confirm()
+
+    def cancel(self) -> None:
+        if self._on_cancel is not None:
+            self._on_cancel(False)
+
+    def destroy(self) -> None:
+        if self._on_cancel is not None:
+            self._on_cancel(True)
+
+
 class GtkRuntimeSignalBackend:
     """Minimal GTK runtime backend that does not require Glade parsing.
 
@@ -284,6 +411,13 @@ class GtkRuntimeSignalBackend:
     def __init__(self, gtk_module: Any) -> None:
         self._gtk = gtk_module
         self._signal_handlers: dict[str, Callable[..., Any]] = {}
+        self._watch_srcdir_l = ""
+        self._watch_srcdir_r = ""
+        self._watch_running = False
+        self._watch_index_l = 0
+        self._watch_index_r = 0
+        self._watch_previous_l: Path | None = None
+        self._watch_previous_r: Path | None = None
 
         window = gtk_module.Window(title="Harite Studio")
         if hasattr(window, "set_resizable"):
@@ -549,24 +683,34 @@ class GtkRuntimeSignalBackend:
                 self._on_native_save_dialog_confirmed,
                 self._on_native_save_dialog_canceled,
             )
+            srcdir_dialog_proxy = _SrcdirDialogProxy(
+                gtk_module,
+                window,
+                self._on_srcdir_dialog_confirmed,
+                self._on_srcdir_dialog_canceled,
+            )
             btn_open_save = gtk_module.Button(label="Save Confirm")
             if hasattr(btn_open_save, "set_sensitive"):
                 btn_open_save.set_sensitive(False)
             btn_cancel_save = gtk_module.Button(label="Save Cancel")
             if hasattr(btn_cancel_save, "set_sensitive"):
                 btn_cancel_save.set_sensitive(False)
-            watch_label = gtk_module.Label(label="Watch (planned)")
+            btn_open_srcdir_l = gtk_module.Button(label="Srcdir-L")
+            btn_open_srcdir_r = gtk_module.Button(label="Srcdir-R")
+            watch_label = gtk_module.Label(label="Watch")
             interval_spin = gtk_module.SpinButton()
             self._configure_spin_button(interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
-            interval_label = gtk_module.Label(label="Interval (planned)")
-            btn_daemonize = gtk_module.Button(label="Watch Start (planned)")
-            btn_cancel_daemonize = gtk_module.Button(label="Watch Stop (planned)")
+            interval_label = gtk_module.Label(label="Interval")
+            btn_daemonize = gtk_module.Button(label="Watch Start")
+            btn_cancel_daemonize = gtk_module.Button(label="Watch Stop")
             btn_about = gtk_module.Button(label="About (secondary)")
             btn_help = gtk_module.Button(label="Help (secondary)")
             command_bar.pack_start(btn_setting, False, False, 0)
             command_bar.pack_start(btn_set_color, False, False, 0)
             command_bar.pack_start(btn_open_save, False, False, 0)
             command_bar.pack_start(btn_cancel_save, False, False, 0)
+            command_bar.pack_start(btn_open_srcdir_l, False, False, 0)
+            command_bar.pack_start(btn_open_srcdir_r, False, False, 0)
             command_bar.pack_start(watch_label, False, False, 0)
             command_bar.pack_start(interval_spin, False, False, 0)
             command_bar.pack_start(interval_label, False, False, 0)
@@ -590,6 +734,14 @@ class GtkRuntimeSignalBackend:
             if hasattr(error_label, "set_xalign"):
                 error_label.set_xalign(0.0)
             status_row.pack_start(error_label, False, False, 0)
+            watch_sources_label = gtk_module.Label(label="Watch srcdirs: L=- | R=-")
+            if hasattr(watch_sources_label, "set_xalign"):
+                watch_sources_label.set_xalign(0.0)
+            status_row.pack_start(watch_sources_label, False, False, 0)
+            watch_current_label = gtk_module.Label(label="Watch current: idle")
+            if hasattr(watch_current_label, "set_xalign"):
+                watch_current_label.set_xalign(0.0)
+            status_row.pack_start(watch_current_label, False, False, 0)
 
             if hasattr(window, "add"):
                 window.add(root)
@@ -658,8 +810,11 @@ class GtkRuntimeSignalBackend:
                 "btnSetColor": btn_set_color,
                 "ImgOpenDialog": open_dialog_proxy,
                 "SaveWallpaperDialog": save_dialog_proxy,
+                "SrcdirDialog": srcdir_dialog_proxy,
                 "btnOpenSave": btn_open_save,
                 "btnCancelSave": btn_cancel_save,
+                "btnOpenSrcdirL": btn_open_srcdir_l,
+                "btnOpenSrcdirR": btn_open_srcdir_r,
                 "lblWatchSection": watch_label,
                 "spnInterval": interval_spin,
                 "lblInterval": interval_label,
@@ -671,6 +826,8 @@ class GtkRuntimeSignalBackend:
                 "lblFlowLegend": flow_legend_label,
                 "lblStatus": status_label,
                 "lblError": error_label,
+                "lblWatchSources": watch_sources_label,
+                "lblWatchCurrent": watch_current_label,
             }
 
             for object_name, widget in self._objects.items():
@@ -721,6 +878,11 @@ class GtkRuntimeSignalBackend:
             btn_set_color.connect("clicked", self._on_color_clicked)
             btn_open_save.connect("clicked", self._on_save_dialog_confirm_clicked)
             btn_cancel_save.connect("clicked", self._on_save_dialog_cancel_clicked)
+            btn_open_srcdir_l.connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("L"))
+            btn_open_srcdir_r.connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("R"))
+            interval_spin.connect("value-changed", self._on_watch_interval_changed)
+            btn_daemonize.connect("clicked", self._on_watch_start_clicked)
+            btn_cancel_daemonize.connect("clicked", self._on_watch_stop_clicked)
             self._refresh_current_state_labels()
         else:
             self._objects = {
@@ -799,6 +961,28 @@ class GtkRuntimeSignalBackend:
             self._set_label_text("lblSaveTarget", f"Save target: {value}")
             return
         self._set_label_text("lblSaveTarget", "Save target: not-selected")
+
+    def _refresh_watch_source_labels(self) -> None:
+        left = self._watch_srcdir_l or "-"
+        right = self._watch_srcdir_r or "-"
+        self._set_label_text("lblWatchSources", f"Watch srcdirs: L={left} | R={right}")
+
+    def _refresh_watch_current_label(self, left: str | None = None, right: str | None = None) -> None:
+        current_left = left if left is not None else (str(self._watch_previous_l) if self._watch_previous_l else "-")
+        current_right = right if right is not None else (str(self._watch_previous_r) if self._watch_previous_r else "-")
+        if not self._watch_running and current_left == "-" and current_right == "-":
+            self._set_label_text("lblWatchCurrent", "Watch current: idle")
+            return
+        self._set_label_text("lblWatchCurrent", f"Watch current: L={current_left} | R={current_right}")
+
+    def _notify_srcdir_dialog_destroy(self) -> None:
+        callback = self._signal_handlers.get("on_SrcdirDialog_destroy")
+        if callback is None:
+            return
+        try:
+            callback()
+        except Exception:
+            pass
 
     def _notify_save_dialog_destroy(self) -> None:
         callback = self._signal_handlers.get("on_SaveWallpaperDialog_destroy")
@@ -972,6 +1156,163 @@ class GtkRuntimeSignalBackend:
         self._set_label_text("lblPickState", f"Open-{side}: {state}")
         self._set_feedback(phase=f"Open-{side}", state=state)
         self._notify_open_dialog_destroy()
+
+    def _current_srcdir_for_side(self, side: str) -> str:
+        return self._watch_srcdir_l if side == "L" else self._watch_srcdir_r
+
+    def _on_pick_srcdir_clicked(self, side: str) -> None:
+        dialog = self._objects.get("SrcdirDialog")
+        if dialog is None or not hasattr(dialog, "open_for_side"):
+            self._set_feedback(
+                phase=f"Srcdir-{side}",
+                state="handler-missing",
+                error="srcdir dialog not available",
+            )
+            return
+
+        dialog.open_for_side(side, self._current_srcdir_for_side(side))
+        self._set_feedback(phase=f"Srcdir-{side}", state="dialog-open")
+
+    def _on_srcdir_dialog_confirmed(self) -> None:
+        dialog = self._objects.get("SrcdirDialog")
+        if dialog is None:
+            self._set_feedback(phase="Srcdir", state="error", error="srcdir dialog not available")
+            return
+
+        side = "L"
+        if hasattr(dialog, "get_side"):
+            side = str(dialog.get_side() or "L").upper()
+
+        folder = ""
+        if hasattr(dialog, "get_current_folder"):
+            folder = str(dialog.get_current_folder() or "").strip()
+
+        if not folder:
+            self._set_feedback(
+                phase=f"Srcdir-{side}",
+                state="awaiting-selection",
+                error="source directory is required",
+            )
+            return
+
+        callback = self._signal_handlers.get("on_btnOpenSrcdir_clicked")
+        if callback is None:
+            self._set_feedback(
+                phase=f"Srcdir-{side}",
+                state="handler-missing",
+                error="handler not connected",
+            )
+            return
+
+        try:
+            ok = callback(folder, side)
+            if not ok:
+                self._set_feedback(
+                    phase=f"Srcdir-{side}",
+                    state="select-failed",
+                    error="srcdir selection returned false",
+                )
+                return
+
+            if side == "L":
+                self._watch_srcdir_l = folder
+            else:
+                self._watch_srcdir_r = folder
+            self._refresh_watch_source_labels()
+            if hasattr(dialog, "hide"):
+                dialog.hide()
+            self._set_feedback(phase=f"Srcdir-{side}", state="selected")
+            self._notify_srcdir_dialog_destroy()
+        except Exception as exc:
+            self._set_feedback(phase=f"Srcdir-{side}", state="error", error=str(exc))
+
+    def _on_srcdir_dialog_canceled(self, destroyed: bool = False) -> None:
+        dialog = self._objects.get("SrcdirDialog")
+        side = "L"
+        if dialog is not None:
+            if hasattr(dialog, "get_side"):
+                side = str(dialog.get_side() or "L").upper()
+            if hasattr(dialog, "hide"):
+                dialog.hide()
+        state = "closed" if destroyed else "canceled"
+        self._set_feedback(phase=f"Srcdir-{side}", state=state)
+        self._notify_srcdir_dialog_destroy()
+
+    def _on_watch_interval_changed(self, widget: Any) -> None:
+        callback = self._signal_handlers.get("on_spnInterval_value_changed")
+        if callback is None:
+            self._set_feedback(phase="Watch", state="handler-missing", error="handler not connected")
+            return
+        try:
+            ok = callback(widget)
+            if ok:
+                interval = 0
+                if hasattr(widget, "get_value_as_int"):
+                    interval = int(widget.get_value_as_int())
+                elif hasattr(widget, "get_value"):
+                    interval = int(widget.get_value())
+                self._set_feedback(phase="Watch", state=f"interval-updated({interval}s)")
+            else:
+                self._set_feedback(phase="Watch", state="interval-failed", error="interval returned false")
+        except Exception as exc:
+            self._set_feedback(phase="Watch", state="error", error=str(exc))
+
+    def _on_watch_start_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_btnDaemonize_clicked")
+        if callback is None:
+            self._set_feedback(phase="Watch", state="handler-missing", error="handler not connected")
+            return
+        try:
+            ok = callback()
+            if not ok:
+                self._set_feedback(phase="Watch", state="start-failed", error="watch start returned false")
+                return
+
+            selected_left = "-"
+            selected_right = "-"
+            if self._watch_srcdir_l:
+                images = collect_watch_input_images(Path(self._watch_srcdir_l))
+                selected, self._watch_index_l = select_next_image(
+                    images,
+                    "sequential",
+                    self._watch_index_l,
+                    previous_selected=self._watch_previous_l,
+                )
+                self._watch_previous_l = selected
+                selected_left = str(selected)
+            if self._watch_srcdir_r:
+                images = collect_watch_input_images(Path(self._watch_srcdir_r))
+                selected, self._watch_index_r = select_next_image(
+                    images,
+                    "sequential",
+                    self._watch_index_r,
+                    previous_selected=self._watch_previous_r,
+                )
+                self._watch_previous_r = selected
+                selected_right = str(selected)
+
+            self._watch_running = True
+            self._refresh_watch_source_labels()
+            self._refresh_watch_current_label(selected_left, selected_right)
+            self._set_feedback(phase="Watch", state="started")
+        except Exception as exc:
+            self._set_feedback(phase="Watch", state="error", error=str(exc))
+
+    def _on_watch_stop_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_btnCancelDaemonize_clicked")
+        if callback is None:
+            self._set_feedback(phase="Watch", state="handler-missing", error="handler not connected")
+            return
+        try:
+            ok = callback()
+            if not ok:
+                self._set_feedback(phase="Watch", state="stop-ignored")
+                return
+            self._watch_running = False
+            self._refresh_watch_current_label()
+            self._set_feedback(phase="Watch", state="stopped")
+        except Exception as exc:
+            self._set_feedback(phase="Watch", state="error", error=str(exc))
 
     def _set_toggle_active(self, object_name: str, active: bool) -> None:
         toggle = self._objects.get(object_name)
