@@ -178,6 +178,8 @@ def test_layout_blueprint_defines_grouping_and_flow():
     assert bp["status"]["phase"] == "init"
     assert bp["status"]["message"] == "ready"
     assert bp["status"]["save_target"] == "Save target: not-selected"
+    assert bp["status"]["watch_sources"] == "Watch srcdirs: L=- | R=-"
+    assert bp["status"]["watch_current"] == "Watch current: idle"
 
 
 def test_save_dialog_confirm_updates_single_save_target_display():
@@ -361,24 +363,45 @@ def test_on_apply_without_optimized_file_fails():
     assert window.status_phase == "apply"
 
 
-def test_watch_handlers_are_planned_and_interval_is_validated():
+def test_watch_handlers_use_srcdirs_and_interval_validation(tmp_path):
     window = MainWindow()
 
     assert window.on_watch_start() is False
-    assert window.status_level == "planned"
+    assert window.status_level == "error"
     assert window.status_phase == "watch"
-    assert window.status_message == "watch start is planned"
+    assert window.last_error == "watch srcdir is required"
 
-    assert window.on_watch_stop() is False
-    assert window.status_level == "planned"
+    left_dir = tmp_path / "watch-left"
+    right_dir = tmp_path / "watch-right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (right_dir / "right-1.png").write_bytes(b"right")
+
+    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
+    assert window.on_pick_watch_srcdir(str(right_dir), "R") is True
+    assert window.watch_source_display == f"Watch srcdirs: L={left_dir} | R={right_dir}"
+
+    assert window.on_watch_start() is True
+    assert window.watch_running is True
+    assert window.status_level == "success"
     assert window.status_phase == "watch"
-    assert window.status_message == "watch stop is planned"
+    assert window.status_message == "watch started"
+    assert window.watch_current_display == (
+        f"Watch current: L={left_dir / 'left-1.jpg'} | R={right_dir / 'right-1.png'}"
+    )
+
+    assert window.on_watch_stop() is True
+    assert window.watch_running is False
+    assert window.status_level == "idle"
+    assert window.status_phase == "watch"
+    assert window.status_message == "watch stopped"
 
     assert window.on_watch_interval_change(120) is True
     assert window.watch_interval_seconds == 120
-    assert window.status_level == "planned"
+    assert window.status_level == "idle"
     assert window.status_phase == "watch"
-    assert window.status_message == "watch interval planned: 120s"
+    assert window.status_message == "watch interval updated: 120s"
 
     assert window.on_watch_interval_change(0) is False
     assert window.status_level == "error"

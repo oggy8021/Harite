@@ -361,6 +361,8 @@ def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
     style_legend = backend.get_object("lblStyleLegend")
     command_section = backend.get_object("lblCommandSection")
     flow_legend = backend.get_object("lblFlowLegend")
+    watch_sources = backend.get_object("lblWatchSources")
+    watch_current = backend.get_object("lblWatchCurrent")
     prefs_btn = backend.get_object("btnSetting")
     about_btn = backend.get_object("btnAbout")
     help_btn = backend.get_object("btnHelp")
@@ -378,8 +380,8 @@ def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
 
     assert do_it.text == "do-it: planned"
     assert priority.text == "Rule: margins define area; align/valign act inside it; fixed binds L/R"
-    assert watch_section.text == "Watch (planned)"
-    assert interval.text == "Interval (planned)"
+    assert watch_section.text == "Watch"
+    assert interval.text == "Interval"
     assert color_btn.label == "Color (planned)"
     assert save_open.label == "Save Confirm"
     assert save_cancel.label == "Save Cancel"
@@ -388,8 +390,10 @@ def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
     assert hasattr(save_dialog, "get_filename")
     assert hasattr(save_dialog, "set_filename")
     assert save_dialog_state.text == "SaveDialog: closed"
-    assert watch_start.label == "Watch Start (planned)"
-    assert watch_stop.label == "Watch Stop (planned)"
+    assert watch_start.label == "Watch Start"
+    assert watch_stop.label == "Watch Stop"
+    assert watch_sources.text == "Watch srcdirs: L=- | R=-"
+    assert watch_current.text == "Watch current: idle"
     assert pick_state.text == "Picker: idle"
     assert style_legend.text == "Style cues: secondary(about/help) | planned"
     assert command_section.text == "Commands"
@@ -408,6 +412,56 @@ def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
     assert tgl_push_left_r.label == "Left-R"
     assert tgl_push_right_r.label == "Right-R"
     assert tgl_lower_r.label == "Bottom-R"
+
+
+def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(tmp_path):
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    srcdir_dialog = backend.get_object("SrcdirDialog")
+    srcdir_l = backend.get_object("btnOpenSrcdirL")
+    srcdir_r = backend.get_object("btnOpenSrcdirR")
+    interval = backend.get_object("spnInterval")
+    watch_start = backend.get_object("btnDaemonize")
+    watch_stop = backend.get_object("btnCancelDaemonize")
+    watch_sources = backend.get_object("lblWatchSources")
+    watch_current = backend.get_object("lblWatchCurrent")
+    status = backend.get_object("lblStatus")
+
+    left_dir = tmp_path / "watch-left"
+    right_dir = tmp_path / "watch-right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (right_dir / "right-1.png").write_bytes(b"right")
+
+    backend.connect_signals(
+        {
+            "on_btnOpenSrcdir_clicked": lambda path, side: bool(path) and side in {"L", "R"},
+            "on_btnDaemonize_clicked": lambda: True,
+            "on_btnCancelDaemonize_clicked": lambda: True,
+            "on_spnInterval_value_changed": lambda widget: int(widget.get_value_as_int()) > 0,
+        }
+    )
+
+    srcdir_l.click()
+    srcdir_dialog.set_current_folder(str(left_dir))
+    srcdir_dialog.confirm()
+    srcdir_r.click()
+    srcdir_dialog.set_current_folder(str(right_dir))
+    srcdir_dialog.confirm()
+
+    assert watch_sources.text == f"Watch srcdirs: L={left_dir} | R={right_dir}"
+
+    interval.set_value(90)
+    interval.emit("value-changed", interval)
+    assert status.text == "Watch: interval-updated(90s)"
+
+    watch_start.click()
+    assert status.text == "Watch: started"
+    assert watch_current.text == f"Watch current: L={left_dir / 'left-1.jpg'} | R={right_dir / 'right-1.png'}"
+
+    watch_stop.click()
+    assert status.text == "Watch: stopped"
 
 
 def test_runtime_backend_open_l_uses_dialog_selection_and_calls_pick_handler():
