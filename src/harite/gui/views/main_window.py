@@ -32,6 +32,7 @@ class MainWindow:
         self.available_plugins = tuple(plugin_registry.list())
         self.plugin_name = self._default_plugin_name()
         self.last_saved_files: list[Path] = []
+        self.save_target_display = "Save target: not-selected"
         self.watch_interval_seconds = 60
         self.open_image_dialog_open = False
         self.open_image_dialog_side: str | None = None
@@ -49,7 +50,7 @@ class MainWindow:
             ("hero", ("input_value", "resolution", "output_dir", "plugin")),
             ("optimize_panel", ("margins", "align", "valign", "padding", "quality", "optimize")),
             ("apply_panel", ("saved_files", "apply_dry_run", "apply_do_it")),
-            ("status_panel", ("status_message", "last_error", "logs")),
+            ("status_panel", ("status_message", "save_target", "last_error", "logs")),
         )
         self.primary_action_flow: tuple[str, ...] = (
             "hero",
@@ -211,6 +212,13 @@ class MainWindow:
     def _log(self, message: str) -> None:
         self.logs.append(message)
 
+    def _update_save_target_display(self, save_path: str | None = None) -> None:
+        value = (save_path or self.form_state.save_path or "").strip()
+        if value:
+            self.save_target_display = f"Save target: {value}"
+            return
+        self.save_target_display = "Save target: not-selected"
+
     def _set_status(self, level: str, phase: str, message: str, *, error: str = "") -> None:
         """Set unified UI status fields and keep last_error in sync."""
         self.status_level = level
@@ -244,6 +252,7 @@ class MainWindow:
     def on_save(self) -> bool:
         """Save action: open save dialog before confirm-driven generation."""
         self.save_dialog_open = True
+        self._update_save_target_display()
         self._set_status("idle", "save_dialog", "save dialog opened")
         self._log("Save dialog opened")
         return True
@@ -350,6 +359,7 @@ class MainWindow:
             value = (self.form_state.save_path or "").strip()
         if value:
             self.form_state.save_path = value
+            self._update_save_target_display(value)
             self.save_dialog_open = False
             self._set_status("idle", "save_dialog", "save path selected")
             self._log(f"Save path selected: {value}")
@@ -415,6 +425,7 @@ class MainWindow:
 
     def on_close_save_dialog(self) -> None:
         """Signal endpoint: on_SaveWallpaperDialog_destroy."""
+        self._update_save_target_display()
         self._log("Save dialog closed")
 
     def on_close_settings_dialog(self) -> None:
@@ -499,6 +510,7 @@ class MainWindow:
                 "phase": self.status_phase,
                 "message": self.status_message,
                 "last_error": self.last_error,
+                "save_target": self.save_target_display,
             },
         }
 

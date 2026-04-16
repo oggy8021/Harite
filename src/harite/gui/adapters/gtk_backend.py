@@ -13,10 +13,97 @@ from typing import Any, Callable
 class _SaveDialogProxy:
     """Minimal file chooser-like object used by runtime fallback backend."""
 
-    def __init__(self, on_filename_change: Callable[[str], None] | None = None) -> None:
+    def __init__(
+        self,
+        gtk_module: Any | None = None,
+        parent_window: Any | None = None,
+        on_filename_change: Callable[[str], None] | None = None,
+        on_confirm: Callable[[], None] | None = None,
+        on_cancel: Callable[[], None] | None = None,
+    ) -> None:
+        self._gtk = gtk_module
+        self._parent_window = parent_window
         self._filename = ""
         self._visible = False
         self._on_filename_change = on_filename_change
+        self._on_confirm = on_confirm
+        self._on_cancel = on_cancel
+
+    def supports_native_dialog(self) -> bool:
+        gtk = self._gtk
+        return bool(
+            gtk is not None
+            and hasattr(gtk, "FileChooserDialog")
+            and hasattr(gtk, "FileChooserAction")
+            and hasattr(gtk, "ResponseType")
+        )
+
+    def _build_native_dialog(self) -> Any:
+        gtk = self._gtk
+        assert gtk is not None
+        dialog = gtk.FileChooserDialog(
+            title="Save wallpaper",
+            parent=self._parent_window,
+            action=gtk.FileChooserAction.SAVE,
+        )
+        if hasattr(dialog, "add_buttons"):
+            dialog.add_buttons(
+                getattr(gtk, "STOCK_CANCEL", "gtk-cancel"),
+                gtk.ResponseType.CANCEL,
+                getattr(gtk, "STOCK_SAVE", "gtk-save"),
+                gtk.ResponseType.OK,
+            )
+        if hasattr(dialog, "set_modal"):
+            dialog.set_modal(True)
+        if hasattr(dialog, "set_transient_for") and self._parent_window is not None:
+            dialog.set_transient_for(self._parent_window)
+        if hasattr(dialog, "set_destroy_with_parent"):
+            dialog.set_destroy_with_parent(True)
+        if hasattr(dialog, "set_do_overwrite_confirmation"):
+            dialog.set_do_overwrite_confirmation(True)
+        return dialog
+
+    def open_dialog(self) -> None:
+        if self.supports_native_dialog():
+            self._run_native_dialog()
+            return
+        self.show()
+
+    def _run_native_dialog(self) -> None:
+        gtk = self._gtk
+        if gtk is None:
+            self.show()
+            return
+
+        dialog = self._build_native_dialog()
+        self._visible = True
+        try:
+            if self._filename:
+                target = Path(self._filename).expanduser()
+                if hasattr(dialog, "set_filename"):
+                    dialog.set_filename(str(target.resolve()))
+            else:
+                home_dir = str(Path.home())
+                if hasattr(dialog, "set_current_folder"):
+                    dialog.set_current_folder(home_dir)
+                if hasattr(dialog, "set_current_name"):
+                    dialog.set_current_name("harite-output.jpg")
+
+            if hasattr(dialog, "show_all"):
+                dialog.show_all()
+            response = dialog.run() if hasattr(dialog, "run") else None
+            self._visible = False
+            if response == gtk.ResponseType.OK:
+                if hasattr(dialog, "get_filename"):
+                    self.set_filename(str(dialog.get_filename() or ""))
+                if self._on_confirm is not None:
+                    self._on_confirm()
+                return
+            if self._on_cancel is not None:
+                self._on_cancel()
+        finally:
+            if hasattr(dialog, "destroy"):
+                dialog.destroy()
 
     def set_filename(self, filename: str) -> None:
         self._filename = str(filename or "")
@@ -368,6 +455,11 @@ class GtkRuntimeSignalBackend:
                 save_dialog_state_label.set_xalign(0.0)
             main_col.pack_start(save_dialog_state_label, False, False, 0)
 
+            save_target_label = gtk_module.Label(label="Save target: not-selected")
+            if hasattr(save_target_label, "set_xalign"):
+                save_target_label.set_xalign(0.0)
+            main_col.pack_start(save_target_label, False, False, 0)
+
             priority_note_label = gtk_module.Label(
                 label="Rule: margins define area; align/valign act inside it; fixed binds L/R"
             )
@@ -450,7 +542,13 @@ class GtkRuntimeSignalBackend:
                 self._on_open_dialog_confirmed,
                 self._on_open_dialog_canceled,
             )
-            save_dialog_proxy = _SaveDialogProxy(self._on_save_dialog_filename_changed)
+            save_dialog_proxy = _SaveDialogProxy(
+                gtk_module,
+                window,
+                self._on_save_dialog_filename_changed,
+                self._on_native_save_dialog_confirmed,
+                self._on_native_save_dialog_canceled,
+            )
             btn_open_save = gtk_module.Button(label="Save Confirm")
             if hasattr(btn_open_save, "set_sensitive"):
                 btn_open_save.set_sensitive(False)
@@ -546,6 +644,7 @@ class GtkRuntimeSignalBackend:
                 "lblApplyTarget": apply_target,
                 "lblDoItPlanned": do_it_plan_label,
                 "lblSaveDialogState": save_dialog_state_label,
+                "lblSaveTarget": save_target_label,
                 "lblPriorityRule": priority_note_label,
                 "lblStyleLegend": style_legend_label,
                 "lblCurrentStateSection": current_state_section_label,
@@ -692,6 +791,24 @@ class GtkRuntimeSignalBackend:
             return ""
         return str(dialog.get_filename() or "").strip()
 
+    def _refresh_save_target_label(self, filename: str | None = None) -> None:
+        value = str(filename or "").strip()
+        if not value:
+            value = self._current_save_dialog_filename()
+        if value:
+            self._set_label_text("lblSaveTarget", f"Save target: {value}")
+            return
+        self._set_label_text("lblSaveTarget", "Save target: not-selected")
+
+    def _notify_save_dialog_destroy(self) -> None:
+        callback = self._signal_handlers.get("on_SaveWallpaperDialog_destroy")
+        if callback is None:
+            return
+        try:
+            callback()
+        except Exception:
+            pass
+
     def _update_save_dialog_action_buttons(self) -> None:
         opened = self._is_save_dialog_open()
         has_path = bool(self._current_save_dialog_filename())
@@ -711,6 +828,7 @@ class GtkRuntimeSignalBackend:
             self._set_label_text("lblSaveDialogState", state_text)
 
     def _on_save_dialog_filename_changed(self, filename: str) -> None:
+        self._refresh_save_target_label(filename)
         if not self._is_save_dialog_open():
             return
         self._update_save_dialog_action_buttons()
@@ -1031,6 +1149,21 @@ class GtkRuntimeSignalBackend:
 
     def _on_save_clicked(self, *_args: Any) -> None:
         # P5-3 split: Save opens save-dialog; generation continues on confirm.
+        callback = self._signal_handlers.get("on_btnSave_clicked")
+        if callback is not None:
+            try:
+                callback()
+            except Exception:
+                pass
+
+        self._refresh_save_target_label()
+
+        dialog = self._objects.get("SaveWallpaperDialog")
+        if dialog is not None and hasattr(dialog, "supports_native_dialog") and dialog.supports_native_dialog():
+            if hasattr(dialog, "open_dialog"):
+                dialog.open_dialog()
+            return
+
         self._set_save_dialog_open_state(True, state_text="SaveDialog: open")
 
     def _on_optimize_clicked(self, *_args: Any) -> None:
@@ -1073,38 +1206,35 @@ class GtkRuntimeSignalBackend:
         except Exception as exc:
             self._set_feedback(phase="Color", state="error", error=str(exc))
 
-    def _on_save_dialog_confirm_clicked(self, *_args: Any) -> None:
-        if not self._is_save_dialog_open():
-            self._set_label_text("lblSaveDialogState", "SaveDialog: closed")
-            self._set_feedback(phase="SaveDialog", state="ignored-closed")
-            return
+    def _handle_save_dialog_confirm(self, filename: str) -> None:
         callback = self._signal_handlers.get("on_btnOpenSave_clicked")
         if callback is None:
             self._set_feedback(phase="SaveDialog", state="handler-missing", error="handler not connected")
             return
         try:
-            dialog = self._objects.get("SaveWallpaperDialog")
-            filename = ""
-            if dialog is not None and hasattr(dialog, "get_filename"):
-                filename = str(dialog.get_filename() or "").strip()
             if not filename:
                 self._set_label_text("lblSaveDialogState", "SaveDialog: open(path-required)")
                 self._set_feedback(phase="SaveDialog", state="confirm-pending-path", error="save path is required")
                 return
-            ok = callback(dialog)
+            self._refresh_save_target_label(filename)
+            ok = callback(filename)
             if ok:
                 self._set_save_dialog_open_state(False, state_text="SaveDialog: closed(confirm)")
                 self._set_feedback(phase="SaveDialog", state="confirm-ok")
+                self._notify_save_dialog_destroy()
             else:
                 self._set_feedback(phase="SaveDialog", state="confirm-failed", error="confirm returned false")
         except Exception as exc:
             self._set_feedback(phase="SaveDialog", state="error", error=str(exc))
 
-    def _on_save_dialog_cancel_clicked(self, *_args: Any) -> None:
+    def _on_save_dialog_confirm_clicked(self, *_args: Any) -> None:
         if not self._is_save_dialog_open():
             self._set_label_text("lblSaveDialogState", "SaveDialog: closed")
             self._set_feedback(phase="SaveDialog", state="ignored-closed")
             return
+        self._handle_save_dialog_confirm(self._current_save_dialog_filename())
+
+    def _handle_save_dialog_cancel(self) -> None:
         callback = self._signal_handlers.get("on_btnCancelSave_clicked")
         if callback is None:
             self._set_feedback(phase="SaveDialog", state="handler-missing", error="handler not connected")
@@ -1114,10 +1244,24 @@ class GtkRuntimeSignalBackend:
             if ok:
                 self._set_save_dialog_open_state(False, state_text="SaveDialog: closed(cancel)")
                 self._set_feedback(phase="SaveDialog", state="cancel-ok")
+                self._notify_save_dialog_destroy()
             else:
                 self._set_feedback(phase="SaveDialog", state="cancel-failed", error="cancel returned false")
         except Exception as exc:
             self._set_feedback(phase="SaveDialog", state="error", error=str(exc))
+
+    def _on_save_dialog_cancel_clicked(self, *_args: Any) -> None:
+        if not self._is_save_dialog_open():
+            self._set_label_text("lblSaveDialogState", "SaveDialog: closed")
+            self._set_feedback(phase="SaveDialog", state="ignored-closed")
+            return
+        self._handle_save_dialog_cancel()
+
+    def _on_native_save_dialog_confirmed(self) -> None:
+        self._handle_save_dialog_confirm(self._current_save_dialog_filename())
+
+    def _on_native_save_dialog_canceled(self) -> None:
+        self._handle_save_dialog_cancel()
 
 
 def load_gtk_builder_signal_backend(ui_file: Path | None = None):
