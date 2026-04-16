@@ -572,6 +572,7 @@ watch 用 `srcdirL/srcdirR` は通常入力 `entPathL/R` と責務分離しつ�
 - 実装メモ1: MainWindow は `watch_srcdir_l/r`, `watch_source_display`, `watch_current_display`, `watch_running` を保持し、watch 専用 state を通常入力から分離した（2026-04-16）
 - 実装メモ2: fallback backend は `SrcdirDialog` proxy と `btnOpenSrcdirL/R`、`lblWatchSources`、`lblWatchCurrent` を追加し、実 GTK では native folder chooser を優先、fallback では proxy state で回せる形にした（2026-04-16）
 - 実装メモ3: 回帰テストでは `srcdirL/srcdirR` 指定あり/なし、watch interval 更新、fallback watch labels を固定し始めた。owner 実行は未実施（2026-04-16）
+- 実装メモ4: 現実装の watch start は source dir 検証と初回選択結果の可視化までで、壁紙 plugin apply や interval ごとの継続切替はまだ接続していない（2026-04-16）
 
 ### 15-4. 非対応・差分（P5-10 事前整理）
 
@@ -588,7 +589,7 @@ watch 用 `srcdirL/srcdirR` は通常入力 `entPathL/R` と責務分離しつ�
 
 - [x] 15-2 と 15-3 の事前整理を記入した
 - [x] `srcdirL/srcdirR` を通常入力と分離する方針を明記した
-- [ ] Approve を得た
+- [x] Approve を得た
 
 ### 15-6. 実装スコープ境界（P5-10）
 
@@ -598,6 +599,7 @@ watch 用 `srcdirL/srcdirR` は通常入力 `entPathL/R` と責務分離しつ�
   - watch start/stop の status と初回選択可視化
 - Out of scope:
   - 長時間 daemon 実行 orchestration
+  - 壁紙 plugin apply を伴う実切替処理
   - apply/save 導線の追加変更
   - `SettingDialog` 全体の完全復元
 
@@ -605,16 +607,30 @@ watch 用 `srcdirL/srcdirR` は通常入力 `entPathL/R` と責務分離しつ�
 
 #### 回帰（Owner実行）
 
-- 実行日: 未実施
+- 実行日: 2026-04-16
 - 実行者: owner
 - コマンド: `python.exe -m pytest -q tests/gui/test_main_window_signals.py tests/gui/test_ui_adapter_dispatch.py tests/gui/test_ui_adapter_mapping_validation.py tests/gui/test_gtk_runtime_backend.py tests/gui/test_phase5_visual_regression.py`
-- 結果: pending
+- 結果: pass
+
+- 回帰メモ1: MainWindow の `srcdirL/srcdirR` 分離、watch start/stop、interval 更新が green
+- 回帰メモ2: ui_adapter の `on_btnOpenSrcdir_clicked` dispatch と fallback backend の watch labels / srcdir chooser proxy が green
 
 #### 実機（XFCE）
 
 | 観点 | 判定 | 根拠（スクリーンショット/ログ） |
 | --- | --- | --- |
-| Srcdir chooser 起動 | pending | owner 実機確認待ち |
-| `srcdirL/srcdirR` 反映 | pending | owner 実機確認待ち |
-| watch start/stop 表示 | pending | owner 実機確認待ち |
-| interval 更新 | pending | owner 実機確認待ち |
+| Srcdir chooser 起動 | pass | owner が XFCE 実機で Srcdir chooser 起動を確認 |
+| `srcdirL/srcdirR` 反映 | pass | owner が左右 srcdir 選択結果の反映を確認 |
+| watch start/stop 表示 | pass | owner が watch start/stop の状態表示を確認 |
+| interval 更新 | pass | owner が interval 更新の反映を確認 |
+
+- 実機メモ1: P5-10 の実機確認項目 1,2,3,4 はいずれも OK（2026-04-16, owner確認）
+- 実機メモ2: `do-it` は現時点で planned のため、本タスクの実機確認対象外とした。P5-10 完了後に別相談へ回す
+- 実機メモ3: watch で壁紙が実際に切り替わる様子は観測できず、「たぶん動いている」段階に留まった。これは現実装が apply / 継続切替未接続であることと整合する（2026-04-16, owner確認）
+
+#### 最終合意
+
+- [x] P5-10 の事前対応表を記入した
+- [x] 実装方針の Approve を得た
+- [x] P5-10 着手可と判定した
+- [x] P5-10 を Go 判定できる

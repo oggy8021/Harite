@@ -201,15 +201,19 @@
   - 完了記録: XFCE 実機で Open dialog 起動、confirm/cancel 状態遷移、path 表示、filter UI の4点を確認し、P5-9 の受け入れ条件を満たした（2026-04-16, owner確認）
   - 完了条件: Open 押下が `planned` 表示で終わらず、選択/キャンセルの状態遷移がUIで確認できる
 
-- [ ] P5-10 feat(gui): watch 導線の実処理導入（srcdirL/srcdirR）
+- [x] P5-10 feat(gui): watch 導線の実処理導入（srcdirL/srcdirR）
   - 対象: watch start/stop/interval の planned 導線を実処理へ昇格
   - 要件: watch 用の左右画像向けパスは `srcdirL`, `srcdirR` で指定可能、未指定も許容
   - 補足: MainWindow の `entPathL` / `entPathR` とは責務を分離（watch 用入力と通常入力を混同しない）
   - 進捗: `spnInterval` も upstream では `GtkSpinButton` の adjustment (`60 1 86400 1 10 0`) で駆動されると確認。fallback 側へ同等の range/increment/初期値を補完し、margin と同種のステッパ不発を予防（2026-04-15）
   - 進捗: upstream `SettingDialog.py` / `SrcdirDialog.py` / `WindowBase.py` を再読し、`btnOpenSrcdir_clicked -> SrcdirDialog.openDialog(current_srcdir, side)` と `spnInterval_value_changed` / `btnDaemonize_clicked` の責務境界を整理した（2026-04-16）
   - 進捗: MainWindow に watch 専用 state (`watch_srcdir_l/r`, `watch_current_display`, `watch_running`) を追加し、`on_pick_watch_srcdir` と start/stop/interval を actual 化した。fallback backend にも `SrcdirDialog` proxy、`Srcdir-L/R`、watch status labels を追加し、`srcdirL/srcdirR` の有無分岐を回帰テストへ固定し始めた（2026-04-16）
+  - 完了記録（部分）: owner 実行の固定 GUI 回帰コマンドが pass。`tests/gui/test_main_window_signals.py` / `test_ui_adapter_dispatch.py` / `test_ui_adapter_mapping_validation.py` / `test_gtk_runtime_backend.py` / `test_phase5_visual_regression.py` の watch/srcdir 回帰を含めて green を確認した（2026-04-16）
+  - 完了記録: owner の XFCE 実機で Srcdir chooser 起動、`srcdirL/srcdirR` 反映、watch start/stop 表示、interval 更新の 4 項目が pass。P5-10 の受け入れ条件を満たした（2026-04-16, owner確認）
   - 追加条件: 旧 `SettingDialog` / `SrcdirDialog` の導線対応表を提出し、実装前レビュー合意を得る
   - 完了条件: watch 実行時に `srcdirL` / `srcdirR` の有無に応じた分岐が回帰テストで固定される
+  - 既知制約: 現実装の watch start は `srcdirL/srcdirR` 検証、次画像選択、状態表示更新までで、壁紙 apply や継続的な切替ループ自体は未接続
+  - スコープ外メモ: `do-it` は依然 planned のため P5-10 の確認対象外。P5-10 完了後に別途相談する
 
 - [x] P5-11 feat(gui): Save 体験改善（低優先 / SaveWallpaperDialog 相当）
   - 対象: 保存先・保存名の明示、confirm/cancel の排他制御、完了後の保存先表示
