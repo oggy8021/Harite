@@ -167,6 +167,76 @@ class _FakeGtk:
     RadioButton = _RadioButton
 
 
+class _NativeResponseType:
+    CANCEL = 0
+    OK = 1
+
+
+class _NativeFileChooserAction:
+    OPEN = 1
+    SAVE = 2
+
+
+class _NativeFileChooserDialog:
+    next_response = _NativeResponseType.CANCEL
+    next_filename = ""
+    last_created = None
+
+    def __init__(self, title="", parent=None, action=None):
+        self.title = title
+        self.parent = parent
+        self.action = action
+        self.filename = ""
+        self.current_folder = ""
+        self.current_name = ""
+        self.overwrite_confirmation = False
+        _NativeFileChooserDialog.last_created = self
+
+    def add_buttons(self, *_args):
+        return None
+
+    def set_modal(self, _enabled):
+        return None
+
+    def set_transient_for(self, _parent):
+        return None
+
+    def set_destroy_with_parent(self, _enabled):
+        return None
+
+    def set_do_overwrite_confirmation(self, enabled):
+        self.overwrite_confirmation = bool(enabled)
+
+    def set_current_folder(self, folder):
+        self.current_folder = str(folder)
+
+    def set_current_name(self, name):
+        self.current_name = str(name)
+
+    def set_filename(self, filename):
+        self.filename = str(filename)
+
+    def show_all(self):
+        return None
+
+    def run(self):
+        return self.next_response
+
+    def get_filename(self):
+        return self.filename or self.next_filename
+
+    def destroy(self):
+        return None
+
+
+class _NativeFakeGtk(_FakeGtk):
+    FileChooserDialog = _NativeFileChooserDialog
+    FileChooserAction = _NativeFileChooserAction
+    ResponseType = _NativeResponseType
+    STOCK_CANCEL = "gtk-cancel"
+    STOCK_SAVE = "gtk-save"
+
+
 def test_runtime_backend_input_controls_optimize_button_state():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
@@ -249,6 +319,7 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("lblApplyTarget") is not None
     assert backend.get_object("lblDoItPlanned") is not None
     assert backend.get_object("lblSaveDialogState") is not None
+    assert backend.get_object("lblSaveTarget") is not None
     assert backend.get_object("lblPriorityRule") is not None
     assert backend.get_object("lblStyleLegend") is not None
     assert backend.get_object("lblCurrentStateSection") is not None
@@ -435,20 +506,21 @@ def test_runtime_backend_color_click_sets_planned_status():
     assert error.text == "Error: none"
 
 
-def test_runtime_backend_save_dialog_confirm_passes_dialog_object_to_handler():
+def test_runtime_backend_save_dialog_confirm_passes_selected_path_to_handler():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     save_open = backend.get_object("btnOpenSave")
     save_dialog = backend.get_object("SaveWallpaperDialog")
     save_dialog_state = backend.get_object("lblSaveDialogState")
+    save_target = backend.get_object("lblSaveTarget")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
     observed = {}
 
     save_dialog.set_filename("/tmp/from-runtime-dialog.jpg")
 
-    def on_open_save(dialog):
-        observed["filename"] = dialog.get_filename()
+    def on_open_save(path):
+        observed["filename"] = path
         return True
 
     backend.connect_signals({"on_btnOpenSave_clicked": on_open_save})
@@ -463,7 +535,88 @@ def test_runtime_backend_save_dialog_confirm_passes_dialog_object_to_handler():
     assert save_open.sensitive is False
     assert backend.get_object("btnCancelSave").sensitive is False
     assert save_dialog_state.text == "SaveDialog: closed(confirm)"
+    assert save_target.text == "Save target: /tmp/from-runtime-dialog.jpg"
     assert status.text == "SaveDialog: confirm-ok"
+    assert error.text == "Error: none"
+
+
+def test_runtime_backend_native_save_dialog_confirm_runs_modal_flow():
+    backend = GtkRuntimeSignalBackend(_NativeFakeGtk)
+
+    save_dialog_state = backend.get_object("lblSaveDialogState")
+    status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+    observed = {"save": 0, "confirm": None, "cancel": 0}
+
+    def on_save():
+        observed["save"] += 1
+        return True
+
+    def on_open_save(path):
+        observed["confirm"] = path
+        return True
+
+    def on_cancel_save():
+        observed["cancel"] += 1
+        return True
+
+    _NativeFileChooserDialog.next_response = _NativeFakeGtk.ResponseType.OK
+    _NativeFileChooserDialog.next_filename = "/tmp/native-save.jpg"
+    backend.connect_signals(
+        {
+            "on_btnSave_clicked": on_save,
+            "on_btnOpenSave_clicked": on_open_save,
+            "on_btnCancelSave_clicked": on_cancel_save,
+        }
+    )
+
+    backend.get_object("btnSave").click()
+
+    assert observed == {"save": 1, "confirm": "/tmp/native-save.jpg", "cancel": 0}
+    assert save_dialog_state.text == "SaveDialog: closed(confirm)"
+    assert status.text == "SaveDialog: confirm-ok"
+    assert error.text == "Error: none"
+    assert _NativeFileChooserDialog.last_created is not None
+    assert _NativeFileChooserDialog.last_created.action == _NativeFakeGtk.FileChooserAction.SAVE
+    assert _NativeFileChooserDialog.last_created.overwrite_confirmation is True
+    assert _NativeFileChooserDialog.last_created.current_name == "harite-output.jpg"
+
+
+def test_runtime_backend_native_save_dialog_cancel_does_not_continue_save_flow():
+    backend = GtkRuntimeSignalBackend(_NativeFakeGtk)
+
+    save_dialog_state = backend.get_object("lblSaveDialogState")
+    status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+    observed = {"save": 0, "confirm": 0, "cancel": 0}
+
+    def on_save():
+        observed["save"] += 1
+        return True
+
+    def on_open_save(_path):
+        observed["confirm"] += 1
+        return True
+
+    def on_cancel_save():
+        observed["cancel"] += 1
+        return True
+
+    _NativeFileChooserDialog.next_response = _NativeFakeGtk.ResponseType.CANCEL
+    _NativeFileChooserDialog.next_filename = ""
+    backend.connect_signals(
+        {
+            "on_btnSave_clicked": on_save,
+            "on_btnOpenSave_clicked": on_open_save,
+            "on_btnCancelSave_clicked": on_cancel_save,
+        }
+    )
+
+    backend.get_object("btnSave").click()
+
+    assert observed == {"save": 1, "confirm": 0, "cancel": 1}
+    assert save_dialog_state.text == "SaveDialog: closed(cancel)"
+    assert status.text == "SaveDialog: cancel-ok"
     assert error.text == "Error: none"
 
 
@@ -595,6 +748,7 @@ def test_runtime_backend_save_dialog_filename_selection_enables_confirm():
     save_dialog = backend.get_object("SaveWallpaperDialog")
     save_open = backend.get_object("btnOpenSave")
     save_dialog_state = backend.get_object("lblSaveDialogState")
+    save_target = backend.get_object("lblSaveTarget")
 
     save_btn.click()
     assert save_open.sensitive is False
@@ -603,6 +757,7 @@ def test_runtime_backend_save_dialog_filename_selection_enables_confirm():
 
     assert save_open.sensitive is True
     assert save_dialog_state.text == "SaveDialog: open(path-ready)"
+    assert save_target.text == "Save target: /tmp/selected.jpg"
 
 
 def test_runtime_backend_input_clear_closes_save_dialog_and_disables_confirm_buttons():
@@ -719,7 +874,7 @@ def test_runtime_backend_save_button_opens_dialog_without_optimize_handler_call(
 
     save_btn.click()
 
-    assert calls == []
+    assert calls == ["save"]
     assert save_dialog.is_visible() is True
     assert save_dialog_state.text == "SaveDialog: open"
     assert status.text == "Status: ready"

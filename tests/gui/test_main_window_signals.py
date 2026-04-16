@@ -96,6 +96,7 @@ def test_save_dialog_confirm_and_cancel_have_distinct_meanings():
 def test_save_dialog_confirm_without_argument_uses_existing_path():
     window = MainWindow()
     window.form_state.save_path = "/tmp/existing-save.jpg"
+    window._update_save_target_display()
     window.save_dialog_open = True
 
     ok = window.on_save_dialog_confirm()
@@ -103,6 +104,7 @@ def test_save_dialog_confirm_without_argument_uses_existing_path():
     assert ok is True
     assert window.save_dialog_open is False
     assert window.form_state.save_path == "/tmp/existing-save.jpg"
+    assert window.save_target_display == "Save target: /tmp/existing-save.jpg"
     assert window.status_level == "idle"
     assert window.status_phase == "save_dialog"
     assert window.status_message == "save path selected"
@@ -175,6 +177,19 @@ def test_layout_blueprint_defines_grouping_and_flow():
     assert bp["status"]["level"] == "idle"
     assert bp["status"]["phase"] == "init"
     assert bp["status"]["message"] == "ready"
+    assert bp["status"]["save_target"] == "Save target: not-selected"
+
+
+def test_save_dialog_confirm_updates_single_save_target_display():
+    window = MainWindow()
+
+    assert window.save_target_display == "Save target: not-selected"
+
+    assert window.on_save() is True
+    assert window.save_target_display == "Save target: not-selected"
+
+    assert window.on_save_dialog_confirm("/tmp/result.jpg") is True
+    assert window.save_target_display == "Save target: /tmp/result.jpg"
 
 
 def test_on_optimize_runs_and_logs(tmp_path):

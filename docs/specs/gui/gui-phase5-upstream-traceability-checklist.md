@@ -291,14 +291,14 @@
 
 ### 12-8. 実装後エビデンス記録（P5-8）
 
-#### 回帰（Owner実行）
+#### 12-8-1. 回帰（Owner実行）
 
 - 実行日: 2026-04-15
 - 実行者: owner
 - コマンド: `python.exe -m pytest -q tests/gui/test_main_window_signals.py tests/gui/test_ui_adapter_dispatch.py tests/gui/test_ui_adapter_mapping_validation.py tests/gui/test_gtk_runtime_backend.py tests/gui/test_phase5_visual_regression.py`
 - 結果: pass（100%）
 
-#### 実機（XFCE）
+#### 12-8-2. 実機（XFCE）
 
 | 観点 | 判定 | 根拠（スクリーンショット/ログ） |
 | --- | --- | --- |
@@ -307,7 +307,7 @@
 | Margin reflect（UI表示） | pass | `Current state` で現在値を確認可能。Top + Top Margin の同時成立も母体 `Core.py` と整合 |
 | Margin reflect（内部状態） | pass | GUI回帰 100% pass |
 
-#### 最終合意
+#### 12-8-3. 最終合意
 
 - [x] P5-8 の受け入れ条件を満たした
 - [x] 非対応差分は `warn` として合意済み
@@ -394,14 +394,14 @@
 
 ### 13-8. 実装後エビデンス記録（P5-9）
 
-#### 回帰（Owner実行）
+#### 13-8-1. 回帰（Owner実行）
 
 - 実行日: 2026-04-16
 - 実行者: owner
 - コマンド: `python.exe -m pytest -q tests/gui/test_main_window_signals.py tests/gui/test_ui_adapter_dispatch.py tests/gui/test_ui_adapter_mapping_validation.py tests/gui/test_gtk_runtime_backend.py tests/gui/test_phase5_visual_regression.py`
 - 結果: pass
 
-#### 実機（XFCE）
+#### 13-8-2. 実機（XFCE）
 
 | 観点 | 判定 | 根拠（スクリーンショット/ログ） |
 | --- | --- | --- |
@@ -410,7 +410,7 @@
 | path 表示 | pass | owner が XFCE 実機で選択 path 表示を確認 |
 | filter UI | pass | owner が XFCE 実機で image/all-files filter を確認 |
 
-#### 最終合意
+#### 13-8-3. 最終合意
 
 - [x] P5-9 の上流対応表を記入した
 - [x] 回帰 pass を記録した
@@ -426,7 +426,7 @@ upstream の save path 確定責務は維持しつつ、dialog 実体は modern 
 
 - PR番号: TBD
 - タスク番号: P5-11
-- ブランチ名: `chore/gui-phase5-p5-11-save-ux-improvement-20260414`
+- ブランチ名: `feature/gui-phase5-p5-11-save-ux-improvement-20260416`
 - 担当: owner
 - レビュー担当: TBD
 - 予定実機環境: XFCE
@@ -455,6 +455,10 @@ upstream の save path 確定責務は維持しつつ、dialog 実体は modern 
 | dialog 実体 | upstream は legacy Glade の `GtkFileChooserDialog` | Harite fallback は独自 `_SaveDialogProxy` と補助ボタン群 | dialog 実体は native save chooser へ modernize 可。戻り値 semantics を優先し widget 再現は要求しない | 実 GTK 環境で save chooser が開き、古い Glade 依存なしに成立する |
 | overwrite / 既定保存先 UX | upstream 実装詳細は薄い | 現行 Harite は path-required 表示中心で、保存先 UX が不明瞭 | modern GTK chooser の overwrite confirmation や current folder UX を活用してよい | 行き先不明が解消され、overwrite 時の事故を減らせる |
 
+- 実装中メモ1: runtime fallback の `_SaveDialogProxy` は native `Gtk.FileChooserDialog(SAVE)` を優先し、Save 押下で `on_save` 通知後に modal chooser を開く形へ着手済み。confirm は save path を callback へ返し、cancel は保存継続なしで閉じる（2026-04-16）
+- 実装中メモ2: modern chooser では overwrite confirmation と既定ファイル名 `harite-output.jpg` を補完し、upstream の modal-return semantics を損なわない範囲で UX を改善する（2026-04-16）
+- 実装中メモ3: MainWindow / runtime fallback の双方に `Save target:` 表示を追加し、保存先 path は 1 箇所で読める形へ整理した。`lblApplyTarget` は apply 導線専用のまま維持する（2026-04-16）
+
 ### 14-4. 非対応・差分（P5-11 事前整理）
 
 - 非対応項目1: upstream の dialog 実体そのものの再現
@@ -472,14 +476,14 @@ upstream の save path 確定責務は維持しつつ、dialog 実体は modern 
 
 - [x] 14-2 と 14-3 の事前整理を記入した
 - [x] 維持点と modernize 点を分離した
-- [ ] Approve を得た
+- [x] Approve を得た
 
 ### 14-6. 実装スコープ境界（P5-11）
 
 - In scope:
   - save path の confirm/cancel semantics
-  - 保存先の可視化
   - native save chooser への modernize
+  - 保存先の可視化
 - Out of scope:
   - optimize 本体アルゴリズムの変更
   - apply/watch 導線の変更
@@ -489,33 +493,42 @@ upstream の save path 確定責務は維持しつつ、dialog 実体は modern 
 
 ### 14-7. 未解決点（P5-11）
 
-- [x] 何を upstream 互換として最優先で守るか
-  - save path の戻り値 semantics と caller 側続行責務を最優先とする
 - [x] 何を modernize してよいか
   - dialog 実体、overwrite confirmation、current folder UX、保存先表示 UI は modern GTK chooser に寄せてよい
 - [x] 何を削ってよいか
   - upstream に根拠の薄い独自の SaveDialog 状態機械や `cancel-failed` 語彙は整理対象とする
+- [x] 何を upstream 互換として最優先で守るか
+  - save path の戻り値 semantics と caller 側続行責務を最優先とする
 
 ### 14-8. 実装後エビデンス記録（P5-11）
 
 #### 回帰（Owner実行）
 
-- 実行日: TBD
+- 実行日: 2026-04-16
 - 実行者: owner
-- コマンド: TBD
-- 結果: TBD
+- コマンド: `python.exe -m pytest -q tests/gui/test_main_window_signals.py tests/gui/test_ui_adapter_dispatch.py tests/gui/test_ui_adapter_mapping_validation.py tests/gui/test_gtk_runtime_backend.py tests/gui/test_phase5_visual_regression.py`
+- 結果: pass
 
 #### 実機（XFCE）
 
 | 観点 | 判定 | 根拠（スクリーンショット/ログ） |
 | --- | --- | --- |
-| Save chooser 起動 | blocked | 未着手 |
-| confirm/cancel 状態遷移 | blocked | 未着手 |
-| 保存先表示 | blocked | 未着手 |
-| overwrite UX | blocked | 未着手 |
+| Save chooser 起動 | pass | owner が XFCE 実機で Save 押下直後の native chooser 起動を確認 |
+| confirm/cancel 状態遷移 | pass | owner が XFCE 実機で confirm と cancel の双方を確認 |
+| 保存先表示 | pass | owner が `Save target:` 表示と実際の保存先一致を確認 |
+| overwrite UX | pass | owner が chooser 側の overwrite confirmation を確認 |
+
+- owner 確認メモ1: Save 押下直後に native save chooser が起動すること
+- owner 確認メモ2: chooser 上で path/filename を選ぶと MainWindow の `Save target:` 表示に同じ path が見えること
+- owner 確認メモ3: cancel では保存処理が継続せず、既存 save path が不要に壊れないこと
+- owner 確認メモ4: overwrite confirmation が chooser 側で機能すること
+- 実機メモ1: Left-L / Bottom-R を試しながら保存し、期待どおりの save 画像を取得できた（2026-04-16, owner確認）
+- 実機メモ2: `Save target:` 表示は owner 実機で期待どおりに読めることを確認した（2026-04-16, owner確認）
+- 実機メモ3: cancel と overwrite confirmation の双方が期待どおりに機能することを確認した（2026-04-16, owner確認）
 
 #### 最終合意
 
 - [x] P5-11 の事前対応表を記入した
-- [ ] 実装方針の Approve を得た
-- [ ] P5-11 着手可と判定した
+- [x] 実装方針の Approve を得た
+- [x] P5-11 着手可と判定した
+- [x] P5-11 を Go 判定できる
