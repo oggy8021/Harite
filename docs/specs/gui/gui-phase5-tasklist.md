@@ -209,12 +209,13 @@
   - 追加条件: 旧 `SettingDialog` / `SrcdirDialog` の導線対応表を提出し、実装前レビュー合意を得る
   - 完了条件: watch 実行時に `srcdirL` / `srcdirR` の有無に応じた分岐が回帰テストで固定される
 
-- [ ] P5-11 feat(gui): Save 体験改善（低優先 / SaveWallpaperDialog 相当）
+- [x] P5-11 feat(gui): Save 体験改善（低優先 / SaveWallpaperDialog 相当）
   - 対象: 保存先・保存名の明示、confirm/cancel の排他制御、完了後の保存先表示
   - 優先度方針: `Optimize / Apply / do-it` の導線安定化より後に着手する
   - 背景: 保存場所選定を除く本体処理は `Optimize` と重なるため、緊急課題とは切り分ける
   - 進捗: runtime fallback の `_SaveDialogProxy` を native `Gtk.FileChooserDialog(SAVE)` 対応へ拡張し、`btnSave` から `on_save` 通知後に modal chooser を開き、confirm は save path を caller へ返し、cancel は保存継続なしで閉じる流れへ寄せ始めた。overwrite confirmation と既定ファイル名も補完した（2026-04-16）
   - 進捗: MainWindow / runtime fallback の双方に `Save target:` 表示を追加し、保存先 path を 1 箇所で確認できるよう整理した。`Apply target` は apply 導線専用表示として維持する（2026-04-16）
+  - 進捗: owner が XFCE 実機で Left-L / Bottom-R を試しながら保存し、期待どおりの save 画像取得と `Save target:` 表示を確認した。cancel と overwrite confirmation も期待どおり機能することを確認済み（2026-04-16）
   - 要件: `Save Cancel` が `cancel-failed` とならない導線を保証
   - 要件: どこに何という名前で保存されたかを MainWindow 側で追跡可能にする
   - 方針: upstream `SaveWallpaperDialog.openDialog()` の責務は維持しつつ、dialog 部品自体が古い場合は native save chooser へ modernize してよい
