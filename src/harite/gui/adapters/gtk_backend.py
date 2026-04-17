@@ -12,7 +12,28 @@ from typing import Any, Callable
 from harite.watch import collect_watch_input_images, select_next_image
 
 
-class _SaveDialogProxy:
+SAVE_PATH_DIALOG_OBJECT_ALIASES: tuple[str, ...] = (
+    "SavePathDialog",
+)
+
+SAVE_PATH_STATE_LABEL_ALIASES: tuple[str, ...] = (
+    "lblSavePathState",
+)
+
+SAVE_PATH_SELECTED_HANDLER_NAMES: tuple[str, ...] = (
+    "on_save_path_selected",
+)
+
+SAVE_PATH_CANCELED_HANDLER_NAMES: tuple[str, ...] = (
+    "on_save_path_selection_canceled",
+)
+
+SAVE_PATH_DESTROY_HANDLER_NAMES: tuple[str, ...] = (
+    "on_SavePathDialog_destroy",
+)
+
+
+class _SavePathDialogProxy:
     """Minimal file chooser-like object used by runtime fallback backend."""
 
     def __init__(
@@ -478,7 +499,7 @@ class GtkRuntimeSignalBackend:
                 subtitle.set_xalign(0.0)
             main_col.pack_start(subtitle, False, False, 0)
 
-            main_section_label = gtk_module.Label(label="Main")
+            main_section_label = gtk_module.Label(label="Compose / Input")
             if hasattr(main_section_label, "set_xalign"):
                 main_section_label.set_xalign(0.0)
             main_col.pack_start(main_section_label, False, False, 0)
@@ -545,16 +566,22 @@ class GtkRuntimeSignalBackend:
             fixed_row.pack_start(rad_fixed, False, False, 0)
             fixed_row.pack_start(rad_no_fixed, False, False, 0)
 
+            action_cluster_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            main_col.pack_start(action_cluster_row, False, False, 0)
+            action_cluster_spacer = gtk_module.Label(label="")
+            action_cluster_row.pack_start(action_cluster_spacer, True, True, 0)
+            action_cluster_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            action_cluster_row.pack_start(action_cluster_col, False, False, 0)
+
             optimize_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            main_col.pack_start(optimize_row, False, False, 0)
+            action_cluster_col.pack_start(optimize_row, False, False, 0)
             optimize_section_label = gtk_module.Label(label="Optimize")
             if hasattr(optimize_section_label, "set_xalign"):
                 optimize_section_label.set_xalign(0.0)
             optimize_row.pack_start(optimize_section_label, False, False, 0)
-            optimize_btn = gtk_module.Button(label="Save")
+            optimize_btn = gtk_module.Button(label="Save As")
             if hasattr(optimize_btn, "set_sensitive"):
                 optimize_btn.set_sensitive(False)
-            optimize_row.pack_start(optimize_btn, False, False, 0)
             optimize_modern_btn = gtk_module.Button(label="Optimize")
             if hasattr(optimize_modern_btn, "set_sensitive"):
                 optimize_modern_btn.set_sensitive(False)
@@ -565,12 +592,12 @@ class GtkRuntimeSignalBackend:
             optimize_row.pack_start(optimize_result, True, True, 0)
 
             apply_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            main_col.pack_start(apply_row, False, False, 0)
+            action_cluster_col.pack_start(apply_row, False, False, 0)
             apply_section_label = gtk_module.Label(label="Apply")
             if hasattr(apply_section_label, "set_xalign"):
                 apply_section_label.set_xalign(0.0)
             apply_row.pack_start(apply_section_label, False, False, 0)
-            apply_btn = gtk_module.Button(label="Apply (dry-run)")
+            apply_btn = gtk_module.Button(label="Apply")
             if hasattr(apply_btn, "set_sensitive"):
                 apply_btn.set_sensitive(False)
             apply_row.pack_start(apply_btn, False, False, 0)
@@ -579,15 +606,15 @@ class GtkRuntimeSignalBackend:
                 apply_target.set_xalign(0.0)
             apply_row.pack_start(apply_target, True, True, 0)
 
-            do_it_plan_label = gtk_module.Label(label="do-it: planned")
+            do_it_plan_label = gtk_module.Label(label="Apply mode: immediate")
             if hasattr(do_it_plan_label, "set_xalign"):
                 do_it_plan_label.set_xalign(0.0)
             main_col.pack_start(do_it_plan_label, False, False, 0)
 
-            save_dialog_state_label = gtk_module.Label(label="SaveDialog: closed")
-            if hasattr(save_dialog_state_label, "set_xalign"):
-                save_dialog_state_label.set_xalign(0.0)
-            main_col.pack_start(save_dialog_state_label, False, False, 0)
+            save_path_state_label = gtk_module.Label(label="Save path: idle")
+            if hasattr(save_path_state_label, "set_xalign"):
+                save_path_state_label.set_xalign(0.0)
+            main_col.pack_start(save_path_state_label, False, False, 0)
 
             save_target_label = gtk_module.Label(label="Save target: not-selected")
             if hasattr(save_target_label, "set_xalign"):
@@ -602,7 +629,7 @@ class GtkRuntimeSignalBackend:
             main_col.pack_start(priority_note_label, False, False, 0)
 
             style_legend_label = gtk_module.Label(
-                label="Style cues: secondary(about/help) | planned"
+                label="Style cues: secondary(about/help) | phase7(color)"
             )
             if hasattr(style_legend_label, "set_xalign"):
                 style_legend_label.set_xalign(0.0)
@@ -661,27 +688,29 @@ class GtkRuntimeSignalBackend:
             bottom_margin_row.pack_start(btm_spacer_r, True, True, 0)
 
             # Row 3: command bar (Glade hbox14 equivalent)
-            command_section_label = gtk_module.Label(label="Commands")
+            command_section_label = gtk_module.Label(label="Secondary / Meta")
             if hasattr(command_section_label, "set_xalign"):
                 command_section_label.set_xalign(0.0)
             root.pack_start(command_section_label, False, False, 0)
 
+            command_tabs = gtk_module.Notebook()
+            root.pack_start(command_tabs, False, False, 0)
+
             command_bar = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            root.pack_start(command_bar, False, False, 0)
             btn_setting = gtk_module.Button(label="Prefs")
-            btn_set_color = gtk_module.Button(label="Color (planned)")
+            btn_set_color = gtk_module.Button(label="Color (phase7)")
             open_dialog_proxy = _OpenDialogProxy(
                 gtk_module,
                 window,
                 self._on_open_dialog_confirmed,
                 self._on_open_dialog_canceled,
             )
-            save_dialog_proxy = _SaveDialogProxy(
+            save_path_dialog_proxy = _SavePathDialogProxy(
                 gtk_module,
                 window,
-                self._on_save_dialog_filename_changed,
-                self._on_native_save_dialog_confirmed,
-                self._on_native_save_dialog_canceled,
+                self._on_save_path_filename_changed,
+                self._on_native_save_path_confirmed,
+                self._on_native_save_path_canceled,
             )
             srcdir_dialog_proxy = _SrcdirDialogProxy(
                 gtk_module,
@@ -689,12 +718,16 @@ class GtkRuntimeSignalBackend:
                 self._on_srcdir_dialog_confirmed,
                 self._on_srcdir_dialog_canceled,
             )
-            btn_open_save = gtk_module.Button(label="Save Confirm")
-            if hasattr(btn_open_save, "set_sensitive"):
-                btn_open_save.set_sensitive(False)
-            btn_cancel_save = gtk_module.Button(label="Save Cancel")
-            if hasattr(btn_cancel_save, "set_sensitive"):
-                btn_cancel_save.set_sensitive(False)
+            btn_about = gtk_module.Button(label="About (secondary)")
+            btn_help = gtk_module.Button(label="Help (secondary)")
+            command_bar.pack_start(btn_setting, False, False, 0)
+            command_bar.pack_start(btn_set_color, False, False, 0)
+            command_bar.pack_start(btn_about, False, False, 0)
+            command_bar.pack_start(btn_help, False, False, 0)
+
+            watch_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            watch_controls_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            watch_tab_box.pack_start(watch_controls_row, False, False, 0)
             btn_open_srcdir_l = gtk_module.Button(label="Srcdir-L")
             btn_open_srcdir_r = gtk_module.Button(label="Srcdir-R")
             watch_label = gtk_module.Label(label="Watch")
@@ -703,29 +736,40 @@ class GtkRuntimeSignalBackend:
             interval_label = gtk_module.Label(label="Interval")
             btn_daemonize = gtk_module.Button(label="Watch Start")
             btn_cancel_daemonize = gtk_module.Button(label="Watch Stop")
-            btn_about = gtk_module.Button(label="About (secondary)")
-            btn_help = gtk_module.Button(label="Help (secondary)")
-            command_bar.pack_start(btn_setting, False, False, 0)
-            command_bar.pack_start(btn_set_color, False, False, 0)
-            command_bar.pack_start(btn_open_save, False, False, 0)
-            command_bar.pack_start(btn_cancel_save, False, False, 0)
-            command_bar.pack_start(btn_open_srcdir_l, False, False, 0)
-            command_bar.pack_start(btn_open_srcdir_r, False, False, 0)
-            command_bar.pack_start(watch_label, False, False, 0)
-            command_bar.pack_start(interval_spin, False, False, 0)
-            command_bar.pack_start(interval_label, False, False, 0)
-            command_bar.pack_start(btn_daemonize, False, False, 0)
-            command_bar.pack_start(btn_cancel_daemonize, False, False, 0)
-            command_bar.pack_start(btn_about, False, False, 0)
-            command_bar.pack_start(btn_help, False, False, 0)
+            watch_controls_row.pack_start(btn_open_srcdir_l, False, False, 0)
+            watch_controls_row.pack_start(btn_open_srcdir_r, False, False, 0)
+            watch_controls_row.pack_start(watch_label, False, False, 0)
+            watch_controls_row.pack_start(interval_label, False, False, 0)
+            watch_controls_row.pack_start(interval_spin, False, False, 0)
+            watch_controls_row.pack_start(btn_daemonize, False, False, 0)
+            watch_controls_row.pack_start(btn_cancel_daemonize, False, False, 0)
+
+            watch_detail_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
+            watch_tab_box.pack_start(watch_detail_row, False, False, 0)
+            watch_sources_label = gtk_module.Label(label="Watch srcdirs: L=- | R=-")
+            if hasattr(watch_sources_label, "set_xalign"):
+                watch_sources_label.set_xalign(0.0)
+            watch_detail_row.pack_start(watch_sources_label, False, False, 0)
+            watch_current_label = gtk_module.Label(label="Watch current: idle")
+            if hasattr(watch_current_label, "set_xalign"):
+                watch_current_label.set_xalign(0.0)
+            watch_detail_row.pack_start(watch_current_label, False, False, 0)
+
+            command_tabs.append_page(command_bar, gtk_module.Label(label="Secondary"))
+            command_tabs.append_page(watch_tab_box, gtk_module.Label(label="Watch"))
 
             # Row 4: status row (Glade statusbar equivalent)
             status_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
             root.pack_start(status_row, False, False, 0)
+            flow_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            status_row.pack_start(flow_row, False, False, 0)
             flow_legend_label = gtk_module.Label(label="Flow: Compose -> Optimize -> Apply")
             if hasattr(flow_legend_label, "set_xalign"):
                 flow_legend_label.set_xalign(0.0)
-            status_row.pack_start(flow_legend_label, False, False, 0)
+            flow_row.pack_start(flow_legend_label, False, False, 0)
+            flow_spacer = gtk_module.Label(label="")
+            flow_row.pack_start(flow_spacer, True, True, 0)
+            flow_row.pack_start(optimize_btn, False, False, 0)
             status_label = gtk_module.Label(label="Status: ready")
             if hasattr(status_label, "set_xalign"):
                 status_label.set_xalign(0.0)
@@ -734,14 +778,10 @@ class GtkRuntimeSignalBackend:
             if hasattr(error_label, "set_xalign"):
                 error_label.set_xalign(0.0)
             status_row.pack_start(error_label, False, False, 0)
-            watch_sources_label = gtk_module.Label(label="Watch srcdirs: L=- | R=-")
-            if hasattr(watch_sources_label, "set_xalign"):
-                watch_sources_label.set_xalign(0.0)
-            status_row.pack_start(watch_sources_label, False, False, 0)
-            watch_current_label = gtk_module.Label(label="Watch current: idle")
-            if hasattr(watch_current_label, "set_xalign"):
-                watch_current_label.set_xalign(0.0)
-            status_row.pack_start(watch_current_label, False, False, 0)
+            watch_summary_label = gtk_module.Label(label="Watch: stopped")
+            if hasattr(watch_summary_label, "set_xalign"):
+                watch_summary_label.set_xalign(0.0)
+            status_row.pack_start(watch_summary_label, False, False, 0)
 
             if hasattr(window, "add"):
                 window.add(root)
@@ -762,6 +802,8 @@ class GtkRuntimeSignalBackend:
                 "lblSubtitle": subtitle,
                 "lblMainSection": main_section_label,
                 "boxMainSection": main_col,
+                "actionClusterRow": action_cluster_row,
+                "actionClusterCol": action_cluster_col,
                 "tglUpperL": tgl_upper_l,
                 "tglUpperR": tgl_upper_r,
                 "tglPushLeftL": tgl_push_left_l,
@@ -795,7 +837,6 @@ class GtkRuntimeSignalBackend:
                 "btnSetWall": apply_btn,
                 "lblApplyTarget": apply_target,
                 "lblDoItPlanned": do_it_plan_label,
-                "lblSaveDialogState": save_dialog_state_label,
                 "lblSaveTarget": save_target_label,
                 "lblPriorityRule": priority_note_label,
                 "lblStyleLegend": style_legend_label,
@@ -805,14 +846,15 @@ class GtkRuntimeSignalBackend:
                 "lblCurrentStateL": current_left_label,
                 "lblCurrentStateR": current_right_label,
                 "lblCommandSection": command_section_label,
+                "commandTabs": command_tabs,
                 "hbox14": command_bar,
                 "btnSetting": btn_setting,
                 "btnSetColor": btn_set_color,
                 "ImgOpenDialog": open_dialog_proxy,
-                "SaveWallpaperDialog": save_dialog_proxy,
                 "SrcdirDialog": srcdir_dialog_proxy,
-                "btnOpenSave": btn_open_save,
-                "btnCancelSave": btn_cancel_save,
+                "watchTab": watch_tab_box,
+                "watchControlsRow": watch_controls_row,
+                "watchDetailRow": watch_detail_row,
                 "btnOpenSrcdirL": btn_open_srcdir_l,
                 "btnOpenSrcdirR": btn_open_srcdir_r,
                 "lblWatchSection": watch_label,
@@ -823,11 +865,15 @@ class GtkRuntimeSignalBackend:
                 "btnAbout": btn_about,
                 "btnHelp": btn_help,
                 "statusbar": status_row,
+                "flowRow": flow_row,
                 "lblFlowLegend": flow_legend_label,
                 "lblStatus": status_label,
                 "lblError": error_label,
+                "lblWatchSummary": watch_summary_label,
                 "lblWatchSources": watch_sources_label,
                 "lblWatchCurrent": watch_current_label,
+                **{object_name: save_path_state_label for object_name in SAVE_PATH_STATE_LABEL_ALIASES},
+                **{object_name: save_path_dialog_proxy for object_name in SAVE_PATH_DIALOG_OBJECT_ALIASES},
             }
 
             for object_name, widget in self._objects.items():
@@ -876,8 +922,6 @@ class GtkRuntimeSignalBackend:
             optimize_modern_btn.connect("clicked", self._on_optimize_clicked)
             apply_btn.connect("clicked", self._on_apply_clicked)
             btn_set_color.connect("clicked", self._on_color_clicked)
-            btn_open_save.connect("clicked", self._on_save_dialog_confirm_clicked)
-            btn_cancel_save.connect("clicked", self._on_save_dialog_cancel_clicked)
             btn_open_srcdir_l.connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("L"))
             btn_open_srcdir_r.connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("R"))
             interval_spin.connect("value-changed", self._on_watch_interval_changed)
@@ -947,8 +991,28 @@ class GtkRuntimeSignalBackend:
         if button is not None and hasattr(button, "set_sensitive"):
             button.set_sensitive(bool(enabled))
 
-    def _current_save_dialog_filename(self) -> str:
-        dialog = self._objects.get("SaveWallpaperDialog")
+    def _get_save_path_dialog(self) -> Any | None:
+        for object_name in SAVE_PATH_DIALOG_OBJECT_ALIASES:
+            dialog = self._objects.get(object_name)
+            if dialog is not None:
+                return dialog
+        return None
+
+    def _get_save_path_destroy_callback(self) -> Callable[..., Any] | None:
+        for handler_name in SAVE_PATH_DESTROY_HANDLER_NAMES:
+            callback = self._signal_handlers.get(handler_name)
+            if callback is not None:
+                return callback
+        return None
+
+    def _set_save_path_state_text(self, message: str) -> None:
+        for object_name in SAVE_PATH_STATE_LABEL_ALIASES:
+            if self._objects.get(object_name) is not None:
+                self._set_label_text(object_name, message)
+                return
+
+    def _current_save_path_filename(self) -> str:
+        dialog = self._get_save_path_dialog()
         if dialog is None or not hasattr(dialog, "get_filename"):
             return ""
         return str(dialog.get_filename() or "").strip()
@@ -956,7 +1020,7 @@ class GtkRuntimeSignalBackend:
     def _refresh_save_target_label(self, filename: str | None = None) -> None:
         value = str(filename or "").strip()
         if not value:
-            value = self._current_save_dialog_filename()
+            value = self._current_save_path_filename()
         if value:
             self._set_label_text("lblSaveTarget", f"Save target: {value}")
             return
@@ -967,6 +1031,10 @@ class GtkRuntimeSignalBackend:
         right = self._watch_srcdir_r or "-"
         self._set_label_text("lblWatchSources", f"Watch srcdirs: L={left} | R={right}")
 
+    def _refresh_watch_summary_label(self) -> None:
+        state = "running" if self._watch_running else "stopped"
+        self._set_label_text("lblWatchSummary", f"Watch: {state}")
+
     def _refresh_watch_current_label(self, left: str | None = None, right: str | None = None) -> None:
         current_left = left if left is not None else (str(self._watch_previous_l) if self._watch_previous_l else "-")
         current_right = right if right is not None else (str(self._watch_previous_r) if self._watch_previous_r else "-")
@@ -976,7 +1044,7 @@ class GtkRuntimeSignalBackend:
         self._set_label_text("lblWatchCurrent", f"Watch current: L={current_left} | R={current_right}")
 
     def _notify_srcdir_dialog_destroy(self) -> None:
-        callback = self._signal_handlers.get("on_SrcdirDialog_destroy")
+        callback = self._signal_handlers.get("on_close_srcdir_dialog")
         if callback is None:
             return
         try:
@@ -984,8 +1052,8 @@ class GtkRuntimeSignalBackend:
         except Exception:
             pass
 
-    def _notify_save_dialog_destroy(self) -> None:
-        callback = self._signal_handlers.get("on_SaveWallpaperDialog_destroy")
+    def _notify_save_path_dialog_destroy(self) -> None:
+        callback = self._get_save_path_destroy_callback()
         if callback is None:
             return
         try:
@@ -993,42 +1061,34 @@ class GtkRuntimeSignalBackend:
         except Exception:
             pass
 
-    def _update_save_dialog_action_buttons(self) -> None:
-        opened = self._is_save_dialog_open()
-        has_path = bool(self._current_save_dialog_filename())
-        self._set_button_enabled("btnCancelSave", opened)
-        self._set_button_enabled("btnOpenSave", opened and has_path)
-
-    def _set_save_dialog_open_state(self, opened: bool, *, state_text: str | None = None) -> None:
-        dialog = self._objects.get("SaveWallpaperDialog")
+    def _set_save_path_dialog_open_state(self, opened: bool, *, state_text: str | None = None) -> None:
+        dialog = self._get_save_path_dialog()
         if dialog is not None:
             if opened and hasattr(dialog, "show"):
                 dialog.show()
             if not opened and hasattr(dialog, "hide"):
                 dialog.hide()
-        self._update_save_dialog_action_buttons()
 
         if state_text is not None:
-            self._set_label_text("lblSaveDialogState", state_text)
+            self._set_save_path_state_text(state_text)
 
-    def _on_save_dialog_filename_changed(self, filename: str) -> None:
+    def _on_save_path_filename_changed(self, filename: str) -> None:
         self._refresh_save_target_label(filename)
-        if not self._is_save_dialog_open():
+        if not self._is_save_path_dialog_open():
             return
-        self._update_save_dialog_action_buttons()
         if str(filename or "").strip():
-            self._set_label_text("lblSaveDialogState", "SaveDialog: open(path-ready)")
+            self._set_save_path_state_text("Save path: ready")
         else:
-            self._set_label_text("lblSaveDialogState", "SaveDialog: open(path-required)")
+            self._set_save_path_state_text("Save path: required")
 
-    def _is_save_dialog_open(self) -> bool:
-        dialog = self._objects.get("SaveWallpaperDialog")
+    def _is_save_path_dialog_open(self) -> bool:
+        dialog = self._get_save_path_dialog()
         if dialog is None or not hasattr(dialog, "is_visible"):
             return False
         return bool(dialog.is_visible())
 
     def _on_input_changed(self, entry: Any) -> None:
-        callback = self._signal_handlers.get("on_entPath_insert_text")
+        callback = self._signal_handlers.get("on_change_input_text")
         text_l = ""
         text_r = ""
 
@@ -1048,7 +1108,7 @@ class GtkRuntimeSignalBackend:
         self._set_button_enabled("btnOptimize", has_input)
         self._set_button_enabled("btnSetWall", False)
         if not has_input:
-            self._set_save_dialog_open_state(False, state_text="SaveDialog: closed(input-reset)")
+            self._set_save_path_dialog_open_state(False, state_text="Save path: reset")
         self._set_label_text("lblOptimizeResult", "Optimize result: not-run")
         self._set_label_text("lblApplyTarget", "Apply target: not-ready")
 
@@ -1083,7 +1143,7 @@ class GtkRuntimeSignalBackend:
         self._set_feedback(phase=f"Open-{side}", state="dialog-open")
 
     def _notify_open_dialog_destroy(self) -> None:
-        callback = self._signal_handlers.get("on_ImgOpenDialog_destroy")
+        callback = self._signal_handlers.get("on_close_open_image_dialog")
         if callback is None:
             return
         try:
@@ -1114,7 +1174,7 @@ class GtkRuntimeSignalBackend:
             )
             return
 
-        callback = self._signal_handlers.get("on_btnGetImg_clicked")
+        callback = self._signal_handlers.get("on_pick_input")
         if callback is None:
             self._set_label_text("lblPickState", f"Open-{side}: handler-missing")
             self._set_feedback(
@@ -1195,7 +1255,7 @@ class GtkRuntimeSignalBackend:
             )
             return
 
-        callback = self._signal_handlers.get("on_btnOpenSrcdir_clicked")
+        callback = self._signal_handlers.get("on_pick_watch_srcdir")
         if callback is None:
             self._set_feedback(
                 phase=f"Srcdir-{side}",
@@ -1239,7 +1299,7 @@ class GtkRuntimeSignalBackend:
         self._notify_srcdir_dialog_destroy()
 
     def _on_watch_interval_changed(self, widget: Any) -> None:
-        callback = self._signal_handlers.get("on_spnInterval_value_changed")
+        callback = self._signal_handlers.get("on_watch_interval_change")
         if callback is None:
             self._set_feedback(phase="Watch", state="handler-missing", error="handler not connected")
             return
@@ -1258,7 +1318,7 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Watch", state="error", error=str(exc))
 
     def _on_watch_start_clicked(self, *_args: Any) -> None:
-        callback = self._signal_handlers.get("on_btnDaemonize_clicked")
+        callback = self._signal_handlers.get("on_watch_start")
         if callback is None:
             self._set_feedback(phase="Watch", state="handler-missing", error="handler not connected")
             return
@@ -1292,6 +1352,7 @@ class GtkRuntimeSignalBackend:
                 selected_right = str(selected)
 
             self._watch_running = True
+            self._refresh_watch_summary_label()
             self._refresh_watch_source_labels()
             self._refresh_watch_current_label(selected_left, selected_right)
             self._set_feedback(phase="Watch", state="started")
@@ -1299,7 +1360,7 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Watch", state="error", error=str(exc))
 
     def _on_watch_stop_clicked(self, *_args: Any) -> None:
-        callback = self._signal_handlers.get("on_btnCancelDaemonize_clicked")
+        callback = self._signal_handlers.get("on_watch_stop")
         if callback is None:
             self._set_feedback(phase="Watch", state="handler-missing", error="handler not connected")
             return
@@ -1309,6 +1370,7 @@ class GtkRuntimeSignalBackend:
                 self._set_feedback(phase="Watch", state="stop-ignored")
                 return
             self._watch_running = False
+            self._refresh_watch_summary_label()
             self._refresh_watch_current_label()
             self._set_feedback(phase="Watch", state="stopped")
         except Exception as exc:
@@ -1370,7 +1432,7 @@ class GtkRuntimeSignalBackend:
         self._set_toggle_active("radNoFixed", not fixed_enabled)
         self._refresh_current_state_labels()
 
-        callback = self._signal_handlers.get("on_radFixed_toggled")
+        callback = self._signal_handlers.get("on_toggle_fixed")
         if callback is not None:
             try:
                 callback(bool(fixed_enabled))
@@ -1399,7 +1461,7 @@ class GtkRuntimeSignalBackend:
                     self._set_toggle_active(opposite_name, False)
         self._refresh_current_state_labels()
 
-        callback = self._signal_handlers.get("on_tglBtn_pressed")
+        callback = self._signal_handlers.get("on_toggle_position_pressed")
         if callback is not None:
             widget = self._objects.get(object_name)
             try:
@@ -1409,7 +1471,7 @@ class GtkRuntimeSignalBackend:
 
     def _on_direction_toggled(self, object_name: str) -> None:
         self._refresh_current_state_labels()
-        callback = self._signal_handlers.get("on_tglBtn_toggled")
+        callback = self._signal_handlers.get("on_toggle_position")
         if callback is None:
             return
 
@@ -1421,7 +1483,7 @@ class GtkRuntimeSignalBackend:
 
     def _on_direction_released(self, object_name: str) -> None:
         self._refresh_current_state_labels()
-        callback = self._signal_handlers.get("on_tglBtn_released")
+        callback = self._signal_handlers.get("on_toggle_position_reset")
         if callback is None:
             return
 
@@ -1443,7 +1505,7 @@ class GtkRuntimeSignalBackend:
 
     def _on_margin_changed(self, widget: Any) -> None:
         self._refresh_current_state_labels()
-        callback = self._signal_handlers.get("on_spnMergin_value_changed")
+        callback = self._signal_handlers.get("on_change_margins")
 
         if callback is None:
             self._set_feedback(phase="Margins", state="planned")
@@ -1489,8 +1551,9 @@ class GtkRuntimeSignalBackend:
             self._set_label_text("lblApplyTarget", "Apply target: not-ready")
 
     def _on_save_clicked(self, *_args: Any) -> None:
-        # P5-3 split: Save opens save-dialog; generation continues on confirm.
-        callback = self._signal_handlers.get("on_btnSave_clicked")
+        # P6 direction: Save As keeps chooser semantics, but fallback should not
+        # depend on separate confirm/cancel controls.
+        callback = self._signal_handlers.get("on_save")
         if callback is not None:
             try:
                 callback()
@@ -1499,20 +1562,25 @@ class GtkRuntimeSignalBackend:
 
         self._refresh_save_target_label()
 
-        dialog = self._objects.get("SaveWallpaperDialog")
+        dialog = self._get_save_path_dialog()
         if dialog is not None and hasattr(dialog, "supports_native_dialog") and dialog.supports_native_dialog():
             if hasattr(dialog, "open_dialog"):
                 dialog.open_dialog()
             return
 
-        self._set_save_dialog_open_state(True, state_text="SaveDialog: open")
+        fallback_filename = self._current_save_path_filename()
+        if not fallback_filename:
+            fallback_filename = str(Path.home() / "harite-output.jpg")
+        if dialog is not None and hasattr(dialog, "set_filename"):
+            dialog.set_filename(fallback_filename)
+        self._handle_save_path_confirm(fallback_filename)
 
     def _on_optimize_clicked(self, *_args: Any) -> None:
-        callback = self._signal_handlers.get("on_btnOptimize_clicked")
+        callback = self._signal_handlers.get("on_optimize")
         self._run_optimize_path(callback)
 
     def _on_apply_clicked(self, *_args: Any) -> None:
-        callback = self._signal_handlers.get("on_btnSetWall_clicked")
+        callback = self._signal_handlers.get("on_apply")
         if callback is None:
             self._set_feedback(
                 phase="Apply",
@@ -1525,84 +1593,66 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Apply", state="running")
             ok = callback()
             if ok:
-                self._set_feedback(phase="Apply", state="dry-run-ok")
+                self._set_feedback(phase="Apply", state="ok")
                 self._set_label_text("lblApplyTarget", "Apply target: consumed")
             else:
                 self._set_feedback(
                     phase="Apply",
-                    state="dry-run-failed",
+                    state="failed",
                     error="apply returned false",
                 )
         except Exception as exc:
             self._set_feedback(phase="Apply", state="error", error=str(exc))
 
     def _on_color_clicked(self, *_args: Any) -> None:
-        callback = self._signal_handlers.get("on_btnSetColor_clicked")
+        callback = self._signal_handlers.get("on_set_color")
         if callback is None:
-            self._set_feedback(phase="Color", state="planned")
+            self._set_feedback(phase="Color", state="deferred")
             return
         try:
             callback()
-            self._set_feedback(phase="Color", state="planned")
+            self._set_feedback(phase="Color", state="deferred")
         except Exception as exc:
             self._set_feedback(phase="Color", state="error", error=str(exc))
 
-    def _handle_save_dialog_confirm(self, filename: str) -> None:
-        callback = self._signal_handlers.get("on_btnOpenSave_clicked")
+    def _handle_save_path_confirm(self, filename: str) -> None:
+        callback = self._signal_handlers.get("on_save_path_selected")
         if callback is None:
-            self._set_feedback(phase="SaveDialog", state="handler-missing", error="handler not connected")
+            self._set_feedback(phase="SavePath", state="handler-missing", error="handler not connected")
             return
         try:
             if not filename:
-                self._set_label_text("lblSaveDialogState", "SaveDialog: open(path-required)")
-                self._set_feedback(phase="SaveDialog", state="confirm-pending-path", error="save path is required")
+                self._set_save_path_state_text("Save path: required")
+                self._set_feedback(phase="SavePath", state="path-required", error="save path is required")
                 return
             self._refresh_save_target_label(filename)
             ok = callback(filename)
             if ok:
-                self._set_save_dialog_open_state(False, state_text="SaveDialog: closed(confirm)")
-                self._set_feedback(phase="SaveDialog", state="confirm-ok")
-                self._notify_save_dialog_destroy()
+                self._set_save_path_dialog_open_state(False, state_text="Save path: saved")
+                self._set_feedback(phase="SavePath", state="saved")
+                self._notify_save_path_dialog_destroy()
             else:
-                self._set_feedback(phase="SaveDialog", state="confirm-failed", error="confirm returned false")
+                self._set_feedback(phase="SavePath", state="failed", error="save path acceptance returned false")
         except Exception as exc:
-            self._set_feedback(phase="SaveDialog", state="error", error=str(exc))
+            self._set_feedback(phase="SavePath", state="error", error=str(exc))
 
-    def _on_save_dialog_confirm_clicked(self, *_args: Any) -> None:
-        if not self._is_save_dialog_open():
-            self._set_label_text("lblSaveDialogState", "SaveDialog: closed")
-            self._set_feedback(phase="SaveDialog", state="ignored-closed")
-            return
-        self._handle_save_dialog_confirm(self._current_save_dialog_filename())
+    def _handle_save_path_cancel(self) -> None:
+        callback = self._signal_handlers.get("on_save_path_selection_canceled")
+        if callback is not None:
+            try:
+                callback()
+            except Exception as exc:
+                self._set_feedback(phase="SavePath", state="error", error=str(exc))
+                return
+        self._set_save_path_dialog_open_state(False, state_text="Save path: canceled")
+        self._set_feedback(phase="SavePath", state="canceled")
+        self._notify_save_path_dialog_destroy()
 
-    def _handle_save_dialog_cancel(self) -> None:
-        callback = self._signal_handlers.get("on_btnCancelSave_clicked")
-        if callback is None:
-            self._set_feedback(phase="SaveDialog", state="handler-missing", error="handler not connected")
-            return
-        try:
-            ok = callback()
-            if ok:
-                self._set_save_dialog_open_state(False, state_text="SaveDialog: closed(cancel)")
-                self._set_feedback(phase="SaveDialog", state="cancel-ok")
-                self._notify_save_dialog_destroy()
-            else:
-                self._set_feedback(phase="SaveDialog", state="cancel-failed", error="cancel returned false")
-        except Exception as exc:
-            self._set_feedback(phase="SaveDialog", state="error", error=str(exc))
+    def _on_native_save_path_confirmed(self) -> None:
+        self._handle_save_path_confirm(self._current_save_path_filename())
 
-    def _on_save_dialog_cancel_clicked(self, *_args: Any) -> None:
-        if not self._is_save_dialog_open():
-            self._set_label_text("lblSaveDialogState", "SaveDialog: closed")
-            self._set_feedback(phase="SaveDialog", state="ignored-closed")
-            return
-        self._handle_save_dialog_cancel()
-
-    def _on_native_save_dialog_confirmed(self) -> None:
-        self._handle_save_dialog_confirm(self._current_save_dialog_filename())
-
-    def _on_native_save_dialog_canceled(self) -> None:
-        self._handle_save_dialog_cancel()
+    def _on_native_save_path_canceled(self) -> None:
+        self._handle_save_path_cancel()
 
 
 def load_gtk_builder_signal_backend(ui_file: Path | None = None):

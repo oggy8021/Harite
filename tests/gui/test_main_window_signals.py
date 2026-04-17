@@ -21,13 +21,13 @@ def test_on_clear_input_resets_optimize_state():
     window = MainWindow()
     window.on_change_input_text("a.jpg")
     assert window.on_save() is True
-    assert window.save_dialog_open is True
+    assert window.save_path_dialog_open is True
 
     ok = window.on_clear_input()
 
     assert ok is True
     assert window.can_optimize is False
-    assert window.save_dialog_open is False
+    assert window.save_path_dialog_open is False
     assert window.status_phase == "input"
     assert window.status_message == "input is required"
 
@@ -49,83 +49,83 @@ def test_on_set_color_is_planned():
     ok = window.on_set_color()
 
     assert ok is False
-    assert window.status_level == "planned"
+    assert window.status_level == "deferred"
     assert window.status_phase == "color"
-    assert window.status_message == "color picker is planned"
+    assert window.status_message == "color picker is deferred to phase7"
 
 
-def test_save_dialog_confirm_and_cancel_have_distinct_meanings():
+def test_save_path_selection_and_cancel_have_distinct_meanings():
     window = MainWindow()
 
-    assert window.on_save_dialog_cancel() is False
+    assert window.on_save_path_selection_canceled() is False
     assert window.status_level == "idle"
-    assert window.status_phase == "save_dialog"
-    assert window.status_message == "save dialog ignored (closed)"
+    assert window.status_phase == "save_path"
+    assert window.status_message == "save path cancel ignored (closed)"
 
     assert window.on_save() is True
-    assert window.save_dialog_open is True
+    assert window.save_path_dialog_open is True
     assert window.status_level == "idle"
-    assert window.status_phase == "save_dialog"
-    assert window.status_message == "save dialog opened"
+    assert window.status_phase == "save_path"
+    assert window.status_message == "save path dialog opened"
 
-    assert window.on_save_dialog_cancel() is True
-    assert window.save_dialog_open is False
+    assert window.on_save_path_selection_canceled() is True
+    assert window.save_path_dialog_open is False
     assert window.status_level == "idle"
-    assert window.status_phase == "save_dialog"
-    assert window.status_message == "save dialog canceled (path unchanged)"
+    assert window.status_phase == "save_path"
+    assert window.status_message == "save path canceled (path unchanged)"
 
-    assert window.on_save_dialog_confirm() is False
+    assert window.on_save_path_selected() is False
     assert window.status_level == "idle"
-    assert window.status_phase == "save_dialog"
-    assert window.status_message == "save dialog ignored (closed)"
+    assert window.status_phase == "save_path"
+    assert window.status_message == "save path ignored (closed)"
 
     assert window.on_save() is True
-    assert window.on_save_dialog_confirm() is False
+    assert window.on_save_path_selected() is False
     assert window.status_level == "error"
-    assert window.status_phase == "save_dialog"
+    assert window.status_phase == "save_path"
     assert window.status_message == "save path is required"
     assert window.last_error == "save path is required"
 
-    assert window.on_save_dialog_confirm("/tmp/result.jpg") is True
+    assert window.on_save_path_selected("/tmp/result.jpg") is True
     assert window.form_state.save_path == "/tmp/result.jpg"
     assert window.status_level == "idle"
-    assert window.status_phase == "save_dialog"
+    assert window.status_phase == "save_path"
     assert window.status_message == "save path selected"
 
 
-def test_save_dialog_confirm_without_argument_uses_existing_path():
+def test_save_path_selected_without_argument_uses_existing_path():
     window = MainWindow()
     window.form_state.save_path = "/tmp/existing-save.jpg"
     window._update_save_target_display()
-    window.save_dialog_open = True
+    window.save_path_dialog_open = True
 
-    ok = window.on_save_dialog_confirm()
+    ok = window.on_save_path_selected()
 
     assert ok is True
-    assert window.save_dialog_open is False
+    assert window.save_path_dialog_open is False
     assert window.form_state.save_path == "/tmp/existing-save.jpg"
     assert window.save_target_display == "Save target: /tmp/existing-save.jpg"
     assert window.status_level == "idle"
-    assert window.status_phase == "save_dialog"
+    assert window.status_phase == "save_path"
     assert window.status_message == "save path selected"
 
 
-def test_save_dialog_cancel_keeps_existing_save_path():
+def test_save_path_selection_canceled_keeps_existing_save_path():
     window = MainWindow()
     window.form_state.save_path = "/tmp/existing-save.jpg"
-    window.save_dialog_open = True
+    window.save_path_dialog_open = True
 
-    ok = window.on_save_dialog_cancel()
+    ok = window.on_save_path_selection_canceled()
 
     assert ok is True
-    assert window.save_dialog_open is False
+    assert window.save_path_dialog_open is False
     assert window.form_state.save_path == "/tmp/existing-save.jpg"
     assert window.status_level == "idle"
-    assert window.status_phase == "save_dialog"
-    assert window.status_message == "save dialog canceled (path unchanged)"
+    assert window.status_phase == "save_path"
+    assert window.status_message == "save path canceled (path unchanged)"
 
 
-def test_save_dialog_confirm_runs_legacy_save_flow_when_input_ready(monkeypatch, tmp_path):
+def test_save_path_selected_runs_save_flow_when_input_ready(monkeypatch, tmp_path):
     class DummyController:
         def __init__(self) -> None:
             self.calls = []
@@ -141,18 +141,18 @@ def test_save_dialog_confirm_runs_legacy_save_flow_when_input_ready(monkeypatch,
     window.controller = DummyController()
     window.on_change_input_text("a.jpg")
     assert window.on_save() is True
-    assert window.save_dialog_open is True
+    assert window.save_path_dialog_open is True
 
-    picked = tmp_path / "picked" / "legacy-save.jpg"
-    ok = window.on_save_dialog_confirm(str(picked))
+    picked = tmp_path / "picked" / "save-path.jpg"
+    ok = window.on_save_path_selected(str(picked))
 
     assert ok is True
-    assert window.save_dialog_open is False
+    assert window.save_path_dialog_open is False
     assert window.form_state.save_path == str(picked)
     assert window.status_level == "success"
     assert window.status_phase == "optimize"
     assert window.status_message == "optimize completed"
-    assert any("Save dialog confirm: running save flow" in line for line in window.logs)
+    assert any("Save path selected: running save flow" in line for line in window.logs)
 
 
 def test_layout_blueprint_defines_grouping_and_flow():
@@ -162,16 +162,15 @@ def test_layout_blueprint_defines_grouping_and_flow():
 
     assert bp["title"] == "Harite Studio"
     assert bp["subtitle"] == "Compose -> Optimize -> Apply"
-    assert bp["layout_version"] == "phase5-radical-mainwindow"
+    assert bp["layout_version"] == "phase6-watch-tab-split"
     assert isinstance(bp["sections"], tuple)
-    assert bp["sections"][0][0] == "hero"
+    assert bp["sections"][0][0] == "compose_input"
     assert bp["sections"][-1][0] == "status_panel"
     assert "hero-first" in bp["layout_highlights"]
     assert bp["primary_action_flow"] == (
         "hero",
         "optimize",
-        "apply_dry_run",
-        "apply_do_it",
+        "apply",
     )
     assert bp["suggested_next_action"] == "input"
     assert bp["status"]["level"] == "idle"
@@ -182,7 +181,7 @@ def test_layout_blueprint_defines_grouping_and_flow():
     assert bp["status"]["watch_current"] == "Watch current: idle"
 
 
-def test_save_dialog_confirm_updates_single_save_target_display():
+def test_save_path_selected_updates_single_save_target_display():
     window = MainWindow()
 
     assert window.save_target_display == "Save target: not-selected"
@@ -190,7 +189,7 @@ def test_save_dialog_confirm_updates_single_save_target_display():
     assert window.on_save() is True
     assert window.save_target_display == "Save target: not-selected"
 
-    assert window.on_save_dialog_confirm("/tmp/result.jpg") is True
+    assert window.on_save_path_selected("/tmp/result.jpg") is True
     assert window.save_target_display == "Save target: /tmp/result.jpg"
 
 
@@ -214,7 +213,7 @@ def test_on_optimize_runs_and_logs(tmp_path):
     assert window.status_message == "optimize completed"
     assert any(line.startswith("Saved ") for line in window.logs)
     assert any(line.startswith("Saved: ") for line in window.logs)
-    assert any("Next action: apply dry-run" in line for line in window.logs)
+    assert any("Next action: apply" in line for line in window.logs)
 
 
 def test_on_close_marks_window_closed():
@@ -308,7 +307,7 @@ def test_on_toggle_position_updates_alignment_and_reset():
     assert window.form_state.valign == "center"
 
 
-def test_on_apply_dry_run_uses_latest_saved_file(monkeypatch, tmp_path):
+def test_on_apply_uses_immediate_apply(monkeypatch, tmp_path):
     class DummyPlugin:
         def __init__(self):
             self.calls = []
@@ -325,37 +324,15 @@ def test_on_apply_dry_run_uses_latest_saved_file(monkeypatch, tmp_path):
     wall.write_bytes(b"x")
     window.last_saved_files = [wall]
 
-    ok = window.on_apply_dry_run()
-    assert ok is True
-    assert plugin.calls == [(str(wall), True)]
-    assert any("Applied wallpaper" in line for line in window.logs)
-
-
-def test_on_apply_do_it_calls_plugin_with_non_dry_run(monkeypatch, tmp_path):
-    class DummyPlugin:
-        def __init__(self):
-            self.calls = []
-
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
-            self.calls.append((path, dry_run))
-            return True
-
-    plugin = DummyPlugin()
-    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
-
-    window = MainWindow()
-    wall = tmp_path / "wall.jpg"
-    wall.write_bytes(b"x")
-    window.last_saved_files = [wall]
-
-    ok = window.on_apply_do_it()
+    ok = window.on_apply()
     assert ok is True
     assert plugin.calls == [(str(wall), False)]
+    assert any("Applied wallpaper" in line for line in window.logs)
 
 
 def test_on_apply_without_optimized_file_fails():
     window = MainWindow()
-    ok = window.on_apply_dry_run()
+    ok = window.on_apply()
 
     assert ok is False
     assert window.last_error == "no optimized file to apply"
@@ -424,7 +401,7 @@ def test_suggest_next_action_transitions(tmp_path):
     assert window.suggest_next_action() == "optimize"
 
     assert window.on_optimize() is True
-    assert window.suggest_next_action() == "apply_dry_run"
+    assert window.suggest_next_action() == "apply"
 
 
 def test_run_primary_flow_step_runs_optimize_then_apply(monkeypatch, tmp_path):
@@ -453,13 +430,13 @@ def test_run_primary_flow_step_runs_optimize_then_apply(monkeypatch, tmp_path):
     assert window.run_primary_flow_step() is True
     assert window.can_apply is True
 
-    # second step should run apply dry-run
+    # second step should run apply
     assert window.run_primary_flow_step() is True
     assert window.status_level == "success"
     assert window.status_phase == "apply"
     assert window.status_message == "apply completed"
     assert plugin.calls
-    assert plugin.calls[-1][1] is True
+    assert plugin.calls[-1][1] is False
 
 
 def test_status_unified_for_input_transitions():
@@ -577,11 +554,11 @@ def test_on_close_open_image_dialog_logs_close_event():
     assert "Open image dialog closed" in window.logs
 
 
-def test_on_close_save_dialog_logs_close_event():
+def test_on_close_save_path_dialog_logs_close_event():
     window = MainWindow()
-    window.on_close_save_dialog()
+    window.on_close_save_path_dialog()
 
-    assert "Save dialog closed" in window.logs
+    assert "Save path dialog closed" in window.logs
 
 
 def test_on_close_settings_dialog_logs_close_event():
@@ -605,7 +582,7 @@ def test_on_close_srcdir_dialog_logs_close_event():
     assert "Source directory dialog closed" in window.logs
 
 
-def test_on_apply_dry_run_unknown_plugin_fails(monkeypatch, tmp_path):
+def test_on_apply_unknown_plugin_fails(monkeypatch, tmp_path):
     def raise_key_error(_name):
         raise KeyError(_name)
 
@@ -617,13 +594,13 @@ def test_on_apply_dry_run_unknown_plugin_fails(monkeypatch, tmp_path):
     window.last_saved_files = [wall]
     window.plugin_name = "missing-plugin"
 
-    ok = window.on_apply_dry_run()
+    ok = window.on_apply()
 
     assert ok is False
     assert window.last_error == "unknown plugin: missing-plugin"
 
 
-def test_on_apply_dry_run_when_plugin_returns_false_sets_error(monkeypatch, tmp_path):
+def test_on_apply_when_plugin_returns_false_sets_error(monkeypatch, tmp_path):
     class DummyPlugin:
         def apply(self, path: str, *, dry_run: bool = True) -> bool:
             return False
@@ -635,13 +612,13 @@ def test_on_apply_dry_run_when_plugin_returns_false_sets_error(monkeypatch, tmp_
     wall.write_bytes(b"x")
     window.last_saved_files = [wall]
 
-    ok = window.on_apply_dry_run()
+    ok = window.on_apply()
 
     assert ok is False
     assert window.last_error == "failed to apply wallpaper"
 
 
-def test_on_apply_dry_run_when_plugin_raises_sets_error(monkeypatch, tmp_path):
+def test_on_apply_when_plugin_raises_sets_error(monkeypatch, tmp_path):
     class DummyPlugin:
         def apply(self, path: str, *, dry_run: bool = True) -> bool:
             raise RuntimeError("boom")
@@ -653,7 +630,7 @@ def test_on_apply_dry_run_when_plugin_raises_sets_error(monkeypatch, tmp_path):
     wall.write_bytes(b"x")
     window.last_saved_files = [wall]
 
-    ok = window.on_apply_dry_run()
+    ok = window.on_apply()
 
     assert ok is False
     assert window.last_error == "failed to apply wallpaper: boom"

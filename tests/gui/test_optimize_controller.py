@@ -81,7 +81,7 @@ def test_run_optimize_passes_save_path(monkeypatch, tmp_path):
 
     controller = OptimizeController()
     state = _base_state(tmp_path)
-    state.save_path = str(tmp_path / "picked" / "legacy-save.jpg")
+    state.save_path = str(tmp_path / "picked" / "save-path.jpg")
 
     saved, placements = controller.run_optimize(state)
 

@@ -1,9 +1,8 @@
-"""Lightweight smoke runner to validate GUI layout and mappings.
+"""Lightweight smoke runner to validate current GUI state.
 
 This script runs without any GUI toolkit. It creates the framework-neutral
-`MainWindow`, optionally loads the UI prototype, creates a fake widget map,
-simulates a few interactions, and emits a JSON summary suitable for manual
-validation or CI artifact collection.
+`MainWindow`, performs direct runtime-style simulation, and emits a JSON
+summary suitable for manual validation or CI artifact collection.
 """
 
 from __future__ import annotations
@@ -16,7 +15,6 @@ from pathlib import Path
 from typing import Any
 
 from harite.gui.views.main_window import MainWindow
-from harite.gui.adapters.fake_adapter import create_fake_widget_map
 
 
 VALID_MANUAL_RESULTS = {"pass", "fail", "not-available"}
@@ -119,6 +117,33 @@ def collect_summary(mainwindow: Any) -> dict:
     }
 
 
+def attach_runtime_binding_metadata(mainwindow: Any) -> None:
+    """Record best-effort runtime binding metadata for smoke reporting."""
+    setattr(
+        mainwindow,
+        "_adapter_bindings",
+        {
+            "mode": "runtime-direct",
+            "source": "gui_layout_smoke",
+            "handler_surface": (
+                "on_change_input_text",
+                "on_save",
+                "on_optimize",
+                "on_apply",
+                "on_watch_start",
+                "on_watch_stop",
+            ),
+        },
+    )
+
+
+def simulate_runtime_interactions(mainwindow: Any) -> None:
+    """Apply a small set of direct interactions without GTK dependencies."""
+    mainwindow.on_change_input_text("/tmp/example.jpg")
+    if getattr(mainwindow, "available_plugins", None):
+        mainwindow.on_change_plugin(mainwindow.available_plugins[0])
+
+
 def evaluate_summary(summary: dict) -> dict:
     checks = {
         "title_present": bool(summary.get("title")),
@@ -159,8 +184,7 @@ def build_pr_comment(
     scope: str,
     notes: str,
     optimize_result: str,
-    apply_dry_run_result: str,
-    apply_do_it_result: str,
+    apply_result: str,
     screenshot_mainwindow: str,
     screenshot_optimize: str,
     screenshot_apply: str,
@@ -178,8 +202,7 @@ def build_pr_comment(
         "### Manual device validation",
         f"- Scope: {scope}",
         f"- optimize: {optimize_result}",
-        f"- apply dry-run: {apply_dry_run_result}",
-        f"- apply do-it: {apply_do_it_result}",
+        f"- apply: {apply_result}",
         f"- GUI smoke: {gui_smoke}",
         f"- Failed checks: {failed}",
         f"- Notes: {notes_text}",
@@ -205,8 +228,7 @@ def build_validation_report(
     run_date: str,
     operator: str,
     optimize_result: str,
-    apply_dry_run_result: str,
-    apply_do_it_result: str,
+    apply_result: str,
     screenshot_mainwindow: str,
     screenshot_optimize: str,
     screenshot_apply: str,
@@ -233,8 +255,7 @@ def build_validation_report(
         "| Check | Status | Notes |",
         "| --- | --- | --- |",
         f"| optimize | {optimize_result} | manual declaration |",
-        f"| apply dry-run | {apply_dry_run_result} | manual declaration |",
-        f"| apply do-it | {apply_do_it_result} | manual declaration |",
+        f"| apply | {apply_result} | manual declaration |",
         f"| GUI smoke | {gui_smoke} | failed checks: {failed} |",
         "",
         "## Artifact paths",
@@ -285,8 +306,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--operator", default="", help="operator name used in report")
     parser.add_argument("--notes", default="", help="notes text used in PR comment template")
     parser.add_argument("--optimize-result", default="not-available", help="manual result: pass/fail/not-available")
-    parser.add_argument("--apply-dry-run-result", default="not-available", help="manual result: pass/fail/not-available")
-    parser.add_argument("--apply-do-it-result", default="not-available", help="manual result: pass/fail/not-available")
+    parser.add_argument("--apply-result", default=None, help="manual result: pass/fail/not-available")
+    parser.add_argument("--apply-dry-run-result", default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--apply-do-it-result", default=None, help=argparse.SUPPRESS)
     parser.add_argument("--screenshot-mainwindow", default="", help="path for MainWindow screenshot used in report")
     parser.add_argument("--screenshot-optimize", default="", help="path for Optimize screenshot used in report")
     parser.add_argument("--screenshot-apply", default="", help="path for Apply screenshot used in report")
@@ -300,10 +322,18 @@ def main(argv: list[str] | None = None) -> int:
         args.require_screenshots = True
         args.verify_screenshot_files = True
 
+    if args.apply_result is None and args.apply_dry_run_result is not None:
+        args.apply_result = args.apply_dry_run_result
+    if args.apply_result is None:
+        args.apply_result = "not-available"
+
     try:
         args.optimize_result = _normalize_manual_result(args.optimize_result)
-        args.apply_dry_run_result = _normalize_manual_result(args.apply_dry_run_result)
-        args.apply_do_it_result = _normalize_manual_result(args.apply_do_it_result)
+        args.apply_result = _normalize_manual_result(args.apply_result)
+        if args.apply_dry_run_result is not None:
+            args.apply_dry_run_result = _normalize_manual_result(args.apply_dry_run_result)
+        if args.apply_do_it_result is not None:
+            args.apply_do_it_result = _normalize_manual_result(args.apply_do_it_result)
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 2
@@ -334,31 +364,12 @@ def main(argv: list[str] | None = None) -> int:
 
     win = MainWindow()
 
-    # Create a best-effort fake widget map using queued adapter code.
-    # We avoid failing the script if UI prototype resource is missing.
-    ui_result = None
     try:
-        from harite.gui.adapters.ui_loader import load_glade_prototype
-
-        ui_result = load_glade_prototype()
-    except Exception:
-        ui_result = None
-
-    try:
-        if ui_result is not None:
-            widgets = create_fake_widget_map(win, ui_result)
-        else:
-            # Create a minimal map when prototype not available.
-            widgets = create_fake_widget_map(win, type("R", (), {"file_path": Path("<none>"), "root_tag": "", "widget_count": 0, "signal_count": 0})())
-
+        attach_runtime_binding_metadata(win)
         if args.simulate:
-            if "input_text" in widgets:
-                widgets["input_text"]("/tmp/example.jpg")
-            if "plugin_change" in widgets and win.available_plugins:
-                widgets["plugin_change"](win.available_plugins[0])
-
+            simulate_runtime_interactions(win)
     except Exception as exc:
-        # Non-fatal: record adapter construction error in summary
+        # Non-fatal: record smoke binding/simulation error in summary.
         setattr(win, "_adapter_bindings_error", str(exc))
 
     summary = collect_summary(win)
@@ -406,8 +417,7 @@ def main(argv: list[str] | None = None) -> int:
             scope=args.scope,
             notes=args.notes,
             optimize_result=args.optimize_result,
-            apply_dry_run_result=args.apply_dry_run_result,
-            apply_do_it_result=args.apply_do_it_result,
+            apply_result=args.apply_result,
             screenshot_mainwindow=args.screenshot_mainwindow,
             screenshot_optimize=args.screenshot_optimize,
             screenshot_apply=args.screenshot_apply,
@@ -444,8 +454,7 @@ def main(argv: list[str] | None = None) -> int:
                 scope=args.scope,
                 notes=args.notes,
                 optimize_result=args.optimize_result,
-                apply_dry_run_result=args.apply_dry_run_result,
-                apply_do_it_result=args.apply_do_it_result,
+                apply_result=args.apply_result,
                 screenshot_mainwindow=args.screenshot_mainwindow,
                 screenshot_optimize=args.screenshot_optimize,
                 screenshot_apply=args.screenshot_apply,
@@ -484,8 +493,7 @@ def main(argv: list[str] | None = None) -> int:
             run_date=args.date,
             operator=args.operator,
             optimize_result=args.optimize_result,
-            apply_dry_run_result=args.apply_dry_run_result,
-            apply_do_it_result=args.apply_do_it_result,
+            apply_result=args.apply_result,
             screenshot_mainwindow=args.screenshot_mainwindow,
             screenshot_optimize=args.screenshot_optimize,
             screenshot_apply=args.screenshot_apply,
@@ -524,8 +532,7 @@ def main(argv: list[str] | None = None) -> int:
                 run_date=args.date,
                 operator=args.operator,
                 optimize_result=args.optimize_result,
-                apply_dry_run_result=args.apply_dry_run_result,
-                apply_do_it_result=args.apply_do_it_result,
+                apply_result=args.apply_result,
                 screenshot_mainwindow=args.screenshot_mainwindow,
                 screenshot_optimize=args.screenshot_optimize,
                 screenshot_apply=args.screenshot_apply,

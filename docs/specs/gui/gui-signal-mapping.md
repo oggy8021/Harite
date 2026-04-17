@@ -1,17 +1,25 @@
-# GUI Signal 対応表（旧 Glade -> 新 Controller）
+# GUI Signal 対応表（旧 Glade -> 新 Controller / 履歴資料）
 
-最終更新: 2026-04-13
+最終更新: 2026-04-18
+
+## 位置づけ
+
+- この文書は Phase 5 以前に作成・更新された旧 glade signal 対応の履歴資料である。
+- current runtime の正本仕様を定義する文書ではない。
+- Phase6 以降は、旧 signal 名と widget ID の証跡確認に限定して参照する。
+- current runtime の構造判断は `gui-phase6-planning.md` と `gui-phase6-glade-adapter-judgement.md` を正本とする。
 
 ## 目的
 
-- 旧 glade/ui の signal 名と、Harite GUI の controller メソッド対応を固定化する。
-- 移植時に「どのイベントをどこへ移すか」を追跡可能にする。
+- Phase 5 以前の移植検討で使っていた、旧 glade/ui の signal 名と controller 対応の記録を保持する。
+- 後続フェーズで、旧 signal / widget の由来を追跡できるようにする。
 
 ## 前提
 
 - 旧資産原本: `docs/legacy-ui/` 配下
 - 新実装: `src/harite/gui/` 配下
 - MVP は常駐機能（tray/indicator/daemon）を対象外とする。
+- `src/harite/gui/resources/wallpositapplet.glade` は Phase6 で削除済みであり、本書は `docs/legacy-ui/wallpositapplet.glade` を参照する履歴文書として扱う。
 
 ## 対応表テンプレート
 
@@ -21,12 +29,12 @@
 
 ## 抽出結果（wallpositapplet.glade）
 
-外部 clone から取り込んだ `wallpositapplet.glade` の signal を分類した。
+外部 clone から取り込んだ `wallpositapplet.glade` の signal を、当時の移植判断用に分類した。
 
 ### 2026-04-13 全ボタン追跡（btn/tgl/rad）
 
 - 目的: signal 対応だけでなく、ボタンフェイス（label/use_stock/relief）と旧実装ハンドラ根拠を一体で追跡する。
-- 追跡対象: `src/harite/gui/resources/wallpositapplet.glade` 内の `btn*` / `tgl*` / `rad*` 全件。
+- 追跡対象: `docs/legacy-ui/wallpositapplet.glade` 内の `btn*` / `tgl*` / `rad*` 全件。
 - 追跡証跡: `out/manual-validation/glade-button-face-trace-20260413.csv`
 
 追跡サマリ:
@@ -40,12 +48,13 @@
 未解決4件の扱い:
 
 - `btnClrPathL`, `btnClrPathR`
- 	- glade signal は `on_btnClrPath_clicked`。
- 	- 旧実装では `WindowBase._initializeWindow()` の `signal_autoconnect` 辞書で `on_btnClrPath_clicked -> btnGetImg_clicked` に束ねており、共有ハンドラ方式。
+  - glade signal は `on_btnClrPath_clicked`。
+  - 旧実装では `WindowBase._initializeWindow()` の `signal_autoconnect` 辞書で `on_btnClrPath_clicked -> btnGetImg_clicked` に束ねており、共有ハンドラ方式。
 - `btnCancelSave`, `btnOpenSave`
- 	- 現行取り込み glade は `on_btnCancelSave_clicked` / `on_btnOpenSave_clicked`。
-	- 旧 `SaveWallpaperDialog.py` は `on_btnCancel_clicked` / `on_btnOpen_clicked` を接続しており、命名差分がある。
-	- 現行側は意味正規化として `on_btnCancelSave_clicked -> on_save_dialog_cancel`、`on_btnOpenSave_clicked -> on_save_dialog_confirm` を採用（close扱いにはしない）。
+  - 現行取り込み glade は `on_btnCancelSave_clicked` / `on_btnOpenSave_clicked`。
+  	- 旧 `SaveWallpaperDialog.py` は `on_btnCancel_clicked` / `on_btnOpen_clicked` を接続しており、命名差分がある。
+  	- 現行側は意味正規化として `on_btnCancelSave_clicked -> MainWindow.on_save_path_selection_canceled`、`on_btnOpenSave_clicked -> MainWindow.on_save_path_selected` を採用している。
+  	- ただしこれは glade 資産側の話であり、current runtime の adapter / backend はすでに `on_save_path_selection_canceled` / `on_save_path_selected` / `on_SavePathDialog_destroy` へ移行済みである。
 
 確度ラベル（本ファイルでの運用）:
 
@@ -68,7 +77,7 @@
 | wallpositapplet.glade | spnTopMergin/spnLMergin/spnRMergin/spnBtmMergin | value_changed | on_spnMergin_value_changed | MainWindow.on_change_margins | implemented | `--margins` へ集約 |
 | wallpositapplet.glade | radFixed / radNoFixed | toggled | on_radFixed_toggled | MainWindow.on_toggle_fixed | implemented | `--fixed` へ反映 |
 | wallpositapplet.glade | btnSave | clicked | on_btnSave_clicked | MainWindow.on_save | implemented | 旧MainWindowの Save 導線。Optimize ボタン同義として扱わない |
-| wallpositapplet.glade | btnSetWall | clicked | on_btnSetWall_clicked | MainWindow.on_apply_dry_run / on_apply_do_it | implemented | `apply` の安全導線に分離 |
+| wallpositapplet.glade | btnSetWall | clicked | on_btnSetWall_clicked | MainWindow.on_apply | implemented | Phase6 では `Apply` 即時実行を正本とする |
 | wallpositapplet.glade | btnSetColor | clicked | on_btnSetColor_clicked | MainWindow.on_set_color | implemented | 現時点は `planned` 明示（非透過化のため状態表示のみ先行） |
 | wallpositapplet.glade | entPathL / entPathR | insert_text | on_entPath_insert_text | MainWindow.on_change_input_text | implemented | Phase 1 優先 |
 | wallpositapplet.glade | WallPosit_MainWindow | delete_event | on_WallPosit_MainWindow_delete_event | MainWindow.on_close | implemented | Phase 1 優先 |
@@ -107,7 +116,7 @@
 |---|---|---|---|---|---|---|
 | wallpositapplet.glade | ColorSelectionDialog | destroy | on_ColorSelectionDialog_destroy | MainWindow.on_close_color_dialog | implemented | プレースホルダでクローズイベントを記録 |
 | wallpositapplet.glade | SrcdirDialog | destroy | on_SrcdirDialog_destroy | MainWindow.on_close_srcdir_dialog | implemented | プレースホルダでクローズイベントを記録 |
-| wallpositapplet.glade | SaveWallpaperDialog | destroy | on_SaveWallpaperDialog_destroy | MainWindow.on_close_save_dialog | implemented | プレースホルダでクローズイベントを記録 |
+| wallpositapplet.glade | SaveWallpaperDialog | destroy | on_SaveWallpaperDialog_destroy | MainWindow.on_close_save_path_dialog | implemented | glade 資産上の legacy handler。current runtime は `on_SavePathDialog_destroy` を正本とする |
 | wallpositapplet.glade | SettingDialog | destroy | on_SettingDialog_destroy | MainWindow.on_close_settings_dialog | implemented | プレースホルダでクローズイベントを記録 |
 | wallpositapplet.glade | ImgOpenDialog | destroy | on_ImgOpenDialog_destroy | MainWindow.on_close_open_image_dialog | implemented | プレースホルダでクローズイベントを記録 |
 | wallpositapplet.glade | ErrorDialog | destroy | on_ErrorDialog_destroy | MainWindow.on_close_error_dialog | implemented | プレースホルダでクローズ時にエラー状態をクリア |
@@ -137,6 +146,7 @@ Status 値:
 - `dropped` は理由が記録されている
 - MainWindow 初期表示から optimize 実行までの signal が追跡できる
 
-## 現在ステータス
+## 履歴ステータス
 
-- 2026-03-21 時点で、MVP 対象 signal はすべて `implemented`。
+- 2026-03-21 時点で、当時の MVP 対象 signal はすべて `implemented` と整理されていた。
+- 2026-04-18 時点では、本書は current runtime の設計書ではなく旧 glade signal 対応の履歴証跡として扱う。

@@ -1,6 +1,13 @@
-# GUI スタンドアロン設計（Glade資産取り込み前提）
+# GUI スタンドアロン設計（Glade資産取り込み前提 / 履歴資料）
 
-最終更新: 2026-03-21
+最終更新: 2026-04-18
+
+## 位置づけ
+
+- この文書は Phase 5 以前の GUI 移植初期に作成された履歴資料である。
+- current runtime の正本仕様を定義する文書ではない。
+- Glade 資産取り込み前提や `src/harite/gui/resources/` への抽出前提は当時の検討経緯として保持する。
+- Phase6 以降の正本判断は `gui-phase6-planning.md` と `gui-phase6-glade-adapter-judgement.md` を参照する。
 
 ## 目的
 
@@ -24,6 +31,8 @@
 
 ### 外部 clone からの取り込み前提
 
+以下は当時の取り込み前提の記録であり、current runtime の現行フローではない。
+
 - 旧母体の `.glade` / `.ui` は外部ディレクトリの clone 側に存在する前提で進める。
 - 取り込み元（現時点）: `C:/Users/oggy_/Develop/Repos/wallpaperoptimizer`
 - Harite 本体には次の手順で取り込む。
@@ -38,7 +47,7 @@
 
 - `docs/legacy-ui/wallpositapplet.glade`
 - `docs/legacy-ui/Glade.py`
-- `src/harite/gui/resources/wallpositapplet.glade`
+- `docs/legacy-ui/wallpositapplet.glade`
 
 ### 参照可能な上流仕様知見
 

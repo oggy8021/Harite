@@ -28,16 +28,16 @@ def test_phase5_visual_tokens_snapshot_is_stable():
     }
 
     assert snapshot == {
-        "main_section": "Main",
+        "main_section": "Compose / Input",
         "optimize_section": "Optimize",
         "apply_section": "Apply",
-        "style_tiers": "Style cues: secondary(about/help) | planned",
+        "style_tiers": "Style cues: secondary(about/help) | phase7(color)",
         "current_state": "Current state",
         "flow": "Flow: Compose -> Optimize -> Apply",
         "save_target": "Save target: not-selected",
-        "save": "Save",
+        "save": "Save As",
         "optimize": "Optimize",
-        "apply": "Apply (dry-run)",
+        "apply": "Apply",
         "prefs": "Prefs",
         "about": "About (secondary)",
         "help": "Help (secondary)",
@@ -57,9 +57,9 @@ def test_phase5_runtime_smoke_optimize_then_apply_updates_visual_states():
     apply_target = backend.get_object("lblApplyTarget")
     status = backend.get_object("lblStatus")
 
-    backend.connect_signals({"on_entPath_insert_text": lambda _text: None})
-    backend.connect_signals({"on_btnOptimize_clicked": lambda: True})
-    backend.connect_signals({"on_btnSetWall_clicked": lambda: True})
+    backend.connect_signals({"on_change_input_text": lambda _text: None})
+    backend.connect_signals({"on_optimize": lambda: True})
+    backend.connect_signals({"on_apply": lambda: True})
 
     assert optimize_btn.sensitive is False
     assert apply_btn.sensitive is False
@@ -79,7 +79,7 @@ def test_phase5_runtime_smoke_optimize_then_apply_updates_visual_states():
 
     apply_btn.click()
 
-    assert status.text == "Apply: dry-run-ok"
+    assert status.text == "Apply: ok"
     assert apply_target.text == "Apply target: consumed"
 
 
@@ -87,17 +87,18 @@ def test_phase5_mainwindow_blueprint_smoke_matches_visual_checklist_scope():
     win = MainWindow()
     bp = win.get_layout_blueprint()
 
-    assert bp["layout_version"] == "phase5-radical-mainwindow"
+    assert bp["layout_version"] == "phase6-watch-tab-split"
     assert [name for name, _ in bp["sections"]] == [
+        "compose_input",
         "hero",
-        "optimize_panel",
-        "apply_panel",
+        "action_cluster",
+        "watch_tab",
+        "secondary_meta",
         "status_panel",
     ]
     assert bp["primary_action_flow"] == (
         "hero",
         "optimize",
-        "apply_dry_run",
-        "apply_do_it",
+        "apply",
     )
     assert bp["subtitle"] == "Compose -> Optimize -> Apply"

@@ -1,9 +1,6 @@
-from pathlib import Path
-
 import pytest
 
-from harite.gui.adapters.ui_adapter import bind_mainwindow, connect_signal_dispatch
-from harite.gui.adapters.ui_loader import UiLoadResult
+from harite.gui.adapters.ui_adapter import RUNTIME_HANDLER_MAP, connect_signal_dispatch, create_mainwindow_signal_dispatch
 
 
 class DummyWindow:
@@ -12,6 +9,14 @@ class DummyWindow:
 
     def on_save(self) -> bool:
         self.optimized = True
+        return True
+
+    def on_optimize(self) -> bool:
+        self.optimize_called = True
+        return True
+
+    def on_apply(self) -> bool:
+        self.apply_called = True
         return True
 
 
@@ -34,8 +39,8 @@ class BackendWithConnect:
 def test_connect_signal_dispatch_uses_connect_signals_strategy():
     backend = BackendWithConnectSignals()
     dispatch = {
-        "on_entPath_insert_text": lambda _text: None,
-        "on_btnSave_clicked": lambda: True,
+        "on_change_input_text": lambda _text: None,
+        "on_save": lambda: True,
     }
 
     info = connect_signal_dispatch(backend, dispatch)
@@ -48,8 +53,8 @@ def test_connect_signal_dispatch_uses_connect_signals_strategy():
 def test_connect_signal_dispatch_uses_connect_strategy():
     backend = BackendWithConnect()
     dispatch = {
-        "on_entPath_insert_text": lambda _text: None,
-        "on_btnSave_clicked": lambda: True,
+        "on_change_input_text": lambda _text: None,
+        "on_save": lambda: True,
     }
 
     info = connect_signal_dispatch(backend, dispatch)
@@ -61,26 +66,40 @@ def test_connect_signal_dispatch_uses_connect_strategy():
 
 def test_connect_signal_dispatch_raises_for_unsupported_backend():
     with pytest.raises(TypeError, match="signal backend must provide"):
-        connect_signal_dispatch(object(), {"on_btnSave_clicked": lambda: True})
+        connect_signal_dispatch(object(), {"on_save": lambda: True})
 
 
-def test_bind_mainwindow_records_signal_connection_metadata():
-    win = DummyWindow()
-    backend = BackendWithConnectSignals()
-    result = UiLoadResult(
-        file_path=Path("/tmp/fake.glade"),
-        root_tag="interface",
-        widget_count=3,
-        signal_count=2,
-        signal_handlers=(
-            "on_entPath_insert_text",
-            "on_btnSave_clicked",
-        ),
+def test_create_mainwindow_signal_dispatch_binds_current_runtime_handlers():
+    window = DummyWindow()
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        ("on_change_input_text", "on_save", "on_optimize", "on_apply"),
+        handler_map=RUNTIME_HANDLER_MAP,
     )
 
-    bind_mainwindow(win, result, signal_backend=backend)
+    assert set(dispatch.keys()) == {"on_change_input_text", "on_save", "on_optimize", "on_apply"}
 
-    assert "signal_connection" in win._adapter_bindings
-    conn = win._adapter_bindings["signal_connection"]
-    assert conn["strategy"] == "connect_signals"
-    assert conn["connected_count"] == 2
+    dispatch["on_change_input_text"]("/tmp/input.jpg")
+    assert window.last_input == "/tmp/input.jpg"
+    assert dispatch["on_save"]() is True
+    assert window.optimized is True
+    assert dispatch["on_optimize"]() is True
+    assert window.optimize_called is True
+    assert dispatch["on_apply"]() is True
+    assert window.apply_called is True
+
+
+def test_create_mainwindow_signal_dispatch_skips_unimplemented_runtime_methods():
+    class PartialWindow:
+        def on_change_input_text(self, text: str) -> None:
+            self.last_input = text
+
+    dispatch = create_mainwindow_signal_dispatch(
+        PartialWindow(),
+        ("on_change_input_text", "on_save", "on_optimize", "on_missing"),
+        handler_map=RUNTIME_HANDLER_MAP,
+    )
+
+    assert set(dispatch.keys()) == {"on_change_input_text"}
+

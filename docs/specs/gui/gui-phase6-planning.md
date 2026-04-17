@@ -1,6 +1,6 @@
 # GUI Phase 6 計画（言語モデル負債の改修フェーズ）
 
-最終更新: 2026-04-16
+最終更新: 2026-04-17
 
 ## 位置づけ
 
@@ -34,7 +34,7 @@
 - glade を repo から撤去する方針と、その後に残す adapter 層 / fallback backend の扱いが判断できる材料が揃っている。
 - `do-it` を採らず、`Apply` を即時実行として扱う前提が CLI / GUI の両方で整理されている。
 - Phase7 へ入る前提として、「新規 GUI を最初から作るなら普通こう置く」という標準形に十分近づいたと説明できる。
-- XFCE 実機で、間に合わせインターフェースではない GUI 機能込みの Harite sdist リリースを組める段階に到達している。
+- owner が XFCE 実機で GUI を確認し、Phase6 の出口条件として承認を返せる段階に到達している。
 
 ## フェーズ方針
 
@@ -155,7 +155,7 @@
 
 - Phase6 でコア機能の責務と構造を確定させる。
 - Phase6 の出口では、glade / adapter / fallback backend に引きずられた構造ではなく、「新規 GUI の標準形」に近いと説明できる状態を要求する。
-- Phase6 の出口では、XFCE 実機で「間に合わせではない」GUI を含む Harite の sdist リリースを現実的に組める状態を要求する。
+- Phase6 の出口では、owner が XFCE 実機で「間に合わせではない」GUI と判断し、承認を返せる状態を要求する。
 - ただし「間に合わせではない」の具体条件は、Phase6 後半の構造整理と実装見通しを踏まえて定義する。
 - Phase7 では、それを前提に新機能へ入る。
 - Phase7 に送ってよいのは新機能そのものだけで、Phase5/6 由来の構造負債は極力持ち越さない。
@@ -165,7 +165,7 @@
 - Phase6 の責務は、既存 GUI を新機能追加前の標準形へ戻すことにある。
 - ここでいう標準形とは、古い signal を読んで変換してから新 signal へ流す多段 adapter を前提にせず、可能な限り単純な接続と責務境界で説明できる構造を指す。
 - fallback backend も UI 本体ではなく、安全網としてだけ説明できるところまで落ちている必要がある。
-- 加えて、XFCE 実機で「間に合わせではない」GUI 機能を含んだ Harite の sdist リリースを組める段階である必要がある。
+- 加えて、owner が XFCE 実機で「間に合わせではない」GUI と判断し、承認を返せる段階である必要がある。
 - この「間に合わせではない」の具体定義は、Phase6 後半で固める。
 - この条件を満たして初めて、Phase7 を新機能フェーズとして切り出す。
 
@@ -298,17 +298,17 @@
 
 1. zone 構成の方向を採るか。
 2. glade を Phase6 のうちに repo から撤去する前提でよいか。
-3. glade 撤去後、既存 docs 参照と母体プログラム参照を前提にして、「新規 GUI の標準形」に近づくよう、adapter / fallback backend をどこまで落とし、どこをより単純な直結へ寄せるか。
-4. Phase6 で「新規 GUI の標準形」まで戻す範囲と、Phase7 へ送る範囲をどこで切るか。
-5. XFCE 実機で GUI 機能込みの Harite sdist リリースを組める段階を、Phase6 完了条件に含めるか。
-6. 「間に合わせではない GUI」の具体条件を、Phase6 後半でどう定義するか。
+3. app の glade prototype 前提を完全に撤去し、起動導線を runtime backend / fallback backend 基準へ一本化する。
+4. glade 撤去後、既存 docs 参照と母体プログラム参照を前提にして、「新規 GUI の標準形」に近づくよう、adapter / fallback backend をどこまで落とし、どこをより単純な直結へ寄せるか。
+5. Phase6 で「新規 GUI の標準形」まで戻す範囲と、Phase7 へ送る範囲をどこで切るか。
+6. Phase6 の出口条件は、owner が XFCE 実機で GUI を確認し、承認を返した時点で満たすものとする。
 7. アイコン表現を既存 docs の記述も踏まえて、Phase6 後半でどう定義するか。
 
 現時点の実質論点:
 
 1. まず owner が決める本丸は zone 構成である。
-2. adapter / fallback backend / Phase6 範囲は、その zone 判断に従属して詰める。
-3. 「間に合わせではない GUI」の具体条件は Phase6 後半で詰める。
+2. glade prototype 前提の撤去を先に固定し、その後に adapter / fallback backend / Phase6 範囲を詰める。
+3. 出口条件は、owner の XFCE 実機確認と承認をもって満たす。
 
 入力資料:
 
@@ -333,7 +333,7 @@ owner 返答テンプレート（簡略版）:
 - 例:
   - `Decision 1 は 2`
   - `Decision 2 は Prefs 残す、Color Phase7、Save Confirm/Cancel 全廃`
-  - `Decision 3 は案Bベース、adapter はさらに落とす、backend は安全網まで、XFCEでsdistを切れる段階までをP6に含める`
+  - `Decision 3 は glade prototype 前提を完全撤去、adapter はさらに落とす、backend は安全網まで`
 - zone だけ先に返す場合の例:
   - `Decision 3 は Header共通、Prefs は Secondary、Save は右上系の標準位置、Optimize/Apply は右下で隣接、Watch は別tab`
 - 細かい条件がある場合だけ、補足を 1-3 行で付ける。
@@ -347,4 +347,20 @@ owner 返答テンプレート（簡略版）:
 - Gate C:
   - T6-3 完了までは、下部コントロールの削除/再配置を確定しない。
 - Gate D:
-  - T6-4 と T6-5 完了までは、glade 撤去や adapter 廃止を実装着手しない。
+  - T6-4 と T6-5 完了後は、glade prototype 前提の撤去を優先し、app 起動導線から先に落とす。
+
+## 実装反映メモ
+
+- 2026-04-17 時点で、Decision 1 と Decision 2 のうち GUI に直結する主要項目は、runtime fallback / `MainWindow` / adapter 上で段階反映が進んでいる。
+- `Apply` は GUI 上で即時実行前提へ戻してあり、`MainWindow` の apply surface も `on_apply` へ一本化している。
+- `Save Confirm` / `Save Cancel` の常設 UI は fallback backend から除去済みで、save path 選択は `Save As` と chooser 主体の流れへ寄せている。
+- `MainWindow` の save status / open-state と primary method は `save_path` / `save_path_dialog_open` / `on_save_path_selected` / `on_save_path_selection_canceled` / `on_close_save_path_dialog` へ寄せてある。
+- `Save` の英語ラベルは `Save As` に変更済みで、main 側では header / flow 側の標準保存位置へ寄せる方向で再配置している。
+- `Watch` は main/status から分離し、fallback backend では別 tab として扱う形へ移行済みである。
+- `Prefs` は secondary 側へ残し、`Color` は Phase7 送りの扱いとして、表示文言・status ともに `deferred` / `phase7` 読みへ寄せている。
+- fallback backend の save chooser 周辺は `SavePathDialog` / `lblSavePathState` を正本 key とし、save handler も `on_save_path_selected` / `on_save_path_selection_canceled` / `on_SavePathDialog_destroy` にそろえている。
+- app 起動導線は glade prototype の静的読込を前提にしない形へ切り替えてあり、`--load-ui-prototype` と `HARITE_GUI_LOAD_UI` は撤去済みとする。
+- adapter / fallback backend はまだ残しているが、save path handler や apply handler などの正本名を優先するだけでなく、current runtime からは save legacy signal 名と legacy object id 解決を除去した。
+- save 系 legacy 名は current runtime から外れたため、残る glade resource 側の旧名は証跡または撤去対象として扱う。
+- save 以外の dialog destroy 系は、close 以上の独自 semantics を持たないため、Phase6 では正本名を増やさず glade 由来 signal 名のまま入口互換として維持する方針で揃えている。
+- 未了項目は、glade / adapter / backend の最終的な縮退線と、owner の XFCE 実機確認へ出せる状態まで整えることである。

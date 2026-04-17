@@ -17,7 +17,7 @@
 ## 一次参照
 
 - [docs/legacy-ui/wallpositapplet.glade](docs/legacy-ui/wallpositapplet.glade)
-- [docs/specs/gui/gui-glade-layout-reconstruction.md](docs/specs/gui/gui-glade-layout-reconstruction.md)
+- [docs/specs/gui/gui-glade-layout-reconstruction.md](docs/specs/gui/gui-glade-layout-reconstruction.md) 旧 Glade レイアウト再構成の履歴資料
 - [docs/specs/gui/gui-phase6-lower-controls-responsibility.md](docs/specs/gui/gui-phase6-lower-controls-responsibility.md)
 - [src/harite/gui/views/main_window.py](src/harite/gui/views/main_window.py)
 - [src/harite/gui/adapters/gtk_backend.py](src/harite/gui/adapters/gtk_backend.py)
@@ -226,7 +226,7 @@
 ### 崩す構造
 
 - glade の「何でも下部 1 行バーへ置く」構造
-- Save dialog 内部操作を恒常ボタンとして見せる構造
+- save path chooser 内部操作を恒常ボタンとして見せる構造
 - `Prefs` / `Color` / `Apply` を同列の補助ボタンとして並べる構造
 
 ### 参照のみ維持する構造
@@ -238,7 +238,7 @@
 補足:
 
 - ここでいう「参照のみ維持」は、glade 実ファイルを repo に残す意味ではない。
-- 必要な意味は [docs/specs/gui/gui-glade-layout-reconstruction.md](docs/specs/gui/gui-glade-layout-reconstruction.md) のような再記述 docs 側へ吸収する前提である。
+- 必要な意味は [docs/specs/gui/gui-glade-layout-reconstruction.md](docs/specs/gui/gui-glade-layout-reconstruction.md) のような履歴再記述 docs 側へ吸収する前提である。
 
 ## zone 案
 
