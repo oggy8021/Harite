@@ -9,6 +9,7 @@ RUNTIME_HANDLER_MAP: dict[str, str] = {
     "on_save": "on_save",
     "on_optimize": "on_optimize",
     "on_apply": "on_apply",
+    "on_change_apply_mode": "on_change_apply_mode",
     "on_watch_start": "on_watch_start",
     "on_watch_stop": "on_watch_stop",
     "on_watch_interval_change": "on_watch_interval_change",

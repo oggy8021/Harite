@@ -9,10 +9,12 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
+from harite.core import split_composite_for_displays
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
 from harite.gui.services.cli_mapper import OptimizeRequest, to_cli_args
 from harite.plugins import registry as plugin_registry
 from harite.watch import collect_watch_input_images, select_next_image
+from harite.workspace import detect_displays
 
 
 class MainWindow:
@@ -34,6 +36,7 @@ class MainWindow:
         self.plugin_name = self._default_plugin_name()
         self.last_saved_files: list[Path] = []
         self.save_target_display = "Save target: not-selected"
+        self.apply_mode = "single-file"
         self.watch_interval_seconds = 60
         self.watch_srcdir_l = ""
         self.watch_srcdir_r = ""
@@ -275,12 +278,49 @@ class MainWindow:
         self.status_message = message
         self.last_error = error
 
+    def _sync_two_screen_state(self) -> None:
+        if not (self.input_path_l and self.input_path_r):
+            self.form_state.two_screen = False
+            self.form_state.l_display = None
+            self.form_state.r_display = None
+            return
+
+        displays = detect_displays()
+        if len(displays) < 2:
+            self.form_state.two_screen = False
+            self.form_state.l_display = None
+            self.form_state.r_display = None
+            self._log("Two-screen unavailable: detected displays < 2")
+            return
+
+        left_display, right_display = displays[0], displays[1]
+        self.form_state.two_screen = True
+        self.form_state.l_display = f"{left_display.width}x{left_display.height}"
+        self.form_state.r_display = f"{right_display.width}x{right_display.height}"
+        self._log(
+            "Two-screen auto-configured: "
+            f"L={self.form_state.l_display} R={self.form_state.r_display}"
+        )
+
+    def on_change_apply_mode(self, mode: str) -> bool:
+        value = (mode or "").strip().lower()
+        if value not in {"single-file", "per-monitor-auto-split"}:
+            self.last_error = f"unknown apply mode: {mode}"
+            self._log(f"Apply mode update failed: unknown mode {mode}")
+            return False
+
+        self.apply_mode = value
+        self.last_error = ""
+        self._log(f"Apply mode updated: {value}")
+        return True
+
     def on_change_input_text(self, text: str) -> None:
         normalized = text.strip()
         parts = [part.strip() for part in normalized.split(",") if part.strip()]
         self.input_path_l = parts[0] if len(parts) >= 1 else ""
         self.input_path_r = parts[1] if len(parts) >= 2 else ""
         self.form_state.input_value = ",".join(parts)
+        self._sync_two_screen_state()
         self.can_optimize = bool(text and text.strip())
         if not self.can_optimize:
             # Input changed to empty; reset apply readiness to avoid stale flow.
@@ -337,7 +377,44 @@ class MainWindow:
 
         self._set_status("running", "apply", "applying wallpaper")
 
-        target = str(self.last_saved_files[-1])
+        composite_path = self.last_saved_files[-1]
+        target: str | dict[str, Path]
+        if self.apply_mode == "per-monitor-auto-split":
+            if self.plugin_name != "linux":
+                self._set_status(
+                    "error",
+                    "apply",
+                    "per-monitor apply requires linux plugin",
+                    error="per-monitor apply requires linux plugin",
+                )
+                self._log("Apply failed: per-monitor apply requires linux plugin")
+                return False
+
+            displays = detect_displays()
+            if len(displays) < 2:
+                self._set_status(
+                    "error",
+                    "apply",
+                    "per-monitor apply requires at least two detected displays",
+                    error="per-monitor apply requires at least two detected displays",
+                )
+                self._log("Apply failed: detected displays < 2 for per-monitor auto-split")
+                return False
+
+            target = split_composite_for_displays(composite_path, displays, composite_path.parent)
+            if not target:
+                self._set_status(
+                    "error",
+                    "apply",
+                    "per-monitor split failed",
+                    error="per-monitor split failed",
+                )
+                self._log(f"Apply failed: per-monitor split failed for {composite_path}")
+                return False
+            self._log(f"Apply per-monitor auto-split: {target}")
+        else:
+            target = str(composite_path)
+
         try:
             plugin = plugin_registry.get(self.plugin_name)
         except KeyError:

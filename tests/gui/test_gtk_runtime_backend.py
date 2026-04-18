@@ -295,6 +295,17 @@ def test_runtime_backend_updates_mainwindow_form_state_for_toggles_and_margins()
     assert window.form_state.margins == "0,0,25,0"
 
 
+def test_runtime_backend_updates_mainwindow_apply_mode_state():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    dispatch = create_mainwindow_signal_dispatch(window, ("on_change_apply_mode",))
+    backend.connect_signals(dispatch)
+
+    backend.get_object("radApplyPerMonitor").click()
+
+    assert window.apply_mode == "per-monitor-auto-split"
+
+
 def test_runtime_backend_input_controls_optimize_button_state():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
@@ -885,6 +896,27 @@ def test_runtime_backend_apply_success_updates_apply_target():
     assert status.text == "Apply: ok"
     assert error.text == "Error: none"
     assert apply_target.text == "Apply target: last applied"
+
+
+def test_runtime_backend_apply_mode_defaults_to_single_file():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    assert backend.get_object("radApplySingle").get_active() is True
+    assert backend.get_object("radApplyPerMonitor").get_active() is False
+    assert backend.get_object("lblApplyMode").text == "Apply mode: single-file"
+
+
+def test_runtime_backend_apply_mode_toggle_dispatches_and_updates_label():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    observed = {}
+
+    backend.connect_signals({"on_change_apply_mode": lambda mode: observed.setdefault("mode", mode) or True})
+
+    backend.get_object("radApplyPerMonitor").click()
+
+    assert observed["mode"] == "per-monitor-auto-split"
+    assert backend.get_object("lblApplyMode").text == "Apply mode: per-monitor auto-split"
+    assert backend.get_object("lblStatus").text == "ApplyMode: updated"
 
 
 def test_runtime_backend_optimize_sets_running_state_before_handler_call():

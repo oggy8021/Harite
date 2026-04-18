@@ -672,6 +672,22 @@ class GtkRuntimeSignalBackend:
                 apply_target.set_xalign(0.0)
             apply_row.pack_start(apply_target, True, True, 0)
 
+            apply_mode_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            apply_group.pack_start(apply_mode_row, False, False, 0)
+            rad_apply_single = gtk_module.RadioButton.new_with_label(None, "Single")
+            rad_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(
+                rad_apply_single,
+                "Per-monitor",
+            )
+            if hasattr(rad_apply_single, "set_active"):
+                rad_apply_single.set_active(True)
+            apply_mode_label = gtk_module.Label(label="Apply mode: single-file")
+            if hasattr(apply_mode_label, "set_xalign"):
+                apply_mode_label.set_xalign(0.0)
+            apply_mode_row.pack_start(rad_apply_single, False, False, 0)
+            apply_mode_row.pack_start(rad_apply_per_monitor, False, False, 0)
+            apply_mode_row.pack_start(apply_mode_label, True, True, 0)
+
             do_it_plan_label = gtk_module.Label(label="Debug: apply is immediate")
             if hasattr(do_it_plan_label, "set_xalign"):
                 do_it_plan_label.set_xalign(0.0)
@@ -886,6 +902,9 @@ class GtkRuntimeSignalBackend:
                 "boxApplySection": apply_row,
                 "btnSetWall": apply_btn,
                 "lblApplyTarget": apply_target,
+                "radApplySingle": rad_apply_single,
+                "radApplyPerMonitor": rad_apply_per_monitor,
+                "lblApplyMode": apply_mode_label,
                 "lblDoItPlanned": do_it_plan_label,
                 "lblSaveTarget": save_target_label,
                 "lblPriorityRule": priority_note_label,
@@ -980,6 +999,11 @@ class GtkRuntimeSignalBackend:
             optimize_btn.connect("clicked", self._on_save_clicked)
             optimize_modern_btn.connect("clicked", self._on_optimize_clicked)
             apply_btn.connect("clicked", self._on_apply_clicked)
+            rad_apply_single.connect("clicked", lambda *_args: self._on_apply_mode_selected("single-file"))
+            rad_apply_per_monitor.connect(
+                "clicked",
+                lambda *_args: self._on_apply_mode_selected("per-monitor-auto-split"),
+            )
             btn_set_color.connect("clicked", self._on_color_clicked)
             btn_open_srcdir_l.connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("L"))
             btn_open_srcdir_r.connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("R"))
@@ -1644,6 +1668,22 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Optimize", state="error", error=str(exc))
             self._set_label_text("lblOptimizeResult", "Optimize result: error")
             self._set_label_text("lblApplyTarget", "Apply target: not-ready")
+
+    def _on_apply_mode_selected(self, mode: str) -> None:
+        single_mode = mode == "single-file"
+        self._set_toggle_active("radApplySingle", single_mode)
+        self._set_toggle_active("radApplyPerMonitor", not single_mode)
+        label = "Apply mode: single-file" if single_mode else "Apply mode: per-monitor auto-split"
+        self._set_label_text("lblApplyMode", label)
+
+        callback = self._signal_handlers.get("on_change_apply_mode")
+        if callback is None:
+            return
+        try:
+            callback(mode)
+            self._set_feedback(phase="ApplyMode", state="updated")
+        except Exception as exc:
+            self._set_feedback(phase="ApplyMode", state="error", error=str(exc))
 
     def _on_save_clicked(self, *_args: Any) -> None:
         # P6 direction: Save As keeps chooser semantics, but fallback should not
