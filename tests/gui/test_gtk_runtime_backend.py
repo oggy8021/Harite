@@ -177,13 +177,30 @@ class _SpinButton(_WidgetBase):
 
 
 class _RadioButton(_ToggleButton):
+    def __init__(self, label="", group=None):
+        super().__init__(label=label)
+        if group is None:
+            self._group = [self]
+        else:
+            self._group = group
+            self._group.append(self)
+
     @classmethod
     def new_with_label(cls, _group, label):
         return cls(label=label)
 
     @classmethod
     def new_with_label_from_widget(cls, _widget, label):
-        return cls(label=label)
+        group = getattr(_widget, "_group", [_widget])
+        return cls(label=label, group=group)
+
+    def click(self):
+        self.emit("pressed", self)
+        for member in getattr(self, "_group", [self]):
+            member._active = member is self
+            member.emit("toggled", member)
+        self.emit("released", self)
+        self.emit("clicked", self)
 
 
 class _FakeGtk:

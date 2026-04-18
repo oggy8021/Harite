@@ -999,10 +999,13 @@ class GtkRuntimeSignalBackend:
             optimize_btn.connect("clicked", self._on_save_clicked)
             optimize_modern_btn.connect("clicked", self._on_optimize_clicked)
             apply_btn.connect("clicked", self._on_apply_clicked)
-            rad_apply_single.connect("clicked", lambda *_args: self._on_apply_mode_selected("single-file"))
+            rad_apply_single.connect(
+                "toggled",
+                lambda widget, *_args: self._on_apply_mode_toggled(widget, "single-file"),
+            )
             rad_apply_per_monitor.connect(
-                "clicked",
-                lambda *_args: self._on_apply_mode_selected("per-monitor-auto-split"),
+                "toggled",
+                lambda widget, *_args: self._on_apply_mode_toggled(widget, "per-monitor-auto-split"),
             )
             btn_set_color.connect("clicked", self._on_color_clicked)
             btn_open_srcdir_l.connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("L"))
@@ -1669,11 +1672,14 @@ class GtkRuntimeSignalBackend:
             self._set_label_text("lblOptimizeResult", "Optimize result: error")
             self._set_label_text("lblApplyTarget", "Apply target: not-ready")
 
-    def _on_apply_mode_selected(self, mode: str) -> None:
-        single_mode = mode == "single-file"
-        self._set_toggle_active("radApplySingle", single_mode)
-        self._set_toggle_active("radApplyPerMonitor", not single_mode)
-        label = "Apply mode: single-file" if single_mode else "Apply mode: per-monitor auto-split"
+    def _on_apply_mode_toggled(self, widget: Any, mode: str) -> None:
+        is_active = True
+        if hasattr(widget, "get_active"):
+            is_active = bool(widget.get_active())
+        if not is_active:
+            return
+
+        label = "Apply mode: single-file" if mode == "single-file" else "Apply mode: per-monitor auto-split"
         self._set_label_text("lblApplyMode", label)
 
         callback = self._signal_handlers.get("on_change_apply_mode")
