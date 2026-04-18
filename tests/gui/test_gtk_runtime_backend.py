@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from harite.gui.adapters.gtk_backend import GtkRuntimeSignalBackend
+from harite.gui.adapters.ui_adapter import create_mainwindow_signal_dispatch
+from harite.gui.views.main_window import MainWindow
 
 
 class _Orientation:
@@ -268,6 +270,31 @@ class _NativeFakeGtk(_FakeGtk):
     STOCK_SAVE = "gtk-save"
 
 
+def test_runtime_backend_updates_mainwindow_form_state_for_toggles_and_margins():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    dispatch = create_mainwindow_signal_dispatch(window, tuple(backend._signal_handlers.keys()) if backend._signal_handlers else tuple())
+
+    if not dispatch:
+        dispatch = create_mainwindow_signal_dispatch(window, (
+            "on_toggle_fixed",
+            "on_toggle_position_pressed",
+            "on_toggle_position",
+            "on_toggle_position_reset",
+            "on_change_margins",
+        ))
+    backend.connect_signals(dispatch)
+
+    backend.get_object("tglPushRightL").click()
+    backend.get_object("tglUpperR").click()
+    backend.get_object("spnTopMergin").set_value(25)
+    backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
+
+    assert window.form_state.align == "right"
+    assert window.form_state.valign == "top"
+    assert window.form_state.margins == "0,0,25,0"
+
+
 def test_runtime_backend_input_controls_optimize_button_state():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
@@ -513,10 +540,66 @@ def test_runtime_backend_open_l_uses_dialog_selection_and_calls_pick_handler():
 
     assert observed["path"] == "/tmp/left.jpg"
     assert observed["side"] == "L"
-    assert entry.get_text() == "/tmp/left.jpg"
+    assert entry.get_text() == "left.jpg"
     assert pick_state.text == "Open-L: selected"
     assert status.text == "Open-L: selected"
     assert error.text == "Error: none"
+
+
+def test_runtime_backend_clear_l_clears_only_left_side_and_keeps_right_input():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    entry_l = backend.get_object("entPathL")
+    entry_r = backend.get_object("entPathR")
+    clear_l = backend.get_object("btnClrPathL")
+    optimize_btn = backend.get_object("btnOptimize")
+    status = backend.get_object("lblStatus")
+    observed = {"text": None}
+
+    def on_change(text):
+        observed["text"] = text
+
+    backend.connect_signals({"on_change_input_text": on_change})
+    backend.connect_signals({"on_pick_input": lambda path, side=None: True})
+
+    dialog = backend.get_object("ImgOpenDialog")
+    backend.get_object("btnGetImgL").click()
+    dialog.set_filename("/tmp/left-image.jpg")
+    dialog.confirm()
+    backend.get_object("btnGetImgR").click()
+    dialog.set_filename("/tmp/right-image.jpg")
+    dialog.confirm()
+
+    clear_l.click()
+
+    assert entry_l.get_text() == ""
+    assert entry_r.get_text() == "right-image.jpg"
+    assert observed["text"] == "/tmp/right-image.jpg"
+    assert optimize_btn.sensitive is True
+    assert status.text == "Clear-L: ok"
+
+
+def test_runtime_backend_clear_r_disables_actions_when_last_input_cleared():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    entry_r = backend.get_object("entPathR")
+    clear_r = backend.get_object("btnClrPathR")
+    save_btn = backend.get_object("btnSave")
+    optimize_btn = backend.get_object("btnOptimize")
+
+    backend.connect_signals({"on_change_input_text": lambda _text: None})
+    backend.connect_signals({"on_pick_input": lambda path, side=None: True})
+
+    dialog = backend.get_object("ImgOpenDialog")
+    backend.get_object("btnGetImgR").click()
+    dialog.set_filename("/tmp/right-image.jpg")
+    dialog.confirm()
+
+    clear_r.click()
+
+    assert entry_r.get_text() == ""
+    assert save_btn.sensitive is False
+    assert optimize_btn.sensitive is False
 
 
 def test_runtime_backend_open_r_opens_dialog_without_entry_path_requirement():
@@ -974,9 +1057,9 @@ def test_runtime_backend_toggle_callbacks_follow_upstream_order():
 
     backend.connect_signals(
         {
-            "on_toggle_position_pressed": lambda widget: calls.append(("pressed", widget.get_name())),
-            "on_toggle_position": lambda widget: calls.append(("toggled", widget.get_name(), widget.get_active())),
-            "on_toggle_position_reset": lambda widget: calls.append(("released", widget.get_name())),
+            "on_toggle_position_pressed": lambda name: calls.append(("pressed", name)),
+            "on_toggle_position": lambda name, active: calls.append(("toggled", name, active)),
+            "on_toggle_position_reset": lambda name: calls.append(("released", name)),
         }
     )
 
@@ -987,7 +1070,6 @@ def test_runtime_backend_toggle_callbacks_follow_upstream_order():
     assert calls == [
         ("pressed", "tglUpperL"),
         ("toggled", "tglUpperL", True),
-        ("released", "tglUpperL"),
         ("pressed", "tglUpperL"),
         ("toggled", "tglUpperL", False),
         ("released", "tglUpperL"),
@@ -1006,9 +1088,9 @@ def test_runtime_backend_margin_change_propagates_all_values():
     error = backend.get_object("lblError")
     captured = {}
 
-    def on_margins(widget):
-        captured["name"] = widget.get_name()
-        captured["value"] = widget.get_value_as_int()
+    def on_margins(name, value):
+        captured["name"] = name
+        captured["value"] = value
 
     backend.connect_signals({"on_change_margins": on_margins})
     backend.get_object("spnLMergin").emit("value-changed", backend.get_object("spnLMergin"))

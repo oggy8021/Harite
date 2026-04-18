@@ -432,6 +432,8 @@ class GtkRuntimeSignalBackend:
     def __init__(self, gtk_module: Any) -> None:
         self._gtk = gtk_module
         self._signal_handlers: dict[str, Callable[..., Any]] = {}
+        self._input_path_l = ""
+        self._input_path_r = ""
         self._watch_srcdir_l = ""
         self._watch_srcdir_r = ""
         self._watch_running = False
@@ -967,6 +969,8 @@ class GtkRuntimeSignalBackend:
             tgl_push_right_r.connect("released", lambda *_args: self._on_direction_released("tglPushRightR"))
             btn_get_img_l.connect("clicked", lambda *_args: self._on_pick_input_clicked("L"))
             btn_get_img_r.connect("clicked", lambda *_args: self._on_pick_input_clicked("R"))
+            btn_clr_path_l.connect("clicked", lambda *_args: self._on_clear_input_clicked("L"))
+            btn_clr_path_r.connect("clicked", lambda *_args: self._on_clear_input_clicked("R"))
             rad_fixed.connect("clicked", lambda *_args: self._on_fixed_selection(True))
             rad_no_fixed.connect("clicked", lambda *_args: self._on_fixed_selection(False))
             top_margin_spin.connect("value-changed", self._on_margin_changed)
@@ -1145,15 +1149,15 @@ class GtkRuntimeSignalBackend:
 
     def _on_input_changed(self, entry: Any) -> None:
         callback = self._signal_handlers.get("on_change_input_text")
-        text_l = ""
-        text_r = ""
+        text_l = self._input_path_l.strip()
+        text_r = self._input_path_r.strip()
 
         entry_l = self._objects.get("entPathL")
-        if entry_l is not None and hasattr(entry_l, "get_text"):
+        if not text_l and entry_l is not None and hasattr(entry_l, "get_text"):
             text_l = str(entry_l.get_text() or "").strip()
 
         entry_r = self._objects.get("entPathR")
-        if entry_r is not None and hasattr(entry_r, "get_text"):
+        if not text_r and entry_r is not None and hasattr(entry_r, "get_text"):
             text_r = str(entry_r.get_text() or "").strip()
 
         input_values = [value for value in (text_l, text_r) if value]
@@ -1178,11 +1182,7 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Input", state="failed", error=str(exc))
 
     def _on_pick_input_clicked(self, side: str) -> None:
-        entry_name = "entPathL" if side == "L" else "entPathR"
-        entry = self._objects.get(entry_name)
-        value = ""
-        if entry is not None and hasattr(entry, "get_text"):
-            value = str(entry.get_text() or "").strip()
+        value = self._input_path_l if side == "L" else self._input_path_r
 
         dialog = self._objects.get("ImgOpenDialog")
         if dialog is None or not hasattr(dialog, "open_for_side"):
@@ -1243,9 +1243,13 @@ class GtkRuntimeSignalBackend:
         try:
             callback(filename, side)
             entry_name = "entPathL" if side == "L" else "entPathR"
+            if side == "L":
+                self._input_path_l = filename
+            else:
+                self._input_path_r = filename
             entry = self._objects.get(entry_name)
             if entry is not None and hasattr(entry, "set_text"):
-                entry.set_text(filename)
+                entry.set_text(self._format_input_display(filename))
                 try:
                     if hasattr(entry, "emit"):
                         entry.emit("changed", entry)
@@ -1275,6 +1279,29 @@ class GtkRuntimeSignalBackend:
         self._set_label_text("lblPickState", f"Open-{side}: {state}")
         self._set_feedback(phase=f"Open-{side}", state=state)
         self._notify_open_dialog_destroy()
+
+    def _format_input_display(self, path: str) -> str:
+        value = str(path or "").strip()
+        if not value:
+            return ""
+        try:
+            return Path(value).name or value
+        except Exception:
+            return value
+
+    def _on_clear_input_clicked(self, side: str) -> None:
+        entry_name = "entPathL" if side == "L" else "entPathR"
+        if side == "L":
+            self._input_path_l = ""
+        else:
+            self._input_path_r = ""
+
+        entry = self._objects.get(entry_name)
+        if entry is not None and hasattr(entry, "set_text"):
+            entry.set_text("")
+
+        self._on_input_changed(entry)
+        self._set_feedback(phase=f"Clear-{side}", state="ok")
 
     def _current_srcdir_for_side(self, side: str) -> str:
         return self._watch_srcdir_l if side == "L" else self._watch_srcdir_r
@@ -1518,39 +1545,42 @@ class GtkRuntimeSignalBackend:
             if opposite_toggle is not None and hasattr(opposite_toggle, "get_active"):
                 if bool(opposite_toggle.get_active()):
                     self._set_toggle_active(opposite_name, False)
+                    reset_callback = self._signal_handlers.get("on_toggle_position_reset")
+                    if reset_callback is not None:
+                        try:
+                            reset_callback(opposite_name)
+                        except Exception:
+                            pass
         self._refresh_current_state_labels()
 
         callback = self._signal_handlers.get("on_toggle_position_pressed")
         if callback is not None:
-            widget = self._objects.get(object_name)
             try:
-                callback(widget)
+                callback(object_name)
             except Exception:
                 pass
 
     def _on_direction_toggled(self, object_name: str) -> None:
         self._refresh_current_state_labels()
         callback = self._signal_handlers.get("on_toggle_position")
-        if callback is None:
-            return
+        active = self._is_toggle_active(object_name)
+        if callback is not None:
+            try:
+                callback(object_name, active)
+            except Exception:
+                pass
 
-        widget = self._objects.get(object_name)
-        try:
-            callback(widget)
-        except Exception:
-            pass
+        if not active:
+            reset_callback = self._signal_handlers.get("on_toggle_position_reset")
+            if reset_callback is not None:
+                try:
+                    reset_callback(object_name)
+                except Exception:
+                    pass
 
     def _on_direction_released(self, object_name: str) -> None:
         self._refresh_current_state_labels()
-        callback = self._signal_handlers.get("on_toggle_position_reset")
-        if callback is None:
-            return
-
-        widget = self._objects.get(object_name)
-        try:
-            callback(widget)
-        except Exception:
-            pass
+        return
 
     def _read_spin_int(self, object_name: str) -> int:
         spin = self._objects.get(object_name)
@@ -1571,7 +1601,13 @@ class GtkRuntimeSignalBackend:
             return
 
         try:
-            callback(widget)
+            widget_name = widget.get_name() if hasattr(widget, "get_name") else ""
+            value = 0
+            if hasattr(widget, "get_value_as_int"):
+                value = int(widget.get_value_as_int())
+            elif hasattr(widget, "get_value"):
+                value = int(widget.get_value())
+            callback(widget_name, value)
             self._set_feedback(phase="Margins", state="updated")
         except Exception as exc:
             self._set_feedback(phase="Margins", state="error", error=str(exc))
