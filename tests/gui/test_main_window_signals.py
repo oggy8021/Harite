@@ -275,8 +275,8 @@ def test_two_screen_auto_configures_when_both_inputs_and_displays_exist(monkeypa
     monkeypatch.setattr(
         "harite.gui.views.main_window.detect_displays",
         lambda: [
-            Display(name="L", width=1920, height=1080),
             Display(name="R", width=1280, height=1024, x_offset=1920),
+            Display(name="L", width=1920, height=1080, x_offset=0),
         ],
     )
 
@@ -287,6 +287,31 @@ def test_two_screen_auto_configures_when_both_inputs_and_displays_exist(monkeypa
     assert window.form_state.two_screen is True
     assert window.form_state.l_display == "1920x1080"
     assert window.form_state.r_display == "1280x1024"
+    assert window.form_state.resolution == "3200x1080"
+
+
+def test_two_screen_auto_restores_prior_resolution_when_second_input_removed(monkeypatch):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.detect_displays",
+        lambda: [
+            Display(name="L", width=1920, height=1080, x_offset=0),
+            Display(name="R", width=1280, height=1024, x_offset=1920),
+        ],
+    )
+
+    window = MainWindow()
+    window.form_state.resolution = "1600x900"
+
+    window.on_pick_input("left.jpg", "L")
+    window.on_pick_input("right.jpg", "R")
+    assert window.form_state.resolution == "3200x1080"
+
+    window.on_change_input_text("left.jpg")
+
+    assert window.form_state.two_screen is False
+    assert window.form_state.l_display is None
+    assert window.form_state.r_display is None
+    assert window.form_state.resolution == "1600x900"
 
 
 def test_two_screen_auto_disables_without_two_inputs(monkeypatch):

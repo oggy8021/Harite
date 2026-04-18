@@ -1185,6 +1185,18 @@ def test_runtime_backend_current_state_panel_updates_for_toggle_and_fixed():
     assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=top"
 
 
+def test_runtime_backend_fixed_radio_dispatches_only_on_active_toggle():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    observed = []
+
+    backend.connect_signals({"on_toggle_fixed": lambda enabled: observed.append(enabled)})
+
+    backend.get_object("radFixed").click()
+    backend.get_object("radNoFixed").click()
+
+    assert observed == [True, False]
+
+
 def test_runtime_backend_current_state_margin_labels_follow_spin_values():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 

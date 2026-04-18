@@ -990,8 +990,14 @@ class GtkRuntimeSignalBackend:
             btn_get_img_r.connect("clicked", lambda *_args: self._on_pick_input_clicked("R"))
             btn_clr_path_l.connect("clicked", lambda *_args: self._on_clear_input_clicked("L"))
             btn_clr_path_r.connect("clicked", lambda *_args: self._on_clear_input_clicked("R"))
-            rad_fixed.connect("clicked", lambda *_args: self._on_fixed_selection(True))
-            rad_no_fixed.connect("clicked", lambda *_args: self._on_fixed_selection(False))
+            rad_fixed.connect(
+                "toggled",
+                lambda widget, *_args: self._on_fixed_toggled(widget, True),
+            )
+            rad_no_fixed.connect(
+                "toggled",
+                lambda widget, *_args: self._on_fixed_toggled(widget, False),
+            )
             top_margin_spin.connect("value-changed", self._on_margin_changed)
             left_margin_spin.connect("value-changed", self._on_margin_changed)
             right_margin_spin.connect("value-changed", self._on_margin_changed)
@@ -1540,9 +1546,13 @@ class GtkRuntimeSignalBackend:
         self._set_label_text("lblCurrentStateL", f"Current L: align={align_l} valign={valign_l}")
         self._set_label_text("lblCurrentStateR", f"Current R: align={align_r} valign={valign_r}")
 
-    def _on_fixed_selection(self, fixed_enabled: bool) -> None:
-        self._set_toggle_active("radFixed", fixed_enabled)
-        self._set_toggle_active("radNoFixed", not fixed_enabled)
+    def _on_fixed_toggled(self, widget: Any, fixed_enabled: bool) -> None:
+        is_active = True
+        if hasattr(widget, "get_active"):
+            is_active = bool(widget.get_active())
+        if not is_active:
+            return
+
         self._refresh_current_state_labels()
 
         callback = self._signal_handlers.get("on_toggle_fixed")

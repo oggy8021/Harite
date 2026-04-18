@@ -37,6 +37,7 @@ class MainWindow:
         self.last_saved_files: list[Path] = []
         self.save_target_display = "Save target: not-selected"
         self.apply_mode = "single-file"
+        self._pre_two_screen_resolution: str | None = None
         self.watch_interval_seconds = 60
         self.watch_srcdir_l = ""
         self.watch_srcdir_r = ""
@@ -280,6 +281,9 @@ class MainWindow:
 
     def _sync_two_screen_state(self) -> None:
         if not (self.input_path_l and self.input_path_r):
+            if self.form_state.two_screen and self._pre_two_screen_resolution:
+                self.form_state.resolution = self._pre_two_screen_resolution
+                self._pre_two_screen_resolution = None
             self.form_state.two_screen = False
             self.form_state.l_display = None
             self.form_state.r_display = None
@@ -287,19 +291,35 @@ class MainWindow:
 
         displays = detect_displays()
         if len(displays) < 2:
+            if self.form_state.two_screen and self._pre_two_screen_resolution:
+                self.form_state.resolution = self._pre_two_screen_resolution
+                self._pre_two_screen_resolution = None
             self.form_state.two_screen = False
             self.form_state.l_display = None
             self.form_state.r_display = None
             self._log("Two-screen unavailable: detected displays < 2")
             return
 
-        left_display, right_display = displays[0], displays[1]
+        ordered_displays = sorted(
+            displays[:2],
+            key=lambda display: (int(display.x_offset), int(display.y_offset), display.name),
+        )
+        left_display, right_display = ordered_displays[0], ordered_displays[1]
+        min_x = min(int(display.x_offset) for display in ordered_displays)
+        max_x = max(int(display.x_offset) + int(display.width) for display in ordered_displays)
+        min_y = min(int(display.y_offset) for display in ordered_displays)
+        max_y = max(int(display.y_offset) + int(display.height) for display in ordered_displays)
+        combined_width = max_x - min_x
+        combined_height = max_y - min_y
+        if not self.form_state.two_screen:
+            self._pre_two_screen_resolution = self.form_state.resolution
         self.form_state.two_screen = True
         self.form_state.l_display = f"{left_display.width}x{left_display.height}"
         self.form_state.r_display = f"{right_display.width}x{right_display.height}"
+        self.form_state.resolution = f"{combined_width}x{combined_height}"
         self._log(
             "Two-screen auto-configured: "
-            f"L={self.form_state.l_display} R={self.form_state.r_display}"
+            f"L={self.form_state.l_display} R={self.form_state.r_display} resolution={self.form_state.resolution}"
         )
 
     def on_change_apply_mode(self, mode: str) -> bool:
