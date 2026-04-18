@@ -466,16 +466,14 @@ class GtkRuntimeSignalBackend:
             if hasattr(subtitle, "set_xalign"):
                 subtitle.set_xalign(0.0)
 
-            title_spacer = gtk_module.Label(label="")
-            title_row.pack_start(title_spacer, True, True, 0)
-
             command_bar = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
-            header_col.pack_start(command_bar, False, False, 0)
-
-            command_section_label = gtk_module.Label(label="Menu")
+            command_section_label = gtk_module.Label(label="")
             if hasattr(command_section_label, "set_xalign"):
                 command_section_label.set_xalign(0.0)
-            command_bar.pack_start(command_section_label, False, False, 0)
+
+            title_spacer = gtk_module.Label(label="")
+            title_row.pack_start(title_spacer, True, True, 0)
+            title_row.pack_start(command_bar, False, False, 0)
 
             btn_setting = gtk_module.Button(label="Prefs")
             btn_help = gtk_module.Button(label="Help")
@@ -484,8 +482,6 @@ class GtkRuntimeSignalBackend:
             command_bar.pack_start(btn_setting, False, False, 0)
             command_bar.pack_start(btn_help, False, False, 0)
             command_bar.pack_start(btn_about, False, False, 0)
-            command_bar_spacer = gtk_module.Label(label="")
-            command_bar.pack_start(command_bar_spacer, True, True, 0)
 
             flow_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
             header_col.pack_start(flow_row, False, False, 0)
@@ -541,31 +537,49 @@ class GtkRuntimeSignalBackend:
             command_tabs = gtk_module.Notebook()
             center_row.pack_start(command_tabs, True, True, 0)
 
-            main_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
+            main_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
             main_section_label = gtk_module.Label(label="Main")
 
-            upper_toggle_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
-            main_col.pack_start(upper_toggle_shell, False, False, 0)
-            upper_toggle_left_spacer = gtk_module.Label(label="")
-            upper_toggle_shell.pack_start(upper_toggle_left_spacer, True, True, 0)
+            compose_stage = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=18)
+            main_col.pack_start(compose_stage, True, True, 0)
+
+            left_display_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=10)
+            compose_stage.pack_start(left_display_shell, True, True, 0)
+            center_axis_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=14)
+            compose_stage.pack_start(center_axis_col, False, False, 0)
+            right_display_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=10)
+            compose_stage.pack_start(right_display_shell, True, True, 0)
+
+            left_stage_spacer = gtk_module.Label(label="")
+            left_display_shell.pack_start(left_stage_spacer, True, True, 0)
+            left_display_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
+            left_display_shell.pack_start(left_display_col, False, False, 0)
+            left_stage_bottom_spacer = gtk_module.Label(label="")
+            left_display_shell.pack_start(left_stage_bottom_spacer, True, True, 0)
+
+            right_stage_spacer = gtk_module.Label(label="")
+            right_display_shell.pack_start(right_stage_spacer, True, True, 0)
+            right_display_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
+            right_display_shell.pack_start(right_display_col, False, False, 0)
+            right_stage_bottom_spacer = gtk_module.Label(label="")
+            right_display_shell.pack_start(right_stage_bottom_spacer, True, True, 0)
+
             upper_toggle_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            upper_toggle_shell.pack_start(upper_toggle_row, False, False, 0)
-            upper_toggle_right_spacer = gtk_module.Label(label="")
-            upper_toggle_shell.pack_start(upper_toggle_right_spacer, True, True, 0)
+            center_axis_col.pack_start(upper_toggle_row, False, False, 0)
             tgl_upper_l = gtk_module.ToggleButton(label="Top-L")
             tgl_upper_r = gtk_module.ToggleButton(label="Top-R")
             upper_toggle_row.pack_start(tgl_upper_l, False, False, 0)
             upper_toggle_row.pack_start(tgl_upper_r, False, False, 0)
 
-            cross_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=12)
-            main_col.pack_start(cross_center_row, False, False, 0)
+            axis_spacer = gtk_module.Label(label="")
+            center_axis_col.pack_start(axis_spacer, True, True, 0)
 
-            left_display_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            cross_center_row.pack_start(left_display_col, True, True, 0)
-            cross_mid_spacer = gtk_module.Label(label="")
-            cross_center_row.pack_start(cross_mid_spacer, False, False, 0)
-            right_display_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            cross_center_row.pack_start(right_display_col, True, True, 0)
+            lower_toggle_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            center_axis_col.pack_start(lower_toggle_row, False, False, 0)
+            tgl_lower_l = gtk_module.ToggleButton(label="Bottom-L")
+            tgl_lower_r = gtk_module.ToggleButton(label="Bottom-R")
+            lower_toggle_row.pack_start(tgl_lower_l, False, False, 0)
+            lower_toggle_row.pack_start(tgl_lower_r, False, False, 0)
 
             push_toggle_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             left_display_col.pack_start(push_toggle_row_l, False, False, 0)
@@ -601,19 +615,6 @@ class GtkRuntimeSignalBackend:
             input_row_r.pack_start(input_entry_r, True, True, 0)
             input_row_r.pack_start(btn_clr_path_r, False, False, 0)
 
-            lower_toggle_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
-            main_col.pack_start(lower_toggle_shell, False, False, 0)
-            lower_toggle_left_spacer = gtk_module.Label(label="")
-            lower_toggle_shell.pack_start(lower_toggle_left_spacer, True, True, 0)
-            lower_toggle_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            lower_toggle_shell.pack_start(lower_toggle_row, False, False, 0)
-            lower_toggle_right_spacer = gtk_module.Label(label="")
-            lower_toggle_shell.pack_start(lower_toggle_right_spacer, True, True, 0)
-            tgl_lower_l = gtk_module.ToggleButton(label="Bottom-L")
-            tgl_lower_r = gtk_module.ToggleButton(label="Bottom-R")
-            lower_toggle_row.pack_start(tgl_lower_l, False, False, 0)
-            lower_toggle_row.pack_start(tgl_lower_r, False, False, 0)
-
             fixed_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
             main_col.pack_start(fixed_shell, False, False, 0)
             fixed_left_spacer = gtk_module.Label(label="")
@@ -632,7 +633,6 @@ class GtkRuntimeSignalBackend:
             pick_state_label = gtk_module.Label(label="Picker: idle")
             if hasattr(pick_state_label, "set_xalign"):
                 pick_state_label.set_xalign(0.0)
-            main_col.pack_start(pick_state_label, False, False, 0)
 
             action_cluster_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             main_col.pack_start(action_cluster_row, False, False, 0)
@@ -715,6 +715,8 @@ class GtkRuntimeSignalBackend:
             if hasattr(current_right_label, "set_xalign"):
                 current_right_label.set_xalign(0.0)
 
+            main_col.pack_start(pick_state_label, False, False, 0)
+
             command_tabs.append_page(main_col, main_section_label)
 
             right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
@@ -778,7 +780,6 @@ class GtkRuntimeSignalBackend:
             interval_label = gtk_module.Label(label="Interval")
             btn_daemonize = gtk_module.Button(label="Watch Start")
             btn_cancel_daemonize = gtk_module.Button(label="Watch Stop")
-            watch_controls_row.pack_start(watch_label, False, False, 0)
             watch_controls_row.pack_start(btn_open_srcdir_l, False, False, 0)
             watch_controls_row.pack_start(btn_open_srcdir_r, False, False, 0)
             watch_controls_row.pack_start(interval_label, False, False, 0)
@@ -823,15 +824,6 @@ class GtkRuntimeSignalBackend:
                 error_label.set_xalign(0.0)
             debug_row.pack_start(error_label, False, False, 0)
             debug_row.pack_start(save_target_label, False, False, 0)
-            debug_row.pack_start(save_path_state_label, False, False, 0)
-            debug_row.pack_start(do_it_plan_label, False, False, 0)
-            debug_row.pack_start(priority_note_label, False, False, 0)
-            debug_row.pack_start(style_legend_label, False, False, 0)
-            debug_row.pack_start(current_state_section_label, False, False, 0)
-            debug_row.pack_start(current_fixed_label, False, False, 0)
-            debug_row.pack_start(current_margins_label, False, False, 0)
-            debug_row.pack_start(current_left_label, False, False, 0)
-            debug_row.pack_start(current_right_label, False, False, 0)
 
             if hasattr(window, "add"):
                 window.add(root)

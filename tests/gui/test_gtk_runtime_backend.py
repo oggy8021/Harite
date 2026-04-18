@@ -402,7 +402,7 @@ def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
     assert watch_current.text == "Watch current: idle"
     assert pick_state.text == "Picker: idle"
     assert style_legend.text == "Reserved slot for future placement"
-    assert command_section.text == "Menu"
+    assert command_section.text == ""
     assert flow_legend.text == "Compose -> Optimize -> Apply"
     assert prefs_btn.label == "Prefs"
     assert about_btn.label == "About"
