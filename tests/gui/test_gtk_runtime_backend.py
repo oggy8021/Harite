@@ -386,11 +386,11 @@ def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
     tgl_push_right_r = backend.get_object("tglPushRightR")
     tgl_lower_r = backend.get_object("tglLowerR")
 
-    assert do_it.text == "Apply mode: immediate"
+    assert do_it.text == "Debug: apply is immediate"
     assert priority.text == "Rule: margins define area; align/valign act inside it; fixed binds L/R"
     assert watch_section.text == "Watch"
     assert interval.text == "Interval"
-    assert color_btn.label == "Color (phase7)"
+    assert color_btn.label == "Color"
     assert backend.get_object("btnOpenSave") is None
     assert backend.get_object("btnCancelSave") is None
     assert hasattr(save_path_chooser, "get_filename")
@@ -401,12 +401,12 @@ def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
     assert watch_sources.text == "Watch srcdirs: L=- | R=-"
     assert watch_current.text == "Watch current: idle"
     assert pick_state.text == "Picker: idle"
-    assert style_legend.text == "Style cues: secondary(about/help) | phase7(color)"
-    assert command_section.text == "Secondary / Meta"
-    assert flow_legend.text == "Flow: Compose -> Optimize -> Apply"
+    assert style_legend.text == "Reserved slot for future placement"
+    assert command_section.text == "Menu"
+    assert flow_legend.text == "Compose -> Optimize -> Apply"
     assert prefs_btn.label == "Prefs"
-    assert about_btn.label == "About (secondary)"
-    assert help_btn.label == "Help (secondary)"
+    assert about_btn.label == "About"
+    assert help_btn.label == "Help"
     assert save_btn.label == "Save As"
     assert optimize_btn.label == "Optimize"
     assert apply_btn.label == "Apply"

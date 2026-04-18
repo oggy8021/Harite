@@ -19,7 +19,7 @@ class MainWindow:
     """Framework-neutral placeholder for the first standalone GUI window."""
 
     def __init__(self) -> None:
-        self.title = "Harite Studio"
+        self.title = "Harite"
         self.subtitle = "Compose -> Optimize -> Apply"
         self.controller = OptimizeController()
         self.closed = False
@@ -55,18 +55,17 @@ class MainWindow:
             resolution="1920x1080",
             output_dir=str(Path(".")),
         )
-        self.layout_version = "phase6-watch-tab-split"
-        # P5-2: move to a stronger hero + action-panel layout for clearer first glance.
+        self.layout_version = "phase6-layout-redefinition"
         self.layout_sections: tuple[tuple[str, tuple[str, ...]], ...] = (
-            ("compose_input", ("input_value", "resolution", "output_dir", "plugin", "margins", "align", "valign", "padding", "quality")),
-            ("hero", ("save_as", "flow")),
+            ("title_menu_flow", ("title", "menu", "flow", "save_as")),
+            ("compose_input", ("input_value", "margins", "cross_layout", "fixed", "align", "valign")),
             ("action_cluster", ("optimize", "apply", "saved_files")),
-            ("watch_tab", ("watch_srcdirs", "watch_interval", "watch_controls", "watch_details")),
-            ("secondary_meta", ("prefs", "about", "help")),
-            ("status_panel", ("status_message", "save_target", "watch_summary", "last_error", "logs")),
+            ("watch_tab", ("watch_summary", "watch_srcdirs", "watch_interval", "watch_controls", "watch_details")),
+            ("status_footer", ("status_message", "watch_summary")),
+            ("debug_footer", ("save_target", "last_error", "logs", "current_state")),
         )
         self.primary_action_flow: tuple[str, ...] = (
-            "hero",
+            "save_as",
             "optimize",
             "apply",
         )
@@ -579,14 +578,14 @@ class MainWindow:
             "sections": self.layout_sections,
             "primary_action_flow": self.primary_action_flow,
             "layout_highlights": (
-                "hero-first",
-                "compose-input-core",
-                "optimize-apply-separation",
-                "action-cluster-right",
-                "save-as-separate",
-                "watch-tab-split",
-                "secondary-meta-separated",
-                "status-persistent-footer",
+                "menu-bar-header",
+                "flow-save-right",
+                "center-cross-layout",
+                "watch-tab-center-only",
+                "actions-right-lower",
+                "status-short-footer",
+                "debug-bottom-band",
+                "color-hidden-slot",
             ),
             "suggested_next_action": self.suggest_next_action(),
             "status": {

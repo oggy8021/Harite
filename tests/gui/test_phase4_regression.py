@@ -22,20 +22,20 @@ def test_phase4_a_layout_structure_sections_are_stable():
 
     section_names = [name for name, _items in bp["sections"]]
     assert section_names == [
+        "title_menu_flow",
         "compose_input",
-        "hero",
         "action_cluster",
         "watch_tab",
-        "secondary_meta",
-        "status_panel",
+        "status_footer",
+        "debug_footer",
     ]
 
     section_items = {name: items for name, items in bp["sections"]}
+    assert "save_as" in section_items["title_menu_flow"]
+    assert "menu" in section_items["title_menu_flow"]
     assert "input_value" in section_items["compose_input"]
-    assert "resolution" in section_items["compose_input"]
-    assert "output_dir" in section_items["compose_input"]
-    assert "plugin" in section_items["compose_input"]
-    assert "save_as" in section_items["hero"]
+    assert "margins" in section_items["compose_input"]
+    assert "cross_layout" in section_items["compose_input"]
     assert "apply" in section_items["action_cluster"]
 
 

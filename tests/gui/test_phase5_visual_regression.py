@@ -28,19 +28,19 @@ def test_phase5_visual_tokens_snapshot_is_stable():
     }
 
     assert snapshot == {
-        "main_section": "Compose / Input",
+        "main_section": "Main",
         "optimize_section": "Optimize",
         "apply_section": "Apply",
-        "style_tiers": "Style cues: secondary(about/help) | phase7(color)",
+        "style_tiers": "Reserved slot for future placement",
         "current_state": "Current state",
-        "flow": "Flow: Compose -> Optimize -> Apply",
+        "flow": "Compose -> Optimize -> Apply",
         "save_target": "Save target: not-selected",
         "save": "Save As",
         "optimize": "Optimize",
         "apply": "Apply",
         "prefs": "Prefs",
-        "about": "About (secondary)",
-        "help": "Help (secondary)",
+        "about": "About",
+        "help": "Help",
         "open_l": "Open-L",
         "open_r": "Open-R",
     }
@@ -87,17 +87,17 @@ def test_phase5_mainwindow_blueprint_smoke_matches_visual_checklist_scope():
     win = MainWindow()
     bp = win.get_layout_blueprint()
 
-    assert bp["layout_version"] == "phase6-watch-tab-split"
+    assert bp["layout_version"] == "phase6-layout-redefinition"
     assert [name for name, _ in bp["sections"]] == [
+        "title_menu_flow",
         "compose_input",
-        "hero",
         "action_cluster",
         "watch_tab",
-        "secondary_meta",
-        "status_panel",
+        "status_footer",
+        "debug_footer",
     ]
     assert bp["primary_action_flow"] == (
-        "hero",
+        "save_as",
         "optimize",
         "apply",
     )
