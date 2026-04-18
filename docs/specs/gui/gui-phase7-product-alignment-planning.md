@@ -31,6 +31,9 @@
 - GUI current runtime は glade prototype 前提を外し、`Apply` を即時実行の正本へ戻している。
 - save path chooser、watch tab 分離、adapter/runtime 名寄せなどの構造整理は Phase6 で進んだ。
 - `Prefs` は Phase6 で必要部品として復旧し、最低限の可視化と config 同期の入口が戻っている。
+- Phase6 の close 判定は、見た目とレイアウトの了承ライン到達を基準として受領済みである。
+- デスクトップ貼り付け結果から見えた `Apply` 結果の疑義は、Phase6 の見た目未達ではなく、Phase7 で扱う product alignment 上の整合性論点として引き継ぐ。
+- 確認済みの具体例として、XFCE 2 画面（2048x1280 x 2、連続 4096x1280）で `700x1244.jpg` と `700x394.jpg` から作った 4096x1280 の optimize 結果を `Default` で適用すると、各 2048x1280 画面へ同一ワイド画像を当てに行くような圧縮表示に見える。一方、同じ画像を XFCE で手動選択し、日本語 UI 上の「縦横比を維持せず全画面化」として表示した場合も同じ見た目になるため、単純な内部不整合ではなく、plugin 実装部が持つ通常 apply 経路の意味と GUI の `Default` 語彙の整合問題である可能性が高い。`Auto-split` は想定どおりに見える。
 - CLI 側には `apply --do-it` と `watch --dry-run/--do-it` が残っている。
 - core / CLI には margin 情報埋め込みや monitor split など、GUI 未露出の機能が既に存在する。
 - watch は CLI が loop / apply / failure-continue を持ち、GUI は source dir / interval / start-stop 表示の前段だけを持つ。
@@ -78,6 +81,10 @@
   - CLI 既定を dry-run のまま残すのか
   - `--do-it` の名称と概念を維持するか、改名するか、廃するか
   - `optimize` と `apply` の責務分離は残すか、入口体験だけ整理するか
+  - デスクトップ貼り付け結果で疑義の出た組み合わせを、語彙差の問題として扱うのか、実処理整合性の問題として扱うのか
+  - 4096x1280 の optimize 結果に対して `Default` を選んだとき、それは「plugin 実装部の通常 apply 経路へ 1 枚の最終成果物をそのまま渡す」意味なのか、「現在の画面構成に応じて暗黙分割される」期待を伴っていたのか
+  - XFCE 手動設定の「縦横比を維持せず全画面化」と一致する現象を、GUI 側でどう説明し、どこまで mode 名や補助文言で予防するか
+  - `Default` という語が、user default / OS default / plugin default のどれを指すのか曖昧になっていないか
 - 成果物:
   - 操作語彙ポリシーメモ
   - CLI / GUI の命名ルール案
@@ -108,6 +115,9 @@
 - 主要論点:
   - `Prefs` のどの項目を main 画面へ残し、どれを設定ダイアログへ寄せるか
   - 既存の値同期・事前埋め込み・auto-detect を、どの粒度で可視化するか
+  - `Apply` 結果の疑義が、visible な選択肢の意味づけの問題か、内部処理組み合わせの問題か
+  - `Default` / `Auto-split` の visible 2 択が、2 画面連結 optimize 結果に対して十分に誤読なく読めるか
+  - `Default` の補助文言が「normal apply」だけで足りるのか、それとも plugin 実装部の通常 apply 経路であることや desktop 側表示モード依存を示すべきか
   - GUI に持ち込むと意味が増える機能か
   - CLI 専用のままでもよい機能か
   - 既存 UI 構造へ自然に乗るか
@@ -134,6 +144,7 @@
 | 項目 | core | CLI | GUI | 暫定評価 | Phase7 で決めること |
 | --- | --- | --- | --- | --- | --- |
 | `apply` 即時実行 | plugin apply は可能 | dry-run 既定 + `--do-it` | 即時実行 | 語彙差が大きい | 同義化するか、意図差として固定するか |
+| `Apply` 結果の疑義 | plugin / split / paste 条件に依存し得る | 組み合わせにより意味差が出る可能性 | 画面上は `Default` / `Auto-split` の 2 択 | Phase6 で具体例を確認済み | XFCE 2 画面 4096x1280 optimize 結果を `Default` 適用したときの圧縮表示が、plugin 実装部の通常 apply どおりか、語彙誤読か、内部処理不整合かを切り分ける |
 | `watch` 継続ループ | watch runner あり | 実装済み | 未接続 | CLI 先行 | GUI front-end 化か、別仕様か |
 | watch failure-continue | plugin apply と組み合わせ可 | 実装済み | 未接続 | CLI 先行 | GUI に必要か |
 | `embed-text` / margin info | 実装済み | 実装済み | 未露出 | GUI 候補の抜け | Phase8 候補化するか |

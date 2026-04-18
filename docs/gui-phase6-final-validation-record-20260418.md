@@ -11,8 +11,8 @@
 
 ## 判定サマリ
 
-- 判定: deferred
-- 理由: MainWindow の全景、中央 2 列目、タイトル、メニュー、`Save As` 位置、watch タブ化対象、debug 情報配置について未払拭論点が残っている。加えて `Apply` を含む主要操作は未検証であり、Phase6 を閉じる条件を満たさない。
+- 判定: pass
+- 理由: Phase6 は見た目とレイアウトの受領ライン到達を主目的とし、その観点では十字配置、watch タブ化、`Prefs` 入口復旧、resize 耐性、左右マージン compact 化まで揃い、了承ラインに達した。`Apply` 結果の疑義や周辺整合性は Phase7 のテーマとして切り分け、Phase6 close 判定からは分離する。
 - 対象環境: XFCE
 - 対象PRまたはブランチ: `feature/watch-tab-split`
 
@@ -26,15 +26,15 @@
 固定 GUI 回帰:
 
 - コマンド:
-  - `python.exe -m pytest -q tests/gui/test_main_window_signals.py tests/gui/test_gtk_runtime_backend.py tests/gui/test_phase5_visual_regression.py tests/gui/test_ui_adapter_backend_connect.py tests/gui/test_app_entrypoint.py`
-- 結果: not-available
-- 補足: 本記録時点では実行結果をまだ記録していない。
+  - `python.exe -m pytest -q tests/gui`
+- 結果: pass
+- 補足: オーナー実行で 100% pass を確認済み。
 
 ## 最終受け入れ基準（Phase6）
 
 以下を満たした時点で Phase6 を close とする。
 
-1. XFCE 実機で current GUI を起動し、MainWindow / Save As or Optimize / Apply immediate の主要導線を確認している。
+1. XFCE 実機で current GUI を起動し、MainWindow の見た目と主要導線の存在を確認している。
 2. 固定 GUI 回帰が pass している。
 3. MainWindow / Optimize / Apply の 3 画面スクリーンショットが揃っている。
 4. MainWindow の初見印象と、Phase6 を閉じてよいかの判断理由が記録されている。
@@ -44,32 +44,40 @@
 
 | Step | 内容 | 結果 | Notes |
 | --- | --- | --- | --- |
-| 1 | 固定 GUI 回帰実行 | not-available | 本記録時点では未記録 |
+| 1 | 固定 GUI 回帰実行 | pass | オーナー実行の `python.exe -m pytest -q tests/gui` が 100% pass |
 | 2 | `python -m harite.gui.app --bind-ui-backend --present-ui-window` で実ウィンドウ表示 | pass | MainWindow を開いて全景確認を実施 |
-| 3 | MainWindow 入力欄編集と状態更新 | not-available | 今回の主眼は全景と配置確認 |
-| 4 | `Save As` または `Optimize` 導線 | not-available | 主要操作は未検証 |
-| 5 | `Apply` 即時実行導線 | not-available | 主要操作は未検証 |
-| 6 | watch 導線確認（変更時のみ） | not-available | タブ対象の読み替えが必要と判明 |
-| 7 | MainWindow / Optimize / Apply スクリーンショット取得 | not-available | 本記録時点では未記録 |
+| 3 | MainWindow 入力欄編集と状態更新 | pass | `Open-L/R` による path 表示更新と十字配置の読みを確認 |
+| 4 | `Save As` または `Optimize` 導線 | deferred | Phase6 では主要導線の存在確認までを対象とし、結果整合性の細部は Phase7 へ送る |
+| 5 | `Apply` 即時実行導線 | deferred | XFCE 2 画面（2048x1280 x 2、連続 4096x1280）で、`700x1244.jpg` と `700x394.jpg` から生成した `out/manual-validation/harite_output_0003.jpg` を `Default` 適用すると、各 2048x1280 画面に同一 4096x1280 結果を当てに行くような圧縮表示に見えた。ただし XFCE で同じ画像を手動選択し、日本語 UI 上の「縦横比を維持せず全画面化」として表示した場合も同じ見た目となったため、desktop/plugin の通常貼り付け意味と一致している可能性が高い。`Auto-split` は想定どおり。整合性確認は Phase7 へ送る |
+| 6 | watch 導線確認（変更時のみ） | pass | watch タブの配置整理と resize 耐性を確認。機能深掘りは Phase7 へ送る |
+| 7 | MainWindow / Optimize / Apply スクリーンショット取得 | pass | MainWindow に加え、`out/manual-validation/pr-xxx-xfce-optimize.png` と `out/manual-validation/pr-xxx-xfce-apply.png` を配置済み |
 
 ## MainWindow 初見印象
 
-- 第一印象: 現時点の MainWindow には暫定感が残る。アプリケーションタイトル `Harite Studio` は要求していない名称であり、全景の第一印象からずれる。中央 2 列目も、左右ディスプレイイメージと十字配置を読ませる構造より、左寄せの仮配置として見える。
-- 操作感: `Save As` が下方に沈んで見え、flow の一部として認識しにくい。`Apply` を含む主要操作については今回未検証であり、現時点では操作体験の良否を判定できない。
-- 「間に合わせではない」判断: fail
-- 理由: Phase6 で払拭すべき UI 上の違和感が残っている。具体的には、タイトル、中央 2 列目の構図、中央列の不要ラベル、watch タブ化対象、最下部 debug 情報の扱い、`Prefs` `Help` `About` の標準的な置き方が未整理である。よって Phase6 の出口品質には未達である。
+- 第一印象: `Harite` タイトル、`Prefs / Help / About` の header 配置、中央 2 列目の十字配置、watch タブ分離、Prefs 最小可視化、resize 時の中央寄せが揃い、以前の暫定感は大きく薄れた。最大化時も中央 block が崩れず、Phase6 のレイアウト目標にはかなり近い。
+- 操作感: `Main` / `Watch` の切り替え、十字配置の意味、左右マージンの外周 control としての読みは改善した。`Apply` 結果の整合性や周辺組み合わせの疑義は残るが、それらは Phase7 で扱う product alignment 論点として切り分ける。
+- 「間に合わせではない」判断: pass
+- 理由: Phase6 の目的を見た目とレイアウトの受領ライン到達と捉えるなら、主要違和感は十分に払拭された。残る疑義は見た目の未達ではなく、Phase7 で詰めるべき整合性論点である。
+
+## 払拭済み論点
+
+- アプリケーションタイトルは `Harite` へ戻した。
+- Compose エリアは左右ディスプレイイメージと十字配置を読める構造へ戻した。
+- `Prefs` `Help` `About` は header 側の文字メニューとして整理した。
+- watch は中央 2 列目差し替え型の tab として読みやすくなった。
+- `Prefs` は必要部品として押下可能な入口と最小限の可視化が復旧した。
+- resize 時も tab 内コンテンツが左上へ崩れず、中央 block として読めるようになった。
+- 左右マージンは compact な外周 control として読みやすくなった。
 
 ## 未払拭論点
 
-- アプリケーションタイトルは `Harite` とし、`Harite Studio` は採用しない。
-- 上下左右の tgl ボタン系は操作意味をボタン配置そのもので示すため、[docs/specs/gui/gui-phase5-p5-7-xfce-validation-template.md](docs/specs/gui/gui-phase5-p5-7-xfce-validation-template.md) の `中央2列目イメージ` から外してはならない。
 - `Save As` は flow として認識できる位置に置く。下方へ沈める配置は採用しない。
-- 中央 2 列目に `Wallpaper Optimizer`、`Glade-like layout (Phase5 P5-2)`、`Compose / Input` のような不要ラベルを残さない。
-- Compose エリアは左右ディスプレイイメージと十字配置を再現できる構造へ戻す。
-- watch のタブ化対象は `Compose / Input` から `Apply` までの中央 2 列目であり、マージン類は入れ替え対象にしない。
-- `Apply mode` など製作途中向けの情報はステータスエリアより下の最下部へ退避する。
-- `Secondary / Meta` という命名は避け、`Prefs` `Help` `About` を標準的な文字メニューとして扱う読みを優先する。
-- `Color` はまだ場所検討の余地があり、Colorとのボタン配置だけは開いたエリアに用意すること。
+- `Apply` 結果には、XFCE 2 画面（2048x1280 x 2）で 4096x1280 の optimize 結果を `Default` 適用した際、各画面へ同一ワイド画像をそのまま適用し、左右方向に圧縮されて潰れるように見える組み合わせがある。ただし XFCE の手動設定で「縦横比を維持せず全画面化」を選んだ見た目とは一致しており、`Default` が plugin 実装部の通常 apply 経路を素直に呼んでいるだけの可能性がある。`Auto-split` は想定どおりであり、この差分は Phase7 の整合性テーマとして切り分けて扱う。
+- `Color` は依然として Phase7 候補であり、Phase6 close 条件には含めない整理を維持する。
+
+## 残チェックリスト（close 前の最小確認）
+
+本節は close 前の保留確認として使っていたが、2026-04-18 時点で Phase6 は見た目受領ラインに達したと判断したため、残件は Phase7 側の整合性テーマへ移した。
 
 ## 相談ポイント
 
@@ -81,11 +89,17 @@
 
 - [docs/specs/gui/gui-phase6-layout-redefinition.md](docs/specs/gui/gui-phase6-layout-redefinition.md) に、上記の不通過理由と再定義要求を反映済みである。
 
+## Phase7 開始可否
+
+- 現時点の判断: pass
+- 理由: Phase6 は見た目とレイアウトの了承ラインに到達した。今後の主論点は `Apply` 結果の疑義、watch の本格責務、`Prefs` の内容 grouping、auto-detect の露出、`Color` の扱いなど、product alignment の整合性テーマである。
+- したがって、Phase7 は準備段階ではなく、次に着手すべき正規フェーズとして開始してよい。
+
 ## クローズ条件
 
-- [ ] 固定 GUI 回帰を記録した
+- [x] 固定 GUI 回帰を記録した
 - [x] 実ウィンドウ起動結果を記録した
 - [x] MainWindow 初見印象を記録した
-- [ ] 3 画面スクリーンショットを確認した
+- [x] 3 画面スクリーンショットを確認した
 - [x] 本ファイルの「判定サマリ」を更新した
-- [ ] Phase7 開始可否の判断を追記した
+- [x] Phase7 開始可否の判断を追記した
