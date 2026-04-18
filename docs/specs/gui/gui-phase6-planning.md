@@ -17,6 +17,7 @@
 - 初期製造時から P5-7 までを含む GUI 判定のうち、見た目 pass と機能 pass の意味を再点検する。
 - CLI 実装を正本として再確認し、GUI が誤った前提に乗っていないかを洗い直す。
 - 下部コントロール群を中心に、`Prefs` / `Color` / `Save Confirm` / `Save Cancel` / `Save` / `Optimize` / `Apply` の責務を再定義する。
+- `Prefs` は Phase6 で必要部品として復旧し、config 共有と既定値確認の入口として残す。なお、内容 grouping や auto-detect との見せ方整理は Phase7 の product alignment で扱う。
 - glade 依存を repo から撤去する前提で、adapter 層と fallback backend の要否を再判断する。
 - 最終的に「新規 GUI の標準形」に近い構造を Phase6 の出口として定義する。
 - 新しい Phase7 の整合性整理へ入る前に、「コア機能はここでとどめを刺す」状態まで到達する。
@@ -33,6 +34,7 @@
 - GUI 判定の再点検結果が文書化され、「再検証が必要な pass」と「維持してよい pass」が分離されている。
 - CLI 正本と GUI 現実装の差分が列挙され、Phase6 で直すものと、新しい Phase7 で棚卸しするもの、Phase8 候補へ送るものが分離されている。
 - 下部コントロール群の残す/消す/後回しにする判断が確定している。
+- `Prefs` は「存在意義の再確認」だけでなく、押下可能な入口と最小限の可視化が復旧している。
 - glade を repo から撤去する方針と、その後に残す adapter 層 / fallback backend の扱いが判断できる材料が揃っている。
 - `do-it` を採らず、`Apply` を即時実行として扱う前提が CLI / GUI の両方で整理されている。
 - 新しい Phase7 へ入る前提として、「新規 GUI を最初から作るなら普通こう置く」という標準形に十分近づいたと説明できる。
@@ -92,6 +94,7 @@
   - `Apply`
 - 主要論点:
   - `Prefs` は本当に残すべきか、残すなら何を束ねるのか
+  - `Prefs` は Phase6 で入口復旧までを対象とし、項目 grouping・初期値埋め込み・auto-detect 露出の最終整理は Phase7 に送る。
   - `Color` はコア機能か、planned のまま退避すべきか
   - `Save Confirm` / `Save Cancel` は native chooser 導入後も必要か
   - `Save` / `Optimize` は下部コントロール群へ再配置すべきか
@@ -146,6 +149,7 @@
 ## 論点メモ
 
 - `Prefs` 未実装をどう扱うか
+- `Prefs` は必要部品として残す前提に改め、Phase6 では入口復旧と最低限の可視化、Phase7 では内容設計を扱うことを明文化する。
 - `Color` planned をコアから外すか
 - `Save Confirm` / `Save Cancel` を削除して chooser 主体に寄せるか
 - `Save` / `Optimize` / `Apply` を下部コントロール帯へ戻すか
@@ -157,6 +161,7 @@
 
 - Phase6 でコア機能の責務と構造を確定させる。
 - Phase6 の出口では、glade / adapter / fallback backend に引きずられた構造ではなく、「新規 GUI の標準形」に近いと説明できる状態を要求する。
+- ただし `Prefs` の詳細内容と grouping までを Phase6 の出口条件に含めない。Phase6 では必要部品としての入口復旧と値同期の土台確認までを求め、詳細設計は Phase7 へ送る。
 - Phase6 の出口では、owner が XFCE 実機で「間に合わせではない」GUI と判断し、承認を返せる状態を要求する。
 - ただし「間に合わせではない」の具体条件は、Phase6 後半の構造整理と実装見通しを踏まえて定義する。
 - 新しい Phase7 では、それを前提にプロダクト整合性の棚卸しと操作語彙再設計へ入る。

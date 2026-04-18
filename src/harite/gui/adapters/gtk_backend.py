@@ -594,8 +594,24 @@ class GtkRuntimeSignalBackend:
             command_tabs = gtk_module.Notebook()
             center_row.pack_start(command_tabs, True, True, 0)
 
+            def _build_centered_page(content: Any) -> Any:
+                page_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+                top_spacer = gtk_module.Label(label="")
+                page_shell.pack_start(top_spacer, True, True, 0)
+                center_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+                page_shell.pack_start(center_shell, False, False, 0)
+                left_spacer = gtk_module.Label(label="")
+                right_spacer = gtk_module.Label(label="")
+                center_shell.pack_start(left_spacer, True, True, 0)
+                center_shell.pack_start(content, False, False, 0)
+                center_shell.pack_start(right_spacer, True, True, 0)
+                bottom_spacer = gtk_module.Label(label="")
+                page_shell.pack_start(bottom_spacer, True, True, 0)
+                return page_shell
+
             main_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
             main_section_label = gtk_module.Label(label="Main")
+            main_page_shell = _build_centered_page(main_col)
 
             compose_grid = gtk_module.Grid()
             if hasattr(compose_grid, "set_column_spacing"):
@@ -783,7 +799,7 @@ class GtkRuntimeSignalBackend:
             if hasattr(current_right_label, "set_xalign"):
                 current_right_label.set_xalign(0.0)
 
-            command_tabs.append_page(main_col, main_section_label)
+            command_tabs.append_page(main_page_shell, main_section_label)
 
             right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
             center_row.pack_start(right_margin_col, False, False, 0)
@@ -967,7 +983,8 @@ class GtkRuntimeSignalBackend:
                 watch_current_label.set_xalign(0.0)
             watch_detail_row.pack_start(watch_current_label, False, False, 0)
 
-            command_tabs.append_page(watch_tab_box, watch_tab_title)
+            watch_page_shell = _build_centered_page(watch_tab_box)
+            command_tabs.append_page(watch_page_shell, watch_tab_title)
 
             # Row 4: status row (Glade statusbar equivalent)
             footer_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)

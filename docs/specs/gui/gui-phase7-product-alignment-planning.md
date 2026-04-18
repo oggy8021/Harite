@@ -16,6 +16,7 @@
 - `optimize` / `apply` / `dry-run` / `do-it` / `watch` の語彙と責務境界を再設計する。
 - CLI に先行して存在する機能のうち、GUI にもたらすべきものと CLI 専用に残すものを分類する。
 - GUI にだけ残る planned / deferred 項目について、プロダクト候補として維持するか、落とすか、Phase8 候補へ送るかを判断する。
+- `Prefs` について、Phase6 で復旧した入口と値同期の土台を前提に、内容 grouping、初期値埋め込み、auto-detect の露出方針、main 画面との責務分担を整理する。
 - Phase8 に送る新機能バックログを、整合性判断済みの状態で作る。
 
 ## 非目的
@@ -29,6 +30,7 @@
 
 - GUI current runtime は glade prototype 前提を外し、`Apply` を即時実行の正本へ戻している。
 - save path chooser、watch tab 分離、adapter/runtime 名寄せなどの構造整理は Phase6 で進んだ。
+- `Prefs` は Phase6 で必要部品として復旧し、最低限の可視化と config 同期の入口が戻っている。
 - CLI 側には `apply --do-it` と `watch --dry-run/--do-it` が残っている。
 - core / CLI には margin 情報埋め込みや monitor split など、GUI 未露出の機能が既に存在する。
 - watch は CLI が loop / apply / failure-continue を持ち、GUI は source dir / interval / start-stop 表示の前段だけを持つ。
@@ -98,11 +100,14 @@
 ### 4. GUI 候補機能の再読
 
 - 対象:
+  - `Prefs` content / grouping / auto-detect exposure
   - margin info embedding / `embed-text`
   - monitor split / per-monitor apply
   - preview / visual assist 候補
   - `Color` など GUI 側 deferred 項目
 - 主要論点:
+  - `Prefs` のどの項目を main 画面へ残し、どれを設定ダイアログへ寄せるか
+  - 既存の値同期・事前埋め込み・auto-detect を、どの粒度で可視化するか
   - GUI に持ち込むと意味が増える機能か
   - CLI 専用のままでもよい機能か
   - 既存 UI 構造へ自然に乗るか

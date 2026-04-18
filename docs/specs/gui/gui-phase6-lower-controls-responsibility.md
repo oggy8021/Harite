@@ -50,6 +50,7 @@
 - 理由は、CLI / GUI 間で config を共有する仕組みの入口として意味があるためである。
 - watch source も元はここにあり、interval だけが main window に残っていたという整理を採る。
 - Zone 6 Secondary / Meta に置く前提で読む。
+- ただし Phase6 で求めるのは入口復旧と最低限の可視化までとし、内容 grouping・初期値埋め込み・auto-detect の見せ方整理は Phase7 の product alignment で扱う。
 
 ### Color
 
