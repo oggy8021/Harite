@@ -622,7 +622,7 @@ class GtkRuntimeSignalBackend:
             fixed_row.pack_start(rad_fixed, False, False, 0)
             fixed_row.pack_start(rad_no_fixed, False, False, 0)
             if hasattr(compose_grid, "attach"):
-                compose_grid.attach(fixed_row, 1, 3, 1, 1)
+                compose_grid.attach(fixed_shell, 1, 3, 1, 1)
 
             pick_state_label = gtk_module.Label(label="")
             if hasattr(pick_state_label, "set_xalign"):
@@ -933,8 +933,14 @@ class GtkRuntimeSignalBackend:
 
             # Why: fallback window must still exercise MainWindow handlers even when
             # legacy glade cannot be parsed at runtime.
-            input_entry_l.connect("changed", self._on_input_changed)
-            input_entry_r.connect("changed", self._on_input_changed)
+            try:
+                input_entry_l.connect("changed", self._on_input_changed)
+            except Exception:
+                pass
+            try:
+                input_entry_r.connect("changed", self._on_input_changed)
+            except Exception:
+                pass
             tgl_upper_l.connect("pressed", lambda *_args: self._on_direction_pressed("tglUpperL"))
             tgl_upper_l.connect("toggled", lambda *_args: self._on_direction_toggled("tglUpperL"))
             tgl_upper_l.connect("released", lambda *_args: self._on_direction_released("tglUpperL"))
@@ -1240,9 +1246,12 @@ class GtkRuntimeSignalBackend:
             entry = self._objects.get(entry_name)
             if entry is not None and hasattr(entry, "set_text"):
                 entry.set_text(filename)
-                if hasattr(entry, "emit"):
-                    entry.emit("changed", entry)
-                else:
+                try:
+                    if hasattr(entry, "emit"):
+                        entry.emit("changed", entry)
+                    else:
+                        self._on_input_changed(entry)
+                except Exception:
                     self._on_input_changed(entry)
             if hasattr(dialog, "hide"):
                 dialog.hide()
