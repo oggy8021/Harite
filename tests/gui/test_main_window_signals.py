@@ -86,18 +86,28 @@ def test_save_path_selection_and_cancel_have_distinct_meanings():
     assert window.status_message == "save path is required"
     assert window.last_error == "save path is required"
 
-    assert window.on_save_path_selected("/tmp/result.jpg") is True
+    assert window.on_save_path_selected("/tmp/result.jpg") is False
     assert window.form_state.save_path == "/tmp/result.jpg"
-    assert window.status_level == "idle"
-    assert window.status_phase == "save_path"
-    assert window.status_message == "save path selected"
+    assert window.status_level == "error"
+    assert window.status_phase == "save"
+    assert window.status_message == "input is required"
 
 
 def test_save_path_selected_without_argument_uses_existing_path():
     window = MainWindow()
     window.form_state.save_path = "/tmp/existing-save.jpg"
+    window.on_change_input_text("a.jpg")
     window._update_save_target_display()
     window.save_path_dialog_open = True
+
+    class DummyController:
+        def run_export(self, form_state, save_path):
+            out = Path(save_path)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_bytes(b"x")
+            return [out], []
+
+    window.controller = DummyController()
 
     ok = window.on_save_path_selected()
 
@@ -105,9 +115,9 @@ def test_save_path_selected_without_argument_uses_existing_path():
     assert window.save_path_dialog_open is False
     assert window.form_state.save_path == "/tmp/existing-save.jpg"
     assert window.save_target_display == "Save target: /tmp/existing-save.jpg"
-    assert window.status_level == "idle"
-    assert window.status_phase == "save_path"
-    assert window.status_message == "save path selected"
+    assert window.status_level == "success"
+    assert window.status_phase == "save"
+    assert window.status_message == "save completed"
 
 
 def test_save_path_selection_canceled_keeps_existing_save_path():
@@ -125,14 +135,14 @@ def test_save_path_selection_canceled_keeps_existing_save_path():
     assert window.status_message == "save path canceled (path unchanged)"
 
 
-def test_save_path_selected_runs_save_flow_when_input_ready(monkeypatch, tmp_path):
+def test_save_path_selected_runs_export_flow_when_input_ready(monkeypatch, tmp_path):
     class DummyController:
         def __init__(self) -> None:
             self.calls = []
 
-        def run_optimize(self, form_state):
-            self.calls.append(form_state.save_path)
-            out = Path(form_state.save_path)
+        def run_export(self, form_state, save_path):
+            self.calls.append((form_state.save_path, save_path))
+            out = Path(save_path)
             out.parent.mkdir(parents=True, exist_ok=True)
             out.write_bytes(b"x")
             return [out], []
@@ -150,9 +160,10 @@ def test_save_path_selected_runs_save_flow_when_input_ready(monkeypatch, tmp_pat
     assert window.save_path_dialog_open is False
     assert window.form_state.save_path == str(picked)
     assert window.status_level == "success"
-    assert window.status_phase == "optimize"
-    assert window.status_message == "optimize completed"
-    assert any("Save path selected: running save flow" in line for line in window.logs)
+    assert window.status_phase == "save"
+    assert window.status_message == "save completed"
+    assert window.controller.calls == [(str(picked), str(picked))]
+    assert window.last_saved_files == []
 
 
 def test_layout_blueprint_defines_grouping_and_flow():
@@ -183,6 +194,16 @@ def test_layout_blueprint_defines_grouping_and_flow():
 
 def test_save_path_selected_updates_single_save_target_display():
     window = MainWindow()
+
+    class DummyController:
+        def run_export(self, form_state, save_path):
+            out = Path(save_path)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_bytes(b"x")
+            return [out], []
+
+    window.controller = DummyController()
+    window.on_change_input_text("a.jpg")
 
     assert window.save_target_display == "Save target: not-selected"
 

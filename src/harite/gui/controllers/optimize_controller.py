@@ -36,6 +36,45 @@ class OptimizeFormState:
 class OptimizeController:
     """Thin adapter from GUI form values to core.optimize_wallpapers."""
 
+    def _build_gui_output_path(self, output_dir: Path) -> Path:
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        counter = 1
+        while True:
+            candidate = output_dir / f"harite_output_{counter:04d}.jpg"
+            if not candidate.exists():
+                return candidate
+            counter += 1
+
+    def _run_with_output_path(self, state: OptimizeFormState, output_path: Path) -> tuple[list[Path], list]:
+        self.validate(state)
+        w, h = parse_resolution(state.resolution)
+        inputs = [p.strip() for p in state.input_value.split(",") if p.strip()]
+        output = Path(state.output_dir)
+        margins = self._parse_margins(state.margins)
+
+        return optimize_wallpapers(
+            inputs=inputs,
+            target_resolution=(w, h),
+            output_dir=output,
+            output_path=output_path,
+            layout=state.layout,
+            scaling=state.scaling,
+            padding=state.padding,
+            quality=state.quality,
+            two_screen=state.two_screen,
+            margins=margins,
+            l_display=None if not state.l_display else parse_resolution(state.l_display),
+            r_display=None if not state.r_display else parse_resolution(state.r_display),
+            fixed=state.fixed,
+            align=state.align,
+            valign=state.valign,
+            embed_info=state.embed_info,
+            embed_text=state.embed_text,
+            embed_position=state.embed_position,
+            embed_max_lines=state.embed_max_lines,
+        )
+
     def _parse_margins(self, margins: Optional[str]) -> tuple[int, int, int, int]:
         if not margins:
             return (0, 0, 0, 0)
@@ -71,33 +110,12 @@ class OptimizeController:
             parse_resolution(state.r_display)
 
     def run_optimize(self, state: OptimizeFormState) -> tuple[list[Path], list]:
-        self.validate(state)
-        w, h = parse_resolution(state.resolution)
-        inputs = [p.strip() for p in state.input_value.split(",") if p.strip()]
         output = Path(state.output_dir)
-        output_path = None
-        if state.save_path and state.save_path.strip():
-            output_path = Path(state.save_path.strip())
-        margins = self._parse_margins(state.margins)
+        output_path = self._build_gui_output_path(output)
+        return self._run_with_output_path(state, output_path)
 
-        return optimize_wallpapers(
-            inputs=inputs,
-            target_resolution=(w, h),
-            output_dir=output,
-            output_path=output_path,
-            layout=state.layout,
-            scaling=state.scaling,
-            padding=state.padding,
-            quality=state.quality,
-            two_screen=state.two_screen,
-            margins=margins,
-            l_display=None if not state.l_display else parse_resolution(state.l_display),
-            r_display=None if not state.r_display else parse_resolution(state.r_display),
-            fixed=state.fixed,
-            align=state.align,
-            valign=state.valign,
-            embed_info=state.embed_info,
-            embed_text=state.embed_text,
-            embed_position=state.embed_position,
-            embed_max_lines=state.embed_max_lines,
-        )
+    def run_export(self, state: OptimizeFormState, save_path: str) -> tuple[list[Path], list]:
+        value = (save_path or "").strip()
+        if not value:
+            raise ValueError("save path is required")
+        return self._run_with_output_path(state, Path(value))

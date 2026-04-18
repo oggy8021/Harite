@@ -80,7 +80,7 @@ def test_phase5_runtime_smoke_optimize_then_apply_updates_visual_states():
     apply_btn.click()
 
     assert status.text == "Apply: ok"
-    assert apply_target.text == "Apply target: consumed"
+    assert apply_target.text == "Apply target: last applied"
 
 
 def test_phase5_mainwindow_blueprint_smoke_matches_visual_checklist_scope():

@@ -485,7 +485,13 @@ def optimize_wallpapers(
             out_path = out_path.with_suffix(".jpg")
         out_path.parent.mkdir(parents=True, exist_ok=True)
     else:
-        out_path = output_dir / ("harite_wallopt_" + str(abs(hash(tuple(items))))[:8] + ".jpg")
+        counter = 1
+        while True:
+            candidate = output_dir / f"harite_output_{counter:04d}.jpg"
+            if not candidate.exists():
+                out_path = candidate
+                break
+            counter += 1
     bg.save(out_path, quality=quality)
     saved_files.append(out_path)
 

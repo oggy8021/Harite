@@ -884,7 +884,7 @@ def test_runtime_backend_apply_success_updates_apply_target():
 
     assert status.text == "Apply: ok"
     assert error.text == "Error: none"
-    assert apply_target.text == "Apply target: consumed"
+    assert apply_target.text == "Apply target: last applied"
 
 
 def test_runtime_backend_optimize_sets_running_state_before_handler_call():

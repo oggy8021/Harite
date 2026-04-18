@@ -1689,7 +1689,7 @@ class GtkRuntimeSignalBackend:
             ok = callback()
             if ok:
                 self._set_feedback(phase="Apply", state="ok")
-                self._set_label_text("lblApplyTarget", "Apply target: consumed")
+                self._set_label_text("lblApplyTarget", "Apply target: last applied")
             else:
                 self._set_feedback(
                     phase="Apply",

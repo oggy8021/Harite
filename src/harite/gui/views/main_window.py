@@ -398,12 +398,22 @@ class MainWindow:
             self.form_state.save_path = value
             self._update_save_target_display(value)
             self.save_path_dialog_open = False
-            self._set_status("idle", "save_path", "save path selected")
             self._log(f"Save path selected: {value}")
-            if self.can_optimize:
-                # Once a save path is accepted, continue into the current Save As flow.
-                self._log("Save path selected: running save flow")
-                return self.on_optimize()
+            if not self.can_optimize:
+                self._set_status("error", "save", "input is required", error="input is required")
+                self._log("Save As blocked: input is required")
+                return False
+
+            self._set_status("running", "save", "saving composite")
+            try:
+                saved, _placements = self.controller.run_export(self.form_state, value)
+            except Exception as exc:
+                self._set_status("error", "save", "save failed", error=str(exc))
+                self._log(f"Save As failed: {exc}")
+                return False
+
+            self._set_status("success", "save", "save completed")
+            self._log(f"Save As completed: {saved[-1]}")
             return True
         self._set_status("error", "save_path", "save path is required", error="save path is required")
         self._log("Save path selection rejected: save path is required")
