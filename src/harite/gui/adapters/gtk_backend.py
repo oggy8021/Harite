@@ -429,8 +429,9 @@ class _SrcdirDialogProxy:
 class _SettingsDialogProxy:
     """Minimal settings dialog model used by runtime fallback backend."""
 
-    def __init__(self) -> None:
+    def __init__(self, window: Any | None = None) -> None:
         self._visible = False
+        self._window = window
         self._preferences_config: dict[str, object] = {}
         default_path = str(Path.home() / "harite-preferences.json")
         self._import_path = default_path
@@ -438,9 +439,18 @@ class _SettingsDialogProxy:
 
     def show(self) -> None:
         self._visible = True
+        if self._window is not None:
+            if hasattr(self._window, "show_all"):
+                self._window.show_all()
+            elif hasattr(self._window, "show"):
+                self._window.show()
+            if hasattr(self._window, "present"):
+                self._window.present()
 
     def hide(self) -> None:
         self._visible = False
+        if self._window is not None and hasattr(self._window, "hide"):
+            self._window.hide()
 
     def is_visible(self) -> bool:
         return self._visible
@@ -815,7 +825,12 @@ class GtkRuntimeSignalBackend:
                 self._on_native_save_path_confirmed,
                 self._on_native_save_path_canceled,
             )
-            settings_dialog_proxy = _SettingsDialogProxy()
+            prefs_window = gtk_module.Window(title="Preferences")
+            if hasattr(prefs_window, "set_default_size"):
+                prefs_window.set_default_size(520, 420)
+            if hasattr(prefs_window, "set_resizable"):
+                prefs_window.set_resizable(True)
+            settings_dialog_proxy = _SettingsDialogProxy(prefs_window)
             srcdir_dialog_proxy = _SrcdirDialogProxy(
                 gtk_module,
                 window,
@@ -835,6 +850,17 @@ class GtkRuntimeSignalBackend:
             if hasattr(prefs_editor_title, "set_xalign"):
                 prefs_editor_title.set_xalign(0.0)
             prefs_editor_box.pack_start(prefs_editor_title, False, False, 0)
+
+            def _prefs_row(label_text: str, *widgets: Any) -> Any:
+                row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+                row_label = gtk_module.Label(label=label_text)
+                if hasattr(row_label, "set_xalign"):
+                    row_label.set_xalign(0.0)
+                row.pack_start(row_label, False, False, 0)
+                for widget in widgets:
+                    row.pack_start(widget, True, True, 0)
+                prefs_editor_box.pack_start(row, False, False, 0)
+                return row
 
             prefs_resolution_entry = gtk_module.Entry()
             prefs_layout_entry = gtk_module.Entry()
@@ -868,6 +894,30 @@ class GtkRuntimeSignalBackend:
             self._configure_spin_button(prefs_watch_interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
             prefs_import_path_entry = gtk_module.Entry()
             prefs_export_path_entry = gtk_module.Entry()
+
+            prefs_apply_mode_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            prefs_apply_mode_shell.pack_start(prefs_apply_single, False, False, 0)
+            prefs_apply_mode_shell.pack_start(prefs_apply_per_monitor, False, False, 0)
+
+            _prefs_row("Resolution", prefs_resolution_entry)
+            _prefs_row("Layout", prefs_layout_entry)
+            _prefs_row("Scaling", prefs_scaling_entry)
+            _prefs_row("Plugin", prefs_plugin_entry)
+            _prefs_row("Apply", prefs_apply_mode_shell)
+            _prefs_row("Watch interval", prefs_watch_interval_spin)
+            _prefs_row("Import path", prefs_import_path_entry)
+            _prefs_row("Export path", prefs_export_path_entry)
+
+            prefs_actions = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            prefs_actions.pack_start(prefs_apply_btn, False, False, 0)
+            prefs_actions.pack_start(prefs_load_btn, False, False, 0)
+            prefs_actions.pack_start(prefs_save_btn, False, False, 0)
+            prefs_actions.pack_start(prefs_close_btn, False, False, 0)
+            prefs_editor_box.pack_start(prefs_actions, False, False, 0)
+            prefs_editor_box.pack_start(prefs_state_label, False, False, 0)
+
+            if hasattr(prefs_window, "add"):
+                prefs_window.add(prefs_editor_box)
 
             watch_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=16)
             watch_label = gtk_module.Label(label="Watch")
@@ -1019,6 +1069,7 @@ class GtkRuntimeSignalBackend:
                 "btnPrefsClose": prefs_close_btn,
                 "lblPrefsState": prefs_state_label,
                 "boxPrefsEditor": prefs_editor_box,
+                "prefsWindow": prefs_window,
                 "lblPrefsEditorTitle": prefs_editor_title,
                 "entPrefsResolution": prefs_resolution_entry,
                 "entPrefsLayout": prefs_layout_entry,
