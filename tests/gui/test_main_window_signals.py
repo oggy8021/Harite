@@ -2,6 +2,7 @@ from pathlib import Path
 
 from PIL import Image
 
+from harite.display_context import TwoScreenOptimizeContext
 from harite.gui.views.main_window import MainWindow
 from harite.workspace import Display
 
@@ -273,11 +274,16 @@ def test_on_pick_input_updates_side_specific_paths():
 
 def test_two_screen_auto_configures_when_both_inputs_and_displays_exist(monkeypatch):
     monkeypatch.setattr(
-        "harite.gui.views.main_window.detect_displays",
-        lambda: [
-            Display(name="R", width=1280, height=1024, x_offset=1920),
-            Display(name="L", width=1920, height=1080, x_offset=0),
-        ],
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="L", width=1920, height=1080, x_offset=0),
+                Display(name="R", width=1280, height=1024, x_offset=1920),
+            ),
+            resolution=(3200, 1080),
+            l_display=(1920, 1080),
+            r_display=(1280, 1024),
+        ),
     )
 
     window = MainWindow()
@@ -292,11 +298,16 @@ def test_two_screen_auto_configures_when_both_inputs_and_displays_exist(monkeypa
 
 def test_two_screen_auto_restores_prior_resolution_when_second_input_removed(monkeypatch):
     monkeypatch.setattr(
-        "harite.gui.views.main_window.detect_displays",
-        lambda: [
-            Display(name="L", width=1920, height=1080, x_offset=0),
-            Display(name="R", width=1280, height=1024, x_offset=1920),
-        ],
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="L", width=1920, height=1080, x_offset=0),
+                Display(name="R", width=1280, height=1024, x_offset=1920),
+            ),
+            resolution=(3200, 1080),
+            l_display=(1920, 1080),
+            r_display=(1280, 1024),
+        ),
     )
 
     window = MainWindow()
@@ -316,11 +327,8 @@ def test_two_screen_auto_restores_prior_resolution_when_second_input_removed(mon
 
 def test_two_screen_auto_disables_without_two_inputs(monkeypatch):
     monkeypatch.setattr(
-        "harite.gui.views.main_window.detect_displays",
-        lambda: [
-            Display(name="L", width=1920, height=1080),
-            Display(name="R", width=1280, height=1024, x_offset=1920),
-        ],
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: None,
     )
 
     window = MainWindow()
@@ -434,18 +442,23 @@ def test_on_apply_per_monitor_auto_split_uses_split_mapping(monkeypatch, tmp_pat
     plugin = DummyPlugin()
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
     monkeypatch.setattr(
-        "harite.gui.views.main_window.detect_displays",
-        lambda: [
-            Display(name="HDMI-1", width=1920, height=1080),
-            Display(name="DP-1", width=1280, height=1024, x_offset=1920),
-        ],
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="HDMI-1", width=1920, height=1080),
+                Display(name="DP-1", width=1280, height=1024, x_offset=1920),
+            ),
+            resolution=(3200, 1080),
+            l_display=(1920, 1080),
+            r_display=(1280, 1024),
+        ),
     )
     expected = {
         "HDMI-1": tmp_path / "wall_HDMI-1.jpg",
         "DP-1": tmp_path / "wall_DP-1.jpg",
     }
     monkeypatch.setattr(
-        "harite.gui.views.main_window.split_composite_for_displays",
+        "harite.gui.views.main_window.build_auto_split_display_map",
         lambda _path, _displays, _output_dir: expected,
     )
 
@@ -461,6 +474,22 @@ def test_on_apply_per_monitor_auto_split_uses_split_mapping(monkeypatch, tmp_pat
     assert ok is True
     assert plugin.calls == [(expected, False)]
     assert any("Apply per-monitor auto-split" in line for line in window.logs)
+
+
+def test_on_apply_per_monitor_auto_split_requires_context(monkeypatch, tmp_path):
+    monkeypatch.setattr("harite.gui.views.main_window.build_two_screen_optimize_context", lambda: None)
+
+    window = MainWindow()
+    wall = tmp_path / "wall.jpg"
+    wall.write_bytes(b"x")
+    window.last_saved_files = [wall]
+    window.plugin_name = "linux"
+    window.apply_mode = "per-monitor-auto-split"
+
+    ok = window.on_apply()
+
+    assert ok is False
+    assert window.last_error == "per-monitor apply requires at least two detected displays"
 
 
 def test_on_apply_without_optimized_file_fails():

@@ -9,9 +9,8 @@ from click.core import ParameterSource
 
 from . import __version__
 from .core import optimize_wallpapers
+from .display_context import build_auto_split_display_map, order_displays
 from .plugins import registry as plugin_registry
-from .workspace import detect_displays
-from .core import split_composite_for_displays
 from .config import load_config
 from .watch import collect_watch_input_images, run_watch_cycles
 
@@ -391,14 +390,14 @@ def apply(
     # Determine what to pass to plugin.apply: either a string path or a dict
     path_or_map = None
     if auto_split:
-        displays = detect_displays()
+        displays = order_displays(detect_displays())
         if not displays:
             typer.echo("No displays detected for --auto-split")
             raise typer.Exit(code=2)
-        per_map = split_composite_for_displays(file, displays, output_dir=Path("."))
+        per_map = build_auto_split_display_map(file, displays, output_dir=Path("."))
         path_or_map = per_map
     elif left_file or right_file:
-        displays = detect_displays()
+        displays = order_displays(detect_displays())
         if len(displays) < 2:
             typer.echo("Need at least two displays to use --left-file/--right-file")
             raise typer.Exit(code=2)
