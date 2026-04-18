@@ -10,6 +10,7 @@ from dataclasses import dataclass
 import logging
 from pathlib import Path
 import re
+from harite.display_context import closest_display_for_offset, get_display_at_index, get_ordered_displays
 from harite import workspace
 
 logger = logging.getLogger(__name__)
@@ -167,9 +168,17 @@ def _match_candidates_for_mapping(mapping: dict, candidates: list) -> dict:
     """
     result: dict = {}
     try:
-        displays = workspace.detect_displays()
+        displays = get_ordered_displays()
     except Exception:
         displays = []
+
+    def _mapping_matches_display(display_name: str) -> bool:
+        if display_name in mapping:
+            return True
+        for variant in _name_variants(display_name):
+            if variant in mapping:
+                return True
+        return False
 
     for mon_name in mapping.keys():
         filtered = []
@@ -198,15 +207,11 @@ def _match_candidates_for_mapping(mapping: dict, candidates: list) -> dict:
                         idx = _extract_index(c)
                         res = _extract_resolution(c)
                         if idx is not None and res is not None:
-                            if idx < len(displays):
-                                d = displays[idx]
-                                if d.name in mapping:
+                            display = get_display_at_index(idx, displays)
+                            if display is not None:
+                                if _mapping_matches_display(display.name):
                                     filtered = [c]
                                     break
-                                for v in _name_variants(d.name):
-                                    if v in mapping:
-                                        filtered = [c]
-                                        break
                                 if filtered:
                                     break
                         if res is not None:
@@ -221,19 +226,14 @@ def _match_candidates_for_mapping(mapping: dict, candidates: list) -> dict:
             try:
                 props_with_index = []
                 for c in candidates:
-                    m = re.search(r"/monitor(?:/|)(\d+)", c)
-                    if not m:
-                        m2 = re.search(r"monitor(\d+)", c)
-                        m = m2
-                    if m:
-                        try:
-                            props_with_index.append((int(m.group(1)), c))
-                        except Exception:
-                            continue
+                    idx = _extract_index(c)
+                    if idx is not None:
+                        props_with_index.append((idx, c))
                 if props_with_index and displays:
                     for idx, prop in props_with_index:
-                        if idx < len(displays):
-                            mon = displays[idx].name
+                        display = get_display_at_index(idx, displays)
+                        if display is not None:
+                            mon = display.name
                             if mon in mapping:
                                 filtered = [prop]
                                 break
@@ -269,15 +269,9 @@ def _match_candidates_for_mapping(mapping: dict, candidates: list) -> dict:
                         pos = _extract_position(c)
                         if pos is None:
                             continue
-                        x_off, y_off = pos
-
-                        def _dist(disp):
-                            dx = (getattr(disp, "x_offset", 0) or 0) - x_off
-                            dy = (getattr(disp, "y_offset", 0) or 0) - y_off
-                            return abs(dx) + abs(dy)
-
-                        closest = min(displays, key=_dist)
-                        distance = _dist(closest)
+                        closest, distance = closest_display_for_offset(pos[0], pos[1], displays)
+                        if closest is None or distance is None:
+                            continue
                         if distance <= POS_MATCH_THRESHOLD and closest.name in mapping:
                             filtered = [c]
                             break
@@ -297,18 +291,12 @@ def _match_candidates_for_mapping(mapping: dict, candidates: list) -> dict:
                 idx_cand = None
                 if displays:
                     for c in candidates:
-                        m = re.search(r"/monitor(?:/|)(\d+)", c)
-                        if not m:
-                            m2 = re.search(r"monitor(\d+)", c)
-                            m = m2
-                        if not m:
+                        idx = _extract_index(c)
+                        if idx is None:
                             continue
-                        try:
-                            idx = int(m.group(1))
-                        except Exception:
-                            continue
-                        if idx < len(displays):
-                            mon_nm = displays[idx].name
+                        display = get_display_at_index(idx, displays)
+                        if display is not None:
+                            mon_nm = display.name
                             if mon_nm in mapping:
                                 idx_cand = c
                                 break
@@ -321,13 +309,9 @@ def _match_candidates_for_mapping(mapping: dict, candidates: list) -> dict:
                     if idx_cand is None:
                         any_display_matches = False
                         for d in displays:
-                            if d.name in mapping:
+                            if _mapping_matches_display(d.name):
                                 any_display_matches = True
                                 break
-                            for v in _name_variants(d.name):
-                                if v in mapping:
-                                    any_display_matches = True
-                                    break
                             if any_display_matches:
                                 break
                         if not any_display_matches:
@@ -335,14 +319,8 @@ def _match_candidates_for_mapping(mapping: dict, candidates: list) -> dict:
                                 if re.search(r"/monitor(?:/|)\d+", c) or re.search(r"monitor\d+", c):
                                     pos = _extract_position(c)
                                     if pos is not None and displays:
-                                        x_off, y_off = pos
-                                        def _dist_to_disp(d):
-                                            dx = (getattr(d, "x_offset", 0) or 0) - x_off
-                                            dy = (getattr(d, "y_offset", 0) or 0) - y_off
-                                            return abs(dx) + abs(dy)
-
-                                        min_dist = min(_dist_to_disp(d) for d in displays)
-                                        if min_dist > POS_MATCH_THRESHOLD:
+                                        _closest, min_dist = closest_display_for_offset(pos[0], pos[1], displays)
+                                        if min_dist is None or min_dist > POS_MATCH_THRESHOLD:
                                             continue
                                     idx_cand = c
                                     break

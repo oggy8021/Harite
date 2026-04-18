@@ -610,7 +610,6 @@ class GtkRuntimeSignalBackend:
             input_row_r.pack_start(btn_clr_path_r, False, False, 0)
 
             fixed_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
-            main_col.pack_start(fixed_shell, False, False, 0)
             fixed_left_spacer = gtk_module.Label(label="")
             fixed_shell.pack_start(fixed_left_spacer, True, True, 0)
             fixed_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)

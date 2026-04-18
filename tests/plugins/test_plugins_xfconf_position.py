@@ -24,7 +24,10 @@ def test_position_matching(monkeypatch):
     monkeypatch.setattr(subprocess, "run", fake_run)
 
     # patch detect_displays to return displays where DP-1 has x_offset 1024
-    monkeypatch.setattr(workspace, "detect_displays", lambda: [workspace.Display("eDP-1", 1024, 768, 0), workspace.Display("DP-1", 2048, 1280, 1024)])
+    monkeypatch.setattr(
+        "harite.display_context.detect_displays",
+        lambda: [workspace.Display("eDP-1", 1024, 768, 0), workspace.Display("DP-1", 2048, 1280, 1024)],
+    )
 
     plugin = LinuxPlugin()
     mapping = {"DP-1": "/tmp/wall.jpg"}

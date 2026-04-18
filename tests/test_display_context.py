@@ -2,7 +2,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from harite.display_context import build_auto_split_display_map, build_two_screen_optimize_context, derive_virtual_resolution, order_displays
+from harite.display_context import build_auto_split_display_map, build_two_screen_optimize_context, closest_display_for_offset, derive_virtual_resolution, get_display_at_index, order_displays
 from harite.workspace import Display
 
 
@@ -63,3 +63,28 @@ def test_build_auto_split_display_map_uses_parent_output_by_default(tmp_path):
     for path in result.values():
         assert Path(path).exists()
         assert Path(path).parent == tmp_path
+
+
+def test_get_display_at_index_uses_ordered_displays():
+    displays = [
+        Display(name="R", width=1280, height=1024, x_offset=1920),
+        Display(name="L", width=1920, height=1080, x_offset=0),
+    ]
+
+    display = get_display_at_index(0, displays)
+
+    assert display is not None
+    assert display.name == "L"
+
+
+def test_closest_display_for_offset_returns_distance_from_ordered_displays():
+    displays = [
+        Display(name="R", width=1280, height=1024, x_offset=1920),
+        Display(name="L", width=1920, height=1080, x_offset=0),
+    ]
+
+    display, distance = closest_display_for_offset(1900, 10, displays)
+
+    assert display is not None
+    assert display.name == "R"
+    assert distance == 30

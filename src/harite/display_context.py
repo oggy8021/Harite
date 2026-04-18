@@ -28,6 +28,36 @@ def order_displays(displays: Sequence[Display], *, limit: int | None = None) -> 
     return ordered[:limit]
 
 
+def get_ordered_displays(displays: Sequence[Display] | None = None, *, limit: int | None = None) -> tuple[Display, ...]:
+    detected = detect_displays() if displays is None else displays
+    return order_displays(detected, limit=limit)
+
+
+def get_display_at_index(index: int, displays: Sequence[Display] | None = None) -> Display | None:
+    ordered = get_ordered_displays(displays)
+    if index < 0 or index >= len(ordered):
+        return None
+    return ordered[index]
+
+
+def closest_display_for_offset(
+    x_offset: int,
+    y_offset: int,
+    displays: Sequence[Display] | None = None,
+) -> tuple[Display | None, int | None]:
+    ordered = get_ordered_displays(displays)
+    if not ordered:
+        return None, None
+
+    def _dist(display: Display) -> int:
+        dx = int(display.x_offset) - int(x_offset)
+        dy = int(display.y_offset) - int(y_offset)
+        return abs(dx) + abs(dy)
+
+    closest = min(ordered, key=_dist)
+    return closest, _dist(closest)
+
+
 def derive_virtual_resolution(displays: Sequence[Display]) -> tuple[int, int] | None:
     if not displays:
         return None

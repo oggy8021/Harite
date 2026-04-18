@@ -14,6 +14,7 @@ class _WidgetBase:
     def __init__(self):
         self._signals = {}
         self._name = ""
+        self._parent = None
 
     def connect(self, name, callback):
         self._signals.setdefault(name, []).append(callback)
@@ -42,6 +43,9 @@ class _Window(_WidgetBase):
         return None
 
     def add(self, child):
+        if getattr(child, "_parent", None) is not None:
+            raise AssertionError("child already has a parent")
+        child._parent = self
         self.child = child
 
 
@@ -54,6 +58,9 @@ class _Box(_WidgetBase):
         return None
 
     def pack_start(self, child, *_args):
+        if getattr(child, "_parent", None) is not None:
+            raise AssertionError("child already has a parent")
+        child._parent = self
         self.children.append(child)
 
 
@@ -71,6 +78,9 @@ class _Grid(_WidgetBase):
         self.column_spacing = int(spacing)
 
     def attach(self, child, left, top, width, height):
+        if getattr(child, "_parent", None) is not None:
+            raise AssertionError("child already has a parent")
+        child._parent = self
         self.children.append((child, int(left), int(top), int(width), int(height)))
 
 
@@ -80,6 +90,9 @@ class _Notebook(_WidgetBase):
         self.pages = []
 
     def append_page(self, child, tab_label):
+        if getattr(child, "_parent", None) is not None:
+            raise AssertionError("child already has a parent")
+        child._parent = self
         self.pages.append((child, tab_label))
 
 

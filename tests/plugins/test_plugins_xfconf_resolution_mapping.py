@@ -23,8 +23,8 @@ def test_resolution_based_mapping(monkeypatch):
 
     monkeypatch.setattr(subprocess, "run", fake_run)
 
-    # patch detect_displays to return a HD display matching 2048x1280
-    monkeypatch.setattr(workspace, "detect_displays", lambda: [workspace.Display("HDMI-1", 2048, 1280, 0)])
+    # patch detect_displays through shared helper path
+    monkeypatch.setattr("harite.display_context.detect_displays", lambda: [workspace.Display("HDMI-1", 2048, 1280, 0)])
 
     plugin = LinuxPlugin()
     mapping = {"HDMI-1": "/tmp/wall.jpg"}
