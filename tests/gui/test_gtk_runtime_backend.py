@@ -55,6 +55,23 @@ class _Box(_WidgetBase):
         self.children.append(child)
 
 
+class _Grid(_WidgetBase):
+    def __init__(self, **_kwargs):
+        super().__init__()
+        self.children = []
+        self.row_spacing = 0
+        self.column_spacing = 0
+
+    def set_row_spacing(self, spacing):
+        self.row_spacing = int(spacing)
+
+    def set_column_spacing(self, spacing):
+        self.column_spacing = int(spacing)
+
+    def attach(self, child, left, top, width, height):
+        self.children.append((child, int(left), int(top), int(width), int(height)))
+
+
 class _Notebook(_WidgetBase):
     def __init__(self):
         super().__init__()
@@ -74,6 +91,9 @@ class _Label(_WidgetBase):
 
     def set_text(self, text):
         self.text = text
+
+    def get_text(self):
+        return self.text
 
 
 class _Entry(_WidgetBase):
@@ -168,6 +188,7 @@ class _FakeGtk:
     Orientation = _Orientation
     Window = _Window
     Box = _Box
+    Grid = _Grid
     Notebook = _Notebook
     Label = _Label
     Entry = _Entry
@@ -400,7 +421,7 @@ def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
     assert watch_stop.label == "Watch Stop"
     assert watch_sources.text == "Watch srcdirs: L=- | R=-"
     assert watch_current.text == "Watch current: idle"
-    assert pick_state.text == "Picker: idle"
+    assert pick_state.text == ""
     assert style_legend.text == "Reserved slot for future placement"
     assert command_section.text == ""
     assert flow_legend.text == "Compose -> Optimize -> Apply"

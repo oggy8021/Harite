@@ -457,7 +457,7 @@ class GtkRuntimeSignalBackend:
             title_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
             header_col.pack_start(title_row, False, False, 0)
 
-            title = gtk_module.Label(label="Harite")
+            title = gtk_module.Label(label="")
             if hasattr(title, "set_xalign"):
                 title.set_xalign(0.0)
             title_row.pack_start(title, False, False, 0)
@@ -540,46 +540,32 @@ class GtkRuntimeSignalBackend:
             main_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
             main_section_label = gtk_module.Label(label="Main")
 
-            compose_stage = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=18)
-            main_col.pack_start(compose_stage, True, True, 0)
+            compose_grid = gtk_module.Grid()
+            if hasattr(compose_grid, "set_column_spacing"):
+                compose_grid.set_column_spacing(32)
+            if hasattr(compose_grid, "set_row_spacing"):
+                compose_grid.set_row_spacing(12)
+            main_col.pack_start(compose_grid, True, True, 0)
 
-            left_display_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=10)
-            compose_stage.pack_start(left_display_shell, True, True, 0)
-            center_axis_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=14)
-            compose_stage.pack_start(center_axis_col, False, False, 0)
-            right_display_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=10)
-            compose_stage.pack_start(right_display_shell, True, True, 0)
-
-            left_stage_spacer = gtk_module.Label(label="")
-            left_display_shell.pack_start(left_stage_spacer, True, True, 0)
             left_display_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
-            left_display_shell.pack_start(left_display_col, False, False, 0)
-            left_stage_bottom_spacer = gtk_module.Label(label="")
-            left_display_shell.pack_start(left_stage_bottom_spacer, True, True, 0)
-
-            right_stage_spacer = gtk_module.Label(label="")
-            right_display_shell.pack_start(right_stage_spacer, True, True, 0)
             right_display_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
-            right_display_shell.pack_start(right_display_col, False, False, 0)
-            right_stage_bottom_spacer = gtk_module.Label(label="")
-            right_display_shell.pack_start(right_stage_bottom_spacer, True, True, 0)
 
             upper_toggle_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            center_axis_col.pack_start(upper_toggle_row, False, False, 0)
             tgl_upper_l = gtk_module.ToggleButton(label="Top-L")
             tgl_upper_r = gtk_module.ToggleButton(label="Top-R")
             upper_toggle_row.pack_start(tgl_upper_l, False, False, 0)
             upper_toggle_row.pack_start(tgl_upper_r, False, False, 0)
 
-            axis_spacer = gtk_module.Label(label="")
-            center_axis_col.pack_start(axis_spacer, True, True, 0)
+            if hasattr(compose_grid, "attach"):
+                compose_grid.attach(upper_toggle_row, 1, 0, 1, 1)
 
             lower_toggle_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            center_axis_col.pack_start(lower_toggle_row, False, False, 0)
             tgl_lower_l = gtk_module.ToggleButton(label="Bottom-L")
             tgl_lower_r = gtk_module.ToggleButton(label="Bottom-R")
             lower_toggle_row.pack_start(tgl_lower_l, False, False, 0)
             lower_toggle_row.pack_start(tgl_lower_r, False, False, 0)
+            if hasattr(compose_grid, "attach"):
+                compose_grid.attach(lower_toggle_row, 1, 2, 1, 1)
 
             push_toggle_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             left_display_col.pack_start(push_toggle_row_l, False, False, 0)
@@ -589,11 +575,14 @@ class GtkRuntimeSignalBackend:
             push_toggle_row_l.pack_start(tgl_push_left_l, False, False, 0)
             push_toggle_row_l.pack_start(btn_get_img_l, False, False, 0)
             push_toggle_row_l.pack_start(tgl_push_right_l, False, False, 0)
+            if hasattr(compose_grid, "attach"):
+                compose_grid.attach(left_display_col, 0, 1, 1, 1)
 
             input_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             left_display_col.pack_start(input_row_l, False, False, 0)
-            input_entry_l = gtk_module.Entry()
-            input_entry_l.set_placeholder_text("/path/to/left_image_or_directory")
+            input_entry_l = gtk_module.Label(label="")
+            if hasattr(input_entry_l, "set_xalign"):
+                input_entry_l.set_xalign(0.0)
             btn_clr_path_l = gtk_module.Button(label="Clear-L")
             input_row_l.pack_start(input_entry_l, True, True, 0)
             input_row_l.pack_start(btn_clr_path_l, False, False, 0)
@@ -606,11 +595,14 @@ class GtkRuntimeSignalBackend:
             push_toggle_row_r.pack_start(tgl_push_left_r, False, False, 0)
             push_toggle_row_r.pack_start(btn_get_img_r, False, False, 0)
             push_toggle_row_r.pack_start(tgl_push_right_r, False, False, 0)
+            if hasattr(compose_grid, "attach"):
+                compose_grid.attach(right_display_col, 2, 1, 1, 1)
 
             input_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             right_display_col.pack_start(input_row_r, False, False, 0)
-            input_entry_r = gtk_module.Entry()
-            input_entry_r.set_placeholder_text("/path/to/right_image_or_directory")
+            input_entry_r = gtk_module.Label(label="")
+            if hasattr(input_entry_r, "set_xalign"):
+                input_entry_r.set_xalign(0.0)
             btn_clr_path_r = gtk_module.Button(label="Clear-R")
             input_row_r.pack_start(input_entry_r, True, True, 0)
             input_row_r.pack_start(btn_clr_path_r, False, False, 0)
@@ -629,25 +621,30 @@ class GtkRuntimeSignalBackend:
                 rad_no_fixed.set_active(True)
             fixed_row.pack_start(rad_fixed, False, False, 0)
             fixed_row.pack_start(rad_no_fixed, False, False, 0)
+            if hasattr(compose_grid, "attach"):
+                compose_grid.attach(fixed_row, 1, 3, 1, 1)
 
-            pick_state_label = gtk_module.Label(label="Picker: idle")
+            pick_state_label = gtk_module.Label(label="")
             if hasattr(pick_state_label, "set_xalign"):
                 pick_state_label.set_xalign(0.0)
 
-            action_cluster_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            main_col.pack_start(action_cluster_row, False, False, 0)
+            action_cluster_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=18)
             action_cluster_spacer = gtk_module.Label(label="")
             action_cluster_row.pack_start(action_cluster_spacer, True, True, 0)
-            action_cluster_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            action_cluster_row.pack_start(action_cluster_col, False, False, 0)
+            optimize_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            apply_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            action_cluster_row.pack_start(optimize_group, False, False, 0)
+            action_cluster_row.pack_start(apply_group, False, False, 0)
+            if hasattr(compose_grid, "attach"):
+                compose_grid.attach(action_cluster_row, 0, 4, 3, 1)
 
             optimize_section_label = gtk_module.Label(label="Optimize")
             if hasattr(optimize_section_label, "set_xalign"):
                 optimize_section_label.set_xalign(0.0)
-            action_cluster_col.pack_start(optimize_section_label, False, False, 0)
+            optimize_group.pack_start(optimize_section_label, False, False, 0)
 
             optimize_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            action_cluster_col.pack_start(optimize_row, False, False, 0)
+            optimize_group.pack_start(optimize_row, False, False, 0)
             optimize_modern_btn = gtk_module.Button(label="Optimize")
             if hasattr(optimize_modern_btn, "set_sensitive"):
                 optimize_modern_btn.set_sensitive(False)
@@ -660,10 +657,10 @@ class GtkRuntimeSignalBackend:
             apply_section_label = gtk_module.Label(label="Apply")
             if hasattr(apply_section_label, "set_xalign"):
                 apply_section_label.set_xalign(0.0)
-            action_cluster_col.pack_start(apply_section_label, False, False, 0)
+            apply_group.pack_start(apply_section_label, False, False, 0)
 
             apply_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            action_cluster_col.pack_start(apply_row, False, False, 0)
+            apply_group.pack_start(apply_row, False, False, 0)
             apply_btn = gtk_module.Button(label="Apply")
             if hasattr(apply_btn, "set_sensitive"):
                 apply_btn.set_sensitive(False)
@@ -715,8 +712,6 @@ class GtkRuntimeSignalBackend:
             if hasattr(current_right_label, "set_xalign"):
                 current_right_label.set_xalign(0.0)
 
-            main_col.pack_start(pick_state_label, False, False, 0)
-
             command_tabs.append_page(main_col, main_section_label)
 
             right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
@@ -766,22 +761,38 @@ class GtkRuntimeSignalBackend:
                 self._on_srcdir_dialog_canceled,
             )
 
-            watch_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            watch_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=16)
             watch_label = gtk_module.Label(label="Watch")
             if hasattr(watch_label, "set_xalign"):
                 watch_label.set_xalign(0.0)
+            watch_tab_title = gtk_module.Label(label="Watch (stopped)")
+            if hasattr(watch_tab_title, "set_xalign"):
+                watch_tab_title.set_xalign(0.0)
             watch_tab_box.pack_start(watch_label, False, False, 0)
-            watch_controls_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            watch_tab_box.pack_start(watch_controls_row, False, False, 0)
+
+            watch_srcdir_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            watch_tab_box.pack_start(watch_srcdir_row, False, False, 0)
             btn_open_srcdir_l = gtk_module.Button(label="Srcdir-L")
             btn_open_srcdir_r = gtk_module.Button(label="Srcdir-R")
+            watch_srcdir_row.pack_start(btn_open_srcdir_l, False, False, 0)
+            watch_srcdir_spacer = gtk_module.Label(label="")
+            watch_srcdir_row.pack_start(watch_srcdir_spacer, True, True, 0)
+            watch_srcdir_row.pack_start(btn_open_srcdir_r, False, False, 0)
+
+            watch_controls_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            watch_tab_box.pack_start(watch_controls_shell, False, False, 0)
+            watch_controls_left_spacer = gtk_module.Label(label="")
+            watch_controls_shell.pack_start(watch_controls_left_spacer, True, True, 0)
+            watch_controls_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            watch_controls_shell.pack_start(watch_controls_row, False, False, 0)
+            watch_controls_right_spacer = gtk_module.Label(label="")
+            watch_controls_shell.pack_start(watch_controls_right_spacer, True, True, 0)
+
             interval_spin = gtk_module.SpinButton()
             self._configure_spin_button(interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
             interval_label = gtk_module.Label(label="Interval")
             btn_daemonize = gtk_module.Button(label="Watch Start")
             btn_cancel_daemonize = gtk_module.Button(label="Watch Stop")
-            watch_controls_row.pack_start(btn_open_srcdir_l, False, False, 0)
-            watch_controls_row.pack_start(btn_open_srcdir_r, False, False, 0)
             watch_controls_row.pack_start(interval_label, False, False, 0)
             watch_controls_row.pack_start(interval_spin, False, False, 0)
             watch_controls_row.pack_start(btn_daemonize, False, False, 0)
@@ -798,7 +809,7 @@ class GtkRuntimeSignalBackend:
                 watch_current_label.set_xalign(0.0)
             watch_detail_row.pack_start(watch_current_label, False, False, 0)
 
-            command_tabs.append_page(watch_tab_box, gtk_module.Label(label="Watch"))
+            command_tabs.append_page(watch_tab_box, watch_tab_title)
 
             # Row 4: status row (Glade statusbar equivalent)
             footer_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
@@ -815,15 +826,10 @@ class GtkRuntimeSignalBackend:
             watch_summary_label = gtk_module.Label(label="Watch: stopped")
             if hasattr(watch_summary_label, "set_xalign"):
                 watch_summary_label.set_xalign(0.0)
-            status_row.pack_start(watch_summary_label, False, False, 0)
 
-            debug_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
-            footer_col.pack_start(debug_row, False, False, 0)
             error_label = gtk_module.Label(label="Error: none")
             if hasattr(error_label, "set_xalign"):
                 error_label.set_xalign(0.0)
-            debug_row.pack_start(error_label, False, False, 0)
-            debug_row.pack_start(save_target_label, False, False, 0)
 
             if hasattr(window, "add"):
                 window.add(root)
@@ -845,7 +851,7 @@ class GtkRuntimeSignalBackend:
                 "lblMainSection": main_section_label,
                 "boxMainSection": main_col,
                 "actionClusterRow": action_cluster_row,
-                "actionClusterCol": action_cluster_col,
+                "actionClusterCol": optimize_group,
                 "tglUpperL": tgl_upper_l,
                 "tglUpperR": tgl_upper_r,
                 "tglPushLeftL": tgl_push_left_l,
@@ -900,6 +906,7 @@ class GtkRuntimeSignalBackend:
                 "btnOpenSrcdirL": btn_open_srcdir_l,
                 "btnOpenSrcdirR": btn_open_srcdir_r,
                 "lblWatchSection": watch_label,
+                "lblWatchTabTitle": watch_tab_title,
                 "spnInterval": interval_spin,
                 "lblInterval": interval_label,
                 "btnDaemonize": btn_daemonize,
@@ -1076,6 +1083,7 @@ class GtkRuntimeSignalBackend:
     def _refresh_watch_summary_label(self) -> None:
         state = "running" if self._watch_running else "stopped"
         self._set_label_text("lblWatchSummary", f"Watch: {state}")
+        self._set_label_text("lblWatchTabTitle", f"Watch ({state})")
 
     def _refresh_watch_current_label(self, left: str | None = None, right: str | None = None) -> None:
         current_left = left if left is not None else (str(self._watch_previous_l) if self._watch_previous_l else "-")
