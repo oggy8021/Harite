@@ -579,17 +579,24 @@ class GtkRuntimeSignalBackend:
             center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=10)
             root.pack_start(center_row, True, True, 0)
 
-            left_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            center_row.pack_start(left_margin_col, False, False, 0)
+            left_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            center_row.pack_start(left_margin_shell, False, False, 0)
+            left_margin_top_spacer = gtk_module.Label(label="")
+            left_margin_shell.pack_start(left_margin_top_spacer, True, True, 0)
 
-            left_margin_label = gtk_module.Label(label="左マージン(px)")
+            left_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            left_margin_shell.pack_start(left_margin_col, False, False, 0)
+
+            left_margin_label = gtk_module.Label(label="左\nマージン(px)")
             if hasattr(left_margin_label, "set_xalign"):
-                left_margin_label.set_xalign(0.0)
+                left_margin_label.set_xalign(0.5)
             left_margin_col.pack_start(left_margin_label, False, False, 0)
 
             left_margin_spin = gtk_module.SpinButton()
             self._configure_spin_button(left_margin_spin, minimum=0, maximum=500, step=1, page=10)
             left_margin_col.pack_start(left_margin_spin, False, False, 0)
+            left_margin_bottom_spacer = gtk_module.Label(label="")
+            left_margin_shell.pack_start(left_margin_bottom_spacer, True, True, 0)
 
             command_tabs = gtk_module.Notebook()
             center_row.pack_start(command_tabs, True, True, 0)
@@ -801,17 +808,24 @@ class GtkRuntimeSignalBackend:
 
             command_tabs.append_page(main_page_shell, main_section_label)
 
-            right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            center_row.pack_start(right_margin_col, False, False, 0)
+            right_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            center_row.pack_start(right_margin_shell, False, False, 0)
+            right_margin_top_spacer = gtk_module.Label(label="")
+            right_margin_shell.pack_start(right_margin_top_spacer, True, True, 0)
 
-            right_margin_label = gtk_module.Label(label="右マージン(px)")
+            right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            right_margin_shell.pack_start(right_margin_col, False, False, 0)
+
+            right_margin_label = gtk_module.Label(label="右\nマージン(px)")
             if hasattr(right_margin_label, "set_xalign"):
-                right_margin_label.set_xalign(0.0)
+                right_margin_label.set_xalign(0.5)
             right_margin_col.pack_start(right_margin_label, False, False, 0)
 
             right_margin_spin = gtk_module.SpinButton()
             self._configure_spin_button(right_margin_spin, minimum=0, maximum=500, step=1, page=10)
             right_margin_col.pack_start(right_margin_spin, False, False, 0)
+            right_margin_bottom_spacer = gtk_module.Label(label="")
+            right_margin_shell.pack_start(right_margin_bottom_spacer, True, True, 0)
 
             # Row 2: bottom margin row (Glade hbox12 equivalent)
             bottom_margin_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
