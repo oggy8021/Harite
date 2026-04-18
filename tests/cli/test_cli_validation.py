@@ -2,6 +2,8 @@ import pytest
 import json
 
 from harite import cli
+from harite.display_context import TwoScreenOptimizeContext
+from harite.workspace import Display
 from typer.testing import CliRunner
 
 
@@ -436,3 +438,82 @@ def test_optimize_passes_embed_font_to_core(tmp_path, monkeypatch):
 
     assert result.exit_code == 0
     assert captured["embed_font"] == str(font)
+
+
+def test_optimize_uses_config_for_layout_scaling_align_and_valign(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    cfg = tmp_path / "config.json"
+    cfg.write_text(
+        json.dumps(
+            {
+                "input": ["from_config.jpg"],
+                "resolution": "1600x900",
+                "layout": "stack",
+                "scaling": "fill",
+                "align": "right",
+                "valign": "bottom",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+
+    result = runner.invoke(cli.app, ["optimize", "--config", str(cfg)])
+
+    assert result.exit_code == 0
+    assert captured["layout"] == "stack"
+    assert captured["scaling"] == "fill"
+    assert captured["align"] == "right"
+    assert captured["valign"] == "bottom"
+
+
+def test_optimize_auto_display_values_can_come_from_config(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    cfg = tmp_path / "config.json"
+    cfg.write_text(
+        json.dumps(
+            {
+                "input": ["left.jpg", "right.jpg"],
+                "resolution": "auto",
+                "two_screen": "auto",
+                "l_display": "auto",
+                "r_display": "auto",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    monkeypatch.setattr(
+        "harite.optimize_settings.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="L", width=1920, height=1080, x_offset=0),
+                Display(name="R", width=1280, height=1024, x_offset=1920),
+            ),
+            resolution=(3200, 1080),
+            l_display=(1920, 1080),
+            r_display=(1280, 1024),
+        ),
+    )
+
+    result = runner.invoke(cli.app, ["optimize", "--config", str(cfg)])
+
+    assert result.exit_code == 0
+    assert captured["target_resolution"] == (3200, 1080)
+    assert captured["two_screen"] is True
+    assert captured["l_display"] == (1920, 1080)
+    assert captured["r_display"] == (1280, 1024)

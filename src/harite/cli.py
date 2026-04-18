@@ -8,10 +8,11 @@ import json
 from click.core import ParameterSource
 
 from . import __version__
+from .apply_settings import resolve_apply_settings
 from .core import optimize_wallpapers
-from .display_context import build_auto_split_display_map, order_displays
 from .plugins import registry as plugin_registry
 from .config import load_config
+from .optimize_settings import is_auto_value, resolve_optimize_display_settings
 from .watch import collect_watch_input_images, run_watch_cycles
 
 app = typer.Typer(help="Harite - wallpaper optimizer")
@@ -85,6 +86,33 @@ def resolve_bool_option(
         return bool(cli_value)
     if name in cfg:
         return parse_config_bool(name, cfg[name])
+    return bool(cli_value)
+
+
+def resolve_option_value(
+    name: str,
+    cli_value: object,
+    cfg: dict,
+    ctx: typer.Context,
+) -> object:
+    if ctx.get_parameter_source(name) == ParameterSource.COMMANDLINE:
+        return cli_value
+    return cfg.get(name, cli_value)
+
+
+def resolve_bool_or_auto_option(
+    name: str,
+    cli_value: bool,
+    cfg: dict,
+    ctx: typer.Context,
+) -> bool | None:
+    if ctx.get_parameter_source(name) == ParameterSource.COMMANDLINE:
+        return bool(cli_value)
+    if name in cfg:
+        raw = cfg[name]
+        if is_auto_value(raw):
+            return None
+        return parse_config_bool(name, raw)
     return bool(cli_value)
 
 
@@ -270,15 +298,7 @@ def optimize(
             raise typer.Exit(code=2)
 
     # resolve effective values: CLI > config > required check
-    eff_resolution = resolution or cfg.get("resolution")
-    if not eff_resolution:
-        typer.echo("--resolution is required (or provide in --config)")
-        raise typer.Exit(code=2)
-    try:
-        w, h = parse_resolution(eff_resolution)
-    except ValueError as exc:
-        typer.echo(str(exc))
-        raise typer.Exit(code=2)
+    eff_resolution = resolve_option_value("resolution", resolution, cfg, ctx)
 
     # validate numeric options
     if padding < 0:
@@ -287,15 +307,16 @@ def optimize(
     if not (1 <= quality <= 100):
         typer.echo("--quality must be between 1 and 100")
         raise typer.Exit(code=2)
-    embed_info = str(embed_info or "none").lower()
+    embed_info = str(resolve_option_value("embed_info", embed_info, cfg, ctx) or "none").lower()
     if embed_info not in ("none", "params", "free", "combo"):
         typer.echo("--embed-info must be one of: none, params, free, combo")
         raise typer.Exit(code=2)
-    embed_position = str(embed_position or "auto").lower()
+    embed_position = str(resolve_option_value("embed_position", embed_position, cfg, ctx) or "auto").lower()
     if embed_position not in ("auto", "top", "bottom", "left", "right"):
         typer.echo("--embed-position must be one of: auto, top, bottom, left, right")
         raise typer.Exit(code=2)
-    if embed_max_lines <= 0:
+    eff_embed_max_lines = int(resolve_option_value("embed_max_lines", embed_max_lines, cfg, ctx))
+    if eff_embed_max_lines <= 0:
         typer.echo("--embed-max-lines must be positive")
         raise typer.Exit(code=2)
 
@@ -310,33 +331,64 @@ def optimize(
         expanded_inputs.extend(parts)
 
     try:
-        eff_two_screen = resolve_bool_option("two_screen", two_screen, cfg, ctx)
+        eff_two_screen = resolve_bool_or_auto_option("two_screen", two_screen, cfg, ctx)
         eff_fixed = resolve_bool_option("fixed", fixed, cfg, ctx)
     except ValueError as exc:
         typer.echo(str(exc))
+        raise typer.Exit(code=2)
+
+    try:
+        resolved_display_settings = resolve_optimize_display_settings(
+            input_values=expanded_inputs,
+            resolution=None if is_auto_value(eff_resolution) else str(eff_resolution or "").strip() or None,
+            two_screen=eff_two_screen,
+            l_display=None if is_auto_value(resolve_option_value("l_display", l_display, cfg, ctx)) else resolve_option_value("l_display", l_display, cfg, ctx),
+            r_display=None if is_auto_value(resolve_option_value("r_display", r_display, cfg, ctx)) else resolve_option_value("r_display", r_display, cfg, ctx),
+        )
+        w, h = parse_resolution(resolved_display_settings.resolution)
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=2)
+
+    eff_layout = str(resolve_option_value("layout", layout, cfg, ctx) or "mosaic")
+    eff_scaling = str(resolve_option_value("scaling", scaling, cfg, ctx) or "fit")
+    eff_align = str(resolve_option_value("align", align, cfg, ctx) or "center")
+    eff_valign = str(resolve_option_value("valign", valign, cfg, ctx) or "center")
+    eff_padding = int(resolve_option_value("padding", padding, cfg, ctx))
+    eff_quality = int(resolve_option_value("quality", quality, cfg, ctx))
+    eff_random_seed = resolve_option_value("random_seed", random_seed, cfg, ctx)
+    eff_margins = resolve_option_value("margins", margins, cfg, ctx)
+    eff_embed_text = resolve_option_value("embed_text", embed_text, cfg, ctx)
+    eff_embed_font = resolve_option_value("embed_font", embed_font, cfg, ctx)
+
+    if eff_padding < 0:
+        typer.echo("--padding must be non-negative")
+        raise typer.Exit(code=2)
+    if not (1 <= eff_quality <= 100):
+        typer.echo("--quality must be between 1 and 100")
         raise typer.Exit(code=2)
 
     saved_files, placements = optimize_wallpapers(
         inputs=expanded_inputs,
         target_resolution=(w, h),
         output_dir=output,
-        layout=layout,
-        scaling=scaling,
-        padding=padding,
-        quality=quality,
-        random_seed=random_seed,
-        two_screen=eff_two_screen,
-        margins=(0, 0, 0, 0) if (margins is None and cfg.get("margins") is None) else parse_margins(margins or cfg.get("margins")),
-        l_display=None if (l_display is None and cfg.get("l_display") is None) else parse_display(l_display or cfg.get("l_display")),
-        r_display=None if (r_display is None and cfg.get("r_display") is None) else parse_display(r_display or cfg.get("r_display")),
+        layout=eff_layout,
+        scaling=eff_scaling,
+        padding=eff_padding,
+        quality=eff_quality,
+        random_seed=eff_random_seed,
+        two_screen=resolved_display_settings.two_screen,
+        margins=(0, 0, 0, 0) if eff_margins is None else parse_margins(str(eff_margins)),
+        l_display=None if resolved_display_settings.l_display is None else parse_display(resolved_display_settings.l_display),
+        r_display=None if resolved_display_settings.r_display is None else parse_display(resolved_display_settings.r_display),
         fixed=eff_fixed,
-        align=align or cfg.get("align"),
-        valign=valign or cfg.get("valign"),
+        align=eff_align,
+        valign=eff_valign,
         embed_info=embed_info,
-        embed_text=embed_text,
+        embed_text=eff_embed_text,
         embed_position=embed_position,
-        embed_max_lines=embed_max_lines,
-        embed_font=(str(embed_font) if embed_font is not None else None),
+        embed_max_lines=eff_embed_max_lines,
+        embed_font=(str(eff_embed_font) if eff_embed_font is not None else None),
     )
     fmt = format.lower()
     if fmt not in ("json", "text"):
@@ -387,31 +439,29 @@ def apply(
         typer.echo(f"Available plugins: {', '.join(plugin_registry.list())}")
         raise typer.Exit(code=2)
 
-    # Determine what to pass to plugin.apply: either a string path or a dict
-    path_or_map = None
+    apply_mode = "single-file"
     if auto_split:
-        displays = order_displays(detect_displays())
-        if not displays:
-            typer.echo("No displays detected for --auto-split")
-            raise typer.Exit(code=2)
-        per_map = build_auto_split_display_map(file, displays, output_dir=Path("."))
-        path_or_map = per_map
+        apply_mode = "per-monitor-auto-split"
     elif left_file or right_file:
-        displays = order_displays(detect_displays())
-        if len(displays) < 2:
-            typer.echo("Need at least two displays to use --left-file/--right-file")
-            raise typer.Exit(code=2)
-        mapping = {}
-        if left_file:
-            mapping[displays[0].name] = str(left_file)
-        if right_file:
-            mapping[displays[1].name] = str(right_file)
-        path_or_map = mapping
+        apply_mode = "per-monitor-explicit"
     elif per_monitor:
         typer.echo("--per-monitor requires --left-file/--right-file or --auto-split")
         raise typer.Exit(code=2)
-    else:
-        path_or_map = str(file)
+
+    try:
+        effective_apply = resolve_apply_settings(
+            file=file,
+            plugin_name=plugin,
+            apply_mode=apply_mode,
+            left_file=left_file,
+            right_file=right_file,
+            output_dir=Path("."),
+        )
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=2)
+
+    path_or_map = effective_apply.target
 
     success = plugin_impl.apply(path_or_map, dry_run=not do_it)
     # Prepare a human-friendly path string for logging (handle per-monitor mapping)

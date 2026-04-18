@@ -949,6 +949,99 @@ def test_runtime_backend_apply_mode_toggle_dispatches_and_updates_label():
     assert backend.get_object("lblStatus").text == "ApplyMode: updated"
 
 
+def test_runtime_backend_prefs_button_dispatches_open_handler():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    observed = {"opened": 0}
+
+    backend.connect_signals(
+        {
+            "on_open_settings_dialog": lambda: observed.__setitem__("opened", observed["opened"] + 1) or True,
+            "on_get_preferences_config": lambda: {"plugin": "linux", "apply_mode": "single-file"},
+        }
+    )
+
+    backend.get_object("btnSetting").click()
+
+    assert observed["opened"] == 1
+    assert backend.get_object("lblStatus").text == "Prefs: opened"
+    assert backend.get_object("SettingsDialog").is_visible() is True
+    assert backend.get_object("SettingsDialog").get_preferences_config()["plugin"] == "linux"
+    assert backend.get_object("entPrefsPlugin").get_text() == "linux"
+    assert backend.get_object("radPrefsApplySingle").get_active() is True
+
+
+def test_runtime_backend_prefs_apply_load_save_and_close_dispatch_handlers(tmp_path):
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    dialog = backend.get_object("SettingsDialog")
+    observed = {"apply": None, "load": None, "save": None, "close": 0}
+
+    import_path = tmp_path / "load-prefs.json"
+    export_path = tmp_path / "save-prefs.json"
+    dialog.set_preferences_config(
+        {
+            "resolution": "1920x1080",
+            "plugin": "linux",
+            "apply_mode": "single-file",
+            "watch_interval_seconds": 60,
+        }
+    )
+    dialog.set_import_path(str(import_path))
+    dialog.set_export_path(str(export_path))
+    dialog.show()
+
+    backend.connect_signals(
+        {
+            "on_apply_preferences": lambda config: observed.__setitem__("apply", config) or True,
+            "on_load_preferences_file": lambda path: observed.__setitem__("load", path) or True,
+            "on_save_preferences_file": lambda path, config=None: observed.__setitem__("save", (path, config)) or True,
+            "on_get_preferences_config": lambda: {"plugin": "xfce", "apply_mode": "per-monitor-auto-split"},
+            "on_close_settings_dialog": lambda: observed.__setitem__("close", observed["close"] + 1) or True,
+        }
+    )
+
+    backend.get_object("entPrefsResolution").set_text("auto")
+    backend.get_object("entPrefsPlugin").set_text("xfce")
+    backend.get_object("spnPrefsWatchInterval").set_value(45)
+    backend.get_object("entPrefsImportPath").set_text(str(import_path))
+    backend.get_object("entPrefsExportPath").set_text(str(export_path))
+    backend.get_object("radPrefsTwoScreenAuto").set_active(True)
+    backend.get_object("radPrefsTwoScreenOn").set_active(False)
+    backend.get_object("radPrefsTwoScreenOff").set_active(False)
+    backend.get_object("radPrefsApplySingle").set_active(False)
+    backend.get_object("radPrefsApplyPerMonitor").set_active(True)
+
+    backend.get_object("btnPrefsApply").click()
+    assert observed["apply"]["resolution"] == "auto"
+    assert observed["apply"]["two_screen"] == "auto"
+    assert observed["apply"]["plugin"] == "xfce"
+    assert observed["apply"]["apply_mode"] == "per-monitor-auto-split"
+    assert observed["apply"]["watch_interval_seconds"] == 45
+    assert dialog.is_visible() is False
+    assert backend.get_object("lblPrefsState").text == "Prefs: applied"
+
+    dialog.show()
+    backend.get_object("btnPrefsLoad").click()
+    assert observed["load"] == str(import_path)
+    assert dialog.get_preferences_config()["plugin"] == "xfce"
+    assert backend.get_object("entPrefsPlugin").get_text() == "xfce"
+    assert backend.get_object("radPrefsApplyPerMonitor").get_active() is True
+    assert backend.get_object("lblPrefsState").text == "Prefs: loaded"
+
+    backend.get_object("entPrefsPlugin").set_text("saved-plugin")
+    backend.get_object("spnPrefsWatchInterval").set_value(77)
+
+    backend.get_object("btnPrefsSave").click()
+    assert observed["save"][0] == str(export_path)
+    assert observed["save"][1]["plugin"] == "saved-plugin"
+    assert observed["save"][1]["watch_interval_seconds"] == 77
+    assert backend.get_object("lblPrefsState").text == "Prefs: saved"
+
+    backend.get_object("btnPrefsClose").click()
+    assert observed["close"] == 1
+    assert dialog.is_visible() is False
+    assert backend.get_object("lblPrefsState").text == "Prefs: closed"
+
+
 def test_runtime_backend_optimize_sets_running_state_before_handler_call():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 

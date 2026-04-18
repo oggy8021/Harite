@@ -2,7 +2,9 @@ from pathlib import Path
 
 from PIL import Image
 
+from harite.apply_settings import EffectiveApplySettings
 from harite.display_context import TwoScreenOptimizeContext
+from harite.preferences import AppPreferences
 from harite.gui.views.main_window import MainWindow
 from harite.workspace import Display
 
@@ -442,24 +444,15 @@ def test_on_apply_per_monitor_auto_split_uses_split_mapping(monkeypatch, tmp_pat
     plugin = DummyPlugin()
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
     monkeypatch.setattr(
-        "harite.gui.views.main_window.build_two_screen_optimize_context",
-        lambda: TwoScreenOptimizeContext(
-            displays=(
-                Display(name="HDMI-1", width=1920, height=1080),
-                Display(name="DP-1", width=1280, height=1024, x_offset=1920),
-            ),
-            resolution=(3200, 1080),
-            l_display=(1920, 1080),
-            r_display=(1280, 1024),
+        "harite.gui.views.main_window.resolve_apply_settings",
+        lambda **_kwargs: EffectiveApplySettings(
+            plugin_name="linux",
+            apply_mode="per-monitor-auto-split",
+            target={
+                "HDMI-1": tmp_path / "wall_HDMI-1.jpg",
+                "DP-1": tmp_path / "wall_DP-1.jpg",
+            },
         ),
-    )
-    expected = {
-        "HDMI-1": tmp_path / "wall_HDMI-1.jpg",
-        "DP-1": tmp_path / "wall_DP-1.jpg",
-    }
-    monkeypatch.setattr(
-        "harite.gui.views.main_window.build_auto_split_display_map",
-        lambda _path, _displays, _output_dir: expected,
     )
 
     window = MainWindow()
@@ -472,12 +465,15 @@ def test_on_apply_per_monitor_auto_split_uses_split_mapping(monkeypatch, tmp_pat
     ok = window.on_apply()
 
     assert ok is True
-    assert plugin.calls == [(expected, False)]
+    assert plugin.calls == [({"HDMI-1": tmp_path / "wall_HDMI-1.jpg", "DP-1": tmp_path / "wall_DP-1.jpg"}, False)]
     assert any("Apply per-monitor auto-split" in line for line in window.logs)
 
 
 def test_on_apply_per_monitor_auto_split_requires_context(monkeypatch, tmp_path):
-    monkeypatch.setattr("harite.gui.views.main_window.build_two_screen_optimize_context", lambda: None)
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.resolve_apply_settings",
+        lambda **_kwargs: (_ for _ in ()).throw(ValueError("per-monitor apply requires at least two detected displays")),
+    )
 
     window = MainWindow()
     wall = tmp_path / "wall.jpg"
@@ -490,6 +486,131 @@ def test_on_apply_per_monitor_auto_split_requires_context(monkeypatch, tmp_path)
 
     assert ok is False
     assert window.last_error == "per-monitor apply requires at least two detected displays"
+
+
+def test_open_settings_dialog_tracks_state():
+    window = MainWindow()
+
+    ok = window.on_open_settings_dialog()
+
+    assert ok is True
+    assert window.settings_dialog_open is True
+    assert "Settings dialog opened" in window.logs
+
+
+def test_apply_preferences_updates_runtime_state():
+    window = MainWindow()
+    prefs = AppPreferences.from_config_dict(
+        {
+            "resolution": "auto",
+            "two_screen": "auto",
+            "l_display": "auto",
+            "r_display": "auto",
+            "plugin": "linux",
+            "apply_mode": "per-monitor-auto-split",
+            "watch_interval_seconds": 120,
+        },
+        default_plugin=window.plugin_name,
+    )
+
+    ok = window.on_apply_preferences(prefs)
+
+    assert ok is True
+    assert window.form_state.resolution == "auto"
+    assert window.form_state.two_screen is None
+    assert window.form_state.l_display == "auto"
+    assert window.form_state.r_display == "auto"
+    assert window.plugin_name == "linux"
+    assert window.apply_mode == "per-monitor-auto-split"
+    assert window.watch_interval_seconds == 120
+
+
+def test_export_and_reload_preferences_config_round_trips():
+    window = MainWindow()
+    window.form_state.resolution = "auto"
+    window.form_state.two_screen = None
+    window.form_state.l_display = "auto"
+    window.form_state.r_display = "auto"
+    window.plugin_name = "linux"
+    window.apply_mode = "per-monitor-auto-split"
+    window.watch_interval_seconds = 90
+
+    exported = window.export_preferences_config()
+
+    assert exported["resolution"] == "auto"
+    assert exported["two_screen"] == "auto"
+    assert exported["plugin"] == "linux"
+    assert exported["apply_mode"] == "per-monitor-auto-split"
+    assert exported["watch_interval_seconds"] == 90
+
+    other = MainWindow()
+    assert other.load_preferences_config(exported) is True
+    assert other.form_state.resolution == "auto"
+    assert other.form_state.two_screen is None
+    assert other.plugin_name == "linux"
+
+
+def test_preferences_file_save_and_load_round_trip(tmp_path):
+    window = MainWindow()
+    window.form_state.resolution = "auto"
+    window.form_state.two_screen = None
+    window.form_state.l_display = "auto"
+    window.form_state.r_display = "auto"
+    window.plugin_name = "linux"
+    window.apply_mode = "per-monitor-auto-split"
+    window.watch_interval_seconds = 75
+
+    target = tmp_path / "prefs.json"
+
+    assert window.on_save_preferences_file(str(target)) is True
+    assert target.exists() is True
+
+    other = MainWindow()
+    assert other.on_load_preferences_file(str(target)) is True
+    assert other.form_state.resolution == "auto"
+    assert other.form_state.two_screen is None
+    assert other.form_state.l_display == "auto"
+    assert other.form_state.r_display == "auto"
+    assert other.plugin_name == "linux"
+    assert other.apply_mode == "per-monitor-auto-split"
+    assert other.watch_interval_seconds == 75
+
+
+def test_preferences_file_handlers_require_path():
+    window = MainWindow()
+
+    assert window.on_save_preferences_file("") is False
+    assert window.status_phase == "prefs"
+    assert window.last_error == "preferences path is required"
+
+    assert window.on_load_preferences_file("") is False
+    assert window.status_phase == "prefs"
+    assert window.last_error == "preferences path is required"
+
+
+def test_preferences_file_save_accepts_explicit_dialog_config(tmp_path):
+    window = MainWindow()
+    target = tmp_path / "prefs-dialog.json"
+
+    assert window.on_save_preferences_file(
+        str(target),
+        {
+            "resolution": "auto",
+            "two_screen": "auto",
+            "plugin": "linux",
+            "apply_mode": "per-monitor-auto-split",
+            "watch_interval_seconds": 33,
+        },
+    ) is True
+
+    loaded = window.on_load_preferences_file(str(target))
+
+    assert loaded is True
+    assert window.form_state.resolution == "auto"
+    assert window.form_state.two_screen is None
+    assert window.plugin_name == "linux"
+    assert window.apply_mode == "per-monitor-auto-split"
+    assert window.watch_interval_seconds == 33
 
 
 def test_on_apply_without_optimized_file_fails():

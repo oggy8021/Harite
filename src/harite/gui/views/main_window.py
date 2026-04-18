@@ -9,10 +9,13 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from harite.display_context import build_auto_split_display_map, build_two_screen_optimize_context
+from harite.apply_settings import resolve_apply_settings
+from harite.config import load_config, save_config
+from harite.display_context import build_two_screen_optimize_context
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
 from harite.gui.services.cli_mapper import OptimizeRequest, to_cli_args
 from harite.plugins import registry as plugin_registry
+from harite.preferences import AppPreferences
 from harite.watch import collect_watch_input_images, select_next_image
 
 
@@ -51,6 +54,7 @@ class MainWindow:
         self.open_image_dialog_open = False
         self.open_image_dialog_side: str | None = None
         self._save_path_dialog_open = False
+        self.settings_dialog_open = False
         self.input_path_l = ""
         self.input_path_r = ""
         self.form_state = OptimizeFormState(
@@ -58,6 +62,7 @@ class MainWindow:
             resolution="1920x1080",
             output_dir=str(Path(".")),
         )
+        self.preferences = AppPreferences.defaults(default_plugin=self.plugin_name)
         self.layout_version = "phase6-layout-redefinition"
         self.layout_sections: tuple[tuple[str, tuple[str, ...]], ...] = (
             ("title_menu_flow", ("title", "menu", "flow", "save_as")),
@@ -386,42 +391,21 @@ class MainWindow:
         self._set_status("running", "apply", "applying wallpaper")
 
         composite_path = self.last_saved_files[-1]
-        target: str | dict[str, Path]
+        try:
+            effective_apply = resolve_apply_settings(
+                file=composite_path,
+                plugin_name=self.plugin_name,
+                apply_mode=self.apply_mode,
+                output_dir=composite_path.parent,
+            )
+        except ValueError as exc:
+            self._set_status("error", "apply", str(exc), error=str(exc))
+            self._log(f"Apply failed: {exc}")
+            return False
+
+        target = effective_apply.target
         if self.apply_mode == "per-monitor-auto-split":
-            if self.plugin_name != "linux":
-                self._set_status(
-                    "error",
-                    "apply",
-                    "per-monitor apply requires linux plugin",
-                    error="per-monitor apply requires linux plugin",
-                )
-                self._log("Apply failed: per-monitor apply requires linux plugin")
-                return False
-
-            context = build_two_screen_optimize_context()
-            if context is None:
-                self._set_status(
-                    "error",
-                    "apply",
-                    "per-monitor apply requires at least two detected displays",
-                    error="per-monitor apply requires at least two detected displays",
-                )
-                self._log("Apply failed: detected displays < 2 for per-monitor auto-split")
-                return False
-
-            target = build_auto_split_display_map(composite_path, context.displays, composite_path.parent)
-            if not target:
-                self._set_status(
-                    "error",
-                    "apply",
-                    "per-monitor split failed",
-                    error="per-monitor split failed",
-                )
-                self._log(f"Apply failed: per-monitor split failed for {composite_path}")
-                return False
             self._log(f"Apply per-monitor auto-split: {target}")
-        else:
-            target = str(composite_path)
 
         try:
             plugin = plugin_registry.get(self.plugin_name)
@@ -453,6 +437,122 @@ class MainWindow:
 
     def on_apply(self) -> bool:
         return self._apply_latest()
+
+    def on_open_settings_dialog(self) -> bool:
+        self.settings_dialog_open = True
+        self._set_status("idle", "prefs", "preferences dialog opened")
+        self._log("Settings dialog opened")
+        return True
+
+    def on_get_preferences_config(self) -> dict[str, object]:
+        return self.export_preferences_config()
+
+    def on_apply_preferences(self, preferences: AppPreferences | dict[str, object]) -> bool:
+        prefs = preferences
+        if isinstance(preferences, dict):
+            prefs = AppPreferences.from_config_dict(preferences, default_plugin=self.plugin_name)
+
+        self.preferences = prefs
+        optimize = prefs.optimize
+        self.form_state.resolution = optimize.resolution
+        self.form_state.layout = optimize.layout
+        self.form_state.scaling = optimize.scaling
+        self.form_state.margins = optimize.margins
+        self.form_state.fixed = optimize.fixed
+        self.form_state.align = optimize.align
+        self.form_state.valign = optimize.valign
+        self.form_state.padding = optimize.padding
+        self.form_state.quality = optimize.quality
+        self.form_state.embed_info = optimize.embed_info
+        self.form_state.embed_text = optimize.embed_text
+        self.form_state.embed_position = optimize.embed_position
+        self.form_state.embed_max_lines = optimize.embed_max_lines
+        self.form_state.l_display = optimize.l_display
+        self.form_state.r_display = optimize.r_display
+        if optimize.two_screen_mode == "auto":
+            self.form_state.two_screen = None
+            if self.input_path_l and self.input_path_r:
+                self._sync_two_screen_state()
+        elif optimize.two_screen_mode == "on":
+            self.form_state.two_screen = True
+        else:
+            self.form_state.two_screen = False
+            self.form_state.l_display = None if optimize.l_display == "auto" else optimize.l_display
+            self.form_state.r_display = None if optimize.r_display == "auto" else optimize.r_display
+
+        self.plugin_name = prefs.apply.plugin_name
+        self.apply_mode = prefs.apply.apply_mode
+        self.watch_interval_seconds = prefs.watch.interval_seconds
+        self.settings_dialog_open = False
+        self._set_status("success", "prefs", "preferences applied")
+        self._log("Preferences applied")
+        return True
+
+    def export_preferences_config(self) -> dict[str, object]:
+        self.preferences.optimize.resolution = self.form_state.resolution
+        self.preferences.optimize.layout = self.form_state.layout
+        self.preferences.optimize.scaling = self.form_state.scaling
+        self.preferences.optimize.margins = self.form_state.margins
+        self.preferences.optimize.fixed = self.form_state.fixed
+        self.preferences.optimize.align = self.form_state.align
+        self.preferences.optimize.valign = self.form_state.valign
+        self.preferences.optimize.padding = self.form_state.padding
+        self.preferences.optimize.quality = self.form_state.quality
+        self.preferences.optimize.embed_info = self.form_state.embed_info
+        self.preferences.optimize.embed_text = self.form_state.embed_text
+        self.preferences.optimize.embed_position = self.form_state.embed_position
+        self.preferences.optimize.embed_max_lines = self.form_state.embed_max_lines
+        self.preferences.apply.plugin_name = self.plugin_name
+        self.preferences.apply.apply_mode = self.apply_mode
+        self.preferences.watch.interval_seconds = self.watch_interval_seconds
+        if self.form_state.two_screen is None:
+            self.preferences.optimize.two_screen_mode = "auto"
+        else:
+            self.preferences.optimize.two_screen_mode = "on" if self.form_state.two_screen else "off"
+        self.preferences.optimize.l_display = self.form_state.l_display
+        self.preferences.optimize.r_display = self.form_state.r_display
+        return self.preferences.to_config_dict()
+
+    def load_preferences_config(self, config: dict[str, object]) -> bool:
+        return self.on_apply_preferences(AppPreferences.from_config_dict(config, default_plugin=self.plugin_name))
+
+    def on_save_preferences_file(
+        self,
+        path: str | None = None,
+        config: dict[str, object] | None = None,
+    ) -> bool:
+        value = (path or "").strip()
+        if not value:
+            self._set_status("error", "prefs", "preferences path is required", error="preferences path is required")
+            self._log("Preferences save failed: path is required")
+            return False
+        try:
+            payload = config if config is not None else self.export_preferences_config()
+            save_config(Path(value), payload)
+        except Exception as exc:
+            self._set_status("error", "prefs", "preferences save failed", error=str(exc))
+            self._log(f"Preferences save failed: {exc}")
+            return False
+        self._set_status("success", "prefs", "preferences saved")
+        self._log(f"Preferences saved: {value}")
+        return True
+
+    def on_load_preferences_file(self, path: str | None = None) -> bool:
+        value = (path or "").strip()
+        if not value:
+            self._set_status("error", "prefs", "preferences path is required", error="preferences path is required")
+            self._log("Preferences load failed: path is required")
+            return False
+        try:
+            config = load_config(Path(value))
+        except Exception as exc:
+            self._set_status("error", "prefs", "preferences load failed", error=str(exc))
+            self._log(f"Preferences load failed: {exc}")
+            return False
+        ok = self.load_preferences_config(config)
+        if ok:
+            self._log(f"Preferences loaded: {value}")
+        return ok
 
     def on_clear_input(self) -> bool:
         self.input_path_l = ""
@@ -605,6 +705,7 @@ class MainWindow:
         self._log("Save path dialog closed")
 
     def on_close_settings_dialog(self) -> None:
+        self.settings_dialog_open = False
         self._log("Settings dialog closed")
 
     def on_close_color_dialog(self) -> None:

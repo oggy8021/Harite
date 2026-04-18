@@ -2,7 +2,9 @@ from pathlib import Path
 
 import pytest
 
+from harite.display_context import TwoScreenOptimizeContext
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
+from harite.workspace import Display
 
 
 def _base_state(tmp_path) -> OptimizeFormState:
@@ -139,3 +141,45 @@ def test_run_export_passes_exact_save_path(monkeypatch, tmp_path):
     assert saved == [export_path]
     assert placements == []
     assert captured["output_path"] == export_path
+
+
+def test_run_optimize_resolves_auto_display_values(monkeypatch, tmp_path):
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [Path(kwargs["output_path"])], []
+
+    monkeypatch.setattr(
+        "harite.gui.controllers.optimize_controller.optimize_wallpapers",
+        fake_optimize_wallpapers,
+    )
+    monkeypatch.setattr(
+        "harite.optimize_settings.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="L", width=1920, height=1080, x_offset=0),
+                Display(name="R", width=1280, height=1024, x_offset=1920),
+            ),
+            resolution=(3200, 1080),
+            l_display=(1920, 1080),
+            r_display=(1280, 1024),
+        ),
+    )
+
+    controller = OptimizeController()
+    state = _base_state(tmp_path)
+    state.input_value = "left.jpg,right.jpg"
+    state.resolution = "auto"
+    state.two_screen = True
+    state.l_display = "auto"
+    state.r_display = "auto"
+
+    saved, placements = controller.run_optimize(state)
+
+    assert saved
+    assert placements == []
+    assert captured["target_resolution"] == (3200, 1080)
+    assert captured["two_screen"] is True
+    assert captured["l_display"] == (1920, 1080)
+    assert captured["r_display"] == (1280, 1024)

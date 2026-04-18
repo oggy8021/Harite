@@ -32,6 +32,10 @@ SAVE_PATH_DESTROY_HANDLER_NAMES: tuple[str, ...] = (
     "on_SavePathDialog_destroy",
 )
 
+SETTINGS_DIALOG_OBJECT_ALIASES: tuple[str, ...] = (
+    "SettingsDialog",
+)
+
 
 class _SavePathDialogProxy:
     """Minimal file chooser-like object used by runtime fallback backend."""
@@ -422,6 +426,47 @@ class _SrcdirDialogProxy:
             self._on_cancel(True)
 
 
+class _SettingsDialogProxy:
+    """Minimal settings dialog model used by runtime fallback backend."""
+
+    def __init__(self) -> None:
+        self._visible = False
+        self._preferences_config: dict[str, object] = {}
+        default_path = str(Path.home() / "harite-preferences.json")
+        self._import_path = default_path
+        self._export_path = default_path
+
+    def show(self) -> None:
+        self._visible = True
+
+    def hide(self) -> None:
+        self._visible = False
+
+    def is_visible(self) -> bool:
+        return self._visible
+
+    def set_preferences_config(self, config: dict[str, object]) -> None:
+        self._preferences_config = dict(config)
+
+    def get_preferences_config(self) -> dict[str, object]:
+        return dict(self._preferences_config)
+
+    def update_preference(self, key: str, value: object) -> None:
+        self._preferences_config[str(key)] = value
+
+    def set_import_path(self, path: str) -> None:
+        self._import_path = str(path or "")
+
+    def get_import_path(self) -> str:
+        return self._import_path
+
+    def set_export_path(self, path: str) -> None:
+        self._export_path = str(path or "")
+
+    def get_export_path(self) -> str:
+        return self._export_path
+
+
 class GtkRuntimeSignalBackend:
     """Minimal GTK runtime backend that does not require Glade parsing.
 
@@ -771,12 +816,59 @@ class GtkRuntimeSignalBackend:
                 self._on_native_save_path_confirmed,
                 self._on_native_save_path_canceled,
             )
+            settings_dialog_proxy = _SettingsDialogProxy()
             srcdir_dialog_proxy = _SrcdirDialogProxy(
                 gtk_module,
                 window,
                 self._on_srcdir_dialog_confirmed,
                 self._on_srcdir_dialog_canceled,
             )
+
+            prefs_apply_btn = gtk_module.Button(label="Prefs Apply")
+            prefs_load_btn = gtk_module.Button(label="Prefs Load")
+            prefs_save_btn = gtk_module.Button(label="Prefs Save")
+            prefs_close_btn = gtk_module.Button(label="Prefs Close")
+            prefs_state_label = gtk_module.Label(label="Prefs: idle")
+            if hasattr(prefs_state_label, "set_xalign"):
+                prefs_state_label.set_xalign(0.0)
+            prefs_editor_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            prefs_editor_title = gtk_module.Label(label="Preferences")
+            if hasattr(prefs_editor_title, "set_xalign"):
+                prefs_editor_title.set_xalign(0.0)
+            prefs_editor_box.pack_start(prefs_editor_title, False, False, 0)
+
+            prefs_resolution_entry = gtk_module.Entry()
+            prefs_layout_entry = gtk_module.Entry()
+            prefs_scaling_entry = gtk_module.Entry()
+            prefs_two_screen_auto = gtk_module.RadioButton.new_with_label(None, "TwoScreen Auto")
+            prefs_two_screen_on = gtk_module.RadioButton.new_with_label_from_widget(prefs_two_screen_auto, "TwoScreen On")
+            prefs_two_screen_off = gtk_module.RadioButton.new_with_label_from_widget(prefs_two_screen_auto, "TwoScreen Off")
+            if hasattr(prefs_two_screen_off, "set_active"):
+                prefs_two_screen_off.set_active(True)
+            prefs_l_display_entry = gtk_module.Entry()
+            prefs_r_display_entry = gtk_module.Entry()
+            prefs_margins_entry = gtk_module.Entry()
+            prefs_fixed_toggle = gtk_module.ToggleButton(label="Fixed")
+            prefs_align_entry = gtk_module.Entry()
+            prefs_valign_entry = gtk_module.Entry()
+            prefs_padding_spin = gtk_module.SpinButton()
+            self._configure_spin_button(prefs_padding_spin, minimum=0, maximum=10000, step=1, page=10, initial=0)
+            prefs_quality_spin = gtk_module.SpinButton()
+            self._configure_spin_button(prefs_quality_spin, minimum=1, maximum=100, step=1, page=10, initial=90)
+            prefs_embed_info_entry = gtk_module.Entry()
+            prefs_embed_text_entry = gtk_module.Entry()
+            prefs_embed_position_entry = gtk_module.Entry()
+            prefs_embed_max_lines_spin = gtk_module.SpinButton()
+            self._configure_spin_button(prefs_embed_max_lines_spin, minimum=1, maximum=20, step=1, page=5, initial=3)
+            prefs_plugin_entry = gtk_module.Entry()
+            prefs_apply_single = gtk_module.RadioButton.new_with_label(None, "Apply Single")
+            prefs_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(prefs_apply_single, "Apply PerMonitor")
+            if hasattr(prefs_apply_single, "set_active"):
+                prefs_apply_single.set_active(True)
+            prefs_watch_interval_spin = gtk_module.SpinButton()
+            self._configure_spin_button(prefs_watch_interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
+            prefs_import_path_entry = gtk_module.Entry()
+            prefs_export_path_entry = gtk_module.Entry()
 
             watch_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=16)
             watch_label = gtk_module.Label(label="Watch")
@@ -917,9 +1009,41 @@ class GtkRuntimeSignalBackend:
                 "commandTabs": command_tabs,
                 "hbox14": command_bar,
                 "btnSetting": btn_setting,
+                "btnPrefsApply": prefs_apply_btn,
+                "btnPrefsLoad": prefs_load_btn,
+                "btnPrefsSave": prefs_save_btn,
+                "btnPrefsClose": prefs_close_btn,
+                "lblPrefsState": prefs_state_label,
+                "boxPrefsEditor": prefs_editor_box,
+                "lblPrefsEditorTitle": prefs_editor_title,
+                "entPrefsResolution": prefs_resolution_entry,
+                "entPrefsLayout": prefs_layout_entry,
+                "entPrefsScaling": prefs_scaling_entry,
+                "radPrefsTwoScreenAuto": prefs_two_screen_auto,
+                "radPrefsTwoScreenOn": prefs_two_screen_on,
+                "radPrefsTwoScreenOff": prefs_two_screen_off,
+                "entPrefsLDisplay": prefs_l_display_entry,
+                "entPrefsRDisplay": prefs_r_display_entry,
+                "entPrefsMargins": prefs_margins_entry,
+                "tglPrefsFixed": prefs_fixed_toggle,
+                "entPrefsAlign": prefs_align_entry,
+                "entPrefsValign": prefs_valign_entry,
+                "spnPrefsPadding": prefs_padding_spin,
+                "spnPrefsQuality": prefs_quality_spin,
+                "entPrefsEmbedInfo": prefs_embed_info_entry,
+                "entPrefsEmbedText": prefs_embed_text_entry,
+                "entPrefsEmbedPosition": prefs_embed_position_entry,
+                "spnPrefsEmbedMaxLines": prefs_embed_max_lines_spin,
+                "entPrefsPlugin": prefs_plugin_entry,
+                "radPrefsApplySingle": prefs_apply_single,
+                "radPrefsApplyPerMonitor": prefs_apply_per_monitor,
+                "spnPrefsWatchInterval": prefs_watch_interval_spin,
+                "entPrefsImportPath": prefs_import_path_entry,
+                "entPrefsExportPath": prefs_export_path_entry,
                 "btnSetColor": btn_set_color,
                 "ImgOpenDialog": open_dialog_proxy,
                 "SrcdirDialog": srcdir_dialog_proxy,
+                **{object_name: settings_dialog_proxy for object_name in SETTINGS_DIALOG_OBJECT_ALIASES},
                 "watchTab": watch_tab_box,
                 "watchControlsRow": watch_controls_row,
                 "watchDetailRow": watch_detail_row,
@@ -1004,6 +1128,11 @@ class GtkRuntimeSignalBackend:
             optimize_btn.connect("clicked", self._on_save_clicked)
             optimize_modern_btn.connect("clicked", self._on_optimize_clicked)
             apply_btn.connect("clicked", self._on_apply_clicked)
+            btn_setting.connect("clicked", self._on_settings_clicked)
+            prefs_apply_btn.connect("clicked", self._on_preferences_apply_clicked)
+            prefs_load_btn.connect("clicked", self._on_preferences_load_clicked)
+            prefs_save_btn.connect("clicked", self._on_preferences_save_clicked)
+            prefs_close_btn.connect("clicked", self._on_preferences_close_clicked)
             rad_apply_single.connect(
                 "toggled",
                 lambda widget, *_args: self._on_apply_mode_toggled(widget, "single-file"),
@@ -1076,6 +1205,24 @@ class GtkRuntimeSignalBackend:
         label = self._objects.get(object_name)
         if label is not None and hasattr(label, "set_text"):
             label.set_text(message)
+
+    def _set_entry_text(self, object_name: str, value: object | None) -> None:
+        entry = self._objects.get(object_name)
+        if entry is not None and hasattr(entry, "set_text"):
+            entry.set_text("" if value is None else str(value))
+
+    def _read_entry_text(self, object_name: str) -> str:
+        entry = self._objects.get(object_name)
+        if entry is None:
+            return ""
+        if hasattr(entry, "get_text"):
+            return str(entry.get_text() or "").strip()
+        return str(getattr(entry, "text", "") or "").strip()
+
+    def _set_spin_value(self, object_name: str, value: int) -> None:
+        spin = self._objects.get(object_name)
+        if spin is not None and hasattr(spin, "set_value"):
+            spin.set_value(int(value))
 
     def _set_button_enabled(self, object_name: str, enabled: bool) -> None:
         button = self._objects.get(object_name)
@@ -1503,6 +1650,106 @@ class GtkRuntimeSignalBackend:
             return
         setattr(toggle, "active", bool(active))
 
+    def _set_preferences_two_screen_mode(self, value: object) -> None:
+        raw = str(value).strip().lower() if value is not None else "off"
+        is_auto = raw == "auto"
+        is_on = raw in {"on", "true", "1"} or value is True
+        self._set_toggle_active("radPrefsTwoScreenAuto", is_auto)
+        self._set_toggle_active("radPrefsTwoScreenOn", is_on and not is_auto)
+        self._set_toggle_active("radPrefsTwoScreenOff", not is_auto and not is_on)
+
+    def _read_preferences_two_screen_mode(self) -> str | bool:
+        if self._is_toggle_active("radPrefsTwoScreenAuto"):
+            return "auto"
+        if self._is_toggle_active("radPrefsTwoScreenOn"):
+            return True
+        return False
+
+    def _set_preferences_apply_mode(self, value: object | None) -> None:
+        mode = str(value or "single-file").strip().lower()
+        is_per_monitor = mode == "per-monitor-auto-split"
+        self._set_toggle_active("radPrefsApplySingle", not is_per_monitor)
+        self._set_toggle_active("radPrefsApplyPerMonitor", is_per_monitor)
+
+    def _read_preferences_apply_mode(self) -> str:
+        if self._is_toggle_active("radPrefsApplyPerMonitor"):
+            return "per-monitor-auto-split"
+        return "single-file"
+
+    def _sync_preferences_widgets_from_dialog(self) -> dict[str, object]:
+        dialog = self._objects.get("SettingsDialog")
+        if dialog is None or not hasattr(dialog, "get_preferences_config"):
+            return {}
+        config = dict(dialog.get_preferences_config())
+        self._set_entry_text("entPrefsResolution", config.get("resolution", "1920x1080"))
+        self._set_entry_text("entPrefsLayout", config.get("layout", "mosaic"))
+        self._set_entry_text("entPrefsScaling", config.get("scaling", "fit"))
+        self._set_preferences_two_screen_mode(config.get("two_screen", False))
+        self._set_entry_text("entPrefsLDisplay", config.get("l_display"))
+        self._set_entry_text("entPrefsRDisplay", config.get("r_display"))
+        self._set_entry_text("entPrefsMargins", config.get("margins"))
+        self._set_toggle_active("tglPrefsFixed", bool(config.get("fixed", False)))
+        self._set_entry_text("entPrefsAlign", config.get("align", "center"))
+        self._set_entry_text("entPrefsValign", config.get("valign", "center"))
+        self._set_spin_value("spnPrefsPadding", int(config.get("padding", 0)))
+        self._set_spin_value("spnPrefsQuality", int(config.get("quality", 90)))
+        self._set_entry_text("entPrefsEmbedInfo", config.get("embed_info", "none"))
+        self._set_entry_text("entPrefsEmbedText", config.get("embed_text"))
+        self._set_entry_text("entPrefsEmbedPosition", config.get("embed_position", "auto"))
+        self._set_spin_value("spnPrefsEmbedMaxLines", int(config.get("embed_max_lines", 3)))
+        self._set_entry_text("entPrefsPlugin", config.get("plugin", "windows"))
+        self._set_preferences_apply_mode(config.get("apply_mode", "single-file"))
+        self._set_spin_value("spnPrefsWatchInterval", int(config.get("watch_interval_seconds", 60)))
+        if hasattr(dialog, "get_import_path"):
+            self._set_entry_text("entPrefsImportPath", dialog.get_import_path())
+        if hasattr(dialog, "get_export_path"):
+            self._set_entry_text("entPrefsExportPath", dialog.get_export_path())
+        return config
+
+    def _sync_preferences_dialog_from_widgets(self) -> dict[str, object]:
+        dialog = self._objects.get("SettingsDialog")
+        config: dict[str, object] = {}
+        if dialog is not None and hasattr(dialog, "get_preferences_config"):
+            config = dict(dialog.get_preferences_config())
+
+        def _empty_to_none(value: str) -> str | None:
+            return value if value else None
+
+        config.update(
+            {
+                "resolution": self._read_entry_text("entPrefsResolution") or "1920x1080",
+                "layout": self._read_entry_text("entPrefsLayout") or "mosaic",
+                "scaling": self._read_entry_text("entPrefsScaling") or "fit",
+                "two_screen": self._read_preferences_two_screen_mode(),
+                "l_display": _empty_to_none(self._read_entry_text("entPrefsLDisplay")),
+                "r_display": _empty_to_none(self._read_entry_text("entPrefsRDisplay")),
+                "margins": _empty_to_none(self._read_entry_text("entPrefsMargins")),
+                "fixed": self._is_toggle_active("tglPrefsFixed"),
+                "align": self._read_entry_text("entPrefsAlign") or "center",
+                "valign": self._read_entry_text("entPrefsValign") or "center",
+                "padding": self._read_spin_int("spnPrefsPadding"),
+                "quality": self._read_spin_int("spnPrefsQuality"),
+                "embed_info": self._read_entry_text("entPrefsEmbedInfo") or "none",
+                "embed_text": _empty_to_none(self._read_entry_text("entPrefsEmbedText")),
+                "embed_position": self._read_entry_text("entPrefsEmbedPosition") or "auto",
+                "embed_max_lines": self._read_spin_int("spnPrefsEmbedMaxLines"),
+                "plugin": self._read_entry_text("entPrefsPlugin") or "windows",
+                "apply_mode": self._read_preferences_apply_mode(),
+                "watch_interval_seconds": self._read_spin_int("spnPrefsWatchInterval"),
+            }
+        )
+
+        import_path = self._read_entry_text("entPrefsImportPath")
+        export_path = self._read_entry_text("entPrefsExportPath")
+        if dialog is not None:
+            if hasattr(dialog, "set_preferences_config"):
+                dialog.set_preferences_config(config)
+            if hasattr(dialog, "set_import_path"):
+                dialog.set_import_path(import_path)
+            if hasattr(dialog, "set_export_path"):
+                dialog.set_export_path(export_path)
+        return config
+
     def _is_toggle_active(self, object_name: str) -> bool:
         toggle = self._objects.get(object_name)
         if toggle is None:
@@ -1753,6 +2000,100 @@ class GtkRuntimeSignalBackend:
                 )
         except Exception as exc:
             self._set_feedback(phase="Apply", state="error", error=str(exc))
+
+    def _on_settings_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_open_settings_dialog")
+        dialog = self._objects.get("SettingsDialog")
+        if callback is None:
+            self._set_feedback(phase="Prefs", state="planned")
+            return
+        try:
+            ok = callback()
+            if ok:
+                getter = self._signal_handlers.get("on_get_preferences_config")
+                if getter is not None and dialog is not None and hasattr(dialog, "set_preferences_config"):
+                    dialog.set_preferences_config(getter())
+                self._sync_preferences_widgets_from_dialog()
+                if dialog is not None and hasattr(dialog, "show"):
+                    dialog.show()
+                self._set_label_text("lblPrefsState", "Prefs: opened")
+                self._set_feedback(phase="Prefs", state="opened")
+            else:
+                self._set_feedback(phase="Prefs", state="deferred")
+        except Exception as exc:
+            self._set_feedback(phase="Prefs", state="error", error=str(exc))
+
+    def _on_preferences_apply_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_apply_preferences")
+        dialog = self._objects.get("SettingsDialog")
+        if callback is None or dialog is None or not hasattr(dialog, "get_preferences_config"):
+            self._set_feedback(phase="PrefsApply", state="handler-missing", error="handler not connected")
+            return
+        try:
+            ok = callback(self._sync_preferences_dialog_from_widgets())
+            if ok:
+                if hasattr(dialog, "hide"):
+                    dialog.hide()
+                self._set_label_text("lblPrefsState", "Prefs: applied")
+                self._set_feedback(phase="PrefsApply", state="applied")
+            else:
+                self._set_feedback(phase="PrefsApply", state="failed", error="preferences apply returned false")
+        except Exception as exc:
+            self._set_feedback(phase="PrefsApply", state="error", error=str(exc))
+
+    def _on_preferences_load_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_load_preferences_file")
+        dialog = self._objects.get("SettingsDialog")
+        if callback is None or dialog is None or not hasattr(dialog, "get_import_path"):
+            self._set_feedback(phase="PrefsLoad", state="handler-missing", error="handler not connected")
+            return
+        try:
+            self._sync_preferences_dialog_from_widgets()
+            ok = callback(dialog.get_import_path())
+            if ok:
+                getter = self._signal_handlers.get("on_get_preferences_config")
+                if getter is not None and hasattr(dialog, "set_preferences_config"):
+                    dialog.set_preferences_config(getter())
+                self._sync_preferences_widgets_from_dialog()
+                self._set_label_text("lblPrefsState", "Prefs: loaded")
+                self._set_feedback(phase="PrefsLoad", state="loaded")
+            else:
+                self._set_feedback(phase="PrefsLoad", state="failed", error="preferences load returned false")
+        except Exception as exc:
+            self._set_feedback(phase="PrefsLoad", state="error", error=str(exc))
+
+    def _on_preferences_save_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_save_preferences_file")
+        dialog = self._objects.get("SettingsDialog")
+        if callback is None or dialog is None or not hasattr(dialog, "get_export_path"):
+            self._set_feedback(phase="PrefsSave", state="handler-missing", error="handler not connected")
+            return
+        try:
+            config = self._sync_preferences_dialog_from_widgets()
+            try:
+                ok = callback(dialog.get_export_path(), config)
+            except TypeError:
+                ok = callback(dialog.get_export_path())
+            if ok:
+                self._set_label_text("lblPrefsState", "Prefs: saved")
+                self._set_feedback(phase="PrefsSave", state="saved")
+            else:
+                self._set_feedback(phase="PrefsSave", state="failed", error="preferences save returned false")
+        except Exception as exc:
+            self._set_feedback(phase="PrefsSave", state="error", error=str(exc))
+
+    def _on_preferences_close_clicked(self, *_args: Any) -> None:
+        dialog = self._objects.get("SettingsDialog")
+        if dialog is not None and hasattr(dialog, "hide"):
+            dialog.hide()
+        callback = self._signal_handlers.get("on_close_settings_dialog")
+        if callback is not None:
+            try:
+                callback()
+            except Exception:
+                pass
+        self._set_label_text("lblPrefsState", "Prefs: closed")
+        self._set_feedback(phase="Prefs", state="closed")
 
     def _on_color_clicked(self, *_args: Any) -> None:
         callback = self._signal_handlers.get("on_set_color")
