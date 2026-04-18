@@ -180,7 +180,7 @@ def test_layout_blueprint_defines_grouping_and_flow():
     assert bp["layout_version"] == "phase6-layout-redefinition"
     assert isinstance(bp["sections"], tuple)
     assert bp["sections"][0][0] == "title_menu_flow"
-    assert bp["sections"][-1][0] == "debug_footer"
+    assert bp["sections"][-1][0] == "status_footer"
     assert "menu-bar-header" in bp["layout_highlights"]
     assert bp["primary_action_flow"] == (
         "save_as",

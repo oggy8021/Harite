@@ -27,7 +27,6 @@ def test_phase4_a_layout_structure_sections_are_stable():
         "action_cluster",
         "watch_tab",
         "status_footer",
-        "debug_footer",
     ]
 
     section_items = {name: items for name, items in bp["sections"]}

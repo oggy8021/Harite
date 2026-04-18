@@ -66,11 +66,10 @@ class MainWindow:
         self.layout_version = "phase6-layout-redefinition"
         self.layout_sections: tuple[tuple[str, tuple[str, ...]], ...] = (
             ("title_menu_flow", ("title", "menu", "flow", "save_as")),
-            ("compose_input", ("input_value", "margins", "cross_layout", "fixed", "align", "valign")),
+            ("compose_input", ("input_value", "margins", "cross_layout", "align", "valign")),
             ("action_cluster", ("optimize", "apply", "saved_files")),
             ("watch_tab", ("watch_summary", "watch_srcdirs", "watch_interval", "watch_controls", "watch_details")),
             ("status_footer", ("status_message", "watch_summary")),
-            ("debug_footer", ("save_target", "last_error", "logs", "current_state")),
         )
         self.primary_action_flow: tuple[str, ...] = (
             "save_as",
@@ -780,7 +779,6 @@ class MainWindow:
                 "watch-tab-center-only",
                 "actions-right-lower",
                 "status-short-footer",
-                "debug-bottom-band",
                 "color-hidden-slot",
             ),
             "suggested_next_action": self.suggest_next_action(),

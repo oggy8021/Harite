@@ -596,23 +596,14 @@ class GtkRuntimeSignalBackend:
 
             left_display_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
             right_display_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
-
-            upper_toggle_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             tgl_upper_l = gtk_module.ToggleButton(label="Top-L")
             tgl_upper_r = gtk_module.ToggleButton(label="Top-R")
-            upper_toggle_row.pack_start(tgl_upper_l, False, False, 0)
-            upper_toggle_row.pack_start(tgl_upper_r, False, False, 0)
-
-            if hasattr(compose_grid, "attach"):
-                compose_grid.attach(upper_toggle_row, 1, 0, 1, 1)
-
-            lower_toggle_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             tgl_lower_l = gtk_module.ToggleButton(label="Bottom-L")
             tgl_lower_r = gtk_module.ToggleButton(label="Bottom-R")
-            lower_toggle_row.pack_start(tgl_lower_l, False, False, 0)
-            lower_toggle_row.pack_start(tgl_lower_r, False, False, 0)
-            if hasattr(compose_grid, "attach"):
-                compose_grid.attach(lower_toggle_row, 1, 2, 1, 1)
+
+            top_toggle_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            top_toggle_row_l.pack_start(tgl_upper_l, False, False, 0)
+            left_display_col.pack_start(top_toggle_row_l, False, False, 0)
 
             push_toggle_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             left_display_col.pack_start(push_toggle_row_l, False, False, 0)
@@ -622,8 +613,13 @@ class GtkRuntimeSignalBackend:
             push_toggle_row_l.pack_start(tgl_push_left_l, False, False, 0)
             push_toggle_row_l.pack_start(btn_get_img_l, False, False, 0)
             push_toggle_row_l.pack_start(tgl_push_right_l, False, False, 0)
+
+            lower_toggle_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            lower_toggle_row_l.pack_start(tgl_lower_l, False, False, 0)
+            left_display_col.pack_start(lower_toggle_row_l, False, False, 0)
+
             if hasattr(compose_grid, "attach"):
-                compose_grid.attach(left_display_col, 0, 1, 1, 1)
+                compose_grid.attach(left_display_col, 0, 0, 1, 1)
 
             input_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             left_display_col.pack_start(input_row_l, False, False, 0)
@@ -634,6 +630,10 @@ class GtkRuntimeSignalBackend:
             input_row_l.pack_start(input_entry_l, True, True, 0)
             input_row_l.pack_start(btn_clr_path_l, False, False, 0)
 
+            top_toggle_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            top_toggle_row_r.pack_start(tgl_upper_r, False, False, 0)
+            right_display_col.pack_start(top_toggle_row_r, False, False, 0)
+
             push_toggle_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             right_display_col.pack_start(push_toggle_row_r, False, False, 0)
             tgl_push_left_r = gtk_module.ToggleButton(label="Left-R")
@@ -642,8 +642,13 @@ class GtkRuntimeSignalBackend:
             push_toggle_row_r.pack_start(tgl_push_left_r, False, False, 0)
             push_toggle_row_r.pack_start(btn_get_img_r, False, False, 0)
             push_toggle_row_r.pack_start(tgl_push_right_r, False, False, 0)
+
+            lower_toggle_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            lower_toggle_row_r.pack_start(tgl_lower_r, False, False, 0)
+            right_display_col.pack_start(lower_toggle_row_r, False, False, 0)
+
             if hasattr(compose_grid, "attach"):
-                compose_grid.attach(right_display_col, 2, 1, 1, 1)
+                compose_grid.attach(right_display_col, 1, 0, 1, 1)
 
             input_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             right_display_col.pack_start(input_row_r, False, False, 0)
@@ -667,8 +672,6 @@ class GtkRuntimeSignalBackend:
                 rad_no_fixed.set_active(True)
             fixed_row.pack_start(rad_fixed, False, False, 0)
             fixed_row.pack_start(rad_no_fixed, False, False, 0)
-            if hasattr(compose_grid, "attach"):
-                compose_grid.attach(fixed_shell, 1, 3, 1, 1)
 
             pick_state_label = gtk_module.Label(label="")
             if hasattr(pick_state_label, "set_xalign"):
@@ -682,7 +685,7 @@ class GtkRuntimeSignalBackend:
             action_cluster_row.pack_start(optimize_group, False, False, 0)
             action_cluster_row.pack_start(apply_group, False, False, 0)
             if hasattr(compose_grid, "attach"):
-                compose_grid.attach(action_cluster_row, 0, 4, 3, 1)
+                compose_grid.attach(action_cluster_row, 0, 1, 2, 1)
 
             optimize_section_label = gtk_module.Label(label="Optimize")
             if hasattr(optimize_section_label, "set_xalign"):
@@ -718,14 +721,14 @@ class GtkRuntimeSignalBackend:
 
             apply_mode_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             apply_group.pack_start(apply_mode_row, False, False, 0)
-            rad_apply_single = gtk_module.RadioButton.new_with_label(None, "Single")
+            rad_apply_single = gtk_module.RadioButton.new_with_label(None, "Default")
             rad_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(
                 rad_apply_single,
-                "Per-monitor",
+                "Auto-split",
             )
             if hasattr(rad_apply_single, "set_active"):
                 rad_apply_single.set_active(True)
-            apply_mode_label = gtk_module.Label(label="Apply mode: single-file")
+            apply_mode_label = gtk_module.Label(label="Default: normal apply")
             if hasattr(apply_mode_label, "set_xalign"):
                 apply_mode_label.set_xalign(0.0)
             apply_mode_row.pack_start(rad_apply_single, False, False, 0)
@@ -861,8 +864,8 @@ class GtkRuntimeSignalBackend:
             prefs_embed_max_lines_spin = gtk_module.SpinButton()
             self._configure_spin_button(prefs_embed_max_lines_spin, minimum=1, maximum=20, step=1, page=5, initial=3)
             prefs_plugin_entry = gtk_module.Entry()
-            prefs_apply_single = gtk_module.RadioButton.new_with_label(None, "Apply Single")
-            prefs_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(prefs_apply_single, "Apply PerMonitor")
+            prefs_apply_single = gtk_module.RadioButton.new_with_label(None, "Apply Default")
+            prefs_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(prefs_apply_single, "Apply Auto-split")
             if hasattr(prefs_apply_single, "set_active"):
                 prefs_apply_single.set_active(True)
             prefs_watch_interval_spin = gtk_module.SpinButton()
@@ -959,6 +962,9 @@ class GtkRuntimeSignalBackend:
                 "lblSubtitle": subtitle,
                 "lblMainSection": main_section_label,
                 "boxMainSection": main_col,
+                "composeGrid": compose_grid,
+                "leftDisplayCol": left_display_col,
+                "rightDisplayCol": right_display_col,
                 "actionClusterRow": action_cluster_row,
                 "actionClusterCol": optimize_group,
                 "tglUpperL": tgl_upper_l,
@@ -1932,11 +1938,13 @@ class GtkRuntimeSignalBackend:
         is_active = True
         if hasattr(widget, "get_active"):
             is_active = bool(widget.get_active())
+        label = "Default: normal apply"
+        if mode == "per-monitor-auto-split" and is_active:
+            label = "Additional request: auto-split"
+        self._set_label_text("lblApplyMode", label)
+
         if not is_active:
             return
-
-        label = "Apply mode: single-file" if mode == "single-file" else "Apply mode: per-monitor auto-split"
-        self._set_label_text("lblApplyMode", label)
 
         callback = self._signal_handlers.get("on_change_apply_mode")
         if callback is None:

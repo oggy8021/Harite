@@ -432,7 +432,7 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("lblError") is not None
 
 
-def test_runtime_backend_current_state_panel_defaults_are_visible():
+def test_runtime_backend_current_state_panel_defaults_are_available():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     assert backend.get_object("lblCurrentStateSection").text == "Current state"
@@ -442,7 +442,7 @@ def test_runtime_backend_current_state_panel_defaults_are_visible():
     assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=center"
 
 
-def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
+def test_runtime_backend_shows_phase6_labels_and_controls():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     do_it = backend.get_object("lblDoItPlanned")
@@ -931,9 +931,11 @@ def test_runtime_backend_apply_success_updates_apply_target():
 def test_runtime_backend_apply_mode_defaults_to_single_file():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
+    assert backend.get_object("radApplySingle").label == "Default"
+    assert backend.get_object("radApplyPerMonitor").label == "Auto-split"
     assert backend.get_object("radApplySingle").get_active() is True
     assert backend.get_object("radApplyPerMonitor").get_active() is False
-    assert backend.get_object("lblApplyMode").text == "Apply mode: single-file"
+    assert backend.get_object("lblApplyMode").text == "Default: normal apply"
 
 
 def test_runtime_backend_apply_mode_toggle_dispatches_and_updates_label():
@@ -945,8 +947,40 @@ def test_runtime_backend_apply_mode_toggle_dispatches_and_updates_label():
     backend.get_object("radApplyPerMonitor").click()
 
     assert observed["mode"] == "per-monitor-auto-split"
-    assert backend.get_object("lblApplyMode").text == "Apply mode: per-monitor auto-split"
+    assert backend.get_object("lblApplyMode").text == "Additional request: auto-split"
     assert backend.get_object("lblStatus").text == "ApplyMode: updated"
+
+
+def test_runtime_backend_apply_mode_can_return_to_default_from_per_monitor():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    observed = []
+
+    backend.connect_signals({"on_change_apply_mode": lambda mode: observed.append(mode) or True})
+
+    backend.get_object("radApplyPerMonitor").click()
+    backend.get_object("radApplySingle").click()
+
+    assert observed == ["per-monitor-auto-split", "single-file"]
+    assert backend.get_object("lblApplyMode").text == "Default: normal apply"
+
+
+def test_runtime_backend_cross_layout_places_top_and_bottom_per_side():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    compose_grid = backend.get_object("composeGrid")
+    left_col = backend.get_object("leftDisplayCol")
+    right_col = backend.get_object("rightDisplayCol")
+
+    assert compose_grid.children == [
+        (left_col, 0, 0, 1, 1),
+        (right_col, 1, 0, 1, 1),
+        (backend.get_object("actionClusterRow"), 0, 1, 2, 1),
+    ]
+
+    assert [child.children[0].label for child in left_col.children[:3]] == ["Top-L", "Left-L", "Bottom-L"]
+    assert left_col.children[1].children[1].label == "Open-L"
+    assert [child.children[0].label for child in right_col.children[:3]] == ["Top-R", "Left-R", "Bottom-R"]
+    assert right_col.children[1].children[1].label == "Open-R"
 
 
 def test_runtime_backend_prefs_button_dispatches_open_handler():
@@ -967,6 +1001,8 @@ def test_runtime_backend_prefs_button_dispatches_open_handler():
     assert backend.get_object("SettingsDialog").is_visible() is True
     assert backend.get_object("SettingsDialog").get_preferences_config()["plugin"] == "linux"
     assert backend.get_object("entPrefsPlugin").get_text() == "linux"
+    assert backend.get_object("radPrefsApplySingle").label == "Apply Default"
+    assert backend.get_object("radPrefsApplyPerMonitor").label == "Apply Auto-split"
     assert backend.get_object("radPrefsApplySingle").get_active() is True
 
 
