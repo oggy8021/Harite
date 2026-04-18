@@ -155,10 +155,8 @@ def test_gui_layout_smoke_writes_pr_comment_template(tmp_path: Path):
             "manual screenshots attached",
             "--optimize-result",
             "pass",
-            "--apply-dry-run-result",
+            "--apply-result",
             "pass",
-            "--apply-do-it-result",
-            "not-available",
             "--out-file",
             str(out_json),
             "--pr-comment-out",
@@ -173,8 +171,7 @@ def test_gui_layout_smoke_writes_pr_comment_template(tmp_path: Path):
     assert "### Manual device validation" in text
     assert "- Scope: windows/gui" in text
     assert "- optimize: pass" in text
-    assert "- apply dry-run: pass" in text
-    assert "- apply do-it: not-available" in text
+    assert "- apply: pass" in text
     assert "- GUI smoke: pass" in text
     assert "- Notes: manual screenshots attached" in text
 
@@ -249,10 +246,8 @@ def test_gui_layout_smoke_writes_full_validation_report(tmp_path: Path):
             "owner",
             "--optimize-result",
             "pass",
-            "--apply-dry-run-result",
+            "--apply-result",
             "pass",
-            "--apply-do-it-result",
-            "not-available",
             "--screenshot-mainwindow",
             "out/manual-validation/pr-140-windows-mainwindow.png",
             "--screenshot-optimize",
@@ -273,7 +268,7 @@ def test_gui_layout_smoke_writes_full_validation_report(tmp_path: Path):
     assert "# GUI Manual Validation Report" in text
     assert "- PR: 140" in text
     assert "| optimize | pass | manual declaration |" in text
-    assert "| apply do-it | not-available | manual declaration |" in text
+    assert "| apply | pass | manual declaration |" in text
     assert "- MainWindow: out/manual-validation/pr-140-windows-mainwindow.png" in text
 
 
@@ -318,10 +313,8 @@ def test_gui_layout_smoke_auto_artifacts_writes_all_outputs(tmp_path: Path):
             "windows/gui",
             "--optimize-result",
             "pass",
-            "--apply-dry-run-result",
+            "--apply-result",
             "pass",
-            "--apply-do-it-result",
-            "not-available",
         ],
         check=False,
         capture_output=True,
@@ -399,8 +392,7 @@ def test_gui_layout_smoke_normalizes_legacy_manual_result_aliases(tmp_path: Path
     assert proc.returncode == 0, proc.stderr
     text = out_pr.read_text(encoding="utf-8")
     assert "- optimize: not-available" in text
-    assert "- apply dry-run: not-available" in text
-    assert "- apply do-it: not-available" in text
+    assert "- apply: not-available" in text
 
 
 def test_gui_layout_smoke_rejects_invalid_manual_result(tmp_path: Path):

@@ -1,6 +1,12 @@
-# MainWindow State Model（Phase 3 UIバインド向け）
+# MainWindow State Model（Phase 3 UIバインド向け / 履歴資料）
 
-最終更新: 2026-03-21
+最終更新: 2026-04-18
+
+## 位置づけ
+
+- この文書は Phase 3 時点の UI バインド前提で整理した MainWindow 状態モデルの履歴資料である。
+- current runtime の状態設計をそのまま表す正本文書ではない。
+- 後続フェーズでは、当時どの state を UI 要素へ結び付けようとしていたかの証跡として参照する。
 
 ## 目的
 

@@ -1,12 +1,19 @@
-# Glade レイアウト再現ガイド（WallPosit_MainWindow）
+# Glade レイアウト再現ガイド（WallPosit_MainWindow / 履歴資料）
 
-最終更新: 2026-04-13
-参照元: `src/harite/gui/resources/wallpositapplet.glade`
+最終更新: 2026-04-18
+参照元: `docs/legacy-ui/wallpositapplet.glade`
+
+## 位置づけ
+
+- この文書は旧 Glade レイアウトの再構成根拠を残すための履歴資料である。
+- current runtime の画面仕様を定義する文書ではない。
+- Phase6 以降は、旧 widget 配置と命名規約の証跡確認に限定して参照する。
+- 現行の構造判断は `gui-phase6-layout-redefinition.md` と `gui-phase6-lower-controls-responsibility.md` を正本とする。
 
 ## 結論
 
 - 既存 `docs/specs/gui/` には、Glade の実ウィジェット配置を画面内構造として固定した文書はなかった。
-- 本書は `WallPosit_MainWindow` の配置を再現するための基準ドキュメント。
+- 本書は `WallPosit_MainWindow` の配置を再現するために作成された当時の基準ドキュメント。
 
 ## 元プログラム由来の一次根拠（参照専用資産）
 
@@ -25,7 +32,7 @@
 運用ルール:
 
 - 原本は `docs/legacy-ui/README.md` の規約どおり「参照専用」とし、直接編集しない。
-- 実装調整は `src/harite/gui/resources/` 側で行い、差分理由を本書または tasklist に記録する。
+- 実装調整は当時 `src/harite/gui/resources/` 側を前提にしていたが、Phase6 以降は legacy 資産を `docs/legacy-ui/` の証跡として扱う。
 
 ## 画面全体の骨格
 

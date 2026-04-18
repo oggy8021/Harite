@@ -43,10 +43,13 @@ def test_xfconf_sample_dryrun_and_apply(monkeypatch):
     monkeypatch.setattr(subprocess, "run", fake_run)
 
     # Patch detect_displays to deterministic layout for heuristics
-    monkeypatch.setattr(workspace, "detect_displays", lambda: [
-        workspace.Display("eDP-1", 1920, 1080, 0),
-        workspace.Display("DP-1", 1920, 1080, 1920),
-    ])
+    monkeypatch.setattr(
+        "harite.display_context.detect_displays",
+        lambda: [
+            workspace.Display("eDP-1", 1920, 1080, 0),
+            workspace.Display("DP-1", 1920, 1080, 1920),
+        ],
+    )
 
     plugin = LinuxPlugin()
     mapping = {"DP-1": "/tmp/wall_dp.jpg", "eDP-1": "/tmp/wall_edp.jpg"}

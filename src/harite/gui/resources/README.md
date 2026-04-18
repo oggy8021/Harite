@@ -1,14 +1,14 @@
-# GUI Resource Staging
+# GUI Resources
 
-このディレクトリは、実装で使用する UI リソース（.ui/.glade 等）の配置先です。
+このディレクトリは current runtime が直接利用する GUI リソースの配置先です。
 
-## 使い分け
+## 現状
 
-- 原本保管: docs/legacy-ui/
-- 実装利用: src/harite/gui/resources/
+- legacy glade 原本は docs/legacy-ui/ を参照する
+- Phase6 では glade prototype 前提を撤去したため、wallpositapplet.glade の実装側コピーは保持しない
 
-## 取り込み方針
+## 方針
 
-1. まず原本を docs/legacy-ui に置く
-2. MVP に必要な画面だけ resources へコピー
-3. 変更履歴は docs/specs/gui-signal-mapping.md で管理
+1. legacy UI の証跡は docs/legacy-ui にのみ置く
+2. current runtime で使う資産だけをこのディレクトリに置く
+3. signal や layout の追跡は docs/specs/gui/ の文書で管理する

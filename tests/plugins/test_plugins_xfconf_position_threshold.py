@@ -24,7 +24,10 @@ def test_position_threshold(monkeypatch):
     monkeypatch.setattr(subprocess, "run", fake_run)
 
     # displays are near origin; candidate at x=5000 should be outside threshold
-    monkeypatch.setattr(workspace, "detect_displays", lambda: [workspace.Display("eDP-1", 1024, 768, 0, 0), workspace.Display("DP-1", 2048, 1280, 1024, 0)])
+    monkeypatch.setattr(
+        "harite.display_context.detect_displays",
+        lambda: [workspace.Display("eDP-1", 1024, 768, 0, 0), workspace.Display("DP-1", 2048, 1280, 1024, 0)],
+    )
 
     plugin = LinuxPlugin()
     mapping = {"DP-1": "/tmp/wall.jpg"}

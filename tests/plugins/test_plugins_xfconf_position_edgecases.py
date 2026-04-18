@@ -23,8 +23,11 @@ def test_negative_offset_matching(monkeypatch):
 
     monkeypatch.setattr(subprocess, "run", fake_run)
 
-    # patch detect_displays to return displays where DP-1 has x_offset -512
-    monkeypatch.setattr(workspace, "detect_displays", lambda: [workspace.Display("eDP-1", 1024, 768, 0), workspace.Display("DP-1", 2048, 1280, -512)])
+    # patch detect_displays through shared helper path
+    monkeypatch.setattr(
+        "harite.display_context.detect_displays",
+        lambda: [workspace.Display("eDP-1", 1024, 768, 0), workspace.Display("DP-1", 2048, 1280, -512)],
+    )
 
     plugin = LinuxPlugin()
     mapping = {"DP-1": "/tmp/wall.jpg"}
@@ -47,7 +50,10 @@ def test_duplicate_size_position_scoring(monkeypatch):
     monkeypatch.setattr(subprocess, "run", fake_run)
 
     # two displays with identical resolution; DP-1 is the right-side one at x_offset 1920
-    monkeypatch.setattr(workspace, "detect_displays", lambda: [workspace.Display("eDP-1", 1920, 1080, 0), workspace.Display("DP-1", 1920, 1080, 1920)])
+    monkeypatch.setattr(
+        "harite.display_context.detect_displays",
+        lambda: [workspace.Display("eDP-1", 1920, 1080, 0), workspace.Display("DP-1", 1920, 1080, 1920)],
+    )
 
     plugin = LinuxPlugin()
     mapping = {"DP-1": "/tmp/wall.jpg"}

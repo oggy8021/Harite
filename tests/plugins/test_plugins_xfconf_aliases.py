@@ -25,7 +25,7 @@ def test_name_alias_matching(monkeypatch):
     monkeypatch.setattr(subprocess, "run", fake_run)
 
     # patch detect_displays to return a display named DP-1
-    monkeypatch.setattr(workspace, "detect_displays", lambda: [workspace.Display("DP-1", 2048, 1280, 0)])
+    monkeypatch.setattr("harite.display_context.detect_displays", lambda: [workspace.Display("DP-1", 2048, 1280, 0)])
 
     plugin = LinuxPlugin()
     # mapping uses a different alias form 'displayport1' (or 'dp1') to ensure alias handling

@@ -13,10 +13,8 @@ def test_phase5_visual_tokens_snapshot_is_stable():
         "main_section": backend.get_object("lblMainSection").text,
         "optimize_section": backend.get_object("lblOptimizeSection").text,
         "apply_section": backend.get_object("lblApplySection").text,
-        "style_tiers": backend.get_object("lblStyleLegend").text,
-        "current_state": backend.get_object("lblCurrentStateSection").text,
+        "apply_mode": backend.get_object("lblApplyMode").text,
         "flow": backend.get_object("lblFlowLegend").text,
-        "save_target": backend.get_object("lblSaveTarget").text,
         "save": backend.get_object("btnSave").label,
         "optimize": backend.get_object("btnOptimize").label,
         "apply": backend.get_object("btnSetWall").label,
@@ -31,16 +29,14 @@ def test_phase5_visual_tokens_snapshot_is_stable():
         "main_section": "Main",
         "optimize_section": "Optimize",
         "apply_section": "Apply",
-        "style_tiers": "Style cues: secondary(about/help) | planned",
-        "current_state": "Current state",
-        "flow": "Flow: Compose -> Optimize -> Apply",
-        "save_target": "Save target: not-selected",
-        "save": "Save",
+        "apply_mode": "Default: normal apply",
+        "flow": "Compose -> Optimize -> Apply",
+        "save": "Save As",
         "optimize": "Optimize",
-        "apply": "Apply (dry-run)",
+        "apply": "Apply",
         "prefs": "Prefs",
-        "about": "About (secondary)",
-        "help": "Help (secondary)",
+        "about": "About",
+        "help": "Help",
         "open_l": "Open-L",
         "open_r": "Open-R",
     }
@@ -57,9 +53,9 @@ def test_phase5_runtime_smoke_optimize_then_apply_updates_visual_states():
     apply_target = backend.get_object("lblApplyTarget")
     status = backend.get_object("lblStatus")
 
-    backend.connect_signals({"on_entPath_insert_text": lambda _text: None})
-    backend.connect_signals({"on_btnOptimize_clicked": lambda: True})
-    backend.connect_signals({"on_btnSetWall_clicked": lambda: True})
+    backend.connect_signals({"on_change_input_text": lambda _text: None})
+    backend.connect_signals({"on_optimize": lambda: True})
+    backend.connect_signals({"on_apply": lambda: True})
 
     assert optimize_btn.sensitive is False
     assert apply_btn.sensitive is False
@@ -79,25 +75,25 @@ def test_phase5_runtime_smoke_optimize_then_apply_updates_visual_states():
 
     apply_btn.click()
 
-    assert status.text == "Apply: dry-run-ok"
-    assert apply_target.text == "Apply target: consumed"
+    assert status.text == "Apply: ok"
+    assert apply_target.text == "Apply target: last applied"
 
 
 def test_phase5_mainwindow_blueprint_smoke_matches_visual_checklist_scope():
     win = MainWindow()
     bp = win.get_layout_blueprint()
 
-    assert bp["layout_version"] == "phase5-radical-mainwindow"
+    assert bp["layout_version"] == "phase6-layout-redefinition"
     assert [name for name, _ in bp["sections"]] == [
-        "hero",
-        "optimize_panel",
-        "apply_panel",
-        "status_panel",
+        "title_menu_flow",
+        "compose_input",
+        "action_cluster",
+        "watch_tab",
+        "status_footer",
     ]
     assert bp["primary_action_flow"] == (
-        "hero",
+        "save_as",
         "optimize",
-        "apply_dry_run",
-        "apply_do_it",
+        "apply",
     )
     assert bp["subtitle"] == "Compose -> Optimize -> Apply"

@@ -9,9 +9,13 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
+from harite.apply_settings import resolve_apply_settings
+from harite.config import load_config, save_config
+from harite.display_context import build_two_screen_optimize_context
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
 from harite.gui.services.cli_mapper import OptimizeRequest, to_cli_args
 from harite.plugins import registry as plugin_registry
+from harite.preferences import AppPreferences
 from harite.watch import collect_watch_input_images, select_next_image
 
 
@@ -19,7 +23,7 @@ class MainWindow:
     """Framework-neutral placeholder for the first standalone GUI window."""
 
     def __init__(self) -> None:
-        self.title = "Harite Studio"
+        self.title = "Harite"
         self.subtitle = "Compose -> Optimize -> Apply"
         self.controller = OptimizeController()
         self.closed = False
@@ -34,9 +38,12 @@ class MainWindow:
         self.plugin_name = self._default_plugin_name()
         self.last_saved_files: list[Path] = []
         self.save_target_display = "Save target: not-selected"
+        self.apply_mode = "single-file"
+        self._pre_two_screen_resolution: str | None = None
         self.watch_interval_seconds = 60
         self.watch_srcdir_l = ""
         self.watch_srcdir_r = ""
+        self.watch_summary_display = "Watch: stopped"
         self.watch_source_display = "Watch srcdirs: L=- | R=-"
         self.watch_current_display = "Watch current: idle"
         self.watch_running = False
@@ -46,7 +53,8 @@ class MainWindow:
         self._watch_previous_r: Path | None = None
         self.open_image_dialog_open = False
         self.open_image_dialog_side: str | None = None
-        self.save_dialog_open = False
+        self._save_path_dialog_open = False
+        self.settings_dialog_open = False
         self.input_path_l = ""
         self.input_path_r = ""
         self.form_state = OptimizeFormState(
@@ -54,20 +62,28 @@ class MainWindow:
             resolution="1920x1080",
             output_dir=str(Path(".")),
         )
-        self.layout_version = "phase5-radical-mainwindow"
-        # P5-2: move to a stronger hero + action-panel layout for clearer first glance.
+        self.preferences = AppPreferences.defaults(default_plugin=self.plugin_name)
+        self.layout_version = "phase6-layout-redefinition"
         self.layout_sections: tuple[tuple[str, tuple[str, ...]], ...] = (
-            ("hero", ("input_value", "resolution", "output_dir", "plugin")),
-            ("optimize_panel", ("margins", "align", "valign", "padding", "quality", "optimize")),
-            ("apply_panel", ("saved_files", "apply_dry_run", "apply_do_it")),
-            ("status_panel", ("status_message", "save_target", "watch_sources", "watch_current", "last_error", "logs")),
+            ("title_menu_flow", ("title", "menu", "flow", "save_as")),
+            ("compose_input", ("input_value", "margins", "cross_layout", "align", "valign")),
+            ("action_cluster", ("optimize", "apply", "saved_files")),
+            ("watch_tab", ("watch_summary", "watch_srcdirs", "watch_interval", "watch_controls", "watch_details")),
+            ("status_footer", ("status_message", "watch_summary")),
         )
         self.primary_action_flow: tuple[str, ...] = (
-            "hero",
+            "save_as",
             "optimize",
-            "apply_dry_run",
-            "apply_do_it",
+            "apply",
         )
+
+    @property
+    def save_path_dialog_open(self) -> bool:
+        return self._save_path_dialog_open
+
+    @save_path_dialog_open.setter
+    def save_path_dialog_open(self, opened: bool) -> None:
+        self._save_path_dialog_open = bool(opened)
 
     def _default_plugin_name(self) -> str:
         platform_map = {
@@ -98,7 +114,6 @@ class MainWindow:
         return True
 
     def on_pick_input(self, path: str, side: str | None = None) -> None:
-        """Signal endpoint: on_btnGetImg_clicked."""
         value = (path or "").strip()
         if not value:
             self.last_error = "input path is empty"
@@ -125,7 +140,6 @@ class MainWindow:
             self._log(f"Input picked: {value}")
 
     def on_pick_watch_srcdir(self, path: str, side: str | None = None) -> bool:
-        """Signal endpoint: on_btnOpenSrcdir_clicked."""
         value = (path or "").strip()
         normalized_side = (side or "").strip().upper()
         if not value:
@@ -171,7 +185,6 @@ class MainWindow:
         return None
 
     def on_change_margins(self, *args: int | str) -> None:
-        """Signal endpoint: on_spnMergin_value_changed."""
         if len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], (int, float)):
             margin_index = self._margin_index_for_widget(args[0])
             if margin_index is None:
@@ -201,16 +214,13 @@ class MainWindow:
         self._log(f"Margins updated: {self.form_state.margins}")
 
     def on_toggle_fixed(self, enabled: bool) -> None:
-        """Signal endpoint: on_radFixed_toggled."""
         self.form_state.fixed = bool(enabled)
         self._log(f"Fixed mode: {self.form_state.fixed}")
 
     def on_toggle_position_pressed(self, widget_name: str) -> None:
-        """Signal endpoint: on_tglBtn_pressed."""
         self._log(f"Toggle pressed: {widget_name}")
 
     def on_toggle_position(self, widget_name: str, active: bool) -> None:
-        """Signal endpoint: on_tglBtn_toggled."""
         if not active:
             return
 
@@ -231,7 +241,6 @@ class MainWindow:
             self._log(f"Valign updated from {widget_name}: bottom")
 
     def on_toggle_position_reset(self, widget_name: str) -> None:
-        """Signal endpoint: on_tglBtn_released."""
         if "Push" in widget_name:
             self.form_state.align = "center"
             self._log(f"Align reset from {widget_name}: center")
@@ -255,6 +264,9 @@ class MainWindow:
         right = self.watch_srcdir_r or "-"
         self.watch_source_display = f"Watch srcdirs: L={left} | R={right}"
 
+    def _update_watch_summary_display(self) -> None:
+        self.watch_summary_display = "Watch: running" if self.watch_running else "Watch: stopped"
+
     def _update_watch_current_display(self, left: str | None = None, right: str | None = None) -> None:
         current_left = left if left is not None else (str(self._watch_previous_l) if self._watch_previous_l else "-")
         current_right = right if right is not None else (str(self._watch_previous_r) if self._watch_previous_r else "-")
@@ -270,13 +282,57 @@ class MainWindow:
         self.status_message = message
         self.last_error = error
 
+    def _sync_two_screen_state(self) -> None:
+        if not (self.input_path_l and self.input_path_r):
+            if self.form_state.two_screen and self._pre_two_screen_resolution:
+                self.form_state.resolution = self._pre_two_screen_resolution
+                self._pre_two_screen_resolution = None
+            self.form_state.two_screen = False
+            self.form_state.l_display = None
+            self.form_state.r_display = None
+            return
+
+        context = build_two_screen_optimize_context()
+        if context is None:
+            if self.form_state.two_screen and self._pre_two_screen_resolution:
+                self.form_state.resolution = self._pre_two_screen_resolution
+                self._pre_two_screen_resolution = None
+            self.form_state.two_screen = False
+            self.form_state.l_display = None
+            self.form_state.r_display = None
+            self._log("Two-screen unavailable: detected displays < 2")
+            return
+
+        if not self.form_state.two_screen:
+            self._pre_two_screen_resolution = self.form_state.resolution
+        self.form_state.two_screen = True
+        self.form_state.l_display = f"{context.l_display[0]}x{context.l_display[1]}"
+        self.form_state.r_display = f"{context.r_display[0]}x{context.r_display[1]}"
+        self.form_state.resolution = f"{context.resolution[0]}x{context.resolution[1]}"
+        self._log(
+            "Two-screen auto-configured: "
+            f"L={self.form_state.l_display} R={self.form_state.r_display} resolution={self.form_state.resolution}"
+        )
+
+    def on_change_apply_mode(self, mode: str) -> bool:
+        value = (mode or "").strip().lower()
+        if value not in {"single-file", "per-monitor-auto-split"}:
+            self.last_error = f"unknown apply mode: {mode}"
+            self._log(f"Apply mode update failed: unknown mode {mode}")
+            return False
+
+        self.apply_mode = value
+        self.last_error = ""
+        self._log(f"Apply mode updated: {value}")
+        return True
+
     def on_change_input_text(self, text: str) -> None:
-        """Signal endpoint: on_entPath_insert_text."""
         normalized = text.strip()
         parts = [part.strip() for part in normalized.split(",") if part.strip()]
         self.input_path_l = parts[0] if len(parts) >= 1 else ""
         self.input_path_r = parts[1] if len(parts) >= 2 else ""
         self.form_state.input_value = ",".join(parts)
+        self._sync_two_screen_state()
         self.can_optimize = bool(text and text.strip())
         if not self.can_optimize:
             # Input changed to empty; reset apply readiness to avoid stale flow.
@@ -284,9 +340,9 @@ class MainWindow:
             self.last_saved_files = []
             self.input_path_l = ""
             self.input_path_r = ""
-            self.save_dialog_open = False
+            self.save_path_dialog_open = False
             self._set_status("error", "input", "input is required", error="input is required")
-            self._log("Save dialog closed by input reset")
+            self._log("Save path dialog closed by input reset")
         if self.can_optimize:
             self._set_status("idle", "input", "input ready")
             self._log("Input updated")
@@ -294,15 +350,13 @@ class MainWindow:
             self._log("Input is empty")
 
     def on_save(self) -> bool:
-        """Save action: open save dialog before confirm-driven generation."""
-        self.save_dialog_open = True
+        self.save_path_dialog_open = True
         self._update_save_target_display()
-        self._set_status("idle", "save_dialog", "save dialog opened")
-        self._log("Save dialog opened")
+        self._set_status("idle", "save_path", "save path dialog opened")
+        self._log("Save path dialog opened")
         return True
 
     def on_optimize(self) -> bool:
-        """Modern optimize action used by current flow/UI."""
         if not self.can_optimize:
             self._set_status("error", "optimize", "input is required", error="input is required")
             self._log("Optimize blocked: input is required")
@@ -319,7 +373,7 @@ class MainWindow:
             for path in saved:
                 self._log(f"Saved: {path}")
             if self.can_apply:
-                self._log("Next action: apply dry-run")
+                self._log("Next action: apply")
             return True
         except Exception as exc:
             self.can_apply = False
@@ -327,7 +381,7 @@ class MainWindow:
             self._log(f"Optimize failed: {exc}")
             return False
 
-    def _apply_latest(self, dry_run: bool) -> bool:
+    def _apply_latest(self) -> bool:
         if not self.last_saved_files:
             self._set_status("error", "apply", "no optimized file to apply", error="no optimized file to apply")
             self._log("Apply blocked: no optimized file")
@@ -335,7 +389,23 @@ class MainWindow:
 
         self._set_status("running", "apply", "applying wallpaper")
 
-        target = str(self.last_saved_files[-1])
+        composite_path = self.last_saved_files[-1]
+        try:
+            effective_apply = resolve_apply_settings(
+                file=composite_path,
+                plugin_name=self.plugin_name,
+                apply_mode=self.apply_mode,
+                output_dir=composite_path.parent,
+            )
+        except ValueError as exc:
+            self._set_status("error", "apply", str(exc), error=str(exc))
+            self._log(f"Apply failed: {exc}")
+            return False
+
+        target = effective_apply.target
+        if self.apply_mode == "per-monitor-auto-split":
+            self._log(f"Apply per-monitor auto-split: {target}")
+
         try:
             plugin = plugin_registry.get(self.plugin_name)
         except KeyError:
@@ -349,31 +419,141 @@ class MainWindow:
             return False
 
         try:
-            ok = bool(plugin.apply(target, dry_run=dry_run))
+            ok = bool(plugin.apply(target, dry_run=False))
         except Exception as exc:
             self._set_status("error", "apply", "apply failed", error=f"failed to apply wallpaper: {exc}")
-            self._log(f"Apply failed via plugin={self.plugin_name} dry_run={dry_run}: {exc}")
+            self._log(f"Apply failed via plugin={self.plugin_name}: {exc}")
             return False
 
         if ok:
             self._set_status("success", "apply", "apply completed")
-            self._log(f"Applied wallpaper via plugin={self.plugin_name} dry_run={dry_run}: {target}")
+            self._log(f"Applied wallpaper via plugin={self.plugin_name}: {target}")
             return True
 
         self._set_status("error", "apply", "apply failed", error="failed to apply wallpaper")
-        self._log(f"Apply failed via plugin={self.plugin_name} dry_run={dry_run}: {target}")
+        self._log(f"Apply failed via plugin={self.plugin_name}: {target}")
         return False
 
-    def on_apply_dry_run(self) -> bool:
-        """Signal endpoint: on_btnSetWall_clicked (safe mode)."""
-        return self._apply_latest(dry_run=True)
+    def on_apply(self) -> bool:
+        return self._apply_latest()
 
-    def on_apply_do_it(self) -> bool:
-        """Signal endpoint: on_btnSetWall_clicked (execute mode)."""
-        return self._apply_latest(dry_run=False)
+    def on_open_settings_dialog(self) -> bool:
+        self.settings_dialog_open = True
+        self._set_status("idle", "prefs", "preferences dialog opened")
+        self._log("Settings dialog opened")
+        return True
+
+    def on_get_preferences_config(self) -> dict[str, object]:
+        return self.export_preferences_config()
+
+    def on_apply_preferences(self, preferences: AppPreferences | dict[str, object]) -> bool:
+        prefs = preferences
+        if isinstance(preferences, dict):
+            prefs = AppPreferences.from_config_dict(preferences, default_plugin=self.plugin_name)
+
+        self.preferences = prefs
+        optimize = prefs.optimize
+        self.form_state.resolution = optimize.resolution
+        self.form_state.layout = optimize.layout
+        self.form_state.scaling = optimize.scaling
+        self.form_state.margins = optimize.margins
+        self.form_state.fixed = optimize.fixed
+        self.form_state.align = optimize.align
+        self.form_state.valign = optimize.valign
+        self.form_state.padding = optimize.padding
+        self.form_state.quality = optimize.quality
+        self.form_state.embed_info = optimize.embed_info
+        self.form_state.embed_text = optimize.embed_text
+        self.form_state.embed_position = optimize.embed_position
+        self.form_state.embed_max_lines = optimize.embed_max_lines
+        self.form_state.l_display = optimize.l_display
+        self.form_state.r_display = optimize.r_display
+        if optimize.two_screen_mode == "auto":
+            self.form_state.two_screen = None
+            if self.input_path_l and self.input_path_r:
+                self._sync_two_screen_state()
+        elif optimize.two_screen_mode == "on":
+            self.form_state.two_screen = True
+        else:
+            self.form_state.two_screen = False
+            self.form_state.l_display = None if optimize.l_display == "auto" else optimize.l_display
+            self.form_state.r_display = None if optimize.r_display == "auto" else optimize.r_display
+
+        self.plugin_name = prefs.apply.plugin_name
+        self.apply_mode = prefs.apply.apply_mode
+        self.watch_interval_seconds = prefs.watch.interval_seconds
+        self.settings_dialog_open = False
+        self._set_status("success", "prefs", "preferences applied")
+        self._log("Preferences applied")
+        return True
+
+    def export_preferences_config(self) -> dict[str, object]:
+        self.preferences.optimize.resolution = self.form_state.resolution
+        self.preferences.optimize.layout = self.form_state.layout
+        self.preferences.optimize.scaling = self.form_state.scaling
+        self.preferences.optimize.margins = self.form_state.margins
+        self.preferences.optimize.fixed = self.form_state.fixed
+        self.preferences.optimize.align = self.form_state.align
+        self.preferences.optimize.valign = self.form_state.valign
+        self.preferences.optimize.padding = self.form_state.padding
+        self.preferences.optimize.quality = self.form_state.quality
+        self.preferences.optimize.embed_info = self.form_state.embed_info
+        self.preferences.optimize.embed_text = self.form_state.embed_text
+        self.preferences.optimize.embed_position = self.form_state.embed_position
+        self.preferences.optimize.embed_max_lines = self.form_state.embed_max_lines
+        self.preferences.apply.plugin_name = self.plugin_name
+        self.preferences.apply.apply_mode = self.apply_mode
+        self.preferences.watch.interval_seconds = self.watch_interval_seconds
+        if self.form_state.two_screen is None:
+            self.preferences.optimize.two_screen_mode = "auto"
+        else:
+            self.preferences.optimize.two_screen_mode = "on" if self.form_state.two_screen else "off"
+        self.preferences.optimize.l_display = self.form_state.l_display
+        self.preferences.optimize.r_display = self.form_state.r_display
+        return self.preferences.to_config_dict()
+
+    def load_preferences_config(self, config: dict[str, object]) -> bool:
+        return self.on_apply_preferences(AppPreferences.from_config_dict(config, default_plugin=self.plugin_name))
+
+    def on_save_preferences_file(
+        self,
+        path: str | None = None,
+        config: dict[str, object] | None = None,
+    ) -> bool:
+        value = (path or "").strip()
+        if not value:
+            self._set_status("error", "prefs", "preferences path is required", error="preferences path is required")
+            self._log("Preferences save failed: path is required")
+            return False
+        try:
+            payload = config if config is not None else self.export_preferences_config()
+            save_config(Path(value), payload)
+        except Exception as exc:
+            self._set_status("error", "prefs", "preferences save failed", error=str(exc))
+            self._log(f"Preferences save failed: {exc}")
+            return False
+        self._set_status("success", "prefs", "preferences saved")
+        self._log(f"Preferences saved: {value}")
+        return True
+
+    def on_load_preferences_file(self, path: str | None = None) -> bool:
+        value = (path or "").strip()
+        if not value:
+            self._set_status("error", "prefs", "preferences path is required", error="preferences path is required")
+            self._log("Preferences load failed: path is required")
+            return False
+        try:
+            config = load_config(Path(value))
+        except Exception as exc:
+            self._set_status("error", "prefs", "preferences load failed", error=str(exc))
+            self._log(f"Preferences load failed: {exc}")
+            return False
+        ok = self.load_preferences_config(config)
+        if ok:
+            self._log(f"Preferences loaded: {value}")
+        return ok
 
     def on_clear_input(self) -> bool:
-        """Signal endpoint: on_btnClrPath_clicked."""
         self.input_path_l = ""
         self.input_path_r = ""
         self.on_change_input_text("")
@@ -381,54 +561,59 @@ class MainWindow:
         return True
 
     def on_about(self) -> bool:
-        """Signal endpoint: on_btnAbout_clicked (planned)."""
         self._set_status("planned", "about", "about dialog is planned")
         self._log("About requested: planned")
         return False
 
     def on_set_color(self) -> bool:
-        """Signal endpoint: on_btnSetColor_clicked (planned)."""
-        self._set_status("planned", "color", "color picker is planned")
-        self._log("Color picker requested: planned")
+        self._set_status("deferred", "color", "color picker is deferred to phase7")
+        self._log("Color picker requested: deferred to phase7")
         return False
 
-    def on_save_dialog_confirm(self, save_path: str | None = None) -> bool:
-        """Signal endpoint: on_btnOpenSave_clicked."""
+    def on_save_path_selected(self, save_path: str | None = None) -> bool:
         value = (save_path or "").strip()
-        if not self.save_dialog_open and not value:
-            self._set_status("idle", "save_dialog", "save dialog ignored (closed)")
-            self._log("Save dialog confirm ignored: dialog is closed")
+        if not self.save_path_dialog_open and not value:
+            self._set_status("idle", "save_path", "save path ignored (closed)")
+            self._log("Save path selection ignored: dialog is closed")
             return False
         if not value:
             value = (self.form_state.save_path or "").strip()
         if value:
             self.form_state.save_path = value
             self._update_save_target_display(value)
-            self.save_dialog_open = False
-            self._set_status("idle", "save_dialog", "save path selected")
+            self.save_path_dialog_open = False
             self._log(f"Save path selected: {value}")
-            if self.can_optimize:
-                # Save path confirm continues into generation when input is ready.
-                self._log("Save dialog confirm: running save flow")
-                return self.on_optimize()
+            if not self.can_optimize:
+                self._set_status("error", "save", "input is required", error="input is required")
+                self._log("Save As blocked: input is required")
+                return False
+
+            self._set_status("running", "save", "saving composite")
+            try:
+                saved, _placements = self.controller.run_export(self.form_state, value)
+            except Exception as exc:
+                self._set_status("error", "save", "save failed", error=str(exc))
+                self._log(f"Save As failed: {exc}")
+                return False
+
+            self._set_status("success", "save", "save completed")
+            self._log(f"Save As completed: {saved[-1]}")
             return True
-        self._set_status("error", "save_dialog", "save path is required", error="save path is required")
-        self._log("Save dialog confirm rejected: save path is required")
+        self._set_status("error", "save_path", "save path is required", error="save path is required")
+        self._log("Save path selection rejected: save path is required")
         return False
 
-    def on_save_dialog_cancel(self) -> bool:
-        """Signal endpoint: on_btnCancelSave_clicked."""
-        if not self.save_dialog_open:
-            self._set_status("idle", "save_dialog", "save dialog ignored (closed)")
-            self._log("Save dialog cancel ignored: dialog is closed")
+    def on_save_path_selection_canceled(self) -> bool:
+        if not self.save_path_dialog_open:
+            self._set_status("idle", "save_path", "save path cancel ignored (closed)")
+            self._log("Save path cancel ignored: dialog is closed")
             return False
-        self.save_dialog_open = False
-        self._set_status("idle", "save_dialog", "save dialog canceled (path unchanged)")
-        self._log("Save dialog canceled")
+        self.save_path_dialog_open = False
+        self._set_status("idle", "save_path", "save path canceled (path unchanged)")
+        self._log("Save path canceled")
         return True
 
     def on_watch_start(self) -> bool:
-        """Signal endpoint: on_btnDaemonize_clicked."""
         sources: list[tuple[str, Path]] = []
         if self.watch_srcdir_l.strip():
             sources.append(("L", Path(self.watch_srcdir_l.strip())))
@@ -469,6 +654,7 @@ class MainWindow:
                 selected_right = str(selected)
 
         self.watch_running = True
+        self._update_watch_summary_display()
         self._update_watch_source_display()
         self._update_watch_current_display(selected_left, selected_right)
         self._set_status("success", "watch", "watch started")
@@ -478,19 +664,18 @@ class MainWindow:
         return True
 
     def on_watch_stop(self) -> bool:
-        """Signal endpoint: on_btnCancelDaemonize_clicked."""
         if not self.watch_running:
             self._set_status("idle", "watch", "watch stop ignored (idle)")
             self._log("Watch stop ignored: watch is idle")
             return False
         self.watch_running = False
+        self._update_watch_summary_display()
         self._update_watch_current_display()
         self._set_status("idle", "watch", "watch stopped")
         self._log("Watch stopped")
         return True
 
     def on_watch_interval_change(self, seconds: int) -> bool:
-        """Signal endpoint: on_spnInterval_value_changed."""
         value = int(seconds)
         if value <= 0:
             self._set_status("error", "watch", "watch interval must be positive", error="watch interval must be positive")
@@ -502,36 +687,30 @@ class MainWindow:
         return True
 
     def on_close(self) -> None:
-        """Signal endpoint: on_WallPosit_MainWindow_delete_event."""
         self.closed = True
         self._log("Window closed")
 
     def on_close_error_dialog(self) -> None:
-        """Signal endpoint: on_ErrorDialog_destroy."""
         self.last_error = ""
         self._log("Error dialog closed")
 
     def on_close_open_image_dialog(self) -> None:
-        """Signal endpoint: on_ImgOpenDialog_destroy."""
         self.open_image_dialog_open = False
         self.open_image_dialog_side = None
         self._log("Open image dialog closed")
 
-    def on_close_save_dialog(self) -> None:
-        """Signal endpoint: on_SaveWallpaperDialog_destroy."""
+    def on_close_save_path_dialog(self) -> None:
         self._update_save_target_display()
-        self._log("Save dialog closed")
+        self._log("Save path dialog closed")
 
     def on_close_settings_dialog(self) -> None:
-        """Signal endpoint: on_SettingDialog_destroy."""
+        self.settings_dialog_open = False
         self._log("Settings dialog closed")
 
     def on_close_color_dialog(self) -> None:
-        """Signal endpoint: on_ColorSelectionDialog_destroy."""
         self._log("Color selection dialog closed")
 
     def on_close_srcdir_dialog(self) -> None:
-        """Signal endpoint: on_SrcdirDialog_destroy."""
         self._log("Source directory dialog closed")
 
     def build_optimize_cli_preview(self) -> str:
@@ -566,7 +745,7 @@ class MainWindow:
             return "input"
         if self.can_optimize and not self.can_apply:
             return "optimize"
-        return "apply_dry_run"
+        return "apply"
 
     def run_primary_flow_step(self) -> bool:
         """Execute one safe step of the primary flow.
@@ -574,13 +753,13 @@ class MainWindow:
         Order:
         - input missing -> no-op (False)
         - optimize ready -> optimize
-        - apply ready -> apply dry-run
+        - apply ready -> apply
         """
         step = self.suggest_next_action()
         if step == "optimize":
             return self.on_optimize()
-        if step == "apply_dry_run":
-            return self.on_apply_dry_run()
+        if step == "apply":
+            return self.on_apply()
         self._set_status("error", "flow", "input is required", error="input is required")
         self._log("Flow step blocked: input is required")
         return False
@@ -594,9 +773,13 @@ class MainWindow:
             "sections": self.layout_sections,
             "primary_action_flow": self.primary_action_flow,
             "layout_highlights": (
-                "hero-first",
-                "optimize-apply-separation",
-                "status-persistent-footer",
+                "menu-bar-header",
+                "flow-save-right",
+                "center-cross-layout",
+                "watch-tab-center-only",
+                "actions-right-lower",
+                "status-short-footer",
+                "color-hidden-slot",
             ),
             "suggested_next_action": self.suggest_next_action(),
             "status": {
@@ -605,6 +788,7 @@ class MainWindow:
                 "message": self.status_message,
                 "last_error": self.last_error,
                 "save_target": self.save_target_display,
+                "watch_summary": self.watch_summary_display,
                 "watch_sources": self.watch_source_display,
                 "watch_current": self.watch_current_display,
             },

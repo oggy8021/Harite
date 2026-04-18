@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from harite.gui.adapters.gtk_backend import GtkRuntimeSignalBackend
+from harite.gui.adapters.ui_adapter import create_mainwindow_signal_dispatch
+from harite.gui.views.main_window import MainWindow
 
 
 class _Orientation:
@@ -12,6 +14,7 @@ class _WidgetBase:
     def __init__(self):
         self._signals = {}
         self._name = ""
+        self._parent = None
 
     def connect(self, name, callback):
         self._signals.setdefault(name, []).append(callback)
@@ -40,6 +43,9 @@ class _Window(_WidgetBase):
         return None
 
     def add(self, child):
+        if getattr(child, "_parent", None) is not None:
+            raise AssertionError("child already has a parent")
+        child._parent = self
         self.child = child
 
 
@@ -52,7 +58,42 @@ class _Box(_WidgetBase):
         return None
 
     def pack_start(self, child, *_args):
+        if getattr(child, "_parent", None) is not None:
+            raise AssertionError("child already has a parent")
+        child._parent = self
         self.children.append(child)
+
+
+class _Grid(_WidgetBase):
+    def __init__(self, **_kwargs):
+        super().__init__()
+        self.children = []
+        self.row_spacing = 0
+        self.column_spacing = 0
+
+    def set_row_spacing(self, spacing):
+        self.row_spacing = int(spacing)
+
+    def set_column_spacing(self, spacing):
+        self.column_spacing = int(spacing)
+
+    def attach(self, child, left, top, width, height):
+        if getattr(child, "_parent", None) is not None:
+            raise AssertionError("child already has a parent")
+        child._parent = self
+        self.children.append((child, int(left), int(top), int(width), int(height)))
+
+
+class _Notebook(_WidgetBase):
+    def __init__(self):
+        super().__init__()
+        self.pages = []
+
+    def append_page(self, child, tab_label):
+        if getattr(child, "_parent", None) is not None:
+            raise AssertionError("child already has a parent")
+        child._parent = self
+        self.pages.append((child, tab_label))
 
 
 class _Label(_WidgetBase):
@@ -65,6 +106,9 @@ class _Label(_WidgetBase):
 
     def set_text(self, text):
         self.text = text
+
+    def get_text(self):
+        return self.text
 
 
 class _Entry(_WidgetBase):
@@ -146,19 +190,38 @@ class _SpinButton(_WidgetBase):
 
 
 class _RadioButton(_ToggleButton):
+    def __init__(self, label="", group=None):
+        super().__init__(label=label)
+        if group is None:
+            self._group = [self]
+        else:
+            self._group = group
+            self._group.append(self)
+
     @classmethod
     def new_with_label(cls, _group, label):
         return cls(label=label)
 
     @classmethod
     def new_with_label_from_widget(cls, _widget, label):
-        return cls(label=label)
+        group = getattr(_widget, "_group", [_widget])
+        return cls(label=label, group=group)
+
+    def click(self):
+        self.emit("pressed", self)
+        for member in getattr(self, "_group", [self]):
+            member._active = member is self
+            member.emit("toggled", member)
+        self.emit("released", self)
+        self.emit("clicked", self)
 
 
 class _FakeGtk:
     Orientation = _Orientation
     Window = _Window
     Box = _Box
+    Grid = _Grid
+    Notebook = _Notebook
     Label = _Label
     Entry = _Entry
     Button = _Button
@@ -237,6 +300,42 @@ class _NativeFakeGtk(_FakeGtk):
     STOCK_SAVE = "gtk-save"
 
 
+def test_runtime_backend_updates_mainwindow_form_state_for_toggles_and_margins():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    dispatch = create_mainwindow_signal_dispatch(window, tuple(backend._signal_handlers.keys()) if backend._signal_handlers else tuple())
+
+    if not dispatch:
+        dispatch = create_mainwindow_signal_dispatch(window, (
+            "on_toggle_fixed",
+            "on_toggle_position_pressed",
+            "on_toggle_position",
+            "on_toggle_position_reset",
+            "on_change_margins",
+        ))
+    backend.connect_signals(dispatch)
+
+    backend.get_object("tglPushRightL").click()
+    backend.get_object("tglUpperR").click()
+    backend.get_object("spnTopMergin").set_value(25)
+    backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
+
+    assert window.form_state.align == "right"
+    assert window.form_state.valign == "top"
+    assert window.form_state.margins == "0,0,25,0"
+
+
+def test_runtime_backend_updates_mainwindow_apply_mode_state():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    dispatch = create_mainwindow_signal_dispatch(window, ("on_change_apply_mode",))
+    backend.connect_signals(dispatch)
+
+    backend.get_object("radApplyPerMonitor").click()
+
+    assert window.apply_mode == "per-monitor-auto-split"
+
+
 def test_runtime_backend_input_controls_optimize_button_state():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
@@ -247,7 +346,7 @@ def test_runtime_backend_input_controls_optimize_button_state():
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
 
-    backend.connect_signals({"on_entPath_insert_text": lambda _text: None})
+    backend.connect_signals({"on_change_input_text": lambda _text: None})
 
     assert optimize_btn.sensitive is False
     assert optimize_modern_btn.sensitive is False
@@ -273,7 +372,7 @@ def test_runtime_backend_optimize_result_controls_apply_button_state():
     optimize_result = backend.get_object("lblOptimizeResult")
     apply_target = backend.get_object("lblApplyTarget")
 
-    backend.connect_signals({"on_btnOptimize_clicked": lambda: True})
+    backend.connect_signals({"on_optimize": lambda: True})
     optimize_btn.click()
 
     assert apply_btn.sensitive is True
@@ -282,7 +381,7 @@ def test_runtime_backend_optimize_result_controls_apply_button_state():
     assert optimize_result.text == "Optimize result: success"
     assert apply_target.text == "Apply target: ready"
 
-    backend.connect_signals({"on_btnOptimize_clicked": lambda: False})
+    backend.connect_signals({"on_optimize": lambda: False})
     optimize_btn.click()
 
     assert apply_btn.sensitive is False
@@ -318,7 +417,7 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("boxApplySection") is not None
     assert backend.get_object("lblApplyTarget") is not None
     assert backend.get_object("lblDoItPlanned") is not None
-    assert backend.get_object("lblSaveDialogState") is not None
+    assert backend.get_object("lblSavePathState") is not None
     assert backend.get_object("lblSaveTarget") is not None
     assert backend.get_object("lblPriorityRule") is not None
     assert backend.get_object("lblStyleLegend") is not None
@@ -333,7 +432,7 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("lblError") is not None
 
 
-def test_runtime_backend_current_state_panel_defaults_are_visible():
+def test_runtime_backend_current_state_panel_defaults_are_available():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     assert backend.get_object("lblCurrentStateSection").text == "Current state"
@@ -343,7 +442,7 @@ def test_runtime_backend_current_state_panel_defaults_are_visible():
     assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=center"
 
 
-def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
+def test_runtime_backend_shows_phase6_labels_and_controls():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     do_it = backend.get_object("lblDoItPlanned")
@@ -351,10 +450,8 @@ def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
     watch_section = backend.get_object("lblWatchSection")
     interval = backend.get_object("lblInterval")
     color_btn = backend.get_object("btnSetColor")
-    save_open = backend.get_object("btnOpenSave")
-    save_cancel = backend.get_object("btnCancelSave")
-    save_dialog = backend.get_object("SaveWallpaperDialog")
-    save_dialog_state = backend.get_object("lblSaveDialogState")
+    save_path_chooser = backend.get_object("SavePathDialog")
+    save_path_state = backend.get_object("lblSavePathState")
     watch_start = backend.get_object("btnDaemonize")
     watch_stop = backend.get_object("btnCancelDaemonize")
     pick_state = backend.get_object("lblPickState")
@@ -378,32 +475,30 @@ def test_runtime_backend_shows_p5_3_planned_and_policy_labels():
     tgl_push_right_r = backend.get_object("tglPushRightR")
     tgl_lower_r = backend.get_object("tglLowerR")
 
-    assert do_it.text == "do-it: planned"
+    assert do_it.text == "Debug: apply is immediate"
     assert priority.text == "Rule: margins define area; align/valign act inside it; fixed binds L/R"
     assert watch_section.text == "Watch"
     assert interval.text == "Interval"
-    assert color_btn.label == "Color (planned)"
-    assert save_open.label == "Save Confirm"
-    assert save_cancel.label == "Save Cancel"
-    assert save_open.sensitive is False
-    assert save_cancel.sensitive is False
-    assert hasattr(save_dialog, "get_filename")
-    assert hasattr(save_dialog, "set_filename")
-    assert save_dialog_state.text == "SaveDialog: closed"
+    assert color_btn.label == "Color"
+    assert backend.get_object("btnOpenSave") is None
+    assert backend.get_object("btnCancelSave") is None
+    assert hasattr(save_path_chooser, "get_filename")
+    assert hasattr(save_path_chooser, "set_filename")
+    assert save_path_state.text == "Save path: idle"
     assert watch_start.label == "Watch Start"
     assert watch_stop.label == "Watch Stop"
     assert watch_sources.text == "Watch srcdirs: L=- | R=-"
     assert watch_current.text == "Watch current: idle"
-    assert pick_state.text == "Picker: idle"
-    assert style_legend.text == "Style cues: secondary(about/help) | planned"
-    assert command_section.text == "Commands"
-    assert flow_legend.text == "Flow: Compose -> Optimize -> Apply"
+    assert pick_state.text == ""
+    assert style_legend.text == "Reserved slot for future placement"
+    assert command_section.text == ""
+    assert flow_legend.text == "Compose -> Optimize -> Apply"
     assert prefs_btn.label == "Prefs"
-    assert about_btn.label == "About (secondary)"
-    assert help_btn.label == "Help (secondary)"
-    assert save_btn.label == "Save"
+    assert about_btn.label == "About"
+    assert help_btn.label == "Help"
+    assert save_btn.label == "Save As"
     assert optimize_btn.label == "Optimize"
-    assert apply_btn.label == "Apply (dry-run)"
+    assert apply_btn.label == "Apply"
     assert tgl_upper_l.label == "Top-L"
     assert tgl_upper_r.label == "Top-R"
     assert tgl_push_left_l.label == "Left-L"
@@ -436,10 +531,10 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(t
 
     backend.connect_signals(
         {
-            "on_btnOpenSrcdir_clicked": lambda path, side: bool(path) and side in {"L", "R"},
-            "on_btnDaemonize_clicked": lambda: True,
-            "on_btnCancelDaemonize_clicked": lambda: True,
-            "on_spnInterval_value_changed": lambda widget: int(widget.get_value_as_int()) > 0,
+            "on_pick_watch_srcdir": lambda path, side: bool(path) and side in {"L", "R"},
+            "on_watch_start": lambda: True,
+            "on_watch_stop": lambda: True,
+            "on_watch_interval_change": lambda widget: int(widget.get_value_as_int()) > 0,
         }
     )
 
@@ -479,17 +574,73 @@ def test_runtime_backend_open_l_uses_dialog_selection_and_calls_pick_handler():
         observed["path"] = path
         observed["side"] = side
 
-    backend.connect_signals({"on_btnGetImg_clicked": on_pick})
+    backend.connect_signals({"on_pick_input": on_pick})
     open_l.click()
     dialog.set_filename("/tmp/left.jpg")
     dialog.confirm()
 
     assert observed["path"] == "/tmp/left.jpg"
     assert observed["side"] == "L"
-    assert entry.get_text() == "/tmp/left.jpg"
+    assert entry.get_text() == "left.jpg"
     assert pick_state.text == "Open-L: selected"
     assert status.text == "Open-L: selected"
     assert error.text == "Error: none"
+
+
+def test_runtime_backend_clear_l_clears_only_left_side_and_keeps_right_input():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    entry_l = backend.get_object("entPathL")
+    entry_r = backend.get_object("entPathR")
+    clear_l = backend.get_object("btnClrPathL")
+    optimize_btn = backend.get_object("btnOptimize")
+    status = backend.get_object("lblStatus")
+    observed = {"text": None}
+
+    def on_change(text):
+        observed["text"] = text
+
+    backend.connect_signals({"on_change_input_text": on_change})
+    backend.connect_signals({"on_pick_input": lambda path, side=None: True})
+
+    dialog = backend.get_object("ImgOpenDialog")
+    backend.get_object("btnGetImgL").click()
+    dialog.set_filename("/tmp/left-image.jpg")
+    dialog.confirm()
+    backend.get_object("btnGetImgR").click()
+    dialog.set_filename("/tmp/right-image.jpg")
+    dialog.confirm()
+
+    clear_l.click()
+
+    assert entry_l.get_text() == ""
+    assert entry_r.get_text() == "right-image.jpg"
+    assert observed["text"] == "/tmp/right-image.jpg"
+    assert optimize_btn.sensitive is True
+    assert status.text == "Clear-L: ok"
+
+
+def test_runtime_backend_clear_r_disables_actions_when_last_input_cleared():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    entry_r = backend.get_object("entPathR")
+    clear_r = backend.get_object("btnClrPathR")
+    save_btn = backend.get_object("btnSave")
+    optimize_btn = backend.get_object("btnOptimize")
+
+    backend.connect_signals({"on_change_input_text": lambda _text: None})
+    backend.connect_signals({"on_pick_input": lambda path, side=None: True})
+
+    dialog = backend.get_object("ImgOpenDialog")
+    backend.get_object("btnGetImgR").click()
+    dialog.set_filename("/tmp/right-image.jpg")
+    dialog.confirm()
+
+    clear_r.click()
+
+    assert entry_r.get_text() == ""
+    assert save_btn.sensitive is False
+    assert optimize_btn.sensitive is False
 
 
 def test_runtime_backend_open_r_opens_dialog_without_entry_path_requirement():
@@ -537,7 +688,7 @@ def test_runtime_backend_right_input_enables_optimize_buttons():
     optimize_btn = backend.get_object("btnSave")
     optimize_modern_btn = backend.get_object("btnOptimize")
 
-    backend.connect_signals({"on_entPath_insert_text": lambda _text: None})
+    backend.connect_signals({"on_change_input_text": lambda _text: None})
 
     entry_l.set_text("")
     entry_r.set_text("/tmp/right-only.jpg")
@@ -547,7 +698,7 @@ def test_runtime_backend_right_input_enables_optimize_buttons():
     assert optimize_modern_btn.sensitive is True
 
 
-def test_runtime_backend_color_click_sets_planned_status():
+def test_runtime_backend_color_click_sets_deferred_status():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     color_btn = backend.get_object("btnSetColor")
@@ -556,48 +707,41 @@ def test_runtime_backend_color_click_sets_planned_status():
 
     color_btn.click()
 
-    assert status.text == "Color: planned"
+    assert status.text == "Color: deferred"
     assert error.text == "Error: none"
 
 
-def test_runtime_backend_save_dialog_confirm_passes_selected_path_to_handler():
+def test_runtime_backend_save_click_passes_selected_path_to_handler():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    save_open = backend.get_object("btnOpenSave")
-    save_dialog = backend.get_object("SaveWallpaperDialog")
-    save_dialog_state = backend.get_object("lblSaveDialogState")
+    save_path_chooser = backend.get_object("SavePathDialog")
+    save_path_state = backend.get_object("lblSavePathState")
     save_target = backend.get_object("lblSaveTarget")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
     observed = {}
 
-    save_dialog.set_filename("/tmp/from-runtime-dialog.jpg")
+    save_path_chooser.set_filename("/tmp/from-runtime-dialog.jpg")
 
     def on_open_save(path):
         observed["filename"] = path
         return True
 
-    backend.connect_signals({"on_btnOpenSave_clicked": on_open_save})
+    backend.connect_signals({"on_save_path_selected": on_open_save})
     backend.get_object("btnSave").click()
-    save_dialog.set_filename("/tmp/from-runtime-dialog.jpg")
-    assert save_open.sensitive is True
-    assert backend.get_object("btnCancelSave").sensitive is True
-    save_open.click()
 
     assert observed["filename"] == "/tmp/from-runtime-dialog.jpg"
-    assert save_dialog.is_visible() is False
-    assert save_open.sensitive is False
-    assert backend.get_object("btnCancelSave").sensitive is False
-    assert save_dialog_state.text == "SaveDialog: closed(confirm)"
+    assert save_path_chooser.is_visible() is False
+    assert save_path_state.text == "Save path: saved"
     assert save_target.text == "Save target: /tmp/from-runtime-dialog.jpg"
-    assert status.text == "SaveDialog: confirm-ok"
+    assert status.text == "SavePath: saved"
     assert error.text == "Error: none"
 
 
-def test_runtime_backend_native_save_dialog_confirm_runs_modal_flow():
+def test_runtime_backend_native_save_path_chooser_confirm_runs_modal_flow():
     backend = GtkRuntimeSignalBackend(_NativeFakeGtk)
 
-    save_dialog_state = backend.get_object("lblSaveDialogState")
+    save_path_state = backend.get_object("lblSavePathState")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
     observed = {"save": 0, "confirm": None, "cancel": 0}
@@ -618,17 +762,17 @@ def test_runtime_backend_native_save_dialog_confirm_runs_modal_flow():
     _NativeFileChooserDialog.next_filename = "/tmp/native-save.jpg"
     backend.connect_signals(
         {
-            "on_btnSave_clicked": on_save,
-            "on_btnOpenSave_clicked": on_open_save,
-            "on_btnCancelSave_clicked": on_cancel_save,
+            "on_save": on_save,
+            "on_save_path_selected": on_open_save,
+            "on_save_path_selection_canceled": on_cancel_save,
         }
     )
 
     backend.get_object("btnSave").click()
 
     assert observed == {"save": 1, "confirm": "/tmp/native-save.jpg", "cancel": 0}
-    assert save_dialog_state.text == "SaveDialog: closed(confirm)"
-    assert status.text == "SaveDialog: confirm-ok"
+    assert save_path_state.text == "Save path: saved"
+    assert status.text == "SavePath: saved"
     assert error.text == "Error: none"
     assert _NativeFileChooserDialog.last_created is not None
     assert _NativeFileChooserDialog.last_created.action == _NativeFakeGtk.FileChooserAction.SAVE
@@ -636,10 +780,10 @@ def test_runtime_backend_native_save_dialog_confirm_runs_modal_flow():
     assert _NativeFileChooserDialog.last_created.current_name == "harite-output.jpg"
 
 
-def test_runtime_backend_native_save_dialog_cancel_does_not_continue_save_flow():
+def test_runtime_backend_native_save_path_chooser_cancel_does_not_continue_save_flow():
     backend = GtkRuntimeSignalBackend(_NativeFakeGtk)
 
-    save_dialog_state = backend.get_object("lblSaveDialogState")
+    save_path_state = backend.get_object("lblSavePathState")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
     observed = {"save": 0, "confirm": 0, "cancel": 0}
@@ -660,98 +804,56 @@ def test_runtime_backend_native_save_dialog_cancel_does_not_continue_save_flow()
     _NativeFileChooserDialog.next_filename = ""
     backend.connect_signals(
         {
-            "on_btnSave_clicked": on_save,
-            "on_btnOpenSave_clicked": on_open_save,
-            "on_btnCancelSave_clicked": on_cancel_save,
+            "on_save": on_save,
+            "on_save_path_selected": on_open_save,
+            "on_save_path_selection_canceled": on_cancel_save,
         }
     )
 
     backend.get_object("btnSave").click()
 
     assert observed == {"save": 1, "confirm": 0, "cancel": 1}
-    assert save_dialog_state.text == "SaveDialog: closed(cancel)"
-    assert status.text == "SaveDialog: cancel-ok"
+    assert save_path_state.text == "Save path: canceled"
+    assert status.text == "SavePath: canceled"
     assert error.text == "Error: none"
 
 
-def test_runtime_backend_save_dialog_confirm_without_path_keeps_dialog_open():
+def test_runtime_backend_save_click_without_path_uses_default_filename():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    save_open = backend.get_object("btnOpenSave")
-    save_dialog = backend.get_object("SaveWallpaperDialog")
-    save_dialog_state = backend.get_object("lblSaveDialogState")
+    save_path_chooser = backend.get_object("SavePathDialog")
+    save_path_state = backend.get_object("lblSavePathState")
+    save_target = backend.get_object("lblSaveTarget")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
-    called = {"count": 0}
+    called = {"filename": None}
 
-    def on_open_save(_dialog):
-        called["count"] += 1
+    def on_open_save(path):
+        called["filename"] = path
         return True
 
-    backend.connect_signals({"on_btnOpenSave_clicked": on_open_save})
+    backend.connect_signals({"on_save_path_selected": on_open_save})
     backend.get_object("btnSave").click()
-    assert save_open.sensitive is False
-    assert backend.get_object("btnCancelSave").sensitive is True
-    save_open.click()
 
-    assert called["count"] == 0
-    assert save_dialog.is_visible() is True
-    assert save_open.sensitive is False
-    assert backend.get_object("btnCancelSave").sensitive is True
-    assert save_dialog_state.text == "SaveDialog: open(path-required)"
-    assert status.text == "SaveDialog: confirm-pending-path"
-    assert error.text == "Error: save path is required"
-
-
-def test_runtime_backend_save_dialog_confirm_is_ignored_when_closed():
-    backend = GtkRuntimeSignalBackend(_FakeGtk)
-
-    save_open = backend.get_object("btnOpenSave")
-    save_dialog_state = backend.get_object("lblSaveDialogState")
-    status = backend.get_object("lblStatus")
-    error = backend.get_object("lblError")
-    called = {"count": 0}
-
-    def on_open_save(_dialog):
-        called["count"] += 1
-        return True
-
-    backend.connect_signals({"on_btnOpenSave_clicked": on_open_save})
-    save_open.click()
-
-    assert called["count"] == 0
-    assert save_dialog_state.text == "SaveDialog: closed"
-    assert status.text == "SaveDialog: ignored-closed"
+    assert called["filename"].endswith("harite-output.jpg")
+    assert save_path_chooser.is_visible() is False
+    assert save_path_state.text == "Save path: saved"
+    assert save_target.text.endswith("harite-output.jpg")
+    assert status.text == "SavePath: saved"
     assert error.text == "Error: none"
 
 
-def test_runtime_backend_save_dialog_cancel_is_ignored_when_closed():
+def test_runtime_backend_save_path_chooser_proxy_no_longer_exposes_confirm_cancel_buttons():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    save_cancel = backend.get_object("btnCancelSave")
-    save_dialog_state = backend.get_object("lblSaveDialogState")
-    status = backend.get_object("lblStatus")
-    error = backend.get_object("lblError")
-    called = {"count": 0}
-
-    def on_cancel_save():
-        called["count"] += 1
-        return True
-
-    backend.connect_signals({"on_btnCancelSave_clicked": on_cancel_save})
-    save_cancel.click()
-
-    assert called["count"] == 0
-    assert save_dialog_state.text == "SaveDialog: closed"
-    assert status.text == "SaveDialog: ignored-closed"
-    assert error.text == "Error: none"
+    assert backend.get_object("btnOpenSave") is None
+    assert backend.get_object("btnCancelSave") is None
 
 
-def test_runtime_backend_save_dialog_cancel_calls_legacy_handler():
-    backend = GtkRuntimeSignalBackend(_FakeGtk)
+def test_runtime_backend_save_path_chooser_cancel_calls_current_handler_on_native_cancel():
+    backend = GtkRuntimeSignalBackend(_NativeFakeGtk)
 
-    save_cancel = backend.get_object("btnCancelSave")
-    save_dialog_state = backend.get_object("lblSaveDialogState")
+    save_path_state = backend.get_object("lblSavePathState")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
     observed = {"called": False}
@@ -760,87 +862,50 @@ def test_runtime_backend_save_dialog_cancel_calls_legacy_handler():
         observed["called"] = True
         return True
 
-    backend.connect_signals({"on_btnCancelSave_clicked": on_cancel_save})
+    _NativeFileChooserDialog.next_response = _NativeFakeGtk.ResponseType.CANCEL
+    _NativeFileChooserDialog.next_filename = ""
+    backend.connect_signals({"on_save_path_selection_canceled": on_cancel_save})
     backend.get_object("btnSave").click()
-    assert save_cancel.sensitive is True
-    assert backend.get_object("btnOpenSave").sensitive is False
-    save_cancel.click()
 
     assert observed["called"] is True
-    assert backend.get_object("SaveWallpaperDialog").is_visible() is False
-    assert save_cancel.sensitive is False
-    assert backend.get_object("btnOpenSave").sensitive is False
-    assert save_dialog_state.text == "SaveDialog: closed(cancel)"
-    assert status.text == "SaveDialog: cancel-ok"
+    assert save_path_state.text == "Save path: canceled"
+    assert status.text == "SavePath: canceled"
     assert error.text == "Error: none"
 
 
-def test_runtime_backend_save_click_opens_save_dialog_proxy():
+def test_runtime_backend_save_path_chooser_filename_change_updates_target_label():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    save_btn = backend.get_object("btnSave")
-    save_dialog = backend.get_object("SaveWallpaperDialog")
-    save_dialog_state = backend.get_object("lblSaveDialogState")
-    status = backend.get_object("lblStatus")
-
-    assert save_dialog.is_visible() is False
-    assert backend.get_object("btnOpenSave").sensitive is False
-    assert backend.get_object("btnCancelSave").sensitive is False
-    save_btn.click()
-
-    assert save_dialog.is_visible() is True
-    assert backend.get_object("btnOpenSave").sensitive is False
-    assert backend.get_object("btnCancelSave").sensitive is True
-    assert save_dialog_state.text == "SaveDialog: open"
-    assert status.text == "Status: ready"
-
-
-def test_runtime_backend_save_dialog_filename_selection_enables_confirm():
-    backend = GtkRuntimeSignalBackend(_FakeGtk)
-
-    save_btn = backend.get_object("btnSave")
-    save_dialog = backend.get_object("SaveWallpaperDialog")
-    save_open = backend.get_object("btnOpenSave")
-    save_dialog_state = backend.get_object("lblSaveDialogState")
+    save_path_chooser = backend.get_object("SavePathDialog")
+    save_path_state = backend.get_object("lblSavePathState")
     save_target = backend.get_object("lblSaveTarget")
 
-    save_btn.click()
-    assert save_open.sensitive is False
+    save_path_chooser.show()
+    save_path_chooser.set_filename("/tmp/selected.jpg")
 
-    save_dialog.set_filename("/tmp/selected.jpg")
-
-    assert save_open.sensitive is True
-    assert save_dialog_state.text == "SaveDialog: open(path-ready)"
+    assert save_path_state.text == "Save path: ready"
     assert save_target.text == "Save target: /tmp/selected.jpg"
 
 
-def test_runtime_backend_input_clear_closes_save_dialog_and_disables_confirm_buttons():
+def test_runtime_backend_prefers_save_path_dialog_destroy_signal_name():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    entry = backend.get_object("entPathL")
-    save_btn = backend.get_object("btnSave")
-    save_dialog = backend.get_object("SaveWallpaperDialog")
-    save_dialog_state = backend.get_object("lblSaveDialogState")
-    save_open = backend.get_object("btnOpenSave")
-    save_cancel = backend.get_object("btnCancelSave")
+    observed = {"destroy": 0}
 
-    backend.connect_signals({"on_entPath_insert_text": lambda _text: None})
+    def on_destroy() -> None:
+        observed["destroy"] += 1
 
-    entry.set_text("/tmp/example.jpg")
-    entry.emit("changed", entry)
-    save_btn.click()
-    save_dialog.set_filename("/tmp/selected.jpg")
-    assert save_dialog.is_visible() is True
-    assert save_open.sensitive is True
-    assert save_cancel.sensitive is True
+    backend.connect_signals(
+        {
+            "on_save_path_selected": lambda _path: True,
+            "on_SavePathDialog_destroy": on_destroy,
+        }
+    )
 
-    entry.set_text("")
-    entry.emit("changed", entry)
+    backend.get_object("SavePathDialog").set_filename("/tmp/from-save-path-destroy.jpg")
+    backend.get_object("btnSave").click()
 
-    assert save_dialog.is_visible() is False
-    assert save_open.sensitive is False
-    assert save_cancel.sensitive is False
-    assert save_dialog_state.text == "SaveDialog: closed(input-reset)"
+    assert observed["destroy"] == 1
 
 
 def test_runtime_backend_apply_success_updates_apply_target():
@@ -852,15 +917,177 @@ def test_runtime_backend_apply_success_updates_apply_target():
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
 
-    backend.connect_signals({"on_btnOptimize_clicked": lambda: True})
-    backend.connect_signals({"on_btnSetWall_clicked": lambda: True})
+    backend.connect_signals({"on_optimize": lambda: True})
+    backend.connect_signals({"on_apply": lambda: True})
 
     optimize_btn.click()
     apply_btn.click()
 
-    assert status.text == "Apply: dry-run-ok"
+    assert status.text == "Apply: ok"
     assert error.text == "Error: none"
-    assert apply_target.text == "Apply target: consumed"
+    assert apply_target.text == "Apply target: last applied"
+
+
+def test_runtime_backend_apply_mode_defaults_to_single_file():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    assert backend.get_object("radApplySingle").label == "Default"
+    assert backend.get_object("radApplyPerMonitor").label == "Auto-split"
+    assert backend.get_object("radApplySingle").get_active() is True
+    assert backend.get_object("radApplyPerMonitor").get_active() is False
+    assert backend.get_object("lblApplyMode").text == "Default: normal apply"
+
+
+def test_runtime_backend_apply_mode_toggle_dispatches_and_updates_label():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    observed = {}
+
+    backend.connect_signals({"on_change_apply_mode": lambda mode: observed.setdefault("mode", mode) or True})
+
+    backend.get_object("radApplyPerMonitor").click()
+
+    assert observed["mode"] == "per-monitor-auto-split"
+    assert backend.get_object("lblApplyMode").text == "Additional request: auto-split"
+    assert backend.get_object("lblStatus").text == "ApplyMode: updated"
+
+
+def test_runtime_backend_apply_mode_can_return_to_default_from_per_monitor():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    observed = []
+
+    backend.connect_signals({"on_change_apply_mode": lambda mode: observed.append(mode) or True})
+
+    backend.get_object("radApplyPerMonitor").click()
+    backend.get_object("radApplySingle").click()
+
+    assert observed == ["per-monitor-auto-split", "single-file"]
+    assert backend.get_object("lblApplyMode").text == "Default: normal apply"
+
+
+def test_runtime_backend_cross_layout_places_top_and_bottom_per_side():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    compose_grid = backend.get_object("composeGrid")
+    left_col = backend.get_object("leftDisplayCol")
+    right_col = backend.get_object("rightDisplayCol")
+
+    assert compose_grid.children == [
+        (left_col, 0, 0, 1, 1),
+        (backend.get_object("inputRowL"), 0, 1, 1, 1),
+        (right_col, 1, 0, 1, 1),
+        (backend.get_object("inputRowR"), 1, 1, 1, 1),
+        (backend.get_object("actionClusterRow"), 0, 2, 2, 1),
+    ]
+
+    assert left_col.children == [
+        (backend.get_object("tglUpperL"), 1, 0, 1, 1),
+        (backend.get_object("tglPushLeftL"), 0, 1, 1, 1),
+        (backend.get_object("btnGetImgL"), 1, 1, 1, 1),
+        (backend.get_object("tglPushRightL"), 2, 1, 1, 1),
+        (backend.get_object("tglLowerL"), 1, 2, 1, 1),
+    ]
+    assert right_col.children == [
+        (backend.get_object("tglUpperR"), 1, 0, 1, 1),
+        (backend.get_object("tglPushLeftR"), 0, 1, 1, 1),
+        (backend.get_object("btnGetImgR"), 1, 1, 1, 1),
+        (backend.get_object("tglPushRightR"), 2, 1, 1, 1),
+        (backend.get_object("tglLowerR"), 1, 2, 1, 1),
+    ]
+
+
+def test_runtime_backend_prefs_button_dispatches_open_handler():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    observed = {"opened": 0}
+
+    backend.connect_signals(
+        {
+            "on_open_settings_dialog": lambda: observed.__setitem__("opened", observed["opened"] + 1) or True,
+            "on_get_preferences_config": lambda: {"plugin": "linux", "apply_mode": "single-file"},
+        }
+    )
+
+    backend.get_object("btnSetting").click()
+
+    assert observed["opened"] == 1
+    assert backend.get_object("lblStatus").text == "Prefs: opened"
+    assert backend.get_object("SettingsDialog").is_visible() is True
+    assert backend.get_object("SettingsDialog").get_preferences_config()["plugin"] == "linux"
+    assert backend.get_object("entPrefsPlugin").get_text() == "linux"
+    assert backend.get_object("radPrefsApplySingle").label == "Apply Default"
+    assert backend.get_object("radPrefsApplyPerMonitor").label == "Apply Auto-split"
+    assert backend.get_object("radPrefsApplySingle").get_active() is True
+
+
+def test_runtime_backend_prefs_apply_load_save_and_close_dispatch_handlers(tmp_path):
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    dialog = backend.get_object("SettingsDialog")
+    observed = {"apply": None, "load": None, "save": None, "close": 0}
+
+    import_path = tmp_path / "load-prefs.json"
+    export_path = tmp_path / "save-prefs.json"
+    dialog.set_preferences_config(
+        {
+            "resolution": "1920x1080",
+            "plugin": "linux",
+            "apply_mode": "single-file",
+            "watch_interval_seconds": 60,
+        }
+    )
+    dialog.set_import_path(str(import_path))
+    dialog.set_export_path(str(export_path))
+    dialog.show()
+
+    backend.connect_signals(
+        {
+            "on_apply_preferences": lambda config: observed.__setitem__("apply", config) or True,
+            "on_load_preferences_file": lambda path: observed.__setitem__("load", path) or True,
+            "on_save_preferences_file": lambda path, config=None: observed.__setitem__("save", (path, config)) or True,
+            "on_get_preferences_config": lambda: {"plugin": "xfce", "apply_mode": "per-monitor-auto-split"},
+            "on_close_settings_dialog": lambda: observed.__setitem__("close", observed["close"] + 1) or True,
+        }
+    )
+
+    backend.get_object("entPrefsResolution").set_text("auto")
+    backend.get_object("entPrefsPlugin").set_text("xfce")
+    backend.get_object("spnPrefsWatchInterval").set_value(45)
+    backend.get_object("entPrefsImportPath").set_text(str(import_path))
+    backend.get_object("entPrefsExportPath").set_text(str(export_path))
+    backend.get_object("radPrefsTwoScreenAuto").set_active(True)
+    backend.get_object("radPrefsTwoScreenOn").set_active(False)
+    backend.get_object("radPrefsTwoScreenOff").set_active(False)
+    backend.get_object("radPrefsApplySingle").set_active(False)
+    backend.get_object("radPrefsApplyPerMonitor").set_active(True)
+
+    backend.get_object("btnPrefsApply").click()
+    assert observed["apply"]["resolution"] == "auto"
+    assert observed["apply"]["two_screen"] == "auto"
+    assert observed["apply"]["plugin"] == "xfce"
+    assert observed["apply"]["apply_mode"] == "per-monitor-auto-split"
+    assert observed["apply"]["watch_interval_seconds"] == 45
+    assert dialog.is_visible() is False
+    assert backend.get_object("lblPrefsState").text == "Prefs: applied"
+
+    dialog.show()
+    backend.get_object("btnPrefsLoad").click()
+    assert observed["load"] == str(import_path)
+    assert dialog.get_preferences_config()["plugin"] == "xfce"
+    assert backend.get_object("entPrefsPlugin").get_text() == "xfce"
+    assert backend.get_object("radPrefsApplyPerMonitor").get_active() is True
+    assert backend.get_object("lblPrefsState").text == "Prefs: loaded"
+
+    backend.get_object("entPrefsPlugin").set_text("saved-plugin")
+    backend.get_object("spnPrefsWatchInterval").set_value(77)
+
+    backend.get_object("btnPrefsSave").click()
+    assert observed["save"][0] == str(export_path)
+    assert observed["save"][1]["plugin"] == "saved-plugin"
+    assert observed["save"][1]["watch_interval_seconds"] == 77
+    assert backend.get_object("lblPrefsState").text == "Prefs: saved"
+
+    backend.get_object("btnPrefsClose").click()
+    assert observed["close"] == 1
+    assert dialog.is_visible() is False
+    assert backend.get_object("lblPrefsState").text == "Prefs: closed"
 
 
 def test_runtime_backend_optimize_sets_running_state_before_handler_call():
@@ -875,7 +1102,7 @@ def test_runtime_backend_optimize_sets_running_state_before_handler_call():
         observed["status_when_called"] = status.text
         return True
 
-    backend.connect_signals({"on_btnOptimize_clicked": on_optimize_clicked})
+    backend.connect_signals({"on_optimize": on_optimize_clicked})
     optimize_btn.click()
 
     assert observed["status_when_called"] == "Optimize: running"
@@ -888,10 +1115,10 @@ def test_runtime_backend_apply_failure_updates_error_message():
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
 
-    backend.connect_signals({"on_btnSetWall_clicked": lambda: False})
+    backend.connect_signals({"on_apply": lambda: False})
     apply_btn.click()
 
-    assert status.text == "Apply: dry-run-failed"
+    assert status.text == "Apply: failed"
     assert error.text == "Error: apply returned false"
 
 
@@ -912,26 +1139,26 @@ def test_runtime_backend_optimize_handler_missing_sets_status_and_error():
     assert apply_target.text == "Apply target: not-ready"
 
 
-def test_runtime_backend_save_button_opens_dialog_without_optimize_handler_call():
+def test_runtime_backend_save_button_skips_optimize_handler_and_reports_missing_path_handler():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     save_btn = backend.get_object("btnSave")
-    save_dialog = backend.get_object("SaveWallpaperDialog")
-    save_dialog_state = backend.get_object("lblSaveDialogState")
+    save_path_chooser = backend.get_object("SavePathDialog")
+    save_path_state = backend.get_object("lblSavePathState")
     status = backend.get_object("lblStatus")
     calls = []
 
     backend.connect_signals({
-        "on_btnSave_clicked": lambda: calls.append("save") or True,
-        "on_btnOptimize_clicked": lambda: calls.append("optimize") or False,
+        "on_save": lambda: calls.append("save") or True,
+        "on_optimize": lambda: calls.append("optimize") or False,
     })
 
     save_btn.click()
 
     assert calls == ["save"]
-    assert save_dialog.is_visible() is True
-    assert save_dialog_state.text == "SaveDialog: open"
-    assert status.text == "Status: ready"
+    assert save_path_chooser.is_visible() is False
+    assert save_path_state.text == "Save path: idle"
+    assert status.text == "SavePath: handler-missing"
 
 
 def test_runtime_backend_optimize_button_does_not_fallback_to_save_handler():
@@ -945,7 +1172,7 @@ def test_runtime_backend_optimize_button_does_not_fallback_to_save_handler():
     calls = []
 
     backend.connect_signals({
-        "on_btnSave_clicked": lambda: calls.append("save") or True,
+        "on_save": lambda: calls.append("save") or True,
     })
 
     optimize_btn.click()
@@ -1033,9 +1260,9 @@ def test_runtime_backend_toggle_callbacks_follow_upstream_order():
 
     backend.connect_signals(
         {
-            "on_tglBtn_pressed": lambda widget: calls.append(("pressed", widget.get_name())),
-            "on_tglBtn_toggled": lambda widget: calls.append(("toggled", widget.get_name(), widget.get_active())),
-            "on_tglBtn_released": lambda widget: calls.append(("released", widget.get_name())),
+            "on_toggle_position_pressed": lambda name: calls.append(("pressed", name)),
+            "on_toggle_position": lambda name, active: calls.append(("toggled", name, active)),
+            "on_toggle_position_reset": lambda name: calls.append(("released", name)),
         }
     )
 
@@ -1046,7 +1273,6 @@ def test_runtime_backend_toggle_callbacks_follow_upstream_order():
     assert calls == [
         ("pressed", "tglUpperL"),
         ("toggled", "tglUpperL", True),
-        ("released", "tglUpperL"),
         ("pressed", "tglUpperL"),
         ("toggled", "tglUpperL", False),
         ("released", "tglUpperL"),
@@ -1065,11 +1291,11 @@ def test_runtime_backend_margin_change_propagates_all_values():
     error = backend.get_object("lblError")
     captured = {}
 
-    def on_margins(widget):
-        captured["name"] = widget.get_name()
-        captured["value"] = widget.get_value_as_int()
+    def on_margins(name, value):
+        captured["name"] = name
+        captured["value"] = value
 
-    backend.connect_signals({"on_spnMergin_value_changed": on_margins})
+    backend.connect_signals({"on_change_margins": on_margins})
     backend.get_object("spnLMergin").emit("value-changed", backend.get_object("spnLMergin"))
 
     assert captured == {"name": "spnLMergin", "value": 11}
@@ -1111,6 +1337,18 @@ def test_runtime_backend_current_state_panel_updates_for_toggle_and_fixed():
     assert backend.get_object("lblCurrentFixed").text == "Current fixed: on"
     assert backend.get_object("lblCurrentStateL").text == "Current L: align=right valign=center"
     assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=top"
+
+
+def test_runtime_backend_fixed_radio_dispatches_only_on_active_toggle():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    observed = []
+
+    backend.connect_signals({"on_toggle_fixed": lambda enabled: observed.append(enabled)})
+
+    backend.get_object("radFixed").click()
+    backend.get_object("radNoFixed").click()
+
+    assert observed == [True, False]
 
 
 def test_runtime_backend_current_state_margin_labels_follow_spin_values():

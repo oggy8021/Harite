@@ -1,6 +1,12 @@
-# GUI Integration Test Matrix（Phase 3 最小セット）
+# GUI Integration Test Matrix（Phase 3 最小セット / 履歴資料）
 
-最終更新: 2026-04-12
+最終更新: 2026-04-18
+
+## 位置づけ
+
+- この文書は Phase 3 時点で想定していた最小 GUI テストセットの履歴資料である。
+- current runtime の最新テスト戦略や受け入れ基準を定義する文書ではない。
+- 後続フェーズでは、当時の回帰観点と signal-to-handler 契約の棚卸し資料として参照する。
 
 ## 目的
 

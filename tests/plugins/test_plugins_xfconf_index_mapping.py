@@ -23,8 +23,11 @@ def test_index_based_mapping(monkeypatch):
 
     monkeypatch.setattr(subprocess, "run", fake_run)
 
-    # patch detect_displays to return DP-1 first, HDMI-1 second (index order)
-    monkeypatch.setattr(workspace, "detect_displays", lambda: [workspace.Display("DP-1", 2048, 1280, 0), workspace.Display("HDMI-1", 2048, 1280, 2048)])
+    # patch detect_displays in unsorted order; helper should normalize by offsets
+    monkeypatch.setattr(
+        "harite.display_context.detect_displays",
+        lambda: [workspace.Display("HDMI-1", 2048, 1280, 2048), workspace.Display("DP-1", 2048, 1280, 0)],
+    )
 
     plugin = LinuxPlugin()
     mapping = {"DP-1": "/tmp/w1.jpg", "HDMI-1": "/tmp/w2.jpg"}

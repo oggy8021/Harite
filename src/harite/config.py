@@ -30,3 +30,12 @@ def load_config(path: Path) -> dict[str, Any]:
             return json.load(fh)
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON config: {e}") from e
+
+def save_config(path: Path, config: dict[str, Any]) -> Path:
+    """JSON 設定ファイルを書き出してパスを返す。"""
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("w", encoding="utf-8") as fh:
+        json.dump(config, fh, ensure_ascii=False, indent=2)
+        fh.write("\n")
+    return p

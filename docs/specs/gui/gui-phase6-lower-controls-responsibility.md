@@ -36,9 +36,9 @@
 | --- | --- | --- | --- | --- | --- |
 | Prefs | glade に `btnSetting` と `SettingDialog` がある | MainWindow に対応 handler は未整備だが、fallback に入口が残る | CLI は `--config` を持ち、GUI / CLI で共有 config を持つ前提がある | owner 判断では意味がある。config 共有の入口であり、watch source も元はここにあった。interval だけが main window に残っていた | 残す。Zone 6 Secondary / Meta に置く |
 | Color | glade に `btnSetColor` と `ColorSelectionDialog` がある | MainWindow では `planned` のまま | CLI に対応機能なし | 現コア導線の一部ではなく、Optimize / Apply / watch の正本確認とも結び付いていない | コア下部コントロールから外し、Phase7 候補へ送る |
-| Save Confirm | 上流 glade の恒常ボタンではなく、現 fallback 運用で追加された confirm 操作 | native save dialog の confirm 代理。dialog open 中のみ有効 | CLI に直接対応機能なし | 恒常ボタンではなく、SaveDialog 内部の確定操作を表面に露出したもの。正式 UI では常設責務を持たない | 全廃 |
-| Save Cancel | 上流 glade の恒常ボタンではなく、現 fallback 運用で追加された cancel 操作 | native save dialog の cancel 代理。dialog open 中のみ有効 | CLI に直接対応機能なし | Save Confirm と同じく dialog 内部責務であり、常設コントロールの責務ではない | 全廃 |
-| Save | glade に `btnSave` がある | MainWindow では save dialog を開くだけで、生成は confirm 後に進む | CLI `optimize` の出力先指定に対応するが、独立の `save` コマンドはない | 現責務は「保存先を選ぶ前段操作」であり、Optimize 実行そのものではない。ラベルと期待挙動が混線しやすい | 意味づけは了解。英語ラベルは `Save As`、配置は Flow / Header の標準保存位置 |
+| Save Confirm | 上流 glade の恒常ボタンではなく、現 fallback 運用で追加された confirm 操作 | native save chooser の confirm 代理。chooser open 中のみ有効 | CLI に直接対応機能なし | 恒常ボタンではなく、save path chooser 内部の確定操作を表面に露出したもの。正式 UI では常設責務を持たない | 全廃 |
+| Save Cancel | 上流 glade の恒常ボタンではなく、現 fallback 運用で追加された cancel 操作 | native save chooser の cancel 代理。chooser open 中のみ有効 | CLI に直接対応機能なし | Save Confirm と同じく chooser 内部責務であり、常設コントロールの責務ではない | 全廃 |
+| Save | glade に `btnSave` がある | MainWindow では save path chooser を開くだけで、生成は選択確定後に進む | CLI `optimize` の出力先指定に対応するが、独立の `save` コマンドはない | 現責務は「保存先を選ぶ前段操作」であり、Optimize 実行そのものではない。ラベルと期待挙動が混線しやすい | 意味づけは了解。英語ラベルは `Save As`、配置は Flow / Header の標準保存位置 |
 | Optimize | glade 下部帯には独立ボタンではなく、現 GUI が modern action として追加した | MainWindow の主機能として実装済み。fallback でも別セクション化済み | CLI `optimize` は正本として存在 | コア主機能であり、補助帯ではなく主操作面に置くのが妥当 | 機能維持。下部コントロール帯へ戻さない候補 |
 | Apply | glade に `btnSetWall` がある | 現 GUI では dry-run / do-it に分かれており、旧 `Apply` の即時性から離れている | CLI `apply` は正本として存在するが、現実装は dry-run / `--do-it` に分かれる | owner 判断では `do-it` は不要で、旧プログラムどおり `Apply` は即時変更でよい。一方で `Optimize` との見せ方は近接した主操作として整理するのが自然である | 残す。`Optimize` と隣接配置する |
 
@@ -50,6 +50,7 @@
 - 理由は、CLI / GUI 間で config を共有する仕組みの入口として意味があるためである。
 - watch source も元はここにあり、interval だけが main window に残っていたという整理を採る。
 - Zone 6 Secondary / Meta に置く前提で読む。
+- ただし Phase6 で求めるのは入口復旧と最低限の可視化までとし、内容 grouping・初期値埋め込み・auto-detect の見せ方整理は Phase7 の product alignment で扱う。
 
 ### Color
 
@@ -63,8 +64,8 @@
 
 ### Save
 
-- [src/harite/gui/views/main_window.py](src/harite/gui/views/main_window.py#L296) の `on_save()` は保存を実行せず、save dialog を開くだけである。
-- 保存先確定後に [src/harite/gui/views/main_window.py](src/harite/gui/views/main_window.py#L395) の confirm が optimize 実行へ進むため、現責務は「Save」より「Choose Save Target」に近い。
+- [src/harite/gui/views/main_window.py](src/harite/gui/views/main_window.py#L296) の `on_save()` は保存を実行せず、save path chooser を開くだけである。
+- 保存先確定後に [src/harite/gui/views/main_window.py](src/harite/gui/views/main_window.py#L395) の save path 選択確定が optimize 実行へ進むため、現責務は「Save」より「Choose Save Target」に近い。
 - owner 判断では、この意味づけはいったん了承する。
 - 一方で `Save` は `Optimize` / `Apply` と同列の主操作には置かず、Flow / Header の右端など標準的な保存位置へ分けて置く読みでよい。
 - glade でも保存アイコンがあり、使用頻度が薄くてもシステム説明上は残す価値がある、という読みを採る。

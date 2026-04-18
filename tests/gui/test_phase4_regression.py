@@ -21,15 +21,21 @@ def test_phase4_a_layout_structure_sections_are_stable():
     bp = win.get_layout_blueprint()
 
     section_names = [name for name, _items in bp["sections"]]
-    assert section_names == ["hero", "optimize_panel", "apply_panel", "status_panel"]
+    assert section_names == [
+        "title_menu_flow",
+        "compose_input",
+        "action_cluster",
+        "watch_tab",
+        "status_footer",
+    ]
 
     section_items = {name: items for name, items in bp["sections"]}
-    assert "input_value" in section_items["hero"]
-    assert "resolution" in section_items["hero"]
-    assert "output_dir" in section_items["hero"]
-    assert "plugin" in section_items["hero"]
-    assert "apply_dry_run" in section_items["apply_panel"]
-    assert "apply_do_it" in section_items["apply_panel"]
+    assert "save_as" in section_items["title_menu_flow"]
+    assert "menu" in section_items["title_menu_flow"]
+    assert "input_value" in section_items["compose_input"]
+    assert "margins" in section_items["compose_input"]
+    assert "cross_layout" in section_items["compose_input"]
+    assert "apply" in section_items["action_cluster"]
 
 
 def test_phase4_b_status_running_success_on_optimize(tmp_path):
@@ -53,7 +59,7 @@ def test_phase4_b_status_error_on_apply_failure(monkeypatch, tmp_path):
     _prepare_input(win, tmp_path)
     assert win.on_optimize() is True
 
-    assert win.on_apply_dry_run() is False
+    assert win.on_apply() is False
     assert win.status_level == "error"
     assert win.status_phase == "apply"
     assert win.status_message == "apply failed"
@@ -76,10 +82,10 @@ def test_phase4_c_primary_flow_reaches_apply_in_two_steps(monkeypatch, tmp_path)
     _prepare_input(win, tmp_path)
 
     assert win.run_primary_flow_step() is True  # optimize
-    assert win.suggest_next_action() == "apply_dry_run"
-    assert win.run_primary_flow_step() is True  # apply dry-run
+    assert win.suggest_next_action() == "apply"
+    assert win.run_primary_flow_step() is True  # apply
     assert plugin.calls
-    assert plugin.calls[-1][1] is True
+    assert plugin.calls[-1][1] is False
 
 
 def test_phase4_d_input_reset_clears_apply_readiness(tmp_path):

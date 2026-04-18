@@ -12,7 +12,32 @@ from typing import Any, Callable
 from harite.watch import collect_watch_input_images, select_next_image
 
 
-class _SaveDialogProxy:
+SAVE_PATH_DIALOG_OBJECT_ALIASES: tuple[str, ...] = (
+    "SavePathDialog",
+)
+
+SAVE_PATH_STATE_LABEL_ALIASES: tuple[str, ...] = (
+    "lblSavePathState",
+)
+
+SAVE_PATH_SELECTED_HANDLER_NAMES: tuple[str, ...] = (
+    "on_save_path_selected",
+)
+
+SAVE_PATH_CANCELED_HANDLER_NAMES: tuple[str, ...] = (
+    "on_save_path_selection_canceled",
+)
+
+SAVE_PATH_DESTROY_HANDLER_NAMES: tuple[str, ...] = (
+    "on_SavePathDialog_destroy",
+)
+
+SETTINGS_DIALOG_OBJECT_ALIASES: tuple[str, ...] = (
+    "SettingsDialog",
+)
+
+
+class _SavePathDialogProxy:
     """Minimal file chooser-like object used by runtime fallback backend."""
 
     def __init__(
@@ -401,6 +426,57 @@ class _SrcdirDialogProxy:
             self._on_cancel(True)
 
 
+class _SettingsDialogProxy:
+    """Minimal settings dialog model used by runtime fallback backend."""
+
+    def __init__(self, window: Any | None = None) -> None:
+        self._visible = False
+        self._window = window
+        self._preferences_config: dict[str, object] = {}
+        default_path = str(Path.home() / "harite-preferences.json")
+        self._import_path = default_path
+        self._export_path = default_path
+
+    def show(self) -> None:
+        self._visible = True
+        if self._window is not None:
+            if hasattr(self._window, "show_all"):
+                self._window.show_all()
+            elif hasattr(self._window, "show"):
+                self._window.show()
+            if hasattr(self._window, "present"):
+                self._window.present()
+
+    def hide(self) -> None:
+        self._visible = False
+        if self._window is not None and hasattr(self._window, "hide"):
+            self._window.hide()
+
+    def is_visible(self) -> bool:
+        return self._visible
+
+    def set_preferences_config(self, config: dict[str, object]) -> None:
+        self._preferences_config = dict(config)
+
+    def get_preferences_config(self) -> dict[str, object]:
+        return dict(self._preferences_config)
+
+    def update_preference(self, key: str, value: object) -> None:
+        self._preferences_config[str(key)] = value
+
+    def set_import_path(self, path: str) -> None:
+        self._import_path = str(path or "")
+
+    def get_import_path(self) -> str:
+        return self._import_path
+
+    def set_export_path(self, path: str) -> None:
+        self._export_path = str(path or "")
+
+    def get_export_path(self) -> str:
+        return self._export_path
+
+
 class GtkRuntimeSignalBackend:
     """Minimal GTK runtime backend that does not require Glade parsing.
 
@@ -411,6 +487,8 @@ class GtkRuntimeSignalBackend:
     def __init__(self, gtk_module: Any) -> None:
         self._gtk = gtk_module
         self._signal_handlers: dict[str, Callable[..., Any]] = {}
+        self._input_path_l = ""
+        self._input_path_r = ""
         self._watch_srcdir_l = ""
         self._watch_srcdir_r = ""
         self._watch_running = False
@@ -419,16 +497,64 @@ class GtkRuntimeSignalBackend:
         self._watch_previous_l: Path | None = None
         self._watch_previous_r: Path | None = None
 
-        window = gtk_module.Window(title="Harite Studio")
+        window = gtk_module.Window(title="Harite")
         if hasattr(window, "set_resizable"):
             # P5-2 policy: modern desktop UX expects a resizable main window.
             window.set_resizable(True)
         if hasattr(window, "set_default_size"):
-            window.set_default_size(960, 640)
+            window.set_default_size(1040, 720)
 
         if hasattr(gtk_module, "Box") and hasattr(gtk_module, "Label"):
-            root = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
+            root = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=10)
             root.set_border_width(10)
+
+            header_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            root.pack_start(header_col, False, False, 0)
+
+            title_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
+            header_col.pack_start(title_row, False, False, 0)
+
+            title = gtk_module.Label(label="")
+            if hasattr(title, "set_xalign"):
+                title.set_xalign(0.0)
+            title_row.pack_start(title, False, False, 0)
+
+            subtitle = gtk_module.Label(label="")
+            if hasattr(subtitle, "set_xalign"):
+                subtitle.set_xalign(0.0)
+
+            command_bar = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
+            command_section_label = gtk_module.Label(label="")
+            if hasattr(command_section_label, "set_xalign"):
+                command_section_label.set_xalign(0.0)
+
+            title_spacer = gtk_module.Label(label="")
+            title_row.pack_start(title_spacer, True, True, 0)
+            title_row.pack_start(command_bar, False, False, 0)
+
+            btn_setting = gtk_module.Button(label="Prefs")
+            btn_help = gtk_module.Button(label="Help")
+            btn_about = gtk_module.Button(label="About")
+            btn_set_color = gtk_module.Button(label="Color")
+            command_bar.pack_start(btn_setting, False, False, 0)
+            command_bar.pack_start(btn_help, False, False, 0)
+            command_bar.pack_start(btn_about, False, False, 0)
+
+            flow_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
+            header_col.pack_start(flow_row, False, False, 0)
+
+            flow_legend_label = gtk_module.Label(label="Compose -> Optimize -> Apply")
+            if hasattr(flow_legend_label, "set_xalign"):
+                flow_legend_label.set_xalign(0.0)
+            flow_row.pack_start(flow_legend_label, False, False, 0)
+
+            flow_spacer = gtk_module.Label(label="")
+            flow_row.pack_start(flow_spacer, True, True, 0)
+
+            optimize_btn = gtk_module.Button(label="Save As")
+            if hasattr(optimize_btn, "set_sensitive"):
+                optimize_btn.set_sensitive(False)
+            flow_row.pack_start(optimize_btn, False, False, 0)
 
             # Row 0: top margin row (Glade hbox11 equivalent)
             top_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
@@ -453,91 +579,122 @@ class GtkRuntimeSignalBackend:
             center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=10)
             root.pack_start(center_row, True, True, 0)
 
-            left_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            center_row.pack_start(left_margin_col, False, False, 0)
+            left_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            center_row.pack_start(left_margin_shell, False, False, 0)
+            left_margin_top_spacer = gtk_module.Label(label="")
+            left_margin_shell.pack_start(left_margin_top_spacer, True, True, 0)
 
-            left_margin_label = gtk_module.Label(label="左マージン(px)")
+            left_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            left_margin_shell.pack_start(left_margin_col, False, False, 0)
+
+            left_margin_label = gtk_module.Label(label="左\nマージン(px)")
             if hasattr(left_margin_label, "set_xalign"):
-                left_margin_label.set_xalign(0.0)
+                left_margin_label.set_xalign(0.5)
             left_margin_col.pack_start(left_margin_label, False, False, 0)
 
             left_margin_spin = gtk_module.SpinButton()
             self._configure_spin_button(left_margin_spin, minimum=0, maximum=500, step=1, page=10)
             left_margin_col.pack_start(left_margin_spin, False, False, 0)
+            left_margin_bottom_spacer = gtk_module.Label(label="")
+            left_margin_shell.pack_start(left_margin_bottom_spacer, True, True, 0)
 
-            main_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            center_row.pack_start(main_col, True, True, 0)
+            command_tabs = gtk_module.Notebook()
+            center_row.pack_start(command_tabs, True, True, 0)
 
-            title = gtk_module.Label(label="Wallpaper Optimizer")
-            if hasattr(title, "set_xalign"):
-                title.set_xalign(0.0)
-            main_col.pack_start(title, False, False, 0)
+            def _build_centered_page(content: Any) -> Any:
+                page_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+                top_spacer = gtk_module.Label(label="")
+                page_shell.pack_start(top_spacer, True, True, 0)
+                center_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+                page_shell.pack_start(center_shell, False, False, 0)
+                left_spacer = gtk_module.Label(label="")
+                right_spacer = gtk_module.Label(label="")
+                center_shell.pack_start(left_spacer, True, True, 0)
+                center_shell.pack_start(content, False, False, 0)
+                center_shell.pack_start(right_spacer, True, True, 0)
+                bottom_spacer = gtk_module.Label(label="")
+                page_shell.pack_start(bottom_spacer, True, True, 0)
+                return page_shell
 
-            subtitle = gtk_module.Label(label="Glade-like layout (Phase5 P5-2)")
-            if hasattr(subtitle, "set_xalign"):
-                subtitle.set_xalign(0.0)
-            main_col.pack_start(subtitle, False, False, 0)
-
+            main_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
             main_section_label = gtk_module.Label(label="Main")
-            if hasattr(main_section_label, "set_xalign"):
-                main_section_label.set_xalign(0.0)
-            main_col.pack_start(main_section_label, False, False, 0)
+            main_page_shell = _build_centered_page(main_col)
 
-            upper_toggle_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            main_col.pack_start(upper_toggle_row, False, False, 0)
+            compose_grid = gtk_module.Grid()
+            if hasattr(compose_grid, "set_column_spacing"):
+                compose_grid.set_column_spacing(32)
+            if hasattr(compose_grid, "set_row_spacing"):
+                compose_grid.set_row_spacing(12)
+            main_col.pack_start(compose_grid, True, True, 0)
+
+            left_display_grid = gtk_module.Grid()
+            right_display_grid = gtk_module.Grid()
+            if hasattr(left_display_grid, "set_column_spacing"):
+                left_display_grid.set_column_spacing(6)
+            if hasattr(left_display_grid, "set_row_spacing"):
+                left_display_grid.set_row_spacing(8)
+            if hasattr(right_display_grid, "set_column_spacing"):
+                right_display_grid.set_column_spacing(6)
+            if hasattr(right_display_grid, "set_row_spacing"):
+                right_display_grid.set_row_spacing(8)
             tgl_upper_l = gtk_module.ToggleButton(label="Top-L")
             tgl_upper_r = gtk_module.ToggleButton(label="Top-R")
-            upper_toggle_row.pack_start(tgl_upper_l, False, False, 0)
-            upper_toggle_row.pack_start(tgl_upper_r, False, False, 0)
-
-            cross_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=12)
-            main_col.pack_start(cross_center_row, False, False, 0)
-
-            push_toggle_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            cross_center_row.pack_start(push_toggle_row_l, False, False, 0)
+            tgl_lower_l = gtk_module.ToggleButton(label="Bottom-L")
+            tgl_lower_r = gtk_module.ToggleButton(label="Bottom-R")
             tgl_push_left_l = gtk_module.ToggleButton(label="Left-L")
             tgl_push_right_l = gtk_module.ToggleButton(label="Right-L")
             btn_get_img_l = gtk_module.Button(label="Open-L")
-            push_toggle_row_l.pack_start(tgl_push_left_l, False, False, 0)
-            push_toggle_row_l.pack_start(btn_get_img_l, False, False, 0)
-            push_toggle_row_l.pack_start(tgl_push_right_l, False, False, 0)
-
-            push_toggle_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            cross_center_row.pack_start(push_toggle_row_r, False, False, 0)
             tgl_push_left_r = gtk_module.ToggleButton(label="Left-R")
             tgl_push_right_r = gtk_module.ToggleButton(label="Right-R")
             btn_get_img_r = gtk_module.Button(label="Open-R")
-            push_toggle_row_r.pack_start(tgl_push_left_r, False, False, 0)
-            push_toggle_row_r.pack_start(btn_get_img_r, False, False, 0)
-            push_toggle_row_r.pack_start(tgl_push_right_r, False, False, 0)
 
-            lower_toggle_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            main_col.pack_start(lower_toggle_row, False, False, 0)
-            tgl_lower_l = gtk_module.ToggleButton(label="Bottom-L")
-            tgl_lower_r = gtk_module.ToggleButton(label="Bottom-R")
-            lower_toggle_row.pack_start(tgl_lower_l, False, False, 0)
-            lower_toggle_row.pack_start(tgl_lower_r, False, False, 0)
+            if hasattr(left_display_grid, "attach"):
+                left_display_grid.attach(tgl_upper_l, 1, 0, 1, 1)
+                left_display_grid.attach(tgl_push_left_l, 0, 1, 1, 1)
+                left_display_grid.attach(btn_get_img_l, 1, 1, 1, 1)
+                left_display_grid.attach(tgl_push_right_l, 2, 1, 1, 1)
+                left_display_grid.attach(tgl_lower_l, 1, 2, 1, 1)
 
-            pick_state_label = gtk_module.Label(label="Picker: idle")
-            if hasattr(pick_state_label, "set_xalign"):
-                pick_state_label.set_xalign(0.0)
-            main_col.pack_start(pick_state_label, False, False, 0)
+            if hasattr(compose_grid, "attach"):
+                compose_grid.attach(left_display_grid, 0, 0, 1, 1)
 
-            input_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            main_col.pack_start(input_row, False, False, 0)
-            input_entry_l = gtk_module.Entry()
-            input_entry_l.set_placeholder_text("/path/to/left_image_or_directory")
+            input_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            input_entry_l = gtk_module.Label(label="")
+            if hasattr(input_entry_l, "set_xalign"):
+                input_entry_l.set_xalign(0.0)
             btn_clr_path_l = gtk_module.Button(label="Clear-L")
-            input_entry_r = gtk_module.Entry()
-            input_entry_r.set_placeholder_text("/path/to/right_image_or_directory")
-            btn_clr_path_r = gtk_module.Button(label="Clear-R")
-            input_row.pack_start(input_entry_l, True, True, 0)
-            input_row.pack_start(btn_clr_path_l, False, False, 0)
-            input_row.pack_start(input_entry_r, True, True, 0)
-            input_row.pack_start(btn_clr_path_r, False, False, 0)
+            input_row_l.pack_start(input_entry_l, True, True, 0)
+            input_row_l.pack_start(btn_clr_path_l, False, False, 0)
+            if hasattr(compose_grid, "attach"):
+                compose_grid.attach(input_row_l, 0, 1, 1, 1)
 
+            if hasattr(right_display_grid, "attach"):
+                right_display_grid.attach(tgl_upper_r, 1, 0, 1, 1)
+                right_display_grid.attach(tgl_push_left_r, 0, 1, 1, 1)
+                right_display_grid.attach(btn_get_img_r, 1, 1, 1, 1)
+                right_display_grid.attach(tgl_push_right_r, 2, 1, 1, 1)
+                right_display_grid.attach(tgl_lower_r, 1, 2, 1, 1)
+
+            if hasattr(compose_grid, "attach"):
+                compose_grid.attach(right_display_grid, 1, 0, 1, 1)
+
+            input_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            input_entry_r = gtk_module.Label(label="")
+            if hasattr(input_entry_r, "set_xalign"):
+                input_entry_r.set_xalign(0.0)
+            btn_clr_path_r = gtk_module.Button(label="Clear-R")
+            input_row_r.pack_start(input_entry_r, True, True, 0)
+            input_row_r.pack_start(btn_clr_path_r, False, False, 0)
+            if hasattr(compose_grid, "attach"):
+                compose_grid.attach(input_row_r, 1, 1, 1, 1)
+
+            fixed_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
+            fixed_left_spacer = gtk_module.Label(label="")
+            fixed_shell.pack_start(fixed_left_spacer, True, True, 0)
             fixed_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            main_col.pack_start(fixed_row, False, False, 0)
+            fixed_shell.pack_start(fixed_row, False, False, 0)
+            fixed_right_spacer = gtk_module.Label(label="")
+            fixed_shell.pack_start(fixed_right_spacer, True, True, 0)
             rad_fixed = gtk_module.RadioButton.new_with_label(None, "入替不可")
             rad_no_fixed = gtk_module.RadioButton.new_with_label_from_widget(rad_fixed, "入替可")
             if hasattr(rad_no_fixed, "set_active"):
@@ -545,16 +702,27 @@ class GtkRuntimeSignalBackend:
             fixed_row.pack_start(rad_fixed, False, False, 0)
             fixed_row.pack_start(rad_no_fixed, False, False, 0)
 
-            optimize_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            main_col.pack_start(optimize_row, False, False, 0)
+            pick_state_label = gtk_module.Label(label="")
+            if hasattr(pick_state_label, "set_xalign"):
+                pick_state_label.set_xalign(0.0)
+
+            action_cluster_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=18)
+            action_cluster_spacer = gtk_module.Label(label="")
+            action_cluster_row.pack_start(action_cluster_spacer, True, True, 0)
+            optimize_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            apply_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            action_cluster_row.pack_start(optimize_group, False, False, 0)
+            action_cluster_row.pack_start(apply_group, False, False, 0)
+            if hasattr(compose_grid, "attach"):
+                compose_grid.attach(action_cluster_row, 0, 2, 2, 1)
+
             optimize_section_label = gtk_module.Label(label="Optimize")
             if hasattr(optimize_section_label, "set_xalign"):
                 optimize_section_label.set_xalign(0.0)
-            optimize_row.pack_start(optimize_section_label, False, False, 0)
-            optimize_btn = gtk_module.Button(label="Save")
-            if hasattr(optimize_btn, "set_sensitive"):
-                optimize_btn.set_sensitive(False)
-            optimize_row.pack_start(optimize_btn, False, False, 0)
+            optimize_group.pack_start(optimize_section_label, False, False, 0)
+
+            optimize_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            optimize_group.pack_start(optimize_row, False, False, 0)
             optimize_modern_btn = gtk_module.Button(label="Optimize")
             if hasattr(optimize_modern_btn, "set_sensitive"):
                 optimize_modern_btn.set_sensitive(False)
@@ -564,13 +732,14 @@ class GtkRuntimeSignalBackend:
                 optimize_result.set_xalign(0.0)
             optimize_row.pack_start(optimize_result, True, True, 0)
 
-            apply_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            main_col.pack_start(apply_row, False, False, 0)
             apply_section_label = gtk_module.Label(label="Apply")
             if hasattr(apply_section_label, "set_xalign"):
                 apply_section_label.set_xalign(0.0)
-            apply_row.pack_start(apply_section_label, False, False, 0)
-            apply_btn = gtk_module.Button(label="Apply (dry-run)")
+            apply_group.pack_start(apply_section_label, False, False, 0)
+
+            apply_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            apply_group.pack_start(apply_row, False, False, 0)
+            apply_btn = gtk_module.Button(label="Apply")
             if hasattr(apply_btn, "set_sensitive"):
                 apply_btn.set_sensitive(False)
             apply_row.pack_start(apply_btn, False, False, 0)
@@ -579,71 +748,84 @@ class GtkRuntimeSignalBackend:
                 apply_target.set_xalign(0.0)
             apply_row.pack_start(apply_target, True, True, 0)
 
-            do_it_plan_label = gtk_module.Label(label="do-it: planned")
+            apply_mode_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            apply_group.pack_start(apply_mode_row, False, False, 0)
+            rad_apply_single = gtk_module.RadioButton.new_with_label(None, "Default")
+            rad_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(
+                rad_apply_single,
+                "Auto-split",
+            )
+            if hasattr(rad_apply_single, "set_active"):
+                rad_apply_single.set_active(True)
+            apply_mode_label = gtk_module.Label(label="Default: normal apply")
+            if hasattr(apply_mode_label, "set_xalign"):
+                apply_mode_label.set_xalign(0.0)
+            apply_mode_row.pack_start(rad_apply_single, False, False, 0)
+            apply_mode_row.pack_start(rad_apply_per_monitor, False, False, 0)
+            apply_mode_row.pack_start(apply_mode_label, True, True, 0)
+
+            do_it_plan_label = gtk_module.Label(label="Debug: apply is immediate")
             if hasattr(do_it_plan_label, "set_xalign"):
                 do_it_plan_label.set_xalign(0.0)
-            main_col.pack_start(do_it_plan_label, False, False, 0)
 
-            save_dialog_state_label = gtk_module.Label(label="SaveDialog: closed")
-            if hasattr(save_dialog_state_label, "set_xalign"):
-                save_dialog_state_label.set_xalign(0.0)
-            main_col.pack_start(save_dialog_state_label, False, False, 0)
+            save_path_state_label = gtk_module.Label(label="Save path: idle")
+            if hasattr(save_path_state_label, "set_xalign"):
+                save_path_state_label.set_xalign(0.0)
 
             save_target_label = gtk_module.Label(label="Save target: not-selected")
             if hasattr(save_target_label, "set_xalign"):
                 save_target_label.set_xalign(0.0)
-            main_col.pack_start(save_target_label, False, False, 0)
 
             priority_note_label = gtk_module.Label(
                 label="Rule: margins define area; align/valign act inside it; fixed binds L/R"
             )
             if hasattr(priority_note_label, "set_xalign"):
                 priority_note_label.set_xalign(0.0)
-            main_col.pack_start(priority_note_label, False, False, 0)
 
-            style_legend_label = gtk_module.Label(
-                label="Style cues: secondary(about/help) | planned"
-            )
+            style_legend_label = gtk_module.Label(label="Reserved slot for future placement")
             if hasattr(style_legend_label, "set_xalign"):
                 style_legend_label.set_xalign(0.0)
-            main_col.pack_start(style_legend_label, False, False, 0)
 
             current_state_section_label = gtk_module.Label(label="Current state")
             if hasattr(current_state_section_label, "set_xalign"):
                 current_state_section_label.set_xalign(0.0)
-            main_col.pack_start(current_state_section_label, False, False, 0)
 
             current_fixed_label = gtk_module.Label(label="Current fixed: off")
             if hasattr(current_fixed_label, "set_xalign"):
                 current_fixed_label.set_xalign(0.0)
-            main_col.pack_start(current_fixed_label, False, False, 0)
 
             current_margins_label = gtk_module.Label(label="Current margins: 0,0,0,0")
             if hasattr(current_margins_label, "set_xalign"):
                 current_margins_label.set_xalign(0.0)
-            main_col.pack_start(current_margins_label, False, False, 0)
 
             current_left_label = gtk_module.Label(label="Current L: align=center valign=center")
             if hasattr(current_left_label, "set_xalign"):
                 current_left_label.set_xalign(0.0)
-            main_col.pack_start(current_left_label, False, False, 0)
 
             current_right_label = gtk_module.Label(label="Current R: align=center valign=center")
             if hasattr(current_right_label, "set_xalign"):
                 current_right_label.set_xalign(0.0)
-            main_col.pack_start(current_right_label, False, False, 0)
+
+            command_tabs.append_page(main_page_shell, main_section_label)
+
+            right_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            center_row.pack_start(right_margin_shell, False, False, 0)
+            right_margin_top_spacer = gtk_module.Label(label="")
+            right_margin_shell.pack_start(right_margin_top_spacer, True, True, 0)
 
             right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            center_row.pack_start(right_margin_col, False, False, 0)
+            right_margin_shell.pack_start(right_margin_col, False, False, 0)
 
-            right_margin_label = gtk_module.Label(label="右マージン(px)")
+            right_margin_label = gtk_module.Label(label="右\nマージン(px)")
             if hasattr(right_margin_label, "set_xalign"):
-                right_margin_label.set_xalign(0.0)
+                right_margin_label.set_xalign(0.5)
             right_margin_col.pack_start(right_margin_label, False, False, 0)
 
             right_margin_spin = gtk_module.SpinButton()
             self._configure_spin_button(right_margin_spin, minimum=0, maximum=500, step=1, page=10)
             right_margin_col.pack_start(right_margin_spin, False, False, 0)
+            right_margin_bottom_spacer = gtk_module.Label(label="")
+            right_margin_shell.pack_start(right_margin_bottom_spacer, True, True, 0)
 
             # Row 2: bottom margin row (Glade hbox12 equivalent)
             bottom_margin_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
@@ -660,88 +842,187 @@ class GtkRuntimeSignalBackend:
             btm_spacer_r = gtk_module.Label(label="")
             bottom_margin_row.pack_start(btm_spacer_r, True, True, 0)
 
-            # Row 3: command bar (Glade hbox14 equivalent)
-            command_section_label = gtk_module.Label(label="Commands")
-            if hasattr(command_section_label, "set_xalign"):
-                command_section_label.set_xalign(0.0)
-            root.pack_start(command_section_label, False, False, 0)
-
-            command_bar = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            root.pack_start(command_bar, False, False, 0)
-            btn_setting = gtk_module.Button(label="Prefs")
-            btn_set_color = gtk_module.Button(label="Color (planned)")
             open_dialog_proxy = _OpenDialogProxy(
                 gtk_module,
                 window,
                 self._on_open_dialog_confirmed,
                 self._on_open_dialog_canceled,
             )
-            save_dialog_proxy = _SaveDialogProxy(
+            save_path_dialog_proxy = _SavePathDialogProxy(
                 gtk_module,
                 window,
-                self._on_save_dialog_filename_changed,
-                self._on_native_save_dialog_confirmed,
-                self._on_native_save_dialog_canceled,
+                self._on_save_path_filename_changed,
+                self._on_native_save_path_confirmed,
+                self._on_native_save_path_canceled,
             )
+            prefs_window = gtk_module.Window(title="Preferences")
+            if hasattr(prefs_window, "set_default_size"):
+                prefs_window.set_default_size(520, 420)
+            if hasattr(prefs_window, "set_resizable"):
+                prefs_window.set_resizable(True)
+            settings_dialog_proxy = _SettingsDialogProxy(prefs_window)
             srcdir_dialog_proxy = _SrcdirDialogProxy(
                 gtk_module,
                 window,
                 self._on_srcdir_dialog_confirmed,
                 self._on_srcdir_dialog_canceled,
             )
-            btn_open_save = gtk_module.Button(label="Save Confirm")
-            if hasattr(btn_open_save, "set_sensitive"):
-                btn_open_save.set_sensitive(False)
-            btn_cancel_save = gtk_module.Button(label="Save Cancel")
-            if hasattr(btn_cancel_save, "set_sensitive"):
-                btn_cancel_save.set_sensitive(False)
+
+            prefs_apply_btn = gtk_module.Button(label="Prefs Apply")
+            prefs_load_btn = gtk_module.Button(label="Prefs Load")
+            prefs_save_btn = gtk_module.Button(label="Prefs Save")
+            prefs_close_btn = gtk_module.Button(label="Prefs Close")
+            prefs_state_label = gtk_module.Label(label="Prefs: idle")
+            if hasattr(prefs_state_label, "set_xalign"):
+                prefs_state_label.set_xalign(0.0)
+            prefs_editor_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            prefs_editor_title = gtk_module.Label(label="Preferences")
+            if hasattr(prefs_editor_title, "set_xalign"):
+                prefs_editor_title.set_xalign(0.0)
+            prefs_editor_box.pack_start(prefs_editor_title, False, False, 0)
+
+            def _prefs_row(label_text: str, *widgets: Any) -> Any:
+                row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+                row_label = gtk_module.Label(label=label_text)
+                if hasattr(row_label, "set_xalign"):
+                    row_label.set_xalign(0.0)
+                row.pack_start(row_label, False, False, 0)
+                for widget in widgets:
+                    row.pack_start(widget, True, True, 0)
+                prefs_editor_box.pack_start(row, False, False, 0)
+                return row
+
+            prefs_resolution_entry = gtk_module.Entry()
+            prefs_layout_entry = gtk_module.Entry()
+            prefs_scaling_entry = gtk_module.Entry()
+            prefs_two_screen_auto = gtk_module.RadioButton.new_with_label(None, "TwoScreen Auto")
+            prefs_two_screen_on = gtk_module.RadioButton.new_with_label_from_widget(prefs_two_screen_auto, "TwoScreen On")
+            prefs_two_screen_off = gtk_module.RadioButton.new_with_label_from_widget(prefs_two_screen_auto, "TwoScreen Off")
+            if hasattr(prefs_two_screen_off, "set_active"):
+                prefs_two_screen_off.set_active(True)
+            prefs_l_display_entry = gtk_module.Entry()
+            prefs_r_display_entry = gtk_module.Entry()
+            prefs_margins_entry = gtk_module.Entry()
+            prefs_fixed_toggle = gtk_module.ToggleButton(label="Fixed")
+            prefs_align_entry = gtk_module.Entry()
+            prefs_valign_entry = gtk_module.Entry()
+            prefs_padding_spin = gtk_module.SpinButton()
+            self._configure_spin_button(prefs_padding_spin, minimum=0, maximum=10000, step=1, page=10, initial=0)
+            prefs_quality_spin = gtk_module.SpinButton()
+            self._configure_spin_button(prefs_quality_spin, minimum=1, maximum=100, step=1, page=10, initial=90)
+            prefs_embed_info_entry = gtk_module.Entry()
+            prefs_embed_text_entry = gtk_module.Entry()
+            prefs_embed_position_entry = gtk_module.Entry()
+            prefs_embed_max_lines_spin = gtk_module.SpinButton()
+            self._configure_spin_button(prefs_embed_max_lines_spin, minimum=1, maximum=20, step=1, page=5, initial=3)
+            prefs_plugin_entry = gtk_module.Entry()
+            prefs_apply_single = gtk_module.RadioButton.new_with_label(None, "Apply Default")
+            prefs_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(prefs_apply_single, "Apply Auto-split")
+            if hasattr(prefs_apply_single, "set_active"):
+                prefs_apply_single.set_active(True)
+            prefs_watch_interval_spin = gtk_module.SpinButton()
+            self._configure_spin_button(prefs_watch_interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
+            prefs_import_path_entry = gtk_module.Entry()
+            prefs_export_path_entry = gtk_module.Entry()
+
+            prefs_apply_mode_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            prefs_apply_mode_shell.pack_start(prefs_apply_single, False, False, 0)
+            prefs_apply_mode_shell.pack_start(prefs_apply_per_monitor, False, False, 0)
+
+            _prefs_row("Resolution", prefs_resolution_entry)
+            _prefs_row("Layout", prefs_layout_entry)
+            _prefs_row("Scaling", prefs_scaling_entry)
+            _prefs_row("Plugin", prefs_plugin_entry)
+            _prefs_row("Apply", prefs_apply_mode_shell)
+            _prefs_row("Watch interval", prefs_watch_interval_spin)
+            _prefs_row("Import path", prefs_import_path_entry)
+            _prefs_row("Export path", prefs_export_path_entry)
+
+            prefs_actions = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            prefs_actions.pack_start(prefs_apply_btn, False, False, 0)
+            prefs_actions.pack_start(prefs_load_btn, False, False, 0)
+            prefs_actions.pack_start(prefs_save_btn, False, False, 0)
+            prefs_actions.pack_start(prefs_close_btn, False, False, 0)
+            prefs_editor_box.pack_start(prefs_actions, False, False, 0)
+            prefs_editor_box.pack_start(prefs_state_label, False, False, 0)
+
+            if hasattr(prefs_window, "add"):
+                prefs_window.add(prefs_editor_box)
+
+            watch_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=16)
+            watch_label = gtk_module.Label(label="Watch")
+            if hasattr(watch_label, "set_xalign"):
+                watch_label.set_xalign(0.0)
+            watch_tab_title = gtk_module.Label(label="Watch (stopped)")
+            if hasattr(watch_tab_title, "set_xalign"):
+                watch_tab_title.set_xalign(0.0)
+            watch_tab_box.pack_start(watch_label, False, False, 0)
+
+            watch_srcdir_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+            watch_tab_box.pack_start(watch_srcdir_shell, False, False, 0)
+            watch_srcdir_left_spacer = gtk_module.Label(label="")
+            watch_srcdir_shell.pack_start(watch_srcdir_left_spacer, True, True, 0)
+            watch_srcdir_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=48)
+            watch_srcdir_shell.pack_start(watch_srcdir_row, False, False, 0)
+            watch_srcdir_right_spacer = gtk_module.Label(label="")
+            watch_srcdir_shell.pack_start(watch_srcdir_right_spacer, True, True, 0)
             btn_open_srcdir_l = gtk_module.Button(label="Srcdir-L")
             btn_open_srcdir_r = gtk_module.Button(label="Srcdir-R")
-            watch_label = gtk_module.Label(label="Watch")
+            watch_srcdir_row.pack_start(btn_open_srcdir_l, False, False, 0)
+            watch_srcdir_row.pack_start(btn_open_srcdir_r, False, False, 0)
+
+            watch_controls_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            watch_tab_box.pack_start(watch_controls_shell, False, False, 0)
+            watch_controls_left_spacer = gtk_module.Label(label="")
+            watch_controls_shell.pack_start(watch_controls_left_spacer, True, True, 0)
+            watch_controls_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            watch_controls_shell.pack_start(watch_controls_row, False, False, 0)
+            watch_controls_right_spacer = gtk_module.Label(label="")
+            watch_controls_shell.pack_start(watch_controls_right_spacer, True, True, 0)
+
             interval_spin = gtk_module.SpinButton()
             self._configure_spin_button(interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
             interval_label = gtk_module.Label(label="Interval")
             btn_daemonize = gtk_module.Button(label="Watch Start")
             btn_cancel_daemonize = gtk_module.Button(label="Watch Stop")
-            btn_about = gtk_module.Button(label="About (secondary)")
-            btn_help = gtk_module.Button(label="Help (secondary)")
-            command_bar.pack_start(btn_setting, False, False, 0)
-            command_bar.pack_start(btn_set_color, False, False, 0)
-            command_bar.pack_start(btn_open_save, False, False, 0)
-            command_bar.pack_start(btn_cancel_save, False, False, 0)
-            command_bar.pack_start(btn_open_srcdir_l, False, False, 0)
-            command_bar.pack_start(btn_open_srcdir_r, False, False, 0)
-            command_bar.pack_start(watch_label, False, False, 0)
-            command_bar.pack_start(interval_spin, False, False, 0)
-            command_bar.pack_start(interval_label, False, False, 0)
-            command_bar.pack_start(btn_daemonize, False, False, 0)
-            command_bar.pack_start(btn_cancel_daemonize, False, False, 0)
-            command_bar.pack_start(btn_about, False, False, 0)
-            command_bar.pack_start(btn_help, False, False, 0)
+            watch_controls_row.pack_start(interval_label, False, False, 0)
+            watch_controls_row.pack_start(interval_spin, False, False, 0)
+            watch_controls_row.pack_start(btn_daemonize, False, False, 0)
+            watch_controls_row.pack_start(btn_cancel_daemonize, False, False, 0)
+
+            watch_detail_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
+            watch_tab_box.pack_start(watch_detail_row, False, False, 0)
+            watch_sources_label = gtk_module.Label(label="Watch srcdirs: L=- | R=-")
+            if hasattr(watch_sources_label, "set_xalign"):
+                watch_sources_label.set_xalign(0.0)
+            watch_detail_row.pack_start(watch_sources_label, False, False, 0)
+            watch_current_label = gtk_module.Label(label="Watch current: idle")
+            if hasattr(watch_current_label, "set_xalign"):
+                watch_current_label.set_xalign(0.0)
+            watch_detail_row.pack_start(watch_current_label, False, False, 0)
+
+            watch_page_shell = _build_centered_page(watch_tab_box)
+            command_tabs.append_page(watch_page_shell, watch_tab_title)
 
             # Row 4: status row (Glade statusbar equivalent)
-            status_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
-            root.pack_start(status_row, False, False, 0)
-            flow_legend_label = gtk_module.Label(label="Flow: Compose -> Optimize -> Apply")
-            if hasattr(flow_legend_label, "set_xalign"):
-                flow_legend_label.set_xalign(0.0)
-            status_row.pack_start(flow_legend_label, False, False, 0)
+            footer_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
+            root.pack_start(footer_col, False, False, 0)
+
+            status_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
+            footer_col.pack_start(status_row, False, False, 0)
             status_label = gtk_module.Label(label="Status: ready")
             if hasattr(status_label, "set_xalign"):
                 status_label.set_xalign(0.0)
             status_row.pack_start(status_label, False, False, 0)
+            status_spacer = gtk_module.Label(label="")
+            status_row.pack_start(status_spacer, True, True, 0)
+            watch_summary_label = gtk_module.Label(label="Watch: stopped")
+            if hasattr(watch_summary_label, "set_xalign"):
+                watch_summary_label.set_xalign(0.0)
+
             error_label = gtk_module.Label(label="Error: none")
             if hasattr(error_label, "set_xalign"):
                 error_label.set_xalign(0.0)
-            status_row.pack_start(error_label, False, False, 0)
-            watch_sources_label = gtk_module.Label(label="Watch srcdirs: L=- | R=-")
-            if hasattr(watch_sources_label, "set_xalign"):
-                watch_sources_label.set_xalign(0.0)
-            status_row.pack_start(watch_sources_label, False, False, 0)
-            watch_current_label = gtk_module.Label(label="Watch current: idle")
-            if hasattr(watch_current_label, "set_xalign"):
-                watch_current_label.set_xalign(0.0)
-            status_row.pack_start(watch_current_label, False, False, 0)
 
             if hasattr(window, "add"):
                 window.add(root)
@@ -762,6 +1043,13 @@ class GtkRuntimeSignalBackend:
                 "lblSubtitle": subtitle,
                 "lblMainSection": main_section_label,
                 "boxMainSection": main_col,
+                "composeGrid": compose_grid,
+                "leftDisplayCol": left_display_grid,
+                "rightDisplayCol": right_display_grid,
+                "inputRowL": input_row_l,
+                "inputRowR": input_row_r,
+                "actionClusterRow": action_cluster_row,
+                "actionClusterCol": optimize_group,
                 "tglUpperL": tgl_upper_l,
                 "tglUpperR": tgl_upper_r,
                 "tglPushLeftL": tgl_push_left_l,
@@ -794,8 +1082,10 @@ class GtkRuntimeSignalBackend:
                 "boxApplySection": apply_row,
                 "btnSetWall": apply_btn,
                 "lblApplyTarget": apply_target,
+                "radApplySingle": rad_apply_single,
+                "radApplyPerMonitor": rad_apply_per_monitor,
+                "lblApplyMode": apply_mode_label,
                 "lblDoItPlanned": do_it_plan_label,
-                "lblSaveDialogState": save_dialog_state_label,
                 "lblSaveTarget": save_target_label,
                 "lblPriorityRule": priority_note_label,
                 "lblStyleLegend": style_legend_label,
@@ -805,29 +1095,68 @@ class GtkRuntimeSignalBackend:
                 "lblCurrentStateL": current_left_label,
                 "lblCurrentStateR": current_right_label,
                 "lblCommandSection": command_section_label,
+                "commandTabs": command_tabs,
                 "hbox14": command_bar,
                 "btnSetting": btn_setting,
+                "btnPrefsApply": prefs_apply_btn,
+                "btnPrefsLoad": prefs_load_btn,
+                "btnPrefsSave": prefs_save_btn,
+                "btnPrefsClose": prefs_close_btn,
+                "lblPrefsState": prefs_state_label,
+                "boxPrefsEditor": prefs_editor_box,
+                "prefsWindow": prefs_window,
+                "lblPrefsEditorTitle": prefs_editor_title,
+                "entPrefsResolution": prefs_resolution_entry,
+                "entPrefsLayout": prefs_layout_entry,
+                "entPrefsScaling": prefs_scaling_entry,
+                "radPrefsTwoScreenAuto": prefs_two_screen_auto,
+                "radPrefsTwoScreenOn": prefs_two_screen_on,
+                "radPrefsTwoScreenOff": prefs_two_screen_off,
+                "entPrefsLDisplay": prefs_l_display_entry,
+                "entPrefsRDisplay": prefs_r_display_entry,
+                "entPrefsMargins": prefs_margins_entry,
+                "tglPrefsFixed": prefs_fixed_toggle,
+                "entPrefsAlign": prefs_align_entry,
+                "entPrefsValign": prefs_valign_entry,
+                "spnPrefsPadding": prefs_padding_spin,
+                "spnPrefsQuality": prefs_quality_spin,
+                "entPrefsEmbedInfo": prefs_embed_info_entry,
+                "entPrefsEmbedText": prefs_embed_text_entry,
+                "entPrefsEmbedPosition": prefs_embed_position_entry,
+                "spnPrefsEmbedMaxLines": prefs_embed_max_lines_spin,
+                "entPrefsPlugin": prefs_plugin_entry,
+                "radPrefsApplySingle": prefs_apply_single,
+                "radPrefsApplyPerMonitor": prefs_apply_per_monitor,
+                "spnPrefsWatchInterval": prefs_watch_interval_spin,
+                "entPrefsImportPath": prefs_import_path_entry,
+                "entPrefsExportPath": prefs_export_path_entry,
                 "btnSetColor": btn_set_color,
                 "ImgOpenDialog": open_dialog_proxy,
-                "SaveWallpaperDialog": save_dialog_proxy,
                 "SrcdirDialog": srcdir_dialog_proxy,
-                "btnOpenSave": btn_open_save,
-                "btnCancelSave": btn_cancel_save,
+                **{object_name: settings_dialog_proxy for object_name in SETTINGS_DIALOG_OBJECT_ALIASES},
+                "watchTab": watch_tab_box,
+                "watchControlsRow": watch_controls_row,
+                "watchDetailRow": watch_detail_row,
                 "btnOpenSrcdirL": btn_open_srcdir_l,
                 "btnOpenSrcdirR": btn_open_srcdir_r,
                 "lblWatchSection": watch_label,
+                "lblWatchTabTitle": watch_tab_title,
                 "spnInterval": interval_spin,
                 "lblInterval": interval_label,
                 "btnDaemonize": btn_daemonize,
                 "btnCancelDaemonize": btn_cancel_daemonize,
                 "btnAbout": btn_about,
                 "btnHelp": btn_help,
-                "statusbar": status_row,
+                "statusbar": footer_col,
+                "flowRow": flow_row,
                 "lblFlowLegend": flow_legend_label,
                 "lblStatus": status_label,
                 "lblError": error_label,
+                "lblWatchSummary": watch_summary_label,
                 "lblWatchSources": watch_sources_label,
                 "lblWatchCurrent": watch_current_label,
+                **{object_name: save_path_state_label for object_name in SAVE_PATH_STATE_LABEL_ALIASES},
+                **{object_name: save_path_dialog_proxy for object_name in SAVE_PATH_DIALOG_OBJECT_ALIASES},
             }
 
             for object_name, widget in self._objects.items():
@@ -838,8 +1167,14 @@ class GtkRuntimeSignalBackend:
 
             # Why: fallback window must still exercise MainWindow handlers even when
             # legacy glade cannot be parsed at runtime.
-            input_entry_l.connect("changed", self._on_input_changed)
-            input_entry_r.connect("changed", self._on_input_changed)
+            try:
+                input_entry_l.connect("changed", self._on_input_changed)
+            except Exception:
+                pass
+            try:
+                input_entry_r.connect("changed", self._on_input_changed)
+            except Exception:
+                pass
             tgl_upper_l.connect("pressed", lambda *_args: self._on_direction_pressed("tglUpperL"))
             tgl_upper_l.connect("toggled", lambda *_args: self._on_direction_toggled("tglUpperL"))
             tgl_upper_l.connect("released", lambda *_args: self._on_direction_released("tglUpperL"))
@@ -866,8 +1201,16 @@ class GtkRuntimeSignalBackend:
             tgl_push_right_r.connect("released", lambda *_args: self._on_direction_released("tglPushRightR"))
             btn_get_img_l.connect("clicked", lambda *_args: self._on_pick_input_clicked("L"))
             btn_get_img_r.connect("clicked", lambda *_args: self._on_pick_input_clicked("R"))
-            rad_fixed.connect("clicked", lambda *_args: self._on_fixed_selection(True))
-            rad_no_fixed.connect("clicked", lambda *_args: self._on_fixed_selection(False))
+            btn_clr_path_l.connect("clicked", lambda *_args: self._on_clear_input_clicked("L"))
+            btn_clr_path_r.connect("clicked", lambda *_args: self._on_clear_input_clicked("R"))
+            rad_fixed.connect(
+                "toggled",
+                lambda widget, *_args: self._on_fixed_toggled(widget, True),
+            )
+            rad_no_fixed.connect(
+                "toggled",
+                lambda widget, *_args: self._on_fixed_toggled(widget, False),
+            )
             top_margin_spin.connect("value-changed", self._on_margin_changed)
             left_margin_spin.connect("value-changed", self._on_margin_changed)
             right_margin_spin.connect("value-changed", self._on_margin_changed)
@@ -875,9 +1218,20 @@ class GtkRuntimeSignalBackend:
             optimize_btn.connect("clicked", self._on_save_clicked)
             optimize_modern_btn.connect("clicked", self._on_optimize_clicked)
             apply_btn.connect("clicked", self._on_apply_clicked)
+            btn_setting.connect("clicked", self._on_settings_clicked)
+            prefs_apply_btn.connect("clicked", self._on_preferences_apply_clicked)
+            prefs_load_btn.connect("clicked", self._on_preferences_load_clicked)
+            prefs_save_btn.connect("clicked", self._on_preferences_save_clicked)
+            prefs_close_btn.connect("clicked", self._on_preferences_close_clicked)
+            rad_apply_single.connect(
+                "toggled",
+                lambda widget, *_args: self._on_apply_mode_toggled(widget, "single-file"),
+            )
+            rad_apply_per_monitor.connect(
+                "toggled",
+                lambda widget, *_args: self._on_apply_mode_toggled(widget, "per-monitor-auto-split"),
+            )
             btn_set_color.connect("clicked", self._on_color_clicked)
-            btn_open_save.connect("clicked", self._on_save_dialog_confirm_clicked)
-            btn_cancel_save.connect("clicked", self._on_save_dialog_cancel_clicked)
             btn_open_srcdir_l.connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("L"))
             btn_open_srcdir_r.connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("R"))
             interval_spin.connect("value-changed", self._on_watch_interval_changed)
@@ -942,13 +1296,51 @@ class GtkRuntimeSignalBackend:
         if label is not None and hasattr(label, "set_text"):
             label.set_text(message)
 
+    def _set_entry_text(self, object_name: str, value: object | None) -> None:
+        entry = self._objects.get(object_name)
+        if entry is not None and hasattr(entry, "set_text"):
+            entry.set_text("" if value is None else str(value))
+
+    def _read_entry_text(self, object_name: str) -> str:
+        entry = self._objects.get(object_name)
+        if entry is None:
+            return ""
+        if hasattr(entry, "get_text"):
+            return str(entry.get_text() or "").strip()
+        return str(getattr(entry, "text", "") or "").strip()
+
+    def _set_spin_value(self, object_name: str, value: int) -> None:
+        spin = self._objects.get(object_name)
+        if spin is not None and hasattr(spin, "set_value"):
+            spin.set_value(int(value))
+
     def _set_button_enabled(self, object_name: str, enabled: bool) -> None:
         button = self._objects.get(object_name)
         if button is not None and hasattr(button, "set_sensitive"):
             button.set_sensitive(bool(enabled))
 
-    def _current_save_dialog_filename(self) -> str:
-        dialog = self._objects.get("SaveWallpaperDialog")
+    def _get_save_path_dialog(self) -> Any | None:
+        for object_name in SAVE_PATH_DIALOG_OBJECT_ALIASES:
+            dialog = self._objects.get(object_name)
+            if dialog is not None:
+                return dialog
+        return None
+
+    def _get_save_path_destroy_callback(self) -> Callable[..., Any] | None:
+        for handler_name in SAVE_PATH_DESTROY_HANDLER_NAMES:
+            callback = self._signal_handlers.get(handler_name)
+            if callback is not None:
+                return callback
+        return None
+
+    def _set_save_path_state_text(self, message: str) -> None:
+        for object_name in SAVE_PATH_STATE_LABEL_ALIASES:
+            if self._objects.get(object_name) is not None:
+                self._set_label_text(object_name, message)
+                return
+
+    def _current_save_path_filename(self) -> str:
+        dialog = self._get_save_path_dialog()
         if dialog is None or not hasattr(dialog, "get_filename"):
             return ""
         return str(dialog.get_filename() or "").strip()
@@ -956,7 +1348,7 @@ class GtkRuntimeSignalBackend:
     def _refresh_save_target_label(self, filename: str | None = None) -> None:
         value = str(filename or "").strip()
         if not value:
-            value = self._current_save_dialog_filename()
+            value = self._current_save_path_filename()
         if value:
             self._set_label_text("lblSaveTarget", f"Save target: {value}")
             return
@@ -967,6 +1359,11 @@ class GtkRuntimeSignalBackend:
         right = self._watch_srcdir_r or "-"
         self._set_label_text("lblWatchSources", f"Watch srcdirs: L={left} | R={right}")
 
+    def _refresh_watch_summary_label(self) -> None:
+        state = "running" if self._watch_running else "stopped"
+        self._set_label_text("lblWatchSummary", f"Watch: {state}")
+        self._set_label_text("lblWatchTabTitle", f"Watch ({state})")
+
     def _refresh_watch_current_label(self, left: str | None = None, right: str | None = None) -> None:
         current_left = left if left is not None else (str(self._watch_previous_l) if self._watch_previous_l else "-")
         current_right = right if right is not None else (str(self._watch_previous_r) if self._watch_previous_r else "-")
@@ -976,7 +1373,7 @@ class GtkRuntimeSignalBackend:
         self._set_label_text("lblWatchCurrent", f"Watch current: L={current_left} | R={current_right}")
 
     def _notify_srcdir_dialog_destroy(self) -> None:
-        callback = self._signal_handlers.get("on_SrcdirDialog_destroy")
+        callback = self._signal_handlers.get("on_close_srcdir_dialog")
         if callback is None:
             return
         try:
@@ -984,8 +1381,8 @@ class GtkRuntimeSignalBackend:
         except Exception:
             pass
 
-    def _notify_save_dialog_destroy(self) -> None:
-        callback = self._signal_handlers.get("on_SaveWallpaperDialog_destroy")
+    def _notify_save_path_dialog_destroy(self) -> None:
+        callback = self._get_save_path_destroy_callback()
         if callback is None:
             return
         try:
@@ -993,51 +1390,43 @@ class GtkRuntimeSignalBackend:
         except Exception:
             pass
 
-    def _update_save_dialog_action_buttons(self) -> None:
-        opened = self._is_save_dialog_open()
-        has_path = bool(self._current_save_dialog_filename())
-        self._set_button_enabled("btnCancelSave", opened)
-        self._set_button_enabled("btnOpenSave", opened and has_path)
-
-    def _set_save_dialog_open_state(self, opened: bool, *, state_text: str | None = None) -> None:
-        dialog = self._objects.get("SaveWallpaperDialog")
+    def _set_save_path_dialog_open_state(self, opened: bool, *, state_text: str | None = None) -> None:
+        dialog = self._get_save_path_dialog()
         if dialog is not None:
             if opened and hasattr(dialog, "show"):
                 dialog.show()
             if not opened and hasattr(dialog, "hide"):
                 dialog.hide()
-        self._update_save_dialog_action_buttons()
 
         if state_text is not None:
-            self._set_label_text("lblSaveDialogState", state_text)
+            self._set_save_path_state_text(state_text)
 
-    def _on_save_dialog_filename_changed(self, filename: str) -> None:
+    def _on_save_path_filename_changed(self, filename: str) -> None:
         self._refresh_save_target_label(filename)
-        if not self._is_save_dialog_open():
+        if not self._is_save_path_dialog_open():
             return
-        self._update_save_dialog_action_buttons()
         if str(filename or "").strip():
-            self._set_label_text("lblSaveDialogState", "SaveDialog: open(path-ready)")
+            self._set_save_path_state_text("Save path: ready")
         else:
-            self._set_label_text("lblSaveDialogState", "SaveDialog: open(path-required)")
+            self._set_save_path_state_text("Save path: required")
 
-    def _is_save_dialog_open(self) -> bool:
-        dialog = self._objects.get("SaveWallpaperDialog")
+    def _is_save_path_dialog_open(self) -> bool:
+        dialog = self._get_save_path_dialog()
         if dialog is None or not hasattr(dialog, "is_visible"):
             return False
         return bool(dialog.is_visible())
 
     def _on_input_changed(self, entry: Any) -> None:
-        callback = self._signal_handlers.get("on_entPath_insert_text")
-        text_l = ""
-        text_r = ""
+        callback = self._signal_handlers.get("on_change_input_text")
+        text_l = self._input_path_l.strip()
+        text_r = self._input_path_r.strip()
 
         entry_l = self._objects.get("entPathL")
-        if entry_l is not None and hasattr(entry_l, "get_text"):
+        if not text_l and entry_l is not None and hasattr(entry_l, "get_text"):
             text_l = str(entry_l.get_text() or "").strip()
 
         entry_r = self._objects.get("entPathR")
-        if entry_r is not None and hasattr(entry_r, "get_text"):
+        if not text_r and entry_r is not None and hasattr(entry_r, "get_text"):
             text_r = str(entry_r.get_text() or "").strip()
 
         input_values = [value for value in (text_l, text_r) if value]
@@ -1048,7 +1437,7 @@ class GtkRuntimeSignalBackend:
         self._set_button_enabled("btnOptimize", has_input)
         self._set_button_enabled("btnSetWall", False)
         if not has_input:
-            self._set_save_dialog_open_state(False, state_text="SaveDialog: closed(input-reset)")
+            self._set_save_path_dialog_open_state(False, state_text="Save path: reset")
         self._set_label_text("lblOptimizeResult", "Optimize result: not-run")
         self._set_label_text("lblApplyTarget", "Apply target: not-ready")
 
@@ -1062,11 +1451,7 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Input", state="failed", error=str(exc))
 
     def _on_pick_input_clicked(self, side: str) -> None:
-        entry_name = "entPathL" if side == "L" else "entPathR"
-        entry = self._objects.get(entry_name)
-        value = ""
-        if entry is not None and hasattr(entry, "get_text"):
-            value = str(entry.get_text() or "").strip()
+        value = self._input_path_l if side == "L" else self._input_path_r
 
         dialog = self._objects.get("ImgOpenDialog")
         if dialog is None or not hasattr(dialog, "open_for_side"):
@@ -1083,7 +1468,7 @@ class GtkRuntimeSignalBackend:
         self._set_feedback(phase=f"Open-{side}", state="dialog-open")
 
     def _notify_open_dialog_destroy(self) -> None:
-        callback = self._signal_handlers.get("on_ImgOpenDialog_destroy")
+        callback = self._signal_handlers.get("on_close_open_image_dialog")
         if callback is None:
             return
         try:
@@ -1114,7 +1499,7 @@ class GtkRuntimeSignalBackend:
             )
             return
 
-        callback = self._signal_handlers.get("on_btnGetImg_clicked")
+        callback = self._signal_handlers.get("on_pick_input")
         if callback is None:
             self._set_label_text("lblPickState", f"Open-{side}: handler-missing")
             self._set_feedback(
@@ -1127,12 +1512,19 @@ class GtkRuntimeSignalBackend:
         try:
             callback(filename, side)
             entry_name = "entPathL" if side == "L" else "entPathR"
+            if side == "L":
+                self._input_path_l = filename
+            else:
+                self._input_path_r = filename
             entry = self._objects.get(entry_name)
             if entry is not None and hasattr(entry, "set_text"):
-                entry.set_text(filename)
-                if hasattr(entry, "emit"):
-                    entry.emit("changed", entry)
-                else:
+                entry.set_text(self._format_input_display(filename))
+                try:
+                    if hasattr(entry, "emit"):
+                        entry.emit("changed", entry)
+                    else:
+                        self._on_input_changed(entry)
+                except Exception:
                     self._on_input_changed(entry)
             if hasattr(dialog, "hide"):
                 dialog.hide()
@@ -1156,6 +1548,29 @@ class GtkRuntimeSignalBackend:
         self._set_label_text("lblPickState", f"Open-{side}: {state}")
         self._set_feedback(phase=f"Open-{side}", state=state)
         self._notify_open_dialog_destroy()
+
+    def _format_input_display(self, path: str) -> str:
+        value = str(path or "").strip()
+        if not value:
+            return ""
+        try:
+            return Path(value).name or value
+        except Exception:
+            return value
+
+    def _on_clear_input_clicked(self, side: str) -> None:
+        entry_name = "entPathL" if side == "L" else "entPathR"
+        if side == "L":
+            self._input_path_l = ""
+        else:
+            self._input_path_r = ""
+
+        entry = self._objects.get(entry_name)
+        if entry is not None and hasattr(entry, "set_text"):
+            entry.set_text("")
+
+        self._on_input_changed(entry)
+        self._set_feedback(phase=f"Clear-{side}", state="ok")
 
     def _current_srcdir_for_side(self, side: str) -> str:
         return self._watch_srcdir_l if side == "L" else self._watch_srcdir_r
@@ -1195,7 +1610,7 @@ class GtkRuntimeSignalBackend:
             )
             return
 
-        callback = self._signal_handlers.get("on_btnOpenSrcdir_clicked")
+        callback = self._signal_handlers.get("on_pick_watch_srcdir")
         if callback is None:
             self._set_feedback(
                 phase=f"Srcdir-{side}",
@@ -1239,7 +1654,7 @@ class GtkRuntimeSignalBackend:
         self._notify_srcdir_dialog_destroy()
 
     def _on_watch_interval_changed(self, widget: Any) -> None:
-        callback = self._signal_handlers.get("on_spnInterval_value_changed")
+        callback = self._signal_handlers.get("on_watch_interval_change")
         if callback is None:
             self._set_feedback(phase="Watch", state="handler-missing", error="handler not connected")
             return
@@ -1258,7 +1673,7 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Watch", state="error", error=str(exc))
 
     def _on_watch_start_clicked(self, *_args: Any) -> None:
-        callback = self._signal_handlers.get("on_btnDaemonize_clicked")
+        callback = self._signal_handlers.get("on_watch_start")
         if callback is None:
             self._set_feedback(phase="Watch", state="handler-missing", error="handler not connected")
             return
@@ -1292,6 +1707,7 @@ class GtkRuntimeSignalBackend:
                 selected_right = str(selected)
 
             self._watch_running = True
+            self._refresh_watch_summary_label()
             self._refresh_watch_source_labels()
             self._refresh_watch_current_label(selected_left, selected_right)
             self._set_feedback(phase="Watch", state="started")
@@ -1299,7 +1715,7 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Watch", state="error", error=str(exc))
 
     def _on_watch_stop_clicked(self, *_args: Any) -> None:
-        callback = self._signal_handlers.get("on_btnCancelDaemonize_clicked")
+        callback = self._signal_handlers.get("on_watch_stop")
         if callback is None:
             self._set_feedback(phase="Watch", state="handler-missing", error="handler not connected")
             return
@@ -1309,6 +1725,7 @@ class GtkRuntimeSignalBackend:
                 self._set_feedback(phase="Watch", state="stop-ignored")
                 return
             self._watch_running = False
+            self._refresh_watch_summary_label()
             self._refresh_watch_current_label()
             self._set_feedback(phase="Watch", state="stopped")
         except Exception as exc:
@@ -1322,6 +1739,106 @@ class GtkRuntimeSignalBackend:
             toggle.set_active(bool(active))
             return
         setattr(toggle, "active", bool(active))
+
+    def _set_preferences_two_screen_mode(self, value: object) -> None:
+        raw = str(value).strip().lower() if value is not None else "off"
+        is_auto = raw == "auto"
+        is_on = raw in {"on", "true", "1"} or value is True
+        self._set_toggle_active("radPrefsTwoScreenAuto", is_auto)
+        self._set_toggle_active("radPrefsTwoScreenOn", is_on and not is_auto)
+        self._set_toggle_active("radPrefsTwoScreenOff", not is_auto and not is_on)
+
+    def _read_preferences_two_screen_mode(self) -> str | bool:
+        if self._is_toggle_active("radPrefsTwoScreenAuto"):
+            return "auto"
+        if self._is_toggle_active("radPrefsTwoScreenOn"):
+            return True
+        return False
+
+    def _set_preferences_apply_mode(self, value: object | None) -> None:
+        mode = str(value or "single-file").strip().lower()
+        is_per_monitor = mode == "per-monitor-auto-split"
+        self._set_toggle_active("radPrefsApplySingle", not is_per_monitor)
+        self._set_toggle_active("radPrefsApplyPerMonitor", is_per_monitor)
+
+    def _read_preferences_apply_mode(self) -> str:
+        if self._is_toggle_active("radPrefsApplyPerMonitor"):
+            return "per-monitor-auto-split"
+        return "single-file"
+
+    def _sync_preferences_widgets_from_dialog(self) -> dict[str, object]:
+        dialog = self._objects.get("SettingsDialog")
+        if dialog is None or not hasattr(dialog, "get_preferences_config"):
+            return {}
+        config = dict(dialog.get_preferences_config())
+        self._set_entry_text("entPrefsResolution", config.get("resolution", "1920x1080"))
+        self._set_entry_text("entPrefsLayout", config.get("layout", "mosaic"))
+        self._set_entry_text("entPrefsScaling", config.get("scaling", "fit"))
+        self._set_preferences_two_screen_mode(config.get("two_screen", False))
+        self._set_entry_text("entPrefsLDisplay", config.get("l_display"))
+        self._set_entry_text("entPrefsRDisplay", config.get("r_display"))
+        self._set_entry_text("entPrefsMargins", config.get("margins"))
+        self._set_toggle_active("tglPrefsFixed", bool(config.get("fixed", False)))
+        self._set_entry_text("entPrefsAlign", config.get("align", "center"))
+        self._set_entry_text("entPrefsValign", config.get("valign", "center"))
+        self._set_spin_value("spnPrefsPadding", int(config.get("padding", 0)))
+        self._set_spin_value("spnPrefsQuality", int(config.get("quality", 90)))
+        self._set_entry_text("entPrefsEmbedInfo", config.get("embed_info", "none"))
+        self._set_entry_text("entPrefsEmbedText", config.get("embed_text"))
+        self._set_entry_text("entPrefsEmbedPosition", config.get("embed_position", "auto"))
+        self._set_spin_value("spnPrefsEmbedMaxLines", int(config.get("embed_max_lines", 3)))
+        self._set_entry_text("entPrefsPlugin", config.get("plugin", "windows"))
+        self._set_preferences_apply_mode(config.get("apply_mode", "single-file"))
+        self._set_spin_value("spnPrefsWatchInterval", int(config.get("watch_interval_seconds", 60)))
+        if hasattr(dialog, "get_import_path"):
+            self._set_entry_text("entPrefsImportPath", dialog.get_import_path())
+        if hasattr(dialog, "get_export_path"):
+            self._set_entry_text("entPrefsExportPath", dialog.get_export_path())
+        return config
+
+    def _sync_preferences_dialog_from_widgets(self) -> dict[str, object]:
+        dialog = self._objects.get("SettingsDialog")
+        config: dict[str, object] = {}
+        if dialog is not None and hasattr(dialog, "get_preferences_config"):
+            config = dict(dialog.get_preferences_config())
+
+        def _empty_to_none(value: str) -> str | None:
+            return value if value else None
+
+        config.update(
+            {
+                "resolution": self._read_entry_text("entPrefsResolution") or "1920x1080",
+                "layout": self._read_entry_text("entPrefsLayout") or "mosaic",
+                "scaling": self._read_entry_text("entPrefsScaling") or "fit",
+                "two_screen": self._read_preferences_two_screen_mode(),
+                "l_display": _empty_to_none(self._read_entry_text("entPrefsLDisplay")),
+                "r_display": _empty_to_none(self._read_entry_text("entPrefsRDisplay")),
+                "margins": _empty_to_none(self._read_entry_text("entPrefsMargins")),
+                "fixed": self._is_toggle_active("tglPrefsFixed"),
+                "align": self._read_entry_text("entPrefsAlign") or "center",
+                "valign": self._read_entry_text("entPrefsValign") or "center",
+                "padding": self._read_spin_int("spnPrefsPadding"),
+                "quality": self._read_spin_int("spnPrefsQuality"),
+                "embed_info": self._read_entry_text("entPrefsEmbedInfo") or "none",
+                "embed_text": _empty_to_none(self._read_entry_text("entPrefsEmbedText")),
+                "embed_position": self._read_entry_text("entPrefsEmbedPosition") or "auto",
+                "embed_max_lines": self._read_spin_int("spnPrefsEmbedMaxLines"),
+                "plugin": self._read_entry_text("entPrefsPlugin") or "windows",
+                "apply_mode": self._read_preferences_apply_mode(),
+                "watch_interval_seconds": self._read_spin_int("spnPrefsWatchInterval"),
+            }
+        )
+
+        import_path = self._read_entry_text("entPrefsImportPath")
+        export_path = self._read_entry_text("entPrefsExportPath")
+        if dialog is not None:
+            if hasattr(dialog, "set_preferences_config"):
+                dialog.set_preferences_config(config)
+            if hasattr(dialog, "set_import_path"):
+                dialog.set_import_path(import_path)
+            if hasattr(dialog, "set_export_path"):
+                dialog.set_export_path(export_path)
+        return config
 
     def _is_toggle_active(self, object_name: str) -> bool:
         toggle = self._objects.get(object_name)
@@ -1365,12 +1882,16 @@ class GtkRuntimeSignalBackend:
         self._set_label_text("lblCurrentStateL", f"Current L: align={align_l} valign={valign_l}")
         self._set_label_text("lblCurrentStateR", f"Current R: align={align_r} valign={valign_r}")
 
-    def _on_fixed_selection(self, fixed_enabled: bool) -> None:
-        self._set_toggle_active("radFixed", fixed_enabled)
-        self._set_toggle_active("radNoFixed", not fixed_enabled)
+    def _on_fixed_toggled(self, widget: Any, fixed_enabled: bool) -> None:
+        is_active = True
+        if hasattr(widget, "get_active"):
+            is_active = bool(widget.get_active())
+        if not is_active:
+            return
+
         self._refresh_current_state_labels()
 
-        callback = self._signal_handlers.get("on_radFixed_toggled")
+        callback = self._signal_handlers.get("on_toggle_fixed")
         if callback is not None:
             try:
                 callback(bool(fixed_enabled))
@@ -1397,39 +1918,42 @@ class GtkRuntimeSignalBackend:
             if opposite_toggle is not None and hasattr(opposite_toggle, "get_active"):
                 if bool(opposite_toggle.get_active()):
                     self._set_toggle_active(opposite_name, False)
+                    reset_callback = self._signal_handlers.get("on_toggle_position_reset")
+                    if reset_callback is not None:
+                        try:
+                            reset_callback(opposite_name)
+                        except Exception:
+                            pass
         self._refresh_current_state_labels()
 
-        callback = self._signal_handlers.get("on_tglBtn_pressed")
+        callback = self._signal_handlers.get("on_toggle_position_pressed")
         if callback is not None:
-            widget = self._objects.get(object_name)
             try:
-                callback(widget)
+                callback(object_name)
             except Exception:
                 pass
 
     def _on_direction_toggled(self, object_name: str) -> None:
         self._refresh_current_state_labels()
-        callback = self._signal_handlers.get("on_tglBtn_toggled")
-        if callback is None:
-            return
+        callback = self._signal_handlers.get("on_toggle_position")
+        active = self._is_toggle_active(object_name)
+        if callback is not None:
+            try:
+                callback(object_name, active)
+            except Exception:
+                pass
 
-        widget = self._objects.get(object_name)
-        try:
-            callback(widget)
-        except Exception:
-            pass
+        if not active:
+            reset_callback = self._signal_handlers.get("on_toggle_position_reset")
+            if reset_callback is not None:
+                try:
+                    reset_callback(object_name)
+                except Exception:
+                    pass
 
     def _on_direction_released(self, object_name: str) -> None:
         self._refresh_current_state_labels()
-        callback = self._signal_handlers.get("on_tglBtn_released")
-        if callback is None:
-            return
-
-        widget = self._objects.get(object_name)
-        try:
-            callback(widget)
-        except Exception:
-            pass
+        return
 
     def _read_spin_int(self, object_name: str) -> int:
         spin = self._objects.get(object_name)
@@ -1443,14 +1967,20 @@ class GtkRuntimeSignalBackend:
 
     def _on_margin_changed(self, widget: Any) -> None:
         self._refresh_current_state_labels()
-        callback = self._signal_handlers.get("on_spnMergin_value_changed")
+        callback = self._signal_handlers.get("on_change_margins")
 
         if callback is None:
             self._set_feedback(phase="Margins", state="planned")
             return
 
         try:
-            callback(widget)
+            widget_name = widget.get_name() if hasattr(widget, "get_name") else ""
+            value = 0
+            if hasattr(widget, "get_value_as_int"):
+                value = int(widget.get_value_as_int())
+            elif hasattr(widget, "get_value"):
+                value = int(widget.get_value())
+            callback(widget_name, value)
             self._set_feedback(phase="Margins", state="updated")
         except Exception as exc:
             self._set_feedback(phase="Margins", state="error", error=str(exc))
@@ -1488,9 +2018,31 @@ class GtkRuntimeSignalBackend:
             self._set_label_text("lblOptimizeResult", "Optimize result: error")
             self._set_label_text("lblApplyTarget", "Apply target: not-ready")
 
+    def _on_apply_mode_toggled(self, widget: Any, mode: str) -> None:
+        is_active = True
+        if hasattr(widget, "get_active"):
+            is_active = bool(widget.get_active())
+        label = "Default: normal apply"
+        if mode == "per-monitor-auto-split" and is_active:
+            label = "Additional request: auto-split"
+        self._set_label_text("lblApplyMode", label)
+
+        if not is_active:
+            return
+
+        callback = self._signal_handlers.get("on_change_apply_mode")
+        if callback is None:
+            return
+        try:
+            callback(mode)
+            self._set_feedback(phase="ApplyMode", state="updated")
+        except Exception as exc:
+            self._set_feedback(phase="ApplyMode", state="error", error=str(exc))
+
     def _on_save_clicked(self, *_args: Any) -> None:
-        # P5-3 split: Save opens save-dialog; generation continues on confirm.
-        callback = self._signal_handlers.get("on_btnSave_clicked")
+        # P6 direction: Save As keeps chooser semantics, but fallback should not
+        # depend on separate confirm/cancel controls.
+        callback = self._signal_handlers.get("on_save")
         if callback is not None:
             try:
                 callback()
@@ -1499,20 +2051,25 @@ class GtkRuntimeSignalBackend:
 
         self._refresh_save_target_label()
 
-        dialog = self._objects.get("SaveWallpaperDialog")
+        dialog = self._get_save_path_dialog()
         if dialog is not None and hasattr(dialog, "supports_native_dialog") and dialog.supports_native_dialog():
             if hasattr(dialog, "open_dialog"):
                 dialog.open_dialog()
             return
 
-        self._set_save_dialog_open_state(True, state_text="SaveDialog: open")
+        fallback_filename = self._current_save_path_filename()
+        if not fallback_filename:
+            fallback_filename = str(Path.home() / "harite-output.jpg")
+        if dialog is not None and hasattr(dialog, "set_filename"):
+            dialog.set_filename(fallback_filename)
+        self._handle_save_path_confirm(fallback_filename)
 
     def _on_optimize_clicked(self, *_args: Any) -> None:
-        callback = self._signal_handlers.get("on_btnOptimize_clicked")
+        callback = self._signal_handlers.get("on_optimize")
         self._run_optimize_path(callback)
 
     def _on_apply_clicked(self, *_args: Any) -> None:
-        callback = self._signal_handlers.get("on_btnSetWall_clicked")
+        callback = self._signal_handlers.get("on_apply")
         if callback is None:
             self._set_feedback(
                 phase="Apply",
@@ -1525,84 +2082,160 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Apply", state="running")
             ok = callback()
             if ok:
-                self._set_feedback(phase="Apply", state="dry-run-ok")
-                self._set_label_text("lblApplyTarget", "Apply target: consumed")
+                self._set_feedback(phase="Apply", state="ok")
+                self._set_label_text("lblApplyTarget", "Apply target: last applied")
             else:
                 self._set_feedback(
                     phase="Apply",
-                    state="dry-run-failed",
+                    state="failed",
                     error="apply returned false",
                 )
         except Exception as exc:
             self._set_feedback(phase="Apply", state="error", error=str(exc))
 
-    def _on_color_clicked(self, *_args: Any) -> None:
-        callback = self._signal_handlers.get("on_btnSetColor_clicked")
+    def _on_settings_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_open_settings_dialog")
+        dialog = self._objects.get("SettingsDialog")
         if callback is None:
-            self._set_feedback(phase="Color", state="planned")
-            return
-        try:
-            callback()
-            self._set_feedback(phase="Color", state="planned")
-        except Exception as exc:
-            self._set_feedback(phase="Color", state="error", error=str(exc))
-
-    def _handle_save_dialog_confirm(self, filename: str) -> None:
-        callback = self._signal_handlers.get("on_btnOpenSave_clicked")
-        if callback is None:
-            self._set_feedback(phase="SaveDialog", state="handler-missing", error="handler not connected")
-            return
-        try:
-            if not filename:
-                self._set_label_text("lblSaveDialogState", "SaveDialog: open(path-required)")
-                self._set_feedback(phase="SaveDialog", state="confirm-pending-path", error="save path is required")
-                return
-            self._refresh_save_target_label(filename)
-            ok = callback(filename)
-            if ok:
-                self._set_save_dialog_open_state(False, state_text="SaveDialog: closed(confirm)")
-                self._set_feedback(phase="SaveDialog", state="confirm-ok")
-                self._notify_save_dialog_destroy()
-            else:
-                self._set_feedback(phase="SaveDialog", state="confirm-failed", error="confirm returned false")
-        except Exception as exc:
-            self._set_feedback(phase="SaveDialog", state="error", error=str(exc))
-
-    def _on_save_dialog_confirm_clicked(self, *_args: Any) -> None:
-        if not self._is_save_dialog_open():
-            self._set_label_text("lblSaveDialogState", "SaveDialog: closed")
-            self._set_feedback(phase="SaveDialog", state="ignored-closed")
-            return
-        self._handle_save_dialog_confirm(self._current_save_dialog_filename())
-
-    def _handle_save_dialog_cancel(self) -> None:
-        callback = self._signal_handlers.get("on_btnCancelSave_clicked")
-        if callback is None:
-            self._set_feedback(phase="SaveDialog", state="handler-missing", error="handler not connected")
+            self._set_feedback(phase="Prefs", state="planned")
             return
         try:
             ok = callback()
             if ok:
-                self._set_save_dialog_open_state(False, state_text="SaveDialog: closed(cancel)")
-                self._set_feedback(phase="SaveDialog", state="cancel-ok")
-                self._notify_save_dialog_destroy()
+                getter = self._signal_handlers.get("on_get_preferences_config")
+                if getter is not None and dialog is not None and hasattr(dialog, "set_preferences_config"):
+                    dialog.set_preferences_config(getter())
+                self._sync_preferences_widgets_from_dialog()
+                if dialog is not None and hasattr(dialog, "show"):
+                    dialog.show()
+                self._set_label_text("lblPrefsState", "Prefs: opened")
+                self._set_feedback(phase="Prefs", state="opened")
             else:
-                self._set_feedback(phase="SaveDialog", state="cancel-failed", error="cancel returned false")
+                self._set_feedback(phase="Prefs", state="deferred")
         except Exception as exc:
-            self._set_feedback(phase="SaveDialog", state="error", error=str(exc))
+            self._set_feedback(phase="Prefs", state="error", error=str(exc))
 
-    def _on_save_dialog_cancel_clicked(self, *_args: Any) -> None:
-        if not self._is_save_dialog_open():
-            self._set_label_text("lblSaveDialogState", "SaveDialog: closed")
-            self._set_feedback(phase="SaveDialog", state="ignored-closed")
+    def _on_preferences_apply_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_apply_preferences")
+        dialog = self._objects.get("SettingsDialog")
+        if callback is None or dialog is None or not hasattr(dialog, "get_preferences_config"):
+            self._set_feedback(phase="PrefsApply", state="handler-missing", error="handler not connected")
             return
-        self._handle_save_dialog_cancel()
+        try:
+            ok = callback(self._sync_preferences_dialog_from_widgets())
+            if ok:
+                if hasattr(dialog, "hide"):
+                    dialog.hide()
+                self._set_label_text("lblPrefsState", "Prefs: applied")
+                self._set_feedback(phase="PrefsApply", state="applied")
+            else:
+                self._set_feedback(phase="PrefsApply", state="failed", error="preferences apply returned false")
+        except Exception as exc:
+            self._set_feedback(phase="PrefsApply", state="error", error=str(exc))
 
-    def _on_native_save_dialog_confirmed(self) -> None:
-        self._handle_save_dialog_confirm(self._current_save_dialog_filename())
+    def _on_preferences_load_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_load_preferences_file")
+        dialog = self._objects.get("SettingsDialog")
+        if callback is None or dialog is None or not hasattr(dialog, "get_import_path"):
+            self._set_feedback(phase="PrefsLoad", state="handler-missing", error="handler not connected")
+            return
+        try:
+            self._sync_preferences_dialog_from_widgets()
+            ok = callback(dialog.get_import_path())
+            if ok:
+                getter = self._signal_handlers.get("on_get_preferences_config")
+                if getter is not None and hasattr(dialog, "set_preferences_config"):
+                    dialog.set_preferences_config(getter())
+                self._sync_preferences_widgets_from_dialog()
+                self._set_label_text("lblPrefsState", "Prefs: loaded")
+                self._set_feedback(phase="PrefsLoad", state="loaded")
+            else:
+                self._set_feedback(phase="PrefsLoad", state="failed", error="preferences load returned false")
+        except Exception as exc:
+            self._set_feedback(phase="PrefsLoad", state="error", error=str(exc))
 
-    def _on_native_save_dialog_canceled(self) -> None:
-        self._handle_save_dialog_cancel()
+    def _on_preferences_save_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_save_preferences_file")
+        dialog = self._objects.get("SettingsDialog")
+        if callback is None or dialog is None or not hasattr(dialog, "get_export_path"):
+            self._set_feedback(phase="PrefsSave", state="handler-missing", error="handler not connected")
+            return
+        try:
+            config = self._sync_preferences_dialog_from_widgets()
+            try:
+                ok = callback(dialog.get_export_path(), config)
+            except TypeError:
+                ok = callback(dialog.get_export_path())
+            if ok:
+                self._set_label_text("lblPrefsState", "Prefs: saved")
+                self._set_feedback(phase="PrefsSave", state="saved")
+            else:
+                self._set_feedback(phase="PrefsSave", state="failed", error="preferences save returned false")
+        except Exception as exc:
+            self._set_feedback(phase="PrefsSave", state="error", error=str(exc))
+
+    def _on_preferences_close_clicked(self, *_args: Any) -> None:
+        dialog = self._objects.get("SettingsDialog")
+        if dialog is not None and hasattr(dialog, "hide"):
+            dialog.hide()
+        callback = self._signal_handlers.get("on_close_settings_dialog")
+        if callback is not None:
+            try:
+                callback()
+            except Exception:
+                pass
+        self._set_label_text("lblPrefsState", "Prefs: closed")
+        self._set_feedback(phase="Prefs", state="closed")
+
+    def _on_color_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_set_color")
+        if callback is None:
+            self._set_feedback(phase="Color", state="deferred")
+            return
+        try:
+            callback()
+            self._set_feedback(phase="Color", state="deferred")
+        except Exception as exc:
+            self._set_feedback(phase="Color", state="error", error=str(exc))
+
+    def _handle_save_path_confirm(self, filename: str) -> None:
+        callback = self._signal_handlers.get("on_save_path_selected")
+        if callback is None:
+            self._set_feedback(phase="SavePath", state="handler-missing", error="handler not connected")
+            return
+        try:
+            if not filename:
+                self._set_save_path_state_text("Save path: required")
+                self._set_feedback(phase="SavePath", state="path-required", error="save path is required")
+                return
+            self._refresh_save_target_label(filename)
+            ok = callback(filename)
+            if ok:
+                self._set_save_path_dialog_open_state(False, state_text="Save path: saved")
+                self._set_feedback(phase="SavePath", state="saved")
+                self._notify_save_path_dialog_destroy()
+            else:
+                self._set_feedback(phase="SavePath", state="failed", error="save path acceptance returned false")
+        except Exception as exc:
+            self._set_feedback(phase="SavePath", state="error", error=str(exc))
+
+    def _handle_save_path_cancel(self) -> None:
+        callback = self._signal_handlers.get("on_save_path_selection_canceled")
+        if callback is not None:
+            try:
+                callback()
+            except Exception as exc:
+                self._set_feedback(phase="SavePath", state="error", error=str(exc))
+                return
+        self._set_save_path_dialog_open_state(False, state_text="Save path: canceled")
+        self._set_feedback(phase="SavePath", state="canceled")
+        self._notify_save_path_dialog_destroy()
+
+    def _on_native_save_path_confirmed(self) -> None:
+        self._handle_save_path_confirm(self._current_save_path_filename())
+
+    def _on_native_save_path_canceled(self) -> None:
+        self._handle_save_path_cancel()
 
 
 def load_gtk_builder_signal_backend(ui_file: Path | None = None):

@@ -14,7 +14,7 @@ class OptimizeRequest:
     output_dir: Path
     layout: str = "mosaic"
     scaling: str = "fit"
-    two_screen: bool = False
+    two_screen: bool | None = False
     margins: Optional[str] = None
     l_display: Optional[str] = None
     r_display: Optional[str] = None
