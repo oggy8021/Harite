@@ -973,14 +973,26 @@ def test_runtime_backend_cross_layout_places_top_and_bottom_per_side():
 
     assert compose_grid.children == [
         (left_col, 0, 0, 1, 1),
+        (backend.get_object("inputRowL"), 0, 1, 1, 1),
         (right_col, 1, 0, 1, 1),
-        (backend.get_object("actionClusterRow"), 0, 1, 2, 1),
+        (backend.get_object("inputRowR"), 1, 1, 1, 1),
+        (backend.get_object("actionClusterRow"), 0, 2, 2, 1),
     ]
 
-    assert [child.children[0].label for child in left_col.children[:3]] == ["Top-L", "Left-L", "Bottom-L"]
-    assert left_col.children[1].children[1].label == "Open-L"
-    assert [child.children[0].label for child in right_col.children[:3]] == ["Top-R", "Left-R", "Bottom-R"]
-    assert right_col.children[1].children[1].label == "Open-R"
+    assert left_col.children == [
+        (backend.get_object("tglUpperL"), 1, 0, 1, 1),
+        (backend.get_object("tglPushLeftL"), 0, 1, 1, 1),
+        (backend.get_object("btnGetImgL"), 1, 1, 1, 1),
+        (backend.get_object("tglPushRightL"), 2, 1, 1, 1),
+        (backend.get_object("tglLowerL"), 1, 2, 1, 1),
+    ]
+    assert right_col.children == [
+        (backend.get_object("tglUpperR"), 1, 0, 1, 1),
+        (backend.get_object("tglPushLeftR"), 0, 1, 1, 1),
+        (backend.get_object("btnGetImgR"), 1, 1, 1, 1),
+        (backend.get_object("tglPushRightR"), 2, 1, 1, 1),
+        (backend.get_object("tglLowerR"), 1, 2, 1, 1),
+    ]
 
 
 def test_runtime_backend_prefs_button_dispatches_open_handler():

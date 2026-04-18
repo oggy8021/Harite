@@ -594,70 +594,66 @@ class GtkRuntimeSignalBackend:
                 compose_grid.set_row_spacing(12)
             main_col.pack_start(compose_grid, True, True, 0)
 
-            left_display_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
-            right_display_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
+            left_display_grid = gtk_module.Grid()
+            right_display_grid = gtk_module.Grid()
+            if hasattr(left_display_grid, "set_column_spacing"):
+                left_display_grid.set_column_spacing(6)
+            if hasattr(left_display_grid, "set_row_spacing"):
+                left_display_grid.set_row_spacing(8)
+            if hasattr(right_display_grid, "set_column_spacing"):
+                right_display_grid.set_column_spacing(6)
+            if hasattr(right_display_grid, "set_row_spacing"):
+                right_display_grid.set_row_spacing(8)
             tgl_upper_l = gtk_module.ToggleButton(label="Top-L")
             tgl_upper_r = gtk_module.ToggleButton(label="Top-R")
             tgl_lower_l = gtk_module.ToggleButton(label="Bottom-L")
             tgl_lower_r = gtk_module.ToggleButton(label="Bottom-R")
-
-            top_toggle_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            top_toggle_row_l.pack_start(tgl_upper_l, False, False, 0)
-            left_display_col.pack_start(top_toggle_row_l, False, False, 0)
-
-            push_toggle_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            left_display_col.pack_start(push_toggle_row_l, False, False, 0)
             tgl_push_left_l = gtk_module.ToggleButton(label="Left-L")
             tgl_push_right_l = gtk_module.ToggleButton(label="Right-L")
             btn_get_img_l = gtk_module.Button(label="Open-L")
-            push_toggle_row_l.pack_start(tgl_push_left_l, False, False, 0)
-            push_toggle_row_l.pack_start(btn_get_img_l, False, False, 0)
-            push_toggle_row_l.pack_start(tgl_push_right_l, False, False, 0)
+            tgl_push_left_r = gtk_module.ToggleButton(label="Left-R")
+            tgl_push_right_r = gtk_module.ToggleButton(label="Right-R")
+            btn_get_img_r = gtk_module.Button(label="Open-R")
 
-            lower_toggle_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            lower_toggle_row_l.pack_start(tgl_lower_l, False, False, 0)
-            left_display_col.pack_start(lower_toggle_row_l, False, False, 0)
+            if hasattr(left_display_grid, "attach"):
+                left_display_grid.attach(tgl_upper_l, 1, 0, 1, 1)
+                left_display_grid.attach(tgl_push_left_l, 0, 1, 1, 1)
+                left_display_grid.attach(btn_get_img_l, 1, 1, 1, 1)
+                left_display_grid.attach(tgl_push_right_l, 2, 1, 1, 1)
+                left_display_grid.attach(tgl_lower_l, 1, 2, 1, 1)
 
             if hasattr(compose_grid, "attach"):
-                compose_grid.attach(left_display_col, 0, 0, 1, 1)
+                compose_grid.attach(left_display_grid, 0, 0, 1, 1)
 
             input_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            left_display_col.pack_start(input_row_l, False, False, 0)
             input_entry_l = gtk_module.Label(label="")
             if hasattr(input_entry_l, "set_xalign"):
                 input_entry_l.set_xalign(0.0)
             btn_clr_path_l = gtk_module.Button(label="Clear-L")
             input_row_l.pack_start(input_entry_l, True, True, 0)
             input_row_l.pack_start(btn_clr_path_l, False, False, 0)
+            if hasattr(compose_grid, "attach"):
+                compose_grid.attach(input_row_l, 0, 1, 1, 1)
 
-            top_toggle_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            top_toggle_row_r.pack_start(tgl_upper_r, False, False, 0)
-            right_display_col.pack_start(top_toggle_row_r, False, False, 0)
-
-            push_toggle_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            right_display_col.pack_start(push_toggle_row_r, False, False, 0)
-            tgl_push_left_r = gtk_module.ToggleButton(label="Left-R")
-            tgl_push_right_r = gtk_module.ToggleButton(label="Right-R")
-            btn_get_img_r = gtk_module.Button(label="Open-R")
-            push_toggle_row_r.pack_start(tgl_push_left_r, False, False, 0)
-            push_toggle_row_r.pack_start(btn_get_img_r, False, False, 0)
-            push_toggle_row_r.pack_start(tgl_push_right_r, False, False, 0)
-
-            lower_toggle_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            lower_toggle_row_r.pack_start(tgl_lower_r, False, False, 0)
-            right_display_col.pack_start(lower_toggle_row_r, False, False, 0)
+            if hasattr(right_display_grid, "attach"):
+                right_display_grid.attach(tgl_upper_r, 1, 0, 1, 1)
+                right_display_grid.attach(tgl_push_left_r, 0, 1, 1, 1)
+                right_display_grid.attach(btn_get_img_r, 1, 1, 1, 1)
+                right_display_grid.attach(tgl_push_right_r, 2, 1, 1, 1)
+                right_display_grid.attach(tgl_lower_r, 1, 2, 1, 1)
 
             if hasattr(compose_grid, "attach"):
-                compose_grid.attach(right_display_col, 1, 0, 1, 1)
+                compose_grid.attach(right_display_grid, 1, 0, 1, 1)
 
             input_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            right_display_col.pack_start(input_row_r, False, False, 0)
             input_entry_r = gtk_module.Label(label="")
             if hasattr(input_entry_r, "set_xalign"):
                 input_entry_r.set_xalign(0.0)
             btn_clr_path_r = gtk_module.Button(label="Clear-R")
             input_row_r.pack_start(input_entry_r, True, True, 0)
             input_row_r.pack_start(btn_clr_path_r, False, False, 0)
+            if hasattr(compose_grid, "attach"):
+                compose_grid.attach(input_row_r, 1, 1, 1, 1)
 
             fixed_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
             fixed_left_spacer = gtk_module.Label(label="")
@@ -685,7 +681,7 @@ class GtkRuntimeSignalBackend:
             action_cluster_row.pack_start(optimize_group, False, False, 0)
             action_cluster_row.pack_start(apply_group, False, False, 0)
             if hasattr(compose_grid, "attach"):
-                compose_grid.attach(action_cluster_row, 0, 1, 2, 1)
+                compose_grid.attach(action_cluster_row, 0, 2, 2, 1)
 
             optimize_section_label = gtk_module.Label(label="Optimize")
             if hasattr(optimize_section_label, "set_xalign"):
@@ -963,8 +959,10 @@ class GtkRuntimeSignalBackend:
                 "lblMainSection": main_section_label,
                 "boxMainSection": main_col,
                 "composeGrid": compose_grid,
-                "leftDisplayCol": left_display_col,
-                "rightDisplayCol": right_display_col,
+                "leftDisplayCol": left_display_grid,
+                "rightDisplayCol": right_display_grid,
+                "inputRowL": input_row_l,
+                "inputRowR": input_row_r,
                 "actionClusterRow": action_cluster_row,
                 "actionClusterCol": optimize_group,
                 "tglUpperL": tgl_upper_l,
