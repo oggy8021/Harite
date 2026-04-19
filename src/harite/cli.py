@@ -1,6 +1,7 @@
 """CLI entrypoints for Harite (skeleton)."""
 from __future__ import annotations
 
+import sys
 import typer
 from pathlib import Path
 from typing import Optional, List, Tuple
@@ -16,6 +17,20 @@ from .optimize_settings import is_auto_value, resolve_optimize_display_settings
 from .watch import collect_watch_input_images, run_watch_cycles
 
 app = typer.Typer(help="Harite - wallpaper optimizer")
+
+
+def _default_plugin_name() -> str:
+    platform_map = {
+        "win32": "windows",
+        "darwin": "macos",
+    }
+    preferred = platform_map.get(sys.platform, "linux")
+    available = plugin_registry.list()
+    if preferred in available:
+        return preferred
+    if available:
+        return available[0]
+    return "windows"
 
 
 def parse_resolution(value: str) -> Tuple[int, int]:
@@ -419,7 +434,7 @@ def compute_placement(
 
 @app.command()
 def apply(
-    plugin: str = typer.Option("windows", "--plugin", "-p", help="Plugin name to apply wallpaper with"),
+    plugin: str = typer.Option(_default_plugin_name(), "--plugin", "-p", help="Plugin name to apply wallpaper with"),
     file: Path = typer.Option(..., "--file", "-f", help="Path to wallpaper image file"),
     do_it: bool = typer.Option(False, "--do-it", help="Actually change the system wallpaper (dry-run by default)"),
     per_monitor: bool = typer.Option(False, "--per-monitor", "-m", help="Apply per-monitor files (requires --left-file/--right-file or --auto-split)"),
@@ -486,7 +501,7 @@ def watch(
     interval_sec: int = typer.Option(..., "--interval-sec", help="Cycle interval in seconds (>=1)"),
     mode: str = typer.Option("sequential", "--mode", help="Selection mode: sequential|random"),
     log_level: str = typer.Option("normal", "--log-level", help="Log level: normal|detail"),
-    plugin: str = typer.Option("windows", "--plugin", "-p", help="Plugin name used when --do-it is enabled"),
+    plugin: str = typer.Option(_default_plugin_name(), "--plugin", "-p", help="Plugin name used when --do-it is enabled"),
     dry_run: bool = typer.Option(True, "--dry-run/--do-it", help="Dry-run by default; pass --do-it to apply"),
     iterations: Optional[int] = typer.Option(None, "--iterations", help="Maximum cycles; omit for unbounded"),
 ) -> None:
