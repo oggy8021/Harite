@@ -623,7 +623,13 @@ def test_on_apply_without_optimized_file_fails():
     assert window.status_phase == "apply"
 
 
-def test_watch_handlers_use_srcdirs_and_interval_validation(tmp_path):
+def test_watch_handlers_use_srcdirs_and_interval_validation(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            return True
+
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+
     window = MainWindow()
 
     assert window.on_watch_start() is False

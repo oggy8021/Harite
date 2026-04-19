@@ -543,7 +543,13 @@ def test_runtime_backend_shows_phase6_labels_and_controls():
     assert tgl_lower_r.label == "Bottom-R"
 
 
-def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(tmp_path):
+def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            return True
+
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
 
