@@ -143,6 +143,173 @@
   - GUI 候補機能リスト
   - Phase8 候補バックログの素案
 
+### Workstream 4 の進め方メモ
+
+- `feature/phase7-gui-candidate-recheck` では、実装に先立って docs 先行で論点整理を進める。
+- 進め方の単位は、内部実装単位ではなく、GUI 上で user が触る入口や機能群を基準とする。
+- したがって Workstream 4 では、まず「どのボタンや設定項目が main 画面に残るべきか」「どれが settings dialog へ寄るべきか」「どれが CLI 専用または Phase8 候補か」を、入口単位で比較・判断する。
+
+### Workstream 4 で先に立てる論点単位
+
+- 第1優先: `Prefs` / settings dialog と main 画面の責務境界
+- 第2優先: `Apply` 周辺の visible 語彙と補助文言
+- 第3優先: `embed-text` / margin info embedding 系の GUI 露出方針
+- 第4優先: preview / visual assist 候補
+- 第5優先: `Color` など deferred 項目
+
+- ここでいう「論点単位」は、個別 widget を 1 個ずつ孤立して論じることではなく、user から見て 1 つの操作意図として読まれる入口群をまとめて扱う単位を指す。
+- ただし `Prefs` の中身を再読する際は、最終的に button / field 単位まで分解しても、判断の書式は揃えたまま維持する。
+
+### 各論点で固定する比較観点
+
+- current GUI 上の入口は何か。
+- current GUI での責務は何か。
+- 母体プログラムでは何が相当機能だったか、または相当機能が存在しなかったか。
+- `Harite v0.1.2` ではどう露出していたか。
+- current 実装やこれまでの改修で、何が揃い、何が意図差として残ったか。
+- 実機確認や過去の不具合修正から見えている制約は何か。
+- Phase7 の判断として、main に残す / settings へ寄せる / CLI 専用のまま残す / Phase8 候補へ送る / 落とす、のどれに置くか。
+
+- これにより Workstream 4 の文書は、感覚的な UI 要望の列挙ではなく、比較可能な product alignment メモとして残す。
+
+### 文書化の順序
+
+- まず `Prefs` と main 画面の責務境界を整理する。
+- 次に `Apply` 周辺の visible 語彙と補助文言を、Workstream 2 の結論と接続して再確認する。
+- その後に `embed-text` / margin info embedding を、制作機能として GUI に持ち込む価値の観点から再読する。
+- 続いて preview / visual assist を、Phase8 backlog 候補として扱うかを判断する。
+- 最後に `Color` など deferred 項目を、維持 / 削除 / Phase8 候補のいずれへ置くか決める。
+
+### このブランチで先に欲しい成果物
+
+- Workstream 4 の比較観点を固定したメモ
+- `Prefs` と main/settings 境界についての整理メモ
+- GUI 候補機能リストの初版
+- Phase8 候補へ送る項目の素案
+
+### PR 区切りの想定
+
+- 最初の区切りは、`Prefs` と main/settings 境界、および Workstream 4 の比較観点が文書として一巡した時点とする。
+- その後、`embed-text` / preview / deferred 項目まで含めて候補機能リストが揃った時点で、必要なら別 PR または同ブランチ後半の区切りとして扱う。
+- しばらくは docs-only の短枝を別に切らず、この feature branch の先頭で前段整理と feature 接続をまとめて扱う。
+
+### `Prefs` と main/settings 境界の現時点整理
+
+- current 実装の `Prefs` は、config / dataclass ベースで optimize・apply・watch の一部既定値を保存し、dialog から apply / load / save できる入口として成立している。
+- 一方で main 画面や watch tab でその場の作業状態として保持している値のうち、`Prefs` にまだ入っていないものも多い。
+- したがって Workstream 4 の第一論点は、「`Prefs` を何でも入る箱として広げる」ことではなく、「既定値として持つべきもの」と「今この作業だけの状態」を分け直すことにある。
+
+### current 実装から読める事実
+
+- `preferences.py` で保存対象になっているのは、optimize 系設定、plugin / apply mode、watch interval である。
+- `MainWindow.on_apply_preferences()` / `export_preferences_config()` でも、実際に反映・往復しているのは resolution / layout / scaling / two-screen / margin 系 / embed 系 / plugin / apply mode / watch interval に限られる。
+- 現時点では、少なくとも次の値は `Prefs` の保存対象に入っていない。
+  - current input path L/R
+  - `output_dir`
+  - `save_path`
+  - watch source dir L/R
+  - watch current 表示や watch 実行状態
+- このため current `Prefs` は「GUI / CLI 共有 config の入口」としては成立しているが、「起動のたびに選び直したくない値の全体」をまだ扱ってはいない。
+
+### 母体比較と Phase6 からの継承知見
+
+- Phase6 時点の整理では、`Prefs` は残す前提であり、CLI / GUI 間の config 共有入口として意味があると判断している。
+- その整理では、watch source は元来 `Prefs` 側にあり、interval だけが main window 側に残っていたという読みを採っている。
+- つまり `Prefs` は、単なる補助 dialog ではなく、「作業前提や既定値をまとめる入口」として読む方が、母体比較とこれまでの修正履歴の両方に整合しやすい。
+
+### Phase7 の暫定境界案
+
+- settings dialog に寄せるもの:
+  - 起動をまたいで保持したい既定値
+  - optimize の品質・構図・two-screen 既定
+  - plugin / apply mode の既定
+  - watch interval の既定値
+  - 将来的には `output_dir` のような再入力コストの高い既定パス候補
+- main 画面に残すもの:
+  - その場の作業対象そのもの
+  - input path L/R
+  - watch source dir L/R
+  - watch start / stop や current 状態表示
+  - save 実行直前の保存先選択
+  - `Apply` / `Optimize` の即時操作
+- 二重性を許すもの:
+  - watch interval
+  - 理由: `Prefs` では既定値として保持したい一方、watch tab 上ではその作業回で即変更したい runtime parameter としても自然だからである。
+
+### この時点での暫定判断
+
+- `Prefs` は残す。
+- ただし main 画面の操作を settings dialog へ吸い込み過ぎず、「既定値」と「今この作業の状態」を分ける方向で整理する。
+- `output_dir` は current 実装では `Prefs` に入っていないが、起動ごとに再指定する負担が高いため、config 連動候補として Workstream 4 の主論点に含める。
+- watch source dir L/R は、作業対象そのものとしては main / watch tab に残す方が自然だが、再起動後の利便性まで見るなら config 連動候補として再検討余地がある。
+- `save_path` は作業ごとの確定先であり、既定値より直前選択の意味が強いため、現時点では `Prefs` に寄せない読みを優先する。
+
+### 次に詰める問い
+
+- `output_dir` を `Prefs` の正式保存対象へ上げるか。
+- watch source dir L/R を「既定フォルダ」として持つか、それとも current task 専用値に留めるか。
+- watch interval を main と `Prefs` の両方に持つ現在の二重性を、既定値と runtime override の関係として明文化するか。
+- `Prefs` dialog の項目 grouping を optimize / apply / watch / path defaults の 4 群へ整理するか。
+
+### `Apply` 周辺の visible 語彙メモ
+
+- current GUI の main 画面では、apply mode の visible 2 択は `Default` / `Auto-split` であり、補助ラベルは `Default: normal apply` になっている。
+- current `Prefs` dialog 側でも、apply mode は `Apply Default` / `Apply Auto-split` として露出している。
+- したがって current runtime は内部実装では `single-file` / `per-monitor-auto-split` を持ちながら、visible 語彙ではなお `Default` を残している。
+
+### current 実装から読めること
+
+- main 画面の `Apply` は即時実行であり、`do-it` 切替は UI に持ち込んでいない。
+- visible な `Default` は current 実装上 `single-file` と同義であり、2 画面文脈を見て暗黙分割する mode ではない。
+- `Auto-split` は、追加処理として monitor 別 apply target を生成して apply する mode を指す。
+- にもかかわらず、`Default` という語は user default / OS default / plugin default のいずれとも読めてしまい、`single-file` の意味を直接は示していない。
+- 補助ラベル `normal apply` も、「通常」の基準が何かを user に渡しておらず、plugin 実装部の通常 apply 経路という意味を十分に固定できていない。
+
+### 母体比較
+
+- 母体プログラムでは `Apply` は即時変更の 1 動作であり、`Default` / `Auto-split` の mode 語彙自体が存在しなかった。
+- したがって母体比較の観点では、current GUI の問題は「mode が多いこと」そのものより、「mode を追加した結果、`Default` が曖昧語になったこと」にある。
+
+### Harite v0.1.2 比較
+
+- `Harite v0.1.2` では GUI 側に `Default` 語彙はなく、`dry-run` / `do-it` が前面に出ていた。
+- そのため曖昧語としての `Default` は現世代 GUI で生まれた問題であり、母体から受け継いだものでも、v0.1.2 からそのまま来たものでもない。
+- current CLI は `single-file` / `per-monitor-explicit` / `per-monitor-auto-split` の 3 経路を保っているため、語彙の基準線は CLI / core 側の方がむしろ明確である。
+
+### これまでの検証知見から見えること
+
+- XFCE 実機観測では、`Default` 適用は monitor-aware な既定ではなく、single-file の通常 apply 経路として読む方が整合する。
+- watch 接続でも、single-source は通常 apply、dual-source は auto-split apply として接続しており、current product の主導線はすでにこの二分で動いている。
+- したがって `Apply` 周辺語彙で必要なのは、新しい概念を増やすことではなく、現に存在する 2 経路を誤読なく言い表すことである。
+
+### Phase7 の暫定判断
+
+- `Auto-split` は Harite 独自価値として主導線に置く。
+- `Default` は最終的には残さない方向を優先し、`分割せず適用` 系の非曖昧語へ寄せる。
+- ただし current 実装やテストには `Default` がまだ残っているため、現段階では「current visible label は `Default` だが、読むべき意味は `single-file`」と文書で先に固定する。
+- 補助文言も `normal apply` のままでは弱く、少なくとも「追加分割なし」「1 ファイルをそのまま apply」「desktop 表示結果は plugin / OS style に依存し得る」のどれかを含む方向で再検討する。
+
+### 現時点で自然な表示語候補
+
+- main 画面候補:
+  - `分割せず適用`
+  - `自動分割して適用`
+- 設定ダイアログ候補:
+  - `適用: 分割なし`
+  - `適用: Auto-split`
+- 補助文言候補:
+  - `追加分割なしで適用`
+  - `1ファイルをそのまま適用`
+
+- ここではまだ最終文言を fix しないが、少なくとも `Default` / `normal apply` をそのまま正本語彙として残す判断は採らない。
+
+### 次に詰める問い
+
+- main 画面では英語ラベルを維持するのか、日本語寄り説明へ寄せるのか。
+- `Auto-split` は固有名として残すのか、`自動分割` へさらに言い換えるのか。
+- main 画面の短いラベルと、補助ラベル / tooltip 相当の説明責務をどう分担するか。
+- `Prefs` dialog の apply mode 表示を main 画面と完全一致させるか、設定項目として少しだけ技術的な語を残すか。
+
 ### 5. Phase8 候補の選別
 
 - 対象:
