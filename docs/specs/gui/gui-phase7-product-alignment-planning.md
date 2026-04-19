@@ -310,6 +310,166 @@
 - main 画面の短いラベルと、補助ラベル / tooltip 相当の説明責務をどう分担するか。
 - `Prefs` dialog の apply mode 表示を main 画面と完全一致させるか、設定項目として少しだけ技術的な語を残すか。
 
+### `embed-text` / margin info embedding の再読メモ
+
+- current core / CLI では、margin info embedding はすでに正本機能として成立している。
+- 一方で current GUI では、state と `Prefs` 保存対象には入っているが、main 画面の主導線 widget としては立っていない。
+- したがってこの論点は「未実装機能を新規導入するか」ではなく、「既存機能を GUI のどの深さまで露出するか」を判断する論点である。
+
+### current 実装から読めること
+
+- core 側には、余白領域にだけ情報を描く `embed_info` / `embed_text` / `embed_position` / `embed_max_lines` の処理がある。
+- GUI state model と optimize controller も、この 4 項目を内部状態として保持し、optimize 実行へ渡せる。
+- `Prefs` dialog にはこれらの entry / spin が存在し、保存・読込・適用の対象にもなっている。
+- ただし main 画面側には、少なくとも current GTK runtime backend 上、これらを直接編集する専用 widget は見えていない。
+- GUI test でも、`embed-text` は form_state や CLI preview 文字列で確認されており、user が main 画面で制作機能として使う導線まではまだ作られていない。
+
+### core 仕様から読めること
+
+- core spec の基本方針は、margin info embedding を「余白のみ」「デフォルト無効」「可読性優先」「壊れにくさ優先」の MVP として扱うことにある。
+- `params` / `free` / `combo` の 3 系統は、装飾機能というより、生成物へ最小限の付加情報を残すための機能として読める。
+- 絶対パスやユーザ名などの機微情報を出さない方針も明記されており、制作支援機能であっても無制限に情報を増やす方向は採っていない。
+
+### 母体比較
+
+- 母体プログラムには、少なくとも current product alignment の比較対象として、margin info embedding に相当する GUI 主導線は見えていない。
+- したがってこの機能は「母体の責務を戻す」話ではなく、Harite で追加された optimize 拡張を GUI へどこまで持ち込むかの判断になる。
+
+### Harite v0.1.2 比較
+
+- `Harite v0.1.2` と current core / CLI の系譜では、embed 系は optimize オプションとして扱われている。
+- ただし current GUI では、それが `Prefs` に入った一方で main 画面の主導線までは上がっておらず、現在は「内部にはあるが front では弱い」中間状態にある。
+
+### これまでの整理と整合すること
+
+- Workstream 4 の第1論点で整理した `Prefs` の役割は、「既定値を持つ入口」であって、「user が毎回触る制作操作をすべて押し込む箱」ではない。
+- この観点から見ると、embed 系を `Prefs` に置けること自体は自然だが、それだけで GUI 主導線になったとは言えない。
+- 逆に、現在の main 画面へ理由なく細かな embed controls を増やすと、Phase6 で落とした複雑さを戻す危険がある。
+
+### Phase7 の暫定判断
+
+- margin info embedding は、current Phase7 の main 主導線へ今すぐ昇格させるより、Phase8 候補として扱う方が自然である。
+- ただし完全に後回しにするのではなく、「core / CLI では成立済み」「GUI では state / prefs までは接続済み」という現在地を先に明文化しておく価値がある。
+- 現時点では、main 画面に常設の詳細 controls を増やすより、将来の制作支援機能群としてまとめて再設計する読みを優先する。
+- そのため Phase7 では「主導線へ入れる」より、「Phase8 backlog に送る際の比較材料を揃える」ことを優先する。
+
+### GUI に持ち込む場合の価値
+
+- optimize 生成物に意図や条件を残せるため、制作機能としての意味が増す。
+- `free` や `combo` は、壁紙を単なる貼付対象ではなく、軽い注記付き成果物として扱える入口になる。
+- 一方で見せ方を誤ると、main 画面の目的が「最短で optimize / apply すること」から逸れやすい。
+
+### 現時点で自然な扱い
+
+- Phase7: `Prefs` と内部 state で保持可能な準備済み機能として扱う。
+- Phase8 候補: preview / visual assist と合わせて、「制作支援」群として再設計する。
+- GUI main 画面: 常設 controls の追加はまだ採らない。
+
+### 次に詰める問い
+
+- embed 系を将来 main 画面へ出すとき、常設 controls とするのか、詳細 dialog / advanced section に寄せるのか。
+- `embed_info` の mode 語彙を、そのまま `none|params|free|combo` で見せるのか、user 向け表現へ言い換えるのか。
+- preview / visual assist が弱い現状で、埋め込み機能だけを先に強く出しても user が結果を把握できるか。
+- `Prefs` に残す「既定値」と、作業ごとに変えたい埋め込み内容をどう分けるか。
+
+### preview / visual assist の再読メモ
+
+- current GUI には、CLI 対応の見える化としての command preview はある。
+- しかし、画像そのものの visual preview や配置確認用 assist は、current product ではまだ常設機能になっていない。
+- したがってこの論点も、未実装の新機能をいきなり足す話というより、「どの種の確認支援を GUI 主導線へ持ち込むか」を整理する論点である。
+
+### current 実装から読めること
+
+- `MainWindow.build_optimize_cli_preview()` は存在し、current form state から `harite optimize ...` の preview 文字列を組み立ててログへ残せる。
+- `last_saved_files` によって optimize 結果ファイル群は保持され、apply 対象候補として再利用できる。
+- 一方で current GUI 実装には、専用の preview pane / preview window / preview service は見当たらない。
+- current GTK runtime backend にも、画像サムネイルや配置矩形を見せる専用 widget は確認できない。
+- したがって current GUI が持っているのは「CLI preview 文字列」と「生成後ファイルの保持」であり、「生成前後の見た目確認」はまだ弱い。
+
+### 過去 docs との整合
+
+- Phase5 系 docs では、中央プレビューは現状無しと整理済みであり、preview は後続タスクとして扱われていた。
+- standalone design では PreviewPane や `preview_service.py` が構想されていたが、current 実装にはまだ接続されていない。
+- したがって preview は「一度捨てた機能」ではなく、「早い段階から後続実装扱いだった候補」が未着手のまま残っている、という理解が自然である。
+
+### 母体比較
+
+- 母体比較で確定しているのは、少なくとも current product alignment の検証対象として、中央常設 preview は存在しないという点である。
+- このため preview を追加する場合、それは母体忠実化ではなく、Harite 側の制作支援拡張として扱うべきである。
+
+### 現在地の読み方
+
+- current GUI は、最短で optimize / save / apply / watch へ進む front-end としては成立している。
+- しかし制作支援の観点では、「どう出力されるか」「埋め込みがどう見えるか」「two-screen 合成がどう収まるか」を事前確認する導線が弱い。
+- その弱さは、embed 系を main 画面へ上げるかどうかの判断にも影響している。
+
+### Phase7 の暫定判断
+
+- preview / visual assist は、Phase7 で主導線へ無理にねじ込むより、Phase8 候補として扱う方が自然である。
+- ただし単なる wishlist にせず、current GUI がすでに持つ `CLI preview` と `last_saved_files` を基点に、どの確認支援が不足しているかを比較可能な形で残す。
+- Phase7 では「画像 preview を実装する」より、「preview 不在がどの判断に影響しているか」を明文化することを優先する。
+
+### Phase8 候補としての価値
+
+- optimize 前に CLI 対応だけでなく見た目の予測も示せれば、two-screen / margins / embed 系の理解コストを下げられる。
+- optimize 後の結果確認を GUI 内で行えれば、apply 前の確認導線が強くなる。
+- watch や auto-split と組み合わせる将来を考えても、visual assist は単発機能ではなく GUI 制作支援の共通基盤になり得る。
+
+### 現時点で自然な扱い
+
+- Phase7: `CLI preview` を現行の最低限の可視化として扱う。
+- Phase8 候補: 画像 preview、配置要約、埋め込み結果確認を含む visual assist 群として再設計する。
+- main 画面: 現段階では preview 不在を前提に、controls の追加判断を過剰に進めない。
+
+### 次に詰める問い
+
+- Phase8 で最初に必要なのは、生成前 preview か、生成後結果 preview か。
+- two-screen / embed / auto-split のうち、どの結果確認を最優先で可視化すべきか。
+- preview を main 画面の中央常設 pane とするのか、別 dialog / subwindow とするのか。
+- CLI preview 文字列と visual preview の責務をどう分けるか。
+
+### `Color` など deferred 項目の再読メモ
+
+- current GUI には `Color` ボタンと close handler の痕跡があるが、正本機能としてはまだ成立していない。
+- この論点では、legacy 由来のボタンを残すかどうかではなく、「Phase7 の product alignment 上、何を正本機能として扱うか」を決める。
+
+### current 実装から読めること
+
+- `MainWindow.on_set_color()` は、実機能を呼ばず `color picker is deferred to phase7` を status に出すだけのプレースホルダである。
+- GUI test も、その deferred status が出ること自体を確認している。
+- GTK runtime backend 側でも `Color` ボタン押下は `Color: deferred` 表示へ落ちるだけで、color selection の実処理には接続されていない。
+- core / CLI 側には、少なくとも GUI の color picker に対応する正本機能は見当たらない。
+
+### 母体比較
+
+- legacy glade には `btnSetColor` と `ColorSelectionDialog` が存在するため、Color は上流資産としての痕跡は持つ。
+- ただし current product alignment の観点では、それは「復元すべきコア導線」であることを直接は意味しない。
+
+### Phase6 までの整理との整合
+
+- Phase6 の lower controls responsibility では、`Color` は core 下部コントロールから外し、Phase7 候補へ送る整理を採っている。
+- その理由は、`Color` が Optimize / Apply / watch の正本確認と結び付いておらず、planned のまま main command bar に残すと未完機能と主導線が混線するためだった。
+- current 実装を読み直しても、この整理を覆す新しい根拠は増えていない。
+
+### Phase7 の暫定判断
+
+- `Color` は Phase7 の主導線へ戻さない。
+- 現時点では、deferred プレースホルダ以上の意味を持っていないため、正本機能として数えない。
+- したがって扱いとしては「維持」ではなく、「Phase8 候補として保留」または「削除候補として再判定」の中間ではなく、まずは主導線から外したままにする判断を優先する。
+- 少なくとも Phase7 では、`Color` を理由に main 画面構成や controls grouping を揺らさない。
+
+### deferred 項目全体としての読み
+
+- deferred 項目は、legacy 由来の痕跡があることと、current product の必要機能であることを分けて読む必要がある。
+- `Color` はその典型であり、上流痕跡はあるが core / CLI / current GUI 主導線のどれとも強く接続していない。
+- この種の項目は、Phase7 では「表示上の余地を残す」以上の意味を持たせない方が整合的である。
+
+### 次に詰める問い
+
+- `Color` を本当に Phase8 backlog に残すのか、それとも削除候補として close するのか。
+- もし残すなら、background color 指定なのか、余白色や canvas 色の調整なのか、機能定義をどこから切り直すのか。
+- deferred 項目のうち、legacy 痕跡だけで残っているものを backlog として維持する基準をどう置くか。
+
 ### 5. Phase8 候補の選別
 
 - 対象:
