@@ -77,6 +77,8 @@
 
 ### 2. 操作語彙の再設計
 
+- 2026-04-19 時点では、本書で最も整理が進んでいるのはこの workstream であり、主要論点の棚卸しと暫定方針づけはおおよそ一巡した。
+
 - 対象:
   - `optimize`
   - `apply`
@@ -88,7 +90,7 @@
   - CLI 既定を dry-run のまま残すのか
   - `--do-it` の名称と概念を維持するか、改名するか、廃するか
   - `optimize` と `apply` の責務分離は残すか、入口体験だけ整理するか
-  - `--left-file` / `--right-file` による explicit mapping を、CLI 専用の expert 機能として残すか、Harite の主導線から外して削るか
+  - `--left-file` / `--right-file` による explicit mapping を、CLI 専用の低露出な escape hatch として残すか、さらに目立たない傍流へ下げるか
   - CLI では `-r` に実画面より小さい解像度を意図的に与え、アスペクト比や画角を優先した生成物を後段 `apply` で monitor 別に振り分ける使い方をどう位置づけるか
   - デスクトップ貼り付け結果で疑義の出た組み合わせを、語彙差の問題として扱うのか、実処理整合性の問題として扱うのか
   - 4096x1280 の optimize 結果に対して `Default` を選んだとき、それは「plugin 実装部の通常 apply 経路へ 1 枚の最終成果物をそのまま渡す」意味なのか、「現在の画面構成に応じて暗黙分割される」期待を伴っていたのか
@@ -129,7 +131,7 @@
   - `Apply` 結果の疑義が、visible な選択肢の意味づけの問題か、内部処理組み合わせの問題か
   - `Default` / `Auto-split` の visible 2 択が、2 画面連結 optimize 結果に対して十分に誤読なく読めるか
   - `Default` の補助文言が「normal apply」だけで足りるのか、それとも plugin 実装部の通常 apply 経路であることや desktop 側表示モード依存を示すべきか
-  - Phase6 で GUI に出さなかった explicit mapping を、今後も「ユーザ意識に上がりにくい CLI 専用機能」として扱うのか、それとも product 上の欠落とみなすのか
+  - Phase6 で GUI に出さなかった explicit mapping を、今後も「ユーザ意識に上がりにくい CLI 専用の低露出機能」として扱うのか、それとも product 上の欠落とみなすのか
   - CLI 側にある「実画面ぴったりではなく、意図的に小さめ解像度で optimize した生成物を apply 側で使う」発想を GUI に持ち込む必要があるのか
   - GUI に持ち込むと意味が増える機能か
   - CLI 専用のままでもよい機能か
@@ -308,18 +310,21 @@
 
 ## Phase7 で決めるべき問い（3世代比較を踏まえて）
 
-### これまでの議論から自然成立しているもの
+### これまでの議論から自然成立している結論
 
-- 正本は、母体か `Harite v0.1.2` かの二択ではなく、母体を参照しつつ Harite で正統進化した仕様に置く、という理解でよいか。
-- `two_screen optimize` の結果に対する既定 `Apply` は、現時点では monitor-aware 既定ではなく、`single-file` による 1 枚貼りのままと読むことでよいか。
-- GUI に `Default` という語を残すより、`分割せず適用` のような非曖昧な表示語へ寄せる方向でよいか。
-- CLI にある「実画面解像度へ厳密適合しない optimize 生成物を apply で活用する」発想は、product の中心責務ではなく、GUI 非対象の非主導線 workflow として分離する理解でよいか。
+- 正本は、母体か `Harite v0.1.2` かの二択ではなく、母体を参照しつつ Harite で正統進化した仕様に置く。
+- `two_screen optimize` の結果に対する既定 `Apply` は、現時点では monitor-aware 既定ではなく、`single-file` による 1 枚貼りのままと読む。
+- GUI に `Default` という語を残すより、`分割せず適用` のような非曖昧な表示語へ寄せる。
+- CLI にある「実画面解像度へ厳密適合しない optimize 生成物を apply で活用する」発想は、product の中心責務ではなく、GUI 非対象の非主導線 workflow として分離する。
 
-### まだ owner 判断が要るもの
+### この時点で置く owner 判断
 
-- `Auto-split` は Harite 独自価値として主導線に含めつつも、どの程度まで前面に出すべきか。
-- `--left-file` / `--right-file` による explicit mapping は、CLI 専用の低露出な escape hatch として残すだけで十分か。それとも `Optimize` の主導線と競合しないよう、さらに目立たない位置づけへ下げるべきか。
-- user が `Optimize` から想像する「Harite が作る成果物」と、CLI explicit mapping が許す「Harite を経由せず monitor ごとに別画像を貼る使い方」は、両立可否そのものより、どちらを主導線に置くかの問題として整理してよいか。
+- `Auto-split` は Harite 独自価値として `Apply` の主導線に置く。
+
+### ここまでに固まった補足整理
+
+- `--left-file` / `--right-file` による explicit mapping は、ひとまず CLI 専用の低露出な escape hatch として残す。
+- CLI explicit mapping が許す「monitor ごとに別画像を貼る使い方」は可能ではあるが、Harite の主導線としては扱わない。
 
 ## 完了条件
 
@@ -335,6 +340,8 @@
 - したがって `do-it` の再整理は、CLI UX だけでなく manual gate / docs / plugin apply の説明にも波及する。
 - `watch` の不足補完は新機能追加に見えるが、実際には CLI 先行機能との整合性整理でもある。
 - `embed-text` のような margin 利用機能は、GUI に持ち込むと制作画面としての意味が増すため、Phase8 候補として価値が高い。
+- `Auto-split` は、現時点では `Apply` の主導線に最も近い Harite 独自機能として扱うのが自然である。
+- `per-monitor-explicit` は残すとしても、`auto-split` より前面に出すのではなく CLI 側の低露出な escape hatch に留める。
 - 逆に、GUI に理由なく CLI 専用機能をそのまま移植すると、Phase6 で落とした暫定 UI の複雑さを戻す危険がある。
 
 ## 初動タスク
