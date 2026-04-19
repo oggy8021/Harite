@@ -1402,6 +1402,12 @@ class GtkRuntimeSignalBackend:
         form_state = getattr(owner, "form_state", None)
         self._refresh_watch_output_label(getattr(form_state, "output_dir", None) if form_state is not None else None)
 
+    def _sync_feedback_from_owner(self, owner: Any) -> None:
+        phase = str(getattr(owner, "status_phase", "") or "").strip() or "watch"
+        message = str(getattr(owner, "status_message", "") or "").strip() or "state-updated"
+        error = str(getattr(owner, "last_error", "") or "").strip() or None
+        self._set_feedback(phase=phase.capitalize(), state=message, error=error)
+
     def _get_glib_module(self) -> Any | None:
         return getattr(self._gtk, "GLib", None)
 
@@ -1761,12 +1767,16 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Watch", state="handler-missing", error="handler not connected")
             return
         try:
+            owner = self._get_handler_owner("on_watch_start")
             ok = callback()
             if not ok:
-                self._set_feedback(phase="Watch", state="start-failed", error="watch start returned false")
+                if owner is not None:
+                    self._sync_watch_state_from_owner(owner)
+                    self._sync_feedback_from_owner(owner)
+                else:
+                    self._set_feedback(phase="Watch", state="start-failed", error="watch start returned false")
                 return
 
-            owner = self._get_handler_owner("on_watch_start")
             if owner is not None:
                 self._sync_watch_state_from_owner(owner)
                 interval_seconds = int(getattr(owner, "watch_interval_seconds", 0) or 0)

@@ -822,6 +822,33 @@ def test_watch_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch, tmp
     assert split2_dp.exists() is True
 
 
+def test_watch_dual_source_start_fails_without_two_detected_displays(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: None,
+    )
+
+    window = MainWindow()
+    window.plugin_name = "linux"
+
+    left_dir = tmp_path / "watch-left"
+    right_dir = tmp_path / "watch-right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (right_dir / "right-1.png").write_bytes(b"right")
+
+    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
+    assert window.on_pick_watch_srcdir(str(right_dir), "R") is True
+    assert window.on_watch_start() is False
+    assert window.watch_running is False
+    assert window.status_level == "error"
+    assert window.status_phase == "watch"
+    assert window.status_message == "dual-source watch requires two detected displays"
+    assert window.last_error == "dual-source watch requires two detected displays"
+    assert any("Watch start blocked: dual-source watch requires two detected displays" in line for line in window.logs)
+
+
 def test_suggest_next_action_transitions(tmp_path):
     window = MainWindow()
     assert window.suggest_next_action() == "input"

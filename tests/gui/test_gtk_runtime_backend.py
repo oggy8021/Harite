@@ -676,6 +676,57 @@ def test_runtime_backend_watch_start_registers_timer_and_stop_removes_it(monkeyp
     assert _FakeGLib.removed_sources == [1]
 
 
+def test_runtime_backend_shows_owner_watch_start_failure_reason(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: None,
+    )
+
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    window.plugin_name = "linux"
+
+    srcdir_dialog = backend.get_object("SrcdirDialog")
+    srcdir_l = backend.get_object("btnOpenSrcdirL")
+    srcdir_r = backend.get_object("btnOpenSrcdirR")
+    watch_start = backend.get_object("btnDaemonize")
+    status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+    watch_tab_title = backend.get_object("lblWatchTabTitle")
+
+    left_dir = tmp_path / "watch-left"
+    right_dir = tmp_path / "watch-right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (right_dir / "right-1.png").write_bytes(b"right")
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_pick_watch_srcdir",
+            "on_watch_start",
+            "on_watch_tick",
+            "on_watch_stop",
+            "on_watch_interval_change",
+        ),
+    )
+    backend.connect_signals(dispatch)
+
+    srcdir_l.click()
+    srcdir_dialog.set_current_folder(str(left_dir))
+    srcdir_dialog.confirm()
+    srcdir_r.click()
+    srcdir_dialog.set_current_folder(str(right_dir))
+    srcdir_dialog.confirm()
+
+    watch_start.click()
+
+    assert status.text == "Watch: dual-source watch requires two detected displays"
+    assert error.text == "Error: dual-source watch requires two detected displays"
+    assert watch_tab_title.text == "Watch (stopped)"
+
+
 def test_runtime_backend_open_l_uses_dialog_selection_and_calls_pick_handler():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 

@@ -644,14 +644,18 @@ class MainWindow:
 
         if source_count > 1:
             if self.plugin_name != "linux":
+                message = "dual-source watch requires linux plugin"
                 self._watch_plugin_impl = None
-                self._log("Watch dual-source auto-split skipped: per-monitor apply requires linux plugin")
-                return True
+                self._set_status("error", "watch", message, error=message)
+                self._log(f"Watch start blocked: {message}")
+                return False
 
             if build_two_screen_optimize_context() is None:
+                message = "dual-source watch requires two detected displays"
                 self._watch_plugin_impl = None
-                self._log("Watch dual-source auto-split skipped: per-monitor apply requires at least two detected displays")
-                return True
+                self._set_status("error", "watch", message, error=message)
+                self._log(f"Watch start blocked: {message}")
+                return False
 
             self._watch_dual_auto_split_enabled = True
 
