@@ -707,6 +707,54 @@ def test_watch_single_source_applies_on_start_and_tick(monkeypatch, tmp_path):
     assert window.on_watch_stop() is True
 
 
+def test_watch_single_source_start_fails_when_plugin_apply_fails(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            return False
+
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+
+    window = MainWindow()
+    left_dir = tmp_path / "watch-left"
+    left_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+
+    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
+    assert window.on_watch_start() is False
+    assert window.watch_running is False
+    assert window.status_level == "error"
+    assert window.status_phase == "watch"
+    assert window.status_message == "watch start single-file apply failed"
+    assert window.last_error == "watch start single-file apply failed"
+
+
+def test_watch_single_source_tick_stops_when_plugin_apply_fails(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def __init__(self):
+            self.calls = 0
+
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            self.calls += 1
+            return self.calls == 1
+
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+
+    window = MainWindow()
+    left_dir = tmp_path / "watch-left"
+    left_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (left_dir / "left-2.jpg").write_bytes(b"left-2")
+
+    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
+    assert window.on_watch_start() is True
+    assert window.on_watch_tick() is False
+    assert window.watch_running is False
+    assert window.status_level == "error"
+    assert window.status_phase == "watch"
+    assert window.status_message == "watch tick single-file apply failed"
+    assert window.last_error == "watch tick single-file apply failed"
+
+
 def test_watch_single_source_success_cleans_previous_generated_files(monkeypatch, tmp_path):
     class DummyPlugin:
         def apply(self, path: str, *, dry_run: bool = True) -> bool:

@@ -714,18 +714,21 @@ class MainWindow:
         self._log(f"Watch {cycle_phase} {apply_mode} apply failed: {target}")
         return False
 
-    def _apply_watch_selection(self, left: str, right: str, *, cycle_phase: str) -> None:
+    def _apply_watch_selection(self, left: str, right: str, *, cycle_phase: str) -> tuple[bool, str | None]:
         selected_paths = [path for path in (left, right) if path != "-"]
-        if not selected_paths or self._watch_plugin_impl is None:
-            return
+        if not selected_paths:
+            return True, None
+        if self._watch_plugin_impl is None:
+            return False, "watch plugin is not ready"
 
         if len(selected_paths) == 1:
             if self._apply_watch_target(selected_paths[0], cycle_phase=cycle_phase, apply_mode="single-file"):
                 self._set_watch_active_generated_files(())
-            return
+                return True, None
+            return False, f"watch {cycle_phase} single-file apply failed"
 
         if not self._watch_dual_auto_split_enabled:
-            return
+            return False, "dual-source watch auto-split is not enabled"
 
         try:
             watch_state = self._build_watch_two_screen_state(selected_paths[0], selected_paths[1])
@@ -739,7 +742,7 @@ class MainWindow:
             )
         except Exception as exc:
             self._log(f"Watch {cycle_phase} auto-split prepare failed: {exc}")
-            return
+            return False, f"watch {cycle_phase} auto-split prepare failed"
 
         self._log(f"Watch {cycle_phase} per-monitor auto-split: {effective_apply.target}")
         generated_files = [composite_path]
@@ -753,6 +756,8 @@ class MainWindow:
         ):
             deduped = tuple(dict.fromkeys(generated_files))
             self._set_watch_active_generated_files(deduped)
+            return True, None
+        return False, f"watch {cycle_phase} per-monitor auto-split apply failed"
 
     def on_watch_start(self) -> bool:
         sources: list[tuple[str, Path]] = []
@@ -787,7 +792,13 @@ class MainWindow:
         self._update_watch_summary_display()
         self._update_watch_source_display()
         self._update_watch_current_display(selected_left, selected_right)
-        self._apply_watch_selection(selected_left, selected_right, cycle_phase="start")
+        applied, error_message = self._apply_watch_selection(selected_left, selected_right, cycle_phase="start")
+        if not applied:
+            self.watch_running = False
+            self._update_watch_summary_display()
+            self._set_status("error", "watch", error_message or "watch start apply failed", error=error_message or "watch start apply failed")
+            self._log(f"Watch start failed: {error_message or 'watch start apply failed'}")
+            return False
         self._set_status("success", "watch", "watch started")
         self._log(
             f"Watch started: interval={self.watch_interval_seconds}s L={selected_left} R={selected_right}"
@@ -821,7 +832,13 @@ class MainWindow:
                 selected_right = selected
 
         self._update_watch_current_display(selected_left, selected_right)
-        self._apply_watch_selection(selected_left, selected_right, cycle_phase="tick")
+        applied, error_message = self._apply_watch_selection(selected_left, selected_right, cycle_phase="tick")
+        if not applied:
+            self.watch_running = False
+            self._update_watch_summary_display()
+            self._set_status("error", "watch", error_message or "watch tick apply failed", error=error_message or "watch tick apply failed")
+            self._log(f"Watch tick stopped: {error_message or 'watch tick apply failed'}")
+            return False
         self._log(f"Watch tick: L={selected_left} R={selected_right}")
         return True
 

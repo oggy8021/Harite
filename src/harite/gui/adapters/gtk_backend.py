@@ -1836,15 +1836,18 @@ class GtkRuntimeSignalBackend:
 
         callback = self._signal_handlers.get("on_watch_tick")
         if callback is not None:
+            owner = self._get_handler_owner("on_watch_tick")
             try:
                 ok = bool(callback())
             except Exception as exc:
                 self._set_feedback(phase="Watch", state="error", error=str(exc))
                 return False
             if not ok:
+                if owner is not None:
+                    self._sync_watch_state_from_owner(owner)
+                    self._sync_feedback_from_owner(owner)
                 return False
 
-            owner = self._get_handler_owner("on_watch_tick")
             if owner is not None:
                 self._sync_watch_state_from_owner(owner)
                 return True

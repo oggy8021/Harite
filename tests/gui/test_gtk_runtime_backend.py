@@ -727,6 +727,61 @@ def test_runtime_backend_shows_owner_watch_start_failure_reason(monkeypatch, tmp
     assert watch_tab_title.text == "Watch (stopped)"
 
 
+def test_runtime_backend_shows_owner_watch_tick_failure_reason(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def __init__(self):
+            self.calls = 0
+
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            self.calls += 1
+            return self.calls == 1
+
+    plugin = DummyPlugin()
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
+
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+
+    srcdir_dialog = backend.get_object("SrcdirDialog")
+    srcdir_l = backend.get_object("btnOpenSrcdirL")
+    watch_start = backend.get_object("btnDaemonize")
+    watch_current = backend.get_object("lblWatchCurrent")
+    watch_tab_title = backend.get_object("lblWatchTabTitle")
+    status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+
+    left_dir = tmp_path / "watch-left"
+    left_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (left_dir / "left-2.jpg").write_bytes(b"left-2")
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_pick_watch_srcdir",
+            "on_watch_start",
+            "on_watch_tick",
+            "on_watch_stop",
+            "on_watch_interval_change",
+        ),
+    )
+    backend.connect_signals(dispatch)
+
+    srcdir_l.click()
+    srcdir_dialog.set_current_folder(str(left_dir))
+    srcdir_dialog.confirm()
+
+    watch_start.click()
+    assert status.text == "Watch: started"
+    assert watch_tab_title.text == "Watch (running)"
+
+    assert backend.run_watch_cycle_once() is False
+    assert status.text == "Watch: watch tick single-file apply failed"
+    assert error.text == "Error: watch tick single-file apply failed"
+    assert watch_tab_title.text == "Watch (stopped)"
+    assert watch_current.text == f"Watch current: L={left_dir / 'left-2.jpg'} | R=-"
+
+
 def test_runtime_backend_open_l_uses_dialog_selection_and_calls_pick_handler():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
