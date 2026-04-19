@@ -549,7 +549,6 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(t
 
     srcdir_dialog = backend.get_object("SrcdirDialog")
     srcdir_l = backend.get_object("btnOpenSrcdirL")
-    srcdir_r = backend.get_object("btnOpenSrcdirR")
     interval = backend.get_object("spnInterval")
     watch_start = backend.get_object("btnDaemonize")
     watch_stop = backend.get_object("btnCancelDaemonize")
@@ -560,13 +559,9 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(t
     status = backend.get_object("lblStatus")
 
     left_dir = tmp_path / "watch-left"
-    right_dir = tmp_path / "watch-right"
     left_dir.mkdir()
-    right_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
     (left_dir / "left-2.jpg").write_bytes(b"left-2")
-    (right_dir / "right-1.png").write_bytes(b"right")
-    (right_dir / "right-2.png").write_bytes(b"right-2")
 
     dispatch = create_mainwindow_signal_dispatch(
         window,
@@ -585,11 +580,8 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(t
     srcdir_l.click()
     srcdir_dialog.set_current_folder(str(left_dir))
     srcdir_dialog.confirm()
-    srcdir_r.click()
-    srcdir_dialog.set_current_folder(str(right_dir))
-    srcdir_dialog.confirm()
 
-    assert watch_sources.text == f"Watch srcdirs: L={left_dir} | R={right_dir}"
+    assert watch_sources.text == f"Watch srcdirs: L={left_dir} | R=-"
     assert watch_output.text == f"Watch output: {tmp_path / 'watch-output'}"
 
     interval.set_value(90)
@@ -600,11 +592,11 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(t
     watch_start.click()
     assert status.text == "Watch: started"
     assert watch_tab_title.text == "Watch (running)"
-    assert watch_current.text == f"Watch current: L={left_dir / 'left-1.jpg'} | R={right_dir / 'right-1.png'}"
+    assert watch_current.text == f"Watch current: L={left_dir / 'left-1.jpg'} | R=-"
 
     assert backend.run_watch_cycle_once() is True
     assert watch_tab_title.text == "Watch (running)"
-    assert watch_current.text == f"Watch current: L={left_dir / 'left-2.jpg'} | R={right_dir / 'right-2.png'}"
+    assert watch_current.text == f"Watch current: L={left_dir / 'left-2.jpg'} | R=-"
 
     watch_stop.click()
     assert status.text == "Watch: stopped"

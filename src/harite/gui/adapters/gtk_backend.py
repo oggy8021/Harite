@@ -1409,7 +1409,18 @@ class GtkRuntimeSignalBackend:
         self._set_feedback(phase=phase.capitalize(), state=message, error=error)
 
     def _get_glib_module(self) -> Any | None:
-        return getattr(self._gtk, "GLib", None)
+        glib = getattr(self._gtk, "GLib", None)
+        if glib is not None:
+            return glib
+        try:
+            import gi
+
+            gi.require_version("Gtk", "3.0")
+            from gi.repository import GLib
+
+            return GLib
+        except Exception:
+            return None
 
     def _stop_watch_timer(self) -> None:
         if self._watch_timer_source_id is None:

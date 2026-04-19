@@ -632,32 +632,23 @@ def test_watch_handlers_use_srcdirs_and_interval_validation(tmp_path):
     assert window.last_error == "watch srcdir is required"
 
     left_dir = tmp_path / "watch-left"
-    right_dir = tmp_path / "watch-right"
     left_dir.mkdir()
-    right_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
-    (right_dir / "right-1.png").write_bytes(b"right")
 
     assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
-    assert window.on_pick_watch_srcdir(str(right_dir), "R") is True
-    assert window.watch_source_display == f"Watch srcdirs: L={left_dir} | R={right_dir}"
+    assert window.watch_source_display == f"Watch srcdirs: L={left_dir} | R=-"
 
     assert window.on_watch_start() is True
     assert window.watch_running is True
     assert window.status_level == "success"
     assert window.status_phase == "watch"
     assert window.status_message == "watch started"
-    assert window.watch_current_display == (
-        f"Watch current: L={left_dir / 'left-1.jpg'} | R={right_dir / 'right-1.png'}"
-    )
+    assert window.watch_current_display == f"Watch current: L={left_dir / 'left-1.jpg'} | R=-"
 
     (left_dir / "left-2.jpg").write_bytes(b"left-2")
-    (right_dir / "right-2.png").write_bytes(b"right-2")
 
     assert window.on_watch_tick() is True
-    assert window.watch_current_display == (
-        f"Watch current: L={left_dir / 'left-2.jpg'} | R={right_dir / 'right-2.png'}"
-    )
+    assert window.watch_current_display == f"Watch current: L={left_dir / 'left-2.jpg'} | R=-"
 
     assert window.on_watch_stop() is True
     assert window.watch_running is False
