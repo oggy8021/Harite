@@ -682,6 +682,12 @@ class MainWindow:
             watch_state.resolution = f"{context.resolution[0]}x{context.resolution[1]}"
         return watch_state
 
+    def _ensure_watch_output_dir(self) -> None:
+        output_dir = str(self.form_state.output_dir or "").strip()
+        if not output_dir:
+            self.form_state.output_dir = "."
+        self._update_watch_output_display()
+
     def _cleanup_watch_generated_files(self, paths: tuple[Path, ...]) -> None:
         for path in paths:
             try:
@@ -761,6 +767,7 @@ class MainWindow:
 
     def on_watch_start(self) -> bool:
         sources: list[tuple[str, Path]] = []
+        self._ensure_watch_output_dir()
         if self.watch_srcdir_l.strip():
             sources.append(("L", Path(self.watch_srcdir_l.strip())))
         if self.watch_srcdir_r.strip():

@@ -64,6 +64,24 @@ def test_linux_plugin_apply_mapping_executes_commands(monkeypatch):
     assert any(isinstance(c, list) and c[0] == "xfconf-query" and "-s" in c for c in calls)
 
 
+def test_linux_plugin_apply_mapping_requires_all_requested_monitors(monkeypatch):
+    monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/xfconf-query" if name == "xfconf-query" else None)
+
+    sample_props = "/backdrop/screen0/monitor1/image\n"
+
+    def fake_run(cmd, check=False, capture_output=False, text=False):
+        if cmd[:3] == ["xfconf-query", "-c", "xfce4-desktop"] and "-l" in cmd:
+            return _make_list_proc(sample_props)
+        return SimpleNamespace(returncode=0, stdout="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    plugin = LinuxPlugin()
+    mapping = {"DP-1": "/tmp/wall1.jpg", "HDMI-1": "/tmp/wall2.jpg"}
+
+    assert plugin.apply(mapping, dry_run=False) is False
+
+
 def test_linux_plugin_no_setter_returns_false(monkeypatch, tmp_path):
     # No xfconf, gsettings, or feh available
     monkeypatch.setattr(shutil, "which", lambda name: None)

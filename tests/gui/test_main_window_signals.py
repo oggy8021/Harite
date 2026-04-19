@@ -728,6 +728,25 @@ def test_watch_single_source_start_fails_when_plugin_apply_fails(monkeypatch, tm
     assert window.last_error == "watch start single-file apply failed"
 
 
+def test_watch_start_normalizes_empty_output_dir(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            return True
+
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+
+    window = MainWindow()
+    window.form_state.output_dir = ""
+    left_dir = tmp_path / "watch-left"
+    left_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+
+    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
+    assert window.on_watch_start() is True
+    assert window.form_state.output_dir == "."
+    assert window.watch_output_display == "Watch output: ."
+
+
 def test_watch_single_source_tick_stops_when_plugin_apply_fails(monkeypatch, tmp_path):
     class DummyPlugin:
         def __init__(self):
