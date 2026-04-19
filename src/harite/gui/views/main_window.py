@@ -6,6 +6,7 @@ package remains importable in environments without GUI libraries.
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 import sys
 
@@ -16,7 +17,7 @@ from harite.gui.controllers.optimize_controller import OptimizeController, Optim
 from harite.gui.services.cli_mapper import OptimizeRequest, to_cli_args
 from harite.plugins import registry as plugin_registry
 from harite.preferences import AppPreferences
-from harite.watch import collect_watch_input_images, select_next_image
+from harite.watch import WatchCycleState, collect_watch_input_images, run_watch_cycle
 
 
 class MainWindow:
@@ -46,11 +47,15 @@ class MainWindow:
         self.watch_summary_display = "Watch: stopped"
         self.watch_source_display = "Watch srcdirs: L=- | R=-"
         self.watch_current_display = "Watch current: idle"
+        self.watch_output_display = "Watch output: ."
         self.watch_running = False
-        self._watch_index_l = 0
-        self._watch_index_r = 0
+        self._watch_state_l = WatchCycleState()
+        self._watch_state_r = WatchCycleState()
         self._watch_previous_l: Path | None = None
         self._watch_previous_r: Path | None = None
+        self._watch_plugin_impl: object | None = None
+        self._watch_dual_auto_split_enabled = False
+        self._watch_active_generated_files: tuple[Path, ...] = ()
         self.open_image_dialog_open = False
         self.open_image_dialog_side: str | None = None
         self._save_path_dialog_open = False
@@ -263,6 +268,10 @@ class MainWindow:
         left = self.watch_srcdir_l or "-"
         right = self.watch_srcdir_r or "-"
         self.watch_source_display = f"Watch srcdirs: L={left} | R={right}"
+
+    def _update_watch_output_display(self) -> None:
+        output_dir = str(Path(self.form_state.output_dir)) if self.form_state.output_dir else "."
+        self.watch_output_display = f"Watch output: {output_dir}"
 
     def _update_watch_summary_display(self) -> None:
         self.watch_summary_display = "Watch: running" if self.watch_running else "Watch: stopped"
@@ -482,6 +491,7 @@ class MainWindow:
         self.plugin_name = prefs.apply.plugin_name
         self.apply_mode = prefs.apply.apply_mode
         self.watch_interval_seconds = prefs.watch.interval_seconds
+        self._update_watch_output_display()
         self.settings_dialog_open = False
         self._set_status("success", "prefs", "preferences applied")
         self._log("Preferences applied")
@@ -613,8 +623,151 @@ class MainWindow:
         self._log("Save path canceled")
         return True
 
+    def _run_watch_cycle_for_side(self, side: str, source_dir: Path) -> str:
+        images = collect_watch_input_images(source_dir)
+        if side == "L":
+            selected, state = run_watch_cycle(images, "sequential", self._watch_state_l)
+            self._watch_state_l = state
+            self._watch_previous_l = selected
+            return str(selected)
+
+        selected, state = run_watch_cycle(images, "sequential", self._watch_state_r)
+        self._watch_state_r = state
+        self._watch_previous_r = selected
+        return str(selected)
+
+    def _prepare_watch_apply(self, source_count: int) -> bool:
+        self._watch_dual_auto_split_enabled = False
+        if source_count < 1:
+            self._watch_plugin_impl = None
+            return True
+
+        if source_count > 1:
+            if self.plugin_name != "linux":
+                message = "dual-source watch requires linux plugin"
+                self._watch_plugin_impl = None
+                self._set_status("error", "watch", message, error=message)
+                self._log(f"Watch start blocked: {message}")
+                return False
+
+            if build_two_screen_optimize_context() is None:
+                message = "dual-source watch requires two detected displays"
+                self._watch_plugin_impl = None
+                self._set_status("error", "watch", message, error=message)
+                self._log(f"Watch start blocked: {message}")
+                return False
+
+            self._watch_dual_auto_split_enabled = True
+
+        try:
+            self._watch_plugin_impl = plugin_registry.get(self.plugin_name)
+        except KeyError:
+            self._set_status(
+                "error",
+                "watch",
+                "unknown plugin",
+                error=f"unknown plugin: {self.plugin_name}",
+            )
+            self._log(f"Watch start failed: unknown plugin {self.plugin_name}")
+            return False
+        return True
+
+    def _build_watch_two_screen_state(self, left: str, right: str) -> OptimizeFormState:
+        watch_state = replace(self.form_state, input_value=f"{left},{right}")
+        context = build_two_screen_optimize_context()
+        if context is not None:
+            watch_state.two_screen = True
+            watch_state.l_display = f"{context.l_display[0]}x{context.l_display[1]}"
+            watch_state.r_display = f"{context.r_display[0]}x{context.r_display[1]}"
+            watch_state.resolution = f"{context.resolution[0]}x{context.resolution[1]}"
+        return watch_state
+
+    def _ensure_watch_output_dir(self) -> None:
+        output_dir = str(self.form_state.output_dir or "").strip()
+        if not output_dir:
+            self.form_state.output_dir = "."
+        self._update_watch_output_display()
+
+    def _cleanup_watch_generated_files(self, paths: tuple[Path, ...]) -> None:
+        for path in paths:
+            try:
+                if path.exists():
+                    path.unlink()
+                    self._log(f"Watch cleanup removed: {path}")
+            except OSError as exc:
+                self._log(f"Watch cleanup failed: {path} ({exc})")
+
+    def _set_watch_active_generated_files(self, paths: tuple[Path, ...]) -> None:
+        previous_paths = self._watch_active_generated_files
+        self._watch_active_generated_files = paths
+        if previous_paths and previous_paths != paths:
+            self._cleanup_watch_generated_files(previous_paths)
+
+    def _apply_watch_target(self, target: object, *, cycle_phase: str, apply_mode: str) -> bool:
+        if self._watch_plugin_impl is None:
+            return False
+
+        try:
+            ok = bool(self._watch_plugin_impl.apply(target, dry_run=False))
+        except Exception as exc:
+            self._log(f"Watch {cycle_phase} {apply_mode} apply error: {exc}")
+            return False
+
+        if ok:
+            self._log(f"Watch {cycle_phase} {apply_mode} apply ok: {target}")
+            return True
+
+        self._log(f"Watch {cycle_phase} {apply_mode} apply failed: {target}")
+        return False
+
+    def _apply_watch_selection(self, left: str, right: str, *, cycle_phase: str) -> tuple[bool, str | None]:
+        selected_paths = [path for path in (left, right) if path != "-"]
+        if not selected_paths:
+            return True, None
+        if self._watch_plugin_impl is None:
+            return False, "watch plugin is not ready"
+
+        if len(selected_paths) == 1:
+            if self._apply_watch_target(selected_paths[0], cycle_phase=cycle_phase, apply_mode="single-file"):
+                self._set_watch_active_generated_files(())
+                return True, None
+            return False, f"watch {cycle_phase} single-file apply failed"
+
+        if not self._watch_dual_auto_split_enabled:
+            return False, "dual-source watch auto-split is not enabled"
+
+        try:
+            watch_state = self._build_watch_two_screen_state(selected_paths[0], selected_paths[1])
+            saved_files, _placements = self.controller.run_optimize(watch_state)
+            composite_path = saved_files[-1]
+            effective_apply = resolve_apply_settings(
+                file=composite_path,
+                plugin_name=self.plugin_name,
+                apply_mode="per-monitor-auto-split",
+                output_dir=composite_path.parent,
+            )
+        except Exception as exc:
+            self._log(f"Watch {cycle_phase} auto-split prepare failed: {exc}")
+            return False, f"watch {cycle_phase} auto-split prepare failed"
+
+        self._log(f"Watch {cycle_phase} per-monitor auto-split: {effective_apply.target}")
+        generated_files = [composite_path]
+        if isinstance(effective_apply.target, dict):
+            generated_files.extend(Path(str(path)) for path in effective_apply.target.values())
+
+        if self._apply_watch_target(
+            effective_apply.target,
+            cycle_phase=cycle_phase,
+            apply_mode="per-monitor-auto-split",
+        ):
+            deduped = tuple(dict.fromkeys(generated_files))
+            self._set_watch_active_generated_files(deduped)
+            return True, None
+        return False, f"watch {cycle_phase} per-monitor auto-split apply failed"
+
     def on_watch_start(self) -> bool:
         sources: list[tuple[str, Path]] = []
+        self._ensure_watch_output_dir()
         if self.watch_srcdir_l.strip():
             sources.append(("L", Path(self.watch_srcdir_l.strip())))
         if self.watch_srcdir_r.strip():
@@ -624,43 +777,76 @@ class MainWindow:
             self._log("Watch start blocked: watch srcdir is required")
             return False
 
+        if not self._prepare_watch_apply(len(sources)):
+            return False
+
         selected_left = "-"
         selected_right = "-"
         for side, source_dir in sources:
             try:
-                images = collect_watch_input_images(source_dir)
+                selected = self._run_watch_cycle_for_side(side, source_dir)
             except ValueError as exc:
                 self._set_status("error", "watch", f"watch srcdir {side} invalid", error=str(exc))
                 self._log(f"Watch start failed ({side}): {exc}")
                 return False
 
             if side == "L":
-                selected, self._watch_index_l = select_next_image(
-                    images,
-                    "sequential",
-                    self._watch_index_l,
-                    previous_selected=self._watch_previous_l,
-                )
-                self._watch_previous_l = selected
-                selected_left = str(selected)
+                selected_left = selected
             else:
-                selected, self._watch_index_r = select_next_image(
-                    images,
-                    "sequential",
-                    self._watch_index_r,
-                    previous_selected=self._watch_previous_r,
-                )
-                self._watch_previous_r = selected
-                selected_right = str(selected)
+                selected_right = selected
 
         self.watch_running = True
         self._update_watch_summary_display()
         self._update_watch_source_display()
         self._update_watch_current_display(selected_left, selected_right)
+        applied, error_message = self._apply_watch_selection(selected_left, selected_right, cycle_phase="start")
+        if not applied:
+            self.watch_running = False
+            self._update_watch_summary_display()
+            self._set_status("error", "watch", error_message or "watch start apply failed", error=error_message or "watch start apply failed")
+            self._log(f"Watch start failed: {error_message or 'watch start apply failed'}")
+            return False
         self._set_status("success", "watch", "watch started")
         self._log(
             f"Watch started: interval={self.watch_interval_seconds}s L={selected_left} R={selected_right}"
         )
+        return True
+
+    def on_watch_tick(self) -> bool:
+        if not self.watch_running:
+            self._log("Watch tick ignored: watch is idle")
+            return False
+
+        selected_left = "-"
+        selected_right = "-"
+        sources: list[tuple[str, Path]] = []
+        if self.watch_srcdir_l.strip():
+            sources.append(("L", Path(self.watch_srcdir_l.strip())))
+        if self.watch_srcdir_r.strip():
+            sources.append(("R", Path(self.watch_srcdir_r.strip())))
+
+        for side, source_dir in sources:
+            try:
+                selected = self._run_watch_cycle_for_side(side, source_dir)
+            except ValueError as exc:
+                self._set_status("error", "watch", f"watch srcdir {side} invalid", error=str(exc))
+                self._log(f"Watch tick failed ({side}): {exc}")
+                return False
+
+            if side == "L":
+                selected_left = selected
+            else:
+                selected_right = selected
+
+        self._update_watch_current_display(selected_left, selected_right)
+        applied, error_message = self._apply_watch_selection(selected_left, selected_right, cycle_phase="tick")
+        if not applied:
+            self.watch_running = False
+            self._update_watch_summary_display()
+            self._set_status("error", "watch", error_message or "watch tick apply failed", error=error_message or "watch tick apply failed")
+            self._log(f"Watch tick stopped: {error_message or 'watch tick apply failed'}")
+            return False
+        self._log(f"Watch tick: L={selected_left} R={selected_right}")
         return True
 
     def on_watch_stop(self) -> bool:
@@ -669,6 +855,7 @@ class MainWindow:
             self._log("Watch stop ignored: watch is idle")
             return False
         self.watch_running = False
+        self._watch_plugin_impl = None
         self._update_watch_summary_display()
         self._update_watch_current_display()
         self._set_status("idle", "watch", "watch stopped")

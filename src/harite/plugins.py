@@ -375,13 +375,16 @@ def _apply_xfconf_candidates(is_map: bool, mapping: dict | None, candidates: lis
             logger.exception("Failed to obtain matched candidates for mapping")
             matched = {k: [] for k in (mapping.keys() if mapping else [])}
 
+        success_all = bool(mapping)
         for mon_name, mon_path in (mapping.items() if mapping else []):
             applied_any = False
             filtered = matched.get(mon_name, [])
             for prop in filtered:
                 cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(mon_path)]
                 logger.info("XFCE: would run: %s", " ".join(cmd))
-                if not dry_run:
+                if dry_run:
+                    applied_any = True
+                else:
                     res = subprocess.run(cmd, check=False)
                     if res.returncode == 0:
                         applied_any = True
@@ -389,6 +392,10 @@ def _apply_xfconf_candidates(is_map: bool, mapping: dict | None, candidates: lis
                         logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
             if applied_any:
                 success_any = True
+            else:
+                success_all = False
+                logger.warning("XFCE: no matching per-monitor apply candidate succeeded for %s", mon_name)
+        return success_all, simulated
     else:
         for prop in candidates:
             cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(p)]
