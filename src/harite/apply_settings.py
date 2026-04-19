@@ -32,6 +32,8 @@ def resolve_apply_settings(
     ordered_displays = get_ordered_displays(displays)
 
     if mode == "per-monitor-explicit":
+        if plugin_name != "linux":
+            raise ValueError("per-monitor apply requires linux plugin")
         if len(ordered_displays) < 2:
             raise ValueError("Need at least two displays to use --left-file/--right-file")
         mapping = {}

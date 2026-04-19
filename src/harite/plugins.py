@@ -448,6 +448,9 @@ class WindowsPlugin:
     name = "windows"
 
     def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        if isinstance(path, dict):
+            logger.error("Per-monitor mapping is not supported by the windows plugin")
+            return False
         p = Path(path)
         if not p.exists():
             logger.error("Wallpaper file does not exist: %s", path)
@@ -482,6 +485,9 @@ class MacOSPlugin:
     name = "macos"
 
     def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        if isinstance(path, dict):
+            logger.error("Per-monitor mapping is not supported by the macos plugin")
+            return False
         p = Path(path)
         if not p.exists():
             logger.error("Wallpaper file does not exist: %s", path)
