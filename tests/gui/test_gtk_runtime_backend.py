@@ -230,6 +230,38 @@ class _FakeGtk:
     RadioButton = _RadioButton
 
 
+class _FakeGLib:
+    next_source_id = 1
+    registered_sources = {}
+    removed_sources = []
+
+    @classmethod
+    def reset(cls):
+        cls.next_source_id = 1
+        cls.registered_sources = {}
+        cls.removed_sources = []
+
+    @classmethod
+    def timeout_add(cls, interval_ms, callback):
+        source_id = cls.next_source_id
+        cls.next_source_id += 1
+        cls.registered_sources[source_id] = {
+            "interval_ms": int(interval_ms),
+            "callback": callback,
+        }
+        return source_id
+
+    @classmethod
+    def source_remove(cls, source_id):
+        cls.removed_sources.append(int(source_id))
+        cls.registered_sources.pop(int(source_id), None)
+        return True
+
+
+class _TimerFakeGtk(_FakeGtk):
+    GLib = _FakeGLib
+
+
 class _NativeResponseType:
     CANCEL = 0
     OK = 1
@@ -460,6 +492,7 @@ def test_runtime_backend_shows_phase6_labels_and_controls():
     flow_legend = backend.get_object("lblFlowLegend")
     watch_sources = backend.get_object("lblWatchSources")
     watch_current = backend.get_object("lblWatchCurrent")
+    watch_output = backend.get_object("lblWatchOutput")
     prefs_btn = backend.get_object("btnSetting")
     about_btn = backend.get_object("btnAbout")
     help_btn = backend.get_object("btnHelp")
@@ -489,6 +522,7 @@ def test_runtime_backend_shows_phase6_labels_and_controls():
     assert watch_stop.label == "Watch Stop"
     assert watch_sources.text == "Watch srcdirs: L=- | R=-"
     assert watch_current.text == "Watch current: idle"
+    assert watch_output.text == "Watch output: ."
     assert pick_state.text == ""
     assert style_legend.text == "Reserved slot for future placement"
     assert command_section.text == ""
@@ -511,6 +545,7 @@ def test_runtime_backend_shows_phase6_labels_and_controls():
 
 def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
 
     srcdir_dialog = backend.get_object("SrcdirDialog")
     srcdir_l = backend.get_object("btnOpenSrcdirL")
@@ -520,6 +555,8 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(t
     watch_stop = backend.get_object("btnCancelDaemonize")
     watch_sources = backend.get_object("lblWatchSources")
     watch_current = backend.get_object("lblWatchCurrent")
+    watch_output = backend.get_object("lblWatchOutput")
+    watch_tab_title = backend.get_object("lblWatchTabTitle")
     status = backend.get_object("lblStatus")
 
     left_dir = tmp_path / "watch-left"
@@ -527,16 +564,23 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(t
     left_dir.mkdir()
     right_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
+    (left_dir / "left-2.jpg").write_bytes(b"left-2")
     (right_dir / "right-1.png").write_bytes(b"right")
+    (right_dir / "right-2.png").write_bytes(b"right-2")
 
-    backend.connect_signals(
-        {
-            "on_pick_watch_srcdir": lambda path, side: bool(path) and side in {"L", "R"},
-            "on_watch_start": lambda: True,
-            "on_watch_stop": lambda: True,
-            "on_watch_interval_change": lambda widget: int(widget.get_value_as_int()) > 0,
-        }
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_pick_watch_srcdir",
+            "on_watch_start",
+            "on_watch_tick",
+            "on_watch_stop",
+            "on_watch_interval_change",
+        ),
     )
+    backend.connect_signals(dispatch)
+    window.form_state.output_dir = str(tmp_path / "watch-output")
+    backend._sync_watch_state_from_owner(window)
 
     srcdir_l.click()
     srcdir_dialog.set_current_folder(str(left_dir))
@@ -546,17 +590,90 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(t
     srcdir_dialog.confirm()
 
     assert watch_sources.text == f"Watch srcdirs: L={left_dir} | R={right_dir}"
+    assert watch_output.text == f"Watch output: {tmp_path / 'watch-output'}"
 
     interval.set_value(90)
     interval.emit("value-changed", interval)
     assert status.text == "Watch: interval-updated(90s)"
+    assert watch_tab_title.text == "Watch (stopped)"
 
     watch_start.click()
     assert status.text == "Watch: started"
+    assert watch_tab_title.text == "Watch (running)"
     assert watch_current.text == f"Watch current: L={left_dir / 'left-1.jpg'} | R={right_dir / 'right-1.png'}"
+
+    assert backend.run_watch_cycle_once() is True
+    assert watch_tab_title.text == "Watch (running)"
+    assert watch_current.text == f"Watch current: L={left_dir / 'left-2.jpg'} | R={right_dir / 'right-2.png'}"
 
     watch_stop.click()
     assert status.text == "Watch: stopped"
+    assert watch_tab_title.text == "Watch (stopped)"
+    assert backend.run_watch_cycle_once() is False
+
+
+def test_runtime_backend_watch_start_registers_timer_and_stop_removes_it(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def __init__(self):
+            self.calls = []
+
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            self.calls.append((path, dry_run))
+            return True
+
+    _FakeGLib.reset()
+    plugin = DummyPlugin()
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
+
+    backend = GtkRuntimeSignalBackend(_TimerFakeGtk)
+    window = MainWindow()
+
+    srcdir_dialog = backend.get_object("SrcdirDialog")
+    srcdir_l = backend.get_object("btnOpenSrcdirL")
+    interval = backend.get_object("spnInterval")
+    watch_start = backend.get_object("btnDaemonize")
+    watch_stop = backend.get_object("btnCancelDaemonize")
+    watch_current = backend.get_object("lblWatchCurrent")
+
+    left_dir = tmp_path / "watch-left"
+    left_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (left_dir / "left-2.jpg").write_bytes(b"left-2")
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_pick_watch_srcdir",
+            "on_watch_start",
+            "on_watch_tick",
+            "on_watch_stop",
+            "on_watch_interval_change",
+        ),
+    )
+    backend.connect_signals(dispatch)
+
+    srcdir_l.click()
+    srcdir_dialog.set_current_folder(str(left_dir))
+    srcdir_dialog.confirm()
+
+    interval.set_value(45)
+    interval.emit("value-changed", interval)
+
+    watch_start.click()
+
+    assert backend._watch_timer_source_id == 1
+    assert _FakeGLib.registered_sources[1]["interval_ms"] == 45000
+    assert plugin.calls == [(str(left_dir / "left-1.jpg"), False)]
+
+    timer_callback = _FakeGLib.registered_sources[1]["callback"]
+    assert timer_callback() is True
+    assert watch_current.text == f"Watch current: L={left_dir / 'left-2.jpg'} | R=-"
+    assert plugin.calls[-1] == (str(left_dir / "left-2.jpg"), False)
+
+    watch_stop.click()
+
+    assert backend._watch_timer_source_id is None
+    assert _FakeGLib.removed_sources == [1]
 
 
 def test_runtime_backend_open_l_uses_dialog_selection_and_calls_pick_handler():

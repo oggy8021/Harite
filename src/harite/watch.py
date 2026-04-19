@@ -1,6 +1,7 @@
 """Watch command helpers (minimum skeleton stage)."""
 from __future__ import annotations
 
+from dataclasses import dataclass
 import random
 import time
 from pathlib import Path
@@ -8,6 +9,13 @@ from typing import Callable, List
 
 
 _IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp"}
+
+
+@dataclass(frozen=True)
+class WatchCycleState:
+    index: int = 0
+    previous_selected: Path | None = None
+    completed: int = 0
 
 
 def collect_watch_input_images(input_dir: Path) -> List[Path]:
@@ -55,6 +63,28 @@ def select_next_image(
     raise ValueError("mode must be one of: sequential, random")
 
 
+def run_watch_cycle(
+    images: List[Path],
+    mode: str,
+    state: WatchCycleState,
+    rng: random.Random | None = None,
+) -> tuple[Path, WatchCycleState]:
+    """Run a single watch cycle and return the updated state."""
+    selected, next_index = select_next_image(
+        images,
+        mode,
+        state.index,
+        previous_selected=state.previous_selected,
+        rng=rng,
+    )
+    next_state = WatchCycleState(
+        index=next_index,
+        previous_selected=selected,
+        completed=state.completed + 1,
+    )
+    return selected, next_state
+
+
 def run_watch_cycles(
     images: List[Path],
     mode: str,
@@ -69,23 +99,14 @@ def run_watch_cycles(
     if iterations is not None and iterations < 1:
         raise ValueError("iterations must be >= 1")
 
-    index = 0
-    completed = 0
-    previous_selected: Path | None = None
+    state = WatchCycleState()
 
-    while iterations is None or completed < iterations:
-        selected, index = select_next_image(
-            images,
-            mode,
-            index,
-            previous_selected=previous_selected,
-        )
-        on_cycle(selected, completed)
-        previous_selected = selected
-        completed += 1
+    while iterations is None or state.completed < iterations:
+        selected, state = run_watch_cycle(images, mode, state)
+        on_cycle(selected, state.completed - 1)
 
         # Sleep only if another cycle may follow.
-        if iterations is None or completed < iterations:
+        if iterations is None or state.completed < iterations:
             sleep_fn(interval_sec)
 
-    return completed
+    return state.completed

@@ -495,7 +495,7 @@ def apply(
         raise typer.Exit(code=3)
 
 
-@app.command()
+@app.command(help="Watch a directory and rotate wallpapers with the existing apply path.")
 def watch(
     input: Path = typer.Option(..., "--input", help="Input directory containing images"),
     interval_sec: int = typer.Option(..., "--interval-sec", help="Cycle interval in seconds (>=1)"),

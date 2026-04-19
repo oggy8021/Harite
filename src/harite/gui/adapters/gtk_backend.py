@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Callable
 
-from harite.watch import collect_watch_input_images, select_next_image
+from harite.watch import WatchCycleState, collect_watch_input_images, run_watch_cycle
 
 
 SAVE_PATH_DIALOG_OBJECT_ALIASES: tuple[str, ...] = (
@@ -492,10 +492,11 @@ class GtkRuntimeSignalBackend:
         self._watch_srcdir_l = ""
         self._watch_srcdir_r = ""
         self._watch_running = False
-        self._watch_index_l = 0
-        self._watch_index_r = 0
+        self._watch_state_l = WatchCycleState()
+        self._watch_state_r = WatchCycleState()
         self._watch_previous_l: Path | None = None
         self._watch_previous_r: Path | None = None
+        self._watch_timer_source_id: int | None = None
 
         window = gtk_module.Window(title="Harite")
         if hasattr(window, "set_resizable"):
@@ -1000,6 +1001,10 @@ class GtkRuntimeSignalBackend:
             if hasattr(watch_current_label, "set_xalign"):
                 watch_current_label.set_xalign(0.0)
             watch_detail_row.pack_start(watch_current_label, False, False, 0)
+            watch_output_label = gtk_module.Label(label="Watch output: .")
+            if hasattr(watch_output_label, "set_xalign"):
+                watch_output_label.set_xalign(0.0)
+            watch_detail_row.pack_start(watch_output_label, False, False, 0)
 
             watch_page_shell = _build_centered_page(watch_tab_box)
             command_tabs.append_page(watch_page_shell, watch_tab_title)
@@ -1155,6 +1160,7 @@ class GtkRuntimeSignalBackend:
                 "lblWatchSummary": watch_summary_label,
                 "lblWatchSources": watch_sources_label,
                 "lblWatchCurrent": watch_current_label,
+                "lblWatchOutput": watch_output_label,
                 **{object_name: save_path_state_label for object_name in SAVE_PATH_STATE_LABEL_ALIASES},
                 **{object_name: save_path_dialog_proxy for object_name in SAVE_PATH_DIALOG_OBJECT_ALIASES},
             }
@@ -1371,6 +1377,77 @@ class GtkRuntimeSignalBackend:
             self._set_label_text("lblWatchCurrent", "Watch current: idle")
             return
         self._set_label_text("lblWatchCurrent", f"Watch current: L={current_left} | R={current_right}")
+
+    def _refresh_watch_output_label(self, output_dir: str | None = None) -> None:
+        value = str(output_dir or "").strip() or "."
+        self._set_label_text("lblWatchOutput", f"Watch output: {value}")
+
+    def _get_handler_owner(self, handler_name: str) -> Any | None:
+        callback = self._signal_handlers.get(handler_name)
+        if callback is None:
+            return None
+        return getattr(callback, "__self__", None)
+
+    def _sync_watch_state_from_owner(self, owner: Any) -> None:
+        self._watch_srcdir_l = str(getattr(owner, "watch_srcdir_l", self._watch_srcdir_l) or "")
+        self._watch_srcdir_r = str(getattr(owner, "watch_srcdir_r", self._watch_srcdir_r) or "")
+        self._watch_running = bool(getattr(owner, "watch_running", self._watch_running))
+        self._watch_state_l = getattr(owner, "_watch_state_l", self._watch_state_l)
+        self._watch_state_r = getattr(owner, "_watch_state_r", self._watch_state_r)
+        self._watch_previous_l = getattr(owner, "_watch_previous_l", self._watch_previous_l)
+        self._watch_previous_r = getattr(owner, "_watch_previous_r", self._watch_previous_r)
+        self._refresh_watch_source_labels()
+        self._refresh_watch_summary_label()
+        self._refresh_watch_current_label()
+        form_state = getattr(owner, "form_state", None)
+        self._refresh_watch_output_label(getattr(form_state, "output_dir", None) if form_state is not None else None)
+
+    def _get_glib_module(self) -> Any | None:
+        return getattr(self._gtk, "GLib", None)
+
+    def _stop_watch_timer(self) -> None:
+        if self._watch_timer_source_id is None:
+            return
+
+        glib = self._get_glib_module()
+        if glib is not None and hasattr(glib, "source_remove"):
+            glib.source_remove(self._watch_timer_source_id)
+        self._watch_timer_source_id = None
+
+    def _on_watch_timer_event(self) -> bool:
+        if not self._watch_running:
+            self._watch_timer_source_id = None
+            return False
+
+        ok = self.run_watch_cycle_once()
+        if not ok or not self._watch_running:
+            self._watch_timer_source_id = None
+            return False
+        return True
+
+    def _start_watch_timer(self, interval_seconds: int) -> bool:
+        self._stop_watch_timer()
+
+        glib = self._get_glib_module()
+        if glib is None or not hasattr(glib, "timeout_add"):
+            return False
+
+        interval_ms = max(1, int(interval_seconds)) * 1000
+        self._watch_timer_source_id = int(glib.timeout_add(interval_ms, self._on_watch_timer_event))
+        return True
+
+    def _run_watch_cycle_for_side(self, side: str, source_dir: Path) -> str:
+        images = collect_watch_input_images(source_dir)
+        if side == "L":
+            selected, state = run_watch_cycle(images, "sequential", self._watch_state_l)
+            self._watch_state_l = state
+            self._watch_previous_l = selected
+            return str(selected)
+
+        selected, state = run_watch_cycle(images, "sequential", self._watch_state_r)
+        self._watch_state_r = state
+        self._watch_previous_r = selected
+        return str(selected)
 
     def _notify_srcdir_dialog_destroy(self) -> None:
         callback = self._signal_handlers.get("on_close_srcdir_dialog")
@@ -1659,13 +1736,19 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Watch", state="handler-missing", error="handler not connected")
             return
         try:
-            ok = callback(widget)
+            interval = 0
+            if hasattr(widget, "get_value_as_int"):
+                interval = int(widget.get_value_as_int())
+            elif hasattr(widget, "get_value"):
+                interval = int(widget.get_value())
+
+            owner = self._get_handler_owner("on_watch_interval_change")
+            if owner is not None:
+                ok = callback(interval)
+            else:
+                ok = callback(widget)
+
             if ok:
-                interval = 0
-                if hasattr(widget, "get_value_as_int"):
-                    interval = int(widget.get_value_as_int())
-                elif hasattr(widget, "get_value"):
-                    interval = int(widget.get_value())
                 self._set_feedback(phase="Watch", state=f"interval-updated({interval}s)")
             else:
                 self._set_feedback(phase="Watch", state="interval-failed", error="interval returned false")
@@ -1683,33 +1766,30 @@ class GtkRuntimeSignalBackend:
                 self._set_feedback(phase="Watch", state="start-failed", error="watch start returned false")
                 return
 
+            owner = self._get_handler_owner("on_watch_start")
+            if owner is not None:
+                self._sync_watch_state_from_owner(owner)
+                interval_seconds = int(getattr(owner, "watch_interval_seconds", 0) or 0)
+                self._start_watch_timer(interval_seconds)
+                self._set_feedback(phase="Watch", state="started")
+                return
+
             selected_left = "-"
             selected_right = "-"
             if self._watch_srcdir_l:
-                images = collect_watch_input_images(Path(self._watch_srcdir_l))
-                selected, self._watch_index_l = select_next_image(
-                    images,
-                    "sequential",
-                    self._watch_index_l,
-                    previous_selected=self._watch_previous_l,
-                )
-                self._watch_previous_l = selected
-                selected_left = str(selected)
+                selected_left = self._run_watch_cycle_for_side("L", Path(self._watch_srcdir_l))
             if self._watch_srcdir_r:
-                images = collect_watch_input_images(Path(self._watch_srcdir_r))
-                selected, self._watch_index_r = select_next_image(
-                    images,
-                    "sequential",
-                    self._watch_index_r,
-                    previous_selected=self._watch_previous_r,
-                )
-                self._watch_previous_r = selected
-                selected_right = str(selected)
+                selected_right = self._run_watch_cycle_for_side("R", Path(self._watch_srcdir_r))
 
             self._watch_running = True
             self._refresh_watch_summary_label()
             self._refresh_watch_source_labels()
             self._refresh_watch_current_label(selected_left, selected_right)
+            interval_widget = self._objects.get("spnInterval")
+            interval_seconds = 0
+            if interval_widget is not None and hasattr(interval_widget, "get_value_as_int"):
+                interval_seconds = int(interval_widget.get_value_as_int())
+            self._start_watch_timer(interval_seconds)
             self._set_feedback(phase="Watch", state="started")
         except Exception as exc:
             self._set_feedback(phase="Watch", state="error", error=str(exc))
@@ -1724,12 +1804,58 @@ class GtkRuntimeSignalBackend:
             if not ok:
                 self._set_feedback(phase="Watch", state="stop-ignored")
                 return
+
+            owner = self._get_handler_owner("on_watch_stop")
+            if owner is not None:
+                self._stop_watch_timer()
+                self._sync_watch_state_from_owner(owner)
+                self._set_feedback(phase="Watch", state="stopped")
+                return
+
             self._watch_running = False
+            self._stop_watch_timer()
             self._refresh_watch_summary_label()
             self._refresh_watch_current_label()
             self._set_feedback(phase="Watch", state="stopped")
         except Exception as exc:
             self._set_feedback(phase="Watch", state="error", error=str(exc))
+
+    def run_watch_cycle_once(self) -> bool:
+        if not self._watch_running:
+            return False
+
+        callback = self._signal_handlers.get("on_watch_tick")
+        if callback is not None:
+            try:
+                ok = bool(callback())
+            except Exception as exc:
+                self._set_feedback(phase="Watch", state="error", error=str(exc))
+                return False
+            if not ok:
+                return False
+
+            owner = self._get_handler_owner("on_watch_tick")
+            if owner is not None:
+                self._sync_watch_state_from_owner(owner)
+                return True
+
+        selected_left = "-"
+        selected_right = "-"
+        if self._watch_srcdir_l:
+            try:
+                selected_left = self._run_watch_cycle_for_side("L", Path(self._watch_srcdir_l))
+            except ValueError as exc:
+                self._set_feedback(phase="Watch", state="error", error=str(exc))
+                return False
+        if self._watch_srcdir_r:
+            try:
+                selected_right = self._run_watch_cycle_for_side("R", Path(self._watch_srcdir_r))
+            except ValueError as exc:
+                self._set_feedback(phase="Watch", state="error", error=str(exc))
+                return False
+
+        self._refresh_watch_current_label(selected_left, selected_right)
+        return True
 
     def _set_toggle_active(self, object_name: str, active: bool) -> None:
         toggle = self._objects.get(object_name)
