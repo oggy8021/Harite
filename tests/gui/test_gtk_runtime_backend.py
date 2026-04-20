@@ -1313,6 +1313,42 @@ def test_runtime_backend_prefs_apply_load_save_and_close_dispatch_handlers(tmp_p
     assert backend.get_object("lblPrefsState").text == "Prefs: closed"
 
 
+def test_runtime_backend_prefs_load_updates_watch_tab_state(tmp_path):
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    import_path = tmp_path / "watch-prefs.json"
+    import_path.write_text(
+        """
+{
+  "plugin": "linux",
+  "apply_mode": "per-monitor-auto-split",
+  "watch_interval_seconds": 45,
+  "watch_srcdir_l": "/watch/left",
+  "watch_srcdir_r": "/watch/right"
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_open_settings_dialog",
+            "on_get_preferences_config",
+            "on_load_preferences_file",
+            "on_close_settings_dialog",
+        ),
+    )
+    backend.connect_signals(dispatch)
+
+    backend.get_object("btnSetting").click()
+    backend.get_object("entPrefsImportPath").set_text(str(import_path))
+    backend.get_object("btnPrefsLoad").click()
+
+    assert backend.get_object("lblWatchSources").text == "Watch srcdirs: L=/watch/left | R=/watch/right"
+    assert backend.get_object("spnInterval").get_value_as_int() == 45
+
+
 def test_runtime_backend_optimize_sets_running_state_before_handler_call():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
