@@ -39,7 +39,7 @@ class MainWindow:
         self.plugin_name = self._default_plugin_name()
         self.last_saved_files: list[Path] = []
         self.save_target_display = "Save target: not-selected"
-        self.apply_mode = "single-file"
+        self.apply_mode = "per-monitor-auto-split" if self.plugin_name == "linux" else "single-file"
         self._pre_two_screen_resolution: str | None = None
         self.watch_interval_seconds = 60
         self.watch_srcdir_l = ""

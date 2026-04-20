@@ -7,6 +7,7 @@ where PyGObject/GTK is available.
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 from typing import Any, Callable
 
 from harite.watch import WatchCycleState, collect_watch_input_images, run_watch_cycle
@@ -35,6 +36,10 @@ SAVE_PATH_DESTROY_HANDLER_NAMES: tuple[str, ...] = (
 SETTINGS_DIALOG_OBJECT_ALIASES: tuple[str, ...] = (
     "SettingsDialog",
 )
+
+
+def _default_apply_mode() -> str:
+    return "per-monitor-auto-split" if sys.platform not in {"win32", "darwin"} else "single-file"
 
 
 class _SavePathDialogProxy:
@@ -751,19 +756,28 @@ class GtkRuntimeSignalBackend:
 
             apply_mode_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             apply_group.pack_start(apply_mode_row, False, False, 0)
+            apply_mode_help_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            apply_group.pack_start(apply_mode_help_row, False, False, 0)
             rad_apply_single = gtk_module.RadioButton.new_with_label(None, "No Split")
             rad_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(
                 rad_apply_single,
                 "Auto-Split",
             )
-            if hasattr(rad_apply_single, "set_active"):
-                rad_apply_single.set_active(True)
-            apply_mode_label = gtk_module.Label(label="Apply the optimized image as a single file.")
+            default_apply_mode = _default_apply_mode()
+            if default_apply_mode == "per-monitor-auto-split":
+                if hasattr(rad_apply_per_monitor, "set_active"):
+                    rad_apply_per_monitor.set_active(True)
+                apply_mode_help_text = "Split the optimized image and apply per display."
+            else:
+                if hasattr(rad_apply_single, "set_active"):
+                    rad_apply_single.set_active(True)
+                apply_mode_help_text = "Apply the optimized image as a single file."
+            apply_mode_label = gtk_module.Label(label=apply_mode_help_text)
             if hasattr(apply_mode_label, "set_xalign"):
                 apply_mode_label.set_xalign(0.0)
             apply_mode_row.pack_start(rad_apply_per_monitor, False, False, 0)
             apply_mode_row.pack_start(rad_apply_single, False, False, 0)
-            apply_mode_row.pack_start(apply_mode_label, True, True, 0)
+            apply_mode_help_row.pack_start(apply_mode_label, True, True, 0)
 
             do_it_plan_label = gtk_module.Label(label="Debug: apply is immediate")
             if hasattr(do_it_plan_label, "set_xalign"):
