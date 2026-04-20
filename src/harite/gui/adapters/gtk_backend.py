@@ -1418,6 +1418,8 @@ class GtkRuntimeSignalBackend:
         self._watch_state_r = getattr(owner, "_watch_state_r", self._watch_state_r)
         self._watch_previous_l = getattr(owner, "_watch_previous_l", self._watch_previous_l)
         self._watch_previous_r = getattr(owner, "_watch_previous_r", self._watch_previous_r)
+        interval_seconds = int(getattr(owner, "watch_interval_seconds", 0) or 0)
+        self._set_spin_value("spnInterval", interval_seconds if interval_seconds > 0 else 60)
         self._refresh_watch_source_labels()
         self._refresh_watch_summary_label()
         self._refresh_watch_current_label()
@@ -2288,6 +2290,9 @@ class GtkRuntimeSignalBackend:
             if ok:
                 self._refresh_preferences_dialog_config_from_getter()
                 self._sync_preferences_widgets_from_dialog()
+                owner = self._get_handler_owner("on_open_settings_dialog")
+                if owner is not None:
+                    self._sync_watch_state_from_owner(owner)
                 if dialog is not None and hasattr(dialog, "show"):
                     dialog.show()
                 self._set_label_text("lblPrefsState", "Prefs: opened")
@@ -2306,6 +2311,9 @@ class GtkRuntimeSignalBackend:
         try:
             ok = callback(self._sync_preferences_dialog_from_widgets())
             if ok:
+                owner = self._get_handler_owner("on_apply_preferences")
+                if owner is not None:
+                    self._sync_watch_state_from_owner(owner)
                 if hasattr(dialog, "hide"):
                     dialog.hide()
                 self._set_label_text("lblPrefsState", "Prefs: applied")
@@ -2327,6 +2335,9 @@ class GtkRuntimeSignalBackend:
             if ok:
                 self._refresh_preferences_dialog_config_from_getter()
                 self._sync_preferences_widgets_from_dialog()
+                owner = self._get_handler_owner("on_load_preferences_file")
+                if owner is not None:
+                    self._sync_watch_state_from_owner(owner)
                 self._set_label_text("lblPrefsState", "Prefs: loaded")
                 self._set_feedback(phase="PrefsLoad", state="loaded")
             else:
