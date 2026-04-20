@@ -883,6 +883,11 @@ class GtkRuntimeSignalBackend:
             if hasattr(prefs_window, "set_resizable"):
                 prefs_window.set_resizable(True)
             settings_dialog_proxy = _SettingsDialogProxy(prefs_window)
+            if hasattr(prefs_window, "connect"):
+                prefs_window.connect(
+                    "delete-event",
+                    lambda *_args: self._on_preferences_window_delete_event(),
+                )
             srcdir_dialog_proxy = _SrcdirDialogProxy(
                 gtk_module,
                 window,
@@ -2361,6 +2366,10 @@ class GtkRuntimeSignalBackend:
                 pass
         self._set_label_text("lblPrefsState", "Prefs: closed")
         self._set_feedback(phase="Prefs", state="closed")
+
+    def _on_preferences_window_delete_event(self) -> bool:
+        self._on_preferences_close_clicked()
+        return True
 
     def _on_color_clicked(self, *_args: Any) -> None:
         callback = self._signal_handlers.get("on_set_color")
