@@ -6,8 +6,8 @@ where PyGObject/GTK is available.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
-import sys
 from typing import Any, Callable
 
 from harite.watch import WatchCycleState, collect_watch_input_images, run_watch_cycle
@@ -39,7 +39,14 @@ SETTINGS_DIALOG_OBJECT_ALIASES: tuple[str, ...] = (
 
 
 def _default_apply_mode() -> str:
-    return "per-monitor-auto-split" if sys.platform not in {"win32", "darwin"} else "single-file"
+    session_markers = (
+        os.environ.get("XDG_CURRENT_DESKTOP", ""),
+        os.environ.get("XDG_SESSION_DESKTOP", ""),
+        os.environ.get("DESKTOP_SESSION", ""),
+        os.environ.get("GDMSESSION", ""),
+    )
+    is_xfce_session = any("xfce" in marker.strip().lower() for marker in session_markers if marker)
+    return "per-monitor-auto-split" if is_xfce_session else "single-file"
 
 
 class _SavePathDialogProxy:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-import sys
+import os
 from typing import Any
 
 from .optimize_settings import AUTO
@@ -108,11 +108,14 @@ class AppPreferences:
 
     @staticmethod
     def _default_apply_mode(default_plugin: str) -> str:
-        if default_plugin == "linux":
-            return "per-monitor-auto-split"
-        if default_plugin:
-            return "single-file"
-        return "per-monitor-auto-split" if sys.platform not in {"win32", "darwin"} else "single-file"
+        session_markers = (
+            os.environ.get("XDG_CURRENT_DESKTOP", ""),
+            os.environ.get("XDG_SESSION_DESKTOP", ""),
+            os.environ.get("DESKTOP_SESSION", ""),
+            os.environ.get("GDMSESSION", ""),
+        )
+        is_xfce_session = any("xfce" in marker.strip().lower() for marker in session_markers if marker)
+        return "per-monitor-auto-split" if is_xfce_session else "single-file"
 
     @classmethod
     def defaults(cls, *, default_plugin: str) -> "AppPreferences":

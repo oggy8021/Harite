@@ -7,6 +7,7 @@ package remains importable in environments without GUI libraries.
 from __future__ import annotations
 
 from dataclasses import replace
+import os
 from pathlib import Path
 import sys
 
@@ -39,7 +40,7 @@ class MainWindow:
         self.plugin_name = self._default_plugin_name()
         self.last_saved_files: list[Path] = []
         self.save_target_display = "Save target: not-selected"
-        self.apply_mode = "per-monitor-auto-split" if self.plugin_name == "linux" else "single-file"
+        self.apply_mode = self._default_apply_mode()
         self._pre_two_screen_resolution: str | None = None
         self.watch_interval_seconds = 60
         self.watch_srcdir_l = ""
@@ -101,6 +102,16 @@ class MainWindow:
         if self.available_plugins:
             return self.available_plugins[0]
         return "windows"
+
+    def _default_apply_mode(self) -> str:
+        session_markers = (
+            os.environ.get("XDG_CURRENT_DESKTOP", ""),
+            os.environ.get("XDG_SESSION_DESKTOP", ""),
+            os.environ.get("DESKTOP_SESSION", ""),
+            os.environ.get("GDMSESSION", ""),
+        )
+        is_xfce_session = any("xfce" in marker.strip().lower() for marker in session_markers if marker)
+        return "per-monitor-auto-split" if is_xfce_session else "single-file"
 
     def on_change_plugin(self, plugin_name: str) -> bool:
         name = (plugin_name or "").strip().lower()
