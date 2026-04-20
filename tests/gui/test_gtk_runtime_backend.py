@@ -1152,11 +1152,11 @@ def test_runtime_backend_apply_success_updates_apply_target():
 def test_runtime_backend_apply_mode_defaults_to_single_file():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    assert backend.get_object("radApplySingle").label == "Default"
+    assert backend.get_object("radApplySingle").label == "No Split"
     assert backend.get_object("radApplyPerMonitor").label == "Auto-split"
     assert backend.get_object("radApplySingle").get_active() is True
     assert backend.get_object("radApplyPerMonitor").get_active() is False
-    assert backend.get_object("lblApplyMode").text == "Default: normal apply"
+    assert backend.get_object("lblApplyMode").text == "No Split: apply the optimized image as a single file."
 
 
 def test_runtime_backend_apply_mode_toggle_dispatches_and_updates_label():
@@ -1168,7 +1168,7 @@ def test_runtime_backend_apply_mode_toggle_dispatches_and_updates_label():
     backend.get_object("radApplyPerMonitor").click()
 
     assert observed["mode"] == "per-monitor-auto-split"
-    assert backend.get_object("lblApplyMode").text == "Additional request: auto-split"
+    assert backend.get_object("lblApplyMode").text == "Auto-split: split the optimized image and apply per display."
     assert backend.get_object("lblStatus").text == "ApplyMode: updated"
 
 
@@ -1182,7 +1182,7 @@ def test_runtime_backend_apply_mode_can_return_to_default_from_per_monitor():
     backend.get_object("radApplySingle").click()
 
     assert observed == ["per-monitor-auto-split", "single-file"]
-    assert backend.get_object("lblApplyMode").text == "Default: normal apply"
+    assert backend.get_object("lblApplyMode").text == "No Split: apply the optimized image as a single file."
 
 
 def test_runtime_backend_cross_layout_places_top_and_bottom_per_side():

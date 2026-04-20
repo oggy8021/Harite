@@ -751,14 +751,14 @@ class GtkRuntimeSignalBackend:
 
             apply_mode_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             apply_group.pack_start(apply_mode_row, False, False, 0)
-            rad_apply_single = gtk_module.RadioButton.new_with_label(None, "Default")
+            rad_apply_single = gtk_module.RadioButton.new_with_label(None, "No Split")
             rad_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(
                 rad_apply_single,
                 "Auto-split",
             )
             if hasattr(rad_apply_single, "set_active"):
                 rad_apply_single.set_active(True)
-            apply_mode_label = gtk_module.Label(label="Default: normal apply")
+            apply_mode_label = gtk_module.Label(label="No Split: apply the optimized image as a single file.")
             if hasattr(apply_mode_label, "set_xalign"):
                 apply_mode_label.set_xalign(0.0)
             apply_mode_row.pack_start(rad_apply_single, False, False, 0)
@@ -2172,9 +2172,9 @@ class GtkRuntimeSignalBackend:
         is_active = True
         if hasattr(widget, "get_active"):
             is_active = bool(widget.get_active())
-        label = "Default: normal apply"
+        label = "No Split: apply the optimized image as a single file."
         if mode == "per-monitor-auto-split" and is_active:
-            label = "Additional request: auto-split"
+            label = "Auto-split: split the optimized image and apply per display."
         self._set_label_text("lblApplyMode", label)
 
         if not is_active:
