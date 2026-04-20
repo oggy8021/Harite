@@ -610,6 +610,25 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(m
     assert backend.run_watch_cycle_once() is False
 
 
+def test_runtime_backend_connect_signals_syncs_watch_output_from_owner():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    window.form_state.output_dir = "/gui/pictures"
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_watch_start",
+            "on_watch_tick",
+            "on_watch_stop",
+            "on_watch_interval_change",
+        ),
+    )
+    backend.connect_signals(dispatch)
+
+    assert backend.get_object("lblWatchOutput").text == "Watch output: /gui/pictures"
+
+
 def test_runtime_backend_watch_start_registers_timer_and_stop_removes_it(monkeypatch, tmp_path):
     class DummyPlugin:
         def __init__(self):

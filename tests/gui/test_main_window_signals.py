@@ -750,6 +750,14 @@ def test_watch_start_normalizes_empty_output_dir(monkeypatch, tmp_path):
             return True
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+    home = tmp_path / "home"
+    xdg_config = tmp_path / "xdg-config"
+    home.mkdir()
+    xdg_config.mkdir()
+    (xdg_config / "user-dirs.dirs").write_text('XDG_PICTURES_DIR="$HOME/Pictures"\n', encoding="utf-8")
+    monkeypatch.setattr("harite.gui.views.main_window.Path.home", lambda: home)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config))
+    monkeypatch.setattr("harite.gui.views.main_window.sys.platform", "linux")
 
     window = MainWindow()
     window.form_state.output_dir = ""
@@ -759,8 +767,54 @@ def test_watch_start_normalizes_empty_output_dir(monkeypatch, tmp_path):
 
     assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
     assert window.on_watch_start() is True
-    assert window.form_state.output_dir == "."
-    assert window.watch_output_display == "Watch output: ."
+    assert window.form_state.output_dir == str(home / "Pictures")
+    assert window.watch_output_display == f"Watch output: {home / 'Pictures'}"
+
+
+def test_main_window_defaults_output_dir_to_xdg_pictures(monkeypatch, tmp_path):
+    home = tmp_path / "home"
+    xdg_config = tmp_path / "xdg-config"
+    home.mkdir()
+    xdg_config.mkdir()
+    (xdg_config / "user-dirs.dirs").write_text('XDG_PICTURES_DIR="$HOME/MyPictures"\n', encoding="utf-8")
+    monkeypatch.setattr("harite.gui.views.main_window.Path.home", lambda: home)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config))
+    monkeypatch.setattr("harite.gui.views.main_window.sys.platform", "linux")
+
+    window = MainWindow()
+
+    assert window.form_state.output_dir == str(home / "MyPictures")
+    assert window.watch_output_display == f"Watch output: {home / 'MyPictures'}"
+
+
+def test_main_window_defaults_output_dir_to_home_pictures_when_xdg_config_missing(monkeypatch, tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setattr("harite.gui.views.main_window.Path.home", lambda: home)
+    monkeypatch.delenv("XDG_PICTURES_DIR", raising=False)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "missing-xdg-config"))
+    monkeypatch.setattr("harite.gui.views.main_window.sys.platform", "linux")
+
+    window = MainWindow()
+
+    assert window.form_state.output_dir == str(home / "Pictures")
+    assert window.watch_output_display == f"Watch output: {home / 'Pictures'}"
+
+
+def test_main_window_defaults_output_dir_to_home_pictures_when_windows_known_folder_unavailable(monkeypatch, tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setattr("harite.gui.views.main_window.Path.home", lambda: home)
+    monkeypatch.delenv("XDG_PICTURES_DIR", raising=False)
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    monkeypatch.setattr("harite.gui.views.main_window.sys.platform", "win32")
+    monkeypatch.setattr(MainWindow, "_resolve_windows_pictures_dir", lambda self: None)
+    monkeypatch.setattr(MainWindow, "_resolve_xdg_pictures_dir", lambda self: None)
+
+    window = MainWindow()
+
+    assert window.form_state.output_dir == str(home / "Pictures")
+    assert window.watch_output_display == f"Watch output: {home / 'Pictures'}"
 
 
 def test_watch_single_source_tick_stops_when_plugin_apply_fails(monkeypatch, tmp_path):

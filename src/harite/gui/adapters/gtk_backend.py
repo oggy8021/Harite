@@ -1275,9 +1275,15 @@ class GtkRuntimeSignalBackend:
 
     def connect_signals(self, mapping: dict[str, Callable[..., Any]]) -> None:
         self._signal_handlers.update(mapping)
+        owner = self._get_connected_owner()
+        if owner is not None:
+            self._sync_watch_state_from_owner(owner)
 
     def connect(self, handler_name: str, callback: Callable[..., Any]) -> None:
         self._signal_handlers[handler_name] = callback
+        owner = self._get_connected_owner()
+        if owner is not None:
+            self._sync_watch_state_from_owner(owner)
 
     def _configure_spin_button(
         self,
@@ -1409,6 +1415,13 @@ class GtkRuntimeSignalBackend:
         if callback is None:
             return None
         return getattr(callback, "__self__", None)
+
+    def _get_connected_owner(self) -> Any | None:
+        for callback in self._signal_handlers.values():
+            owner = getattr(callback, "__self__", None)
+            if owner is not None:
+                return owner
+        return None
 
     def _sync_watch_state_from_owner(self, owner: Any) -> None:
         self._watch_srcdir_l = str(getattr(owner, "watch_srcdir_l", self._watch_srcdir_l) or "")
