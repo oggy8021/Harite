@@ -6,6 +6,7 @@ package remains importable in environments without GUI libraries.
 
 from __future__ import annotations
 
+import ctypes
 from dataclasses import replace
 import os
 from pathlib import Path
@@ -63,10 +64,11 @@ class MainWindow:
         self.settings_dialog_open = False
         self.input_path_l = ""
         self.input_path_r = ""
+        default_output_dir = self._default_output_dir()
         self.form_state = OptimizeFormState(
             input_value="",
             resolution="1920x1080",
-            output_dir=str(Path(".")),
+            output_dir=default_output_dir,
         )
         self.preferences = AppPreferences.defaults(default_plugin=self.plugin_name)
         self.layout_version = "phase6-layout-redefinition"
@@ -82,6 +84,7 @@ class MainWindow:
             "optimize",
             "apply",
         )
+        self._update_watch_output_display()
 
     @property
     def save_path_dialog_open(self) -> bool:
@@ -112,6 +115,62 @@ class MainWindow:
         )
         is_xfce_session = any("xfce" in marker.strip().lower() for marker in session_markers if marker)
         return "per-monitor-auto-split" if is_xfce_session else "single-file"
+
+    def _default_output_dir(self) -> str:
+        return str(self._resolve_default_output_dir())
+
+    def _resolve_default_output_dir(self) -> Path:
+        if sys.platform == "win32":
+            pictures_dir = self._resolve_windows_pictures_dir()
+            if pictures_dir is not None:
+                return pictures_dir
+
+        pictures_dir = self._resolve_xdg_pictures_dir()
+        if pictures_dir is not None:
+            return pictures_dir
+
+        return Path.home() / "Pictures"
+
+    def _resolve_windows_pictures_dir(self) -> Path | None:
+        try:
+            buffer = ctypes.create_unicode_buffer(260)
+            result = ctypes.windll.shell32.SHGetFolderPathW(None, 0x27, None, 0, buffer)
+        except Exception:
+            return None
+
+        if result != 0 or not buffer.value:
+            return None
+        return Path(buffer.value)
+
+    def _resolve_xdg_pictures_dir(self) -> Path | None:
+        env_value = str(os.environ.get("XDG_PICTURES_DIR", "") or "").strip()
+        if env_value:
+            return self._normalize_pictures_dir(env_value)
+
+        config_home = Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"))
+        user_dirs_path = config_home / "user-dirs.dirs"
+        if not user_dirs_path.is_file():
+            return None
+
+        try:
+            for raw_line in user_dirs_path.read_text(encoding="utf-8").splitlines():
+                line = raw_line.strip()
+                if not line or line.startswith("#") or not line.startswith("XDG_PICTURES_DIR="):
+                    continue
+                return self._normalize_pictures_dir(line.split("=", 1)[1].strip())
+        except OSError:
+            return None
+        return None
+
+    def _normalize_pictures_dir(self, raw_value: str) -> Path:
+        value = raw_value.strip().strip('"').strip("'")
+        home = str(Path.home())
+        value = value.replace("$HOME", home).replace("${HOME}", home)
+        value = os.path.expandvars(value)
+        path = Path(value).expanduser()
+        if path.is_absolute():
+            return path
+        return Path.home() / path
 
     def on_change_plugin(self, plugin_name: str) -> bool:
         name = (plugin_name or "").strip().lower()
@@ -281,7 +340,7 @@ class MainWindow:
         self.watch_source_display = f"Watch srcdirs: L={left} | R={right}"
 
     def _update_watch_output_display(self) -> None:
-        output_dir = str(Path(self.form_state.output_dir)) if self.form_state.output_dir else "."
+        output_dir = str(Path(self.form_state.output_dir)) if self.form_state.output_dir else self._default_output_dir()
         self.watch_output_display = f"Watch output: {output_dir}"
 
     def _update_watch_summary_display(self) -> None:
@@ -701,7 +760,7 @@ class MainWindow:
     def _ensure_watch_output_dir(self) -> None:
         output_dir = str(self.form_state.output_dir or "").strip()
         if not output_dir:
-            self.form_state.output_dir = "."
+            self.form_state.output_dir = self._default_output_dir()
         self._update_watch_output_display()
 
     def _cleanup_watch_generated_files(self, paths: tuple[Path, ...]) -> None:
