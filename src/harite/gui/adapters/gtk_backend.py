@@ -942,8 +942,6 @@ class GtkRuntimeSignalBackend:
             prefs_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(prefs_apply_single, "Apply Auto-split")
             if hasattr(prefs_apply_single, "set_active"):
                 prefs_apply_single.set_active(True)
-            prefs_watch_interval_spin = gtk_module.SpinButton()
-            self._configure_spin_button(prefs_watch_interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
             prefs_import_path_entry = gtk_module.Entry()
             prefs_export_path_entry = gtk_module.Entry()
 
@@ -956,7 +954,6 @@ class GtkRuntimeSignalBackend:
             _prefs_row("Scaling", prefs_scaling_entry)
             _prefs_row("Plugin", prefs_plugin_entry)
             _prefs_row("Apply", prefs_apply_mode_shell)
-            _prefs_row("Watch interval", prefs_watch_interval_spin)
             _prefs_row("Import path", prefs_import_path_entry)
             _prefs_row("Export path", prefs_export_path_entry)
 
@@ -1153,7 +1150,6 @@ class GtkRuntimeSignalBackend:
                 "entPrefsPlugin": prefs_plugin_entry,
                 "radPrefsApplySingle": prefs_apply_single,
                 "radPrefsApplyPerMonitor": prefs_apply_per_monitor,
-                "spnPrefsWatchInterval": prefs_watch_interval_spin,
                 "entPrefsImportPath": prefs_import_path_entry,
                 "entPrefsExportPath": prefs_export_path_entry,
                 "btnSetColor": btn_set_color,
@@ -1960,7 +1956,6 @@ class GtkRuntimeSignalBackend:
         self._set_spin_value("spnPrefsEmbedMaxLines", int(config.get("embed_max_lines", 3)))
         self._set_entry_text("entPrefsPlugin", config.get("plugin", "windows"))
         self._set_preferences_apply_mode(config.get("apply_mode", "single-file"))
-        self._set_spin_value("spnPrefsWatchInterval", int(config.get("watch_interval_seconds", 60)))
         if hasattr(dialog, "get_import_path"):
             self._set_entry_text("entPrefsImportPath", dialog.get_import_path())
         if hasattr(dialog, "get_export_path"):
@@ -1996,7 +1991,6 @@ class GtkRuntimeSignalBackend:
                 "embed_max_lines": self._read_spin_int("spnPrefsEmbedMaxLines"),
                 "plugin": self._read_entry_text("entPrefsPlugin") or "windows",
                 "apply_mode": self._read_preferences_apply_mode(),
-                "watch_interval_seconds": self._read_spin_int("spnPrefsWatchInterval"),
             }
         )
 
@@ -2010,6 +2004,20 @@ class GtkRuntimeSignalBackend:
             if hasattr(dialog, "set_export_path"):
                 dialog.set_export_path(export_path)
         return config
+
+    def _refresh_preferences_dialog_config_from_getter(self) -> None:
+        dialog = self._objects.get("SettingsDialog")
+        getter = self._signal_handlers.get("on_get_preferences_config")
+        if getter is None or dialog is None or not hasattr(dialog, "set_preferences_config"):
+            return
+
+        current_config: dict[str, object] = {}
+        if hasattr(dialog, "get_preferences_config"):
+            current_config = dict(dialog.get_preferences_config())
+
+        refreshed = dict(current_config)
+        refreshed.update(dict(getter()))
+        dialog.set_preferences_config(refreshed)
 
     def _is_toggle_active(self, object_name: str) -> bool:
         toggle = self._objects.get(object_name)
@@ -2273,9 +2281,7 @@ class GtkRuntimeSignalBackend:
         try:
             ok = callback()
             if ok:
-                getter = self._signal_handlers.get("on_get_preferences_config")
-                if getter is not None and dialog is not None and hasattr(dialog, "set_preferences_config"):
-                    dialog.set_preferences_config(getter())
+                self._refresh_preferences_dialog_config_from_getter()
                 self._sync_preferences_widgets_from_dialog()
                 if dialog is not None and hasattr(dialog, "show"):
                     dialog.show()
@@ -2314,9 +2320,7 @@ class GtkRuntimeSignalBackend:
             self._sync_preferences_dialog_from_widgets()
             ok = callback(dialog.get_import_path())
             if ok:
-                getter = self._signal_handlers.get("on_get_preferences_config")
-                if getter is not None and hasattr(dialog, "set_preferences_config"):
-                    dialog.set_preferences_config(getter())
+                self._refresh_preferences_dialog_config_from_getter()
                 self._sync_preferences_widgets_from_dialog()
                 self._set_label_text("lblPrefsState", "Prefs: loaded")
                 self._set_feedback(phase="PrefsLoad", state="loaded")

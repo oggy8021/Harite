@@ -1237,6 +1237,7 @@ def test_runtime_backend_prefs_button_dispatches_open_handler():
     assert backend.get_object("radPrefsApplySingle").label == "Apply Default"
     assert backend.get_object("radPrefsApplyPerMonitor").label == "Apply Auto-split"
     assert backend.get_object("radPrefsApplySingle").get_active() is True
+    assert backend.get_object("spnPrefsWatchInterval") is None
 
 
 def test_runtime_backend_prefs_apply_load_save_and_close_dispatch_handlers(tmp_path):
@@ -1252,6 +1253,7 @@ def test_runtime_backend_prefs_apply_load_save_and_close_dispatch_handlers(tmp_p
             "plugin": "linux",
             "apply_mode": "single-file",
             "watch_interval_seconds": 60,
+            "watch_srcdir_l": "/watch/left",
         }
     )
     dialog.set_import_path(str(import_path))
@@ -1270,7 +1272,6 @@ def test_runtime_backend_prefs_apply_load_save_and_close_dispatch_handlers(tmp_p
 
     backend.get_object("entPrefsResolution").set_text("auto")
     backend.get_object("entPrefsPlugin").set_text("xfce")
-    backend.get_object("spnPrefsWatchInterval").set_value(45)
     backend.get_object("entPrefsImportPath").set_text(str(import_path))
     backend.get_object("entPrefsExportPath").set_text(str(export_path))
     backend.get_object("radPrefsTwoScreenAuto").set_active(True)
@@ -1284,7 +1285,8 @@ def test_runtime_backend_prefs_apply_load_save_and_close_dispatch_handlers(tmp_p
     assert observed["apply"]["two_screen"] == "auto"
     assert observed["apply"]["plugin"] == "xfce"
     assert observed["apply"]["apply_mode"] == "per-monitor-auto-split"
-    assert observed["apply"]["watch_interval_seconds"] == 45
+    assert observed["apply"]["watch_interval_seconds"] == 60
+    assert observed["apply"]["watch_srcdir_l"] == "/watch/left"
     assert dialog.is_visible() is False
     assert backend.get_object("lblPrefsState").text == "Prefs: applied"
 
@@ -1297,12 +1299,12 @@ def test_runtime_backend_prefs_apply_load_save_and_close_dispatch_handlers(tmp_p
     assert backend.get_object("lblPrefsState").text == "Prefs: loaded"
 
     backend.get_object("entPrefsPlugin").set_text("saved-plugin")
-    backend.get_object("spnPrefsWatchInterval").set_value(77)
 
     backend.get_object("btnPrefsSave").click()
     assert observed["save"][0] == str(export_path)
     assert observed["save"][1]["plugin"] == "saved-plugin"
-    assert observed["save"][1]["watch_interval_seconds"] == 77
+    assert observed["save"][1]["watch_interval_seconds"] == 60
+    assert observed["save"][1]["watch_srcdir_l"] == "/watch/left"
     assert backend.get_object("lblPrefsState").text == "Prefs: saved"
 
     backend.get_object("btnPrefsClose").click()

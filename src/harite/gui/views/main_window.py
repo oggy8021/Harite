@@ -502,6 +502,9 @@ class MainWindow:
         self.plugin_name = prefs.apply.plugin_name
         self.apply_mode = prefs.apply.apply_mode
         self.watch_interval_seconds = prefs.watch.interval_seconds
+        self.watch_srcdir_l = prefs.watch.srcdir_l or ""
+        self.watch_srcdir_r = prefs.watch.srcdir_r or ""
+        self._update_watch_source_display()
         self._update_watch_output_display()
         self.settings_dialog_open = False
         self._set_status("success", "prefs", "preferences applied")
@@ -525,6 +528,8 @@ class MainWindow:
         self.preferences.apply.plugin_name = self.plugin_name
         self.preferences.apply.apply_mode = self.apply_mode
         self.preferences.watch.interval_seconds = self.watch_interval_seconds
+        self.preferences.watch.srcdir_l = self.watch_srcdir_l or None
+        self.preferences.watch.srcdir_r = self.watch_srcdir_r or None
         if self.form_state.two_screen is None:
             self.preferences.optimize.two_screen_mode = "auto"
         else:
