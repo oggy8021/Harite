@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+import os
 from typing import Any
 
 from .optimize_settings import AUTO
@@ -71,13 +72,13 @@ class OptimizePreferences:
 @dataclass
 class ApplyPreferences:
     plugin_name: str = "windows"
-    apply_mode: str = "single-file"
+    apply_mode: str = "per-monitor-auto-split"
 
     @classmethod
     def from_config_dict(cls, config: dict[str, Any], *, default_plugin: str) -> "ApplyPreferences":
         return cls(
             plugin_name=str(config.get("plugin", default_plugin)),
-            apply_mode=str(config.get("apply_mode", "single-file")),
+            apply_mode=str(config.get("apply_mode", "per-monitor-auto-split")),
         )
 
     def to_config_dict(self) -> dict[str, Any]:
@@ -105,15 +106,36 @@ class AppPreferences:
     apply: ApplyPreferences = field(default_factory=ApplyPreferences)
     watch: WatchPreferences = field(default_factory=WatchPreferences)
 
+    @staticmethod
+    def _default_apply_mode(default_plugin: str) -> str:
+        session_markers = (
+            os.environ.get("XDG_CURRENT_DESKTOP", ""),
+            os.environ.get("XDG_SESSION_DESKTOP", ""),
+            os.environ.get("DESKTOP_SESSION", ""),
+            os.environ.get("GDMSESSION", ""),
+        )
+        is_xfce_session = any("xfce" in marker.strip().lower() for marker in session_markers if marker)
+        return "per-monitor-auto-split" if is_xfce_session else "single-file"
+
     @classmethod
     def defaults(cls, *, default_plugin: str) -> "AppPreferences":
-        return cls(apply=ApplyPreferences(plugin_name=default_plugin))
+        return cls(
+            apply=ApplyPreferences(
+                plugin_name=default_plugin,
+                apply_mode=cls._default_apply_mode(default_plugin),
+            )
+        )
 
     @classmethod
     def from_config_dict(cls, config: dict[str, Any], *, default_plugin: str) -> "AppPreferences":
+        raw_apply_mode = config.get("apply_mode")
+        apply_mode = str(raw_apply_mode) if raw_apply_mode is not None else cls._default_apply_mode(default_plugin)
         return cls(
             optimize=OptimizePreferences.from_config_dict(config),
-            apply=ApplyPreferences.from_config_dict(config, default_plugin=default_plugin),
+            apply=ApplyPreferences(
+                plugin_name=str(config.get("plugin", default_plugin)),
+                apply_mode=apply_mode,
+            ),
             watch=WatchPreferences.from_config_dict(config),
         )
 
