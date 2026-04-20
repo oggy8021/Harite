@@ -91,13 +91,23 @@ class ApplyPreferences:
 @dataclass
 class WatchPreferences:
     interval_seconds: int = 60
+    srcdir_l: str | None = None
+    srcdir_r: str | None = None
 
     @classmethod
     def from_config_dict(cls, config: dict[str, Any]) -> "WatchPreferences":
-        return cls(interval_seconds=int(config.get("watch_interval_seconds", 60)))
+        return cls(
+            interval_seconds=int(config.get("watch_interval_seconds", 60)),
+            srcdir_l=None if config.get("watch_srcdir_l") is None else str(config.get("watch_srcdir_l")),
+            srcdir_r=None if config.get("watch_srcdir_r") is None else str(config.get("watch_srcdir_r")),
+        )
 
     def to_config_dict(self) -> dict[str, Any]:
-        return {"watch_interval_seconds": self.interval_seconds}
+        return {
+            "watch_interval_seconds": self.interval_seconds,
+            "watch_srcdir_l": self.srcdir_l,
+            "watch_srcdir_r": self.srcdir_r,
+        }
 
 
 @dataclass

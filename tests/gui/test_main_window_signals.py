@@ -509,6 +509,8 @@ def test_apply_preferences_updates_runtime_state():
             "plugin": "linux",
             "apply_mode": "per-monitor-auto-split",
             "watch_interval_seconds": 120,
+            "watch_srcdir_l": "/watch/left",
+            "watch_srcdir_r": "/watch/right",
         },
         default_plugin=window.plugin_name,
     )
@@ -523,6 +525,9 @@ def test_apply_preferences_updates_runtime_state():
     assert window.plugin_name == "linux"
     assert window.apply_mode == "per-monitor-auto-split"
     assert window.watch_interval_seconds == 120
+    assert window.watch_srcdir_l == "/watch/left"
+    assert window.watch_srcdir_r == "/watch/right"
+    assert window.watch_source_display == "Watch srcdirs: L=/watch/left | R=/watch/right"
 
 
 def test_export_and_reload_preferences_config_round_trips():
@@ -534,6 +539,9 @@ def test_export_and_reload_preferences_config_round_trips():
     window.plugin_name = "linux"
     window.apply_mode = "per-monitor-auto-split"
     window.watch_interval_seconds = 90
+    window.watch_srcdir_l = "/watch/left"
+    window.watch_srcdir_r = "/watch/right"
+    window._update_watch_source_display()
 
     exported = window.export_preferences_config()
 
@@ -542,12 +550,17 @@ def test_export_and_reload_preferences_config_round_trips():
     assert exported["plugin"] == "linux"
     assert exported["apply_mode"] == "per-monitor-auto-split"
     assert exported["watch_interval_seconds"] == 90
+    assert exported["watch_srcdir_l"] == "/watch/left"
+    assert exported["watch_srcdir_r"] == "/watch/right"
 
     other = MainWindow()
     assert other.load_preferences_config(exported) is True
     assert other.form_state.resolution == "auto"
     assert other.form_state.two_screen is None
     assert other.plugin_name == "linux"
+    assert other.watch_interval_seconds == 90
+    assert other.watch_srcdir_l == "/watch/left"
+    assert other.watch_srcdir_r == "/watch/right"
 
 
 def test_preferences_file_save_and_load_round_trip(tmp_path):
@@ -559,6 +572,8 @@ def test_preferences_file_save_and_load_round_trip(tmp_path):
     window.plugin_name = "linux"
     window.apply_mode = "per-monitor-auto-split"
     window.watch_interval_seconds = 75
+    window.watch_srcdir_l = "/watch/left"
+    window.watch_srcdir_r = "/watch/right"
 
     target = tmp_path / "prefs.json"
 
@@ -574,6 +589,8 @@ def test_preferences_file_save_and_load_round_trip(tmp_path):
     assert other.plugin_name == "linux"
     assert other.apply_mode == "per-monitor-auto-split"
     assert other.watch_interval_seconds == 75
+    assert other.watch_srcdir_l == "/watch/left"
+    assert other.watch_srcdir_r == "/watch/right"
 
 
 def test_preferences_file_handlers_require_path():
@@ -600,6 +617,7 @@ def test_preferences_file_save_accepts_explicit_dialog_config(tmp_path):
             "plugin": "linux",
             "apply_mode": "per-monitor-auto-split",
             "watch_interval_seconds": 33,
+            "watch_srcdir_l": "/watch/left",
         },
     ) is True
 
@@ -611,6 +629,7 @@ def test_preferences_file_save_accepts_explicit_dialog_config(tmp_path):
     assert window.plugin_name == "linux"
     assert window.apply_mode == "per-monitor-auto-split"
     assert window.watch_interval_seconds == 33
+    assert window.watch_srcdir_l == "/watch/left"
 
 
 def test_on_apply_without_optimized_file_fails():
