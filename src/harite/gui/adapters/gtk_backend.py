@@ -723,12 +723,8 @@ class GtkRuntimeSignalBackend:
                 pick_state_label.set_xalign(0.0)
 
             action_cluster_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=18)
-            action_cluster_spacer = gtk_module.Label(label="")
-            action_cluster_row.pack_start(action_cluster_spacer, True, True, 0)
             optimize_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
             apply_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            action_cluster_row.pack_start(optimize_group, False, False, 0)
-            action_cluster_row.pack_start(apply_group, False, False, 0)
             if hasattr(compose_grid, "attach"):
                 compose_grid.attach(action_cluster_row, 0, 2, 2, 1)
 
@@ -791,6 +787,12 @@ class GtkRuntimeSignalBackend:
 
             preview_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
             action_cluster_row.pack_start(preview_group, False, False, 0)
+
+            action_cluster_spacer = gtk_module.Label(label="")
+            action_cluster_row.pack_start(action_cluster_spacer, True, True, 0)
+
+            action_cluster_row.pack_start(optimize_group, False, False, 0)
+            action_cluster_row.pack_start(apply_group, False, False, 0)
 
             preview_section_label = gtk_module.Label(label="Preview")
             if hasattr(preview_section_label, "set_xalign"):
