@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from PIL import Image
+
 from harite.gui.adapters.gtk_backend import GtkRuntimeSignalBackend
 from harite.gui.adapters.ui_adapter import create_mainwindow_signal_dispatch
 from harite.gui.views.main_window import MainWindow

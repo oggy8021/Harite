@@ -238,6 +238,7 @@ def test_on_optimize_runs_and_logs(tmp_path):
     assert window.status_message == "optimize completed"
     assert any(line.startswith("Saved ") for line in window.logs)
     assert any(line.startswith("Saved: ") for line in window.logs)
+    assert any("Next action: apply" in line for line in window.logs)
 
 
 def test_build_result_preview_state_uses_latest_saved_file(tmp_path):
@@ -272,7 +273,6 @@ def test_build_result_preview_state_includes_two_screen_display_sizes(tmp_path):
     assert state.apply_mode == "per-monitor-auto-split"
     assert state.l_display == (200, 180)
     assert state.r_display == (120, 180)
-    assert any("Next action: apply" in line for line in window.logs)
 
 
 def test_on_close_marks_window_closed():
