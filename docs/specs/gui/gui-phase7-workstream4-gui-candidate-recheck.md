@@ -7,6 +7,7 @@
 - 本書は Phase7 product alignment における Workstream 4 の詳細メモである。
 - 目的は、main 画面、settings、CLI 専用機能、Phase8 候補の境界を docs-first で整理することにある。
 - index は [docs/specs/gui/gui-phase7-product-alignment-planning.md](docs/specs/gui/gui-phase7-product-alignment-planning.md) を参照する。
+- Phase8 planning へ送った後続骨子は [docs/specs/gui/gui-phase8-planning.md](docs/specs/gui/gui-phase8-planning.md) と [docs/specs/gui/gui-phase8-backlog.md](docs/specs/gui/gui-phase8-backlog.md) を参照する。
 
 ## Workstream 4 の比較観点
 
@@ -354,3 +355,8 @@
 - 理由:
   - preview / assist が弱いまま embed 系や deferred 項目を先に動かすと、結果確認の弱さを抱えたまま controls だけ増えやすい。
   - 先に制作支援の土台を置いた方が、embed 系を上げるか据え置くか、`Color` を残すか閉じるかの判断もしやすい。
+
+## handoff
+
+- Phase7 側では、preview / visual assist を第1群、embed 系 GUI 昇格を第2群、`Color` / deferred legacy を第3群として送るところまでを close とする。
+- 以後の仕様化と PR 粒度整理は [docs/specs/gui/gui-phase8-planning.md](docs/specs/gui/gui-phase8-planning.md) と [docs/specs/gui/gui-phase8-backlog.md](docs/specs/gui/gui-phase8-backlog.md) で扱う。

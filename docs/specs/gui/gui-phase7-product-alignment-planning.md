@@ -60,6 +60,9 @@
   - [docs/specs/gui/gui-phase7-workstream3-watch-responsibility.md](docs/specs/gui/gui-phase7-workstream3-watch-responsibility.md)
 - Workstream 4: GUI 候補機能の再読
   - [docs/specs/gui/gui-phase7-workstream4-gui-candidate-recheck.md](docs/specs/gui/gui-phase7-workstream4-gui-candidate-recheck.md)
+- Phase8 planning / backlog:
+  - [docs/specs/gui/gui-phase8-planning.md](docs/specs/gui/gui-phase8-planning.md)
+  - [docs/specs/gui/gui-phase8-backlog.md](docs/specs/gui/gui-phase8-backlog.md)
 
 ## Workstream 一覧
 
@@ -138,3 +141,4 @@
 - Phase8 は、Phase7 で承認された候補機能だけを実装するフェーズとする。
 - Phase8 は探索フェーズではなく、仕様化済み backlog の実装フェーズとして扱う。
 - Phase7 で整合性整理が終わらない限り、Phase8 の着手条件は満たさない。
+- 2026-04-21 時点で、Phase8 planning の入口は [docs/specs/gui/gui-phase8-planning.md](docs/specs/gui/gui-phase8-planning.md) と [docs/specs/gui/gui-phase8-backlog.md](docs/specs/gui/gui-phase8-backlog.md) へ切り出した。
