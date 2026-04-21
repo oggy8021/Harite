@@ -22,6 +22,8 @@
   - watch は対象外とし、optimize / apply 主導線の補助として扱う
   - `single-file` では同一画像が左右ディスプレイへ出ることを事前に伝える
   - `Auto-split` では分割後の見え方を疑似表示の対象に含める
+  - preview サイズは Window 全体比ではなく、preview 親領域の割当幅に対する比率で決める
+  - preview は起動直後は空、optimize 成功で初期化、apply mode 切替で再描画、input clear で破棄、optimize failure 時は前回成功 preview を維持する
 - 除外:
   - 生成前 preview
   - `Color` や embed controls との同時実装

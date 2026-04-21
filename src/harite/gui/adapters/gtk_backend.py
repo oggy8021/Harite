@@ -723,12 +723,8 @@ class GtkRuntimeSignalBackend:
                 pick_state_label.set_xalign(0.0)
 
             action_cluster_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=18)
-            action_cluster_spacer = gtk_module.Label(label="")
-            action_cluster_row.pack_start(action_cluster_spacer, True, True, 0)
             optimize_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
             apply_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            action_cluster_row.pack_start(optimize_group, False, False, 0)
-            action_cluster_row.pack_start(apply_group, False, False, 0)
             if hasattr(compose_grid, "attach"):
                 compose_grid.attach(action_cluster_row, 0, 2, 2, 1)
 
@@ -788,6 +784,42 @@ class GtkRuntimeSignalBackend:
             apply_mode_row.pack_start(rad_apply_per_monitor, False, False, 0)
             apply_mode_row.pack_start(rad_apply_single, False, False, 0)
             apply_mode_help_row.pack_start(apply_mode_label, True, True, 0)
+
+            preview_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            action_cluster_row.pack_start(preview_group, False, False, 0)
+
+            action_cluster_spacer = gtk_module.Label(label="")
+            action_cluster_row.pack_start(action_cluster_spacer, True, True, 0)
+
+            action_cluster_row.pack_start(optimize_group, False, False, 0)
+            action_cluster_row.pack_start(apply_group, False, False, 0)
+
+            preview_section_label = gtk_module.Label(label="Preview")
+            if hasattr(preview_section_label, "set_xalign"):
+                preview_section_label.set_xalign(0.0)
+            preview_group.pack_start(preview_section_label, False, False, 0)
+
+            preview_images_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            preview_group.pack_start(preview_images_row, False, False, 0)
+
+            preview_left = gtk_module.Image() if hasattr(gtk_module, "Image") else gtk_module.Label(label="Preview L: not-ready")
+            preview_right = gtk_module.Image() if hasattr(gtk_module, "Image") else gtk_module.Label(label="Preview R: not-ready")
+            if hasattr(preview_left, "set_size_request"):
+                preview_left.set_size_request(160, 90)
+            if hasattr(preview_right, "set_size_request"):
+                preview_right.set_size_request(160, 90)
+            preview_images_row.pack_start(preview_left, False, False, 0)
+            preview_images_row.pack_start(preview_right, False, False, 0)
+
+            preview_state_label = gtk_module.Label(label="Preview: not-ready")
+            if hasattr(preview_state_label, "set_xalign"):
+                preview_state_label.set_xalign(0.0)
+            preview_group.pack_start(preview_state_label, False, False, 0)
+
+            preview_source_label = gtk_module.Label(label="Preview source: -")
+            if hasattr(preview_source_label, "set_xalign"):
+                preview_source_label.set_xalign(0.0)
+            preview_group.pack_start(preview_source_label, False, False, 0)
 
             do_it_plan_label = gtk_module.Label(label="Debug: apply is immediate")
             if hasattr(do_it_plan_label, "set_xalign"):
@@ -1121,6 +1153,13 @@ class GtkRuntimeSignalBackend:
                 "boxApplySection": apply_row,
                 "btnSetWall": apply_btn,
                 "lblApplyTarget": apply_target,
+                "lblPreviewSection": preview_section_label,
+                "boxPreviewSection": preview_group,
+                "boxPreviewImagesRow": preview_images_row,
+                "imgPreviewL": preview_left,
+                "imgPreviewR": preview_right,
+                "lblPreviewState": preview_state_label,
+                "lblPreviewSource": preview_source_label,
                 "radApplySingle": rad_apply_single,
                 "radApplyPerMonitor": rad_apply_per_monitor,
                 "lblApplyMode": apply_mode_label,
@@ -1501,6 +1540,152 @@ class GtkRuntimeSignalBackend:
         error = str(getattr(owner, "last_error", "") or "").strip() or None
         self._set_feedback(phase=phase.capitalize(), state=message, error=error)
 
+    def _get_gdkpixbuf_module(self) -> Any | None:
+        try:
+            import gi
+
+            gi.require_version("GdkPixbuf", "2.0")
+            from gi.repository import GdkPixbuf
+
+            return GdkPixbuf
+        except Exception:
+            return None
+
+    def _clear_preview_widget(self, object_name: str, message: str) -> None:
+        widget = self._objects.get(object_name)
+        if widget is None:
+            return
+        if hasattr(widget, "set_text"):
+            widget.set_text(message)
+            return
+        if hasattr(widget, "set_from_pixbuf"):
+            widget.set_from_pixbuf(None)
+
+    def _preview_target_size(self) -> tuple[int, int]:
+        fallback_width = 160
+        fallback_height = 90
+
+        container = self._objects.get("boxPreviewImagesRow") or self._objects.get("boxPreviewSection")
+        if container is None:
+            return fallback_width, fallback_height
+
+        allocated_width = None
+        if hasattr(container, "get_allocated_width"):
+            try:
+                allocated_width = int(container.get_allocated_width())
+            except Exception:
+                allocated_width = None
+        elif hasattr(container, "allocation"):
+            allocation = getattr(container, "allocation", None)
+            allocated_width = int(getattr(allocation, "width", 0) or 0)
+
+        if not allocated_width or allocated_width <= 0:
+            return fallback_width, fallback_height
+
+        # Keep each preview at roughly half of the preview row while preserving a 16:9 frame.
+        target_width = max(120, min(320, int((allocated_width - 6) * 0.48)))
+        target_height = max(68, int(round(target_width * 9 / 16)))
+        return target_width, target_height
+
+    def _set_preview_widget(self, object_name: str, source_path: Path | None, *, crop_box: tuple[int, int, int, int] | None = None) -> None:
+        widget = self._objects.get(object_name)
+        if widget is None:
+            return
+        if source_path is None:
+            self._clear_preview_widget(object_name, f"{object_name}: not-ready")
+            return
+
+        if hasattr(widget, "set_text"):
+            widget.set_text(str(source_path.name))
+            return
+
+        target_width, target_height = self._preview_target_size()
+        if hasattr(widget, "set_size_request"):
+            try:
+                widget.set_size_request(target_width, target_height)
+            except Exception:
+                pass
+
+        gdkpixbuf = self._get_gdkpixbuf_module()
+        if gdkpixbuf is not None and hasattr(widget, "set_from_pixbuf"):
+            try:
+                pixbuf = gdkpixbuf.Pixbuf.new_from_file(str(source_path))
+                if crop_box is not None:
+                    x, y, width, height = crop_box
+                    pixbuf = pixbuf.new_subpixbuf(int(x), int(y), int(width), int(height))
+                scaled = pixbuf.scale_simple(target_width, target_height, gdkpixbuf.InterpType.BILINEAR)
+                widget.set_from_pixbuf(scaled or pixbuf)
+                return
+            except Exception:
+                pass
+
+        if hasattr(widget, "set_from_file"):
+            try:
+                widget.set_from_file(str(source_path))
+            except Exception:
+                pass
+
+    def _build_preview_crop_boxes(
+        self,
+        source_path: Path,
+        *,
+        l_display: tuple[int, int] | None,
+        r_display: tuple[int, int] | None,
+    ) -> tuple[tuple[int, int, int, int], tuple[int, int, int, int]] | None:
+        try:
+            from PIL import Image
+
+            with Image.open(source_path) as image:
+                comp_width, comp_height = image.size
+        except Exception:
+            return None
+
+        left_width = int(l_display[0]) if l_display is not None else 1
+        right_width = int(r_display[0]) if r_display is not None else 1
+        total_width = max(1, left_width + right_width)
+        split_x = int(round((left_width / total_width) * comp_width))
+        split_x = max(1, min(comp_width - 1, split_x)) if comp_width > 1 else comp_width
+        return (
+            (0, 0, split_x, comp_height),
+            (split_x, 0, max(1, comp_width - split_x), comp_height),
+        )
+
+    def _sync_result_preview_from_owner(self, owner: Any) -> None:
+        builder = getattr(owner, "build_result_preview_state", None)
+        if not callable(builder):
+            self._clear_preview_widget("imgPreviewL", "Preview L: not-ready")
+            self._clear_preview_widget("imgPreviewR", "Preview R: not-ready")
+            self._set_label_text("lblPreviewState", "Preview: not-ready")
+            self._set_label_text("lblPreviewSource", "Preview source: -")
+            return
+
+        state = builder()
+        source_path = getattr(state, "source_file", None)
+        if source_path is None:
+            self._clear_preview_widget("imgPreviewL", "Preview L: not-ready")
+            self._clear_preview_widget("imgPreviewR", "Preview R: not-ready")
+            self._set_label_text("lblPreviewState", "Preview: not-ready")
+            self._set_label_text("lblPreviewSource", "Preview source: -")
+            return
+
+        mode = str(getattr(state, "apply_mode", "single-file") or "single-file").strip().lower()
+        self._set_label_text("lblPreviewSource", f"Preview source: {Path(source_path).name}")
+        if mode == "per-monitor-auto-split":
+            boxes = self._build_preview_crop_boxes(
+                Path(source_path),
+                l_display=getattr(state, "l_display", None),
+                r_display=getattr(state, "r_display", None),
+            )
+            self._set_label_text("lblPreviewState", "Preview: pseudo auto-split by display widths")
+            if boxes is not None:
+                self._set_preview_widget("imgPreviewL", Path(source_path), crop_box=boxes[0])
+                self._set_preview_widget("imgPreviewR", Path(source_path), crop_box=boxes[1])
+                return
+
+        self._set_label_text("lblPreviewState", "Preview: same image on both displays")
+        self._set_preview_widget("imgPreviewL", Path(source_path))
+        self._set_preview_widget("imgPreviewR", Path(source_path))
+
     def _get_glib_module(self) -> Any | None:
         glib = getattr(self._gtk, "GLib", None)
         if glib is not None:
@@ -1633,6 +1818,9 @@ class GtkRuntimeSignalBackend:
 
         try:
             callback(text)
+            owner = self._get_handler_owner("on_change_input_text")
+            if owner is not None:
+                self._sync_result_preview_from_owner(owner)
             self._set_feedback(phase="Input", state="updated")
         except Exception as exc:
             self._set_feedback(phase="Input", state="failed", error=str(exc))
@@ -2286,11 +2474,16 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Optimize", state="running")
             ok = callback()
             self._set_button_enabled("btnSetWall", bool(ok))
+            owner = self._get_handler_owner("on_optimize")
             if ok:
+                if owner is not None:
+                    self._sync_result_preview_from_owner(owner)
                 self._set_feedback(phase="Optimize", state="ok")
                 self._set_label_text("lblOptimizeResult", "Optimize result: success")
                 self._set_label_text("lblApplyTarget", "Apply target: ready")
             else:
+                if owner is not None:
+                    self._sync_result_preview_from_owner(owner)
                 self._set_feedback(
                     phase="Optimize",
                     state="failed",
@@ -2321,6 +2514,9 @@ class GtkRuntimeSignalBackend:
             return
         try:
             callback(mode)
+            owner = self._get_handler_owner("on_change_apply_mode")
+            if owner is not None:
+                self._sync_result_preview_from_owner(owner)
             self._set_feedback(phase="ApplyMode", state="updated")
         except Exception as exc:
             self._set_feedback(phase="ApplyMode", state="error", error=str(exc))

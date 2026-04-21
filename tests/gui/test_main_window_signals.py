@@ -241,6 +241,40 @@ def test_on_optimize_runs_and_logs(tmp_path):
     assert any("Next action: apply" in line for line in window.logs)
 
 
+def test_build_result_preview_state_uses_latest_saved_file(tmp_path):
+    window = MainWindow()
+    saved = tmp_path / "result.jpg"
+    saved.write_bytes(b"x")
+
+    window.last_saved_files = [saved]
+
+    state = window.build_result_preview_state()
+
+    assert state.source_file == saved
+    assert state.apply_mode == window.apply_mode
+
+
+def test_build_result_preview_state_includes_two_screen_display_sizes(tmp_path):
+    window = MainWindow()
+    saved = tmp_path / "result.jpg"
+    saved.write_bytes(b"x")
+
+    window.last_saved_files = [saved]
+    window.apply_mode = "per-monitor-auto-split"
+    window.form_state.input_value = "left.jpg,right.jpg"
+    window.form_state.two_screen = True
+    window.form_state.resolution = "320x180"
+    window.form_state.l_display = "200x180"
+    window.form_state.r_display = "120x180"
+
+    state = window.build_result_preview_state()
+
+    assert state.source_file == saved
+    assert state.apply_mode == "per-monitor-auto-split"
+    assert state.l_display == (200, 180)
+    assert state.r_display == (120, 180)
+
+
 def test_on_close_marks_window_closed():
     window = MainWindow()
     assert window.closed is False
