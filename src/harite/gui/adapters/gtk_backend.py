@@ -821,6 +821,11 @@ class GtkRuntimeSignalBackend:
                 preview_source_label.set_xalign(0.0)
             preview_group.pack_start(preview_source_label, False, False, 0)
 
+            preview_assist_label = gtk_module.Label(label="Assist: not-ready")
+            if hasattr(preview_assist_label, "set_xalign"):
+                preview_assist_label.set_xalign(0.0)
+            preview_group.pack_start(preview_assist_label, False, False, 0)
+
             do_it_plan_label = gtk_module.Label(label="Debug: apply is immediate")
             if hasattr(do_it_plan_label, "set_xalign"):
                 do_it_plan_label.set_xalign(0.0)
@@ -1160,6 +1165,7 @@ class GtkRuntimeSignalBackend:
                 "imgPreviewR": preview_right,
                 "lblPreviewState": preview_state_label,
                 "lblPreviewSource": preview_source_label,
+                "lblPreviewAssist": preview_assist_label,
                 "radApplySingle": rad_apply_single,
                 "radApplyPerMonitor": rad_apply_per_monitor,
                 "lblApplyMode": apply_mode_label,
@@ -1657,6 +1663,7 @@ class GtkRuntimeSignalBackend:
             self._clear_preview_widget("imgPreviewR", "Preview R: not-ready")
             self._set_label_text("lblPreviewState", "Preview: not-ready")
             self._set_label_text("lblPreviewSource", "Preview source: -")
+            self._set_label_text("lblPreviewAssist", "Assist: not-ready")
             return
 
         state = builder()
@@ -1666,10 +1673,12 @@ class GtkRuntimeSignalBackend:
             self._clear_preview_widget("imgPreviewR", "Preview R: not-ready")
             self._set_label_text("lblPreviewState", "Preview: not-ready")
             self._set_label_text("lblPreviewSource", "Preview source: -")
+            self._set_label_text("lblPreviewAssist", "Assist: not-ready")
             return
 
         mode = str(getattr(state, "apply_mode", "single-file") or "single-file").strip().lower()
         self._set_label_text("lblPreviewSource", f"Preview source: {Path(source_path).name}")
+        self._set_label_text("lblPreviewAssist", str(getattr(state, "assist_summary", "") or "Assist: not-ready"))
         if mode == "per-monitor-auto-split":
             boxes = self._build_preview_crop_boxes(
                 Path(source_path),
