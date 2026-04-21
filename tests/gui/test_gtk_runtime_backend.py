@@ -352,8 +352,8 @@ def test_runtime_backend_updates_mainwindow_form_state_for_toggles_and_margins()
     backend.get_object("spnTopMergin").set_value(25)
     backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
 
-    assert window.form_state.align == "right"
-    assert window.form_state.valign == "top"
+    assert window.form_state.align == ("right", "center")
+    assert window.form_state.valign == ("center", "top")
     assert window.form_state.margins == "0,0,25,0"
 
 
@@ -1302,6 +1302,8 @@ def test_runtime_backend_prefs_apply_load_save_and_close_dispatch_handlers(tmp_p
     backend.get_object("btnPrefsApply").click()
     assert observed["apply"]["resolution"] == "auto"
     assert observed["apply"]["two_screen"] == "auto"
+    assert observed["apply"]["align"] == ["center", "center"]
+    assert observed["apply"]["valign"] == ["center", "center"]
     assert observed["apply"]["plugin"] == "xfce"
     assert observed["apply"]["apply_mode"] == "per-monitor-auto-split"
     assert observed["apply"]["watch_interval_seconds"] == 60
@@ -1314,6 +1316,8 @@ def test_runtime_backend_prefs_apply_load_save_and_close_dispatch_handlers(tmp_p
     assert observed["load"] == str(import_path)
     assert dialog.get_preferences_config()["plugin"] == "xfce"
     assert backend.get_object("entPrefsPlugin").get_text() == "xfce"
+    assert backend.get_object("entPrefsAlign").get_text() == "center,center"
+    assert backend.get_object("entPrefsValign").get_text() == "center,center"
     assert backend.get_object("radPrefsApplyPerMonitor").get_active() is True
     assert backend.get_object("lblPrefsState").text == "Prefs: loaded"
 

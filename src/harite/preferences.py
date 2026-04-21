@@ -5,6 +5,7 @@ import os
 from typing import Any
 
 from .optimize_settings import AUTO
+from .positioning import parse_position_pair
 
 
 def _decode_two_screen_mode(value: object) -> str:
@@ -32,8 +33,8 @@ class OptimizePreferences:
     r_display: str | None = None
     margins: str | None = None
     fixed: bool = False
-    align: str = "center"
-    valign: str = "center"
+    align: tuple[str, str] = ("center", "center")
+    valign: tuple[str, str] = ("center", "center")
     padding: int = 0
     quality: int = 90
     embed_info: str = "none"
@@ -52,8 +53,8 @@ class OptimizePreferences:
             r_display=None if config.get("r_display") is None else str(config.get("r_display")),
             margins=None if config.get("margins") is None else str(config.get("margins")),
             fixed=bool(config.get("fixed", False)),
-            align=str(config.get("align", "center")),
-            valign=str(config.get("valign", "center")),
+            align=parse_position_pair(config.get("align", "center"), axis="align"),
+            valign=parse_position_pair(config.get("valign", "center"), axis="valign"),
             padding=int(config.get("padding", 0)),
             quality=int(config.get("quality", 90)),
             embed_info=str(config.get("embed_info", "none")),
@@ -66,6 +67,8 @@ class OptimizePreferences:
         data = asdict(self)
         data["two_screen"] = AUTO if self.two_screen_mode == AUTO else (self.two_screen_mode == "on")
         del data["two_screen_mode"]
+        data["align"] = list(self.align)
+        data["valign"] = list(self.valign)
         return data
 
 

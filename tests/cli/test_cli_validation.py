@@ -470,8 +470,8 @@ def test_optimize_uses_config_for_layout_scaling_align_and_valign(tmp_path, monk
     assert result.exit_code == 0
     assert captured["layout"] == "stack"
     assert captured["scaling"] == "fill"
-    assert captured["align"] == "right"
-    assert captured["valign"] == "bottom"
+    assert captured["align"] == ("right", "right")
+    assert captured["valign"] == ("bottom", "bottom")
 
 
 def test_optimize_auto_display_values_can_come_from_config(tmp_path, monkeypatch):

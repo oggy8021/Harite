@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 from typing import Any, Callable
 
+from harite.positioning import format_position_pair, parse_position_pair
 from harite.watch import WatchCycleState, collect_watch_input_images, run_watch_cycle
 
 
@@ -2007,8 +2008,8 @@ class GtkRuntimeSignalBackend:
         self._set_entry_text("entPrefsRDisplay", config.get("r_display"))
         self._set_entry_text("entPrefsMargins", config.get("margins"))
         self._set_toggle_active("tglPrefsFixed", bool(config.get("fixed", False)))
-        self._set_entry_text("entPrefsAlign", config.get("align", "center"))
-        self._set_entry_text("entPrefsValign", config.get("valign", "center"))
+        self._set_entry_text("entPrefsAlign", format_position_pair(config.get("align", "center"), axis="align"))
+        self._set_entry_text("entPrefsValign", format_position_pair(config.get("valign", "center"), axis="valign"))
         self._set_spin_value("spnPrefsPadding", int(config.get("padding", 0)))
         self._set_spin_value("spnPrefsQuality", int(config.get("quality", 90)))
         self._set_entry_text("entPrefsEmbedInfo", config.get("embed_info", "none"))
@@ -2042,8 +2043,8 @@ class GtkRuntimeSignalBackend:
                 "r_display": _empty_to_none(self._read_entry_text("entPrefsRDisplay")),
                 "margins": _empty_to_none(self._read_entry_text("entPrefsMargins")),
                 "fixed": self._is_toggle_active("tglPrefsFixed"),
-                "align": self._read_entry_text("entPrefsAlign") or "center",
-                "valign": self._read_entry_text("entPrefsValign") or "center",
+                "align": list(parse_position_pair(self._read_entry_text("entPrefsAlign") or "center", axis="align")),
+                "valign": list(parse_position_pair(self._read_entry_text("entPrefsValign") or "center", axis="valign")),
                 "padding": self._read_spin_int("spnPrefsPadding"),
                 "quality": self._read_spin_int("spnPrefsQuality"),
                 "embed_info": self._read_entry_text("entPrefsEmbedInfo") or "none",

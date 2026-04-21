@@ -17,6 +17,8 @@ def test_to_cli_args_contains_required_fields(tmp_path):
     assert "--input" in args and "a.jpg,b.jpg" in args
     assert "--resolution" in args and "1920x1080" in args
     assert "--output" in args and str(out_dir) in args
+    assert "--align" in args and "center,center" in args
+    assert "--valign" in args and "center,center" in args
 
 
 def test_to_cli_args_omits_optional_flags_when_unset(tmp_path):
@@ -46,6 +48,8 @@ def test_to_cli_args_includes_optional_flags_when_set(tmp_path):
         l_display="1920x1080",
         r_display="1280x1024",
         fixed=True,
+        align=("left", "right"),
+        valign=("top", "bottom"),
         embed_text="note",
     )
 
@@ -56,4 +60,6 @@ def test_to_cli_args_includes_optional_flags_when_set(tmp_path):
     assert "--l-display" in args and "1920x1080" in args
     assert "--r-display" in args and "1280x1024" in args
     assert "--fixed" in args
+    assert "--align" in args and "left,right" in args
+    assert "--valign" in args and "top,bottom" in args
     assert "--embed-text" in args and "note" in args

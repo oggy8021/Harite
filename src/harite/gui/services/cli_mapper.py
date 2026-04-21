@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from harite.positioning import format_position_pair, parse_position_pair
+
 
 @dataclass
 class OptimizeRequest:
@@ -19,14 +21,18 @@ class OptimizeRequest:
     l_display: Optional[str] = None
     r_display: Optional[str] = None
     fixed: bool = False
-    align: str = "center"
-    valign: str = "center"
+    align: tuple[str, str] = ("center", "center")
+    valign: tuple[str, str] = ("center", "center")
     padding: int = 0
     quality: int = 90
     embed_info: str = "none"
     embed_text: Optional[str] = None
     embed_position: str = "auto"
     embed_max_lines: int = 3
+
+    def __post_init__(self) -> None:
+        self.align = parse_position_pair(self.align, axis="align")
+        self.valign = parse_position_pair(self.valign, axis="valign")
 
 
 def to_cli_args(req: OptimizeRequest) -> list[str]:
@@ -44,9 +50,9 @@ def to_cli_args(req: OptimizeRequest) -> list[str]:
         "--scaling",
         req.scaling,
         "--align",
-        req.align,
+        format_position_pair(req.align, axis="align"),
         "--valign",
-        req.valign,
+        format_position_pair(req.valign, axis="valign"),
         "--padding",
         str(req.padding),
         "--quality",

@@ -14,6 +14,7 @@ from .core import optimize_wallpapers
 from .plugins import registry as plugin_registry
 from .config import load_config
 from .optimize_settings import is_auto_value, resolve_optimize_display_settings
+from .positioning import parse_position_pair
 from .watch import collect_watch_input_images, run_watch_cycles
 
 app = typer.Typer(help="Harite - wallpaper optimizer")
@@ -220,13 +221,13 @@ def optimize(
     align: str = typer.Option(
         "center",
         "--align",
-        help="Horizontal align: left|center|right",
+        help="Horizontal align for left,right images (e.g. left,right). A single value applies to both.",
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     valign: str = typer.Option(
         "center",
         "--valign",
-        help="Vertical align: top|center|bottom",
+        help="Vertical align for left,right images (e.g. top,bottom). A single value applies to both.",
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     padding: int = typer.Option(
@@ -367,8 +368,8 @@ def optimize(
 
     eff_layout = str(resolve_option_value("layout", layout, cfg, ctx) or "mosaic")
     eff_scaling = str(resolve_option_value("scaling", scaling, cfg, ctx) or "fit")
-    eff_align = str(resolve_option_value("align", align, cfg, ctx) or "center")
-    eff_valign = str(resolve_option_value("valign", valign, cfg, ctx) or "center")
+    eff_align = parse_position_pair(resolve_option_value("align", align, cfg, ctx) or "center", axis="align")
+    eff_valign = parse_position_pair(resolve_option_value("valign", valign, cfg, ctx) or "center", axis="valign")
     eff_padding = int(resolve_option_value("padding", padding, cfg, ctx))
     eff_quality = int(resolve_option_value("quality", quality, cfg, ctx))
     eff_random_seed = resolve_option_value("random_seed", random_seed, cfg, ctx)

@@ -28,6 +28,7 @@
 | `watch` 継続ループ | watch runner あり | 実装済み | srcdir / interval / start-stop、timer event 駆動、状態表示、apply 接続あり | 接続済み | GUI は same-process の watch front-end として接続済みであり、`run_watch_cycle()` を刻んで反復 apply を扱う。 | close 判定用の manual validation と文言調整へ進む |
 | watch failure-continue / 実切替 | plugin apply と組み合わせ可能 | 実装済み | 既定挙動として継承、詳細 option は未露出 | 意図差 | GUI は CLI と同じ詳細 option 群を広く露出せず、watch 実切替の front-end として必要最小限の責務に留める。 | GUI 非露出のまま維持する語彙境界を確定する |
 | `Prefs` / 設定同期 | config / dataclass 基盤あり | config 読み込みあり | dialog 開閉、適用、保存、読込あり | 未接続 | Phase6 で入口と同期基盤は復旧した。内容 grouping と main 画面との責務分担はまだ再設計対象。 | Workstream 4 で main と settings の境界を再整理する |
+| `align` / `valign` の L/R semantics | 母体は左右別 pair を保持 | 既定 CLI / config は左右 2 値を取り得る | same-side toggle UI はあるが、途中で single 値へ潰していた | 接続済み | 母体未読の類推で single 値扱いしていたが誤りだった。Phase7 で pair semantics へ修正し、GUI / CLI / core / prefs を揃えた。 | Phase7 では母体踏襲として close |
 | `embed-text` / margin info | 実装済み | 実装済み | form / preferences には入るが主導線では未露出 | Phase8 候補 | core / CLI では既に使える一方、GUI では制作機能としてまだ立ち上げきっていない。 | GUI へ送る価値と露出方法を Workstream 4 で判断する |
 | per-monitor apply / auto-split の GUI 露出 | 実装済み | 実装済み | `Auto-split` のみ露出、explicit は未露出 | 意図差 | `Auto-split` を主導線、explicit mapping を非主導線とする方向で整理済み。 | GUI に出す apply mode の最終語彙を固める |
 | visual preview / assist | 画像 preview の専用基盤は未成熟 | なし | CLI preview 文字列はあるが画像 preview は未成熟 | Phase8 候補 | GUI には optimize CLI preview 相当はあるが、制作支援としての visual preview はまだ候補段階。 | Workstream 4 で backlog 化するか判断する |
