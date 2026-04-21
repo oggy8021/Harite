@@ -252,6 +252,7 @@ def test_build_result_preview_state_uses_latest_saved_file(tmp_path):
 
     assert state.source_file == saved
     assert state.apply_mode == window.apply_mode
+    assert state.assist_summary == "Assist: same optimized image will be applied to both displays"
 
 
 def test_build_result_preview_state_includes_two_screen_display_sizes(tmp_path):
@@ -273,6 +274,7 @@ def test_build_result_preview_state_includes_two_screen_display_sizes(tmp_path):
     assert state.apply_mode == "per-monitor-auto-split"
     assert state.l_display == (200, 180)
     assert state.r_display == (120, 180)
+    assert state.assist_summary == "Assist: auto-split as L 200x180 | R 120x180"
 
 
 def test_on_close_marks_window_closed():

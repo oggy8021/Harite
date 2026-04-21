@@ -30,6 +30,7 @@ class ResultPreviewState:
     apply_mode: str
     l_display: tuple[int, int] | None = None
     r_display: tuple[int, int] | None = None
+    assist_summary: str = "Assist: not-ready"
 
 
 class MainWindow:
@@ -427,6 +428,25 @@ class MainWindow:
         except ValueError:
             return None
 
+    def _format_display_summary(self, display: tuple[int, int] | None) -> str | None:
+        if display is None:
+            return None
+        return f"{display[0]}x{display[1]}"
+
+    def _build_preview_assist_summary(
+        self,
+        apply_mode: str,
+        l_display: tuple[int, int] | None,
+        r_display: tuple[int, int] | None,
+    ) -> str:
+        if apply_mode == "per-monitor-auto-split":
+            left = self._format_display_summary(l_display)
+            right = self._format_display_summary(r_display)
+            if left and right:
+                return f"Assist: auto-split as L {left} | R {right}"
+            return "Assist: auto-split by current left/right display widths"
+        return "Assist: same optimized image will be applied to both displays"
+
     def build_result_preview_state(self) -> ResultPreviewState:
         source_file = self.last_saved_files[-1] if self.last_saved_files else None
         if source_file is None:
@@ -454,6 +474,7 @@ class MainWindow:
             apply_mode=self.apply_mode,
             l_display=l_display,
             r_display=r_display,
+            assist_summary=self._build_preview_assist_summary(self.apply_mode, l_display, r_display),
         )
 
     def on_change_apply_mode(self, mode: str) -> bool:
