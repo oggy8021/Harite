@@ -501,6 +501,8 @@ class GtkRuntimeSignalBackend:
         self._signal_handlers: dict[str, Callable[..., Any]] = {}
         self._input_path_l = ""
         self._input_path_r = ""
+        self._prefs_apply_mode_preserved: str | None = None
+        self._prefs_apply_mode_syncing = False
         self._watch_srcdir_l = ""
         self._watch_srcdir_r = ""
         self._watch_running = False
@@ -947,6 +949,14 @@ class GtkRuntimeSignalBackend:
             prefs_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(prefs_apply_single, "Apply Auto-split")
             if hasattr(prefs_apply_single, "set_active"):
                 prefs_apply_single.set_active(True)
+            prefs_apply_single.connect(
+                "toggled",
+                lambda widget, *_args: self._on_preferences_apply_mode_toggled(widget, "single-file"),
+            )
+            prefs_apply_per_monitor.connect(
+                "toggled",
+                lambda widget, *_args: self._on_preferences_apply_mode_toggled(widget, "per-monitor-auto-split"),
+            )
             prefs_import_path_entry = gtk_module.Entry()
             prefs_export_path_entry = gtk_module.Entry()
 
@@ -1944,14 +1954,45 @@ class GtkRuntimeSignalBackend:
 
     def _set_preferences_apply_mode(self, value: object | None) -> None:
         mode = str(value or "single-file").strip().lower()
-        is_per_monitor = mode == "per-monitor-auto-split"
-        self._set_toggle_active("radPrefsApplySingle", not is_per_monitor)
-        self._set_toggle_active("radPrefsApplyPerMonitor", is_per_monitor)
+        self._prefs_apply_mode_syncing = True
+        try:
+            if mode == "per-monitor-auto-split":
+                self._prefs_apply_mode_preserved = None
+                self._set_toggle_active("radPrefsApplySingle", False)
+                self._set_toggle_active("radPrefsApplyPerMonitor", True)
+                return
+            if mode == "single-file":
+                self._prefs_apply_mode_preserved = None
+                self._set_toggle_active("radPrefsApplySingle", True)
+                self._set_toggle_active("radPrefsApplyPerMonitor", False)
+                return
+
+            # Preserve unsupported modes such as per-monitor-explicit without
+            # surfacing them as editable GUI choices.
+            self._prefs_apply_mode_preserved = mode
+            self._set_toggle_active("radPrefsApplySingle", False)
+            self._set_toggle_active("radPrefsApplyPerMonitor", False)
+        finally:
+            self._prefs_apply_mode_syncing = False
 
     def _read_preferences_apply_mode(self) -> str:
         if self._is_toggle_active("radPrefsApplyPerMonitor"):
             return "per-monitor-auto-split"
+        if self._is_toggle_active("radPrefsApplySingle"):
+            return "single-file"
+        if self._prefs_apply_mode_preserved:
+            return self._prefs_apply_mode_preserved
         return "single-file"
+
+    def _on_preferences_apply_mode_toggled(self, widget: Any, mode: str) -> None:
+        if self._prefs_apply_mode_syncing:
+            return
+        is_active = True
+        if hasattr(widget, "get_active"):
+            is_active = bool(widget.get_active())
+        if not is_active:
+            return
+        self._prefs_apply_mode_preserved = None
 
     def _sync_preferences_widgets_from_dialog(self) -> dict[str, object]:
         dialog = self._objects.get("SettingsDialog")

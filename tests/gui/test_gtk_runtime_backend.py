@@ -1368,6 +1368,77 @@ def test_runtime_backend_prefs_load_updates_watch_tab_state(tmp_path):
     assert backend.get_object("spnInterval").get_value_as_int() == 45
 
 
+def test_runtime_backend_prefs_preserves_explicit_apply_mode_when_unedited(tmp_path):
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    dialog = backend.get_object("SettingsDialog")
+    observed = {"apply": None, "save": None}
+
+    import_path = tmp_path / "explicit-load.json"
+    export_path = tmp_path / "explicit-save.json"
+    dialog.set_preferences_config(
+        {
+            "plugin": "linux",
+            "apply_mode": "per-monitor-explicit",
+        }
+    )
+    dialog.set_import_path(str(import_path))
+    dialog.set_export_path(str(export_path))
+    dialog.show()
+
+    backend.connect_signals(
+        {
+            "on_apply_preferences": lambda config: observed.__setitem__("apply", config) or True,
+            "on_load_preferences_file": lambda path: True,
+            "on_save_preferences_file": lambda path, config=None: observed.__setitem__("save", (path, config)) or True,
+            "on_get_preferences_config": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
+        }
+    )
+
+    backend.get_object("btnPrefsLoad").click()
+
+    assert backend.get_object("radPrefsApplySingle").get_active() is False
+    assert backend.get_object("radPrefsApplyPerMonitor").get_active() is False
+
+    backend.get_object("btnPrefsApply").click()
+    assert observed["apply"]["apply_mode"] == "per-monitor-explicit"
+
+    dialog.show()
+    backend.get_object("entPrefsExportPath").set_text(str(export_path))
+    backend.get_object("btnPrefsSave").click()
+    assert observed["save"][0] == str(export_path)
+    assert observed["save"][1]["apply_mode"] == "per-monitor-explicit"
+
+
+def test_runtime_backend_prefs_can_override_preserved_explicit_apply_mode(tmp_path):
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    dialog = backend.get_object("SettingsDialog")
+    observed = {"apply": None}
+
+    import_path = tmp_path / "explicit-load.json"
+    dialog.set_preferences_config(
+        {
+            "plugin": "linux",
+            "apply_mode": "per-monitor-explicit",
+        }
+    )
+    dialog.set_import_path(str(import_path))
+    dialog.show()
+
+    backend.connect_signals(
+        {
+            "on_apply_preferences": lambda config: observed.__setitem__("apply", config) or True,
+            "on_load_preferences_file": lambda path: True,
+            "on_get_preferences_config": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
+        }
+    )
+
+    backend.get_object("btnPrefsLoad").click()
+    backend.get_object("radPrefsApplyPerMonitor").click()
+    backend.get_object("btnPrefsApply").click()
+
+    assert observed["apply"]["apply_mode"] == "per-monitor-auto-split"
+
+
 def test_runtime_backend_optimize_sets_running_state_before_handler_call():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 

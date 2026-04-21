@@ -632,6 +632,24 @@ def test_preferences_file_save_accepts_explicit_dialog_config(tmp_path):
     assert window.watch_srcdir_l == "/watch/left"
 
 
+def test_preferences_file_round_trips_explicit_apply_mode_without_gui_projection(tmp_path):
+    window = MainWindow()
+    target = tmp_path / "prefs-explicit.json"
+
+    assert window.on_save_preferences_file(
+        str(target),
+        {
+            "plugin": "linux",
+            "apply_mode": "per-monitor-explicit",
+        },
+    ) is True
+
+    other = MainWindow()
+    assert other.on_load_preferences_file(str(target)) is True
+    assert other.plugin_name == "linux"
+    assert other.apply_mode == "per-monitor-explicit"
+
+
 def test_on_apply_without_optimized_file_fails():
     window = MainWindow()
     ok = window.on_apply()

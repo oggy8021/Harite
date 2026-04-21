@@ -1,6 +1,6 @@
 # GUI Phase 7 Workstream 4: GUI 候補機能の再読
 
-最終更新: 2026-04-20
+最終更新: 2026-04-21
 
 ## 位置づけ
 
@@ -184,11 +184,18 @@
 - Phase7 で閉じる判断:
   - explicit mapping (`--left-file` / `--right-file`) は GUI 非対象として閉じる。
   - CLI 専用の低露出 escape hatch として残し、MainWindow や `Prefs` の主導線には持ち込まない。
+  - ただし config / prefs load-save-apply 経路では unsupported mode を破壊しない。
 
 - 理由:
   - Harite の GUI 主導線は、`Optimize` で成果物を作る流れと、`Auto-split` による monitor 別適用の自動生成に置く。
   - explicit mapping は expert workflow としては有効だが、current GUI の中心責務ではない。
   - これを GUI へ前面露出すると、`Auto-split` 主導線と責務が競合し、Phase7 で閉じた apply 語彙の整理も再び曖昧になりやすい。
+
+- 2026-04-21 実装反映:
+  - `per-monitor-explicit` 自体の GUI 露出は追加しない。
+  - `Prefs` の apply mode は GUI 対応の 2 択だけを編集面として維持する。
+  - その一方で、既存 config に `per-monitor-explicit` が入っていても、load / save / apply 経路で `single-file` へ勝手に潰さない。
+  - この論点では実機確認を要求せず、GUI tests 通過を close 根拠とする。
 
 ## `embed-text` / margin info embedding
 
