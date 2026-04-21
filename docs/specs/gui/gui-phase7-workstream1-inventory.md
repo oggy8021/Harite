@@ -1,6 +1,6 @@
 # GUI Phase 7 Workstream 1: 機能棚卸し
 
-最終更新: 2026-04-20
+最終更新: 2026-04-21
 
 ## 位置づけ
 
@@ -24,7 +24,7 @@
 | `Apply` の基本責務 | plugin apply は可能 | dry-run 既定 + `--do-it` | 即時実行 | 意図差 | CLI と GUI で実行ポリシーが異なるが、語彙差を除けば同じ plugin apply を指している。 | この差を残すか、将来さらに寄せるかを別途判断する |
 | `Default` / `single-file` apply | `single-file` 経路あり | 既定 apply は `single-file` | visible には `Default` 相当で露出 | 意図差 | 現在の理解では `Default` は monitor-aware 既定ではなく、追加分割なしの通常 apply 経路を指す。 | GUI 表示語を `分割せず適用` 系へ寄せる整理を維持する |
 | `Auto-split` | split / monitor-aware apply の土台あり | 実装済み | apply mode として露出済み | 意図差 | Harite 独自価値として `Apply` の主導線に置く判断まで到達した。 | GUI 上でどの程度前面に出すかを UI/文言へ落とす |
-| explicit mapping (`--left-file` / `--right-file`) | mapping を受ける土台あり | 実装済み | 未露出 | CLI 専用 | CLI 側の低露出 escape hatch として残す。Harite の主導線とは扱わない。 | GUI 非対象のまま固定するかを棚卸し結果として明記する |
+| explicit mapping (`--left-file` / `--right-file`) | mapping を受ける土台あり | 実装済み | 未露出。Prefs でも unsupported mode を保持し、GUI 2択へ勝手に射影しない | CLI 専用 | CLI 側の低露出 escape hatch として残す。Harite の主導線とは扱わない。 | Phase7 では GUI 非対象のまま固定済み |
 | `watch` 継続ループ | watch runner あり | 実装済み | srcdir / interval / start-stop、timer event 駆動、状態表示、apply 接続あり | 接続済み | GUI は same-process の watch front-end として接続済みであり、`run_watch_cycle()` を刻んで反復 apply を扱う。 | close 判定用の manual validation と文言調整へ進む |
 | watch failure-continue / 実切替 | plugin apply と組み合わせ可能 | 実装済み | 既定挙動として継承、詳細 option は未露出 | 意図差 | GUI は CLI と同じ詳細 option 群を広く露出せず、watch 実切替の front-end として必要最小限の責務に留める。 | GUI 非露出のまま維持する語彙境界を確定する |
 | `Prefs` / 設定同期 | config / dataclass 基盤あり | config 読み込みあり | dialog 開閉、適用、保存、読込あり | 未接続 | Phase6 で入口と同期基盤は復旧した。内容 grouping と main 画面との責務分担はまだ再設計対象。 | Workstream 4 で main と settings の境界を再整理する |
