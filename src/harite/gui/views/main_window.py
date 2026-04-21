@@ -7,7 +7,7 @@ package remains importable in environments without GUI libraries.
 from __future__ import annotations
 
 import ctypes
-from dataclasses import replace
+from dataclasses import dataclass, replace
 import os
 from pathlib import Path
 import sys
@@ -17,10 +17,19 @@ from harite.config import load_config, save_config
 from harite.display_context import build_two_screen_optimize_context
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
 from harite.gui.services.cli_mapper import OptimizeRequest, to_cli_args
+from harite.optimize_settings import resolve_optimize_display_settings
 from harite.positioning import reset_position_pair, update_position_pair
 from harite.plugins import registry as plugin_registry
 from harite.preferences import AppPreferences
 from harite.watch import WatchCycleState, collect_watch_input_images, run_watch_cycle
+
+
+@dataclass(frozen=True)
+class ResultPreviewState:
+    source_file: Path | None
+    apply_mode: str
+    l_display: tuple[int, int] | None = None
+    r_display: tuple[int, int] | None = None
 
 
 class MainWindow:
@@ -406,6 +415,45 @@ class MainWindow:
         self._log(
             "Two-screen auto-configured: "
             f"L={self.form_state.l_display} R={self.form_state.r_display} resolution={self.form_state.resolution}"
+        )
+
+    def _parse_resolution_value(self, value: str | None) -> tuple[int, int] | None:
+        raw = str(value or "").strip().lower()
+        if not raw or "x" not in raw:
+            return None
+        width_str, height_str = raw.split("x", 1)
+        try:
+            return int(width_str), int(height_str)
+        except ValueError:
+            return None
+
+    def build_result_preview_state(self) -> ResultPreviewState:
+        source_file = self.last_saved_files[-1] if self.last_saved_files else None
+        if source_file is None:
+            return ResultPreviewState(source_file=None, apply_mode=self.apply_mode)
+
+        input_values = [part.strip() for part in self.form_state.input_value.split(",") if part.strip()]
+        l_display = self._parse_resolution_value(self.form_state.l_display)
+        r_display = self._parse_resolution_value(self.form_state.r_display)
+
+        try:
+            display_settings = resolve_optimize_display_settings(
+                input_values=input_values,
+                resolution=self.form_state.resolution,
+                two_screen=self.form_state.two_screen,
+                l_display=self.form_state.l_display,
+                r_display=self.form_state.r_display,
+            )
+            l_display = self._parse_resolution_value(display_settings.l_display) or l_display
+            r_display = self._parse_resolution_value(display_settings.r_display) or r_display
+        except Exception:
+            pass
+
+        return ResultPreviewState(
+            source_file=source_file,
+            apply_mode=self.apply_mode,
+            l_display=l_display,
+            r_display=r_display,
         )
 
     def on_change_apply_mode(self, mode: str) -> bool:

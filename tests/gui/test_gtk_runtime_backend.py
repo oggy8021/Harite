@@ -448,6 +448,12 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("lblApplySection") is not None
     assert backend.get_object("boxApplySection") is not None
     assert backend.get_object("lblApplyTarget") is not None
+    assert backend.get_object("lblPreviewSection") is not None
+    assert backend.get_object("boxPreviewSection") is not None
+    assert backend.get_object("imgPreviewL") is not None
+    assert backend.get_object("imgPreviewR") is not None
+    assert backend.get_object("lblPreviewState") is not None
+    assert backend.get_object("lblPreviewSource") is not None
     assert backend.get_object("lblDoItPlanned") is not None
     assert backend.get_object("lblSavePathState") is not None
     assert backend.get_object("lblSaveTarget") is not None
@@ -468,6 +474,35 @@ def test_runtime_backend_current_state_panel_defaults_are_available():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     assert backend.get_object("lblCurrentStateSection").text == "Current state"
+
+
+def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path):
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+
+    source = tmp_path / "preview.jpg"
+    Image.new("RGB", (320, 180), color=(20, 30, 40)).save(source)
+
+    def run_optimize(_form_state):
+        return [source], []
+
+    window.controller.run_optimize = run_optimize
+
+    dispatch = create_mainwindow_signal_dispatch(window, ("on_change_input_text", "on_optimize", "on_change_apply_mode"))
+    backend.connect_signals(dispatch)
+
+    backend.get_object("entPathL").set_text("left.jpg")
+    backend.get_object("entPathL").emit("changed", backend.get_object("entPathL"))
+    backend.get_object("btnOptimize").click()
+
+    assert backend.get_object("lblPreviewState").text == "Preview: same image on both displays"
+    assert backend.get_object("lblPreviewSource").text == "Preview source: preview.jpg"
+    assert backend.get_object("imgPreviewL").text == "preview.jpg"
+    assert backend.get_object("imgPreviewR").text == "preview.jpg"
+
+    backend.get_object("radApplyPerMonitor").click()
+
+    assert backend.get_object("lblPreviewState").text == "Preview: pseudo auto-split by display widths"
     assert backend.get_object("lblCurrentFixed").text == "Current fixed: off"
     assert backend.get_object("lblCurrentMargins").text == "Current margins: 0,0,0,0"
     assert backend.get_object("lblCurrentStateL").text == "Current L: align=center valign=center"
