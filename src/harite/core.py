@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from typing import Sequence, Tuple, List, Optional
 from PIL import Image, ImageDraw, ImageFont
+from .positioning import format_position_pair, parse_position_pair
 from .workspace import Display
 
 
@@ -148,6 +149,16 @@ def _build_embed_lines(
                 free_lines.append(v)
 
     return params_lines + free_lines
+
+
+def _resolve_cell_alignment(kwargs: dict[str, object], index: int) -> tuple[str, str]:
+    align_left, align_right = parse_position_pair(kwargs.get("align", "center"), axis="align")
+    valign_left, valign_right = parse_position_pair(kwargs.get("valign", "center"), axis="valign")
+    if index == 0:
+        return align_left, valign_left
+    if index == 1:
+        return align_right, valign_right
+    return align_left, valign_left
 
 
 def _truncate_to_width(draw: ImageDraw.ImageDraw, text: str, max_w: int, font: ImageFont.ImageFont) -> str:
@@ -409,8 +420,7 @@ def optimize_wallpapers(
         img_resized = img.resize((nw, nh), Image.LANCZOS)
 
         # determine alignment offsets (defaults: center)
-        align = str(kwargs.get("align", "center")).lower()
-        valign = str(kwargs.get("valign", "center")).lower()
+        align, valign = _resolve_cell_alignment(kwargs, i)
 
         # horizontal offset within this cell
         space_x = max(0, this_cell_w - nw)
@@ -461,8 +471,8 @@ def optimize_wallpapers(
         embed_info,
         target_resolution=target_resolution,
         margins=(ml, mr, mt, mb),
-        align=str(kwargs.get("align", "center")).lower(),
-        valign=str(kwargs.get("valign", "center")).lower(),
+        align=format_position_pair(kwargs.get("align", "center"), axis="align"),
+        valign=format_position_pair(kwargs.get("valign", "center"), axis="valign"),
         padding=padding,
         input_count=len(items),
         two_screen=two_screen,

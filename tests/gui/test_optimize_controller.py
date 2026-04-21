@@ -66,6 +66,8 @@ def test_run_optimize_passes_parsed_margins(monkeypatch, tmp_path):
     assert saved
     assert placements == []
     assert captured["margins"] == (10, 20, 30, 40)
+    assert captured["align"] == ("center", "center")
+    assert captured["valign"] == ("center", "center")
 
 
 def test_run_optimize_passes_save_path(monkeypatch, tmp_path):

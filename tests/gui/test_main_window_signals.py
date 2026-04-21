@@ -389,14 +389,14 @@ def test_on_toggle_position_updates_alignment_and_reset():
     window.on_toggle_position("tglPushRightL", True)
     window.on_toggle_position("tglUpperR", True)
 
-    assert window.form_state.align == "right"
-    assert window.form_state.valign == "top"
+    assert window.form_state.align == ("right", "center")
+    assert window.form_state.valign == ("center", "top")
 
     window.on_toggle_position_reset("tglPushRightL")
     window.on_toggle_position_reset("tglUpperR")
 
-    assert window.form_state.align == "center"
-    assert window.form_state.valign == "center"
+    assert window.form_state.align == ("center", "center")
+    assert window.form_state.valign == ("center", "center")
 
 
 def test_on_apply_uses_immediate_apply(monkeypatch, tmp_path):
@@ -547,6 +547,8 @@ def test_export_and_reload_preferences_config_round_trips():
 
     assert exported["resolution"] == "auto"
     assert exported["two_screen"] == "auto"
+    assert exported["align"] == ["center", "center"]
+    assert exported["valign"] == ["center", "center"]
     assert exported["plugin"] == "linux"
     assert exported["apply_mode"] == "per-monitor-auto-split"
     assert exported["watch_interval_seconds"] == 90
@@ -557,6 +559,8 @@ def test_export_and_reload_preferences_config_round_trips():
     assert other.load_preferences_config(exported) is True
     assert other.form_state.resolution == "auto"
     assert other.form_state.two_screen is None
+    assert other.form_state.align == ("center", "center")
+    assert other.form_state.valign == ("center", "center")
     assert other.plugin_name == "linux"
     assert other.watch_interval_seconds == 90
     assert other.watch_srcdir_l == "/watch/left"
@@ -586,6 +590,8 @@ def test_preferences_file_save_and_load_round_trip(tmp_path):
     assert other.form_state.two_screen is None
     assert other.form_state.l_display == "auto"
     assert other.form_state.r_display == "auto"
+    assert other.form_state.align == ("center", "center")
+    assert other.form_state.valign == ("center", "center")
     assert other.plugin_name == "linux"
     assert other.apply_mode == "per-monitor-auto-split"
     assert other.watch_interval_seconds == 75

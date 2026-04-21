@@ -9,6 +9,7 @@ from typing import Optional
 from harite.cli import parse_resolution
 from harite.core import optimize_wallpapers
 from harite.optimize_settings import resolve_optimize_display_settings
+from harite.positioning import parse_position_pair, position_value_for_side
 
 
 @dataclass
@@ -24,14 +25,24 @@ class OptimizeFormState:
     l_display: Optional[str] = None
     r_display: Optional[str] = None
     fixed: bool = False
-    align: str = "center"
-    valign: str = "center"
+    align: tuple[str, str] = ("center", "center")
+    valign: tuple[str, str] = ("center", "center")
     padding: int = 0
     quality: int = 90
     embed_info: str = "none"
     embed_text: Optional[str] = None
     embed_position: str = "auto"
     embed_max_lines: int = 3
+
+    def __post_init__(self) -> None:
+        self.align = parse_position_pair(self.align, axis="align")
+        self.valign = parse_position_pair(self.valign, axis="valign")
+
+    def align_for(self, side: str) -> str:
+        return position_value_for_side(self.align, side, axis="align")
+
+    def valign_for(self, side: str) -> str:
+        return position_value_for_side(self.valign, side, axis="valign")
 
 
 class OptimizeController:

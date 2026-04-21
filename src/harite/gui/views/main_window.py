@@ -17,6 +17,7 @@ from harite.config import load_config, save_config
 from harite.display_context import build_two_screen_optimize_context
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
 from harite.gui.services.cli_mapper import OptimizeRequest, to_cli_args
+from harite.positioning import reset_position_pair, update_position_pair
 from harite.plugins import registry as plugin_registry
 from harite.preferences import AppPreferences
 from harite.watch import WatchCycleState, collect_watch_input_images, run_watch_cycle
@@ -295,33 +296,47 @@ class MainWindow:
     def on_toggle_position_pressed(self, widget_name: str) -> None:
         self._log(f"Toggle pressed: {widget_name}")
 
+    def _toggle_side(self, widget_name: str) -> str | None:
+        if widget_name.endswith("L"):
+            return "L"
+        if widget_name.endswith("R"):
+            return "R"
+        return None
+
     def on_toggle_position(self, widget_name: str, active: bool) -> None:
         if not active:
             return
 
+        side = self._toggle_side(widget_name)
+        if side is None:
+            return
+
         if "PushLeft" in widget_name:
-            self.form_state.align = "left"
+            self.form_state.align = update_position_pair(self.form_state.align, side, "left", axis="align")
             self._log(f"Align updated from {widget_name}: left")
             return
         if "PushRight" in widget_name:
-            self.form_state.align = "right"
+            self.form_state.align = update_position_pair(self.form_state.align, side, "right", axis="align")
             self._log(f"Align updated from {widget_name}: right")
             return
         if "Upper" in widget_name:
-            self.form_state.valign = "top"
+            self.form_state.valign = update_position_pair(self.form_state.valign, side, "top", axis="valign")
             self._log(f"Valign updated from {widget_name}: top")
             return
         if "Lower" in widget_name:
-            self.form_state.valign = "bottom"
+            self.form_state.valign = update_position_pair(self.form_state.valign, side, "bottom", axis="valign")
             self._log(f"Valign updated from {widget_name}: bottom")
 
     def on_toggle_position_reset(self, widget_name: str) -> None:
+        side = self._toggle_side(widget_name)
+        if side is None:
+            return
         if "Push" in widget_name:
-            self.form_state.align = "center"
+            self.form_state.align = reset_position_pair(self.form_state.align, side, axis="align")
             self._log(f"Align reset from {widget_name}: center")
             return
         if "Upper" in widget_name or "Lower" in widget_name:
-            self.form_state.valign = "center"
+            self.form_state.valign = reset_position_pair(self.form_state.valign, side, axis="valign")
             self._log(f"Valign reset from {widget_name}: center")
 
     def _log(self, message: str) -> None:

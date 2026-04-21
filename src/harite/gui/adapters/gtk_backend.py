@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 from typing import Any, Callable
 
+from harite.positioning import format_position_pair, parse_position_pair
 from harite.watch import WatchCycleState, collect_watch_input_images, run_watch_cycle
 
 
@@ -1449,6 +1450,51 @@ class GtkRuntimeSignalBackend:
         form_state = getattr(owner, "form_state", None)
         self._refresh_watch_output_label(getattr(form_state, "output_dir", None) if form_state is not None else None)
 
+    def _parse_margin_values(self, value: object | None) -> tuple[int, int, int, int]:
+        raw = str(value or "").strip()
+        if not raw:
+            return (0, 0, 0, 0)
+
+        parts = [part.strip() for part in raw.split(",")]
+        if len(parts) != 4:
+            return (0, 0, 0, 0)
+
+        try:
+            return tuple(int(part) for part in parts)
+        except ValueError:
+            return (0, 0, 0, 0)
+
+    def _sync_main_state_from_owner(self, owner: Any) -> None:
+        form_state = getattr(owner, "form_state", None)
+        if form_state is None:
+            return
+
+        fixed = bool(getattr(form_state, "fixed", False))
+        self._set_toggle_active("radFixed", fixed)
+        self._set_toggle_active("radNoFixed", not fixed)
+
+        margin_left, margin_right, margin_top, margin_bottom = self._parse_margin_values(
+            getattr(form_state, "margins", None)
+        )
+        self._set_spin_value("spnLMergin", margin_left)
+        self._set_spin_value("spnRMergin", margin_right)
+        self._set_spin_value("spnTopMergin", margin_top)
+        self._set_spin_value("spnBtmMergin", margin_bottom)
+
+        align_left, align_right = parse_position_pair(getattr(form_state, "align", "center"), axis="align")
+        valign_left, valign_right = parse_position_pair(getattr(form_state, "valign", "center"), axis="valign")
+
+        self._set_toggle_active("tglPushLeftL", align_left == "left")
+        self._set_toggle_active("tglPushRightL", align_left == "right")
+        self._set_toggle_active("tglPushLeftR", align_right == "left")
+        self._set_toggle_active("tglPushRightR", align_right == "right")
+        self._set_toggle_active("tglUpperL", valign_left == "top")
+        self._set_toggle_active("tglLowerL", valign_left == "bottom")
+        self._set_toggle_active("tglUpperR", valign_right == "top")
+        self._set_toggle_active("tglLowerR", valign_right == "bottom")
+
+        self._refresh_current_state_labels()
+
     def _sync_feedback_from_owner(self, owner: Any) -> None:
         phase = str(getattr(owner, "status_phase", "") or "").strip() or "watch"
         message = str(getattr(owner, "status_message", "") or "").strip() or "state-updated"
@@ -2007,8 +2053,8 @@ class GtkRuntimeSignalBackend:
         self._set_entry_text("entPrefsRDisplay", config.get("r_display"))
         self._set_entry_text("entPrefsMargins", config.get("margins"))
         self._set_toggle_active("tglPrefsFixed", bool(config.get("fixed", False)))
-        self._set_entry_text("entPrefsAlign", config.get("align", "center"))
-        self._set_entry_text("entPrefsValign", config.get("valign", "center"))
+        self._set_entry_text("entPrefsAlign", format_position_pair(config.get("align", "center"), axis="align"))
+        self._set_entry_text("entPrefsValign", format_position_pair(config.get("valign", "center"), axis="valign"))
         self._set_spin_value("spnPrefsPadding", int(config.get("padding", 0)))
         self._set_spin_value("spnPrefsQuality", int(config.get("quality", 90)))
         self._set_entry_text("entPrefsEmbedInfo", config.get("embed_info", "none"))
@@ -2042,8 +2088,8 @@ class GtkRuntimeSignalBackend:
                 "r_display": _empty_to_none(self._read_entry_text("entPrefsRDisplay")),
                 "margins": _empty_to_none(self._read_entry_text("entPrefsMargins")),
                 "fixed": self._is_toggle_active("tglPrefsFixed"),
-                "align": self._read_entry_text("entPrefsAlign") or "center",
-                "valign": self._read_entry_text("entPrefsValign") or "center",
+                "align": list(parse_position_pair(self._read_entry_text("entPrefsAlign") or "center", axis="align")),
+                "valign": list(parse_position_pair(self._read_entry_text("entPrefsValign") or "center", axis="valign")),
                 "padding": self._read_spin_int("spnPrefsPadding"),
                 "quality": self._read_spin_int("spnPrefsQuality"),
                 "embed_info": self._read_entry_text("entPrefsEmbedInfo") or "none",
@@ -2391,6 +2437,7 @@ class GtkRuntimeSignalBackend:
                 self._sync_preferences_widgets_from_dialog()
                 owner = self._get_handler_owner("on_load_preferences_file")
                 if owner is not None:
+                    self._sync_main_state_from_owner(owner)
                     self._sync_watch_state_from_owner(owner)
                 self._set_label_text("lblPrefsState", "Prefs: loaded")
                 self._set_feedback(phase="PrefsLoad", state="loaded")

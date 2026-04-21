@@ -52,3 +52,31 @@ def test_vertical_valign(tmp_path):
     bottom_y = placements[0].y
 
     assert top_y < center_y < bottom_y
+
+
+def test_pair_align_and_valign_apply_per_side_in_two_screen_mode(tmp_path):
+    left = tmp_path / "left.jpg"
+    right = tmp_path / "right.jpg"
+    _make_image(left, size=(50, 100), color=(255, 0, 0))
+    _make_image(right, size=(100, 50), color=(0, 255, 0))
+
+    out_dir = tmp_path / "out-pair"
+
+    _saved, placements = optimize_wallpapers(
+        [str(left), str(right)],
+        (400, 200),
+        out_dir,
+        padding=0,
+        quality=80,
+        two_screen=True,
+        l_display=(200, 200),
+        r_display=(200, 200),
+        align=("left", "right"),
+        valign=("top", "bottom"),
+    )
+
+    assert len(placements) == 2
+    assert placements[0].x == 0
+    assert placements[0].y == 0
+    assert placements[1].x == 200
+    assert placements[1].y == 100

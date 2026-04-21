@@ -1,6 +1,6 @@
 # GUI Phase 7 Workstream 2: 操作語彙の再設計
 
-最終更新: 2026-04-20
+最終更新: 2026-04-21
 
 ## 位置づけ
 
@@ -25,6 +25,8 @@
 - `Apply` は独立した mode 切替ではなく、生成済みの 1 枚を即時に壁紙変更へ渡す動作だった。
 - `dry-run` / `do-it` / `Default` / `Auto-split` のような apply mode 語彙は持たない。
 - `two_screen` 相当の関心は optimize / compose 側にあり、apply 時点の暗黙分割はない。
+- `align` / `valign` は single 値ではなく、左画像・右画像それぞれの pair として保持される。
+- `tglPushLeftL` / `tglPushRightR` などの toggle は same-side の pair 要素を書き換える責務であり、反対側を巻き込まない。
 
 ### Harite v0.1.2
 
@@ -68,6 +70,22 @@
 - `Auto-split` は、Harite 独自価値として `Apply` の主導線に置く。
 - explicit mapping は CLI 専用の低露出 escape hatch として残し、GUI には持ち込まない。
 - CLI に残る「小さめ解像度で optimize し、後段 apply で使う」発想は、GUI 非対象の非主導線 workflow として分離する。
+- `align` / `valign` については、Harite 独自の single 値類推を撤回し、母体どおり左右別 pair を正本とする。
+
+## 2026-04-21 実装反映: L/R toggle semantics
+
+- 発端:
+  - `tglPushRightL` / `tglPushLeftR` などの見た目は左右独立指示なのに、Harite では内部で single `align` / `valign` に潰れていた。
+  - これは母体未読のまま Harite 独自表現を類推した結果であり、Phase7 の整合性判断としても不適切だった。
+
+- 母体再確認で分かったこと:
+  - 母体 GUI は `option.opts.align[lr]` / `option.opts.valign[lr]` を持ち、toggle は same-side の要素だけを更新する。
+  - 母体 CLI も `--align` / `--valign` を左右 2 値として受ける。
+
+- このブランチで閉じたこと:
+  - Harite の core / CLI / GUI / prefs / optimize CLI preview を、`align` / `valign` pair semantics へ統一した。
+  - 既存 config の single 値は互換的に読みつつ、保存時は左右 2 値として保持する。
+  - 「Harite 独自の single 値表現を正本とする」方向は捨て、母体踏襲で close する。
 
 ## 現時点で自然な表示語候補
 
@@ -142,3 +160,5 @@
 
 - `--left-file` / `--right-file` による explicit mapping は、ひとまず CLI 専用の低露出な escape hatch として残す。
 - CLI explicit mapping が許す「monitor ごとに別画像を貼る使い方」は可能ではあるが、Harite の主導線としては扱わない。
+
+この論点は、母体踏襲の pair semantics を正本として Phase7 で close する。

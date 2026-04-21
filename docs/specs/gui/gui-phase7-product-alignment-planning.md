@@ -66,7 +66,7 @@
 | Workstream | 主題 | 現在地 | 詳細 |
 | --- | --- | --- | --- |
 | 1 | 機能棚卸し | 初版作成済み | [docs/specs/gui/gui-phase7-workstream1-inventory.md](docs/specs/gui/gui-phase7-workstream1-inventory.md) |
-| 2 | 操作語彙の再設計 | 主要論点の棚卸しと暫定方針は一巡済み | [docs/specs/gui/gui-phase7-workstream2-operation-semantics.md](docs/specs/gui/gui-phase7-workstream2-operation-semantics.md) |
+| 2 | 操作語彙の再設計 | 主要論点の棚卸しと暫定方針は一巡済み。`align/valign` の左右別 semantics も母体踏襲で close | [docs/specs/gui/gui-phase7-workstream2-operation-semantics.md](docs/specs/gui/gui-phase7-workstream2-operation-semantics.md) |
 | 3 | watch の責務再定義 | 接続方針と責務整理は完了、close 前の文言整理と manual validation を残す | [docs/specs/gui/gui-phase7-workstream3-watch-responsibility.md](docs/specs/gui/gui-phase7-workstream3-watch-responsibility.md) |
 | 4 | GUI 候補機能の再読 | 第1巡の比較メモに加え、explicit mapping の GUI 非対象境界まで実装反映済み | [docs/specs/gui/gui-phase7-workstream4-gui-candidate-recheck.md](docs/specs/gui/gui-phase7-workstream4-gui-candidate-recheck.md) |
 
@@ -76,6 +76,7 @@
 - `Auto-split` は Harite 独自価値として `Apply` の主導線に置く。
 - explicit mapping (`--left-file` / `--right-file`) は CLI 専用の低露出 escape hatch として残す。
 - explicit mapping は GUI に露出しない一方、既存 config / prefs 経路で unsupported mode を破壊しないところまで Phase7 で閉じる。
+- `align` / `valign` は Harite 独自の single 値類推を捨て、母体どおり左右別 pair を正本として扱う。
 - GUI watch は CLI watch / watch runner を利用する same-process front-end として扱う。
 - `Prefs` は残し、既定値とその場の作業状態を分ける方向で整理する。
 - `embed-text` / margin info、preview / visual assist、`Color` は Phase8 候補として扱い、Phase7 主導線へは無理に上げない。

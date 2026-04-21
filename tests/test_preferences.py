@@ -23,6 +23,8 @@ def test_app_preferences_round_trip_config_with_auto_values():
     assert exported["two_screen"] == "auto"
     assert exported["l_display"] == "auto"
     assert exported["r_display"] == "auto"
+    assert exported["align"] == ["center", "center"]
+    assert exported["valign"] == ["center", "center"]
     assert exported["plugin"] == "linux"
     assert exported["apply_mode"] == "per-monitor-auto-split"
     assert exported["watch_interval_seconds"] == 120
