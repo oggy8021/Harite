@@ -1343,6 +1343,10 @@ def test_runtime_backend_prefs_load_updates_watch_tab_state(tmp_path):
     import_path.write_text(
         """
 {
+    "margins": "5,15,25,35",
+    "fixed": true,
+    "align": ["right", "center"],
+    "valign": ["center", "top"],
   "plugin": "linux",
   "apply_mode": "per-monitor-auto-split",
   "watch_interval_seconds": 45,
@@ -1370,6 +1374,10 @@ def test_runtime_backend_prefs_load_updates_watch_tab_state(tmp_path):
 
     assert backend.get_object("lblWatchSources").text == "Watch srcdirs: L=/watch/left | R=/watch/right"
     assert backend.get_object("spnInterval").get_value_as_int() == 45
+    assert backend.get_object("lblCurrentFixed").text == "Current fixed: on"
+    assert backend.get_object("lblCurrentMargins").text == "Current margins: 5,15,25,35"
+    assert backend.get_object("lblCurrentStateL").text == "Current L: align=right valign=center"
+    assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=top"
 
 
 def test_runtime_backend_prefs_preserves_explicit_apply_mode_when_unedited(tmp_path):
