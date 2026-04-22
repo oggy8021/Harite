@@ -84,6 +84,7 @@ class MainWindow:
             input_value="",
             resolution="1920x1080",
             output_dir=default_output_dir,
+            embed_position="bottom",
         )
         self.preferences = AppPreferences.defaults(default_plugin=self.plugin_name)
         self.layout_version = "phase6-layout-redefinition"
@@ -133,6 +134,28 @@ class MainWindow:
 
     def _default_output_dir(self) -> str:
         return str(self._resolve_default_output_dir())
+
+    def _current_resolution_value(self) -> tuple[int, int] | None:
+        value = (self.form_state.resolution or "").strip()
+        if not value:
+            return None
+        try:
+            width_text, height_text = value.lower().split("x", 1)
+            width = int(width_text)
+            height = int(height_text)
+        except (ValueError, TypeError):
+            return None
+        if width <= 0 or height <= 0:
+            return None
+        return width, height
+
+    def _normalize_gui_embed_position(self, value: object | None) -> str:
+        normalized = str(value or "").strip().lower()
+        if normalized == "auto":
+            return "bottom"
+        if normalized in {"top", "bottom", "left", "right"}:
+            return normalized
+        return "bottom"
 
     def _resolve_default_output_dir(self) -> Path:
         if sys.platform == "win32":
@@ -263,6 +286,59 @@ class MainWindow:
         except ValueError:
             return (0, 0, 0, 0)
 
+    def _embed_margin_area(self, position: str) -> tuple[int, int] | None:
+        normalized = (position or "").strip().lower()
+        if normalized not in {"top", "bottom", "left", "right"}:
+            return None
+
+        resolution = self._current_resolution_value()
+        if resolution is None:
+            return None
+
+        target_width, target_height = resolution
+        left, right, top, bottom = self._current_margin_values()
+        if normalized == "top":
+            return max(0, target_width - (left + right)), top
+        if normalized == "bottom":
+            return max(0, target_width - (left + right)), bottom
+        if normalized == "left":
+            return left, max(0, target_height - (top + bottom))
+        return right, max(0, target_height - (top + bottom))
+
+    def _update_embed_preflight_status(self) -> None:
+        embed_info = str(getattr(self.form_state, "embed_info", "none") or "none").lower()
+        if embed_info == "none":
+            self._set_status("idle", "embed", "embed off")
+            return
+
+        embed_position = self._normalize_gui_embed_position(self.form_state.embed_position)
+        self.form_state.embed_position = embed_position
+        area = self._embed_margin_area(embed_position)
+        if area is None:
+            self._set_status("error", "embed", "embed position unavailable", error="embed position unavailable")
+            self._log("Embed preflight failed: position unavailable")
+            return
+
+        area_width, area_height = area
+        if area_width < 40 or area_height < 12:
+            self._set_status(
+                "error",
+                "embed",
+                "embed does not fit current margin area",
+                error="selected margin area is too small for embed text",
+            )
+            self._log(
+                f"Embed preflight failed: {embed_position} margin too small ({area_width}x{area_height})"
+            )
+            return
+
+        self._set_status(
+            "idle",
+            "embed",
+            f"embed ready in {embed_position} margin ({area_width}x{area_height})",
+        )
+        self._log(f"Embed preflight ready: {embed_position} margin ({area_width}x{area_height})")
+
     def _margin_index_for_widget(self, widget_name: str) -> int | None:
         if "LMergin" in widget_name:
             return 0
@@ -302,6 +378,7 @@ class MainWindow:
         self.form_state.margins = f"{left},{right},{top},{bottom}"
         self.last_error = ""
         self._log(f"Margins updated: {self.form_state.margins}")
+        self._update_embed_preflight_status()
 
     def on_toggle_fixed(self, enabled: bool) -> None:
         self.form_state.fixed = bool(enabled)
@@ -539,27 +616,27 @@ class MainWindow:
             return False
 
         self.form_state.embed_info = normalized
-        self.last_error = ""
         self._log(f"Embed info updated: {normalized}")
+        self._update_embed_preflight_status()
         return True
 
     def on_change_embed_text(self, value: str | None) -> bool:
         text = None if value is None else str(value)
         self.form_state.embed_text = None if not text or not text.strip() else text
-        self.last_error = ""
         self._log("Embed text updated")
+        self._update_embed_preflight_status()
         return True
 
     def on_change_embed_position(self, value: str) -> bool:
         normalized = (value or "").strip().lower()
-        if normalized not in {"auto", "top", "bottom", "left", "right"}:
+        if normalized not in {"top", "bottom", "left", "right"}:
             self.last_error = f"unknown embed_position: {value}"
             self._log(f"Embed position update failed: unknown value {value}")
             return False
 
         self.form_state.embed_position = normalized
-        self.last_error = ""
         self._log(f"Embed position updated: {normalized}")
+        self._update_embed_preflight_status()
         return True
 
     def on_change_embed_max_lines(self, value: int) -> bool:
@@ -570,8 +647,8 @@ class MainWindow:
             return False
 
         self.form_state.embed_max_lines = max_lines
-        self.last_error = ""
         self._log(f"Embed max lines updated: {max_lines}")
+        self._update_embed_preflight_status()
         return True
 
     def on_change_input_text(self, text: str) -> None:
@@ -712,7 +789,7 @@ class MainWindow:
         self.form_state.quality = optimize.quality
         self.form_state.embed_info = optimize.embed_info
         self.form_state.embed_text = optimize.embed_text
-        self.form_state.embed_position = optimize.embed_position
+        self.form_state.embed_position = self._normalize_gui_embed_position(optimize.embed_position)
         self.form_state.embed_max_lines = optimize.embed_max_lines
         self.form_state.l_display = optimize.l_display
         self.form_state.r_display = optimize.r_display

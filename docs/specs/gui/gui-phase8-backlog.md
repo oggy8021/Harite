@@ -57,14 +57,29 @@
 - P8-2A の最小実装:
   - watch より手前に `Embed` tab を追加し、`embed_info` は `Off / Params / Text / Both` の visible 語彙で切り替えられるようにする
   - `embed_text` / `embed_position` / `embed_max_lines` は MainWindow から直接更新できる入口までを用意する
+- `Params` 表示内容の整理メモ:
+  - 合成後画像上では `Params` という見出しは置かず、内容だけを直接出す方針とする
+  - `resolution` は `res` へ省略せず、そのまま `resolution` と明記する
+  - `margins` は短縮形を採用し、`L,R,U,B` ベースで出す
+  - `align` は現状 wording を維持する
+  - `pad` は意味が伝わりにくいため、`Params` 表示には含めない
+  - `inputs` も `Params` 表示には含めない
+  - `two-screen=1` のような flag 的露出は避け、split の有無はラベルなしで `Auto-Split` / `No Split` として見せる
+  - `Max lines` の初期値は固定せず、上記 wording を並べた案と `position` の整理後に再評価する
+- `Position` 整理メモ:
+  - user が選べる候補は current implementation に合わせて `Top margin` / `Bottom margin` / `Left margin` / `Right margin` の 4 つに絞る
+  - `auto` は P8-2A で廃止し、初期値は `Bottom margin` とする
+  - `Left display` / `Right display` / `Both displays` は今回の scope に入れない
+  - 画像本体との重畳は行わず、margin 領域のみを配置対象とする
+  - embed tab では preflight 判定を行い、選択された margin 領域が current resolution / margins で不足する場合は `Status` / `Error` に出す
 - 実機確認メモ:
   - margin がないと embed は当然ほぼ確認できず、単独機能として誤読されやすい
   - `position=auto` は実機では左上に置かれた。CLI 側が暫定実装だった前提も含め、意味付けの再確認が要る
   - `Position` は `auto` 以外に何が書けるかが user から分かりにくく、CLI literal をそのまま出すより「マージンのどの領域に置くか」という user-facing な言い方へ整理する議論が要る
   - 1 行程度の text は taskbar との干渉で視認性を失う場合がある
   - `Params` は何の parameter か直感しづらく、実機確認では「こちらの設定組み合わせ」を出す意味だと再把握した。user-facing wording としては再検討が要る
-  - `Text` が 1 行入力のため、`Max lines` の意味付けは現状まだ弱い
-  - tab 内の `Embed: ...` state 表示は Main tab に戻ると見えず、価値が薄いので follow-up で整理する
+  - `Text` が 1 行入力のため、`Max lines` の意味付けは現状まだ弱い。初期値はおおよそ 5-6 行を目標に再評価する
+  - tab 内の `Embed: ...` state 表示は Main tab に戻ると見えず価値が薄いため、P8-2A では置かない方針にした
 - 前提:
   - current state / prefs 接続までは既にある
 - 依存:

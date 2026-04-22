@@ -469,9 +469,11 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("radEmbedInfoText") is not None
     assert backend.get_object("radEmbedInfoBoth") is not None
     assert backend.get_object("entEmbedText") is not None
-    assert backend.get_object("entEmbedPosition") is not None
+    assert backend.get_object("radEmbedPositionTop") is not None
+    assert backend.get_object("radEmbedPositionBottom") is not None
+    assert backend.get_object("radEmbedPositionLeft") is not None
+    assert backend.get_object("radEmbedPositionRight") is not None
     assert backend.get_object("spnEmbedMaxLines") is not None
-    assert backend.get_object("lblEmbedState") is not None
     assert backend.get_object("lblDoItPlanned") is not None
     assert backend.get_object("lblSavePathState") is not None
     assert backend.get_object("lblSaveTarget") is not None
@@ -521,9 +523,8 @@ def test_runtime_backend_adds_embed_tab_and_syncs_owner_state():
     assert backend.get_object("lblEmbedTabTitle").text == "Embed"
     assert backend.get_object("radEmbedInfoBoth").get_active() is True
     assert backend.get_object("entEmbedText").get_text() == "margin-note"
-    assert backend.get_object("entEmbedPosition").get_text() == "bottom"
+    assert backend.get_object("radEmbedPositionBottom").get_active() is True
     assert backend.get_object("spnEmbedMaxLines").get_value_as_int() == 4
-    assert backend.get_object("lblEmbedState").text == "Embed: Both"
 
 
 def test_runtime_backend_embed_tab_updates_owner_state_and_cli_preview(tmp_path):
@@ -533,6 +534,7 @@ def test_runtime_backend_embed_tab_updates_owner_state_and_cli_preview(tmp_path)
     out_dir.mkdir()
     window.form_state.input_value = "a.jpg"
     window.form_state.output_dir = str(out_dir)
+    window.form_state.margins = "10,10,20,10"
 
     dispatch = create_mainwindow_signal_dispatch(
         window,
@@ -548,8 +550,7 @@ def test_runtime_backend_embed_tab_updates_owner_state_and_cli_preview(tmp_path)
     backend.get_object("radEmbedInfoText").click()
     backend.get_object("entEmbedText").set_text("hello")
     backend.get_object("entEmbedText").emit("changed", backend.get_object("entEmbedText"))
-    backend.get_object("entEmbedPosition").set_text("top")
-    backend.get_object("entEmbedPosition").emit("changed", backend.get_object("entEmbedPosition"))
+    backend.get_object("radEmbedPositionTop").click()
     backend.get_object("spnEmbedMaxLines").set_value(5)
     backend.get_object("spnEmbedMaxLines").emit("value-changed", backend.get_object("spnEmbedMaxLines"))
 
@@ -557,13 +558,38 @@ def test_runtime_backend_embed_tab_updates_owner_state_and_cli_preview(tmp_path)
     assert window.form_state.embed_text == "hello"
     assert window.form_state.embed_position == "top"
     assert window.form_state.embed_max_lines == 5
-    assert backend.get_object("lblEmbedState").text == "Embed: Text"
+    assert backend.get_object("lblStatus").text.startswith("Embed: embed ready in top margin")
+    assert backend.get_object("lblError").text == "Error: none"
 
     preview = window.build_optimize_cli_preview()
     assert "--embed-info free" in preview
     assert "--embed-text hello" in preview
     assert "--embed-position top" in preview
     assert "--embed-max-lines 5" in preview
+
+
+def test_runtime_backend_embed_preflight_reports_small_margin_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    window.form_state.resolution = "1920x1080"
+    window.form_state.margins = "10,10,20,10"
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_change_embed_info",
+            "on_change_embed_text",
+            "on_change_embed_position",
+            "on_change_embed_max_lines",
+        ),
+    )
+    backend.connect_signals(dispatch)
+
+    backend.get_object("radEmbedInfoParams").click()
+    backend.get_object("radEmbedPositionBottom").click()
+
+    assert backend.get_object("lblStatus").text == "Embed: embed does not fit current margin area"
+    assert backend.get_object("lblError").text == "Error: selected margin area is too small for embed text"
 
 
 def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path):
