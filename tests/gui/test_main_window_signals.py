@@ -1219,6 +1219,47 @@ def test_build_optimize_cli_preview_includes_optional_flags(tmp_path):
     assert "--embed-text hello" in preview
 
 
+def test_embed_change_handlers_update_form_state():
+    window = MainWindow()
+    window.form_state.resolution = "1920x1080"
+    window.form_state.margins = "10,10,20,30"
+
+    assert window.on_change_embed_info("combo") is True
+    assert window.on_change_embed_text("hello") is True
+    assert window.on_change_embed_position("bottom") is True
+    assert window.on_change_embed_max_lines(4) is True
+
+    assert window.form_state.embed_info == "combo"
+    assert window.form_state.embed_text == "hello"
+    assert window.form_state.embed_position == "bottom"
+    assert window.form_state.embed_max_lines == 4
+    assert window.status_phase == "embed"
+    assert window.status_message == "embed ready in bottom margin (1900x30)"
+    assert window.last_error == ""
+
+
+def test_embed_change_handlers_reject_invalid_values():
+    window = MainWindow()
+
+    assert window.on_change_embed_info("weird") is False
+    assert window.on_change_embed_position("auto") is False
+    assert window.on_change_embed_position("middle") is False
+    assert window.on_change_embed_max_lines(0) is False
+
+
+def test_embed_preflight_reports_margin_area_too_small():
+    window = MainWindow()
+    window.form_state.resolution = "1920x1080"
+    window.form_state.margins = "10,10,20,10"
+
+    assert window.on_change_embed_info("params") is True
+    assert window.on_change_embed_position("bottom") is True
+
+    assert window.status_phase == "embed"
+    assert window.status_message == "embed does not fit current margin area"
+    assert window.last_error == "selected margin area is too small for embed text"
+
+
 def test_on_close_error_dialog_clears_last_error():
     window = MainWindow()
     window.last_error = "something failed"

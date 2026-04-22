@@ -111,6 +111,40 @@ def test_embed_text_drawn_on_top_margin(tmp_path):
     assert any(px != (30, 30, 30) for px in sample_area.getdata())
 
 
+def test_two_screen_explicit_with_outer_margins_keeps_placements_within_display_slices(tmp_path):
+    from harite.core import optimize_wallpapers
+
+    inp_dir = tmp_path / "in"
+    out_dir = tmp_path / "out"
+    inp_dir.mkdir()
+    out_dir.mkdir()
+
+    img1 = inp_dir / "left.jpg"
+    img2 = inp_dir / "right.jpg"
+    make_image(img1, size=(1600, 900), color=(90, 120, 150))
+    make_image(img2, size=(900, 1600), color=(40, 80, 160))
+
+    saved, placements = optimize_wallpapers(
+        [str(img1), str(img2)],
+        (4096, 1280),
+        out_dir,
+        two_screen=True,
+        l_display=(2048, 1280),
+        r_display=(2048, 1280),
+        margins=(200, 200, 200, 200),
+        align=("right", "center"),
+        valign=("center", "top"),
+    )
+
+    assert saved
+    assert len(placements) == 2
+    left, right = placements
+    assert left.x >= 200
+    assert left.x + left.width <= 2048
+    assert right.x >= 2048
+    assert right.x + right.width <= 4096 - 200
+
+
 def test_load_preferred_font_tries_explicit_path_first(monkeypatch):
     import harite.core as core
 

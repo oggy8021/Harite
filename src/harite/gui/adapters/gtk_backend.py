@@ -38,6 +38,13 @@ SETTINGS_DIALOG_OBJECT_ALIASES: tuple[str, ...] = (
     "SettingsDialog",
 )
 
+EMBED_INFO_VISIBLE_LABELS: dict[str, str] = {
+    "none": "Off",
+    "params": "Params",
+    "free": "Text",
+    "combo": "Both",
+}
+
 
 def _default_apply_mode() -> str:
     session_markers = (
@@ -1102,6 +1109,76 @@ class GtkRuntimeSignalBackend:
                 watch_output_label.set_xalign(0.0)
             watch_detail_row.pack_start(watch_output_label, False, False, 0)
 
+            embed_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
+            embed_section_label = gtk_module.Label(label="Embed")
+            if hasattr(embed_section_label, "set_xalign"):
+                embed_section_label.set_xalign(0.0)
+            embed_tab_box.pack_start(embed_section_label, False, False, 0)
+
+            embed_info_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            embed_tab_box.pack_start(embed_info_block, False, False, 0)
+            embed_info_label = gtk_module.Label(label="Margin info")
+            if hasattr(embed_info_label, "set_xalign"):
+                embed_info_label.set_xalign(0.0)
+            embed_info_block.pack_start(embed_info_label, False, False, 0)
+
+            embed_info_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            embed_info_block.pack_start(embed_info_row, False, False, 0)
+            embed_info_none = gtk_module.RadioButton.new_with_label(None, "Off")
+            embed_info_params = gtk_module.RadioButton.new_with_label_from_widget(embed_info_none, "Params")
+            embed_info_free = gtk_module.RadioButton.new_with_label_from_widget(embed_info_none, "Text")
+            embed_info_combo = gtk_module.RadioButton.new_with_label_from_widget(embed_info_none, "Both")
+            if hasattr(embed_info_none, "set_active"):
+                embed_info_none.set_active(True)
+            embed_info_row.pack_start(embed_info_none, False, False, 0)
+            embed_info_row.pack_start(embed_info_params, False, False, 0)
+            embed_info_row.pack_start(embed_info_free, False, False, 0)
+            embed_info_row.pack_start(embed_info_combo, False, False, 0)
+
+            embed_text_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            embed_tab_box.pack_start(embed_text_row, False, False, 0)
+            embed_text_label = gtk_module.Label(label="Text")
+            if hasattr(embed_text_label, "set_xalign"):
+                embed_text_label.set_xalign(0.0)
+            embed_text_entry = gtk_module.Entry()
+            if hasattr(embed_text_entry, "set_placeholder_text"):
+                embed_text_entry.set_placeholder_text("Used by Text/Both")
+            embed_text_row.pack_start(embed_text_label, False, False, 0)
+            embed_text_row.pack_start(embed_text_entry, True, True, 0)
+
+            embed_position_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            embed_tab_box.pack_start(embed_position_row, False, False, 0)
+            embed_position_label = gtk_module.Label(label="Position")
+            if hasattr(embed_position_label, "set_xalign"):
+                embed_position_label.set_xalign(0.0)
+            embed_position_top = gtk_module.RadioButton.new_with_label(None, "Top margin")
+            embed_position_bottom = gtk_module.RadioButton.new_with_label_from_widget(embed_position_top, "Bottom margin")
+            embed_position_left = gtk_module.RadioButton.new_with_label_from_widget(embed_position_top, "Left margin")
+            embed_position_right = gtk_module.RadioButton.new_with_label_from_widget(embed_position_top, "Right margin")
+            if hasattr(embed_position_bottom, "set_active"):
+                embed_position_bottom.set_active(True)
+            embed_position_row.pack_start(embed_position_label, False, False, 0)
+            embed_position_row.pack_start(embed_position_top, False, False, 0)
+            embed_position_row.pack_start(embed_position_bottom, False, False, 0)
+            embed_position_row.pack_start(embed_position_left, False, False, 0)
+            embed_position_row.pack_start(embed_position_right, False, False, 0)
+
+            embed_max_lines_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            embed_tab_box.pack_start(embed_max_lines_row, False, False, 0)
+            embed_max_lines_label = gtk_module.Label(label="Max lines")
+            if hasattr(embed_max_lines_label, "set_xalign"):
+                embed_max_lines_label.set_xalign(0.0)
+            embed_max_lines_spin = gtk_module.SpinButton()
+            self._configure_spin_button(embed_max_lines_spin, minimum=1, maximum=20, step=1, page=5, initial=3)
+            embed_max_lines_row.pack_start(embed_max_lines_label, False, False, 0)
+            embed_max_lines_row.pack_start(embed_max_lines_spin, False, False, 0)
+
+            embed_tab_title = gtk_module.Label(label="Embed")
+            if hasattr(embed_tab_title, "set_xalign"):
+                embed_tab_title.set_xalign(0.0)
+            embed_page_shell = _build_centered_page(embed_tab_box)
+            command_tabs.append_page(embed_page_shell, embed_tab_title)
+
             watch_page_shell = _build_centered_page(watch_tab_box)
             command_tabs.append_page(watch_page_shell, watch_tab_title)
 
@@ -1247,8 +1324,21 @@ class GtkRuntimeSignalBackend:
                 "SrcdirDialog": srcdir_dialog_proxy,
                 **{object_name: settings_dialog_proxy for object_name in SETTINGS_DIALOG_OBJECT_ALIASES},
                 "watchTab": watch_tab_box,
+                "embedTab": embed_tab_box,
                 "watchControlsRow": watch_controls_row,
                 "watchDetailRow": watch_detail_row,
+                "lblEmbedTabTitle": embed_tab_title,
+                "lblEmbedSection": embed_section_label,
+                "radEmbedInfoOff": embed_info_none,
+                "radEmbedInfoParams": embed_info_params,
+                "radEmbedInfoText": embed_info_free,
+                "radEmbedInfoBoth": embed_info_combo,
+                "entEmbedText": embed_text_entry,
+                "radEmbedPositionTop": embed_position_top,
+                "radEmbedPositionBottom": embed_position_bottom,
+                "radEmbedPositionLeft": embed_position_left,
+                "radEmbedPositionRight": embed_position_right,
+                "spnEmbedMaxLines": embed_max_lines_spin,
                 "btnOpenSrcdirL": btn_open_srcdir_l,
                 "btnOpenSrcdirR": btn_open_srcdir_r,
                 "lblWatchSection": watch_label,
@@ -1350,6 +1440,16 @@ class GtkRuntimeSignalBackend:
             interval_spin.connect("value-changed", self._on_watch_interval_changed)
             btn_daemonize.connect("clicked", self._on_watch_start_clicked)
             btn_cancel_daemonize.connect("clicked", self._on_watch_stop_clicked)
+            embed_info_none.connect("toggled", lambda widget, *_args: self._on_embed_info_toggled(widget, "none"))
+            embed_info_params.connect("toggled", lambda widget, *_args: self._on_embed_info_toggled(widget, "params"))
+            embed_info_free.connect("toggled", lambda widget, *_args: self._on_embed_info_toggled(widget, "free"))
+            embed_info_combo.connect("toggled", lambda widget, *_args: self._on_embed_info_toggled(widget, "combo"))
+            embed_text_entry.connect("changed", self._on_embed_text_changed)
+            embed_position_top.connect("toggled", lambda widget, *_args: self._on_embed_position_toggled(widget, "top"))
+            embed_position_bottom.connect("toggled", lambda widget, *_args: self._on_embed_position_toggled(widget, "bottom"))
+            embed_position_left.connect("toggled", lambda widget, *_args: self._on_embed_position_toggled(widget, "left"))
+            embed_position_right.connect("toggled", lambda widget, *_args: self._on_embed_position_toggled(widget, "right"))
+            embed_max_lines_spin.connect("value-changed", self._on_embed_max_lines_changed)
             self._refresh_current_state_labels()
         else:
             self._objects = {
@@ -1362,12 +1462,16 @@ class GtkRuntimeSignalBackend:
         self._signal_handlers.update(mapping)
         owner = self._get_connected_owner()
         if owner is not None:
+            self._sync_main_state_from_owner(owner)
+            self._sync_embed_state_from_owner(owner)
             self._sync_watch_state_from_owner(owner)
 
     def connect(self, handler_name: str, callback: Callable[..., Any]) -> None:
         self._signal_handlers[handler_name] = callback
         owner = self._get_connected_owner()
         if owner is not None:
+            self._sync_main_state_from_owner(owner)
+            self._sync_embed_state_from_owner(owner)
             self._sync_watch_state_from_owner(owner)
 
     def _configure_spin_button(
@@ -1568,6 +1672,26 @@ class GtkRuntimeSignalBackend:
         self._set_toggle_active("tglLowerR", valign_right == "bottom")
 
         self._refresh_current_state_labels()
+
+    def _sync_embed_state_from_owner(self, owner: Any) -> None:
+        form_state = getattr(owner, "form_state", None)
+        if form_state is None:
+            return
+
+        embed_info = str(getattr(form_state, "embed_info", "none") or "none").lower()
+        embed_position = str(getattr(form_state, "embed_position", "bottom") or "bottom").lower()
+        if embed_position == "auto":
+            embed_position = "bottom"
+        self._set_toggle_active("radEmbedInfoOff", embed_info == "none")
+        self._set_toggle_active("radEmbedInfoParams", embed_info == "params")
+        self._set_toggle_active("radEmbedInfoText", embed_info == "free")
+        self._set_toggle_active("radEmbedInfoBoth", embed_info == "combo")
+        self._set_entry_text("entEmbedText", getattr(form_state, "embed_text", None))
+        self._set_toggle_active("radEmbedPositionTop", embed_position == "top")
+        self._set_toggle_active("radEmbedPositionBottom", embed_position == "bottom")
+        self._set_toggle_active("radEmbedPositionLeft", embed_position == "left")
+        self._set_toggle_active("radEmbedPositionRight", embed_position == "right")
+        self._set_spin_value("spnEmbedMaxLines", int(getattr(form_state, "embed_max_lines", 3) or 3))
 
     def _sync_feedback_from_owner(self, owner: Any) -> None:
         phase = str(getattr(owner, "status_phase", "") or "").strip() or "watch"
@@ -2183,6 +2307,85 @@ class GtkRuntimeSignalBackend:
         except Exception as exc:
             self._set_feedback(phase="Watch", state="error", error=str(exc))
 
+    def _on_embed_info_toggled(self, widget: Any, value: str) -> None:
+        if hasattr(widget, "get_active") and not widget.get_active():
+            return
+        callback = self._signal_handlers.get("on_change_embed_info")
+        if callback is None:
+            self._set_feedback(phase="Embed", state="planned")
+            return
+        try:
+            ok = callback(value)
+            if ok is False:
+                self._set_feedback(phase="Embed", state="info-rejected", error="embed info update rejected")
+                return
+            owner = self._get_handler_owner("on_change_embed_info")
+            if owner is not None:
+                self._sync_embed_state_from_owner(owner)
+                self._sync_feedback_from_owner(owner)
+                return
+            self._set_feedback(phase="Embed", state="info-updated")
+        except Exception as exc:
+            self._set_feedback(phase="Embed", state="info-error", error=str(exc))
+
+    def _on_embed_text_changed(self, entry: Any) -> None:
+        callback = self._signal_handlers.get("on_change_embed_text")
+        if callback is None:
+            return
+        try:
+            value = str(entry.get_text() or "") if hasattr(entry, "get_text") else ""
+            ok = callback(value)
+            if ok is False:
+                self._set_feedback(phase="Embed", state="text-rejected", error="embed text update rejected")
+                return
+            owner = self._get_handler_owner("on_change_embed_text")
+            if owner is not None:
+                self._sync_embed_state_from_owner(owner)
+                self._sync_feedback_from_owner(owner)
+                return
+            self._set_feedback(phase="Embed", state="text-updated")
+        except Exception as exc:
+            self._set_feedback(phase="Embed", state="text-error", error=str(exc))
+
+    def _on_embed_position_toggled(self, widget: Any, value: str) -> None:
+        if hasattr(widget, "get_active") and not widget.get_active():
+            return
+        callback = self._signal_handlers.get("on_change_embed_position")
+        if callback is None:
+            return
+        try:
+            ok = callback(value)
+            if ok is False:
+                self._set_feedback(phase="Embed", state="position-rejected", error="embed position update rejected")
+                return
+            owner = self._get_handler_owner("on_change_embed_position")
+            if owner is not None:
+                self._sync_embed_state_from_owner(owner)
+                self._sync_feedback_from_owner(owner)
+                return
+            self._set_feedback(phase="Embed", state="position-updated")
+        except Exception as exc:
+            self._set_feedback(phase="Embed", state="position-error", error=str(exc))
+
+    def _on_embed_max_lines_changed(self, spin: Any) -> None:
+        callback = self._signal_handlers.get("on_change_embed_max_lines")
+        if callback is None:
+            return
+        try:
+            value = int(spin.get_value_as_int()) if hasattr(spin, "get_value_as_int") else int(spin.get_value())
+            ok = callback(value)
+            if ok is False:
+                self._set_feedback(phase="Embed", state="max-lines-rejected", error="embed max lines update rejected")
+                return
+            owner = self._get_handler_owner("on_change_embed_max_lines")
+            if owner is not None:
+                self._sync_embed_state_from_owner(owner)
+                self._sync_feedback_from_owner(owner)
+                return
+            self._set_feedback(phase="Embed", state="max-lines-updated")
+        except Exception as exc:
+            self._set_feedback(phase="Embed", state="max-lines-error", error=str(exc))
+
     def run_watch_cycle_once(self) -> bool:
         if not self._watch_running:
             return False
@@ -2670,7 +2873,10 @@ class GtkRuntimeSignalBackend:
             if ok:
                 owner = self._get_handler_owner("on_apply_preferences")
                 if owner is not None:
+                    self._sync_main_state_from_owner(owner)
+                    self._sync_embed_state_from_owner(owner)
                     self._sync_watch_state_from_owner(owner)
+                    self._sync_feedback_from_owner(owner)
                 if hasattr(dialog, "hide"):
                     dialog.hide()
                 self._set_label_text("lblPrefsState", "Prefs: applied")
@@ -2695,7 +2901,9 @@ class GtkRuntimeSignalBackend:
                 owner = self._get_handler_owner("on_load_preferences_file")
                 if owner is not None:
                     self._sync_main_state_from_owner(owner)
+                    self._sync_embed_state_from_owner(owner)
                     self._sync_watch_state_from_owner(owner)
+                    self._sync_feedback_from_owner(owner)
                 self._set_label_text("lblPrefsState", "Prefs: loaded")
                 self._set_feedback(phase="PrefsLoad", state="loaded")
             else:
