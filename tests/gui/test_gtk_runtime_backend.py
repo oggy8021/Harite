@@ -876,6 +876,20 @@ def test_runtime_backend_open_l_uses_dialog_selection_and_calls_pick_handler():
     assert error.text == "Error: none"
 
 
+def test_runtime_backend_open_l_truncates_long_display_name():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    dialog = backend.get_object("ImgOpenDialog")
+    entry = backend.get_object("entPathL")
+
+    backend.connect_signals({"on_pick_input": lambda *_args: None})
+    backend.get_object("btnGetImgL").click()
+    dialog.set_filename("/tmp/Higashiyama-Kaii-Cho-un-1080x1920-700x1244.jpg")
+    dialog.confirm()
+
+    assert entry.get_text() == "Higashiyama-Kaii-Cho-...700x1244.jpg"
+
+
 def test_runtime_backend_clear_l_clears_only_left_side_and_keeps_right_input():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 

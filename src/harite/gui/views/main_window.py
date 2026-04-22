@@ -449,8 +449,20 @@ class MainWindow:
             return "Assist: auto-split by current left/right display widths"
         return "Assist: same optimized image will be applied to both displays"
 
+    def _format_preview_assignment_name(self, value: str, max_length: int = 36) -> str:
+        name = Path(value).name
+        if len(name) <= max_length:
+            return name
+
+        tail_length = 12
+        head_length = max_length - tail_length - 3
+        if head_length < 8:
+            head_length = 8
+            tail_length = max(4, max_length - head_length - 3)
+        return f"{name[:head_length]}...{name[-tail_length:]}"
+
     def _build_preview_assignments(self, input_values: list[str]) -> tuple[str, str]:
-        normalized = [Path(value).name for value in input_values if str(value or "").strip()]
+        normalized = [self._format_preview_assignment_name(value) for value in input_values if str(value or "").strip()]
         if len(normalized) >= 2:
             return f"L display <- {normalized[0]}", f"R display <- {normalized[1]}"
         if len(normalized) == 1:

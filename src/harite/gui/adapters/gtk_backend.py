@@ -1961,9 +1961,20 @@ class GtkRuntimeSignalBackend:
         if not value:
             return ""
         try:
-            return Path(value).name or value
+            name = Path(value).name or value
         except Exception:
             return value
+
+        max_length = 36
+        if len(name) <= max_length:
+            return name
+
+        tail_length = 12
+        head_length = max_length - tail_length - 3
+        if head_length < 8:
+            head_length = 8
+            tail_length = max(4, max_length - head_length - 3)
+        return f"{name[:head_length]}...{name[-tail_length:]}"
 
     def _on_clear_input_clicked(self, side: str) -> None:
         entry_name = "entPathL" if side == "L" else "entPathR"
