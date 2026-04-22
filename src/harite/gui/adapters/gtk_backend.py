@@ -2876,6 +2876,7 @@ class GtkRuntimeSignalBackend:
                     self._sync_main_state_from_owner(owner)
                     self._sync_embed_state_from_owner(owner)
                     self._sync_watch_state_from_owner(owner)
+                    self._sync_feedback_from_owner(owner)
                 if hasattr(dialog, "hide"):
                     dialog.hide()
                 self._set_label_text("lblPrefsState", "Prefs: applied")
@@ -2902,6 +2903,7 @@ class GtkRuntimeSignalBackend:
                     self._sync_main_state_from_owner(owner)
                     self._sync_embed_state_from_owner(owner)
                     self._sync_watch_state_from_owner(owner)
+                    self._sync_feedback_from_owner(owner)
                 self._set_label_text("lblPrefsState", "Prefs: loaded")
                 self._set_feedback(phase="PrefsLoad", state="loaded")
             else:

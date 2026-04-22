@@ -393,13 +393,19 @@ def optimize_wallpapers(
     inner_w = max(1, w_target - (ml + mr))
     inner_h = max(1, h_target - (mt + mb))
 
+    split_x = None
     # If two-screen with explicit displays, prefer those widths
     if two_screen and l_display and r_display:
         # Force count to 2
         count = 2
         left_w = int(l_display[0])
         right_w = int(r_display[0])
-        cell_w_list = [left_w, right_w]
+        total_display_w = max(1, left_w + right_w)
+        split_x = int(round((left_w / total_display_w) * w_target))
+        split_x = max(1, min(w_target - 1, split_x)) if w_target > 1 else w_target
+        left_region_w = max(1, split_x - ml)
+        right_region_w = max(1, (w_target - mr) - split_x)
+        cell_w_list = [left_region_w, right_region_w]
         cell_h = inner_h
     else:
         # Simple layout: split inner width horizontally among items
@@ -445,7 +451,7 @@ def optimize_wallpapers(
             if i == 0:
                 x = ml + inner_x
             else:
-                x = ml + cell_w_list[0] + padding + inner_x
+                x = int(split_x or 0) + inner_x
         else:
             x = ml + i * (this_cell_w + padding) + inner_x
 
