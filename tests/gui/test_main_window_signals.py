@@ -256,6 +256,8 @@ def test_build_result_preview_state_uses_latest_saved_file(tmp_path):
     assert state.assist_summary == "Assist: same optimized image will be applied to both displays"
     assert state.l_assignment == "L display <- single-source.jpg"
     assert state.r_assignment == "R display <- single-source.jpg"
+    assert state.l_result_note == "Result: full optimized image"
+    assert state.r_result_note == "Result: full optimized image"
 
 
 def test_build_result_preview_state_includes_two_screen_display_sizes(tmp_path):
@@ -280,6 +282,8 @@ def test_build_result_preview_state_includes_two_screen_display_sizes(tmp_path):
     assert state.assist_summary == "Assist: auto-split as L 200x180 | R 120x180"
     assert state.l_assignment == "L display <- left.jpg"
     assert state.r_assignment == "R display <- right.jpg"
+    assert state.l_result_note == "Result: auto-split left crop"
+    assert state.r_result_note == "Result: auto-split right crop"
 
 
 def test_build_result_preview_state_truncates_long_assignment_names(tmp_path):

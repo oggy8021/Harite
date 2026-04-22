@@ -826,6 +826,16 @@ class GtkRuntimeSignalBackend:
             preview_left_box.pack_start(preview_left, False, False, 0)
             preview_right_box.pack_start(preview_right, False, False, 0)
 
+            preview_left_result = gtk_module.Label(label="Result: not-ready")
+            if hasattr(preview_left_result, "set_xalign"):
+                preview_left_result.set_xalign(0.0)
+            preview_left_box.pack_start(preview_left_result, False, False, 0)
+
+            preview_right_result = gtk_module.Label(label="Result: not-ready")
+            if hasattr(preview_right_result, "set_xalign"):
+                preview_right_result.set_xalign(0.0)
+            preview_right_box.pack_start(preview_right_result, False, False, 0)
+
             preview_state_label = gtk_module.Label(label="Preview: not-ready")
             if hasattr(preview_state_label, "set_xalign"):
                 preview_state_label.set_xalign(0.0)
@@ -1180,6 +1190,8 @@ class GtkRuntimeSignalBackend:
                 "imgPreviewR": preview_right,
                 "lblPreviewAssignL": preview_left_assignment,
                 "lblPreviewAssignR": preview_right_assignment,
+                "lblPreviewResultL": preview_left_result,
+                "lblPreviewResultR": preview_right_result,
                 "lblPreviewState": preview_state_label,
                 "lblPreviewSource": preview_source_label,
                 "lblPreviewAssist": preview_assist_label,
@@ -1680,6 +1692,8 @@ class GtkRuntimeSignalBackend:
             self._clear_preview_widget("imgPreviewR", "Preview R: not-ready")
             self._set_label_text("lblPreviewAssignL", "L display <- -")
             self._set_label_text("lblPreviewAssignR", "R display <- -")
+            self._set_label_text("lblPreviewResultL", "Result: not-ready")
+            self._set_label_text("lblPreviewResultR", "Result: not-ready")
             self._set_label_text("lblPreviewState", "Preview: not-ready")
             self._set_label_text("lblPreviewSource", "Preview source: -")
             self._set_label_text("lblPreviewAssist", "Assist: not-ready")
@@ -1692,6 +1706,8 @@ class GtkRuntimeSignalBackend:
             self._clear_preview_widget("imgPreviewR", "Preview R: not-ready")
             self._set_label_text("lblPreviewAssignL", "L display <- -")
             self._set_label_text("lblPreviewAssignR", "R display <- -")
+            self._set_label_text("lblPreviewResultL", "Result: not-ready")
+            self._set_label_text("lblPreviewResultR", "Result: not-ready")
             self._set_label_text("lblPreviewState", "Preview: not-ready")
             self._set_label_text("lblPreviewSource", "Preview source: -")
             self._set_label_text("lblPreviewAssist", "Assist: not-ready")
@@ -1700,6 +1716,8 @@ class GtkRuntimeSignalBackend:
         mode = str(getattr(state, "apply_mode", "single-file") or "single-file").strip().lower()
         self._set_label_text("lblPreviewAssignL", str(getattr(state, "l_assignment", "") or "L display <- -"))
         self._set_label_text("lblPreviewAssignR", str(getattr(state, "r_assignment", "") or "R display <- -"))
+        self._set_label_text("lblPreviewResultL", str(getattr(state, "l_result_note", "") or "Result: not-ready"))
+        self._set_label_text("lblPreviewResultR", str(getattr(state, "r_result_note", "") or "Result: not-ready"))
         self._set_label_text("lblPreviewSource", f"Preview source: {Path(source_path).name}")
         self._set_label_text("lblPreviewAssist", str(getattr(state, "assist_summary", "") or "Assist: not-ready"))
         if mode == "per-monitor-auto-split":

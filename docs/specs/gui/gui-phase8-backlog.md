@@ -40,6 +40,8 @@
   - preview 直下に配置要約ラベルを 1 本置き、`single-file` は同一画像を左右へ適用すること、`Auto-split` は左右表示幅に沿って分割適用することを文で補足する
 - 第2段の最小実装:
   - 左右 preview pane ごとに割当ラベルを置き、どの入力画像が L / R display に対応するかを basename 単位で見えるようにする
+- 第3段の最小実装:
+  - 左右 preview pane ごとに result note を置き、`single-file` では full optimized image、`Auto-split` では left crop / right crop を明示して pseudo split preview を結果確認として読めるようにする
 - 依存:
   - P8-1A が先
 
