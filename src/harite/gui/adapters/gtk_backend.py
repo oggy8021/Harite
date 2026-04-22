@@ -1109,9 +1109,6 @@ class GtkRuntimeSignalBackend:
                 watch_output_label.set_xalign(0.0)
             watch_detail_row.pack_start(watch_output_label, False, False, 0)
 
-            watch_page_shell = _build_centered_page(watch_tab_box)
-            command_tabs.append_page(watch_page_shell, watch_tab_title)
-
             embed_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
             embed_section_label = gtk_module.Label(label="Embed")
             if hasattr(embed_section_label, "set_xalign"):
@@ -1180,6 +1177,9 @@ class GtkRuntimeSignalBackend:
                 embed_tab_title.set_xalign(0.0)
             embed_page_shell = _build_centered_page(embed_tab_box)
             command_tabs.append_page(embed_page_shell, embed_tab_title)
+
+            watch_page_shell = _build_centered_page(watch_tab_box)
+            command_tabs.append_page(watch_page_shell, watch_tab_title)
 
             # Row 4: status row (Glade statusbar equivalent)
             footer_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)

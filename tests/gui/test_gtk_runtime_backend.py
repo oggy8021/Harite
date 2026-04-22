@@ -515,6 +515,9 @@ def test_runtime_backend_adds_embed_tab_and_syncs_owner_state():
 
     notebook = backend.get_object("commandTabs")
     assert len(notebook.pages) == 3
+    assert notebook.pages[0][1].text == "Main"
+    assert notebook.pages[1][1].text == "Embed"
+    assert notebook.pages[2][1].text == "Watch (stopped)"
     assert backend.get_object("lblEmbedTabTitle").text == "Embed"
     assert backend.get_object("radEmbedInfoBoth").get_active() is True
     assert backend.get_object("entEmbedText").get_text() == "margin-note"

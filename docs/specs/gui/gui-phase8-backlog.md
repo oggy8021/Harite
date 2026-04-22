@@ -52,11 +52,18 @@
 - 目的:
   - `embed-text` / margin info を `Prefs` 既定値保持だけで終わらせず、MainWindow の制作機能として扱う。
 - 最小スコープ:
-  - MainWindow の第3タブとして embed 系入口を置く
+  - MainWindow の watch より手前の tab として embed 系入口を置く
   - `embed_info` の visible 語彙を user 向けに整理する
 - P8-2A の最小実装:
-  - 第3タブ `Embed` を追加し、`embed_info` は `Off / Params / Text / Both` の visible 語彙で切り替えられるようにする
+  - watch より手前に `Embed` tab を追加し、`embed_info` は `Off / Params / Text / Both` の visible 語彙で切り替えられるようにする
   - `embed_text` / `embed_position` / `embed_max_lines` は MainWindow から直接更新できる入口までを用意する
+- 実機確認メモ:
+  - margin がないと embed は当然ほぼ確認できず、単独機能として誤読されやすい
+  - `position=auto` の見え方は実機では左上寄りに読めたため、visible wording と help 補助が要る
+  - 1 行程度の text は taskbar との干渉で視認性を失う場合がある
+  - `Params` は user-facing wording として古いか、露出していない内部語彙のままの可能性がある
+  - `Text` が 1 行入力のため、`Max lines` の意味付けは現状まだ弱い
+  - tab 内の `Embed: ...` state 表示は Main tab に戻ると見えず、価値が薄いので follow-up で整理する
 - 前提:
   - current state / prefs 接続までは既にある
 - 依存:
