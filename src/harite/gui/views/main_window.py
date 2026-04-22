@@ -33,6 +33,8 @@ class ResultPreviewState:
     assist_summary: str = "Assist: not-ready"
     l_assignment: str = "L display <- -"
     r_assignment: str = "R display <- -"
+    l_result_note: str = "Result: not-ready"
+    r_result_note: str = "Result: not-ready"
 
 
 class MainWindow:
@@ -469,6 +471,17 @@ class MainWindow:
             return f"L display <- {normalized[0]}", f"R display <- {normalized[0]}"
         return "L display <- -", "R display <- -"
 
+    def _build_preview_result_notes(self, apply_mode: str) -> tuple[str, str]:
+        if apply_mode == "per-monitor-auto-split":
+            return (
+                "Result: auto-split left crop",
+                "Result: auto-split right crop",
+            )
+        return (
+            "Result: full optimized image",
+            "Result: full optimized image",
+        )
+
     def build_result_preview_state(self) -> ResultPreviewState:
         source_file = self.last_saved_files[-1] if self.last_saved_files else None
         if source_file is None:
@@ -492,6 +505,7 @@ class MainWindow:
             pass
 
         l_assignment, r_assignment = self._build_preview_assignments(input_values)
+        l_result_note, r_result_note = self._build_preview_result_notes(self.apply_mode)
 
         return ResultPreviewState(
             source_file=source_file,
@@ -501,6 +515,8 @@ class MainWindow:
             assist_summary=self._build_preview_assist_summary(self.apply_mode, l_display, r_display),
             l_assignment=l_assignment,
             r_assignment=r_assignment,
+            l_result_note=l_result_note,
+            r_result_note=r_result_note,
         )
 
     def on_change_apply_mode(self, mode: str) -> bool:
