@@ -802,14 +802,29 @@ class GtkRuntimeSignalBackend:
             preview_images_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             preview_group.pack_start(preview_images_row, False, False, 0)
 
+            preview_left_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
+            preview_right_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
+            preview_images_row.pack_start(preview_left_box, False, False, 0)
+            preview_images_row.pack_start(preview_right_box, False, False, 0)
+
+            preview_left_assignment = gtk_module.Label(label="L display <- -")
+            if hasattr(preview_left_assignment, "set_xalign"):
+                preview_left_assignment.set_xalign(0.0)
+            preview_left_box.pack_start(preview_left_assignment, False, False, 0)
+
+            preview_right_assignment = gtk_module.Label(label="R display <- -")
+            if hasattr(preview_right_assignment, "set_xalign"):
+                preview_right_assignment.set_xalign(0.0)
+            preview_right_box.pack_start(preview_right_assignment, False, False, 0)
+
             preview_left = gtk_module.Image() if hasattr(gtk_module, "Image") else gtk_module.Label(label="Preview L: not-ready")
             preview_right = gtk_module.Image() if hasattr(gtk_module, "Image") else gtk_module.Label(label="Preview R: not-ready")
             if hasattr(preview_left, "set_size_request"):
                 preview_left.set_size_request(160, 90)
             if hasattr(preview_right, "set_size_request"):
                 preview_right.set_size_request(160, 90)
-            preview_images_row.pack_start(preview_left, False, False, 0)
-            preview_images_row.pack_start(preview_right, False, False, 0)
+            preview_left_box.pack_start(preview_left, False, False, 0)
+            preview_right_box.pack_start(preview_right, False, False, 0)
 
             preview_state_label = gtk_module.Label(label="Preview: not-ready")
             if hasattr(preview_state_label, "set_xalign"):
@@ -1163,6 +1178,8 @@ class GtkRuntimeSignalBackend:
                 "boxPreviewImagesRow": preview_images_row,
                 "imgPreviewL": preview_left,
                 "imgPreviewR": preview_right,
+                "lblPreviewAssignL": preview_left_assignment,
+                "lblPreviewAssignR": preview_right_assignment,
                 "lblPreviewState": preview_state_label,
                 "lblPreviewSource": preview_source_label,
                 "lblPreviewAssist": preview_assist_label,
@@ -1661,6 +1678,8 @@ class GtkRuntimeSignalBackend:
         if not callable(builder):
             self._clear_preview_widget("imgPreviewL", "Preview L: not-ready")
             self._clear_preview_widget("imgPreviewR", "Preview R: not-ready")
+            self._set_label_text("lblPreviewAssignL", "L display <- -")
+            self._set_label_text("lblPreviewAssignR", "R display <- -")
             self._set_label_text("lblPreviewState", "Preview: not-ready")
             self._set_label_text("lblPreviewSource", "Preview source: -")
             self._set_label_text("lblPreviewAssist", "Assist: not-ready")
@@ -1671,12 +1690,16 @@ class GtkRuntimeSignalBackend:
         if source_path is None:
             self._clear_preview_widget("imgPreviewL", "Preview L: not-ready")
             self._clear_preview_widget("imgPreviewR", "Preview R: not-ready")
+            self._set_label_text("lblPreviewAssignL", "L display <- -")
+            self._set_label_text("lblPreviewAssignR", "R display <- -")
             self._set_label_text("lblPreviewState", "Preview: not-ready")
             self._set_label_text("lblPreviewSource", "Preview source: -")
             self._set_label_text("lblPreviewAssist", "Assist: not-ready")
             return
 
         mode = str(getattr(state, "apply_mode", "single-file") or "single-file").strip().lower()
+        self._set_label_text("lblPreviewAssignL", str(getattr(state, "l_assignment", "") or "L display <- -"))
+        self._set_label_text("lblPreviewAssignR", str(getattr(state, "r_assignment", "") or "R display <- -"))
         self._set_label_text("lblPreviewSource", f"Preview source: {Path(source_path).name}")
         self._set_label_text("lblPreviewAssist", str(getattr(state, "assist_summary", "") or "Assist: not-ready"))
         if mode == "per-monitor-auto-split":
@@ -1938,9 +1961,20 @@ class GtkRuntimeSignalBackend:
         if not value:
             return ""
         try:
-            return Path(value).name or value
+            name = Path(value).name or value
         except Exception:
             return value
+
+        max_length = 36
+        if len(name) <= max_length:
+            return name
+
+        tail_length = 12
+        head_length = max_length - tail_length - 3
+        if head_length < 8:
+            head_length = 8
+            tail_length = max(4, max_length - head_length - 3)
+        return f"{name[:head_length]}...{name[-tail_length:]}"
 
     def _on_clear_input_clicked(self, side: str) -> None:
         entry_name = "entPathL" if side == "L" else "entPathR"

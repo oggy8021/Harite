@@ -454,6 +454,8 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("boxPreviewSection") is not None
     assert backend.get_object("imgPreviewL") is not None
     assert backend.get_object("imgPreviewR") is not None
+    assert backend.get_object("lblPreviewAssignL") is not None
+    assert backend.get_object("lblPreviewAssignR") is not None
     assert backend.get_object("lblPreviewState") is not None
     assert backend.get_object("lblPreviewSource") is not None
     assert backend.get_object("lblPreviewAssist") is not None
@@ -498,14 +500,21 @@ def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path):
     backend.get_object("entPathL").emit("changed", backend.get_object("entPathL"))
     backend.get_object("btnOptimize").click()
 
+    assert backend.get_object("lblPreviewAssignL").text == "L display <- left.jpg"
+    assert backend.get_object("lblPreviewAssignR").text == "R display <- left.jpg"
     assert backend.get_object("lblPreviewState").text == "Preview: same image on both displays"
     assert backend.get_object("lblPreviewSource").text == "Preview source: preview.jpg"
     assert backend.get_object("lblPreviewAssist").text == "Assist: same optimized image will be applied to both displays"
     assert backend.get_object("imgPreviewL").text == "preview.jpg"
     assert backend.get_object("imgPreviewR").text == "preview.jpg"
 
+    backend.get_object("entPathR").set_text("right.jpg")
+    backend.get_object("entPathR").emit("changed", backend.get_object("entPathR"))
+
     backend.get_object("radApplyPerMonitor").click()
 
+    assert backend.get_object("lblPreviewAssignL").text == "L display <- left.jpg"
+    assert backend.get_object("lblPreviewAssignR").text == "R display <- right.jpg"
     assert backend.get_object("lblPreviewState").text == "Preview: pseudo auto-split by display widths"
     assert backend.get_object("lblPreviewAssist").text == "Assist: auto-split by current left/right display widths"
     assert backend.get_object("lblCurrentFixed").text == "Current fixed: off"
@@ -865,6 +874,20 @@ def test_runtime_backend_open_l_uses_dialog_selection_and_calls_pick_handler():
     assert pick_state.text == "Open-L: selected"
     assert status.text == "Open-L: selected"
     assert error.text == "Error: none"
+
+
+def test_runtime_backend_open_l_truncates_long_display_name():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    dialog = backend.get_object("ImgOpenDialog")
+    entry = backend.get_object("entPathL")
+
+    backend.connect_signals({"on_pick_input": lambda *_args: None})
+    backend.get_object("btnGetImgL").click()
+    dialog.set_filename("/tmp/Higashiyama-Kaii-Cho-un-1080x1920-700x1244.jpg")
+    dialog.confirm()
+
+    assert entry.get_text() == "Higashiyama-Kaii-Cho-...700x1244.jpg"
 
 
 def test_runtime_backend_clear_l_clears_only_left_side_and_keeps_right_input():

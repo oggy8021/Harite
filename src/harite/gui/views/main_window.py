@@ -31,6 +31,8 @@ class ResultPreviewState:
     l_display: tuple[int, int] | None = None
     r_display: tuple[int, int] | None = None
     assist_summary: str = "Assist: not-ready"
+    l_assignment: str = "L display <- -"
+    r_assignment: str = "R display <- -"
 
 
 class MainWindow:
@@ -447,6 +449,26 @@ class MainWindow:
             return "Assist: auto-split by current left/right display widths"
         return "Assist: same optimized image will be applied to both displays"
 
+    def _format_preview_assignment_name(self, value: str, max_length: int = 36) -> str:
+        name = Path(value).name
+        if len(name) <= max_length:
+            return name
+
+        tail_length = 12
+        head_length = max_length - tail_length - 3
+        if head_length < 8:
+            head_length = 8
+            tail_length = max(4, max_length - head_length - 3)
+        return f"{name[:head_length]}...{name[-tail_length:]}"
+
+    def _build_preview_assignments(self, input_values: list[str]) -> tuple[str, str]:
+        normalized = [self._format_preview_assignment_name(value) for value in input_values if str(value or "").strip()]
+        if len(normalized) >= 2:
+            return f"L display <- {normalized[0]}", f"R display <- {normalized[1]}"
+        if len(normalized) == 1:
+            return f"L display <- {normalized[0]}", f"R display <- {normalized[0]}"
+        return "L display <- -", "R display <- -"
+
     def build_result_preview_state(self) -> ResultPreviewState:
         source_file = self.last_saved_files[-1] if self.last_saved_files else None
         if source_file is None:
@@ -469,12 +491,16 @@ class MainWindow:
         except Exception:
             pass
 
+        l_assignment, r_assignment = self._build_preview_assignments(input_values)
+
         return ResultPreviewState(
             source_file=source_file,
             apply_mode=self.apply_mode,
             l_display=l_display,
             r_display=r_display,
             assist_summary=self._build_preview_assist_summary(self.apply_mode, l_display, r_display),
+            l_assignment=l_assignment,
+            r_assignment=r_assignment,
         )
 
     def on_change_apply_mode(self, mode: str) -> bool:
