@@ -531,6 +531,49 @@ class MainWindow:
         self._log(f"Apply mode updated: {value}")
         return True
 
+    def on_change_embed_info(self, value: str) -> bool:
+        normalized = (value or "").strip().lower()
+        if normalized not in {"none", "params", "free", "combo"}:
+            self.last_error = f"unknown embed_info: {value}"
+            self._log(f"Embed info update failed: unknown value {value}")
+            return False
+
+        self.form_state.embed_info = normalized
+        self.last_error = ""
+        self._log(f"Embed info updated: {normalized}")
+        return True
+
+    def on_change_embed_text(self, value: str | None) -> bool:
+        text = None if value is None else str(value)
+        self.form_state.embed_text = None if not text or not text.strip() else text
+        self.last_error = ""
+        self._log("Embed text updated")
+        return True
+
+    def on_change_embed_position(self, value: str) -> bool:
+        normalized = (value or "").strip().lower()
+        if normalized not in {"auto", "top", "bottom", "left", "right"}:
+            self.last_error = f"unknown embed_position: {value}"
+            self._log(f"Embed position update failed: unknown value {value}")
+            return False
+
+        self.form_state.embed_position = normalized
+        self.last_error = ""
+        self._log(f"Embed position updated: {normalized}")
+        return True
+
+    def on_change_embed_max_lines(self, value: int) -> bool:
+        max_lines = int(value)
+        if max_lines <= 0:
+            self.last_error = "embed_max_lines must be positive"
+            self._log("Embed max lines update failed: non-positive value")
+            return False
+
+        self.form_state.embed_max_lines = max_lines
+        self.last_error = ""
+        self._log(f"Embed max lines updated: {max_lines}")
+        return True
+
     def on_change_input_text(self, text: str) -> None:
         normalized = text.strip()
         parts = [part.strip() for part in normalized.split(",") if part.strip()]

@@ -54,6 +54,9 @@
 - 最小スコープ:
   - MainWindow の第3タブとして embed 系入口を置く
   - `embed_info` の visible 語彙を user 向けに整理する
+- P8-2A の最小実装:
+  - 第3タブ `Embed` を追加し、`embed_info` は `Off / Params / Text / Both` の visible 語彙で切り替えられるようにする
+  - `embed_text` / `embed_position` / `embed_max_lines` は MainWindow から直接更新できる入口までを用意する
 - 前提:
   - current state / prefs 接続までは既にある
 - 依存:

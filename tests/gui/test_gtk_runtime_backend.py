@@ -461,6 +461,17 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("lblPreviewState") is not None
     assert backend.get_object("lblPreviewSource") is not None
     assert backend.get_object("lblPreviewAssist") is not None
+    assert backend.get_object("embedTab") is not None
+    assert backend.get_object("lblEmbedTabTitle") is not None
+    assert backend.get_object("lblEmbedSection") is not None
+    assert backend.get_object("radEmbedInfoOff") is not None
+    assert backend.get_object("radEmbedInfoParams") is not None
+    assert backend.get_object("radEmbedInfoText") is not None
+    assert backend.get_object("radEmbedInfoBoth") is not None
+    assert backend.get_object("entEmbedText") is not None
+    assert backend.get_object("entEmbedPosition") is not None
+    assert backend.get_object("spnEmbedMaxLines") is not None
+    assert backend.get_object("lblEmbedState") is not None
     assert backend.get_object("lblDoItPlanned") is not None
     assert backend.get_object("lblSavePathState") is not None
     assert backend.get_object("lblSaveTarget") is not None
@@ -481,6 +492,75 @@ def test_runtime_backend_current_state_panel_defaults_are_available():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     assert backend.get_object("lblCurrentStateSection").text == "Current state"
+
+
+def test_runtime_backend_adds_embed_tab_and_syncs_owner_state():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    window.form_state.embed_info = "combo"
+    window.form_state.embed_text = "margin-note"
+    window.form_state.embed_position = "bottom"
+    window.form_state.embed_max_lines = 4
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_change_embed_info",
+            "on_change_embed_text",
+            "on_change_embed_position",
+            "on_change_embed_max_lines",
+        ),
+    )
+    backend.connect_signals(dispatch)
+
+    notebook = backend.get_object("commandTabs")
+    assert len(notebook.pages) == 3
+    assert backend.get_object("lblEmbedTabTitle").text == "Embed"
+    assert backend.get_object("radEmbedInfoBoth").get_active() is True
+    assert backend.get_object("entEmbedText").get_text() == "margin-note"
+    assert backend.get_object("entEmbedPosition").get_text() == "bottom"
+    assert backend.get_object("spnEmbedMaxLines").get_value_as_int() == 4
+    assert backend.get_object("lblEmbedState").text == "Embed: Both"
+
+
+def test_runtime_backend_embed_tab_updates_owner_state_and_cli_preview(tmp_path):
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    window.form_state.input_value = "a.jpg"
+    window.form_state.output_dir = str(out_dir)
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_change_embed_info",
+            "on_change_embed_text",
+            "on_change_embed_position",
+            "on_change_embed_max_lines",
+        ),
+    )
+    backend.connect_signals(dispatch)
+
+    backend.get_object("radEmbedInfoText").click()
+    backend.get_object("entEmbedText").set_text("hello")
+    backend.get_object("entEmbedText").emit("changed", backend.get_object("entEmbedText"))
+    backend.get_object("entEmbedPosition").set_text("top")
+    backend.get_object("entEmbedPosition").emit("changed", backend.get_object("entEmbedPosition"))
+    backend.get_object("spnEmbedMaxLines").set_value(5)
+    backend.get_object("spnEmbedMaxLines").emit("value-changed", backend.get_object("spnEmbedMaxLines"))
+
+    assert window.form_state.embed_info == "free"
+    assert window.form_state.embed_text == "hello"
+    assert window.form_state.embed_position == "top"
+    assert window.form_state.embed_max_lines == 5
+    assert backend.get_object("lblEmbedState").text == "Embed: Text"
+
+    preview = window.build_optimize_cli_preview()
+    assert "--embed-info free" in preview
+    assert "--embed-text hello" in preview
+    assert "--embed-position top" in preview
+    assert "--embed-max-lines 5" in preview
 
 
 def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path):

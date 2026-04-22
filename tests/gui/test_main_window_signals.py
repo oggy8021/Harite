@@ -1219,6 +1219,28 @@ def test_build_optimize_cli_preview_includes_optional_flags(tmp_path):
     assert "--embed-text hello" in preview
 
 
+def test_embed_change_handlers_update_form_state():
+    window = MainWindow()
+
+    assert window.on_change_embed_info("combo") is True
+    assert window.on_change_embed_text("hello") is True
+    assert window.on_change_embed_position("bottom") is True
+    assert window.on_change_embed_max_lines(4) is True
+
+    assert window.form_state.embed_info == "combo"
+    assert window.form_state.embed_text == "hello"
+    assert window.form_state.embed_position == "bottom"
+    assert window.form_state.embed_max_lines == 4
+
+
+def test_embed_change_handlers_reject_invalid_values():
+    window = MainWindow()
+
+    assert window.on_change_embed_info("weird") is False
+    assert window.on_change_embed_position("middle") is False
+    assert window.on_change_embed_max_lines(0) is False
+
+
 def test_on_close_error_dialog_clears_last_error():
     window = MainWindow()
     window.last_error = "something failed"
