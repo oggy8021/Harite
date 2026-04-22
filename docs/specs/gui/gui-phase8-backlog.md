@@ -82,6 +82,9 @@
   - tab 内の `Embed: ...` state 表示は Main tab に戻ると見えず価値が薄いため、P8-2A では置かない方針にした
 - 前提:
   - current state / prefs 接続までは既にある
+- 割り込み条件:
+  - P8-2B へ進む前に、`margins` / `two_screen` / `align` / `valign` / `fixed` / `apply_mode` の precedence audit を 1 度挟む
+  - 特に母体の screen-bound な幾何拘束と、Harite 現行の global outer margins 主導の意味論差を確認してから wording 強化や max-lines 再設計へ進む
 - 依存:
   - preview 方針の固定後に扱う
 
