@@ -247,12 +247,15 @@ def test_build_result_preview_state_uses_latest_saved_file(tmp_path):
     saved.write_bytes(b"x")
 
     window.last_saved_files = [saved]
+    window.form_state.input_value = "single-source.jpg"
 
     state = window.build_result_preview_state()
 
     assert state.source_file == saved
     assert state.apply_mode == window.apply_mode
     assert state.assist_summary == "Assist: same optimized image will be applied to both displays"
+    assert state.l_assignment == "L display <- single-source.jpg"
+    assert state.r_assignment == "R display <- single-source.jpg"
 
 
 def test_build_result_preview_state_includes_two_screen_display_sizes(tmp_path):
@@ -275,6 +278,8 @@ def test_build_result_preview_state_includes_two_screen_display_sizes(tmp_path):
     assert state.l_display == (200, 180)
     assert state.r_display == (120, 180)
     assert state.assist_summary == "Assist: auto-split as L 200x180 | R 120x180"
+    assert state.l_assignment == "L display <- left.jpg"
+    assert state.r_assignment == "R display <- right.jpg"
 
 
 def test_on_close_marks_window_closed():

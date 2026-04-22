@@ -454,6 +454,8 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("boxPreviewSection") is not None
     assert backend.get_object("imgPreviewL") is not None
     assert backend.get_object("imgPreviewR") is not None
+    assert backend.get_object("lblPreviewAssignL") is not None
+    assert backend.get_object("lblPreviewAssignR") is not None
     assert backend.get_object("lblPreviewState") is not None
     assert backend.get_object("lblPreviewSource") is not None
     assert backend.get_object("lblPreviewAssist") is not None
@@ -498,14 +500,21 @@ def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path):
     backend.get_object("entPathL").emit("changed", backend.get_object("entPathL"))
     backend.get_object("btnOptimize").click()
 
+    assert backend.get_object("lblPreviewAssignL").text == "L display <- left.jpg"
+    assert backend.get_object("lblPreviewAssignR").text == "R display <- left.jpg"
     assert backend.get_object("lblPreviewState").text == "Preview: same image on both displays"
     assert backend.get_object("lblPreviewSource").text == "Preview source: preview.jpg"
     assert backend.get_object("lblPreviewAssist").text == "Assist: same optimized image will be applied to both displays"
     assert backend.get_object("imgPreviewL").text == "preview.jpg"
     assert backend.get_object("imgPreviewR").text == "preview.jpg"
 
+    backend.get_object("entPathR").set_text("right.jpg")
+    backend.get_object("entPathR").emit("changed", backend.get_object("entPathR"))
+
     backend.get_object("radApplyPerMonitor").click()
 
+    assert backend.get_object("lblPreviewAssignL").text == "L display <- left.jpg"
+    assert backend.get_object("lblPreviewAssignR").text == "R display <- right.jpg"
     assert backend.get_object("lblPreviewState").text == "Preview: pseudo auto-split by display widths"
     assert backend.get_object("lblPreviewAssist").text == "Assist: auto-split by current left/right display widths"
     assert backend.get_object("lblCurrentFixed").text == "Current fixed: off"
