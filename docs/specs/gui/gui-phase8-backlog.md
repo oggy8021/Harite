@@ -59,9 +59,10 @@
   - `embed_text` / `embed_position` / `embed_max_lines` は MainWindow から直接更新できる入口までを用意する
 - 実機確認メモ:
   - margin がないと embed は当然ほぼ確認できず、単独機能として誤読されやすい
-  - `position=auto` の見え方は実機では左上寄りに読めたため、visible wording と help 補助が要る
+  - `position=auto` は実機では左上に置かれた。CLI 側が暫定実装だった前提も含め、意味付けの再確認が要る
+  - `Position` は `auto` 以外に何が書けるかが user から分かりにくく、CLI literal をそのまま出すより「マージンのどの領域に置くか」という user-facing な言い方へ整理する議論が要る
   - 1 行程度の text は taskbar との干渉で視認性を失う場合がある
-  - `Params` は user-facing wording として古いか、露出していない内部語彙のままの可能性がある
+  - `Params` は何の parameter か直感しづらく、実機確認では「こちらの設定組み合わせ」を出す意味だと再把握した。user-facing wording としては再検討が要る
   - `Text` が 1 行入力のため、`Max lines` の意味付けは現状まだ弱い
   - tab 内の `Embed: ...` state 表示は Main tab に戻ると見えず、価値が薄いので follow-up で整理する
 - 前提:
