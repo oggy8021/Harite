@@ -92,6 +92,20 @@
 
 - 目的:
   - embed 系を「保存される既定値」と「今回だけの編集値」に分ける。
+- 再設計前提:
+  - `Embed` という名称はやめ、tab 全体は `Margins` として扱う。
+  - tab 内は少なくとも `Margins` と `Margin text` の 2 段に分ける。
+  - 既存の margin 数値 4 項目は Main 側から `Margins` tab へ移し、margin 関連を一箇所で扱う。
+  - margin 値は 4 つ 1 組で入力させ、左右で同じ margin として扱う前提を維持する。
+  - ただしこの整理は「current 実装の global outer margins を肯定する」意味ではなく、母体差を抱えたまま margin 関連 UI を分散させないための再配置である。
+  - `embed info` という名称はやめ、CLI/GUI ともに `Margin text` 系の語彙へ寄せる。
+  - `Text` 入力は 1 行 entry ではなく 5 行 textbox 風の multiline control へ広げる。
+  - `max lines` は user-facing control としては廃止する。
+  - 行数上限は mode ごとの内部ルールで扱う。
+  - `Params` 相当: 自然に決まる行数
+  - `Text` 相当: 最大 5 行
+  - `Both` 相当: 最大 8 行
+  - 将来的には margin text の出力先 display を左右どちらかへ限定指定する余地を残す。
 - 候補:
   - `embed_text` 「今回だけの編集値」
   - `embed_position` 「保存される既定値」
