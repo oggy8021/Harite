@@ -1045,34 +1045,43 @@ class GtkRuntimeSignalBackend:
             watch_detail_row.pack_start(watch_output_label, False, False, 0)
 
             embed_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
-            embed_section_label = gtk_module.Label(label="Margins settings")
+            embed_section_label = gtk_module.Label(label="")
             if hasattr(embed_section_label, "set_xalign"):
                 embed_section_label.set_xalign(0.0)
-            embed_tab_box.pack_start(embed_section_label, False, False, 0)
 
-            margins_settings_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
-            if hasattr(margins_settings_shell, "set_border_width"):
-                margins_settings_shell.set_border_width(8)
-            embed_tab_box.pack_start(margins_settings_shell, False, False, 0)
+            embed_outer_grid = gtk_module.Grid()
+            if hasattr(embed_outer_grid, "set_column_spacing"):
+                embed_outer_grid.set_column_spacing(28)
+            if hasattr(embed_outer_grid, "set_row_spacing"):
+                embed_outer_grid.set_row_spacing(12)
+            embed_tab_box.pack_start(embed_outer_grid, False, False, 0)
 
-            margins_grid = gtk_module.Grid()
-            if hasattr(margins_grid, "set_column_spacing"):
-                margins_grid.set_column_spacing(12)
-            if hasattr(margins_grid, "set_row_spacing"):
-                margins_grid.set_row_spacing(8)
-            margins_settings_shell.pack_start(margins_grid, False, False, 0)
-            if hasattr(margins_grid, "attach"):
-                margins_grid.attach(top_margin_label, 0, 0, 1, 1)
-                margins_grid.attach(top_margin_spin, 1, 0, 1, 1)
-                margins_grid.attach(bottom_margin_label, 2, 0, 1, 1)
-                margins_grid.attach(bottom_margin_spin, 3, 0, 1, 1)
-                margins_grid.attach(left_margin_label, 0, 1, 1, 1)
-                margins_grid.attach(left_margin_spin, 1, 1, 1, 1)
-                margins_grid.attach(right_margin_label, 2, 1, 1, 1)
-                margins_grid.attach(right_margin_spin, 3, 1, 1, 1)
+            current_state_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            current_state_box.pack_start(current_state_section_label, False, False, 0)
+            current_state_box.pack_start(current_margins_label, False, False, 0)
+            current_state_box.pack_start(current_left_label, False, False, 0)
+            current_state_box.pack_start(current_right_label, False, False, 0)
+
+            top_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            top_margin_box.pack_start(top_margin_label, False, False, 0)
+            top_margin_box.pack_start(top_margin_spin, False, False, 0)
+
+            left_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            left_margin_box.pack_start(left_margin_label, False, False, 0)
+            left_margin_box.pack_start(left_margin_spin, False, False, 0)
+
+            right_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            right_margin_box.pack_start(right_margin_label, False, False, 0)
+            right_margin_box.pack_start(right_margin_spin, False, False, 0)
+
+            bottom_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+            bottom_margin_box.pack_start(bottom_margin_label, False, False, 0)
+            bottom_margin_box.pack_start(bottom_margin_spin, False, False, 0)
+
+            center_stack = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
 
             embed_info_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            margins_settings_shell.pack_start(embed_info_block, False, False, 0)
+            center_stack.pack_start(embed_info_block, False, False, 0)
             embed_info_label = gtk_module.Label(label="Mode")
             if hasattr(embed_info_label, "set_xalign"):
                 embed_info_label.set_xalign(0.0)
@@ -1092,24 +1101,34 @@ class GtkRuntimeSignalBackend:
             embed_info_row.pack_start(embed_info_combo, False, False, 0)
 
             embed_text_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            margins_settings_shell.pack_start(embed_text_row, False, False, 0)
+            center_stack.pack_start(embed_text_row, False, False, 0)
             embed_text_label = gtk_module.Label(label="Margin text")
             if hasattr(embed_text_label, "set_xalign"):
                 embed_text_label.set_xalign(0.0)
             embed_text_entry = gtk_module.TextView() if hasattr(gtk_module, "TextView") else gtk_module.Entry()
+            if hasattr(embed_text_entry, "set_wrap_mode") and hasattr(gtk_module, "WrapMode"):
+                embed_text_entry.set_wrap_mode(gtk_module.WrapMode.WORD_CHAR)
             if hasattr(embed_text_entry, "set_placeholder_text"):
                 embed_text_entry.set_placeholder_text("Up to 5 lines of margin text")
             if hasattr(embed_text_entry, "set_size_request"):
-                embed_text_entry.set_size_request(360, 110)
+                embed_text_entry.set_size_request(460, 140)
             embed_text_row.pack_start(embed_text_label, False, False, 0)
             embed_text_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
             if hasattr(embed_text_shell, "set_border_width"):
-                embed_text_shell.set_border_width(4)
+                embed_text_shell.set_border_width(2)
+            if hasattr(gtk_module, "ScrolledWindow"):
+                embed_text_scroller = gtk_module.ScrolledWindow()
+                if hasattr(embed_text_scroller, "set_size_request"):
+                    embed_text_scroller.set_size_request(460, 140)
+                if hasattr(embed_text_scroller, "add"):
+                    embed_text_scroller.add(embed_text_entry)
+                embed_text_shell.pack_start(embed_text_scroller, True, True, 0)
+            else:
+                embed_text_shell.pack_start(embed_text_entry, True, True, 0)
             embed_text_row.pack_start(embed_text_shell, True, True, 0)
-            embed_text_shell.pack_start(embed_text_entry, True, True, 0)
 
             embed_position_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            margins_settings_shell.pack_start(embed_position_row, False, False, 0)
+            center_stack.pack_start(embed_position_row, False, False, 0)
             embed_position_label = gtk_module.Label(label="Margin area")
             if hasattr(embed_position_label, "set_xalign"):
                 embed_position_label.set_xalign(0.0)
@@ -1130,13 +1149,19 @@ class GtkRuntimeSignalBackend:
             margin_text_hint = gtk_module.Label(label="Line limits are chosen automatically for the selected margin text mode.")
             if hasattr(margin_text_hint, "set_xalign"):
                 margin_text_hint.set_xalign(0.0)
-            margins_settings_shell.pack_start(margin_text_hint, False, False, 0)
-            margins_settings_shell.pack_start(priority_note_label, False, False, 0)
-            margins_settings_shell.pack_start(style_legend_label, False, False, 0)
-            margins_settings_shell.pack_start(current_state_section_label, False, False, 0)
-            margins_settings_shell.pack_start(current_margins_label, False, False, 0)
-            margins_settings_shell.pack_start(current_left_label, False, False, 0)
-            margins_settings_shell.pack_start(current_right_label, False, False, 0)
+            notes_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
+            notes_box.pack_start(margin_text_hint, False, False, 0)
+            notes_box.pack_start(priority_note_label, False, False, 0)
+            notes_box.pack_start(style_legend_label, False, False, 0)
+
+            if hasattr(embed_outer_grid, "attach"):
+                embed_outer_grid.attach(current_state_box, 0, 0, 1, 1)
+                embed_outer_grid.attach(top_margin_box, 1, 0, 1, 1)
+                embed_outer_grid.attach(left_margin_box, 0, 1, 1, 1)
+                embed_outer_grid.attach(center_stack, 1, 1, 1, 1)
+                embed_outer_grid.attach(right_margin_box, 2, 1, 1, 1)
+                embed_outer_grid.attach(bottom_margin_box, 1, 2, 1, 1)
+                embed_outer_grid.attach(notes_box, 1, 3, 1, 1)
 
             embed_tab_title = gtk_module.Label(label="Margins")
             if hasattr(embed_tab_title, "set_xalign"):

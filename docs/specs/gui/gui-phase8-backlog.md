@@ -110,6 +110,7 @@
   - `embed_text` 「今回だけの編集値」
   - `embed_position` 「保存される既定値」
   - `embed_max_lines` 「保存される既定値」
+- layout 正本: [docs/specs/gui/gui-margin-tab-grid-re-layout-contract.md](docs/specs/gui/gui-margin-tab-grid-re-layout-contract.md)
 
 ## Group 3: `Color` / deferred legacy
 
