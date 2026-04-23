@@ -974,7 +974,6 @@ class GtkRuntimeSignalBackend:
                 return row
 
             prefs_resolution_entry = gtk_module.Entry()
-            prefs_layout_entry = gtk_module.Entry()
             prefs_scaling_entry = gtk_module.Entry()
             prefs_two_screen_auto = gtk_module.RadioButton.new_with_label(None, "TwoScreen Auto")
             prefs_two_screen_on = gtk_module.RadioButton.new_with_label_from_widget(prefs_two_screen_auto, "TwoScreen On")
@@ -986,8 +985,6 @@ class GtkRuntimeSignalBackend:
             prefs_margins_entry = gtk_module.Entry()
             prefs_align_entry = gtk_module.Entry()
             prefs_valign_entry = gtk_module.Entry()
-            prefs_padding_spin = gtk_module.SpinButton()
-            self._configure_spin_button(prefs_padding_spin, minimum=0, maximum=10000, step=1, page=10, initial=0)
             prefs_quality_spin = gtk_module.SpinButton()
             self._configure_spin_button(prefs_quality_spin, minimum=1, maximum=100, step=1, page=10, initial=90)
             prefs_embed_info_entry = gtk_module.Entry()
@@ -1016,7 +1013,6 @@ class GtkRuntimeSignalBackend:
             prefs_apply_mode_shell.pack_start(prefs_apply_per_monitor, False, False, 0)
 
             _prefs_row("Resolution", prefs_resolution_entry)
-            _prefs_row("Layout", prefs_layout_entry)
             _prefs_row("Scaling", prefs_scaling_entry)
             _prefs_row("Plugin", prefs_plugin_entry)
             _prefs_row("Apply", prefs_apply_mode_shell)
@@ -1275,7 +1271,6 @@ class GtkRuntimeSignalBackend:
                 "prefsWindow": prefs_window,
                 "lblPrefsEditorTitle": prefs_editor_title,
                 "entPrefsResolution": prefs_resolution_entry,
-                "entPrefsLayout": prefs_layout_entry,
                 "entPrefsScaling": prefs_scaling_entry,
                 "radPrefsTwoScreenAuto": prefs_two_screen_auto,
                 "radPrefsTwoScreenOn": prefs_two_screen_on,
@@ -1285,7 +1280,6 @@ class GtkRuntimeSignalBackend:
                 "entPrefsMargins": prefs_margins_entry,
                 "entPrefsAlign": prefs_align_entry,
                 "entPrefsValign": prefs_valign_entry,
-                "spnPrefsPadding": prefs_padding_spin,
                 "spnPrefsQuality": prefs_quality_spin,
                 "entPrefsEmbedInfo": prefs_embed_info_entry,
                 "entPrefsEmbedText": prefs_embed_text_entry,
@@ -2463,7 +2457,6 @@ class GtkRuntimeSignalBackend:
             return {}
         config = dict(dialog.get_preferences_config())
         self._set_entry_text("entPrefsResolution", config.get("resolution", "1920x1080"))
-        self._set_entry_text("entPrefsLayout", config.get("layout", "mosaic"))
         self._set_entry_text("entPrefsScaling", config.get("scaling", "fit"))
         self._set_preferences_two_screen_mode(config.get("two_screen", False))
         self._set_entry_text("entPrefsLDisplay", config.get("l_display"))
@@ -2471,7 +2464,6 @@ class GtkRuntimeSignalBackend:
         self._set_entry_text("entPrefsMargins", config.get("margins"))
         self._set_entry_text("entPrefsAlign", format_position_pair(config.get("align", "center"), axis="align"))
         self._set_entry_text("entPrefsValign", format_position_pair(config.get("valign", "center"), axis="valign"))
-        self._set_spin_value("spnPrefsPadding", int(config.get("padding", 0)))
         self._set_spin_value("spnPrefsQuality", int(config.get("quality", 90)))
         self._set_entry_text("entPrefsEmbedInfo", config.get("embed_info", "none"))
         self._set_entry_text("entPrefsEmbedText", config.get("embed_text"))
@@ -2497,7 +2489,6 @@ class GtkRuntimeSignalBackend:
         config.update(
             {
                 "resolution": self._read_entry_text("entPrefsResolution") or "1920x1080",
-                "layout": self._read_entry_text("entPrefsLayout") or "mosaic",
                 "scaling": self._read_entry_text("entPrefsScaling") or "fit",
                 "two_screen": self._read_preferences_two_screen_mode(),
                 "l_display": _empty_to_none(self._read_entry_text("entPrefsLDisplay")),
@@ -2505,7 +2496,6 @@ class GtkRuntimeSignalBackend:
                 "margins": _empty_to_none(self._read_entry_text("entPrefsMargins")),
                 "align": list(parse_position_pair(self._read_entry_text("entPrefsAlign") or "center", axis="align")),
                 "valign": list(parse_position_pair(self._read_entry_text("entPrefsValign") or "center", axis="valign")),
-                "padding": self._read_spin_int("spnPrefsPadding"),
                 "quality": self._read_spin_int("spnPrefsQuality"),
                 "embed_info": self._read_entry_text("entPrefsEmbedInfo") or "none",
                 "embed_text": _empty_to_none(self._read_entry_text("entPrefsEmbedText")),

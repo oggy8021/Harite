@@ -479,7 +479,7 @@ def test_optimize_passes_embed_font_to_core(tmp_path, monkeypatch):
     assert captured["embed_font"] == str(font)
 
 
-def test_optimize_uses_config_for_layout_scaling_align_and_valign(tmp_path, monkeypatch):
+def test_optimize_uses_config_for_scaling_align_and_valign(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -493,7 +493,6 @@ def test_optimize_uses_config_for_layout_scaling_align_and_valign(tmp_path, monk
             {
                 "input": ["from_config.jpg"],
                 "resolution": "1600x900",
-                "layout": "stack",
                 "scaling": "fill",
                 "align": "right",
                 "valign": "bottom",
@@ -507,7 +506,6 @@ def test_optimize_uses_config_for_layout_scaling_align_and_valign(tmp_path, monk
     result = runner.invoke(cli.app, ["optimize", "--config", str(cfg)])
 
     assert result.exit_code == 0
-    assert captured["layout"] == "stack"
     assert captured["scaling"] == "fill"
     assert captured["align"] == ("right", "right")
     assert captured["valign"] == ("bottom", "bottom")

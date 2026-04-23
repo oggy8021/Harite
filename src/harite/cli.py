@@ -176,12 +176,6 @@ def optimize(
         help="Output format: text|json",
         rich_help_panel="基本オプション",
     ),
-    layout: str = typer.Option(
-        "mosaic",
-        "--layout",
-        help="Layout mode (current implementation is effectively mosaic; other values are treated equivalently)",
-        rich_help_panel="基本オプション",
-    ),
     scaling: str = typer.Option(
         "fit",
         "--scaling",
@@ -223,12 +217,6 @@ def optimize(
         "--valign",
         help="Vertical align for left,right images (e.g. top,bottom). A single value applies to both.",
         rich_help_panel="条件付きオプション（通常は省略可）",
-    ),
-    padding: int = typer.Option(
-        0,
-        "--padding",
-        help="Padding (px) between images",
-        rich_help_panel="詳細調整",
     ),
     quality: int = typer.Option(
         90,
@@ -311,9 +299,6 @@ def optimize(
     eff_resolution = resolve_option_value("resolution", resolution, cfg, ctx)
 
     # validate numeric options
-    if padding < 0:
-        typer.echo("--padding must be non-negative")
-        raise typer.Exit(code=2)
     if not (1 <= quality <= 100):
         typer.echo("--quality must be between 1 and 100")
         raise typer.Exit(code=2)
@@ -364,20 +349,15 @@ def optimize(
         typer.echo(str(exc))
         raise typer.Exit(code=2)
 
-    eff_layout = str(resolve_option_value("layout", layout, cfg, ctx) or "mosaic")
     eff_scaling = str(resolve_option_value("scaling", scaling, cfg, ctx) or "fit")
     eff_align = parse_position_pair(resolve_option_value("align", align, cfg, ctx) or "center", axis="align")
     eff_valign = parse_position_pair(resolve_option_value("valign", valign, cfg, ctx) or "center", axis="valign")
-    eff_padding = int(resolve_option_value("padding", padding, cfg, ctx))
     eff_quality = int(resolve_option_value("quality", quality, cfg, ctx))
     eff_random_seed = resolve_option_value("random_seed", random_seed, cfg, ctx)
     eff_margins = resolve_option_value("margins", margins, cfg, ctx)
     eff_embed_text = resolve_option_value("embed_text", embed_text, cfg, ctx)
     eff_embed_font = resolve_option_value("embed_font", embed_font, cfg, ctx)
 
-    if eff_padding < 0:
-        typer.echo("--padding must be non-negative")
-        raise typer.Exit(code=2)
     if not (1 <= eff_quality <= 100):
         typer.echo("--quality must be between 1 and 100")
         raise typer.Exit(code=2)
@@ -386,9 +366,7 @@ def optimize(
         inputs=expanded_inputs,
         target_resolution=(w, h),
         output_dir=output,
-        layout=eff_layout,
         scaling=eff_scaling,
-        padding=eff_padding,
         quality=eff_quality,
         random_seed=eff_random_seed,
         two_screen=resolved_display_settings.two_screen,

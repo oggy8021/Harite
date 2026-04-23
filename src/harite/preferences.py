@@ -26,7 +26,6 @@ def _decode_two_screen_mode(value: object) -> str:
 @dataclass
 class OptimizePreferences:
     resolution: str = "1920x1080"
-    layout: str = "mosaic"
     scaling: str = "fit"
     two_screen_mode: str = "off"
     l_display: str | None = None
@@ -34,7 +33,6 @@ class OptimizePreferences:
     margins: str | None = None
     align: tuple[str, str] = ("center", "center")
     valign: tuple[str, str] = ("center", "center")
-    padding: int = 0
     quality: int = 90
     embed_info: str = "none"
     embed_text: str | None = None
@@ -45,7 +43,6 @@ class OptimizePreferences:
     def from_config_dict(cls, config: dict[str, Any]) -> "OptimizePreferences":
         return cls(
             resolution=str(config.get("resolution", "1920x1080")),
-            layout=str(config.get("layout", "mosaic")),
             scaling=str(config.get("scaling", "fit")),
             two_screen_mode=_decode_two_screen_mode(config.get("two_screen", False)),
             l_display=None if config.get("l_display") is None else str(config.get("l_display")),
@@ -53,7 +50,6 @@ class OptimizePreferences:
             margins=None if config.get("margins") is None else str(config.get("margins")),
             align=parse_position_pair(config.get("align", "center"), axis="align"),
             valign=parse_position_pair(config.get("valign", "center"), axis="valign"),
-            padding=int(config.get("padding", 0)),
             quality=int(config.get("quality", 90)),
             embed_info=str(config.get("embed_info", "none")),
             embed_text=None if config.get("embed_text") is None else str(config.get("embed_text")),

@@ -13,7 +13,7 @@
 
 - 基本操作
   - 旧: `wallpaperoptimizer --input DIR --resolution 1920x1080 --layout mosaic`  
-    → 現行: `harite optimize --input DIR --resolution 1920x1080 --layout mosaic`
+    → 現行: `harite optimize --input img1.jpg --resolution 1920x1080`
 
 - 出力フォーマット
   - 旧: （標準出力/ログ）  

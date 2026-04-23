@@ -98,7 +98,6 @@ def _build_embed_lines(
     margins: Tuple[int, int, int, int],
     align: str,
     valign: str,
-    padding: int,
     input_count: int,
     two_screen: bool,
     l_display: Optional[Tuple[int, int]],
@@ -116,7 +115,6 @@ def _build_embed_lines(
         margins: (l, r, t, b) の各余白。
         align: 横寄せ。
         valign: 縦寄せ。
-        padding: 画像間パディング(px)。
         input_count: 入力画像数。
         two_screen: 2画面モードフラグ。
         l_display: 左画面解像度。
@@ -135,7 +133,7 @@ def _build_embed_lines(
         w_target, h_target = target_resolution
         ml, mr, mt, mb = margins
         params_lines.append(f"res={w_target}x{h_target} margins={ml},{mr},{mt},{mb}")
-        params_lines.append(f"align={align}/{valign} pad={padding} inputs={input_count}")
+        params_lines.append(f"align={align}/{valign} inputs={input_count}")
         if two_screen:
             if l_display and r_display:
                 params_lines.append(
@@ -330,9 +328,7 @@ def optimize_wallpapers(
     inputs: Sequence[Path | str],
     target_resolution: Tuple[int, int],
     output_dir: Path,
-    layout: str = "mosaic",
     scaling: str = "fit",
-    padding: int = 0,
     quality: int = 90,
     random_seed: int | None = None,
     output_path: Path | None = None,
@@ -349,9 +345,7 @@ def optimize_wallpapers(
         target_resolution: 出力解像度 (w, h)。
         output_dir: 出力先ディレクトリ。
         output_path: 出力先ファイルパス（指定時は自動命名より優先）。
-        layout: レイアウトモード。
         scaling: スケーリングモード。
-        padding: 画像間のパディング(px)。
         quality: JPEG 品質。
         random_seed: 乱数シード（任意）。
         **kwargs: 互換性のための追加オプション（two_screen, margins, 等）。
@@ -365,6 +359,8 @@ def optimize_wallpapers(
 
     items = _parse_inputs(inputs)
     w_target, h_target = target_resolution
+    padding = int(kwargs.pop("padding", 0) or 0)
+    kwargs.pop("layout", None)
 
     # Compatibility: accept upstream-style kwargs
     two_screen = bool(kwargs.get("two_screen", False))
@@ -481,7 +477,6 @@ def optimize_wallpapers(
         margins=(ml, mr, mt, mb),
         align=format_position_pair(kwargs.get("align", "center"), axis="align"),
         valign=format_position_pair(kwargs.get("valign", "center"), axis="valign"),
-        padding=padding,
         input_count=len(items),
         two_screen=two_screen,
         l_display=l_display,
@@ -519,18 +514,14 @@ def optimize_wallpapers(
 def compute_placement(
     image_path: Path,
     target_resolution: Tuple[int, int],
-    layout: str = "mosaic",
     scaling: str = "fit",
-    padding: int = 0,
 ) -> PlacementResult:
     """単一画像の中央配置を計算して `PlacementResult` を返す。
 
     Args:
         image_path: 画像ファイルのパス。
         target_resolution: (w, h) の目標解像度。
-        layout: レイアウトモード（現状未使用）。
         scaling: スケーリングモード（現状未使用）。
-        padding: パディング（現状未使用）。
 
     Returns:
         `PlacementResult`。
