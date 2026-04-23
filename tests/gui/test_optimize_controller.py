@@ -45,6 +45,17 @@ def test_validate_accepts_valid_margins_and_displays(tmp_path):
     controller.validate(state)
 
 
+def test_validate_rejects_directory_input(tmp_path):
+    controller = OptimizeController()
+    state = _base_state(tmp_path)
+    input_dir = tmp_path / "images"
+    input_dir.mkdir()
+    state.input_value = str(input_dir)
+
+    with pytest.raises(ValueError, match="optimize --input does not accept directories"):
+        controller.validate(state)
+
+
 def test_run_optimize_passes_parsed_margins(monkeypatch, tmp_path):
     captured = {}
 

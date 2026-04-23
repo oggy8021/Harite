@@ -44,11 +44,12 @@ class PlacementResult:
         }
 
 
-def _parse_inputs(inputs: Sequence[Path | str]) -> List[Path]:
-    """入力パス群を展開してファイル一覧を返す。
+def normalize_optimize_input_paths(inputs: Sequence[Path | str]) -> List[Path]:
+    """optimize 用入力パス群を file-only として正規化する。
 
     Summary:
-        ディレクトリ指定があれば中の画像ファイルを列挙し、ファイルはそのまま返す。
+        optimize では画像ファイルのみを受け付ける。
+        既存ディレクトリが渡された場合は明示エラーにする。
 
     Args:
         inputs: Path または文字列の列。
@@ -60,12 +61,14 @@ def _parse_inputs(inputs: Sequence[Path | str]) -> List[Path]:
     for p in inputs:
         pp = Path(p)
         if pp.is_dir():
-            for ext in ("*.jpg", "*.jpeg", "*.png", "*.bmp"):
-                for f in sorted(pp.glob(ext)):
-                    paths.append(f)
-        else:
-            paths.append(pp)
+            raise ValueError(f"optimize --input does not accept directories: {pp}")
+        paths.append(pp)
     return paths
+
+
+def _parse_inputs(inputs: Sequence[Path | str]) -> List[Path]:
+    """入力パス群を optimize 用 file-only ルールで正規化して返す。"""
+    return normalize_optimize_input_paths(inputs)
 
 
 def _scale_to_fit(img: Image.Image, max_w: int, max_h: int) -> Tuple[int, int, float]:

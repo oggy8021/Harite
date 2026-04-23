@@ -1,6 +1,6 @@
 # optimize 入力拘束と two-screen 仕様
 
-最終更新: 2026-03-21
+最終更新: 2026-04-23
 
 ## 目的
 
@@ -23,14 +23,15 @@
 
 例:
 
-- `--input ./dirA --input ./dirB`
-- `--input ./dirA,./dirB`
-- `--input ./dirA,./dirB --input ./img1.jpg`
+- `--input ./img1.jpg --input ./img2.png`
+- `--input ./img1.jpg,./img2.png`
+- `--input ./img1.jpg,./img2.png --input ./img3.bmp`
 
 ### 入力拘束
 
 - `--input` は画像ファイルパスのみを受け付ける。
 - ディレクトリ指定は受け付けない。
+- 既存ディレクトリを渡した場合は、CLI / GUI / core で明示エラーにする。
 - 複数入力は指定順に連結される。
 - 重複パスは除外しない（同一ファイルが複数回入ることがある）。
 

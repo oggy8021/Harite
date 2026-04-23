@@ -10,7 +10,7 @@ from click.core import ParameterSource
 
 from . import __version__
 from .apply_settings import resolve_apply_settings
-from .core import optimize_wallpapers
+from .core import normalize_optimize_input_paths, optimize_wallpapers
 from .plugins import registry as plugin_registry
 from .config import load_config
 from .optimize_settings import is_auto_value, resolve_optimize_display_settings
@@ -283,7 +283,7 @@ def optimize(
     """Optimize wallpapers.
 
     `--input` は複数指定可。カンマ区切りまたは `--input` の繰り返しで複数パスを指定できます。
-    ディレクトリを指定すると、その直下の画像（jpg/jpeg/png/bmp）が対象になります。
+    `optimize` では画像ファイルのみを受け付け、ディレクトリは受け付けません。
 
     `--two-screen` は左右2画面向けモードです。
     `--l-display` / `--r-display` を併用した場合は、先頭2入力を左・右へ割り当てます。
@@ -339,6 +339,11 @@ def optimize(
     for it in eff_input:
         parts = [p.strip() for p in it.split(",") if p.strip()]
         expanded_inputs.extend(parts)
+    try:
+        expanded_inputs = [str(path) for path in normalize_optimize_input_paths(expanded_inputs)]
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=2)
 
     try:
         eff_two_screen = resolve_bool_or_auto_option("two_screen", two_screen, cfg, ctx)

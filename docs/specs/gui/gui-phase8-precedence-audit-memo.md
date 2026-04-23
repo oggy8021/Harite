@@ -230,8 +230,8 @@
 
 ### `--input` の拘束強化
 
-- `harite optimize` の `--input` は、今後は画像ファイルのみを受け付ける。
-- directory 指定を受けて中身を展開する current 実装は、母体を無視した Harite 固有 convenience とみなし廃止する。
+- `harite optimize` の `--input` は、画像ファイルのみを受け付ける実装へ更新した。
+- directory 指定を受けて中身を展開する旧実装は、母体を無視した Harite 固有 convenience とみなし廃止した。
 - 2画面時の左右順は、directory 展開後の順ではなく、`input=` に投入した画像ファイルの順に従う。
 - この決定は optimize CLI とその周辺 state / docs に対するものであり、watch の input directory 要件とは切り分けて扱う。
 
