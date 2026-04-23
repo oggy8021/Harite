@@ -839,7 +839,7 @@ class GtkRuntimeSignalBackend:
             if hasattr(priority_note_label, "set_xalign"):
                 priority_note_label.set_xalign(0.0)
 
-            style_legend_label = gtk_module.Label(label="Reserved slot for future placement")
+            style_legend_label = gtk_module.Label(label="Current behavior: margins are global to the composite canvas")
             if hasattr(style_legend_label, "set_xalign"):
                 style_legend_label.set_xalign(0.0)
 
@@ -1045,30 +1045,35 @@ class GtkRuntimeSignalBackend:
             watch_detail_row.pack_start(watch_output_label, False, False, 0)
 
             embed_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
-            embed_section_label = gtk_module.Label(label="Margins")
+            embed_section_label = gtk_module.Label(label="Margins settings")
             if hasattr(embed_section_label, "set_xalign"):
                 embed_section_label.set_xalign(0.0)
             embed_tab_box.pack_start(embed_section_label, False, False, 0)
+
+            margins_settings_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
+            if hasattr(margins_settings_shell, "set_border_width"):
+                margins_settings_shell.set_border_width(8)
+            embed_tab_box.pack_start(margins_settings_shell, False, False, 0)
 
             margins_grid = gtk_module.Grid()
             if hasattr(margins_grid, "set_column_spacing"):
                 margins_grid.set_column_spacing(12)
             if hasattr(margins_grid, "set_row_spacing"):
                 margins_grid.set_row_spacing(8)
-            embed_tab_box.pack_start(margins_grid, False, False, 0)
+            margins_settings_shell.pack_start(margins_grid, False, False, 0)
             if hasattr(margins_grid, "attach"):
                 margins_grid.attach(top_margin_label, 0, 0, 1, 1)
                 margins_grid.attach(top_margin_spin, 1, 0, 1, 1)
+                margins_grid.attach(bottom_margin_label, 2, 0, 1, 1)
+                margins_grid.attach(bottom_margin_spin, 3, 0, 1, 1)
                 margins_grid.attach(left_margin_label, 0, 1, 1, 1)
                 margins_grid.attach(left_margin_spin, 1, 1, 1, 1)
-                margins_grid.attach(right_margin_label, 0, 2, 1, 1)
-                margins_grid.attach(right_margin_spin, 1, 2, 1, 1)
-                margins_grid.attach(bottom_margin_label, 0, 3, 1, 1)
-                margins_grid.attach(bottom_margin_spin, 1, 3, 1, 1)
+                margins_grid.attach(right_margin_label, 2, 1, 1, 1)
+                margins_grid.attach(right_margin_spin, 3, 1, 1, 1)
 
             embed_info_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            embed_tab_box.pack_start(embed_info_block, False, False, 0)
-            embed_info_label = gtk_module.Label(label="Margin text")
+            margins_settings_shell.pack_start(embed_info_block, False, False, 0)
+            embed_info_label = gtk_module.Label(label="Mode")
             if hasattr(embed_info_label, "set_xalign"):
                 embed_info_label.set_xalign(0.0)
             embed_info_block.pack_start(embed_info_label, False, False, 0)
@@ -1087,7 +1092,7 @@ class GtkRuntimeSignalBackend:
             embed_info_row.pack_start(embed_info_combo, False, False, 0)
 
             embed_text_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            embed_tab_box.pack_start(embed_text_row, False, False, 0)
+            margins_settings_shell.pack_start(embed_text_row, False, False, 0)
             embed_text_label = gtk_module.Label(label="Margin text")
             if hasattr(embed_text_label, "set_xalign"):
                 embed_text_label.set_xalign(0.0)
@@ -1097,10 +1102,14 @@ class GtkRuntimeSignalBackend:
             if hasattr(embed_text_entry, "set_size_request"):
                 embed_text_entry.set_size_request(360, 110)
             embed_text_row.pack_start(embed_text_label, False, False, 0)
-            embed_text_row.pack_start(embed_text_entry, True, True, 0)
+            embed_text_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            if hasattr(embed_text_shell, "set_border_width"):
+                embed_text_shell.set_border_width(4)
+            embed_text_row.pack_start(embed_text_shell, True, True, 0)
+            embed_text_shell.pack_start(embed_text_entry, True, True, 0)
 
             embed_position_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            embed_tab_box.pack_start(embed_position_row, False, False, 0)
+            margins_settings_shell.pack_start(embed_position_row, False, False, 0)
             embed_position_label = gtk_module.Label(label="Margin area")
             if hasattr(embed_position_label, "set_xalign"):
                 embed_position_label.set_xalign(0.0)
@@ -1121,7 +1130,13 @@ class GtkRuntimeSignalBackend:
             margin_text_hint = gtk_module.Label(label="Line limits are chosen automatically for the selected margin text mode.")
             if hasattr(margin_text_hint, "set_xalign"):
                 margin_text_hint.set_xalign(0.0)
-            embed_tab_box.pack_start(margin_text_hint, False, False, 0)
+            margins_settings_shell.pack_start(margin_text_hint, False, False, 0)
+            margins_settings_shell.pack_start(priority_note_label, False, False, 0)
+            margins_settings_shell.pack_start(style_legend_label, False, False, 0)
+            margins_settings_shell.pack_start(current_state_section_label, False, False, 0)
+            margins_settings_shell.pack_start(current_margins_label, False, False, 0)
+            margins_settings_shell.pack_start(current_left_label, False, False, 0)
+            margins_settings_shell.pack_start(current_right_label, False, False, 0)
 
             embed_tab_title = gtk_module.Label(label="Margins")
             if hasattr(embed_tab_title, "set_xalign"):
@@ -1276,7 +1291,8 @@ class GtkRuntimeSignalBackend:
                 "lblMarginsTabTitle": embed_tab_title,
                 "lblEmbedSection": embed_section_label,
                 "lblMarginsSection": embed_section_label,
-                "lblMarginTextSection": embed_info_label,
+                "lblMarginTextSection": embed_text_label,
+                "lblMarginTextMode": embed_info_label,
                 "radEmbedInfoOff": embed_info_none,
                 "radEmbedInfoParams": embed_info_params,
                 "radEmbedInfoText": embed_info_free,
@@ -1465,13 +1481,24 @@ class GtkRuntimeSignalBackend:
 
     def _set_entry_text(self, object_name: str, value: object | None) -> None:
         entry = self._objects.get(object_name)
+        normalized = "" if value is None else str(value)
+        if entry is not None and hasattr(entry, "get_text") and str(entry.get_text() or "") == normalized:
+            return
         if entry is not None and hasattr(entry, "set_text"):
-            entry.set_text("" if value is None else str(value))
+            entry.set_text(normalized)
             return
         if entry is not None and hasattr(entry, "get_buffer"):
             buffer = entry.get_buffer()
+            if buffer is not None and hasattr(buffer, "get_text"):
+                start = buffer.get_start_iter() if hasattr(buffer, "get_start_iter") else None
+                end = buffer.get_end_iter() if hasattr(buffer, "get_end_iter") else None
+                if str(buffer.get_text(start, end, True) or "") == normalized:
+                    return
             if buffer is not None and hasattr(buffer, "set_text"):
-                buffer.set_text("" if value is None else str(value))
+                buffer.set_text(normalized)
+
+    def _sanitize_margin_text(self, value: str) -> str:
+        return "\n".join(str(value or "").splitlines()[:5])
 
     def _read_entry_text(self, object_name: str) -> str:
         entry = self._objects.get(object_name)
@@ -2293,6 +2320,7 @@ class GtkRuntimeSignalBackend:
                 value = str(buffer.get_text(start, end, True) or "")
             else:
                 value = ""
+            value = self._sanitize_margin_text(value)
             ok = callback(value)
             if ok is False:
                 self._set_feedback(phase="Margins", state="text-rejected", error="margin text update rejected")

@@ -610,6 +610,19 @@ def test_runtime_backend_margins_tab_updates_owner_state_and_cli_preview(tmp_pat
     assert "--embed-max-lines" not in preview
 
 
+def test_runtime_backend_clamps_margin_text_to_five_lines():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+
+    dispatch = create_mainwindow_signal_dispatch(window, ("on_change_embed_text",))
+    backend.connect_signals(dispatch)
+
+    backend.get_object("txtMarginText").set_text("1\n2\n3\n4\n5\n6")
+
+    assert window.form_state.embed_text == "1\n2\n3\n4\n5"
+    assert backend.get_object("txtMarginText").get_text() == "1\n2\n3\n4\n5"
+
+
 def test_runtime_backend_margin_text_preflight_reports_small_margin_error():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()

@@ -627,6 +627,8 @@ class MainWindow:
 
     def on_change_embed_text(self, value: str | None) -> bool:
         text = None if value is None else str(value)
+        if text:
+            text = "\n".join(text.splitlines()[:5])
         self.form_state.embed_text = None if not text or not text.strip() else text
         self._log("Margin text updated")
         self._update_embed_preflight_status()
