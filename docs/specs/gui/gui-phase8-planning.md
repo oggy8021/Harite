@@ -36,6 +36,8 @@
   - [docs/specs/gui/gui-phase8-planning.md](docs/specs/gui/gui-phase8-planning.md)
 - backlog / feature group detail:
   - [docs/specs/gui/gui-phase8-backlog.md](docs/specs/gui/gui-phase8-backlog.md)
+- repair sequence:
+  - [docs/specs/gui/gui-phase8-repair-plan.md](docs/specs/gui/gui-phase8-repair-plan.md)
 
 ## Phase7 から受け取る前提
 

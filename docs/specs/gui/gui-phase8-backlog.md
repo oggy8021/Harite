@@ -147,3 +147,8 @@
 - PR2: preview 入口と visual assist 最小セット
 - PR3: embed 系 GUI 昇格の最小設計
 - PR4: `Color` / `About` と deferred の扱い判断
+
+## 修復計画への導線
+
+- precedence audit 後の実装修復順は [docs/specs/gui/gui-phase8-repair-plan.md](docs/specs/gui/gui-phase8-repair-plan.md) を正本として扱う。
+- 特に `fixed`、optimize input、`padding` / `mosaic`、`Margins` / `Margin text` 再配置は backlog の自然順だけで入れ替えず、修復計画の順に従う。
