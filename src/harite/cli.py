@@ -152,7 +152,7 @@ def optimize(
         None,
         "--input",
         "-i",
-        help="Input file(s) or directory(ies). Use comma-separated paths or repeat --input.",
+        help="Input file(s). Use comma-separated paths or repeat --input.",
         rich_help_panel="必須に近い入力",
     ),
     resolution: Optional[str] = typer.Option(

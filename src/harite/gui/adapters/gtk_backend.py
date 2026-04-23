@@ -579,47 +579,24 @@ class GtkRuntimeSignalBackend:
                 optimize_btn.set_sensitive(False)
             flow_row.pack_start(optimize_btn, False, False, 0)
 
-            # Row 0: top margin row (Glade hbox11 equivalent)
             top_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
-            root.pack_start(top_row, False, False, 0)
-
-            top_spacer_l = gtk_module.Label(label="")
-            top_row.pack_start(top_spacer_l, True, True, 0)
-
-            top_margin_label = gtk_module.Label(label="上マージン(px)")
+            top_margin_label = gtk_module.Label(label="Top margin (px)")
             if hasattr(top_margin_label, "set_xalign"):
                 top_margin_label.set_xalign(0.0)
-            top_row.pack_start(top_margin_label, False, False, 0)
-
             top_margin_spin = gtk_module.SpinButton()
             self._configure_spin_button(top_margin_spin, minimum=0, maximum=250, step=1, page=10)
-            top_row.pack_start(top_margin_spin, False, False, 0)
-
-            top_spacer_r = gtk_module.Label(label="")
-            top_row.pack_start(top_spacer_r, True, True, 0)
 
             # Row 1: center body (Glade hbox2 equivalent)
             center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=10)
             root.pack_start(center_row, True, True, 0)
 
             left_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-            center_row.pack_start(left_margin_shell, False, False, 0)
-            left_margin_top_spacer = gtk_module.Label(label="")
-            left_margin_shell.pack_start(left_margin_top_spacer, True, True, 0)
-
             left_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            left_margin_shell.pack_start(left_margin_col, False, False, 0)
-
-            left_margin_label = gtk_module.Label(label="左\nマージン(px)")
+            left_margin_label = gtk_module.Label(label="Left margin (px)")
             if hasattr(left_margin_label, "set_xalign"):
-                left_margin_label.set_xalign(0.5)
-            left_margin_col.pack_start(left_margin_label, False, False, 0)
-
+                left_margin_label.set_xalign(0.0)
             left_margin_spin = gtk_module.SpinButton()
             self._configure_spin_button(left_margin_spin, minimum=0, maximum=500, step=1, page=10)
-            left_margin_col.pack_start(left_margin_spin, False, False, 0)
-            left_margin_bottom_spacer = gtk_module.Label(label="")
-            left_margin_shell.pack_start(left_margin_bottom_spacer, True, True, 0)
 
             command_tabs = gtk_module.Notebook()
             center_row.pack_start(command_tabs, True, True, 0)
@@ -862,7 +839,7 @@ class GtkRuntimeSignalBackend:
             if hasattr(priority_note_label, "set_xalign"):
                 priority_note_label.set_xalign(0.0)
 
-            style_legend_label = gtk_module.Label(label="Reserved slot for future placement")
+            style_legend_label = gtk_module.Label(label="Current behavior: margins are global to the composite canvas")
             if hasattr(style_legend_label, "set_xalign"):
                 style_legend_label.set_xalign(0.0)
 
@@ -885,38 +862,19 @@ class GtkRuntimeSignalBackend:
             command_tabs.append_page(main_page_shell, main_section_label)
 
             right_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-            center_row.pack_start(right_margin_shell, False, False, 0)
-            right_margin_top_spacer = gtk_module.Label(label="")
-            right_margin_shell.pack_start(right_margin_top_spacer, True, True, 0)
-
             right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            right_margin_shell.pack_start(right_margin_col, False, False, 0)
-
-            right_margin_label = gtk_module.Label(label="右\nマージン(px)")
+            right_margin_label = gtk_module.Label(label="Right margin (px)")
             if hasattr(right_margin_label, "set_xalign"):
-                right_margin_label.set_xalign(0.5)
-            right_margin_col.pack_start(right_margin_label, False, False, 0)
-
+                right_margin_label.set_xalign(0.0)
             right_margin_spin = gtk_module.SpinButton()
             self._configure_spin_button(right_margin_spin, minimum=0, maximum=500, step=1, page=10)
-            right_margin_col.pack_start(right_margin_spin, False, False, 0)
-            right_margin_bottom_spacer = gtk_module.Label(label="")
-            right_margin_shell.pack_start(right_margin_bottom_spacer, True, True, 0)
 
-            # Row 2: bottom margin row (Glade hbox12 equivalent)
             bottom_margin_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
-            root.pack_start(bottom_margin_row, False, False, 0)
-            btm_spacer_l = gtk_module.Label(label="")
-            bottom_margin_row.pack_start(btm_spacer_l, True, True, 0)
-            bottom_margin_label = gtk_module.Label(label="下マージン(px)")
+            bottom_margin_label = gtk_module.Label(label="Bottom margin (px)")
             if hasattr(bottom_margin_label, "set_xalign"):
                 bottom_margin_label.set_xalign(0.0)
-            bottom_margin_row.pack_start(bottom_margin_label, False, False, 0)
             bottom_margin_spin = gtk_module.SpinButton()
             self._configure_spin_button(bottom_margin_spin, minimum=0, maximum=250, step=1, page=10)
-            bottom_margin_row.pack_start(bottom_margin_spin, False, False, 0)
-            btm_spacer_r = gtk_module.Label(label="")
-            bottom_margin_row.pack_start(btm_spacer_r, True, True, 0)
 
             open_dialog_proxy = _OpenDialogProxy(
                 gtk_module,
@@ -1087,14 +1045,35 @@ class GtkRuntimeSignalBackend:
             watch_detail_row.pack_start(watch_output_label, False, False, 0)
 
             embed_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
-            embed_section_label = gtk_module.Label(label="Embed")
+            embed_section_label = gtk_module.Label(label="Margins settings")
             if hasattr(embed_section_label, "set_xalign"):
                 embed_section_label.set_xalign(0.0)
             embed_tab_box.pack_start(embed_section_label, False, False, 0)
 
+            margins_settings_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
+            if hasattr(margins_settings_shell, "set_border_width"):
+                margins_settings_shell.set_border_width(8)
+            embed_tab_box.pack_start(margins_settings_shell, False, False, 0)
+
+            margins_grid = gtk_module.Grid()
+            if hasattr(margins_grid, "set_column_spacing"):
+                margins_grid.set_column_spacing(12)
+            if hasattr(margins_grid, "set_row_spacing"):
+                margins_grid.set_row_spacing(8)
+            margins_settings_shell.pack_start(margins_grid, False, False, 0)
+            if hasattr(margins_grid, "attach"):
+                margins_grid.attach(top_margin_label, 0, 0, 1, 1)
+                margins_grid.attach(top_margin_spin, 1, 0, 1, 1)
+                margins_grid.attach(bottom_margin_label, 2, 0, 1, 1)
+                margins_grid.attach(bottom_margin_spin, 3, 0, 1, 1)
+                margins_grid.attach(left_margin_label, 0, 1, 1, 1)
+                margins_grid.attach(left_margin_spin, 1, 1, 1, 1)
+                margins_grid.attach(right_margin_label, 2, 1, 1, 1)
+                margins_grid.attach(right_margin_spin, 3, 1, 1, 1)
+
             embed_info_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            embed_tab_box.pack_start(embed_info_block, False, False, 0)
-            embed_info_label = gtk_module.Label(label="Margin info")
+            margins_settings_shell.pack_start(embed_info_block, False, False, 0)
+            embed_info_label = gtk_module.Label(label="Mode")
             if hasattr(embed_info_label, "set_xalign"):
                 embed_info_label.set_xalign(0.0)
             embed_info_block.pack_start(embed_info_label, False, False, 0)
@@ -1102,8 +1081,8 @@ class GtkRuntimeSignalBackend:
             embed_info_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             embed_info_block.pack_start(embed_info_row, False, False, 0)
             embed_info_none = gtk_module.RadioButton.new_with_label(None, "Off")
-            embed_info_params = gtk_module.RadioButton.new_with_label_from_widget(embed_info_none, "Params")
-            embed_info_free = gtk_module.RadioButton.new_with_label_from_widget(embed_info_none, "Text")
+            embed_info_params = gtk_module.RadioButton.new_with_label_from_widget(embed_info_none, "Settings")
+            embed_info_free = gtk_module.RadioButton.new_with_label_from_widget(embed_info_none, "Text only")
             embed_info_combo = gtk_module.RadioButton.new_with_label_from_widget(embed_info_none, "Both")
             if hasattr(embed_info_none, "set_active"):
                 embed_info_none.set_active(True)
@@ -1112,20 +1091,26 @@ class GtkRuntimeSignalBackend:
             embed_info_row.pack_start(embed_info_free, False, False, 0)
             embed_info_row.pack_start(embed_info_combo, False, False, 0)
 
-            embed_text_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            embed_tab_box.pack_start(embed_text_row, False, False, 0)
-            embed_text_label = gtk_module.Label(label="Text")
+            embed_text_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            margins_settings_shell.pack_start(embed_text_row, False, False, 0)
+            embed_text_label = gtk_module.Label(label="Margin text")
             if hasattr(embed_text_label, "set_xalign"):
                 embed_text_label.set_xalign(0.0)
-            embed_text_entry = gtk_module.Entry()
+            embed_text_entry = gtk_module.TextView() if hasattr(gtk_module, "TextView") else gtk_module.Entry()
             if hasattr(embed_text_entry, "set_placeholder_text"):
-                embed_text_entry.set_placeholder_text("Used by Text/Both")
+                embed_text_entry.set_placeholder_text("Up to 5 lines of margin text")
+            if hasattr(embed_text_entry, "set_size_request"):
+                embed_text_entry.set_size_request(360, 110)
             embed_text_row.pack_start(embed_text_label, False, False, 0)
-            embed_text_row.pack_start(embed_text_entry, True, True, 0)
+            embed_text_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            if hasattr(embed_text_shell, "set_border_width"):
+                embed_text_shell.set_border_width(4)
+            embed_text_row.pack_start(embed_text_shell, True, True, 0)
+            embed_text_shell.pack_start(embed_text_entry, True, True, 0)
 
             embed_position_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            embed_tab_box.pack_start(embed_position_row, False, False, 0)
-            embed_position_label = gtk_module.Label(label="Position")
+            margins_settings_shell.pack_start(embed_position_row, False, False, 0)
+            embed_position_label = gtk_module.Label(label="Margin area")
             if hasattr(embed_position_label, "set_xalign"):
                 embed_position_label.set_xalign(0.0)
             embed_position_top = gtk_module.RadioButton.new_with_label(None, "Top margin")
@@ -1140,17 +1125,20 @@ class GtkRuntimeSignalBackend:
             embed_position_row.pack_start(embed_position_left, False, False, 0)
             embed_position_row.pack_start(embed_position_right, False, False, 0)
 
-            embed_max_lines_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            embed_tab_box.pack_start(embed_max_lines_row, False, False, 0)
-            embed_max_lines_label = gtk_module.Label(label="Max lines")
-            if hasattr(embed_max_lines_label, "set_xalign"):
-                embed_max_lines_label.set_xalign(0.0)
             embed_max_lines_spin = gtk_module.SpinButton()
             self._configure_spin_button(embed_max_lines_spin, minimum=1, maximum=20, step=1, page=5, initial=3)
-            embed_max_lines_row.pack_start(embed_max_lines_label, False, False, 0)
-            embed_max_lines_row.pack_start(embed_max_lines_spin, False, False, 0)
+            margin_text_hint = gtk_module.Label(label="Line limits are chosen automatically for the selected margin text mode.")
+            if hasattr(margin_text_hint, "set_xalign"):
+                margin_text_hint.set_xalign(0.0)
+            margins_settings_shell.pack_start(margin_text_hint, False, False, 0)
+            margins_settings_shell.pack_start(priority_note_label, False, False, 0)
+            margins_settings_shell.pack_start(style_legend_label, False, False, 0)
+            margins_settings_shell.pack_start(current_state_section_label, False, False, 0)
+            margins_settings_shell.pack_start(current_margins_label, False, False, 0)
+            margins_settings_shell.pack_start(current_left_label, False, False, 0)
+            margins_settings_shell.pack_start(current_right_label, False, False, 0)
 
-            embed_tab_title = gtk_module.Label(label="Embed")
+            embed_tab_title = gtk_module.Label(label="Margins")
             if hasattr(embed_tab_title, "set_xalign"):
                 embed_tab_title.set_xalign(0.0)
             embed_page_shell = _build_centered_page(embed_tab_box)
@@ -1296,15 +1284,21 @@ class GtkRuntimeSignalBackend:
                 **{object_name: settings_dialog_proxy for object_name in SETTINGS_DIALOG_OBJECT_ALIASES},
                 "watchTab": watch_tab_box,
                 "embedTab": embed_tab_box,
+                "marginsTab": embed_tab_box,
                 "watchControlsRow": watch_controls_row,
                 "watchDetailRow": watch_detail_row,
                 "lblEmbedTabTitle": embed_tab_title,
+                "lblMarginsTabTitle": embed_tab_title,
                 "lblEmbedSection": embed_section_label,
+                "lblMarginsSection": embed_section_label,
+                "lblMarginTextSection": embed_text_label,
+                "lblMarginTextMode": embed_info_label,
                 "radEmbedInfoOff": embed_info_none,
                 "radEmbedInfoParams": embed_info_params,
                 "radEmbedInfoText": embed_info_free,
                 "radEmbedInfoBoth": embed_info_combo,
                 "entEmbedText": embed_text_entry,
+                "txtMarginText": embed_text_entry,
                 "radEmbedPositionTop": embed_position_top,
                 "radEmbedPositionBottom": embed_position_bottom,
                 "radEmbedPositionLeft": embed_position_left,
@@ -1407,7 +1401,10 @@ class GtkRuntimeSignalBackend:
             embed_info_params.connect("toggled", lambda widget, *_args: self._on_embed_info_toggled(widget, "params"))
             embed_info_free.connect("toggled", lambda widget, *_args: self._on_embed_info_toggled(widget, "free"))
             embed_info_combo.connect("toggled", lambda widget, *_args: self._on_embed_info_toggled(widget, "combo"))
-            embed_text_entry.connect("changed", self._on_embed_text_changed)
+            if hasattr(embed_text_entry, "get_buffer") and hasattr(embed_text_entry.get_buffer(), "connect"):
+                embed_text_entry.get_buffer().connect("changed", lambda *_args: self._on_embed_text_changed(embed_text_entry))
+            else:
+                embed_text_entry.connect("changed", self._on_embed_text_changed)
             embed_position_top.connect("toggled", lambda widget, *_args: self._on_embed_position_toggled(widget, "top"))
             embed_position_bottom.connect("toggled", lambda widget, *_args: self._on_embed_position_toggled(widget, "bottom"))
             embed_position_left.connect("toggled", lambda widget, *_args: self._on_embed_position_toggled(widget, "left"))
@@ -1484,8 +1481,24 @@ class GtkRuntimeSignalBackend:
 
     def _set_entry_text(self, object_name: str, value: object | None) -> None:
         entry = self._objects.get(object_name)
+        normalized = "" if value is None else str(value)
+        if entry is not None and hasattr(entry, "get_text") and str(entry.get_text() or "") == normalized:
+            return
         if entry is not None and hasattr(entry, "set_text"):
-            entry.set_text("" if value is None else str(value))
+            entry.set_text(normalized)
+            return
+        if entry is not None and hasattr(entry, "get_buffer"):
+            buffer = entry.get_buffer()
+            if buffer is not None and hasattr(buffer, "get_text"):
+                start = buffer.get_start_iter() if hasattr(buffer, "get_start_iter") else None
+                end = buffer.get_end_iter() if hasattr(buffer, "get_end_iter") else None
+                if str(buffer.get_text(start, end, True) or "") == normalized:
+                    return
+            if buffer is not None and hasattr(buffer, "set_text"):
+                buffer.set_text(normalized)
+
+    def _sanitize_margin_text(self, value: str) -> str:
+        return "\n".join(str(value or "").splitlines()[:5])
 
     def _read_entry_text(self, object_name: str) -> str:
         entry = self._objects.get(object_name)
@@ -1493,6 +1506,12 @@ class GtkRuntimeSignalBackend:
             return ""
         if hasattr(entry, "get_text"):
             return str(entry.get_text() or "").strip()
+        if hasattr(entry, "get_buffer"):
+            buffer = entry.get_buffer()
+            if buffer is not None and hasattr(buffer, "get_text"):
+                start = buffer.get_start_iter() if hasattr(buffer, "get_start_iter") else None
+                end = buffer.get_end_iter() if hasattr(buffer, "get_end_iter") else None
+                return str(buffer.get_text(start, end, True) or "").strip()
         return str(getattr(entry, "text", "") or "").strip()
 
     def _set_spin_value(self, object_name: str, value: int) -> None:
@@ -2271,40 +2290,49 @@ class GtkRuntimeSignalBackend:
             return
         callback = self._signal_handlers.get("on_change_embed_info")
         if callback is None:
-            self._set_feedback(phase="Embed", state="planned")
+            self._set_feedback(phase="Margins", state="planned")
             return
         try:
             ok = callback(value)
             if ok is False:
-                self._set_feedback(phase="Embed", state="info-rejected", error="embed info update rejected")
+                self._set_feedback(phase="Margins", state="info-rejected", error="margin text mode update rejected")
                 return
             owner = self._get_handler_owner("on_change_embed_info")
             if owner is not None:
                 self._sync_embed_state_from_owner(owner)
                 self._sync_feedback_from_owner(owner)
                 return
-            self._set_feedback(phase="Embed", state="info-updated")
+            self._set_feedback(phase="Margins", state="info-updated")
         except Exception as exc:
-            self._set_feedback(phase="Embed", state="info-error", error=str(exc))
+            self._set_feedback(phase="Margins", state="info-error", error=str(exc))
 
     def _on_embed_text_changed(self, entry: Any) -> None:
         callback = self._signal_handlers.get("on_change_embed_text")
         if callback is None:
             return
         try:
-            value = str(entry.get_text() or "") if hasattr(entry, "get_text") else ""
+            if hasattr(entry, "get_text"):
+                value = str(entry.get_text() or "")
+            elif hasattr(entry, "get_buffer"):
+                buffer = entry.get_buffer()
+                start = buffer.get_start_iter() if hasattr(buffer, "get_start_iter") else None
+                end = buffer.get_end_iter() if hasattr(buffer, "get_end_iter") else None
+                value = str(buffer.get_text(start, end, True) or "")
+            else:
+                value = ""
+            value = self._sanitize_margin_text(value)
             ok = callback(value)
             if ok is False:
-                self._set_feedback(phase="Embed", state="text-rejected", error="embed text update rejected")
+                self._set_feedback(phase="Margins", state="text-rejected", error="margin text update rejected")
                 return
             owner = self._get_handler_owner("on_change_embed_text")
             if owner is not None:
                 self._sync_embed_state_from_owner(owner)
                 self._sync_feedback_from_owner(owner)
                 return
-            self._set_feedback(phase="Embed", state="text-updated")
+            self._set_feedback(phase="Margins", state="text-updated")
         except Exception as exc:
-            self._set_feedback(phase="Embed", state="text-error", error=str(exc))
+            self._set_feedback(phase="Margins", state="text-error", error=str(exc))
 
     def _on_embed_position_toggled(self, widget: Any, value: str) -> None:
         if hasattr(widget, "get_active") and not widget.get_active():
@@ -2315,16 +2343,16 @@ class GtkRuntimeSignalBackend:
         try:
             ok = callback(value)
             if ok is False:
-                self._set_feedback(phase="Embed", state="position-rejected", error="embed position update rejected")
+                self._set_feedback(phase="Margins", state="position-rejected", error="margin area update rejected")
                 return
             owner = self._get_handler_owner("on_change_embed_position")
             if owner is not None:
                 self._sync_embed_state_from_owner(owner)
                 self._sync_feedback_from_owner(owner)
                 return
-            self._set_feedback(phase="Embed", state="position-updated")
+            self._set_feedback(phase="Margins", state="position-updated")
         except Exception as exc:
-            self._set_feedback(phase="Embed", state="position-error", error=str(exc))
+            self._set_feedback(phase="Margins", state="position-error", error=str(exc))
 
     def _on_embed_max_lines_changed(self, spin: Any) -> None:
         callback = self._signal_handlers.get("on_change_embed_max_lines")
@@ -2334,16 +2362,16 @@ class GtkRuntimeSignalBackend:
             value = int(spin.get_value_as_int()) if hasattr(spin, "get_value_as_int") else int(spin.get_value())
             ok = callback(value)
             if ok is False:
-                self._set_feedback(phase="Embed", state="max-lines-rejected", error="embed max lines update rejected")
+                self._set_feedback(phase="Margins", state="max-lines-rejected", error="margin text line limit update rejected")
                 return
             owner = self._get_handler_owner("on_change_embed_max_lines")
             if owner is not None:
                 self._sync_embed_state_from_owner(owner)
                 self._sync_feedback_from_owner(owner)
                 return
-            self._set_feedback(phase="Embed", state="max-lines-updated")
+            self._set_feedback(phase="Margins", state="max-lines-updated")
         except Exception as exc:
-            self._set_feedback(phase="Embed", state="max-lines-error", error=str(exc))
+            self._set_feedback(phase="Margins", state="max-lines-error", error=str(exc))
 
     def run_watch_cycle_once(self) -> bool:
         if not self._watch_running:
