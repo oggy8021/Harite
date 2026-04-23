@@ -54,8 +54,6 @@ def to_cli_args(req: OptimizeRequest) -> list[str]:
         req.embed_info,
         "--embed-position",
         req.embed_position,
-        "--embed-max-lines",
-        str(req.embed_max_lines),
     ]
     if req.two_screen:
         args.append("--two-screen")

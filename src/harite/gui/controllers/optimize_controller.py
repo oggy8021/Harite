@@ -12,6 +12,17 @@ from harite.optimize_settings import resolve_optimize_display_settings
 from harite.positioning import parse_position_pair, position_value_for_side
 
 
+def resolve_embed_max_lines(embed_info: str, configured: int = 3) -> int:
+    mode = str(embed_info or "none").strip().lower()
+    if mode == "free":
+        return 5
+    if mode == "combo":
+        return 8
+    if mode == "params":
+        return max(1, int(configured or 3))
+    return max(1, int(configured or 3))
+
+
 @dataclass
 class OptimizeFormState:
     input_value: str
@@ -85,7 +96,7 @@ class OptimizeController:
             embed_info=state.embed_info,
             embed_text=state.embed_text,
             embed_position=state.embed_position,
-            embed_max_lines=state.embed_max_lines,
+            embed_max_lines=resolve_embed_max_lines(state.embed_info, state.embed_max_lines),
         )
 
     def _parse_margins(self, margins: Optional[str]) -> tuple[int, int, int, int]:

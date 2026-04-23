@@ -110,7 +110,7 @@
 - 出力先選択
 - 解像度、スケーリング、品質
 - two-screen 設定（チェック、左右解像度、margins）
-- 余白情報埋め込み設定（embed 系）
+- `Margins` tab に margin 数値 4 項目と `Margin text` 設定を集約
 - 実行ボタン（Preview / Optimize / Apply dry-run / Apply do-it）
 
 1. PreviewPane
@@ -137,7 +137,7 @@
 - 基本設定: `--scaling`, `--quality`
 - two-screen: `--two-screen`, `--l-display`, `--r-display`, `--margins`
 - 配置: `--align`, `--valign`
-- 埋め込み: `--embed-info`, `--embed-text`, `--embed-position`, `--embed-max-lines`
+- margin text: `--embed-info`, `--embed-text`, `--embed-position`
 - 適用: `apply --plugin ... --file ... [--do-it]`
 
 ## モジュール分割案

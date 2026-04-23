@@ -127,6 +127,49 @@ class _Entry(_WidgetBase):
     def get_text(self):
         return self._text
 
+    def set_size_request(self, *_args):
+        return None
+
+
+class _TextBuffer(_WidgetBase):
+    def __init__(self):
+        super().__init__()
+        self._text = ""
+
+    def set_text(self, text):
+        self._text = text
+        self.emit("changed", self)
+
+    def get_start_iter(self):
+        return 0
+
+    def get_end_iter(self):
+        return len(self._text)
+
+    def get_text(self, _start, _end, _include_hidden):
+        return self._text
+
+
+class _TextView(_WidgetBase):
+    def __init__(self):
+        super().__init__()
+        self._buffer = _TextBuffer()
+
+    def set_placeholder_text(self, _text):
+        return None
+
+    def set_size_request(self, *_args):
+        return None
+
+    def get_buffer(self):
+        return self._buffer
+
+    def set_text(self, text):
+        self._buffer.set_text(text)
+
+    def get_text(self):
+        return self._buffer.get_text(0, len(self._buffer._text), True)
+
 
 class _Button(_WidgetBase):
     def __init__(self, label=""):
@@ -226,6 +269,7 @@ class _FakeGtk:
     Notebook = _Notebook
     Label = _Label
     Entry = _Entry
+    TextView = _TextView
     Button = _Button
     ToggleButton = _ToggleButton
     SpinButton = _SpinButton
@@ -461,19 +505,19 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("lblPreviewState") is not None
     assert backend.get_object("lblPreviewSource") is not None
     assert backend.get_object("lblPreviewAssist") is not None
-    assert backend.get_object("embedTab") is not None
-    assert backend.get_object("lblEmbedTabTitle") is not None
-    assert backend.get_object("lblEmbedSection") is not None
+    assert backend.get_object("marginsTab") is not None
+    assert backend.get_object("lblMarginsTabTitle") is not None
+    assert backend.get_object("lblMarginsSection") is not None
+    assert backend.get_object("lblMarginTextSection") is not None
     assert backend.get_object("radEmbedInfoOff") is not None
     assert backend.get_object("radEmbedInfoParams") is not None
     assert backend.get_object("radEmbedInfoText") is not None
     assert backend.get_object("radEmbedInfoBoth") is not None
-    assert backend.get_object("entEmbedText") is not None
+    assert backend.get_object("txtMarginText") is not None
     assert backend.get_object("radEmbedPositionTop") is not None
     assert backend.get_object("radEmbedPositionBottom") is not None
     assert backend.get_object("radEmbedPositionLeft") is not None
     assert backend.get_object("radEmbedPositionRight") is not None
-    assert backend.get_object("spnEmbedMaxLines") is not None
     assert backend.get_object("lblDoItPlanned") is not None
     assert backend.get_object("lblSavePathState") is not None
     assert backend.get_object("lblSaveTarget") is not None
@@ -495,7 +539,7 @@ def test_runtime_backend_current_state_panel_defaults_are_available():
     assert backend.get_object("lblCurrentStateSection").text == "Current state"
 
 
-def test_runtime_backend_adds_embed_tab_and_syncs_owner_state():
+def test_runtime_backend_adds_margins_tab_and_syncs_owner_state():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
     window.form_state.embed_info = "combo"
@@ -517,16 +561,15 @@ def test_runtime_backend_adds_embed_tab_and_syncs_owner_state():
     notebook = backend.get_object("commandTabs")
     assert len(notebook.pages) == 3
     assert notebook.pages[0][1].text == "Main"
-    assert notebook.pages[1][1].text == "Embed"
+    assert notebook.pages[1][1].text == "Margins"
     assert notebook.pages[2][1].text == "Watch (stopped)"
-    assert backend.get_object("lblEmbedTabTitle").text == "Embed"
+    assert backend.get_object("lblMarginsTabTitle").text == "Margins"
     assert backend.get_object("radEmbedInfoBoth").get_active() is True
-    assert backend.get_object("entEmbedText").get_text() == "margin-note"
+    assert backend.get_object("txtMarginText").get_text() == "margin-note"
     assert backend.get_object("radEmbedPositionBottom").get_active() is True
-    assert backend.get_object("spnEmbedMaxLines").get_value_as_int() == 4
 
 
-def test_runtime_backend_embed_tab_updates_owner_state_and_cli_preview(tmp_path):
+def test_runtime_backend_margins_tab_updates_owner_state_and_cli_preview(tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
     out_dir = tmp_path / "out"
@@ -541,33 +584,33 @@ def test_runtime_backend_embed_tab_updates_owner_state_and_cli_preview(tmp_path)
             "on_change_embed_info",
             "on_change_embed_text",
             "on_change_embed_position",
-            "on_change_embed_max_lines",
+            "on_change_margins",
         ),
     )
     backend.connect_signals(dispatch)
 
+    backend.get_object("spnTopMergin").set_value(24)
+    backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
     backend.get_object("radEmbedInfoText").click()
-    backend.get_object("entEmbedText").set_text("hello")
-    backend.get_object("entEmbedText").emit("changed", backend.get_object("entEmbedText"))
+    backend.get_object("txtMarginText").set_text("hello\nworld")
     backend.get_object("radEmbedPositionTop").click()
-    backend.get_object("spnEmbedMaxLines").set_value(5)
-    backend.get_object("spnEmbedMaxLines").emit("value-changed", backend.get_object("spnEmbedMaxLines"))
 
+    assert window.form_state.margins == "10,10,24,10"
     assert window.form_state.embed_info == "free"
-    assert window.form_state.embed_text == "hello"
+    assert window.form_state.embed_text == "hello\nworld"
     assert window.form_state.embed_position == "top"
-    assert window.form_state.embed_max_lines == 5
-    assert backend.get_object("lblStatus").text.startswith("Embed: embed ready in top margin")
+    assert backend.get_object("lblStatus").text.startswith("Margins: margin text ready in top margin")
     assert backend.get_object("lblError").text == "Error: none"
 
     preview = window.build_optimize_cli_preview()
+    assert "--margins 10,10,24,10" in preview
     assert "--embed-info free" in preview
-    assert "--embed-text hello" in preview
+    assert "--embed-text hello\nworld" in preview
     assert "--embed-position top" in preview
-    assert "--embed-max-lines 5" in preview
+    assert "--embed-max-lines" not in preview
 
 
-def test_runtime_backend_embed_preflight_reports_small_margin_error():
+def test_runtime_backend_margin_text_preflight_reports_small_margin_error():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
     window.form_state.resolution = "1920x1080"
@@ -579,7 +622,6 @@ def test_runtime_backend_embed_preflight_reports_small_margin_error():
             "on_change_embed_info",
             "on_change_embed_text",
             "on_change_embed_position",
-            "on_change_embed_max_lines",
         ),
     )
     backend.connect_signals(dispatch)
@@ -587,8 +629,8 @@ def test_runtime_backend_embed_preflight_reports_small_margin_error():
     backend.get_object("radEmbedInfoParams").click()
     backend.get_object("radEmbedPositionBottom").click()
 
-    assert backend.get_object("lblStatus").text == "Embed: embed does not fit current margin area"
-    assert backend.get_object("lblError").text == "Error: selected margin area is too small for embed text"
+    assert backend.get_object("lblStatus").text == "Margins: margin text does not fit current margin area"
+    assert backend.get_object("lblError").text == "Error: selected margin area is too small for margin text"
 
 
 def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path):
