@@ -83,7 +83,6 @@ def test_build_embed_lines_without_datetime():
         margins=(10, 20, 30, 40),
         align="center",
         valign="center",
-        padding=5,
         input_count=2,
         two_screen=True,
         l_display=(1920, 1080),
@@ -94,6 +93,7 @@ def test_build_embed_lines_without_datetime():
     assert "res=1920x1080" in joined
     assert "two_screen=1" in joined
     assert "hello" in joined
+    assert "pad=" not in joined
     assert "datetime" not in joined
 
 

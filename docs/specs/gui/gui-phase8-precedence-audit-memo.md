@@ -217,16 +217,14 @@
 
 ### `pad` keyword の点検結果
 
-- `pad` は user-facing GUI 語彙として使われているというより、`padding` の短縮として core の埋め込み文字列へ残っている内部寄りの語である。
-- 実際の入口は CLI の `--padding`、state model の `padding`、optimize 実装の cell 間 spacing である。
-- 現行で user が直接 `pad` という語を見る主経路は、`embed_info=params` による合成画像上の文字列である。
-- このため `pad` は表示語として維持するより、内部値として閉じるか、表示するなら `padding` へ戻す方が自然である。
+- `pad` は user-facing GUI 語彙としては不要であり、現行では `embed_info=params` の表示からも除去した。
+- `padding` の主経路だった CLI / state model / optimize 実装 surface は phase8 で撤去した。
 - なお、母体の `--mergin` は `padding` と対になる別概念ではなく、単なるスペルミスのまま残っている margin オプションである。
 - 背景として、Harite には input に directory を許し、その中の画像を無理やり展開して tile する経路が入っている。
-- `padding` は主にその通常分割経路の cell 間隔として使われており、母体由来の幾何制約ではない。
+- `padding` は主にその通常分割経路の cell 間隔として使われていたが、母体由来の幾何制約ではなかった。
 - この directory 展開と tile 前提の optimize は見栄えが悪く、母体を無視した Harite 固有機能の典型とみなす。
-- したがって `--padding` は CLI から落とす方向で扱う。
-- `layout=mosaic` も同じ文脈の Harite 固有都合で入った可能性が高く、同時に廃止候補として再点検する。
+- したがって `--padding` は CLI から撤去した。
+- `layout=mosaic` も同じ文脈の Harite 固有都合とみなし、optimize の user-facing surface から撤去した。
 
 ### `--input` の拘束強化
 

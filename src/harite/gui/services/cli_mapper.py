@@ -14,7 +14,6 @@ class OptimizeRequest:
     input_value: str
     resolution: str
     output_dir: Path
-    layout: str = "mosaic"
     scaling: str = "fit"
     two_screen: bool | None = False
     margins: Optional[str] = None
@@ -22,7 +21,6 @@ class OptimizeRequest:
     r_display: Optional[str] = None
     align: tuple[str, str] = ("center", "center")
     valign: tuple[str, str] = ("center", "center")
-    padding: int = 0
     quality: int = 90
     embed_info: str = "none"
     embed_text: Optional[str] = None
@@ -44,16 +42,12 @@ def to_cli_args(req: OptimizeRequest) -> list[str]:
         req.resolution,
         "--output",
         str(req.output_dir),
-        "--layout",
-        req.layout,
         "--scaling",
         req.scaling,
         "--align",
         format_position_pair(req.align, axis="align"),
         "--valign",
         format_position_pair(req.valign, axis="valign"),
-        "--padding",
-        str(req.padding),
         "--quality",
         str(req.quality),
         "--embed-info",

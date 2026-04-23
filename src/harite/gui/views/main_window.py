@@ -775,12 +775,10 @@ class MainWindow:
         self.preferences = prefs
         optimize = prefs.optimize
         self.form_state.resolution = optimize.resolution
-        self.form_state.layout = optimize.layout
         self.form_state.scaling = optimize.scaling
         self.form_state.margins = optimize.margins
         self.form_state.align = optimize.align
         self.form_state.valign = optimize.valign
-        self.form_state.padding = optimize.padding
         self.form_state.quality = optimize.quality
         self.form_state.embed_info = optimize.embed_info
         self.form_state.embed_text = optimize.embed_text
@@ -813,12 +811,10 @@ class MainWindow:
 
     def export_preferences_config(self) -> dict[str, object]:
         self.preferences.optimize.resolution = self.form_state.resolution
-        self.preferences.optimize.layout = self.form_state.layout
         self.preferences.optimize.scaling = self.form_state.scaling
         self.preferences.optimize.margins = self.form_state.margins
         self.preferences.optimize.align = self.form_state.align
         self.preferences.optimize.valign = self.form_state.valign
-        self.preferences.optimize.padding = self.form_state.padding
         self.preferences.optimize.quality = self.form_state.quality
         self.preferences.optimize.embed_info = self.form_state.embed_info
         self.preferences.optimize.embed_text = self.form_state.embed_text
@@ -1220,7 +1216,6 @@ class MainWindow:
             input_value=self.form_state.input_value,
             resolution=self.form_state.resolution,
             output_dir=Path(self.form_state.output_dir),
-            layout=self.form_state.layout,
             scaling=self.form_state.scaling,
             two_screen=self.form_state.two_screen,
             margins=self.form_state.margins,
@@ -1228,7 +1223,6 @@ class MainWindow:
             r_display=self.form_state.r_display,
             align=self.form_state.align,
             valign=self.form_state.valign,
-            padding=self.form_state.padding,
             quality=self.form_state.quality,
             embed_info=self.form_state.embed_info,
             embed_text=self.form_state.embed_text,

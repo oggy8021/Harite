@@ -18,7 +18,6 @@ class OptimizeFormState:
     resolution: str
     output_dir: str
     save_path: Optional[str] = None
-    layout: str = "mosaic"
     scaling: str = "fit"
     two_screen: Optional[bool] = None
     margins: Optional[str] = None
@@ -26,7 +25,6 @@ class OptimizeFormState:
     r_display: Optional[str] = None
     align: tuple[str, str] = ("center", "center")
     valign: tuple[str, str] = ("center", "center")
-    padding: int = 0
     quality: int = 90
     embed_info: str = "none"
     embed_text: Optional[str] = None
@@ -76,9 +74,7 @@ class OptimizeController:
             target_resolution=(w, h),
             output_dir=output,
             output_path=output_path,
-            layout=state.layout,
             scaling=state.scaling,
-            padding=state.padding,
             quality=state.quality,
             two_screen=display_settings.two_screen,
             margins=margins,
@@ -123,8 +119,6 @@ class OptimizeController:
             r_display=state.r_display,
         )
         parse_resolution(display_settings.resolution)
-        if state.padding < 0:
-            raise ValueError("padding must be non-negative")
         if state.quality < 1 or state.quality > 100:
             raise ValueError("quality must be between 1 and 100")
         if state.embed_info not in ("none", "params", "free", "combo"):

@@ -108,7 +108,7 @@
 
 - 入力画像/ディレクトリ選択
 - 出力先選択
-- 解像度、レイアウト、スケーリング、品質、padding
+- 解像度、スケーリング、品質
 - two-screen 設定（チェック、左右解像度、margins）
 - 余白情報埋め込み設定（embed 系）
 - 実行ボタン（Preview / Optimize / Apply dry-run / Apply do-it）
@@ -134,7 +134,7 @@
 - 入力: `--input`
 - 出力先: `--output`
 - 解像度: `--resolution`
-- 基本設定: `--layout`, `--scaling`, `--quality`, `--padding`
+- 基本設定: `--scaling`, `--quality`
 - two-screen: `--two-screen`, `--l-display`, `--r-display`, `--margins`
 - 配置: `--align`, `--valign`
 - 埋め込み: `--embed-info`, `--embed-text`, `--embed-position`, `--embed-max-lines`
@@ -161,6 +161,7 @@
 - 再利用（概念維持）: 入力、設定、プレビュー、実行
 - 改変（現行CLI準拠）: two-screen、embed、apply dry-run
 - 廃止（MVP非対象）: indicator/tray/daemon
+
 1. 旧 signal 名と新 controller メソッドの対応表を作る
 2. 1:1 再現ではなく「操作意図」を優先して UI を再設計
 
