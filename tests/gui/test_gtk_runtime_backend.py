@@ -741,7 +741,7 @@ def test_runtime_backend_shows_phase6_labels_and_controls():
     assert watch_current.text == "Watch current: idle"
     assert watch_output.text == "Watch output: ."
     assert pick_state.text == ""
-    assert style_legend.text == "Reserved slot for future placement"
+    assert style_legend.text == "Current behavior: margins are global to the composite canvas"
     assert command_section.text == ""
     assert flow_legend.text == "Compose -> Optimize -> Apply"
     assert prefs_btn.label == "Prefs"
