@@ -32,7 +32,6 @@ class OptimizePreferences:
     l_display: str | None = None
     r_display: str | None = None
     margins: str | None = None
-    fixed: bool = False
     align: tuple[str, str] = ("center", "center")
     valign: tuple[str, str] = ("center", "center")
     padding: int = 0
@@ -52,7 +51,6 @@ class OptimizePreferences:
             l_display=None if config.get("l_display") is None else str(config.get("l_display")),
             r_display=None if config.get("r_display") is None else str(config.get("r_display")),
             margins=None if config.get("margins") is None else str(config.get("margins")),
-            fixed=bool(config.get("fixed", False)),
             align=parse_position_pair(config.get("align", "center"), axis="align"),
             valign=parse_position_pair(config.get("valign", "center"), axis="valign"),
             padding=int(config.get("padding", 0)),

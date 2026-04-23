@@ -20,7 +20,6 @@ class OptimizeRequest:
     margins: Optional[str] = None
     l_display: Optional[str] = None
     r_display: Optional[str] = None
-    fixed: bool = False
     align: tuple[str, str] = ("center", "center")
     valign: tuple[str, str] = ("center", "center")
     padding: int = 0
@@ -72,8 +71,6 @@ def to_cli_args(req: OptimizeRequest) -> list[str]:
         args.extend(["--l-display", req.l_display])
     if req.r_display:
         args.extend(["--r-display", req.r_display])
-    if req.fixed:
-        args.append("--fixed")
     if req.embed_text:
         args.extend(["--embed-text", req.embed_text])
     return args

@@ -480,7 +480,6 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("lblPriorityRule") is not None
     assert backend.get_object("lblStyleLegend") is not None
     assert backend.get_object("lblCurrentStateSection") is not None
-    assert backend.get_object("lblCurrentFixed") is not None
     assert backend.get_object("lblCurrentMargins") is not None
     assert backend.get_object("lblCurrentStateL") is not None
     assert backend.get_object("lblCurrentStateR") is not None
@@ -632,7 +631,6 @@ def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path):
     assert backend.get_object("lblPreviewResultR").text == "Result: auto-split right crop"
     assert backend.get_object("lblPreviewState").text == "Preview: pseudo auto-split by display widths"
     assert backend.get_object("lblPreviewAssist").text == "Assist: auto-split by current left/right display widths"
-    assert backend.get_object("lblCurrentFixed").text == "Current fixed: off"
     assert backend.get_object("lblCurrentMargins").text == "Current margins: 0,0,0,0"
     assert backend.get_object("lblCurrentStateL").text == "Current L: align=center valign=center"
     assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=center"
@@ -673,7 +671,7 @@ def test_runtime_backend_shows_phase6_labels_and_controls():
     tgl_lower_r = backend.get_object("tglLowerR")
 
     assert do_it.text == "Debug: apply is immediate"
-    assert priority.text == "Rule: margins define area; align/valign act inside it; fixed binds L/R"
+    assert priority.text == "Rule: margins define area; align/valign act inside it"
     assert watch_section.text == "Watch"
     assert interval.text == "Interval"
     assert color_btn.label == "Color"
@@ -1522,7 +1520,6 @@ def test_runtime_backend_prefs_load_updates_watch_tab_state(tmp_path):
         """
 {
     "margins": "5,15,25,35",
-    "fixed": true,
     "align": ["right", "center"],
     "valign": ["center", "top"],
   "plugin": "linux",
@@ -1552,7 +1549,6 @@ def test_runtime_backend_prefs_load_updates_watch_tab_state(tmp_path):
 
     assert backend.get_object("lblWatchSources").text == "Watch srcdirs: L=/watch/left | R=/watch/right"
     assert backend.get_object("spnInterval").get_value_as_int() == 45
-    assert backend.get_object("lblCurrentFixed").text == "Current fixed: on"
     assert backend.get_object("lblCurrentMargins").text == "Current margins: 5,15,25,35"
     assert backend.get_object("lblCurrentStateL").text == "Current L: align=right valign=center"
     assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=top"
@@ -1866,28 +1862,14 @@ def test_runtime_backend_interval_spin_matches_upstream_adjustments():
     assert interval.get_value_as_int() == 60
 
 
-def test_runtime_backend_current_state_panel_updates_for_toggle_and_fixed():
+def test_runtime_backend_current_state_panel_updates_for_toggle_positions():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     backend.get_object("tglPushRightL").click()
     backend.get_object("tglUpperR").click()
-    backend.get_object("radFixed").click()
 
-    assert backend.get_object("lblCurrentFixed").text == "Current fixed: on"
     assert backend.get_object("lblCurrentStateL").text == "Current L: align=right valign=center"
     assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=top"
-
-
-def test_runtime_backend_fixed_radio_dispatches_only_on_active_toggle():
-    backend = GtkRuntimeSignalBackend(_FakeGtk)
-    observed = []
-
-    backend.connect_signals({"on_toggle_fixed": lambda enabled: observed.append(enabled)})
-
-    backend.get_object("radFixed").click()
-    backend.get_object("radNoFixed").click()
-
-    assert observed == [True, False]
 
 
 def test_runtime_backend_current_state_margin_labels_follow_spin_values():

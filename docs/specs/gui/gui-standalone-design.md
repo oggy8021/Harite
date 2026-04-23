@@ -109,7 +109,7 @@
 - 入力画像/ディレクトリ選択
 - 出力先選択
 - 解像度、レイアウト、スケーリング、品質、padding
-- two-screen 設定（チェック、左右解像度、margins、fixed）
+- two-screen 設定（チェック、左右解像度、margins）
 - 余白情報埋め込み設定（embed 系）
 - 実行ボタン（Preview / Optimize / Apply dry-run / Apply do-it）
 
@@ -135,7 +135,7 @@
 - 出力先: `--output`
 - 解像度: `--resolution`
 - 基本設定: `--layout`, `--scaling`, `--quality`, `--padding`
-- two-screen: `--two-screen`, `--l-display`, `--r-display`, `--margins`, `--fixed`
+- two-screen: `--two-screen`, `--l-display`, `--r-display`, `--margins`
 - 配置: `--align`, `--valign`
 - 埋め込み: `--embed-info`, `--embed-text`, `--embed-position`, `--embed-max-lines`
 - 適用: `apply --plugin ... --file ... [--do-it]`

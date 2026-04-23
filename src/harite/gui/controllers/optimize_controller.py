@@ -24,7 +24,6 @@ class OptimizeFormState:
     margins: Optional[str] = None
     l_display: Optional[str] = None
     r_display: Optional[str] = None
-    fixed: bool = False
     align: tuple[str, str] = ("center", "center")
     valign: tuple[str, str] = ("center", "center")
     padding: int = 0
@@ -85,7 +84,6 @@ class OptimizeController:
             margins=margins,
             l_display=None if not display_settings.l_display else parse_resolution(display_settings.l_display),
             r_display=None if not display_settings.r_display else parse_resolution(display_settings.r_display),
-            fixed=state.fixed,
             align=state.align,
             valign=state.valign,
             embed_info=state.embed_info,

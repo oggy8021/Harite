@@ -29,7 +29,7 @@ def test_margins_reduce_available_space(tmp_path):
         assert p.y >= margins[2]
 
 
-def test_fixed_allocation_keeps_order(tmp_path):
+def test_two_screen_allocation_keeps_input_order(tmp_path):
     left = Path("tests/data/left.jpg")
     right = Path("tests/data/right.jpg")
     out_dir = tmp_path / "out"
@@ -42,10 +42,9 @@ def test_fixed_allocation_keeps_order(tmp_path):
         two_screen=True,
         l_display=(960, 1080),
         r_display=(960, 1080),
-        fixed=True,
     )
 
     assert len(placements) >= 2
-    # When fixed, allocation should follow input order: first input -> left posit
+    # Two-screen allocation follows input order: first input -> left posit
     assert placements[0].posit == "left"
     assert placements[1].posit == "right"

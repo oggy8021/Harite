@@ -212,12 +212,6 @@ def optimize(
         help="Right display size WxH (e.g. 1280x1024). Effective with --two-screen.",
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
-    fixed: bool = typer.Option(
-        False,
-        "--fixed/--no-fixed",
-        help="Fix allocation by input order (left then right). Current optimize implementation impact is limited.",
-        rich_help_panel="条件付きオプション（通常は省略可）",
-    ),
     align: str = typer.Option(
         "center",
         "--align",
@@ -297,7 +291,7 @@ def optimize(
     パラメータの強弱（現状）:
     - `margins` はまず有効領域を決め、その内側で `align` / `valign` が効きます。
     - `two-screen` は `--l-display` / `--r-display` 併用時に効きが強くなります。
-    - `layout` / `scaling` / `fixed` / `random-seed` は現状の optimize 実装では効きが限定的です。
+    - `layout` / `scaling` / `random-seed` は現状の optimize 実装では効きが限定的です。
 
     余白情報埋め込み:
     - `--embed-info` は `none|params|free|combo` を指定できます。
@@ -348,7 +342,6 @@ def optimize(
 
     try:
         eff_two_screen = resolve_bool_or_auto_option("two_screen", two_screen, cfg, ctx)
-        eff_fixed = resolve_bool_option("fixed", fixed, cfg, ctx)
     except ValueError as exc:
         typer.echo(str(exc))
         raise typer.Exit(code=2)
@@ -397,7 +390,6 @@ def optimize(
         margins=(0, 0, 0, 0) if eff_margins is None else parse_margins(str(eff_margins)),
         l_display=None if resolved_display_settings.l_display is None else parse_display(resolved_display_settings.l_display),
         r_display=None if resolved_display_settings.r_display is None else parse_display(resolved_display_settings.r_display),
-        fixed=eff_fixed,
         align=eff_align,
         valign=eff_valign,
         embed_info=embed_info,

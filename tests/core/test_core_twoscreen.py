@@ -23,7 +23,6 @@ def test_two_screen_basic(tmp_path):
         l_display=(1920, 1080),
         r_display=(1920, 1080),
         margins=(10, 10, 5, 5),
-        fixed=True,
     )
 
     # one output file

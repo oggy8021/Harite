@@ -45,7 +45,7 @@
 
 - fixed 指定
   - 旧: fixed 相当の入力順固定運用（左右割り当て）  
-    → 現行: `--fixed/--no-fixed` をサポートし、`two_screen` と併用時の入力順固定を維持
+    → 現行: `fixed` は廃止。2画面時の左右順は常に入力順に従う
 
 優先復元項目（推奨順）
 
@@ -56,9 +56,10 @@
 完了済み項目（2026-04-11時点）
 
 - `--config` 優先順位（CLI > config > default）を実装・テスト固定済み。
-- `--two-screen` / `--fixed` の config 連携を実装・テスト固定済み。
-- `--no-two-screen` / `--no-fixed` を導入し、CLI から明示 false 指定を可能化。
-- `--two-screen` + `--l-display` + `--r-display` + `--margins` + `--fixed` の組み合わせケースを CLI テストで固定済み。
+- `--two-screen` の config 連携を実装・テスト固定済み。
+- `--no-two-screen` を導入し、CLI から明示 false 指定を可能化。
+- `fixed` は撤去し、2画面時の左右順は入力順へ一本化した。
+- `--two-screen` + `--l-display` + `--r-display` + `--margins` の組み合わせケースを CLI テストで固定済み。
 
 移植手順（短期）
 
