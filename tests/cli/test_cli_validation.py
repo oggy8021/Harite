@@ -1,10 +1,15 @@
 import pytest
 import json
+import re
 
 from harite import cli
 from harite.display_context import TwoScreenOptimizeContext
 from harite.workspace import Display
 from typer.testing import CliRunner
+
+
+def _normalize_cli_output(text: str) -> str:
+    return re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text)
 
 
 def test_parse_resolution_valid():
@@ -222,7 +227,7 @@ def test_optimize_cli_values_override_config_for_margins_and_displays(tmp_path, 
     assert captured["r_display"] == (1920, 1200)
 
 
-def test_optimize_reads_two_screen_and_fixed_from_config(tmp_path, monkeypatch):
+def test_optimize_reads_two_screen_from_config(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -237,7 +242,6 @@ def test_optimize_reads_two_screen_and_fixed_from_config(tmp_path, monkeypatch):
                 "input": ["from_config.jpg"],
                 "resolution": "1600x900",
                 "two_screen": True,
-                "fixed": True,
             }
         ),
         encoding="utf-8",
@@ -249,10 +253,9 @@ def test_optimize_reads_two_screen_and_fixed_from_config(tmp_path, monkeypatch):
 
     assert result.exit_code == 0
     assert captured["two_screen"] is True
-    assert captured["fixed"] is True
 
 
-def test_optimize_cli_two_screen_and_fixed_override_config_false(tmp_path, monkeypatch):
+def test_optimize_cli_two_screen_overrides_config_false(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -267,7 +270,6 @@ def test_optimize_cli_two_screen_and_fixed_override_config_false(tmp_path, monke
                 "input": ["from_config.jpg"],
                 "resolution": "1600x900",
                 "two_screen": False,
-                "fixed": False,
             }
         ),
         encoding="utf-8",
@@ -282,16 +284,14 @@ def test_optimize_cli_two_screen_and_fixed_override_config_false(tmp_path, monke
             "--config",
             str(cfg),
             "--two-screen",
-            "--fixed",
         ],
     )
 
     assert result.exit_code == 0
     assert captured["two_screen"] is True
-    assert captured["fixed"] is True
 
 
-def test_optimize_cli_no_flags_override_config_true(tmp_path, monkeypatch):
+def test_optimize_cli_no_two_screen_overrides_config_true(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -306,7 +306,6 @@ def test_optimize_cli_no_flags_override_config_true(tmp_path, monkeypatch):
                 "input": ["from_config.jpg"],
                 "resolution": "1600x900",
                 "two_screen": True,
-                "fixed": True,
             }
         ),
         encoding="utf-8",
@@ -321,13 +320,35 @@ def test_optimize_cli_no_flags_override_config_true(tmp_path, monkeypatch):
             "--config",
             str(cfg),
             "--no-two-screen",
-            "--no-fixed",
         ],
     )
 
     assert result.exit_code == 0
     assert captured["two_screen"] is False
-    assert captured["fixed"] is False
+
+
+def test_optimize_rejects_removed_fixed_flag(tmp_path):
+    runner = CliRunner()
+
+    img = tmp_path / "from_cli.jpg"
+    img.write_bytes(b"x")
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--input",
+            str(img),
+            "--resolution",
+            "1600x900",
+            "--fixed",
+        ],
+    )
+
+    assert result.exit_code == 2
+    output = _normalize_cli_output(result.output)
+    assert "No such option" in output
+    assert "--fixed" in output
 
 
 def test_optimize_rejects_invalid_bool_in_config(tmp_path, monkeypatch):
@@ -356,7 +377,7 @@ def test_optimize_rejects_invalid_bool_in_config(tmp_path, monkeypatch):
     assert "invalid config bool for two_screen" in result.output
 
 
-def test_optimize_combined_two_screen_fixed_margins_displays(tmp_path, monkeypatch):
+def test_optimize_combined_two_screen_margins_displays(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -384,7 +405,6 @@ def test_optimize_combined_two_screen_fixed_margins_displays(tmp_path, monkeypat
             "--config",
             str(cfg),
             "--two-screen",
-            "--fixed",
             "--margins",
             "10,20,30,40",
             "--l-display",
@@ -396,7 +416,6 @@ def test_optimize_combined_two_screen_fixed_margins_displays(tmp_path, monkeypat
 
     assert result.exit_code == 0
     assert captured["two_screen"] is True
-    assert captured["fixed"] is True
     assert captured["margins"] == (10, 20, 30, 40)
     assert captured["l_display"] == (1920, 1080)
     assert captured["r_display"] == (1280, 1024)

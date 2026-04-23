@@ -34,7 +34,6 @@ def test_to_cli_args_omits_optional_flags_when_unset(tmp_path):
     assert "--margins" not in args
     assert "--l-display" not in args
     assert "--r-display" not in args
-    assert "--fixed" not in args
     assert "--embed-text" not in args
 
 
@@ -47,7 +46,6 @@ def test_to_cli_args_includes_optional_flags_when_set(tmp_path):
         margins="1,2,3,4",
         l_display="1920x1080",
         r_display="1280x1024",
-        fixed=True,
         align=("left", "right"),
         valign=("top", "bottom"),
         embed_text="note",
@@ -59,7 +57,6 @@ def test_to_cli_args_includes_optional_flags_when_set(tmp_path):
     assert "--margins" in args and "1,2,3,4" in args
     assert "--l-display" in args and "1920x1080" in args
     assert "--r-display" in args and "1280x1024" in args
-    assert "--fixed" in args
     assert "--align" in args and "left,right" in args
     assert "--valign" in args and "top,bottom" in args
     assert "--embed-text" in args and "note" in args

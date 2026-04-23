@@ -28,7 +28,6 @@ RUNTIME_HANDLER_MAP: dict[str, str] = {
     "on_clear_input": "on_clear_input",
     "on_about": "on_about",
     "on_set_color": "on_set_color",
-    "on_toggle_fixed": "on_toggle_fixed",
     "on_toggle_position_pressed": "on_toggle_position_pressed",
     "on_toggle_position": "on_toggle_position",
     "on_toggle_position_reset": "on_toggle_position_reset",

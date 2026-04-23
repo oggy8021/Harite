@@ -46,8 +46,8 @@
 
 拡張オプション（Harite API 用）
 
-- `optimize_wallpapers(..., two_screen: bool=False, l_display:Optional[Tuple[int,int]]=None, r_display:Optional[Tuple[int,int]]=None, margins: Tuple[int,int,int,int]=(0,0,0,0), fixed: bool=False)`
-  - two_screen=True の場合、左/右割当を行い `PlacementResult.posit` を `left`/`right` とする。`fixed` が True なら入力順序で固定する。
+- `optimize_wallpapers(..., two_screen: bool=False, l_display:Optional[Tuple[int,int]]=None, r_display:Optional[Tuple[int,int]]=None, margins: Tuple[int,int,int,int]=(0,0,0,0))`
+  - two_screen=True の場合、左/右割当を行い `PlacementResult.posit` を `left`/`right` とする。左右順は入力順に従う。
 
 テストケース設計（必須）
 

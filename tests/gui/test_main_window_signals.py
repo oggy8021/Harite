@@ -433,18 +433,6 @@ def test_on_change_margins_supports_single_widget_update():
     assert window.form_state.margins == "1,2,99,4"
     assert window.last_error == ""
 
-
-def test_on_toggle_fixed_updates_flag():
-    window = MainWindow()
-    assert window.form_state.fixed is False
-
-    window.on_toggle_fixed(True)
-    assert window.form_state.fixed is True
-
-    window.on_toggle_fixed(False)
-    assert window.form_state.fixed is False
-
-
 def test_on_toggle_position_updates_alignment_and_reset():
     window = MainWindow()
 
@@ -1209,13 +1197,11 @@ def test_build_optimize_cli_preview_includes_optional_flags(tmp_path):
     window.form_state.output_dir = str(out_dir)
     window.form_state.two_screen = True
     window.form_state.margins = "1,2,3,4"
-    window.form_state.fixed = True
     window.form_state.embed_text = "hello"
     preview = window.build_optimize_cli_preview()
 
     assert "--two-screen" in preview
     assert "--margins 1,2,3,4" in preview
-    assert "--fixed" in preview
     assert "--embed-text hello" in preview
 
 

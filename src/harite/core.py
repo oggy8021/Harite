@@ -372,7 +372,6 @@ def optimize_wallpapers(
         ml, mr, mt, mb = (0, 0, 0, 0)
     l_display = kwargs.get("l_display")
     r_display = kwargs.get("r_display")
-    _fixed = bool(kwargs.get("fixed", False))
     embed_info = str(kwargs.get("embed_info", "none")).lower()
     embed_text = kwargs.get("embed_text")
     embed_position = str(kwargs.get("embed_position", "auto")).lower()

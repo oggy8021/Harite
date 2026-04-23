@@ -67,7 +67,7 @@
   - 主なフィールド:
     - 入力: `input_value`, `resolution`, `output_dir`
     - 配置/品質: `layout`, `scaling`, `align`, `valign`, `padding`, `quality`
-    - two-screen: `two_screen`, `margins`, `l_display`, `r_display`, `fixed`
+    - two-screen: `two_screen`, `margins`, `l_display`, `r_display`
     - 埋め込み: `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`
   - UI反映: 各入力コンポーネント
 

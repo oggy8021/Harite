@@ -711,20 +711,6 @@ class GtkRuntimeSignalBackend:
             if hasattr(compose_grid, "attach"):
                 compose_grid.attach(input_row_r, 1, 1, 1, 1)
 
-            fixed_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
-            fixed_left_spacer = gtk_module.Label(label="")
-            fixed_shell.pack_start(fixed_left_spacer, True, True, 0)
-            fixed_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            fixed_shell.pack_start(fixed_row, False, False, 0)
-            fixed_right_spacer = gtk_module.Label(label="")
-            fixed_shell.pack_start(fixed_right_spacer, True, True, 0)
-            rad_fixed = gtk_module.RadioButton.new_with_label(None, "入替不可")
-            rad_no_fixed = gtk_module.RadioButton.new_with_label_from_widget(rad_fixed, "入替可")
-            if hasattr(rad_no_fixed, "set_active"):
-                rad_no_fixed.set_active(True)
-            fixed_row.pack_start(rad_fixed, False, False, 0)
-            fixed_row.pack_start(rad_no_fixed, False, False, 0)
-
             pick_state_label = gtk_module.Label(label="")
             if hasattr(pick_state_label, "set_xalign"):
                 pick_state_label.set_xalign(0.0)
@@ -871,7 +857,7 @@ class GtkRuntimeSignalBackend:
                 save_target_label.set_xalign(0.0)
 
             priority_note_label = gtk_module.Label(
-                label="Rule: margins define area; align/valign act inside it; fixed binds L/R"
+                label="Rule: margins define area; align/valign act inside it"
             )
             if hasattr(priority_note_label, "set_xalign"):
                 priority_note_label.set_xalign(0.0)
@@ -883,10 +869,6 @@ class GtkRuntimeSignalBackend:
             current_state_section_label = gtk_module.Label(label="Current state")
             if hasattr(current_state_section_label, "set_xalign"):
                 current_state_section_label.set_xalign(0.0)
-
-            current_fixed_label = gtk_module.Label(label="Current fixed: off")
-            if hasattr(current_fixed_label, "set_xalign"):
-                current_fixed_label.set_xalign(0.0)
 
             current_margins_label = gtk_module.Label(label="Current margins: 0,0,0,0")
             if hasattr(current_margins_label, "set_xalign"):
@@ -1002,7 +984,6 @@ class GtkRuntimeSignalBackend:
             prefs_l_display_entry = gtk_module.Entry()
             prefs_r_display_entry = gtk_module.Entry()
             prefs_margins_entry = gtk_module.Entry()
-            prefs_fixed_toggle = gtk_module.ToggleButton(label="Fixed")
             prefs_align_entry = gtk_module.Entry()
             prefs_valign_entry = gtk_module.Entry()
             prefs_padding_spin = gtk_module.SpinButton()
@@ -1243,8 +1224,6 @@ class GtkRuntimeSignalBackend:
                 "btnClrPathL": btn_clr_path_l,
                 "entPathR": input_entry_r,
                 "btnClrPathR": btn_clr_path_r,
-                "radFixed": rad_fixed,
-                "radNoFixed": rad_no_fixed,
                 "vbox5": right_margin_col,
                 "lblRMergin": right_margin_label,
                 "spnRMergin": right_margin_spin,
@@ -1280,7 +1259,6 @@ class GtkRuntimeSignalBackend:
                 "lblPriorityRule": priority_note_label,
                 "lblStyleLegend": style_legend_label,
                 "lblCurrentStateSection": current_state_section_label,
-                "lblCurrentFixed": current_fixed_label,
                 "lblCurrentMargins": current_margins_label,
                 "lblCurrentStateL": current_left_label,
                 "lblCurrentStateR": current_right_label,
@@ -1305,7 +1283,6 @@ class GtkRuntimeSignalBackend:
                 "entPrefsLDisplay": prefs_l_display_entry,
                 "entPrefsRDisplay": prefs_r_display_entry,
                 "entPrefsMargins": prefs_margins_entry,
-                "tglPrefsFixed": prefs_fixed_toggle,
                 "entPrefsAlign": prefs_align_entry,
                 "entPrefsValign": prefs_valign_entry,
                 "spnPrefsPadding": prefs_padding_spin,
@@ -1406,14 +1383,6 @@ class GtkRuntimeSignalBackend:
             btn_get_img_r.connect("clicked", lambda *_args: self._on_pick_input_clicked("R"))
             btn_clr_path_l.connect("clicked", lambda *_args: self._on_clear_input_clicked("L"))
             btn_clr_path_r.connect("clicked", lambda *_args: self._on_clear_input_clicked("R"))
-            rad_fixed.connect(
-                "toggled",
-                lambda widget, *_args: self._on_fixed_toggled(widget, True),
-            )
-            rad_no_fixed.connect(
-                "toggled",
-                lambda widget, *_args: self._on_fixed_toggled(widget, False),
-            )
             top_margin_spin.connect("value-changed", self._on_margin_changed)
             left_margin_spin.connect("value-changed", self._on_margin_changed)
             right_margin_spin.connect("value-changed", self._on_margin_changed)
@@ -1646,10 +1615,6 @@ class GtkRuntimeSignalBackend:
         form_state = getattr(owner, "form_state", None)
         if form_state is None:
             return
-
-        fixed = bool(getattr(form_state, "fixed", False))
-        self._set_toggle_active("radFixed", fixed)
-        self._set_toggle_active("radNoFixed", not fixed)
 
         margin_left, margin_right, margin_top, margin_bottom = self._parse_margin_values(
             getattr(form_state, "margins", None)
@@ -2504,7 +2469,6 @@ class GtkRuntimeSignalBackend:
         self._set_entry_text("entPrefsLDisplay", config.get("l_display"))
         self._set_entry_text("entPrefsRDisplay", config.get("r_display"))
         self._set_entry_text("entPrefsMargins", config.get("margins"))
-        self._set_toggle_active("tglPrefsFixed", bool(config.get("fixed", False)))
         self._set_entry_text("entPrefsAlign", format_position_pair(config.get("align", "center"), axis="align"))
         self._set_entry_text("entPrefsValign", format_position_pair(config.get("valign", "center"), axis="valign"))
         self._set_spin_value("spnPrefsPadding", int(config.get("padding", 0)))
@@ -2539,7 +2503,6 @@ class GtkRuntimeSignalBackend:
                 "l_display": _empty_to_none(self._read_entry_text("entPrefsLDisplay")),
                 "r_display": _empty_to_none(self._read_entry_text("entPrefsRDisplay")),
                 "margins": _empty_to_none(self._read_entry_text("entPrefsMargins")),
-                "fixed": self._is_toggle_active("tglPrefsFixed"),
                 "align": list(parse_position_pair(self._read_entry_text("entPrefsAlign") or "center", axis="align")),
                 "valign": list(parse_position_pair(self._read_entry_text("entPrefsValign") or "center", axis="valign")),
                 "padding": self._read_spin_int("spnPrefsPadding"),
@@ -2603,11 +2566,6 @@ class GtkRuntimeSignalBackend:
         return align, valign
 
     def _refresh_current_state_labels(self) -> None:
-        fixed_widget = self._objects.get("radFixed")
-        fixed_enabled = False
-        if fixed_widget is not None and hasattr(fixed_widget, "get_active"):
-            fixed_enabled = bool(fixed_widget.get_active())
-
         left = self._read_spin_int("spnLMergin")
         right = self._read_spin_int("spnRMergin")
         top = self._read_spin_int("spnTopMergin")
@@ -2615,26 +2573,9 @@ class GtkRuntimeSignalBackend:
         align_l, valign_l = self._current_side_state("L")
         align_r, valign_r = self._current_side_state("R")
 
-        self._set_label_text("lblCurrentFixed", f"Current fixed: {'on' if fixed_enabled else 'off'}")
         self._set_label_text("lblCurrentMargins", f"Current margins: {left},{right},{top},{bottom}")
         self._set_label_text("lblCurrentStateL", f"Current L: align={align_l} valign={valign_l}")
         self._set_label_text("lblCurrentStateR", f"Current R: align={align_r} valign={valign_r}")
-
-    def _on_fixed_toggled(self, widget: Any, fixed_enabled: bool) -> None:
-        is_active = True
-        if hasattr(widget, "get_active"):
-            is_active = bool(widget.get_active())
-        if not is_active:
-            return
-
-        self._refresh_current_state_labels()
-
-        callback = self._signal_handlers.get("on_toggle_fixed")
-        if callback is not None:
-            try:
-                callback(bool(fixed_enabled))
-            except Exception:
-                pass
 
     def _opposite_toggle_name(self, object_name: str) -> str | None:
         opposites = {

@@ -380,10 +380,6 @@ class MainWindow:
         self._log(f"Margins updated: {self.form_state.margins}")
         self._update_embed_preflight_status()
 
-    def on_toggle_fixed(self, enabled: bool) -> None:
-        self.form_state.fixed = bool(enabled)
-        self._log(f"Fixed mode: {self.form_state.fixed}")
-
     def on_toggle_position_pressed(self, widget_name: str) -> None:
         self._log(f"Toggle pressed: {widget_name}")
 
@@ -782,7 +778,6 @@ class MainWindow:
         self.form_state.layout = optimize.layout
         self.form_state.scaling = optimize.scaling
         self.form_state.margins = optimize.margins
-        self.form_state.fixed = optimize.fixed
         self.form_state.align = optimize.align
         self.form_state.valign = optimize.valign
         self.form_state.padding = optimize.padding
@@ -821,7 +816,6 @@ class MainWindow:
         self.preferences.optimize.layout = self.form_state.layout
         self.preferences.optimize.scaling = self.form_state.scaling
         self.preferences.optimize.margins = self.form_state.margins
-        self.preferences.optimize.fixed = self.form_state.fixed
         self.preferences.optimize.align = self.form_state.align
         self.preferences.optimize.valign = self.form_state.valign
         self.preferences.optimize.padding = self.form_state.padding
@@ -1232,7 +1226,6 @@ class MainWindow:
             margins=self.form_state.margins,
             l_display=self.form_state.l_display,
             r_display=self.form_state.r_display,
-            fixed=self.form_state.fixed,
             align=self.form_state.align,
             valign=self.form_state.valign,
             padding=self.form_state.padding,
