@@ -1,10 +1,15 @@
 import pytest
 import json
+import re
 
 from harite import cli
 from harite.display_context import TwoScreenOptimizeContext
 from harite.workspace import Display
 from typer.testing import CliRunner
+
+
+def _normalize_cli_output(text: str) -> str:
+    return re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text)
 
 
 def test_parse_resolution_valid():
@@ -341,7 +346,9 @@ def test_optimize_rejects_removed_fixed_flag(tmp_path):
     )
 
     assert result.exit_code == 2
-    assert "No such option: --fixed" in result.output
+    output = _normalize_cli_output(result.output)
+    assert "No such option" in output
+    assert "--fixed" in output
 
 
 def test_optimize_rejects_invalid_bool_in_config(tmp_path, monkeypatch):
