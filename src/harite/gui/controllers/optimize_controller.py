@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 from harite.cli import parse_resolution
-from harite.core import optimize_wallpapers
+from harite.core import normalize_optimize_input_paths, optimize_wallpapers
 from harite.optimize_settings import resolve_optimize_display_settings
 from harite.positioning import parse_position_pair, position_value_for_side
 
@@ -114,6 +114,7 @@ class OptimizeController:
         if not state.input_value.strip():
             raise ValueError("input is required")
         inputs = [p.strip() for p in state.input_value.split(",") if p.strip()]
+        normalize_optimize_input_paths(inputs)
         display_settings = resolve_optimize_display_settings(
             input_values=inputs,
             resolution=state.resolution,

@@ -83,6 +83,26 @@ def test_optimize_rejects_invalid_embed_position(tmp_path):
     assert "--embed-position must be one of" in result.output
 
 
+def test_optimize_rejects_directory_input(tmp_path):
+    runner = CliRunner()
+    input_dir = tmp_path / "images"
+    input_dir.mkdir()
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--input",
+            str(input_dir),
+            "--resolution",
+            "100x100",
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert f"optimize --input does not accept directories: {input_dir}" in _normalize_cli_output(result.output)
+
+
 def test_optimize_uses_config_for_required_values(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}

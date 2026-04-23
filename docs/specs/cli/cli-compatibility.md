@@ -59,6 +59,7 @@
 - `--two-screen` の config 連携を実装・テスト固定済み。
 - `--no-two-screen` を導入し、CLI から明示 false 指定を可能化。
 - `fixed` は撤去し、2画面時の左右順は入力順へ一本化した。
+- `optimize --input` は file-only に制限し、directory 指定は受け付けない実装へ更新した。
 - `--two-screen` + `--l-display` + `--r-display` + `--margins` の組み合わせケースを CLI テストで固定済み。
 
 移植手順（短期）

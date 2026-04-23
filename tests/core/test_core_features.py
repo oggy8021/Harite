@@ -1,4 +1,5 @@
 from pathlib import Path
+import pytest
 from PIL import Image
 import tempfile
 
@@ -29,6 +30,18 @@ def test_optimize_wallpapers_creates_output_and_placements(tmp_path):
     assert isinstance(placements, list)
     # placement entries should reference original images
     assert any('a1' in p.image_path.name or 'a2' in p.image_path.name for p in placements)
+
+
+def test_optimize_wallpapers_rejects_directory_input(tmp_path):
+    from harite.core import optimize_wallpapers
+
+    inp_dir = tmp_path / "in"
+    out_dir = tmp_path / "out"
+    inp_dir.mkdir()
+    out_dir.mkdir()
+
+    with pytest.raises(ValueError, match="optimize --input does not accept directories"):
+        optimize_wallpapers([str(inp_dir)], (800, 600), out_dir)
 
 
 def test_compute_placement_centers_and_scales(tmp_path):
