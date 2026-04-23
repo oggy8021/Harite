@@ -1049,12 +1049,8 @@ class GtkRuntimeSignalBackend:
             if hasattr(embed_section_label, "set_xalign"):
                 embed_section_label.set_xalign(0.0)
 
-            embed_outer_grid = gtk_module.Grid()
-            if hasattr(embed_outer_grid, "set_column_spacing"):
-                embed_outer_grid.set_column_spacing(28)
-            if hasattr(embed_outer_grid, "set_row_spacing"):
-                embed_outer_grid.set_row_spacing(12)
-            embed_tab_box.pack_start(embed_outer_grid, False, False, 0)
+            embed_layout_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
+            embed_tab_box.pack_start(embed_layout_col, False, False, 0)
 
             current_state_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
             current_state_box.pack_start(current_state_section_label, False, False, 0)
@@ -1154,14 +1150,43 @@ class GtkRuntimeSignalBackend:
             notes_box.pack_start(priority_note_label, False, False, 0)
             notes_box.pack_start(style_legend_label, False, False, 0)
 
-            if hasattr(embed_outer_grid, "attach"):
-                embed_outer_grid.attach(current_state_box, 0, 0, 1, 1)
-                embed_outer_grid.attach(top_margin_box, 1, 0, 1, 1)
-                embed_outer_grid.attach(left_margin_box, 0, 1, 1, 1)
-                embed_outer_grid.attach(center_stack, 1, 1, 1, 1)
-                embed_outer_grid.attach(right_margin_box, 2, 1, 1, 1)
-                embed_outer_grid.attach(bottom_margin_box, 1, 2, 1, 1)
-                embed_outer_grid.attach(notes_box, 1, 3, 1, 1)
+            top_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=28)
+            top_left_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            top_center_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            top_right_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            top_row.pack_start(top_left_box, False, False, 0)
+            top_row.pack_start(top_center_box, True, True, 0)
+            top_row.pack_start(top_right_box, False, False, 0)
+            top_left_box.pack_start(current_state_box, False, False, 0)
+            top_center_box.pack_start(top_margin_box, False, False, 0)
+
+            middle_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=28)
+            middle_row.pack_start(left_margin_box, False, False, 0)
+            middle_row.pack_start(center_stack, True, True, 0)
+            middle_row.pack_start(right_margin_box, False, False, 0)
+
+            bottom_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=28)
+            bottom_left_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            bottom_center_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            bottom_right_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            bottom_row.pack_start(bottom_left_box, False, False, 0)
+            bottom_row.pack_start(bottom_center_box, True, True, 0)
+            bottom_row.pack_start(bottom_right_box, False, False, 0)
+            bottom_center_box.pack_start(bottom_margin_box, False, False, 0)
+
+            notes_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=28)
+            notes_left_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            notes_center_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            notes_right_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            notes_row.pack_start(notes_left_box, False, False, 0)
+            notes_row.pack_start(notes_center_box, True, True, 0)
+            notes_row.pack_start(notes_right_box, False, False, 0)
+            notes_center_box.pack_start(notes_box, False, False, 0)
+
+            embed_layout_col.pack_start(top_row, False, False, 0)
+            embed_layout_col.pack_start(middle_row, False, False, 0)
+            embed_layout_col.pack_start(bottom_row, False, False, 0)
+            embed_layout_col.pack_start(notes_row, False, False, 0)
 
             embed_tab_title = gtk_module.Label(label="Margins")
             if hasattr(embed_tab_title, "set_xalign"):
@@ -1515,15 +1540,18 @@ class GtkRuntimeSignalBackend:
         if entry is not None and hasattr(entry, "get_buffer"):
             buffer = entry.get_buffer()
             if buffer is not None and hasattr(buffer, "get_text"):
-                start = buffer.get_start_iter() if hasattr(buffer, "get_start_iter") else None
-                end = buffer.get_end_iter() if hasattr(buffer, "get_end_iter") else None
+                if hasattr(buffer, "get_bounds"):
+                    start, end = buffer.get_bounds()
+                else:
+                    start = buffer.get_start_iter() if hasattr(buffer, "get_start_iter") else None
+                    end = buffer.get_end_iter() if hasattr(buffer, "get_end_iter") else None
                 if str(buffer.get_text(start, end, True) or "") == normalized:
                     return
             if buffer is not None and hasattr(buffer, "set_text"):
                 buffer.set_text(normalized)
 
     def _sanitize_margin_text(self, value: str) -> str:
-        return "\n".join(str(value or "").splitlines()[:5])
+        return "\n".join(str(value or "").split("\n")[:5])
 
     def _read_entry_text(self, object_name: str) -> str:
         entry = self._objects.get(object_name)
@@ -1534,8 +1562,11 @@ class GtkRuntimeSignalBackend:
         if hasattr(entry, "get_buffer"):
             buffer = entry.get_buffer()
             if buffer is not None and hasattr(buffer, "get_text"):
-                start = buffer.get_start_iter() if hasattr(buffer, "get_start_iter") else None
-                end = buffer.get_end_iter() if hasattr(buffer, "get_end_iter") else None
+                if hasattr(buffer, "get_bounds"):
+                    start, end = buffer.get_bounds()
+                else:
+                    start = buffer.get_start_iter() if hasattr(buffer, "get_start_iter") else None
+                    end = buffer.get_end_iter() if hasattr(buffer, "get_end_iter") else None
                 return str(buffer.get_text(start, end, True) or "").strip()
         return str(getattr(entry, "text", "") or "").strip()
 
@@ -2340,8 +2371,11 @@ class GtkRuntimeSignalBackend:
                 value = str(entry.get_text() or "")
             elif hasattr(entry, "get_buffer"):
                 buffer = entry.get_buffer()
-                start = buffer.get_start_iter() if hasattr(buffer, "get_start_iter") else None
-                end = buffer.get_end_iter() if hasattr(buffer, "get_end_iter") else None
+                if hasattr(buffer, "get_bounds"):
+                    start, end = buffer.get_bounds()
+                else:
+                    start = buffer.get_start_iter() if hasattr(buffer, "get_start_iter") else None
+                    end = buffer.get_end_iter() if hasattr(buffer, "get_end_iter") else None
                 value = str(buffer.get_text(start, end, True) or "")
             else:
                 value = ""

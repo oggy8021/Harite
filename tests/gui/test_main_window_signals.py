@@ -1240,6 +1240,13 @@ def test_embed_text_is_clamped_to_five_lines():
     assert window.form_state.embed_text == "1\n2\n3\n4\n5"
 
 
+def test_embed_text_preserves_trailing_newline_during_edit():
+    window = MainWindow()
+
+    assert window.on_change_embed_text("1\n") is True
+    assert window.form_state.embed_text == "1\n"
+
+
 def test_embed_preflight_reports_margin_area_too_small():
     window = MainWindow()
     window.form_state.resolution = "1920x1080"

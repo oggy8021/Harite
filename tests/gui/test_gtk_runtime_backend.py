@@ -146,6 +146,9 @@ class _TextBuffer(_WidgetBase):
     def get_end_iter(self):
         return len(self._text)
 
+    def get_bounds(self):
+        return (0, len(self._text))
+
     def get_text(self, _start, _end, _include_hidden):
         return self._text
 
@@ -621,6 +624,19 @@ def test_runtime_backend_clamps_margin_text_to_five_lines():
 
     assert window.form_state.embed_text == "1\n2\n3\n4\n5"
     assert backend.get_object("txtMarginText").get_text() == "1\n2\n3\n4\n5"
+
+
+def test_runtime_backend_preserves_trailing_newline_while_editing_margin_text():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+
+    dispatch = create_mainwindow_signal_dispatch(window, ("on_change_embed_text",))
+    backend.connect_signals(dispatch)
+
+    backend.get_object("txtMarginText").set_text("1\n")
+
+    assert window.form_state.embed_text == "1\n"
+    assert backend.get_object("txtMarginText").get_text() == "1\n"
 
 
 def test_runtime_backend_margin_text_preflight_reports_small_margin_error():
