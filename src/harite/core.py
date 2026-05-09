@@ -170,6 +170,10 @@ def resolve_embed_margin_region(
     target_size: Tuple[int, int],
     margins: Tuple[int, int, int, int],
     position: str,
+    *,
+    two_screen: bool = False,
+    l_display: Tuple[int, int] | None = None,
+    r_display: Tuple[int, int] | None = None,
 ) -> Tuple[int, int, int, int] | None:
     """Resolve explicit margin-text placement to one of four top/bottom corner slots."""
     normalized = str(position or "").strip().lower()
@@ -178,6 +182,31 @@ def resolve_embed_margin_region(
 
     w_target, h_target = target_size
     ml, mr, mt, mb = margins
+
+    def _slice_region(offset_x: int, slice_w: int, slice_h: int) -> Tuple[int, int, int, int]:
+        inner_x0 = offset_x + max(0, ml)
+        inner_x1 = max(inner_x0, offset_x + max(0, slice_w) - max(0, mr))
+        inner_y1 = max(0, min(h_target, max(0, slice_h)))
+        if normalized == "top":
+            return (inner_x0, 0, inner_x1, max(0, mt))
+        if normalized == "left":
+            return (inner_x0, max(0, inner_y1 - max(0, mb)), inner_x1, inner_y1)
+        if normalized == "right":
+            return (inner_x0, 0, inner_x1, max(0, mt))
+        return (inner_x0, max(0, inner_y1 - max(0, mb)), inner_x1, inner_y1)
+
+    if two_screen and l_display and r_display:
+        if normalized in {"top", "left"}:
+            return _slice_region(0, int(l_display[0]), int(l_display[1]))
+        return _slice_region(int(l_display[0]), int(r_display[0]), int(r_display[1]))
+
+    if two_screen:
+        left_slice_w = max(1, w_target // 2)
+        right_slice_w = max(1, w_target - left_slice_w)
+        if normalized in {"top", "left"}:
+            return _slice_region(0, left_slice_w, h_target)
+        return _slice_region(left_slice_w, right_slice_w, h_target)
+
     usable_left = max(0, ml)
     usable_right = max(usable_left, w_target - max(0, mr))
     usable_width = max(0, usable_right - usable_left)
@@ -299,6 +328,9 @@ def _draw_embed_text_in_margin(
     position: str,
     max_lines: int,
     embed_font: Optional[str] = None,
+    two_screen: bool = False,
+    l_display: Tuple[int, int] | None = None,
+    r_display: Tuple[int, int] | None = None,
 ) -> None:
     """余白に埋め込みテキストを描画する。
 
@@ -322,7 +354,14 @@ def _draw_embed_text_in_margin(
         candidates = [("top", mt), ("bottom", mb), ("left", ml), ("right", mr)]
         pos = max(candidates, key=lambda x: x[1])[0]
 
-    area = resolve_embed_margin_region((w_target, h_target), (ml, mr, mt, mb), pos)
+    area = resolve_embed_margin_region(
+        (w_target, h_target),
+        (ml, mr, mt, mb),
+        pos,
+        two_screen=two_screen,
+        l_display=l_display,
+        r_display=r_display,
+    )
     if area is None:
         return
 
@@ -438,15 +477,31 @@ def optimize_wallpapers(
         total_display_w = max(1, left_w + right_w)
         split_x = int(round((left_w / total_display_w) * w_target))
         split_x = max(1, min(w_target - 1, split_x)) if w_target > 1 else w_target
-        left_region_w = max(1, split_x - ml)
-        right_region_w = max(1, (w_target - mr) - split_x)
+        left_slice_w = max(1, int(split_x or 0))
+        right_slice_w = max(1, w_target - left_slice_w)
+        left_region_w = max(1, left_slice_w - (ml + mr))
+        right_region_w = max(1, right_slice_w - (ml + mr))
+        left_display_h = max(1, int(l_display[1]))
+        right_display_h = max(1, int(r_display[1]))
         cell_w_list = [left_region_w, right_region_w]
-        cell_h = inner_h
+        cell_h_list = [
+            max(1, min(h_target, left_display_h) - (mt + mb)),
+            max(1, min(h_target, right_display_h) - (mt + mb)),
+        ]
+    elif two_screen:
+        count = min(2, count)
+        left_slice_w = max(1, w_target // 2)
+        right_slice_w = max(1, w_target - left_slice_w)
+        cell_w_list = [
+            max(1, left_slice_w - (ml + mr)),
+            max(1, right_slice_w - (ml + mr)),
+        ][:count]
+        cell_h_list = [max(1, h_target - (mt + mb))] * count
     else:
         # Simple layout: split inner width horizontally among items
         cell_w = max(1, inner_w // count)
-        cell_h = inner_h
         cell_w_list = [cell_w] * count
+        cell_h_list = [inner_h] * count
 
     for i, img_path in enumerate(items[:count]):
         try:
@@ -457,7 +512,8 @@ def optimize_wallpapers(
 
         # determine this cell's width
         this_cell_w = cell_w_list[i] if i < len(cell_w_list) else cell_w_list[-1]
-        nw, nh, scale = _scale_to_fit(img, this_cell_w, cell_h)
+        this_cell_h = cell_h_list[i] if i < len(cell_h_list) else cell_h_list[-1]
+        nw, nh, scale = _scale_to_fit(img, this_cell_w, this_cell_h)
         img_resized = img.resize((nw, nh), Image.LANCZOS)
 
         # determine alignment offsets (defaults: center)
@@ -473,7 +529,7 @@ def optimize_wallpapers(
             inner_x = space_x // 2
 
         # vertical offset within this cell
-        space_y = max(0, cell_h - nh)
+        space_y = max(0, this_cell_h - nh)
         if valign == "top":
             inner_y = 0
         elif valign == "bottom":
@@ -486,7 +542,13 @@ def optimize_wallpapers(
             if i == 0:
                 x = ml + inner_x
             else:
-                x = int(split_x or 0) + inner_x
+                x = int(split_x or 0) + ml + inner_x
+        elif two_screen:
+            left_slice_w = max(1, w_target // 2)
+            if i == 0:
+                x = ml + inner_x
+            else:
+                x = left_slice_w + ml + inner_x
         else:
             x = ml + i * this_cell_w + inner_x
 
@@ -527,6 +589,9 @@ def optimize_wallpapers(
         position=embed_position,
         max_lines=embed_max_lines,
         embed_font=kwargs.get("embed_font"),
+        two_screen=two_screen,
+        l_display=l_display,
+        r_display=r_display,
     )
 
     if output_path is not None:

@@ -61,8 +61,9 @@
 - `padding` / `mosaic` の整理は未完了
   - 2026-05-10 時点で core の cell 間隔計算と代表テスト引数から `padding` / `mosaic` 残骸の除去に着手している
   - 現行 spec docs でも `padding` / `mosaic` 前提の説明を段階的に整理する
-- `Margins` 4 値の意味論修復は未着手
+- `Margins` 4 値の意味論修復は着手済み
   - 母体は左右 display 双方へ同じ margin 値を適用する前提だが、Harite 現状は `global outer margins` として先に canvas 全体へ効かせている
+  - 2026-05-10 時点で explicit two-screen 分岐について、左右 display slice ごとに同じ margin 値を適用する修復に着手している
   - この差は wording 調整ではなく core/CLI semantics の修復として扱う
 - `margin text` display-target は未着手
 - preview / visual assist、`Color`、`About` は backlog 上の別群として残っている

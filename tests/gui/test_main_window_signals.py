@@ -1260,6 +1260,22 @@ def test_margin_text_preflight_reports_margin_area_too_small():
     assert window.last_error == "selected margin area is too small for margin text"
 
 
+def test_margin_text_preflight_uses_display_slice_area_for_two_screen():
+    window = MainWindow()
+    window.form_state.two_screen = True
+    window.form_state.resolution = "3200x1080"
+    window.form_state.l_display = "1920x1080"
+    window.form_state.r_display = "1280x1024"
+    window.form_state.margins = "100,150,80,90"
+
+    assert window.on_change_margin_text_mode("params") is True
+    assert window.on_change_margin_text_position("right") is True
+
+    assert window.status_phase == "margins"
+    assert window.status_message == "margin text ready in right top position (1030x80)"
+    assert window.last_error == ""
+
+
 def test_on_close_error_dialog_clears_last_error():
     window = MainWindow()
     window.last_error = "something failed"
