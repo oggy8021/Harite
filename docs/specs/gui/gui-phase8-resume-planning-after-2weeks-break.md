@@ -1,12 +1,12 @@
 # GUI Phase 8 Resume Planning After 2 Weeks Break
 
-最終更新: 2026-05-09
+最終更新: 2026-05-10
 
 ## 目的
 
-- 本書は、2026-04-21 から 2026-04-23 に起こした Phase8 planning / backlog / repair-plan を、2026-05-09 時点の実装・実機確認結果に重ねて読み直すための再開用 index である。
+- 本書は、2026-04-21 から 2026-04-23 に起こした Phase8 planning / backlog / repair-plan を、2026-05-10 時点の実装・実機確認結果に重ねて読み直すための再開用 index である。
 - 既存の Phase8 文書を歴史ごと書き換えるのではなく、どの文書が今も正本で、どこが既に消化済みで、どこが未了かを短く固定する。
-- 次ブランチで `gui-phase8-traceability-followup-memo.md` を着手対象に入れるべきか、それとも repair-plan 未了項目を先に閉じるべきかを判断できる状態を作る。
+- `phase8-drop-padding-mosaic` と `phase8-fix-margin-semantics` を取り込んだ後の現在地を固定し、次に `gui-phase8-traceability-followup-memo.md` をどう扱うかを判断できる状態を作る。
 
 ## 文書の役割と現在地
 
@@ -41,7 +41,7 @@
 - [docs/specs/gui/gui-phase8-traceability-followup-memo.md](docs/specs/gui/gui-phase8-traceability-followup-memo.md) は、Margins branch 完了後に見えた GUI traceability debt を次の専用ブランチへ送る短い設計メモである。
 - これは Phase8 の全体順を置き換える文書ではなく、repair-plan の途中または後段に差し込む GUI 専用メモとして扱う。
 
-## 2026-05-09 時点の実装観測
+## 2026-05-10 時点の実装観測
 
 ### 完了として扱ってよいもの
 
@@ -49,59 +49,59 @@
 - 5 行 text area 化と入力ガード
 - `Margins (for each display)` を含む手動調整
 - MainWindow 側 alignment sign を残す補助表示
+- `padding` / `mosaic` 残骸の整理
+- `Margins` 4 値の意味論修復
+  - explicit two-screen / implicit two-screen の双方で、margin を canvas 全体ではなく各 display slice に対して適用するよう修復済み
+  - 同一 display を並べ、同一画像を Auto-split で Optimize したときに同じ壁紙配置が得られることを確認済み
+- margin text / preflight / GTK runtime backend の display-slice 整合
 - 関連 GUI テスト通過、および owner による表示性・機能性・Optimize / Apply 確認
 
 ### docs と実装がまだずれているもの
 
 - repair-plan 上は `phase8-gui-margins-tab` が「これから実施」に見えるが、実態は完了済み
 - [docs/specs/gui/gui-margin-tab-grid-re-layout-contract.md](docs/specs/gui/gui-margin-tab-grid-re-layout-contract.md) の固定 visible layout 冒頭には `Margins` のままとある一方、Grid contract と実装・実機確認では `Margins (for each display)` へ進んでいる
+- traceability follow-up memo は「semantics 修復の後段に置く」と読めるが、どの docs ブランチで再開判断を固定したかの追記がまだ薄い
 
 ### 未了として扱うべきもの
 
-- `padding` / `mosaic` の整理は未完了
-  - 2026-05-10 時点で core の cell 間隔計算と代表テスト引数から `padding` / `mosaic` 残骸の除去に着手している
-  - 現行 spec docs でも `padding` / `mosaic` 前提の説明を段階的に整理する
-- `Margins` 4 値の意味論修復は着手済み
-  - 母体は左右 display 双方へ同じ margin 値を適用する前提だが、Harite 現状は `global outer margins` として先に canvas 全体へ効かせている
-  - 2026-05-10 時点で explicit two-screen 分岐について、左右 display slice ごとに同じ margin 値を適用する修復に着手している
-  - この差は wording 調整ではなく core/CLI semantics の修復として扱う
 - `margin text` display-target は未着手
 - preview / visual assist、`Color`、`About` は backlog 上の別群として残っている
+- GUI traceability debt の整理は未着手
+  - 次の専用ブランチ候補として [docs/specs/gui/gui-phase8-traceability-followup-memo.md](docs/specs/gui/gui-phase8-traceability-followup-memo.md) を正本に使う
 
 ## 再計画
 
-### 判断 1. follow-up memo は「次で必ず着手」ではない
+### 判断 1. traceability follow-up は着手可能段階に入った
 
-- [docs/specs/gui/gui-phase8-traceability-followup-memo.md](docs/specs/gui/gui-phase8-traceability-followup-memo.md) の課題は妥当だが、性質は GUI traceability 改善であり、意味論修復の代替ではない。
-- したがって repair-plan の未了項目が残っている限り、常に最優先とまでは置かない。
+- [docs/specs/gui/gui-phase8-traceability-followup-memo.md](docs/specs/gui/gui-phase8-traceability-followup-memo.md) の課題は、`padding` / `mosaic` 整理と `Margins` 4 値意味論修復の後段で扱う前提だった。
+- その前提は満たされたため、Phase8 内の次の docs / GUI 専用ブランチ候補として着手可能とみなしてよい。
 
-### 判断 2. 次ブランチの第一候補は `padding` / `mosaic` 整理
+### 判断 2. 次ブランチの第一候補は traceability follow-up
 
-- repair-plan の順を尊重するなら、次に消すべき未了の太い項目は `phase8-drop-padding-mosaic` である。
-- 理由は、GUI wording より下層の core / regression surface にまだ残っており、Phase8 の semantics 修復列がそこで止まっているためである。
+- 次に太い未了として残っているのは、GUI traceability debt の整理である。
+- 理由は、意味論修復列は一度閉じられ、現在は GUI の追跡性と命名一貫性を改善する専用ブランチへ進める段に入ったためである。
 
-### 判断 3. `Margins` 4 値の見直しは `padding` / `mosaic` の直後に置く
+### 判断 3. `Margins` 4 値修復は通過済みとして扱う
 
-- `global outer margins` を母体準拠の screen-bound margin semantics へ寄せる修復は、次の独立ブランチとして扱う。
-- この段では、`Margins` 4 値を左右 display 双方へ同じ値として適用する前提へ戻し、`global outer margins` 前提の説明や計算順を縮退させる。
-- これは GUI wording の微修正ではなく、optimize 側の拘束順と margin 解釈を直す semantics 修復として切り出す。
+- `global outer margins` を前提にした主要経路は、optimize / preflight / runtime backend を含めて修復済みと扱う。
+- 今後この話題が再浮上する場合は、新規 semantics 修復ではなく residual difference の確認として扱う。
 
 ### 判断 4. traceability follow-up の着手タイミング
 
-- 第一候補: `Margins` 4 値の意味論修復完了直後
-- 条件付き前倒し候補: 今回の 2 週間 break 後にまず変更追跡性を上げてから次の semantics 修復へ入りたい場合
-- ただし前倒しする場合も、「repair-plan の順から一時的に外す」という判断を PR 本文と本書に明記する
+- 第一候補: 今回の docs follow-up で再開判断を固定した直後
+- 実装ブランチでは、feature 追加を混ぜずに traceability 改善だけを扱う
+- 以後は「repair-plan の順から一時的に外す」ではなく、overlay 上の現在地更新に従った自然な次段として扱ってよい
 
 ## 推奨の次アクション
 
 1. この docs ブランチでは、本書を resume index として追加し、既存 Phase8 docs からの導線だけを足す
-2. 実装ブランチの第一候補は `phase8-drop-padding-mosaic` とする
-3. その次に、`Margins` 4 値を母体準拠へ戻す semantics 修復ブランチを切る
-4. `gui-phase8-traceability-followup-memo.md` は、その後に `phase8-gui-traceability-followup` 相当の専用ブランチで扱う
-5. もし break 明けの再始動コストを下げることを優先するなら、4 を 2 より前へ送ってよいが、その場合は「semantics 修復より traceability 改善を先に置く理由」を明文化する
+2. この follow-up では、`padding` / `mosaic` 整理と `Margins` 4 値意味論修復が通過済みであることを本書に反映する
+3. 実装ブランチの第一候補は `phase8-gui-traceability-followup` 相当とする
+4. [docs/specs/gui/gui-phase8-traceability-followup-memo.md](docs/specs/gui/gui-phase8-traceability-followup-memo.md) を次ブランチの正本として使う
+5. preview / visual assist や `margin text` display-target は、traceability 改善と混ぜず後段の別ブランチで扱う
 
 ## この文書を読んだあとの進み方
 
-- semantics を直すブランチへ進むなら [docs/specs/gui/gui-phase8-precedence-audit-memo.md](docs/specs/gui/gui-phase8-precedence-audit-memo.md) と [docs/specs/gui/gui-phase8-repair-plan.md](docs/specs/gui/gui-phase8-repair-plan.md) を再読する
+- repair-plan の順と現在地 overlay の差を再確認したいときは [docs/specs/gui/gui-phase8-repair-plan.md](docs/specs/gui/gui-phase8-repair-plan.md) を参照する
 - GUI traceability ブランチへ進むなら [docs/specs/gui/gui-phase8-traceability-followup-memo.md](docs/specs/gui/gui-phase8-traceability-followup-memo.md) を正本として使う
 - 完了済み Margins レイアウトの確認結果を辿るときだけ [docs/specs/gui/gui-margin-tab-grid-re-layout-contract.md](docs/specs/gui/gui-margin-tab-grid-re-layout-contract.md) を参照する
