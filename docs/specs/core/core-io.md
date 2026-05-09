@@ -19,11 +19,9 @@
 
 ## 入力（パラメータ）
 
-- inputs: `list[str | Path]` — 入力画像ファイルのパス一覧、もしくは画像を列挙するディレクトリパス
+- inputs: `list[str | Path]` — 入力画像ファイルのパス一覧
 - target_resolution: `tuple[int, int]` — 出力画面解像度（幅、高さ）
-- layout: `str` — レイアウトモード（例: `single`、`grid`、`mosaic`、`cover`）
 - scaling: `str` — リサイズモード（例: `fit`、`fill`、`crop`）
-- padding: `int` — 画像間の余白（ピクセル）
 - output_dir: `Path` — 出力先ディレクトリ
 - quality: `int` (0-100) — 出力画像の圧縮品質
 - random_seed: `Optional[int]` — 再現性のための乱数シード
@@ -64,9 +62,7 @@ def optimize_wallpapers(
     inputs: Sequence[Path | str],
     target_resolution: Tuple[int, int],
     output_dir: Path,
-    layout: str = "mosaic",
     scaling: str = "fit",
-    padding: int = 0,
     quality: int = 90,
     random_seed: int | None = None,
 ) -> Tuple[List[Path], List[PlacementResult]]:
@@ -77,9 +73,8 @@ def optimize_wallpapers(
 def compute_placement(
     image_path: Path,
     target_resolution: Tuple[int, int],
-    layout: str = "mosaic",
+    layout: str = "cover",
     scaling: str = "fit",
-    padding: int = 0,
 ) -> PlacementResult:
     """単一画像のターゲット画面内における配置を計算して返す。"""
 ```
@@ -88,13 +83,13 @@ def compute_placement(
 
 - 基本実行例:
 
-```
-harite optimize --input ./imgs --resolution 3840x2160 --layout mosaic --output ./out --quality 90
+```bash
+harite optimize --input ./imgs/img1.jpg --resolution 3840x2160 --output ./out --quality 90
 ```
 
 - 単一画像で配置のみ確認する例:
 
-```
+```bash
 harite compute-placement --input img.jpg --resolution 1920x1080 --layout cover
 ```
 

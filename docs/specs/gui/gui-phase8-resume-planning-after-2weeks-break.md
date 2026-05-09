@@ -59,8 +59,8 @@
 ### 未了として扱うべきもの
 
 - `padding` / `mosaic` の整理は未完了
-  - 2026-05-09 時点確認で [src/harite/core.py](src/harite/core.py) に `padding` 処理が残っている
-  - 同日時点確認で [tests/core/test_core.py](tests/core/test_core.py)、[tests/core/test_core_twoscreen.py](tests/core/test_core_twoscreen.py)、[tests/regression/test_regression_parity.py](tests/regression/test_regression_parity.py) などに `padding` / `mosaic` 前提テストが残っている
+  - 2026-05-10 時点で core の cell 間隔計算と代表テスト引数から `padding` / `mosaic` 残骸の除去に着手している
+  - 現行 spec docs でも `padding` / `mosaic` 前提の説明を段階的に整理する
 - `Margins` 4 値の意味論修復は未着手
   - 母体は左右 display 双方へ同じ margin 値を適用する前提だが、Harite 現状は `global outer margins` として先に canvas 全体へ効かせている
   - この差は wording 調整ではなく core/CLI semantics の修復として扱う

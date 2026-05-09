@@ -14,6 +14,7 @@
 - 基本操作
   - 旧: `wallpaperoptimizer --input DIR --resolution 1920x1080 --layout mosaic`  
     → 現行: `harite optimize --input img1.jpg --resolution 1920x1080`
+    - 補足: 旧 `--layout mosaic` という機能は存在しない。相当する通常分割 convenience は Harite 固有残骸として縮退対象であり、現行 `optimize` の user-facing surface では採らない。
 
 - 出力フォーマット
   - 旧: （標準出力/ログ）  

@@ -15,9 +15,7 @@ def test_two_screen_basic_parity(tmp_path):
         inputs=[str(left), str(right)],
         target_resolution=(3840, 1080),
         output_dir=out_dir,
-        layout="mosaic",
         scaling="fit",
-        padding=0,
     )
 
     # Expect one output file and two placement entries
@@ -27,7 +25,7 @@ def test_two_screen_basic_parity(tmp_path):
     # Left/right posit assigned and sizes within bounds
     w_target, h_target = 3840, 1080
     count = 2
-    cell_w = max(1, (w_target - 0 * (count - 1)) // count)
+    cell_w = max(1, w_target // count)
 
     assert placements[0].posit == "left"
     assert placements[1].posit == "right"

@@ -8,7 +8,6 @@
 
 - 入力: `inputs = ['samples/img_wide.jpg']`
 - target_resolution: `(1920, 1080)`
-- layout: `cover`
 - scaling: `fill`
 - 期待出力（メタデータ）:
   - 1つの `PlacementResult` を返す
@@ -19,7 +18,6 @@
 
 - 入力: `inputs = ['samples/left.jpg', 'samples/right.jpg']`
 - target_resolution: `(3840, 1080)`  # 左:1920x1080、右:1920x1080
-- layout: `mosaic`
 - scaling: `fit`
 - 期待出力:
   - 2つの `PlacementResult`（left/right）
@@ -28,11 +26,11 @@
 
 ## 例3: マージン指定と再現性
 
-- 入力: ディレクトリ `samples/` を指定して複数画像をランダム選出
-- オプション: `padding=10`、`random_seed=42`
+- 入力: `inputs = ['samples/a.jpg', 'samples/b.jpg']`
+- オプション: `random_seed=42`
 - 期待出力:
   - `random_seed=42` による `layout_metadata` は再現可能
-  - 画像間の距離が `padding` を満たす
+  - 同じ入力順と設定から同じ配置結果が得られる
 
 ## メタデータ JSON 例
 

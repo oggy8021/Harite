@@ -279,7 +279,7 @@ def optimize(
     パラメータの強弱（現状）:
     - `margins` はまず有効領域を決め、その内側で `align` / `valign` が効きます。
     - `two-screen` は `--l-display` / `--r-display` 併用時に効きが強くなります。
-    - `layout` / `scaling` / `random-seed` は現状の optimize 実装では効きが限定的です。
+    - `scaling` / `random-seed` は現状の optimize 実装では効きが限定的です。
 
     余白情報埋め込み:
     - `--embed-info` は `none|params|free|combo` を指定できます。
