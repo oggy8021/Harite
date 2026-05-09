@@ -1065,9 +1065,19 @@ class GtkRuntimeSignalBackend:
             current_state_box.pack_start(current_left_label, False, False, 0)
             current_state_box.pack_start(current_right_label, False, False, 0)
 
+            current_state_title_display = gtk_module.Label(label="Main Window Current alignment:")
+            if hasattr(current_state_title_display, "set_xalign"):
+                current_state_title_display.set_xalign(0.0)
+
             top_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             top_margin_box.pack_start(top_margin_label, False, False, 0)
             top_margin_box.pack_start(top_margin_spin, False, False, 0)
+            top_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+            top_margin_shell_left = gtk_module.Label(label="")
+            top_margin_shell_right = gtk_module.Label(label="")
+            top_margin_shell.pack_start(top_margin_shell_left, True, True, 0)
+            top_margin_shell.pack_start(top_margin_box, False, False, 0)
+            top_margin_shell.pack_start(top_margin_shell_right, True, True, 0)
 
             left_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
             left_margin_box.pack_start(left_margin_label, False, False, 0)
@@ -1080,6 +1090,12 @@ class GtkRuntimeSignalBackend:
             bottom_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             bottom_margin_box.pack_start(bottom_margin_label, False, False, 0)
             bottom_margin_box.pack_start(bottom_margin_spin, False, False, 0)
+            bottom_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+            bottom_margin_shell_left = gtk_module.Label(label="")
+            bottom_margin_shell_right = gtk_module.Label(label="")
+            bottom_margin_shell.pack_start(bottom_margin_shell_left, True, True, 0)
+            bottom_margin_shell.pack_start(bottom_margin_box, False, False, 0)
+            bottom_margin_shell.pack_start(bottom_margin_shell_right, True, True, 0)
 
             center_stack = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
 
@@ -1087,7 +1103,7 @@ class GtkRuntimeSignalBackend:
             center_state_left = gtk_module.Label(label="")
             center_state_right = gtk_module.Label(label="")
             center_state_shell.pack_start(center_state_left, True, True, 0)
-            center_state_shell.pack_start(current_state_box, False, False, 0)
+            center_state_shell.pack_start(current_state_title_display, False, False, 0)
             center_state_shell.pack_start(center_state_right, True, True, 0)
             center_stack.pack_start(center_state_shell, False, False, 0)
 
@@ -1149,7 +1165,6 @@ class GtkRuntimeSignalBackend:
                 margin_text_entry.set_pixels_above_lines(2)
             if hasattr(margin_text_entry, "set_pixels_below_lines"):
                 margin_text_entry.set_pixels_below_lines(2)
-            margin_text_page.pack_start(margin_text_section_label, False, False, 0)
             margin_text_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
             if hasattr(margin_text_shell, "set_border_width"):
                 margin_text_shell.set_border_width(2)
@@ -1171,7 +1186,6 @@ class GtkRuntimeSignalBackend:
             margin_text_tabs.append_page(margin_text_page, text_tab_label)
 
             margin_position_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
-            center_stack.pack_start(margin_position_shell, False, False, 0)
             margin_position_label = gtk_module.Label(label="Position:")
             if hasattr(margin_position_label, "set_xalign"):
                 margin_position_label.set_xalign(0.0)
@@ -1182,22 +1196,34 @@ class GtkRuntimeSignalBackend:
                 margin_position_left_label.set_xalign(0.0)
             margin_position_left_top = gtk_module.RadioButton.new_with_label(None, "Top")
             margin_position_left_bottom = gtk_module.RadioButton.new_with_label_from_widget(margin_position_left_top, "Bottom")
+            margin_position_left_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+            margin_position_left_shell_left = gtk_module.Label(label="")
+            margin_position_left_shell_right = gtk_module.Label(label="")
             margin_position_right_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             margin_position_right_label = gtk_module.Label(label="Right:")
             if hasattr(margin_position_right_label, "set_xalign"):
                 margin_position_right_label.set_xalign(0.0)
             margin_position_right_top = gtk_module.RadioButton.new_with_label_from_widget(margin_position_left_top, "Top")
             margin_position_right_bottom = gtk_module.RadioButton.new_with_label_from_widget(margin_position_left_top, "Bottom")
+            margin_position_right_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+            margin_position_right_shell_left = gtk_module.Label(label="")
+            margin_position_right_shell_right = gtk_module.Label(label="")
             if hasattr(margin_position_right_bottom, "set_active"):
                 margin_position_right_bottom.set_active(True)
             margin_position_left_row.pack_start(margin_position_left_label, False, False, 0)
             margin_position_left_row.pack_start(margin_position_left_top, False, False, 0)
             margin_position_left_row.pack_start(margin_position_left_bottom, False, False, 0)
+            margin_position_left_shell.pack_start(margin_position_left_shell_left, True, True, 0)
+            margin_position_left_shell.pack_start(margin_position_left_row, False, False, 0)
+            margin_position_left_shell.pack_start(margin_position_left_shell_right, True, True, 0)
             margin_position_right_row.pack_start(margin_position_right_label, False, False, 0)
             margin_position_right_row.pack_start(margin_position_right_top, False, False, 0)
             margin_position_right_row.pack_start(margin_position_right_bottom, False, False, 0)
-            margin_position_shell.pack_start(margin_position_left_row, False, False, 0)
-            margin_position_shell.pack_start(margin_position_right_row, False, False, 0)
+            margin_position_right_shell.pack_start(margin_position_right_shell_left, True, True, 0)
+            margin_position_right_shell.pack_start(margin_position_right_row, False, False, 0)
+            margin_position_right_shell.pack_start(margin_position_right_shell_right, True, True, 0)
+            margin_position_shell.pack_start(margin_position_left_shell, False, False, 0)
+            margin_position_shell.pack_start(margin_position_right_shell, False, False, 0)
 
             margin_text_max_lines_spin = gtk_module.SpinButton()
             self._configure_spin_button(margin_text_max_lines_spin, minimum=1, maximum=20, step=1, page=5, initial=3)
@@ -1209,7 +1235,8 @@ class GtkRuntimeSignalBackend:
             notes_box.pack_start(priority_note_label, False, False, 0)
             notes_box.pack_start(style_legend_label, False, False, 0)
 
-            center_stack.pack_start(bottom_margin_box, False, False, 0)
+            center_stack.pack_start(bottom_margin_shell, False, False, 0)
+            center_stack.pack_start(margin_position_shell, False, False, 0)
             center_stack.pack_start(notes_box, False, False, 0)
 
             margins_grid_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=28)
@@ -1222,22 +1249,34 @@ class GtkRuntimeSignalBackend:
 
             left_margin_spacer_top = gtk_module.Label(label="")
             left_margin_spacer_bottom = gtk_module.Label(label="")
+            left_margin_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+            left_margin_center_left = gtk_module.Label(label="")
+            left_margin_center_right = gtk_module.Label(label="")
+            left_margin_center_row.pack_start(left_margin_center_left, True, True, 0)
+            left_margin_center_row.pack_start(left_margin_box, False, False, 0)
+            left_margin_center_row.pack_start(left_margin_center_right, True, True, 0)
             left_margin_shell.pack_start(left_margin_spacer_top, True, True, 0)
-            left_margin_shell.pack_start(left_margin_box, False, False, 0)
+            left_margin_shell.pack_start(left_margin_center_row, False, False, 0)
             left_margin_shell.pack_start(left_margin_spacer_bottom, True, True, 0)
 
             right_margin_spacer_top = gtk_module.Label(label="")
             right_margin_spacer_bottom = gtk_module.Label(label="")
+            right_margin_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+            right_margin_center_left = gtk_module.Label(label="")
+            right_margin_center_right = gtk_module.Label(label="")
+            right_margin_center_row.pack_start(right_margin_center_left, True, True, 0)
+            right_margin_center_row.pack_start(right_margin_box, False, False, 0)
+            right_margin_center_row.pack_start(right_margin_center_right, True, True, 0)
             right_margin_shell.pack_start(right_margin_spacer_top, True, True, 0)
-            right_margin_shell.pack_start(right_margin_box, False, False, 0)
+            right_margin_shell.pack_start(right_margin_center_row, False, False, 0)
             right_margin_shell.pack_start(right_margin_spacer_bottom, True, True, 0)
 
-            center_margin_shell.pack_start(top_margin_box, False, False, 0)
+            center_margin_shell.pack_start(top_margin_shell, False, False, 0)
             center_margin_shell.pack_start(center_stack, True, True, 0)
 
             margins_layout_col.pack_start(margins_grid_shell, False, False, 0)
 
-            margins_tab_title = gtk_module.Label(label="Margins")
+            margins_tab_title = gtk_module.Label(label="Margins (for each display)")
             if hasattr(margins_tab_title, "set_xalign"):
                 margins_tab_title.set_xalign(0.0)
             margins_page_shell = _build_centered_page(margins_tab_box)

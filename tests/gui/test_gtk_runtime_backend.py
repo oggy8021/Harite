@@ -564,9 +564,9 @@ def test_runtime_backend_adds_margins_tab_and_syncs_owner_state():
     notebook = backend.get_object("commandTabs")
     assert len(notebook.pages) == 3
     assert notebook.pages[0][1].text == "Main"
-    assert notebook.pages[1][1].text == "Margins"
+    assert notebook.pages[1][1].text == "Margins (for each display)"
     assert notebook.pages[2][1].text == "Watch (stopped)"
-    assert backend.get_object("lblMarginsTabTitle").text == "Margins"
+    assert backend.get_object("lblMarginsTabTitle").text == "Margins (for each display)"
     assert backend.get_object("radMarginTextModeBoth").get_active() is True
     assert backend.get_object("txtMarginText").get_text() == "margin-note"
     assert backend.get_object("radMarginTextPositionRightBottom").get_active() is True
