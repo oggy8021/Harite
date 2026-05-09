@@ -31,7 +31,7 @@ SAVE_PATH_CANCELED_HANDLER_NAMES: tuple[str, ...] = (
 )
 
 SAVE_PATH_DESTROY_HANDLER_NAMES: tuple[str, ...] = (
-    "on_SavePathDialog_destroy",
+    "on_close_save_path_dialog",
 )
 
 SETTINGS_DIALOG_OBJECT_ALIASES: tuple[str, ...] = (
@@ -555,7 +555,7 @@ class GtkRuntimeSignalBackend:
             title_row.pack_start(title_spacer, True, True, 0)
             title_row.pack_start(command_bar, False, False, 0)
 
-            btn_setting = gtk_module.Button(label="Prefs")
+            btn_setting = gtk_module.Button(label="Settings")
             btn_help = gtk_module.Button(label="Help")
             btn_about = gtk_module.Button(label="About")
             btn_set_color = gtk_module.Button(label="Color")
@@ -586,7 +586,7 @@ class GtkRuntimeSignalBackend:
             top_margin_spin = gtk_module.SpinButton()
             self._configure_spin_button(top_margin_spin, minimum=0, maximum=250, step=1, page=10)
 
-            # Row 1: center body (Glade hbox2 equivalent)
+            # Row 1: center body
             center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=10)
             root.pack_start(center_row, True, True, 0)
 
@@ -889,7 +889,7 @@ class GtkRuntimeSignalBackend:
                 self._on_native_save_path_confirmed,
                 self._on_native_save_path_canceled,
             )
-            prefs_window = gtk_module.Window(title="Preferences")
+            prefs_window = gtk_module.Window(title="Settings")
             if hasattr(prefs_window, "set_default_size"):
                 prefs_window.set_default_size(520, 420)
             if hasattr(prefs_window, "set_resizable"):
@@ -907,15 +907,15 @@ class GtkRuntimeSignalBackend:
                 self._on_srcdir_dialog_canceled,
             )
 
-            prefs_apply_btn = gtk_module.Button(label="Prefs Apply")
-            prefs_load_btn = gtk_module.Button(label="Prefs Load")
-            prefs_save_btn = gtk_module.Button(label="Prefs Save")
-            prefs_close_btn = gtk_module.Button(label="Prefs Close")
-            prefs_state_label = gtk_module.Label(label="Prefs: idle")
+            prefs_apply_btn = gtk_module.Button(label="Settings Apply")
+            prefs_load_btn = gtk_module.Button(label="Settings Load")
+            prefs_save_btn = gtk_module.Button(label="Settings Save")
+            prefs_close_btn = gtk_module.Button(label="Settings Close")
+            prefs_state_label = gtk_module.Label(label="Settings: idle")
             if hasattr(prefs_state_label, "set_xalign"):
                 prefs_state_label.set_xalign(0.0)
             prefs_editor_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            prefs_editor_title = gtk_module.Label(label="Preferences")
+            prefs_editor_title = gtk_module.Label(label="Settings")
             if hasattr(prefs_editor_title, "set_xalign"):
                 prefs_editor_title.set_xalign(0.0)
             prefs_editor_box.pack_start(prefs_editor_title, False, False, 0)
@@ -1318,15 +1318,11 @@ class GtkRuntimeSignalBackend:
             self._objects = {
                 "WallPosit_MainWindow": window,
                 "main_window": window,
-                "window1": window,
                 "boxRoot": root,
-                "hbox11": top_row,
-                "lblTopMergin": top_margin_label,
-                "spnTopMergin": top_margin_spin,
-                "hbox2": center_row,
-                "vbox4": left_margin_col,
-                "lblLMergin": left_margin_label,
-                "spnLMergin": left_margin_spin,
+                "lblTopMargin": top_margin_label,
+                "spnTopMargin": top_margin_spin,
+                "lblLeftMargin": left_margin_label,
+                "spnLeftMargin": left_margin_spin,
                 "lblTitle": title,
                 "lblSubtitle": subtitle,
                 "lblMainSection": main_section_label,
@@ -1354,11 +1350,11 @@ class GtkRuntimeSignalBackend:
                 "entPathR": input_entry_r,
                 "btnClrPathR": btn_clr_path_r,
                 "vbox5": right_margin_col,
-                "lblRMergin": right_margin_label,
-                "spnRMergin": right_margin_spin,
+                "lblRightMargin": right_margin_label,
+                "spnRightMargin": right_margin_spin,
                 "hbox12": bottom_margin_row,
-                "lblBtmMergin": bottom_margin_label,
-                "spnBtmMergin": bottom_margin_spin,
+                "lblBottomMargin": bottom_margin_label,
+                "spnBottomMargin": bottom_margin_spin,
                 "lblOptimizeSection": optimize_section_label,
                 "boxOptimizeSection": optimize_row,
                 "btnSave": optimize_btn,
@@ -1395,34 +1391,35 @@ class GtkRuntimeSignalBackend:
                 "commandTabs": command_tabs,
                 "hbox14": command_bar,
                 "btnSetting": btn_setting,
-                "btnPrefsApply": prefs_apply_btn,
-                "btnPrefsLoad": prefs_load_btn,
-                "btnPrefsSave": prefs_save_btn,
-                "btnPrefsClose": prefs_close_btn,
-                "lblPrefsState": prefs_state_label,
-                "boxPrefsEditor": prefs_editor_box,
-                "prefsWindow": prefs_window,
-                "lblPrefsEditorTitle": prefs_editor_title,
-                "entPrefsResolution": prefs_resolution_entry,
-                "entPrefsScaling": prefs_scaling_entry,
-                "radPrefsTwoScreenAuto": prefs_two_screen_auto,
-                "radPrefsTwoScreenOn": prefs_two_screen_on,
-                "radPrefsTwoScreenOff": prefs_two_screen_off,
-                "entPrefsLDisplay": prefs_l_display_entry,
-                "entPrefsRDisplay": prefs_r_display_entry,
-                "entPrefsMargins": prefs_margins_entry,
-                "entPrefsAlign": prefs_align_entry,
-                "entPrefsValign": prefs_valign_entry,
-                "spnPrefsQuality": prefs_quality_spin,
-                "entPrefsMarginTextMode": prefs_margin_text_mode_entry,
-                "entPrefsMarginText": prefs_margin_text_entry,
-                "entPrefsMarginTextPosition": prefs_margin_text_position_entry,
-                "spnPrefsMarginTextMaxLines": prefs_margin_text_max_lines_spin,
-                "entPrefsPlugin": prefs_plugin_entry,
-                "radPrefsApplySingle": prefs_apply_single,
-                "radPrefsApplyPerMonitor": prefs_apply_per_monitor,
-                "entPrefsImportPath": prefs_import_path_entry,
-                "entPrefsExportPath": prefs_export_path_entry,
+                "btnSettings": btn_setting,
+                "btnSettingsApply": prefs_apply_btn,
+                "btnSettingsLoad": prefs_load_btn,
+                "btnSettingsSave": prefs_save_btn,
+                "btnSettingsClose": prefs_close_btn,
+                "lblSettingsState": prefs_state_label,
+                "boxSettingsEditor": prefs_editor_box,
+                "settingsWindow": prefs_window,
+                "lblSettingsEditorTitle": prefs_editor_title,
+                "entSettingsResolution": prefs_resolution_entry,
+                "entSettingsScaling": prefs_scaling_entry,
+                "radSettingsTwoScreenAuto": prefs_two_screen_auto,
+                "radSettingsTwoScreenOn": prefs_two_screen_on,
+                "radSettingsTwoScreenOff": prefs_two_screen_off,
+                "entSettingsLDisplay": prefs_l_display_entry,
+                "entSettingsRDisplay": prefs_r_display_entry,
+                "entSettingsMargins": prefs_margins_entry,
+                "entSettingsAlign": prefs_align_entry,
+                "entSettingsValign": prefs_valign_entry,
+                "spnSettingsQuality": prefs_quality_spin,
+                "entSettingsMarginTextMode": prefs_margin_text_mode_entry,
+                "entSettingsMarginText": prefs_margin_text_entry,
+                "entSettingsMarginTextPosition": prefs_margin_text_position_entry,
+                "spnSettingsMarginTextMaxLines": prefs_margin_text_max_lines_spin,
+                "entSettingsPlugin": prefs_plugin_entry,
+                "radSettingsApplySingle": prefs_apply_single,
+                "radSettingsApplyPerMonitor": prefs_apply_per_monitor,
+                "entSettingsImportPath": prefs_import_path_entry,
+                "entSettingsExportPath": prefs_export_path_entry,
                 "btnSetColor": btn_set_color,
                 "ImgOpenDialog": open_dialog_proxy,
                 "SrcdirDialog": srcdir_dialog_proxy,
@@ -1565,7 +1562,6 @@ class GtkRuntimeSignalBackend:
             self._objects = {
                 "WallPosit_MainWindow": window,
                 "main_window": window,
-                "window1": window,
             }
 
     def connect_signals(self, mapping: dict[str, Callable[..., Any]]) -> None:
@@ -1851,10 +1847,10 @@ class GtkRuntimeSignalBackend:
         margin_left, margin_right, margin_top, margin_bottom = self._parse_margin_values(
             getattr(form_state, "margins", None)
         )
-        self._set_spin_value("spnLMergin", margin_left)
-        self._set_spin_value("spnRMergin", margin_right)
-        self._set_spin_value("spnTopMergin", margin_top)
-        self._set_spin_value("spnBtmMergin", margin_bottom)
+        self._set_spin_value("spnLeftMargin", margin_left)
+        self._set_spin_value("spnRightMargin", margin_right)
+        self._set_spin_value("spnTopMargin", margin_top)
+        self._set_spin_value("spnBottomMargin", margin_bottom)
 
         align_left, align_right = parse_position_pair(getattr(form_state, "align", "center"), axis="align")
         valign_left, valign_right = parse_position_pair(getattr(form_state, "valign", "center"), axis="valign")
@@ -1869,6 +1865,23 @@ class GtkRuntimeSignalBackend:
         self._set_toggle_active("tglLowerR", valign_right == "bottom")
 
         self._refresh_current_state_labels()
+
+    def _sync_input_state_from_owner(self, owner: Any) -> None:
+        form_state = getattr(owner, "form_state", None)
+        if form_state is None:
+            return
+
+        self._input_path_l = str(getattr(owner, "input_path_l", "") or "")
+        self._input_path_r = str(getattr(owner, "input_path_r", "") or "")
+        self._set_entry_text("entPathL", self._format_input_display(self._input_path_l))
+        self._set_entry_text("entPathR", self._format_input_display(self._input_path_r))
+
+        self._set_button_enabled("btnSave", bool(getattr(owner, "can_optimize", False)))
+        self._set_button_enabled("btnOptimize", bool(getattr(owner, "can_optimize", False)))
+        self._set_button_enabled("btnSetWall", bool(getattr(owner, "can_apply", False)))
+        self._set_save_path_dialog_open_state(bool(getattr(owner, "save_path_dialog_open", False)))
+        self._set_label_text("lblOptimizeResult", "Optimize result: not-run")
+        self._set_label_text("lblApplyTarget", "Apply target: not-ready")
 
     def _sync_margins_state_from_owner(self, owner: Any) -> None:
         form_state = getattr(owner, "form_state", None)
@@ -1895,10 +1908,10 @@ class GtkRuntimeSignalBackend:
         form_state = getattr(owner, "form_state", None) if owner is not None else None
         resolution = str(getattr(form_state, "resolution", "-") or "-")
         margins = self._parse_margin_values(getattr(form_state, "margins", None)) if form_state is not None else (
-            self._read_spin_int("spnLMergin"),
-            self._read_spin_int("spnRMergin"),
-            self._read_spin_int("spnTopMergin"),
-            self._read_spin_int("spnBtmMergin"),
+            self._read_spin_int("spnLeftMargin"),
+            self._read_spin_int("spnRightMargin"),
+            self._read_spin_int("spnTopMargin"),
+            self._read_spin_int("spnBottomMargin"),
         )
         left, right, top, bottom = margins
         if form_state is not None:
@@ -2309,21 +2322,19 @@ class GtkRuntimeSignalBackend:
 
         try:
             callback(filename, side)
-            entry_name = "entPathL" if side == "L" else "entPathR"
-            if side == "L":
-                self._input_path_l = filename
+            owner = self._get_handler_owner("on_pick_input")
+            if owner is not None:
+                self._sync_input_state_from_owner(owner)
+                self._sync_result_preview_from_owner(owner)
             else:
-                self._input_path_r = filename
-            entry = self._objects.get(entry_name)
-            if entry is not None and hasattr(entry, "set_text"):
-                entry.set_text(self._format_input_display(filename))
-                try:
-                    if hasattr(entry, "emit"):
-                        entry.emit("changed", entry)
-                    else:
-                        self._on_input_changed(entry)
-                except Exception:
-                    self._on_input_changed(entry)
+                entry_name = "entPathL" if side == "L" else "entPathR"
+                if side == "L":
+                    self._input_path_l = filename
+                else:
+                    self._input_path_r = filename
+                entry = self._objects.get(entry_name)
+                if entry is not None and hasattr(entry, "set_text"):
+                    entry.set_text(self._format_input_display(filename))
             if hasattr(dialog, "hide"):
                 dialog.hide()
             self._set_label_text("lblPickState", f"Open-{side}: selected")
@@ -2368,18 +2379,34 @@ class GtkRuntimeSignalBackend:
         return f"{name[:head_length]}...{name[-tail_length:]}"
 
     def _on_clear_input_clicked(self, side: str) -> None:
-        entry_name = "entPathL" if side == "L" else "entPathR"
-        if side == "L":
-            self._input_path_l = ""
-        else:
-            self._input_path_r = ""
+        callback = self._signal_handlers.get("on_clear_input")
+        if callback is None:
+            self._set_feedback(phase=f"Clear-{side}", state="handler-missing", error="handler not connected")
+            return
 
-        entry = self._objects.get(entry_name)
-        if entry is not None and hasattr(entry, "set_text"):
-            entry.set_text("")
-
-        self._on_input_changed(entry)
-        self._set_feedback(phase=f"Clear-{side}", state="ok")
+        try:
+            callback(side)
+            owner = self._get_handler_owner("on_clear_input")
+            if owner is not None:
+                self._sync_input_state_from_owner(owner)
+                self._sync_result_preview_from_owner(owner)
+                self._sync_feedback_from_owner(owner)
+            else:
+                self._set_feedback(phase=f"Clear-{side}", state="ok")
+        except TypeError:
+            try:
+                callback()
+                owner = self._get_handler_owner("on_clear_input")
+                if owner is not None:
+                    self._sync_input_state_from_owner(owner)
+                    self._sync_result_preview_from_owner(owner)
+                    self._sync_feedback_from_owner(owner)
+                else:
+                    self._set_feedback(phase=f"Clear-{side}", state="ok")
+            except Exception as exc:
+                self._set_feedback(phase=f"Clear-{side}", state="failed", error=str(exc))
+        except Exception as exc:
+            self._set_feedback(phase=f"Clear-{side}", state="failed", error=str(exc))
 
     def _current_srcdir_for_side(self, side: str) -> str:
         return self._watch_srcdir_l if side == "L" else self._watch_srcdir_r
@@ -2700,14 +2727,14 @@ class GtkRuntimeSignalBackend:
         raw = str(value).strip().lower() if value is not None else "off"
         is_auto = raw == "auto"
         is_on = raw in {"on", "true", "1"} or value is True
-        self._set_toggle_active("radPrefsTwoScreenAuto", is_auto)
-        self._set_toggle_active("radPrefsTwoScreenOn", is_on and not is_auto)
-        self._set_toggle_active("radPrefsTwoScreenOff", not is_auto and not is_on)
+        self._set_toggle_active("radSettingsTwoScreenAuto", is_auto)
+        self._set_toggle_active("radSettingsTwoScreenOn", is_on and not is_auto)
+        self._set_toggle_active("radSettingsTwoScreenOff", not is_auto and not is_on)
 
     def _read_preferences_two_screen_mode(self) -> str | bool:
-        if self._is_toggle_active("radPrefsTwoScreenAuto"):
+        if self._is_toggle_active("radSettingsTwoScreenAuto"):
             return "auto"
-        if self._is_toggle_active("radPrefsTwoScreenOn"):
+        if self._is_toggle_active("radSettingsTwoScreenOn"):
             return True
         return False
 
@@ -2717,27 +2744,27 @@ class GtkRuntimeSignalBackend:
         try:
             if mode == "per-monitor-auto-split":
                 self._prefs_apply_mode_preserved = None
-                self._set_toggle_active("radPrefsApplySingle", False)
-                self._set_toggle_active("radPrefsApplyPerMonitor", True)
+                self._set_toggle_active("radSettingsApplySingle", False)
+                self._set_toggle_active("radSettingsApplyPerMonitor", True)
                 return
             if mode == "single-file":
                 self._prefs_apply_mode_preserved = None
-                self._set_toggle_active("radPrefsApplySingle", True)
-                self._set_toggle_active("radPrefsApplyPerMonitor", False)
+                self._set_toggle_active("radSettingsApplySingle", True)
+                self._set_toggle_active("radSettingsApplyPerMonitor", False)
                 return
 
             # Preserve unsupported modes such as per-monitor-explicit without
             # surfacing them as editable GUI choices.
             self._prefs_apply_mode_preserved = mode
-            self._set_toggle_active("radPrefsApplySingle", False)
-            self._set_toggle_active("radPrefsApplyPerMonitor", False)
+            self._set_toggle_active("radSettingsApplySingle", False)
+            self._set_toggle_active("radSettingsApplyPerMonitor", False)
         finally:
             self._prefs_apply_mode_syncing = False
 
     def _read_preferences_apply_mode(self) -> str:
-        if self._is_toggle_active("radPrefsApplyPerMonitor"):
+        if self._is_toggle_active("radSettingsApplyPerMonitor"):
             return "per-monitor-auto-split"
-        if self._is_toggle_active("radPrefsApplySingle"):
+        if self._is_toggle_active("radSettingsApplySingle"):
             return "single-file"
         if self._prefs_apply_mode_preserved:
             return self._prefs_apply_mode_preserved
@@ -2758,25 +2785,25 @@ class GtkRuntimeSignalBackend:
         if dialog is None or not hasattr(dialog, "get_preferences_config"):
             return {}
         config = dict(dialog.get_preferences_config())
-        self._set_entry_text("entPrefsResolution", config.get("resolution", "1920x1080"))
-        self._set_entry_text("entPrefsScaling", config.get("scaling", "fit"))
+        self._set_entry_text("entSettingsResolution", config.get("resolution", "1920x1080"))
+        self._set_entry_text("entSettingsScaling", config.get("scaling", "fit"))
         self._set_preferences_two_screen_mode(config.get("two_screen", False))
-        self._set_entry_text("entPrefsLDisplay", config.get("l_display"))
-        self._set_entry_text("entPrefsRDisplay", config.get("r_display"))
-        self._set_entry_text("entPrefsMargins", config.get("margins"))
-        self._set_entry_text("entPrefsAlign", format_position_pair(config.get("align", "center"), axis="align"))
-        self._set_entry_text("entPrefsValign", format_position_pair(config.get("valign", "center"), axis="valign"))
-        self._set_spin_value("spnPrefsQuality", int(config.get("quality", 90)))
-        self._set_entry_text("entPrefsMarginTextMode", config.get("embed_info", "none"))
-        self._set_entry_text("entPrefsMarginText", config.get("embed_text"))
-        self._set_entry_text("entPrefsMarginTextPosition", config.get("embed_position", "auto"))
-        self._set_spin_value("spnPrefsMarginTextMaxLines", int(config.get("embed_max_lines", 3)))
-        self._set_entry_text("entPrefsPlugin", config.get("plugin", "windows"))
+        self._set_entry_text("entSettingsLDisplay", config.get("l_display"))
+        self._set_entry_text("entSettingsRDisplay", config.get("r_display"))
+        self._set_entry_text("entSettingsMargins", config.get("margins"))
+        self._set_entry_text("entSettingsAlign", format_position_pair(config.get("align", "center"), axis="align"))
+        self._set_entry_text("entSettingsValign", format_position_pair(config.get("valign", "center"), axis="valign"))
+        self._set_spin_value("spnSettingsQuality", int(config.get("quality", 90)))
+        self._set_entry_text("entSettingsMarginTextMode", config.get("embed_info", "none"))
+        self._set_entry_text("entSettingsMarginText", config.get("embed_text"))
+        self._set_entry_text("entSettingsMarginTextPosition", config.get("embed_position", "auto"))
+        self._set_spin_value("spnSettingsMarginTextMaxLines", int(config.get("embed_max_lines", 3)))
+        self._set_entry_text("entSettingsPlugin", config.get("plugin", "windows"))
         self._set_preferences_apply_mode(config.get("apply_mode", "single-file"))
         if hasattr(dialog, "get_import_path"):
-            self._set_entry_text("entPrefsImportPath", dialog.get_import_path())
+            self._set_entry_text("entSettingsImportPath", dialog.get_import_path())
         if hasattr(dialog, "get_export_path"):
-            self._set_entry_text("entPrefsExportPath", dialog.get_export_path())
+            self._set_entry_text("entSettingsExportPath", dialog.get_export_path())
         return config
 
     def _sync_preferences_dialog_from_widgets(self) -> dict[str, object]:
@@ -2790,26 +2817,26 @@ class GtkRuntimeSignalBackend:
 
         config.update(
             {
-                "resolution": self._read_entry_text("entPrefsResolution") or "1920x1080",
-                "scaling": self._read_entry_text("entPrefsScaling") or "fit",
+                "resolution": self._read_entry_text("entSettingsResolution") or "1920x1080",
+                "scaling": self._read_entry_text("entSettingsScaling") or "fit",
                 "two_screen": self._read_preferences_two_screen_mode(),
-                "l_display": _empty_to_none(self._read_entry_text("entPrefsLDisplay")),
-                "r_display": _empty_to_none(self._read_entry_text("entPrefsRDisplay")),
-                "margins": _empty_to_none(self._read_entry_text("entPrefsMargins")),
-                "align": list(parse_position_pair(self._read_entry_text("entPrefsAlign") or "center", axis="align")),
-                "valign": list(parse_position_pair(self._read_entry_text("entPrefsValign") or "center", axis="valign")),
-                "quality": self._read_spin_int("spnPrefsQuality"),
-                "embed_info": self._read_entry_text("entPrefsMarginTextMode") or "none",
-                "embed_text": _empty_to_none(self._read_entry_text("entPrefsMarginText")),
-                "embed_position": self._read_entry_text("entPrefsMarginTextPosition") or "auto",
-                "embed_max_lines": self._read_spin_int("spnPrefsMarginTextMaxLines"),
-                "plugin": self._read_entry_text("entPrefsPlugin") or "windows",
+                "l_display": _empty_to_none(self._read_entry_text("entSettingsLDisplay")),
+                "r_display": _empty_to_none(self._read_entry_text("entSettingsRDisplay")),
+                "margins": _empty_to_none(self._read_entry_text("entSettingsMargins")),
+                "align": list(parse_position_pair(self._read_entry_text("entSettingsAlign") or "center", axis="align")),
+                "valign": list(parse_position_pair(self._read_entry_text("entSettingsValign") or "center", axis="valign")),
+                "quality": self._read_spin_int("spnSettingsQuality"),
+                "embed_info": self._read_entry_text("entSettingsMarginTextMode") or "none",
+                "embed_text": _empty_to_none(self._read_entry_text("entSettingsMarginText")),
+                "embed_position": self._read_entry_text("entSettingsMarginTextPosition") or "auto",
+                "embed_max_lines": self._read_spin_int("spnSettingsMarginTextMaxLines"),
+                "plugin": self._read_entry_text("entSettingsPlugin") or "windows",
                 "apply_mode": self._read_preferences_apply_mode(),
             }
         )
 
-        import_path = self._read_entry_text("entPrefsImportPath")
-        export_path = self._read_entry_text("entPrefsExportPath")
+        import_path = self._read_entry_text("entSettingsImportPath")
+        export_path = self._read_entry_text("entSettingsExportPath")
         if dialog is not None:
             if hasattr(dialog, "set_preferences_config"):
                 dialog.set_preferences_config(config)
@@ -2821,7 +2848,7 @@ class GtkRuntimeSignalBackend:
 
     def _refresh_preferences_dialog_config_from_getter(self) -> None:
         dialog = self._objects.get("SettingsDialog")
-        getter = self._signal_handlers.get("on_get_preferences_config")
+        getter = self._signal_handlers.get("on_get_settings_config")
         if getter is None or dialog is None or not hasattr(dialog, "set_preferences_config"):
             return
 
@@ -2858,10 +2885,10 @@ class GtkRuntimeSignalBackend:
         return align, valign
 
     def _refresh_current_state_labels(self) -> None:
-        left = self._read_spin_int("spnLMergin")
-        right = self._read_spin_int("spnRMergin")
-        top = self._read_spin_int("spnTopMergin")
-        bottom = self._read_spin_int("spnBtmMergin")
+        left = self._read_spin_int("spnLeftMargin")
+        right = self._read_spin_int("spnRightMargin")
+        top = self._read_spin_int("spnTopMargin")
+        bottom = self._read_spin_int("spnBottomMargin")
         align_l, valign_l = self._current_side_state("L")
         align_r, valign_r = self._current_side_state("R")
 
@@ -3025,7 +3052,7 @@ class GtkRuntimeSignalBackend:
     def _on_save_clicked(self, *_args: Any) -> None:
         # P6 direction: Save As keeps chooser semantics, but fallback should not
         # depend on separate confirm/cancel controls.
-        callback = self._signal_handlers.get("on_save")
+        callback = self._signal_handlers.get("on_save_as")
         if callback is not None:
             try:
                 callback()
@@ -3080,7 +3107,7 @@ class GtkRuntimeSignalBackend:
         callback = self._signal_handlers.get("on_open_settings_dialog")
         dialog = self._objects.get("SettingsDialog")
         if callback is None:
-            self._set_feedback(phase="Prefs", state="planned")
+            self._set_feedback(phase="Settings", state="planned")
             return
         try:
             ok = callback()
@@ -3092,23 +3119,24 @@ class GtkRuntimeSignalBackend:
                     self._sync_watch_state_from_owner(owner)
                 if dialog is not None and hasattr(dialog, "show"):
                     dialog.show()
-                self._set_label_text("lblPrefsState", "Prefs: opened")
-                self._set_feedback(phase="Prefs", state="opened")
+                self._set_label_text("lblSettingsState", "Settings: opened")
+                self._set_feedback(phase="Settings", state="opened")
             else:
-                self._set_feedback(phase="Prefs", state="deferred")
+                self._set_feedback(phase="Settings", state="deferred")
         except Exception as exc:
-            self._set_feedback(phase="Prefs", state="error", error=str(exc))
+            self._set_feedback(phase="Settings", state="error", error=str(exc))
 
     def _on_preferences_apply_clicked(self, *_args: Any) -> None:
-        callback = self._signal_handlers.get("on_apply_preferences")
+        handler_name = "on_apply_settings"
+        callback = self._signal_handlers.get(handler_name)
         dialog = self._objects.get("SettingsDialog")
         if callback is None or dialog is None or not hasattr(dialog, "get_preferences_config"):
-            self._set_feedback(phase="PrefsApply", state="handler-missing", error="handler not connected")
+            self._set_feedback(phase="SettingsApply", state="handler-missing", error="handler not connected")
             return
         try:
             ok = callback(self._sync_preferences_dialog_from_widgets())
             if ok:
-                owner = self._get_handler_owner("on_apply_preferences")
+                owner = self._get_handler_owner(handler_name)
                 if owner is not None:
                     self._sync_main_state_from_owner(owner)
                     self._sync_margins_state_from_owner(owner)
@@ -3116,18 +3144,19 @@ class GtkRuntimeSignalBackend:
                     self._sync_feedback_from_owner(owner)
                 if hasattr(dialog, "hide"):
                     dialog.hide()
-                self._set_label_text("lblPrefsState", "Prefs: applied")
-                self._set_feedback(phase="PrefsApply", state="applied")
+                self._set_label_text("lblSettingsState", "Settings: applied")
+                self._set_feedback(phase="SettingsApply", state="applied")
             else:
-                self._set_feedback(phase="PrefsApply", state="failed", error="preferences apply returned false")
+                self._set_feedback(phase="SettingsApply", state="failed", error="settings apply returned false")
         except Exception as exc:
-            self._set_feedback(phase="PrefsApply", state="error", error=str(exc))
+            self._set_feedback(phase="SettingsApply", state="error", error=str(exc))
 
     def _on_preferences_load_clicked(self, *_args: Any) -> None:
-        callback = self._signal_handlers.get("on_load_preferences_file")
+        handler_name = "on_load_settings_file"
+        callback = self._signal_handlers.get(handler_name)
         dialog = self._objects.get("SettingsDialog")
         if callback is None or dialog is None or not hasattr(dialog, "get_import_path"):
-            self._set_feedback(phase="PrefsLoad", state="handler-missing", error="handler not connected")
+            self._set_feedback(phase="SettingsLoad", state="handler-missing", error="handler not connected")
             return
         try:
             self._sync_preferences_dialog_from_widgets()
@@ -3135,24 +3164,24 @@ class GtkRuntimeSignalBackend:
             if ok:
                 self._refresh_preferences_dialog_config_from_getter()
                 self._sync_preferences_widgets_from_dialog()
-                owner = self._get_handler_owner("on_load_preferences_file")
+                owner = self._get_handler_owner(handler_name)
                 if owner is not None:
                     self._sync_main_state_from_owner(owner)
                     self._sync_margins_state_from_owner(owner)
                     self._sync_watch_state_from_owner(owner)
                     self._sync_feedback_from_owner(owner)
-                self._set_label_text("lblPrefsState", "Prefs: loaded")
-                self._set_feedback(phase="PrefsLoad", state="loaded")
+                self._set_label_text("lblSettingsState", "Settings: loaded")
+                self._set_feedback(phase="SettingsLoad", state="loaded")
             else:
-                self._set_feedback(phase="PrefsLoad", state="failed", error="preferences load returned false")
+                self._set_feedback(phase="SettingsLoad", state="failed", error="settings load returned false")
         except Exception as exc:
-            self._set_feedback(phase="PrefsLoad", state="error", error=str(exc))
+            self._set_feedback(phase="SettingsLoad", state="error", error=str(exc))
 
     def _on_preferences_save_clicked(self, *_args: Any) -> None:
-        callback = self._signal_handlers.get("on_save_preferences_file")
+        callback = self._signal_handlers.get("on_save_settings_file")
         dialog = self._objects.get("SettingsDialog")
         if callback is None or dialog is None or not hasattr(dialog, "get_export_path"):
-            self._set_feedback(phase="PrefsSave", state="handler-missing", error="handler not connected")
+            self._set_feedback(phase="SettingsSave", state="handler-missing", error="handler not connected")
             return
         try:
             config = self._sync_preferences_dialog_from_widgets()
@@ -3161,12 +3190,12 @@ class GtkRuntimeSignalBackend:
             except TypeError:
                 ok = callback(dialog.get_export_path())
             if ok:
-                self._set_label_text("lblPrefsState", "Prefs: saved")
-                self._set_feedback(phase="PrefsSave", state="saved")
+                self._set_label_text("lblSettingsState", "Settings: saved")
+                self._set_feedback(phase="SettingsSave", state="saved")
             else:
-                self._set_feedback(phase="PrefsSave", state="failed", error="preferences save returned false")
+                self._set_feedback(phase="SettingsSave", state="failed", error="settings save returned false")
         except Exception as exc:
-            self._set_feedback(phase="PrefsSave", state="error", error=str(exc))
+            self._set_feedback(phase="SettingsSave", state="error", error=str(exc))
 
     def _on_preferences_close_clicked(self, *_args: Any) -> None:
         dialog = self._objects.get("SettingsDialog")
@@ -3178,8 +3207,8 @@ class GtkRuntimeSignalBackend:
                 callback()
             except Exception:
                 pass
-        self._set_label_text("lblPrefsState", "Prefs: closed")
-        self._set_feedback(phase="Prefs", state="closed")
+        self._set_label_text("lblSettingsState", "Settings: closed")
+        self._set_feedback(phase="Settings", state="closed")
 
     def _on_preferences_window_delete_event(self) -> bool:
         self._on_preferences_close_clicked()
@@ -3271,7 +3300,7 @@ def _resolve_window(signal_backend, requested_id: str):
         return window
 
     # Fallback IDs that may appear in legacy GTK/Glade exports.
-    for candidate in ("main_window", "window1"):
+    for candidate in ("main_window",):
         window = signal_backend.get_object(candidate)
         if window is not None:
             return window

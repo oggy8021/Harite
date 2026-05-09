@@ -248,8 +248,7 @@ class MainWindow:
             self.input_path_l = current[0] if len(current) >= 1 else ""
             self.input_path_r = current[1] if len(current) >= 2 else ""
 
-        combined = ",".join(path for path in (self.input_path_l, self.input_path_r) if path)
-        self.on_change_input_text(combined)
+        self._apply_input_paths()
         if normalized_side in {"L", "R"}:
             self._log(f"Input picked ({normalized_side}): {value}")
         else:
@@ -358,13 +357,13 @@ class MainWindow:
         return 3
 
     def _margin_index_for_widget(self, widget_name: str) -> int | None:
-        if "LMergin" in widget_name:
+        if "LeftMargin" in widget_name:
             return 0
-        if "RMergin" in widget_name:
+        if "RightMargin" in widget_name:
             return 1
-        if "TopMergin" in widget_name:
+        if "TopMargin" in widget_name:
             return 2
-        if "BtmMergin" in widget_name:
+        if "BottomMargin" in widget_name:
             return 3
         return None
 
@@ -667,14 +666,10 @@ class MainWindow:
         self._update_margin_text_preflight_status()
         return True
 
-    def on_change_input_text(self, text: str) -> None:
-        normalized = text.strip()
-        parts = [part.strip() for part in normalized.split(",") if part.strip()]
-        self.input_path_l = parts[0] if len(parts) >= 1 else ""
-        self.input_path_r = parts[1] if len(parts) >= 2 else ""
-        self.form_state.input_value = ",".join(parts)
+    def _apply_input_paths(self) -> None:
+        self.form_state.input_value = ",".join(path for path in (self.input_path_l, self.input_path_r) if path)
         self._sync_two_screen_state()
-        self.can_optimize = bool(text and text.strip())
+        self.can_optimize = bool(self.form_state.input_value)
         if not self.can_optimize:
             # Input changed to empty; reset apply readiness to avoid stale flow.
             self.can_apply = False
@@ -690,7 +685,14 @@ class MainWindow:
         else:
             self._log("Input is empty")
 
-    def on_save(self) -> bool:
+    def on_change_input_text(self, text: str) -> None:
+        normalized = text.strip()
+        parts = [part.strip() for part in normalized.split(",") if part.strip()]
+        self.input_path_l = parts[0] if len(parts) >= 1 else ""
+        self.input_path_r = parts[1] if len(parts) >= 2 else ""
+        self._apply_input_paths()
+
+    def on_save_as(self) -> bool:
         self.save_path_dialog_open = True
         self._update_save_target_display()
         self._set_status("idle", "save_path", "save path dialog opened")
@@ -781,20 +783,20 @@ class MainWindow:
 
     def on_open_settings_dialog(self) -> bool:
         self.settings_dialog_open = True
-        self._set_status("idle", "prefs", "preferences dialog opened")
+        self._set_status("idle", "settings", "settings dialog opened")
         self._log("Settings dialog opened")
         return True
 
-    def on_get_preferences_config(self) -> dict[str, object]:
-        return self.export_preferences_config()
+    def on_get_settings_config(self) -> dict[str, object]:
+        return self.export_settings_config()
 
-    def on_apply_preferences(self, preferences: AppPreferences | dict[str, object]) -> bool:
-        prefs = preferences
-        if isinstance(preferences, dict):
-            prefs = AppPreferences.from_config_dict(preferences, default_plugin=self.plugin_name)
+    def on_apply_settings(self, settings: AppPreferences | dict[str, object]) -> bool:
+        settings_value = settings
+        if isinstance(settings, dict):
+            settings_value = AppPreferences.from_config_dict(settings, default_plugin=self.plugin_name)
 
-        self.preferences = prefs
-        optimize = prefs.optimize
+        self.preferences = settings_value
+        optimize = settings_value.optimize
         self.form_state.resolution = optimize.resolution
         self.form_state.scaling = optimize.scaling
         self.form_state.margins = optimize.margins
@@ -818,19 +820,19 @@ class MainWindow:
             self.form_state.l_display = None if optimize.l_display == "auto" else optimize.l_display
             self.form_state.r_display = None if optimize.r_display == "auto" else optimize.r_display
 
-        self.plugin_name = prefs.apply.plugin_name
-        self.apply_mode = prefs.apply.apply_mode
-        self.watch_interval_seconds = prefs.watch.interval_seconds
-        self.watch_srcdir_l = prefs.watch.srcdir_l or ""
-        self.watch_srcdir_r = prefs.watch.srcdir_r or ""
+        self.plugin_name = settings_value.apply.plugin_name
+        self.apply_mode = settings_value.apply.apply_mode
+        self.watch_interval_seconds = settings_value.watch.interval_seconds
+        self.watch_srcdir_l = settings_value.watch.srcdir_l or ""
+        self.watch_srcdir_r = settings_value.watch.srcdir_r or ""
         self._update_watch_source_display()
         self._update_watch_output_display()
         self.settings_dialog_open = False
-        self._set_status("success", "prefs", "preferences applied")
-        self._log("Preferences applied")
+        self._set_status("success", "settings", "settings applied")
+        self._log("Settings applied")
         return True
 
-    def export_preferences_config(self) -> dict[str, object]:
+    def export_settings_config(self) -> dict[str, object]:
         self.preferences.optimize.resolution = self.form_state.resolution
         self.preferences.optimize.scaling = self.form_state.scaling
         self.preferences.optimize.margins = self.form_state.margins
@@ -854,52 +856,62 @@ class MainWindow:
         self.preferences.optimize.r_display = self.form_state.r_display
         return self.preferences.to_config_dict()
 
-    def load_preferences_config(self, config: dict[str, object]) -> bool:
-        return self.on_apply_preferences(AppPreferences.from_config_dict(config, default_plugin=self.plugin_name))
+    def load_settings_config(self, config: dict[str, object]) -> bool:
+        return self.on_apply_settings(AppPreferences.from_config_dict(config, default_plugin=self.plugin_name))
 
-    def on_save_preferences_file(
+    def on_save_settings_file(
         self,
         path: str | None = None,
         config: dict[str, object] | None = None,
     ) -> bool:
         value = (path or "").strip()
         if not value:
-            self._set_status("error", "prefs", "preferences path is required", error="preferences path is required")
-            self._log("Preferences save failed: path is required")
+            self._set_status("error", "settings", "settings path is required", error="settings path is required")
+            self._log("Settings save failed: path is required")
             return False
         try:
-            payload = config if config is not None else self.export_preferences_config()
+            payload = config if config is not None else self.export_settings_config()
             save_config(Path(value), payload)
         except Exception as exc:
-            self._set_status("error", "prefs", "preferences save failed", error=str(exc))
-            self._log(f"Preferences save failed: {exc}")
+            self._set_status("error", "settings", "settings save failed", error=str(exc))
+            self._log(f"Settings save failed: {exc}")
             return False
-        self._set_status("success", "prefs", "preferences saved")
-        self._log(f"Preferences saved: {value}")
+        self._set_status("success", "settings", "settings saved")
+        self._log(f"Settings saved: {value}")
         return True
 
-    def on_load_preferences_file(self, path: str | None = None) -> bool:
+    def on_load_settings_file(self, path: str | None = None) -> bool:
         value = (path or "").strip()
         if not value:
-            self._set_status("error", "prefs", "preferences path is required", error="preferences path is required")
-            self._log("Preferences load failed: path is required")
+            self._set_status("error", "settings", "settings path is required", error="settings path is required")
+            self._log("Settings load failed: path is required")
             return False
         try:
             config = load_config(Path(value))
         except Exception as exc:
-            self._set_status("error", "prefs", "preferences load failed", error=str(exc))
-            self._log(f"Preferences load failed: {exc}")
+            self._set_status("error", "settings", "settings load failed", error=str(exc))
+            self._log(f"Settings load failed: {exc}")
             return False
-        ok = self.load_preferences_config(config)
+        ok = self.load_settings_config(config)
         if ok:
-            self._log(f"Preferences loaded: {value}")
+            self._log(f"Settings loaded: {value}")
         return ok
 
-    def on_clear_input(self) -> bool:
-        self.input_path_l = ""
-        self.input_path_r = ""
-        self.on_change_input_text("")
-        self._log("Input cleared")
+    def on_clear_input(self, side: str | None = None) -> bool:
+        normalized_side = (side or "").strip().upper()
+        if normalized_side == "L":
+            self.input_path_l = ""
+        elif normalized_side == "R":
+            self.input_path_r = ""
+        else:
+            self.input_path_l = ""
+            self.input_path_r = ""
+
+        self._apply_input_paths()
+        if normalized_side in {"L", "R"}:
+            self._log(f"Input cleared ({normalized_side})")
+        else:
+            self._log("Input cleared")
         return True
 
     def on_about(self) -> bool:

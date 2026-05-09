@@ -398,8 +398,8 @@ def test_runtime_backend_updates_mainwindow_form_state_for_toggles_and_margins()
 
     backend.get_object("tglPushRightL").click()
     backend.get_object("tglUpperR").click()
-    backend.get_object("spnTopMergin").set_value(25)
-    backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
+    backend.get_object("spnTopMargin").set_value(25)
+    backend.get_object("spnTopMargin").emit("value-changed", backend.get_object("spnTopMargin"))
 
     assert window.form_state.align == ("right", "center")
     assert window.form_state.valign == ("center", "top")
@@ -592,8 +592,8 @@ def test_runtime_backend_margins_tab_updates_owner_state_and_cli_preview(tmp_pat
     )
     backend.connect_signals(dispatch)
 
-    backend.get_object("spnTopMergin").set_value(24)
-    backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
+    backend.get_object("spnTopMargin").set_value(24)
+    backend.get_object("spnTopMargin").emit("value-changed", backend.get_object("spnTopMargin"))
     backend.get_object("radMarginTextModeText").click()
     backend.get_object("txtMarginText").set_text("hello\nworld")
     backend.get_object("radMarginTextPositionLeftTop").click()
@@ -786,7 +786,7 @@ def test_runtime_backend_shows_phase6_labels_and_controls():
     assert style_legend.text == "Current behavior: margins are global to the composite canvas"
     assert command_section.text == ""
     assert flow_legend.text == "Compose -> Optimize -> Apply"
-    assert prefs_btn.label == "Prefs"
+    assert prefs_btn.label == "Settings"
     assert about_btn.label == "About"
     assert help_btn.label == "Help"
     assert save_btn.label == "Save As"
@@ -1102,19 +1102,16 @@ def test_runtime_backend_open_l_truncates_long_display_name():
 
 def test_runtime_backend_clear_l_clears_only_left_side_and_keeps_right_input():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
 
     entry_l = backend.get_object("entPathL")
     entry_r = backend.get_object("entPathR")
     clear_l = backend.get_object("btnClrPathL")
     optimize_btn = backend.get_object("btnOptimize")
     status = backend.get_object("lblStatus")
-    observed = {"text": None}
 
-    def on_change(text):
-        observed["text"] = text
-
-    backend.connect_signals({"on_change_input_text": on_change})
-    backend.connect_signals({"on_pick_input": lambda path, side=None: True})
+    dispatch = create_mainwindow_signal_dispatch(window, ("on_pick_input", "on_change_input_text", "on_clear_input"))
+    backend.connect_signals(dispatch)
 
     dialog = backend.get_object("ImgOpenDialog")
     backend.get_object("btnGetImgL").click()
@@ -1128,21 +1125,22 @@ def test_runtime_backend_clear_l_clears_only_left_side_and_keeps_right_input():
 
     assert entry_l.get_text() == ""
     assert entry_r.get_text() == "right-image.jpg"
-    assert observed["text"] == "/tmp/right-image.jpg"
+    assert window.form_state.input_value == "/tmp/right-image.jpg"
     assert optimize_btn.sensitive is True
-    assert status.text == "Clear-L: ok"
+    assert status.text == "Input: input ready"
 
 
 def test_runtime_backend_clear_r_disables_actions_when_last_input_cleared():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
 
     entry_r = backend.get_object("entPathR")
     clear_r = backend.get_object("btnClrPathR")
     save_btn = backend.get_object("btnSave")
     optimize_btn = backend.get_object("btnOptimize")
 
-    backend.connect_signals({"on_change_input_text": lambda _text: None})
-    backend.connect_signals({"on_pick_input": lambda path, side=None: True})
+    dispatch = create_mainwindow_signal_dispatch(window, ("on_pick_input", "on_change_input_text", "on_clear_input"))
+    backend.connect_signals(dispatch)
 
     dialog = backend.get_object("ImgOpenDialog")
     backend.get_object("btnGetImgR").click()
@@ -1154,6 +1152,15 @@ def test_runtime_backend_clear_r_disables_actions_when_last_input_cleared():
     assert entry_r.get_text() == ""
     assert save_btn.sensitive is False
     assert optimize_btn.sensitive is False
+
+
+def test_runtime_backend_clear_button_reports_missing_clear_handler():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.get_object("btnClrPathL").click()
+
+    assert backend.get_object("lblStatus").text == "Clear-L: handler-missing"
+    assert backend.get_object("lblError").text == "Error: handler not connected"
 
 
 def test_runtime_backend_open_r_opens_dialog_without_entry_path_requirement():
@@ -1259,7 +1266,7 @@ def test_runtime_backend_native_save_path_chooser_confirm_runs_modal_flow():
     error = backend.get_object("lblError")
     observed = {"save": 0, "confirm": None, "cancel": 0}
 
-    def on_save():
+    def on_save_as():
         observed["save"] += 1
         return True
 
@@ -1275,7 +1282,7 @@ def test_runtime_backend_native_save_path_chooser_confirm_runs_modal_flow():
     _NativeFileChooserDialog.next_filename = "/tmp/native-save.jpg"
     backend.connect_signals(
         {
-            "on_save": on_save,
+            "on_save_as": on_save_as,
             "on_save_path_selected": on_open_save,
             "on_save_path_selection_canceled": on_cancel_save,
         }
@@ -1301,7 +1308,7 @@ def test_runtime_backend_native_save_path_chooser_cancel_does_not_continue_save_
     error = backend.get_object("lblError")
     observed = {"save": 0, "confirm": 0, "cancel": 0}
 
-    def on_save():
+    def on_save_as():
         observed["save"] += 1
         return True
 
@@ -1317,7 +1324,7 @@ def test_runtime_backend_native_save_path_chooser_cancel_does_not_continue_save_
     _NativeFileChooserDialog.next_filename = ""
     backend.connect_signals(
         {
-            "on_save": on_save,
+            "on_save_as": on_save_as,
             "on_save_path_selected": on_open_save,
             "on_save_path_selection_canceled": on_cancel_save,
         }
@@ -1400,7 +1407,7 @@ def test_runtime_backend_save_path_chooser_filename_change_updates_target_label(
     assert save_target.text == "Save target: /tmp/selected.jpg"
 
 
-def test_runtime_backend_prefers_save_path_dialog_destroy_signal_name():
+def test_runtime_backend_prefers_save_path_dialog_close_handler_name():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     observed = {"destroy": 0}
@@ -1411,7 +1418,7 @@ def test_runtime_backend_prefers_save_path_dialog_destroy_signal_name():
     backend.connect_signals(
         {
             "on_save_path_selected": lambda _path: True,
-            "on_SavePathDialog_destroy": on_destroy,
+            "on_close_save_path_dialog": on_destroy,
         }
     )
 
@@ -1508,31 +1515,32 @@ def test_runtime_backend_cross_layout_places_top_and_bottom_per_side():
     ]
 
 
-def test_runtime_backend_prefs_button_dispatches_open_handler():
+def test_runtime_backend_settings_button_dispatches_open_handler():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     observed = {"opened": 0}
 
     backend.connect_signals(
         {
             "on_open_settings_dialog": lambda: observed.__setitem__("opened", observed["opened"] + 1) or True,
-            "on_get_preferences_config": lambda: {"plugin": "linux", "apply_mode": "single-file"},
+            "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "single-file"},
         }
     )
 
-    backend.get_object("btnSetting").click()
+    backend.get_object("btnSettings").click()
 
     assert observed["opened"] == 1
-    assert backend.get_object("lblStatus").text == "Prefs: opened"
+    assert backend.get_object("lblStatus").text == "Settings: opened"
     assert backend.get_object("SettingsDialog").is_visible() is True
     assert backend.get_object("SettingsDialog").get_preferences_config()["plugin"] == "linux"
-    assert backend.get_object("entPrefsPlugin").get_text() == "linux"
-    assert backend.get_object("radPrefsApplySingle").label == "Apply Default"
-    assert backend.get_object("radPrefsApplyPerMonitor").label == "Apply Auto-split"
-    assert backend.get_object("radPrefsApplySingle").get_active() is True
+    assert backend.get_object("entSettingsPlugin").get_text() == "linux"
+    assert backend.get_object("radSettingsApplySingle").label == "Apply Default"
+    assert backend.get_object("radSettingsApplyPerMonitor").label == "Apply Auto-split"
+    assert backend.get_object("radSettingsApplySingle").get_active() is True
+    assert backend.get_object("btnPrefsApply") is None
     assert backend.get_object("spnPrefsWatchInterval") is None
 
 
-def test_runtime_backend_prefs_apply_load_save_and_close_dispatch_handlers(tmp_path):
+def test_runtime_backend_settings_apply_load_save_and_close_dispatch_handlers(tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     dialog = backend.get_object("SettingsDialog")
     observed = {"apply": None, "load": None, "save": None, "close": 0}
@@ -1554,25 +1562,25 @@ def test_runtime_backend_prefs_apply_load_save_and_close_dispatch_handlers(tmp_p
 
     backend.connect_signals(
         {
-            "on_apply_preferences": lambda config: observed.__setitem__("apply", config) or True,
-            "on_load_preferences_file": lambda path: observed.__setitem__("load", path) or True,
-            "on_save_preferences_file": lambda path, config=None: observed.__setitem__("save", (path, config)) or True,
-            "on_get_preferences_config": lambda: {"plugin": "xfce", "apply_mode": "per-monitor-auto-split"},
+            "on_apply_settings": lambda config: observed.__setitem__("apply", config) or True,
+            "on_load_settings_file": lambda path: observed.__setitem__("load", path) or True,
+            "on_save_settings_file": lambda path, config=None: observed.__setitem__("save", (path, config)) or True,
+            "on_get_settings_config": lambda: {"plugin": "xfce", "apply_mode": "per-monitor-auto-split"},
             "on_close_settings_dialog": lambda: observed.__setitem__("close", observed["close"] + 1) or True,
         }
     )
 
-    backend.get_object("entPrefsResolution").set_text("auto")
-    backend.get_object("entPrefsPlugin").set_text("xfce")
-    backend.get_object("entPrefsImportPath").set_text(str(import_path))
-    backend.get_object("entPrefsExportPath").set_text(str(export_path))
-    backend.get_object("radPrefsTwoScreenAuto").set_active(True)
-    backend.get_object("radPrefsTwoScreenOn").set_active(False)
-    backend.get_object("radPrefsTwoScreenOff").set_active(False)
-    backend.get_object("radPrefsApplySingle").set_active(False)
-    backend.get_object("radPrefsApplyPerMonitor").set_active(True)
+    backend.get_object("entSettingsResolution").set_text("auto")
+    backend.get_object("entSettingsPlugin").set_text("xfce")
+    backend.get_object("entSettingsImportPath").set_text(str(import_path))
+    backend.get_object("entSettingsExportPath").set_text(str(export_path))
+    backend.get_object("radSettingsTwoScreenAuto").set_active(True)
+    backend.get_object("radSettingsTwoScreenOn").set_active(False)
+    backend.get_object("radSettingsTwoScreenOff").set_active(False)
+    backend.get_object("radSettingsApplySingle").set_active(False)
+    backend.get_object("radSettingsApplyPerMonitor").set_active(True)
 
-    backend.get_object("btnPrefsApply").click()
+    backend.get_object("btnSettingsApply").click()
     assert observed["apply"]["resolution"] == "auto"
     assert observed["apply"]["two_screen"] == "auto"
     assert observed["apply"]["align"] == ["center", "center"]
@@ -1582,31 +1590,31 @@ def test_runtime_backend_prefs_apply_load_save_and_close_dispatch_handlers(tmp_p
     assert observed["apply"]["watch_interval_seconds"] == 60
     assert observed["apply"]["watch_srcdir_l"] == "/watch/left"
     assert dialog.is_visible() is False
-    assert backend.get_object("lblPrefsState").text == "Prefs: applied"
+    assert backend.get_object("lblSettingsState").text == "Settings: applied"
 
     dialog.show()
-    backend.get_object("btnPrefsLoad").click()
+    backend.get_object("btnSettingsLoad").click()
     assert observed["load"] == str(import_path)
     assert dialog.get_preferences_config()["plugin"] == "xfce"
-    assert backend.get_object("entPrefsPlugin").get_text() == "xfce"
-    assert backend.get_object("entPrefsAlign").get_text() == "center,center"
-    assert backend.get_object("entPrefsValign").get_text() == "center,center"
-    assert backend.get_object("radPrefsApplyPerMonitor").get_active() is True
-    assert backend.get_object("lblPrefsState").text == "Prefs: loaded"
+    assert backend.get_object("entSettingsPlugin").get_text() == "xfce"
+    assert backend.get_object("entSettingsAlign").get_text() == "center,center"
+    assert backend.get_object("entSettingsValign").get_text() == "center,center"
+    assert backend.get_object("radSettingsApplyPerMonitor").get_active() is True
+    assert backend.get_object("lblSettingsState").text == "Settings: loaded"
 
-    backend.get_object("entPrefsPlugin").set_text("saved-plugin")
+    backend.get_object("entSettingsPlugin").set_text("saved-plugin")
 
-    backend.get_object("btnPrefsSave").click()
+    backend.get_object("btnSettingsSave").click()
     assert observed["save"][0] == str(export_path)
     assert observed["save"][1]["plugin"] == "saved-plugin"
     assert observed["save"][1]["watch_interval_seconds"] == 60
     assert observed["save"][1]["watch_srcdir_l"] == "/watch/left"
-    assert backend.get_object("lblPrefsState").text == "Prefs: saved"
+    assert backend.get_object("lblSettingsState").text == "Settings: saved"
 
-    backend.get_object("btnPrefsClose").click()
+    backend.get_object("btnSettingsClose").click()
     assert observed["close"] == 1
     assert dialog.is_visible() is False
-    assert backend.get_object("lblPrefsState").text == "Prefs: closed"
+    assert backend.get_object("lblSettingsState").text == "Settings: closed"
 
 
 def test_runtime_backend_prefs_load_updates_watch_tab_state(tmp_path):
@@ -1633,16 +1641,16 @@ def test_runtime_backend_prefs_load_updates_watch_tab_state(tmp_path):
         window,
         (
             "on_open_settings_dialog",
-            "on_get_preferences_config",
-            "on_load_preferences_file",
+            "on_get_settings_config",
+            "on_load_settings_file",
             "on_close_settings_dialog",
         ),
     )
     backend.connect_signals(dispatch)
 
-    backend.get_object("btnSetting").click()
-    backend.get_object("entPrefsImportPath").set_text(str(import_path))
-    backend.get_object("btnPrefsLoad").click()
+    backend.get_object("btnSettings").click()
+    backend.get_object("entSettingsImportPath").set_text(str(import_path))
+    backend.get_object("btnSettingsLoad").click()
 
     assert backend.get_object("lblWatchSources").text == "Watch srcdirs: L=/watch/left | R=/watch/right"
     assert backend.get_object("spnInterval").get_value_as_int() == 45
@@ -1651,7 +1659,7 @@ def test_runtime_backend_prefs_load_updates_watch_tab_state(tmp_path):
     assert backend.get_object("lblCurrentStateR").text == "R: align=center valign=top"
 
 
-def test_runtime_backend_prefs_preserves_explicit_apply_mode_when_unedited(tmp_path):
+def test_runtime_backend_settings_preserves_explicit_apply_mode_when_unedited(tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     dialog = backend.get_object("SettingsDialog")
     observed = {"apply": None, "save": None}
@@ -1670,29 +1678,29 @@ def test_runtime_backend_prefs_preserves_explicit_apply_mode_when_unedited(tmp_p
 
     backend.connect_signals(
         {
-            "on_apply_preferences": lambda config: observed.__setitem__("apply", config) or True,
-            "on_load_preferences_file": lambda path: True,
-            "on_save_preferences_file": lambda path, config=None: observed.__setitem__("save", (path, config)) or True,
-            "on_get_preferences_config": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
+            "on_apply_settings": lambda config: observed.__setitem__("apply", config) or True,
+            "on_load_settings_file": lambda path: True,
+            "on_save_settings_file": lambda path, config=None: observed.__setitem__("save", (path, config)) or True,
+            "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
         }
     )
 
-    backend.get_object("btnPrefsLoad").click()
+    backend.get_object("btnSettingsLoad").click()
 
-    assert backend.get_object("radPrefsApplySingle").get_active() is False
-    assert backend.get_object("radPrefsApplyPerMonitor").get_active() is False
+    assert backend.get_object("radSettingsApplySingle").get_active() is False
+    assert backend.get_object("radSettingsApplyPerMonitor").get_active() is False
 
-    backend.get_object("btnPrefsApply").click()
+    backend.get_object("btnSettingsApply").click()
     assert observed["apply"]["apply_mode"] == "per-monitor-explicit"
 
     dialog.show()
-    backend.get_object("entPrefsExportPath").set_text(str(export_path))
-    backend.get_object("btnPrefsSave").click()
+    backend.get_object("entSettingsExportPath").set_text(str(export_path))
+    backend.get_object("btnSettingsSave").click()
     assert observed["save"][0] == str(export_path)
     assert observed["save"][1]["apply_mode"] == "per-monitor-explicit"
 
 
-def test_runtime_backend_prefs_can_override_preserved_explicit_apply_mode(tmp_path):
+def test_runtime_backend_settings_can_override_preserved_explicit_apply_mode(tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     dialog = backend.get_object("SettingsDialog")
     observed = {"apply": None}
@@ -1709,15 +1717,15 @@ def test_runtime_backend_prefs_can_override_preserved_explicit_apply_mode(tmp_pa
 
     backend.connect_signals(
         {
-            "on_apply_preferences": lambda config: observed.__setitem__("apply", config) or True,
-            "on_load_preferences_file": lambda path: True,
-            "on_get_preferences_config": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
+            "on_apply_settings": lambda config: observed.__setitem__("apply", config) or True,
+            "on_load_settings_file": lambda path: True,
+            "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
         }
     )
 
-    backend.get_object("btnPrefsLoad").click()
-    backend.get_object("radPrefsApplyPerMonitor").click()
-    backend.get_object("btnPrefsApply").click()
+    backend.get_object("btnSettingsLoad").click()
+    backend.get_object("radSettingsApplyPerMonitor").click()
+    backend.get_object("btnSettingsApply").click()
 
     assert observed["apply"]["apply_mode"] == "per-monitor-auto-split"
 
@@ -1781,7 +1789,7 @@ def test_runtime_backend_save_button_skips_optimize_handler_and_reports_missing_
     calls = []
 
     backend.connect_signals({
-        "on_save": lambda: calls.append("save") or True,
+        "on_save_as": lambda: calls.append("save") or True,
         "on_optimize": lambda: calls.append("optimize") or False,
     })
 
@@ -1814,6 +1822,23 @@ def test_runtime_backend_optimize_button_does_not_fallback_to_save_handler():
     assert error.text == "Error: handler not connected"
     assert optimize_result.text == "Optimize result: handler-missing"
     assert apply_target.text == "Apply target: not-ready"
+
+
+def test_runtime_backend_save_button_does_not_use_legacy_save_alias():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    save_btn = backend.get_object("btnSave")
+    status = backend.get_object("lblStatus")
+    calls = []
+
+    backend.connect_signals({
+        "on_save": lambda: calls.append("save") or True,
+    })
+
+    save_btn.click()
+
+    assert calls == []
+    assert status.text == "SavePath: handler-missing"
 
 
 def test_runtime_backend_apply_handler_missing_sets_status_and_error():
@@ -1914,10 +1939,10 @@ def test_runtime_backend_toggle_callbacks_follow_upstream_order():
 def test_runtime_backend_margin_change_propagates_all_values():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    backend.get_object("spnLMergin").set_value(11)
-    backend.get_object("spnRMergin").set_value(22)
-    backend.get_object("spnTopMergin").set_value(33)
-    backend.get_object("spnBtmMergin").set_value(44)
+    backend.get_object("spnLeftMargin").set_value(11)
+    backend.get_object("spnRightMargin").set_value(22)
+    backend.get_object("spnTopMargin").set_value(33)
+    backend.get_object("spnBottomMargin").set_value(44)
 
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
@@ -1928,9 +1953,9 @@ def test_runtime_backend_margin_change_propagates_all_values():
         captured["value"] = value
 
     backend.connect_signals({"on_change_margins": on_margins})
-    backend.get_object("spnLMergin").emit("value-changed", backend.get_object("spnLMergin"))
+    backend.get_object("spnLeftMargin").emit("value-changed", backend.get_object("spnLeftMargin"))
 
-    assert captured == {"name": "spnLMergin", "value": 11}
+    assert captured == {"name": "spnLeftMargin", "value": 11}
     assert status.text == "Margins: updated"
     assert error.text == "Error: none"
     assert backend.get_object("lblCurrentMargins").text == "margins=11,22,33,44"
@@ -1939,10 +1964,10 @@ def test_runtime_backend_margin_change_propagates_all_values():
 def test_runtime_backend_margin_spin_matches_upstream_adjustments():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    top = backend.get_object("spnTopMergin")
-    left = backend.get_object("spnLMergin")
-    right = backend.get_object("spnRMergin")
-    bottom = backend.get_object("spnBtmMergin")
+    top = backend.get_object("spnTopMargin")
+    left = backend.get_object("spnLeftMargin")
+    right = backend.get_object("spnRightMargin")
+    bottom = backend.get_object("spnBottomMargin")
 
     assert (top.minimum, top.maximum, top.step_increment, top.page_increment) == (0, 250, 1, 10)
     assert (bottom.minimum, bottom.maximum, bottom.step_increment, bottom.page_increment) == (0, 250, 1, 10)
@@ -1972,11 +1997,11 @@ def test_runtime_backend_current_state_panel_updates_for_toggle_positions():
 def test_runtime_backend_current_state_margin_labels_follow_spin_values():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    backend.get_object("spnLMergin").set_value(5)
-    backend.get_object("spnRMergin").set_value(15)
-    backend.get_object("spnTopMergin").set_value(25)
-    backend.get_object("spnBtmMergin").set_value(35)
-    backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
+    backend.get_object("spnLeftMargin").set_value(5)
+    backend.get_object("spnRightMargin").set_value(15)
+    backend.get_object("spnTopMargin").set_value(25)
+    backend.get_object("spnBottomMargin").set_value(35)
+    backend.get_object("spnTopMargin").emit("value-changed", backend.get_object("spnTopMargin"))
 
     assert backend.get_object("lblCurrentMargins").text == "margins=5,15,25,35"
 
@@ -1984,8 +2009,8 @@ def test_runtime_backend_current_state_margin_labels_follow_spin_values():
 def test_runtime_backend_margin_and_top_alignment_coexist_in_current_state():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    backend.get_object("spnTopMergin").set_value(5)
-    backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
+    backend.get_object("spnTopMargin").set_value(5)
+    backend.get_object("spnTopMargin").emit("value-changed", backend.get_object("spnTopMargin"))
     backend.get_object("tglUpperL").click()
 
     assert backend.get_object("lblCurrentMargins").text == "margins=0,0,5,0"
