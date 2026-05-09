@@ -1,6 +1,6 @@
 # GUI Phase 8 Traceability Follow-up Memo
 
-最終更新: 2026-05-09
+最終更新: 2026-05-10
 
 ## 位置づけ
 
@@ -17,8 +17,8 @@
 
 - 本メモは「次に必ず着手する」ことを固定する文書ではなく、Margins branch 完了後に見えた GUI traceability debt の受け皿である。
 - Phase8 全体の branch order は [docs/specs/gui/gui-phase8-repair-plan.md](docs/specs/gui/gui-phase8-repair-plan.md) を正本とし、2026-05-09 時点の再開判断は [docs/specs/gui/gui-phase8-resume-planning-after-2weeks-break.md](docs/specs/gui/gui-phase8-resume-planning-after-2weeks-break.md) を参照する。
-- 原則としては、未了の semantics 修復を優先し、その直後の GUI 専用ブランチで本メモを扱う。
-- ただし break 明けの再始動コスト低減を優先して traceability 改善を前倒しする場合は、その判断理由を PR 本文と resume 文書へ明記する。
+- 2026-05-10 時点では、`padding` / `mosaic` 整理と `Margins` 4 値の semantics 修復が main に取り込まれている。
+- したがって次の専用ブランチ候補として、本メモをそのまま正本に使ってよい。
 
 ## 後続ブランチで解く課題
 
