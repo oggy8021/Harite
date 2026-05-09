@@ -6,12 +6,12 @@ from typing import Any, Callable, Mapping
 
 RUNTIME_HANDLER_MAP: dict[str, str] = {
     "on_open_settings_dialog": "on_open_settings_dialog",
-    "on_get_preferences_config": "on_get_preferences_config",
-    "on_apply_preferences": "on_apply_preferences",
-    "on_load_preferences_file": "on_load_preferences_file",
-    "on_save_preferences_file": "on_save_preferences_file",
+    "on_get_settings_config": "on_get_settings_config",
+    "on_apply_settings": "on_apply_settings",
+    "on_load_settings_file": "on_load_settings_file",
+    "on_save_settings_file": "on_save_settings_file",
     "on_change_input_text": "on_change_input_text",
-    "on_save": "on_save",
+    "on_save_as": "on_save_as",
     "on_optimize": "on_optimize",
     "on_apply": "on_apply",
     "on_change_apply_mode": "on_change_apply_mode",

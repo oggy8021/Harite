@@ -34,7 +34,7 @@ def test_phase5_visual_tokens_snapshot_is_stable():
         "save": "Save As",
         "optimize": "Optimize",
         "apply": "Apply",
-        "prefs": "Prefs",
+        "prefs": "Settings",
         "about": "About",
         "help": "Help",
         "open_l": "Open-L",

@@ -24,7 +24,7 @@ def test_on_change_input_text_updates_state():
 def test_on_clear_input_resets_optimize_state():
     window = MainWindow()
     window.on_change_input_text("a.jpg")
-    assert window.on_save() is True
+    assert window.on_save_as() is True
     assert window.save_path_dialog_open is True
 
     ok = window.on_clear_input()
@@ -66,7 +66,7 @@ def test_save_path_selection_and_cancel_have_distinct_meanings():
     assert window.status_phase == "save_path"
     assert window.status_message == "save path cancel ignored (closed)"
 
-    assert window.on_save() is True
+    assert window.on_save_as() is True
     assert window.save_path_dialog_open is True
     assert window.status_level == "idle"
     assert window.status_phase == "save_path"
@@ -83,7 +83,7 @@ def test_save_path_selection_and_cancel_have_distinct_meanings():
     assert window.status_phase == "save_path"
     assert window.status_message == "save path ignored (closed)"
 
-    assert window.on_save() is True
+    assert window.on_save_as() is True
     assert window.on_save_path_selected() is False
     assert window.status_level == "error"
     assert window.status_phase == "save_path"
@@ -154,7 +154,7 @@ def test_save_path_selected_runs_export_flow_when_input_ready(monkeypatch, tmp_p
     window = MainWindow()
     window.controller = DummyController()
     window.on_change_input_text("a.jpg")
-    assert window.on_save() is True
+    assert window.on_save_as() is True
     assert window.save_path_dialog_open is True
 
     picked = tmp_path / "picked" / "save-path.jpg"
@@ -211,7 +211,7 @@ def test_save_path_selected_updates_single_save_target_display():
 
     assert window.save_target_display == "Save target: not-selected"
 
-    assert window.on_save() is True
+    assert window.on_save_as() is True
     assert window.save_target_display == "Save target: not-selected"
 
     assert window.on_save_path_selected("/tmp/result.jpg") is True
@@ -428,7 +428,7 @@ def test_on_change_margins_supports_single_widget_update():
     window = MainWindow()
 
     window.on_change_margins(1, 2, 3, 4)
-    window.on_change_margins("spnTopMergin", 99)
+    window.on_change_margins("spnTopMargin", 99)
 
     assert window.form_state.margins == "1,2,99,4"
     assert window.last_error == ""
@@ -548,7 +548,7 @@ def test_open_settings_dialog_tracks_state():
     assert "Settings dialog opened" in window.logs
 
 
-def test_apply_preferences_updates_runtime_state():
+def test_apply_settings_updates_runtime_state():
     window = MainWindow()
     prefs = AppPreferences.from_config_dict(
         {
@@ -565,7 +565,7 @@ def test_apply_preferences_updates_runtime_state():
         default_plugin=window.plugin_name,
     )
 
-    ok = window.on_apply_preferences(prefs)
+    ok = window.on_apply_settings(prefs)
 
     assert ok is True
     assert window.form_state.resolution == "auto"
@@ -580,7 +580,7 @@ def test_apply_preferences_updates_runtime_state():
     assert window.watch_source_display == "Watch srcdirs: L=/watch/left | R=/watch/right"
 
 
-def test_export_and_reload_preferences_config_round_trips():
+def test_export_and_reload_settings_config_round_trips():
     window = MainWindow()
     window.form_state.resolution = "auto"
     window.form_state.two_screen = None
@@ -593,7 +593,7 @@ def test_export_and_reload_preferences_config_round_trips():
     window.watch_srcdir_r = "/watch/right"
     window._update_watch_source_display()
 
-    exported = window.export_preferences_config()
+    exported = window.export_settings_config()
 
     assert exported["resolution"] == "auto"
     assert exported["two_screen"] == "auto"
@@ -606,7 +606,7 @@ def test_export_and_reload_preferences_config_round_trips():
     assert exported["watch_srcdir_r"] == "/watch/right"
 
     other = MainWindow()
-    assert other.load_preferences_config(exported) is True
+    assert other.load_settings_config(exported) is True
     assert other.form_state.resolution == "auto"
     assert other.form_state.two_screen is None
     assert other.form_state.align == ("center", "center")
@@ -617,7 +617,7 @@ def test_export_and_reload_preferences_config_round_trips():
     assert other.watch_srcdir_r == "/watch/right"
 
 
-def test_preferences_file_save_and_load_round_trip(tmp_path):
+def test_settings_file_save_and_load_round_trip(tmp_path):
     window = MainWindow()
     window.form_state.resolution = "auto"
     window.form_state.two_screen = None
@@ -631,11 +631,11 @@ def test_preferences_file_save_and_load_round_trip(tmp_path):
 
     target = tmp_path / "prefs.json"
 
-    assert window.on_save_preferences_file(str(target)) is True
+    assert window.on_save_settings_file(str(target)) is True
     assert target.exists() is True
 
     other = MainWindow()
-    assert other.on_load_preferences_file(str(target)) is True
+    assert other.on_load_settings_file(str(target)) is True
     assert other.form_state.resolution == "auto"
     assert other.form_state.two_screen is None
     assert other.form_state.l_display == "auto"
@@ -649,23 +649,23 @@ def test_preferences_file_save_and_load_round_trip(tmp_path):
     assert other.watch_srcdir_r == "/watch/right"
 
 
-def test_preferences_file_handlers_require_path():
+def test_settings_file_handlers_require_path():
     window = MainWindow()
 
-    assert window.on_save_preferences_file("") is False
-    assert window.status_phase == "prefs"
-    assert window.last_error == "preferences path is required"
+    assert window.on_save_settings_file("") is False
+    assert window.status_phase == "settings"
+    assert window.last_error == "settings path is required"
 
-    assert window.on_load_preferences_file("") is False
-    assert window.status_phase == "prefs"
-    assert window.last_error == "preferences path is required"
+    assert window.on_load_settings_file("") is False
+    assert window.status_phase == "settings"
+    assert window.last_error == "settings path is required"
 
 
-def test_preferences_file_save_accepts_explicit_dialog_config(tmp_path):
+def test_settings_file_save_accepts_explicit_dialog_config(tmp_path):
     window = MainWindow()
     target = tmp_path / "prefs-dialog.json"
 
-    assert window.on_save_preferences_file(
+    assert window.on_save_settings_file(
         str(target),
         {
             "resolution": "auto",
@@ -677,7 +677,7 @@ def test_preferences_file_save_accepts_explicit_dialog_config(tmp_path):
         },
     ) is True
 
-    loaded = window.on_load_preferences_file(str(target))
+    loaded = window.on_load_settings_file(str(target))
 
     assert loaded is True
     assert window.form_state.resolution == "auto"
@@ -688,11 +688,11 @@ def test_preferences_file_save_accepts_explicit_dialog_config(tmp_path):
     assert window.watch_srcdir_l == "/watch/left"
 
 
-def test_preferences_file_round_trips_explicit_apply_mode_without_gui_projection(tmp_path):
+def test_settings_file_round_trips_explicit_apply_mode_without_gui_projection(tmp_path):
     window = MainWindow()
     target = tmp_path / "prefs-explicit.json"
 
-    assert window.on_save_preferences_file(
+    assert window.on_save_settings_file(
         str(target),
         {
             "plugin": "linux",
@@ -701,7 +701,7 @@ def test_preferences_file_round_trips_explicit_apply_mode_without_gui_projection
     ) is True
 
     other = MainWindow()
-    assert other.on_load_preferences_file(str(target)) is True
+    assert other.on_load_settings_file(str(target)) is True
     assert other.plugin_name == "linux"
     assert other.apply_mode == "per-monitor-explicit"
 
