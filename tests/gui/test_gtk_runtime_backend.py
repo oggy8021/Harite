@@ -662,6 +662,32 @@ def test_runtime_backend_margin_text_preflight_reports_small_margin_error():
     assert backend.get_object("lblError").text == "Error: selected margin area is too small for margin text"
 
 
+def test_runtime_backend_margin_text_preflight_uses_two_screen_display_slice_area():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    window.form_state.two_screen = True
+    window.form_state.resolution = "3200x1080"
+    window.form_state.l_display = "1920x1080"
+    window.form_state.r_display = "1280x1024"
+    window.form_state.margins = "100,150,80,90"
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_change_margin_text_mode",
+            "on_change_margin_text_position",
+        ),
+    )
+    backend.connect_signals(dispatch)
+
+    backend.get_object("radMarginTextModeSettings").click()
+    backend.get_object("radMarginTextPositionRightTop").click()
+
+    assert window.form_state.embed_position == "right"
+    assert backend.get_object("lblStatus").text == "Margins: margin text ready in right top position (1030x80)"
+    assert backend.get_object("lblError").text == "Error: none"
+
+
 def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()

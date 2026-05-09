@@ -300,7 +300,14 @@ class MainWindow:
 
         target_width, target_height = resolution
         left, right, top, bottom = self._current_margin_values()
-        region = resolve_margin_text_region((target_width, target_height), (left, right, top, bottom), normalized)
+        region = resolve_margin_text_region(
+            (target_width, target_height),
+            (left, right, top, bottom),
+            normalized,
+            two_screen=bool(self.form_state.two_screen),
+            l_display=self._parse_resolution_value(self.form_state.l_display),
+            r_display=self._parse_resolution_value(self.form_state.r_display),
+        )
         if region is None:
             return None
         x0, y0, x1, y1 = region

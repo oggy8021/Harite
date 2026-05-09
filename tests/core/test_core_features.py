@@ -111,6 +111,33 @@ def test_phase8_embed_position_helpers_map_to_quadrants():
     assert resolve_embed_margin_region((1920, 1080), (10, 10, 20, 30), "bottom") == (960, 1050, 1910, 1080)
 
 
+def test_phase8_embed_position_helpers_use_display_slices_for_two_screen():
+    from harite.core import resolve_embed_margin_region
+
+    assert resolve_embed_margin_region(
+        (3200, 1080),
+        (100, 150, 80, 90),
+        "top",
+        two_screen=True,
+        l_display=(1920, 1080),
+        r_display=(1280, 1024),
+    ) == (100, 0, 1770, 80)
+    assert resolve_embed_margin_region(
+        (3200, 1080),
+        (100, 150, 80, 90),
+        "right",
+        two_screen=True,
+        l_display=(1920, 1080),
+        r_display=(1280, 1024),
+    ) == (2020, 0, 3050, 80)
+    assert resolve_embed_margin_region(
+        (3840, 1080),
+        (100, 150, 80, 90),
+        "bottom",
+        two_screen=True,
+    ) == (2020, 990, 3690, 1080)
+
+
 def test_embed_text_drawn_on_top_margin(tmp_path):
     from harite.core import optimize_wallpapers
 
@@ -136,6 +163,40 @@ def test_embed_text_drawn_on_top_margin(tmp_path):
     # top margin area should include text pixels not equal to pure background.
     sample_area = out.crop((12, 2, 200, 30))
     assert any(px != (30, 30, 30) for px in sample_area.getdata())
+
+
+def test_embed_text_drawn_in_right_display_margin_for_two_screen(tmp_path):
+    from harite.core import optimize_wallpapers
+
+    inp_dir = tmp_path / "in-two-screen-text"
+    out_dir = tmp_path / "out-two-screen-text"
+    inp_dir.mkdir()
+    out_dir.mkdir()
+
+    img1 = inp_dir / "left.jpg"
+    img2 = inp_dir / "right.jpg"
+    make_image(img1, size=(900, 600), color=(90, 120, 150))
+    make_image(img2, size=(900, 600), color=(60, 100, 170))
+
+    saved, _ = optimize_wallpapers(
+        [str(img1), str(img2)],
+        (3200, 1080),
+        out_dir,
+        two_screen=True,
+        l_display=(1920, 1080),
+        r_display=(1280, 1024),
+        margins=(100, 150, 80, 90),
+        embed_info="free",
+        embed_text="right-slice",
+        embed_position="right",
+    )
+
+    out = Image.open(saved[0]).convert("RGB")
+    left_sample = out.crop((110, 2, 500, 60))
+    right_sample = out.crop((2025, 2, 2450, 60))
+
+    assert all(px == (30, 30, 30) for px in left_sample.getdata())
+    assert any(px != (30, 30, 30) for px in right_sample.getdata())
 
 
 def test_two_screen_explicit_with_outer_margins_keeps_placements_within_display_slices(tmp_path):
@@ -168,8 +229,84 @@ def test_two_screen_explicit_with_outer_margins_keeps_placements_within_display_
     left, right = placements
     assert left.x >= 200
     assert left.x + left.width <= 2048
-    assert right.x >= 2048
+    assert left.y >= 200
+    assert left.y + left.height <= 1280 - 200
+    assert right.x >= 2048 + 200
     assert right.x + right.width <= 4096 - 200
+    assert right.y >= 200
+    assert right.y + right.height <= 1280 - 200
+
+
+def test_two_screen_without_explicit_displays_applies_margins_per_half(tmp_path):
+    from harite.core import optimize_wallpapers
+
+    inp_dir = tmp_path / "in-implicit"
+    out_dir = tmp_path / "out-implicit"
+    inp_dir.mkdir()
+    out_dir.mkdir()
+
+    img1 = inp_dir / "left.jpg"
+    img2 = inp_dir / "right.jpg"
+    make_image(img1, size=(1400, 900), color=(100, 120, 140))
+    make_image(img2, size=(1200, 900), color=(50, 90, 180))
+
+    saved, placements = optimize_wallpapers(
+        [str(img1), str(img2)],
+        (3840, 1080),
+        out_dir,
+        two_screen=True,
+        margins=(100, 150, 80, 90),
+        align=("left", "right"),
+        valign=("top", "bottom"),
+    )
+
+    assert saved
+    assert len(placements) == 2
+    left, right = placements
+    half_w = 3840 // 2
+
+    assert left.x >= 100
+    assert left.x + left.width <= half_w - 150
+    assert left.y >= 80
+    assert left.y + left.height <= 1080 - 90
+
+    assert right.x >= half_w + 100
+    assert right.x + right.width <= 3840 - 150
+    assert right.y >= 80
+    assert right.y + right.height <= 1080 - 90
+
+
+def test_two_screen_equal_displays_keep_identical_inputs_in_matching_positions(tmp_path):
+    from harite.core import optimize_wallpapers
+
+    inp_dir = tmp_path / "in-identical-two-screen"
+    out_dir = tmp_path / "out-identical-two-screen"
+    inp_dir.mkdir()
+    out_dir.mkdir()
+
+    img1 = inp_dir / "same.jpg"
+    make_image(img1, size=(1600, 900), color=(90, 120, 150))
+
+    saved, placements = optimize_wallpapers(
+        [str(img1), str(img1)],
+        (4096, 1280),
+        out_dir,
+        two_screen=True,
+        l_display=(2048, 1280),
+        r_display=(2048, 1280),
+        margins=(200, 200, 200, 200),
+        align=("center", "center"),
+        valign=("center", "center"),
+    )
+
+    assert saved
+    assert len(placements) == 2
+    left, right = placements
+
+    assert left.width == right.width
+    assert left.height == right.height
+    assert left.y == right.y
+    assert right.x - left.x == 2048
 
 
 def test_load_preferred_font_tries_explicit_path_first(monkeypatch):
