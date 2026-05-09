@@ -1068,6 +1068,10 @@ class GtkRuntimeSignalBackend:
             current_state_title_display = gtk_module.Label(label="Main Window Current alignment:")
             if hasattr(current_state_title_display, "set_xalign"):
                 current_state_title_display.set_xalign(0.0)
+            current_state_summary_display = gtk_module.Label(label="align=center,center/center,center")
+            if hasattr(current_state_summary_display, "set_xalign"):
+                current_state_summary_display.set_xalign(0.0)
+            self._current_state_summary_display = current_state_summary_display
 
             top_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             top_margin_box.pack_start(top_margin_label, False, False, 0)
@@ -1102,8 +1106,11 @@ class GtkRuntimeSignalBackend:
             center_state_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
             center_state_left = gtk_module.Label(label="")
             center_state_right = gtk_module.Label(label="")
+            center_state_display_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
+            center_state_display_box.pack_start(current_state_title_display, False, False, 0)
+            center_state_display_box.pack_start(current_state_summary_display, False, False, 0)
             center_state_shell.pack_start(center_state_left, True, True, 0)
-            center_state_shell.pack_start(current_state_title_display, False, False, 0)
+            center_state_shell.pack_start(center_state_display_box, False, False, 0)
             center_state_shell.pack_start(center_state_right, True, True, 0)
             center_stack.pack_start(center_state_shell, False, False, 0)
 
@@ -2861,6 +2868,9 @@ class GtkRuntimeSignalBackend:
         self._set_label_text("lblCurrentMargins", f"margins={left},{right},{top},{bottom}")
         self._set_label_text("lblCurrentStateL", f"L: align={align_l} valign={valign_l}")
         self._set_label_text("lblCurrentStateR", f"R: align={align_r} valign={valign_r}")
+        current_state_summary_display = getattr(self, "_current_state_summary_display", None)
+        if current_state_summary_display is not None and hasattr(current_state_summary_display, "set_text"):
+            current_state_summary_display.set_text(f"align={align_l},{align_r}/{valign_l},{valign_r}")
         self._set_label_text("lblMarginSettingsPreview", self._build_margin_settings_preview())
 
     def _opposite_toggle_name(self, object_name: str) -> str | None:
