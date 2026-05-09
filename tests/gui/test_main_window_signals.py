@@ -1205,55 +1205,55 @@ def test_build_optimize_cli_preview_includes_optional_flags(tmp_path):
     assert "--embed-text hello" in preview
 
 
-def test_embed_change_handlers_update_form_state():
+def test_margin_text_change_handlers_update_form_state():
     window = MainWindow()
     window.form_state.resolution = "1920x1080"
     window.form_state.margins = "10,10,20,30"
 
-    assert window.on_change_embed_info("combo") is True
-    assert window.on_change_embed_text("hello") is True
-    assert window.on_change_embed_position("bottom") is True
-    assert window.on_change_embed_max_lines(4) is True
+    assert window.on_change_margin_text_mode("combo") is True
+    assert window.on_change_margin_text("hello") is True
+    assert window.on_change_margin_text_position("bottom") is True
+    assert window.on_change_margin_text_max_lines(4) is True
 
     assert window.form_state.embed_info == "combo"
     assert window.form_state.embed_text == "hello"
     assert window.form_state.embed_position == "bottom"
     assert window.form_state.embed_max_lines == 4
     assert window.status_phase == "margins"
-    assert window.status_message == "margin text ready in bottom margin (1900x30)"
+    assert window.status_message == "margin text ready in right bottom position (950x30)"
     assert window.last_error == ""
 
 
-def test_embed_change_handlers_reject_invalid_values():
+def test_margin_text_change_handlers_reject_invalid_values():
     window = MainWindow()
 
-    assert window.on_change_embed_info("weird") is False
-    assert window.on_change_embed_position("auto") is False
-    assert window.on_change_embed_position("middle") is False
-    assert window.on_change_embed_max_lines(0) is False
+    assert window.on_change_margin_text_mode("weird") is False
+    assert window.on_change_margin_text_position("auto") is False
+    assert window.on_change_margin_text_position("middle") is False
+    assert window.on_change_margin_text_max_lines(0) is False
 
 
-def test_embed_text_is_clamped_to_five_lines():
+def test_margin_text_is_clamped_to_five_lines():
     window = MainWindow()
 
-    assert window.on_change_embed_text("1\n2\n3\n4\n5\n6") is True
+    assert window.on_change_margin_text("1\n2\n3\n4\n5\n6") is True
     assert window.form_state.embed_text == "1\n2\n3\n4\n5"
 
 
-def test_embed_text_preserves_trailing_newline_during_edit():
+def test_margin_text_preserves_trailing_newline_during_edit():
     window = MainWindow()
 
-    assert window.on_change_embed_text("1\n") is True
+    assert window.on_change_margin_text("1\n") is True
     assert window.form_state.embed_text == "1\n"
 
 
-def test_embed_preflight_reports_margin_area_too_small():
+def test_margin_text_preflight_reports_margin_area_too_small():
     window = MainWindow()
     window.form_state.resolution = "1920x1080"
     window.form_state.margins = "10,10,20,10"
 
-    assert window.on_change_embed_info("params") is True
-    assert window.on_change_embed_position("bottom") is True
+    assert window.on_change_margin_text_mode("params") is True
+    assert window.on_change_margin_text_position("bottom") is True
 
     assert window.status_phase == "margins"
     assert window.status_message == "margin text does not fit current margin area"

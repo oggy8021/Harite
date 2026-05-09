@@ -97,6 +97,20 @@ def test_build_embed_lines_without_datetime():
     assert "datetime" not in joined
 
 
+def test_phase8_embed_position_helpers_map_to_quadrants():
+    from harite.core import describe_embed_position, resolve_embed_margin_region
+
+    assert describe_embed_position("top") == "left top"
+    assert describe_embed_position("left") == "left bottom"
+    assert describe_embed_position("right") == "right top"
+    assert describe_embed_position("bottom") == "right bottom"
+
+    assert resolve_embed_margin_region((1920, 1080), (10, 10, 20, 30), "top") == (10, 0, 960, 20)
+    assert resolve_embed_margin_region((1920, 1080), (10, 10, 20, 30), "left") == (10, 1050, 960, 1080)
+    assert resolve_embed_margin_region((1920, 1080), (10, 10, 20, 30), "right") == (960, 0, 1910, 20)
+    assert resolve_embed_margin_region((1920, 1080), (10, 10, 20, 30), "bottom") == (960, 1050, 1910, 1080)
+
+
 def test_embed_text_drawn_on_top_margin(tmp_path):
     from harite.core import optimize_wallpapers
 
