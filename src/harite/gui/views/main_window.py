@@ -12,6 +12,8 @@ import os
 from pathlib import Path
 import sys
 
+from harite.core import describe_embed_position as describe_margin_text_position
+from harite.core import resolve_embed_margin_region as resolve_margin_text_region
 from harite.apply_settings import resolve_apply_settings
 from harite.config import load_config, save_config
 from harite.display_context import build_two_screen_optimize_context
@@ -150,7 +152,7 @@ class MainWindow:
             return None
         return width, height
 
-    def _normalize_gui_embed_position(self, value: object | None) -> str:
+    def _normalize_margin_text_position(self, value: object | None) -> str:
         normalized = str(value or "").strip().lower()
         if normalized == "auto":
             return "bottom"
@@ -287,7 +289,7 @@ class MainWindow:
         except ValueError:
             return (0, 0, 0, 0)
 
-    def _embed_margin_area(self, position: str) -> tuple[int, int] | None:
+    def _margin_text_area(self, position: str) -> tuple[int, int] | None:
         normalized = (position or "").strip().lower()
         if normalized not in {"top", "bottom", "left", "right"}:
             return None
@@ -298,23 +300,21 @@ class MainWindow:
 
         target_width, target_height = resolution
         left, right, top, bottom = self._current_margin_values()
-        if normalized == "top":
-            return max(0, target_width - (left + right)), top
-        if normalized == "bottom":
-            return max(0, target_width - (left + right)), bottom
-        if normalized == "left":
-            return left, max(0, target_height - (top + bottom))
-        return right, max(0, target_height - (top + bottom))
+        region = resolve_margin_text_region((target_width, target_height), (left, right, top, bottom), normalized)
+        if region is None:
+            return None
+        x0, y0, x1, y1 = region
+        return max(0, x1 - x0), max(0, y1 - y0)
 
-    def _update_embed_preflight_status(self) -> None:
-        embed_info = str(getattr(self.form_state, "embed_info", "none") or "none").lower()
-        if embed_info == "none":
+    def _update_margin_text_preflight_status(self) -> None:
+        margin_text_mode = str(getattr(self.form_state, "embed_info", "none") or "none").lower()
+        if margin_text_mode == "none":
             self._set_status("idle", "margins", "margin text off")
             return
 
-        embed_position = self._normalize_gui_embed_position(self.form_state.embed_position)
-        self.form_state.embed_position = embed_position
-        area = self._embed_margin_area(embed_position)
+        margin_text_position = self._normalize_margin_text_position(self.form_state.embed_position)
+        self.form_state.embed_position = margin_text_position
+        area = self._margin_text_area(margin_text_position)
         if area is None:
             self._set_status("error", "margins", "margin area unavailable", error="margin area unavailable")
             self._log("Margin text preflight failed: area unavailable")
@@ -329,22 +329,24 @@ class MainWindow:
                 error="selected margin area is too small for margin text",
             )
             self._log(
-                f"Margin text preflight failed: {embed_position} margin too small ({area_width}x{area_height})"
+                f"Margin text preflight failed: {margin_text_position} margin too small ({area_width}x{area_height})"
             )
             return
 
         self._set_status(
             "idle",
             "margins",
-            f"margin text ready in {embed_position} margin ({area_width}x{area_height})",
+            f"margin text ready in {describe_margin_text_position(margin_text_position)} position ({area_width}x{area_height})",
         )
-        self._log(f"Margin text preflight ready: {embed_position} margin ({area_width}x{area_height})")
+        self._log(
+            f"Margin text preflight ready: {describe_margin_text_position(margin_text_position)} position ({area_width}x{area_height})"
+        )
 
-    def _effective_embed_max_lines(self) -> int:
-        embed_info = str(getattr(self.form_state, "embed_info", "none") or "none").lower()
-        if embed_info == "free":
+    def _effective_margin_text_max_lines(self) -> int:
+        margin_text_mode = str(getattr(self.form_state, "embed_info", "none") or "none").lower()
+        if margin_text_mode == "free":
             return 5
-        if embed_info == "combo":
+        if margin_text_mode == "combo":
             return 8
         return 3
 
@@ -387,7 +389,7 @@ class MainWindow:
         self.form_state.margins = f"{left},{right},{top},{bottom}"
         self.last_error = ""
         self._log(f"Margins updated: {self.form_state.margins}")
-        self._update_embed_preflight_status()
+        self._update_margin_text_preflight_status()
 
     def on_toggle_position_pressed(self, widget_name: str) -> None:
         self._log(f"Toggle pressed: {widget_name}")
@@ -613,49 +615,49 @@ class MainWindow:
         self._log(f"Apply mode updated: {value}")
         return True
 
-    def on_change_embed_info(self, value: str) -> bool:
+    def on_change_margin_text_mode(self, value: str) -> bool:
         normalized = (value or "").strip().lower()
         if normalized not in {"none", "params", "free", "combo"}:
-            self.last_error = f"unknown embed_info: {value}"
+            self.last_error = f"unknown margin_text_mode: {value}"
             self._log(f"Margin text mode update failed: unknown value {value}")
             return False
 
         self.form_state.embed_info = normalized
         self._log(f"Margin text mode updated: {normalized}")
-        self._update_embed_preflight_status()
+        self._update_margin_text_preflight_status()
         return True
 
-    def on_change_embed_text(self, value: str | None) -> bool:
+    def on_change_margin_text(self, value: str | None) -> bool:
         text = None if value is None else str(value)
         if text:
-            text = "\n".join(text.splitlines()[:5])
+            text = "\n".join(text.split("\n")[:5])
         self.form_state.embed_text = None if not text or not text.strip() else text
         self._log("Margin text updated")
-        self._update_embed_preflight_status()
+        self._update_margin_text_preflight_status()
         return True
 
-    def on_change_embed_position(self, value: str) -> bool:
+    def on_change_margin_text_position(self, value: str) -> bool:
         normalized = (value or "").strip().lower()
         if normalized not in {"top", "bottom", "left", "right"}:
-            self.last_error = f"unknown embed_position: {value}"
+            self.last_error = f"unknown margin_text_position: {value}"
             self._log(f"Margin area update failed: unknown value {value}")
             return False
 
         self.form_state.embed_position = normalized
         self._log(f"Margin area updated: {normalized}")
-        self._update_embed_preflight_status()
+        self._update_margin_text_preflight_status()
         return True
 
-    def on_change_embed_max_lines(self, value: int) -> bool:
+    def on_change_margin_text_max_lines(self, value: int) -> bool:
         max_lines = int(value)
         if max_lines <= 0:
-            self.last_error = "embed_max_lines must be positive"
+            self.last_error = "margin_text_max_lines must be positive"
             self._log("Margin text internal line limit update failed: non-positive value")
             return False
 
         self.form_state.embed_max_lines = max_lines
         self._log(f"Margin text internal line limit updated: {max_lines}")
-        self._update_embed_preflight_status()
+        self._update_margin_text_preflight_status()
         return True
 
     def on_change_input_text(self, text: str) -> None:
@@ -695,7 +697,7 @@ class MainWindow:
             return False
 
         self._set_status("running", "optimize", "optimizing")
-        effective_state = replace(self.form_state, embed_max_lines=self._effective_embed_max_lines())
+        effective_state = replace(self.form_state, embed_max_lines=self._effective_margin_text_max_lines())
 
         try:
             saved, _placements = self.controller.run_optimize(effective_state)
@@ -794,7 +796,7 @@ class MainWindow:
         self.form_state.quality = optimize.quality
         self.form_state.embed_info = optimize.embed_info
         self.form_state.embed_text = optimize.embed_text
-        self.form_state.embed_position = self._normalize_gui_embed_position(optimize.embed_position)
+        self.form_state.embed_position = self._normalize_margin_text_position(optimize.embed_position)
         self.form_state.embed_max_lines = optimize.embed_max_lines
         self.form_state.l_display = optimize.l_display
         self.form_state.r_display = optimize.r_display
@@ -1239,7 +1241,7 @@ class MainWindow:
             embed_info=self.form_state.embed_info,
             embed_text=self.form_state.embed_text,
             embed_position=self.form_state.embed_position,
-            embed_max_lines=self._effective_embed_max_lines(),
+            embed_max_lines=self._effective_margin_text_max_lines(),
         )
         args = to_cli_args(req)
         preview = "harite " + " ".join(args)

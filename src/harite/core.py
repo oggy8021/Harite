@@ -10,6 +10,14 @@ from .positioning import format_position_pair, parse_position_pair
 from .workspace import Display
 
 
+EMBED_POSITION_SLOT_LABELS: dict[str, str] = {
+    "top": "left top",
+    "left": "left bottom",
+    "right": "right top",
+    "bottom": "right bottom",
+}
+
+
 @dataclass
 class PlacementResult:
     image_path: Path
@@ -152,6 +160,39 @@ def _build_embed_lines(
     return params_lines + free_lines
 
 
+def describe_embed_position(position: str) -> str:
+    """Map legacy embed_position values to the phase8 visible slot labels."""
+    normalized = str(position or "").strip().lower()
+    return EMBED_POSITION_SLOT_LABELS.get(normalized, normalized or "right bottom")
+
+
+def resolve_embed_margin_region(
+    target_size: Tuple[int, int],
+    margins: Tuple[int, int, int, int],
+    position: str,
+) -> Tuple[int, int, int, int] | None:
+    """Resolve explicit margin-text placement to one of four top/bottom corner slots."""
+    normalized = str(position or "").strip().lower()
+    if normalized not in EMBED_POSITION_SLOT_LABELS:
+        return None
+
+    w_target, h_target = target_size
+    ml, mr, mt, mb = margins
+    usable_left = max(0, ml)
+    usable_right = max(usable_left, w_target - max(0, mr))
+    usable_width = max(0, usable_right - usable_left)
+    left_slice_width = usable_width // 2
+    right_slice_width = usable_width - left_slice_width
+
+    if normalized == "top":
+        return (usable_left, 0, usable_left + left_slice_width, max(0, mt))
+    if normalized == "left":
+        return (usable_left, max(0, h_target - mb), usable_left + left_slice_width, h_target)
+    if normalized == "right":
+        return (usable_right - right_slice_width, 0, usable_right, max(0, mt))
+    return (usable_right - right_slice_width, max(0, h_target - mb), usable_right, h_target)
+
+
 def _resolve_cell_alignment(kwargs: dict[str, object], index: int) -> tuple[str, str]:
     align_left, align_right = parse_position_pair(kwargs.get("align", "center"), axis="align")
     valign_left, valign_right = parse_position_pair(kwargs.get("valign", "center"), axis="valign")
@@ -281,15 +322,8 @@ def _draw_embed_text_in_margin(
         candidates = [("top", mt), ("bottom", mb), ("left", ml), ("right", mr)]
         pos = max(candidates, key=lambda x: x[1])[0]
 
-    if pos == "top":
-        area = (ml, 0, max(0, w_target - mr), mt)
-    elif pos == "bottom":
-        area = (ml, max(0, h_target - mb), max(0, w_target - mr), h_target)
-    elif pos == "left":
-        area = (0, mt, ml, max(0, h_target - mb))
-    elif pos == "right":
-        area = (max(0, w_target - mr), mt, w_target, max(0, h_target - mb))
-    else:
+    area = resolve_embed_margin_region((w_target, h_target), (ml, mr, mt, mb), pos)
+    if area is None:
         return
 
     x0, y0, x1, y1 = area
@@ -312,9 +346,15 @@ def _draw_embed_text_in_margin(
     if len(lines) > line_limit:
         cropped_lines[-1] = cropped_lines[-1] + " ..."
 
-    text_x = x0 + 4
+    longest_px = 0
+    for line in cropped_lines:
+        bbox = font.getbbox(line or " ")
+        longest_px = max(longest_px, max(0, bbox[2] - bbox[0]))
+
+    quartile_offset = max(4, min(max(1, area_w // 4), max(1, longest_px // 4 or 1)))
+    text_x = x0 + quartile_offset
     text_y = y0 + 2
-    max_text_w = max(0, area_w - 8)
+    max_text_w = max(0, area_w - quartile_offset - 4)
     for line in cropped_lines:
         if text_y + line_h > y1:
             break

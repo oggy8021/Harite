@@ -146,6 +146,9 @@ class _TextBuffer(_WidgetBase):
     def get_end_iter(self):
         return len(self._text)
 
+    def get_bounds(self):
+        return (0, len(self._text))
+
     def get_text(self, _start, _end, _include_hidden):
         return self._text
 
@@ -509,15 +512,15 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("lblMarginsTabTitle") is not None
     assert backend.get_object("lblMarginsSection") is not None
     assert backend.get_object("lblMarginTextSection") is not None
-    assert backend.get_object("radEmbedInfoOff") is not None
-    assert backend.get_object("radEmbedInfoParams") is not None
-    assert backend.get_object("radEmbedInfoText") is not None
-    assert backend.get_object("radEmbedInfoBoth") is not None
+    assert backend.get_object("radMarginTextModeOff") is not None
+    assert backend.get_object("radMarginTextModeSettings") is not None
+    assert backend.get_object("radMarginTextModeText") is not None
+    assert backend.get_object("radMarginTextModeBoth") is not None
     assert backend.get_object("txtMarginText") is not None
-    assert backend.get_object("radEmbedPositionTop") is not None
-    assert backend.get_object("radEmbedPositionBottom") is not None
-    assert backend.get_object("radEmbedPositionLeft") is not None
-    assert backend.get_object("radEmbedPositionRight") is not None
+    assert backend.get_object("radMarginTextPositionLeftTop") is not None
+    assert backend.get_object("radMarginTextPositionRightBottom") is not None
+    assert backend.get_object("radMarginTextPositionLeftBottom") is not None
+    assert backend.get_object("radMarginTextPositionRightTop") is not None
     assert backend.get_object("lblDoItPlanned") is not None
     assert backend.get_object("lblSavePathState") is not None
     assert backend.get_object("lblSaveTarget") is not None
@@ -536,7 +539,7 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
 def test_runtime_backend_current_state_panel_defaults_are_available():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    assert backend.get_object("lblCurrentStateSection").text == "Current state"
+    assert backend.get_object("lblCurrentStateSection").text == "Main Window Current alignment:"
 
 
 def test_runtime_backend_adds_margins_tab_and_syncs_owner_state():
@@ -550,10 +553,10 @@ def test_runtime_backend_adds_margins_tab_and_syncs_owner_state():
     dispatch = create_mainwindow_signal_dispatch(
         window,
         (
-            "on_change_embed_info",
-            "on_change_embed_text",
-            "on_change_embed_position",
-            "on_change_embed_max_lines",
+            "on_change_margin_text_mode",
+            "on_change_margin_text",
+            "on_change_margin_text_position",
+            "on_change_margin_text_max_lines",
         ),
     )
     backend.connect_signals(dispatch)
@@ -561,12 +564,12 @@ def test_runtime_backend_adds_margins_tab_and_syncs_owner_state():
     notebook = backend.get_object("commandTabs")
     assert len(notebook.pages) == 3
     assert notebook.pages[0][1].text == "Main"
-    assert notebook.pages[1][1].text == "Margins"
+    assert notebook.pages[1][1].text == "Margins (for each display)"
     assert notebook.pages[2][1].text == "Watch (stopped)"
-    assert backend.get_object("lblMarginsTabTitle").text == "Margins"
-    assert backend.get_object("radEmbedInfoBoth").get_active() is True
+    assert backend.get_object("lblMarginsTabTitle").text == "Margins (for each display)"
+    assert backend.get_object("radMarginTextModeBoth").get_active() is True
     assert backend.get_object("txtMarginText").get_text() == "margin-note"
-    assert backend.get_object("radEmbedPositionBottom").get_active() is True
+    assert backend.get_object("radMarginTextPositionRightBottom").get_active() is True
 
 
 def test_runtime_backend_margins_tab_updates_owner_state_and_cli_preview(tmp_path):
@@ -581,9 +584,9 @@ def test_runtime_backend_margins_tab_updates_owner_state_and_cli_preview(tmp_pat
     dispatch = create_mainwindow_signal_dispatch(
         window,
         (
-            "on_change_embed_info",
-            "on_change_embed_text",
-            "on_change_embed_position",
+            "on_change_margin_text_mode",
+            "on_change_margin_text",
+            "on_change_margin_text_position",
             "on_change_margins",
         ),
     )
@@ -591,15 +594,15 @@ def test_runtime_backend_margins_tab_updates_owner_state_and_cli_preview(tmp_pat
 
     backend.get_object("spnTopMergin").set_value(24)
     backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
-    backend.get_object("radEmbedInfoText").click()
+    backend.get_object("radMarginTextModeText").click()
     backend.get_object("txtMarginText").set_text("hello\nworld")
-    backend.get_object("radEmbedPositionTop").click()
+    backend.get_object("radMarginTextPositionLeftTop").click()
 
     assert window.form_state.margins == "10,10,24,10"
     assert window.form_state.embed_info == "free"
     assert window.form_state.embed_text == "hello\nworld"
     assert window.form_state.embed_position == "top"
-    assert backend.get_object("lblStatus").text.startswith("Margins: margin text ready in top margin")
+    assert backend.get_object("lblStatus").text.startswith("Margins: margin text ready in left top position")
     assert backend.get_object("lblError").text == "Error: none"
 
     preview = window.build_optimize_cli_preview()
@@ -614,13 +617,26 @@ def test_runtime_backend_clamps_margin_text_to_five_lines():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
 
-    dispatch = create_mainwindow_signal_dispatch(window, ("on_change_embed_text",))
+    dispatch = create_mainwindow_signal_dispatch(window, ("on_change_margin_text",))
     backend.connect_signals(dispatch)
 
     backend.get_object("txtMarginText").set_text("1\n2\n3\n4\n5\n6")
 
     assert window.form_state.embed_text == "1\n2\n3\n4\n5"
     assert backend.get_object("txtMarginText").get_text() == "1\n2\n3\n4\n5"
+
+
+def test_runtime_backend_preserves_trailing_newline_while_editing_margin_text():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+
+    dispatch = create_mainwindow_signal_dispatch(window, ("on_change_margin_text",))
+    backend.connect_signals(dispatch)
+
+    backend.get_object("txtMarginText").set_text("1\n")
+
+    assert window.form_state.embed_text == "1\n"
+    assert backend.get_object("txtMarginText").get_text() == "1\n"
 
 
 def test_runtime_backend_margin_text_preflight_reports_small_margin_error():
@@ -632,15 +648,15 @@ def test_runtime_backend_margin_text_preflight_reports_small_margin_error():
     dispatch = create_mainwindow_signal_dispatch(
         window,
         (
-            "on_change_embed_info",
-            "on_change_embed_text",
-            "on_change_embed_position",
+            "on_change_margin_text_mode",
+            "on_change_margin_text",
+            "on_change_margin_text_position",
         ),
     )
     backend.connect_signals(dispatch)
 
-    backend.get_object("radEmbedInfoParams").click()
-    backend.get_object("radEmbedPositionBottom").click()
+    backend.get_object("radMarginTextModeSettings").click()
+    backend.get_object("radMarginTextPositionRightBottom").click()
 
     assert backend.get_object("lblStatus").text == "Margins: margin text does not fit current margin area"
     assert backend.get_object("lblError").text == "Error: selected margin area is too small for margin text"
@@ -686,9 +702,9 @@ def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path):
     assert backend.get_object("lblPreviewResultR").text == "Result: auto-split right crop"
     assert backend.get_object("lblPreviewState").text == "Preview: pseudo auto-split by display widths"
     assert backend.get_object("lblPreviewAssist").text == "Assist: auto-split by current left/right display widths"
-    assert backend.get_object("lblCurrentMargins").text == "Current margins: 0,0,0,0"
-    assert backend.get_object("lblCurrentStateL").text == "Current L: align=center valign=center"
-    assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=center"
+    assert backend.get_object("lblCurrentMargins").text == "margins=0,0,0,0"
+    assert backend.get_object("lblCurrentStateL").text == "L: align=center valign=center"
+    assert backend.get_object("lblCurrentStateR").text == "R: align=center valign=center"
 
 
 def test_runtime_backend_shows_phase6_labels_and_controls():
@@ -1604,9 +1620,9 @@ def test_runtime_backend_prefs_load_updates_watch_tab_state(tmp_path):
 
     assert backend.get_object("lblWatchSources").text == "Watch srcdirs: L=/watch/left | R=/watch/right"
     assert backend.get_object("spnInterval").get_value_as_int() == 45
-    assert backend.get_object("lblCurrentMargins").text == "Current margins: 5,15,25,35"
-    assert backend.get_object("lblCurrentStateL").text == "Current L: align=right valign=center"
-    assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=top"
+    assert backend.get_object("lblCurrentMargins").text == "margins=5,15,25,35"
+    assert backend.get_object("lblCurrentStateL").text == "L: align=right valign=center"
+    assert backend.get_object("lblCurrentStateR").text == "R: align=center valign=top"
 
 
 def test_runtime_backend_prefs_preserves_explicit_apply_mode_when_unedited(tmp_path):
@@ -1891,7 +1907,7 @@ def test_runtime_backend_margin_change_propagates_all_values():
     assert captured == {"name": "spnLMergin", "value": 11}
     assert status.text == "Margins: updated"
     assert error.text == "Error: none"
-    assert backend.get_object("lblCurrentMargins").text == "Current margins: 11,22,33,44"
+    assert backend.get_object("lblCurrentMargins").text == "margins=11,22,33,44"
 
 
 def test_runtime_backend_margin_spin_matches_upstream_adjustments():
@@ -1923,8 +1939,8 @@ def test_runtime_backend_current_state_panel_updates_for_toggle_positions():
     backend.get_object("tglPushRightL").click()
     backend.get_object("tglUpperR").click()
 
-    assert backend.get_object("lblCurrentStateL").text == "Current L: align=right valign=center"
-    assert backend.get_object("lblCurrentStateR").text == "Current R: align=center valign=top"
+    assert backend.get_object("lblCurrentStateL").text == "L: align=right valign=center"
+    assert backend.get_object("lblCurrentStateR").text == "R: align=center valign=top"
 
 
 def test_runtime_backend_current_state_margin_labels_follow_spin_values():
@@ -1936,7 +1952,7 @@ def test_runtime_backend_current_state_margin_labels_follow_spin_values():
     backend.get_object("spnBtmMergin").set_value(35)
     backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
 
-    assert backend.get_object("lblCurrentMargins").text == "Current margins: 5,15,25,35"
+    assert backend.get_object("lblCurrentMargins").text == "margins=5,15,25,35"
 
 
 def test_runtime_backend_margin_and_top_alignment_coexist_in_current_state():
@@ -1946,5 +1962,5 @@ def test_runtime_backend_margin_and_top_alignment_coexist_in_current_state():
     backend.get_object("spnTopMergin").emit("value-changed", backend.get_object("spnTopMergin"))
     backend.get_object("tglUpperL").click()
 
-    assert backend.get_object("lblCurrentMargins").text == "Current margins: 0,0,5,0"
-    assert backend.get_object("lblCurrentStateL").text == "Current L: align=center valign=top"
+    assert backend.get_object("lblCurrentMargins").text == "margins=0,0,5,0"
+    assert backend.get_object("lblCurrentStateL").text == "L: align=center valign=top"
