@@ -17,16 +17,16 @@ def test_horizontal_align(tmp_path):
     out_dir = tmp_path / "out"
 
     # left
-    saved, placements = optimize_wallpapers([str(img)], (500, 100), out_dir, padding=0, quality=80, align="left", valign="center")
+    saved, placements = optimize_wallpapers([str(img)], (500, 100), out_dir, quality=80, align="left", valign="center")
     assert len(placements) == 1
     left_x = placements[0].x
 
     # center
-    saved, placements = optimize_wallpapers([str(img)], (500, 100), out_dir, padding=0, quality=80, align="center", valign="center")
+    saved, placements = optimize_wallpapers([str(img)], (500, 100), out_dir, quality=80, align="center", valign="center")
     center_x = placements[0].x
 
     # right
-    saved, placements = optimize_wallpapers([str(img)], (500, 100), out_dir, padding=0, quality=80, align="right", valign="center")
+    saved, placements = optimize_wallpapers([str(img)], (500, 100), out_dir, quality=80, align="right", valign="center")
     right_x = placements[0].x
 
     assert left_x < center_x < right_x
@@ -40,15 +40,15 @@ def test_vertical_valign(tmp_path):
     out_dir = tmp_path / "out2"
 
     # top
-    saved, placements = optimize_wallpapers([str(img)], (100, 300), out_dir, padding=0, quality=80, align="center", valign="top")
+    saved, placements = optimize_wallpapers([str(img)], (100, 300), out_dir, quality=80, align="center", valign="top")
     top_y = placements[0].y
 
     # center
-    saved, placements = optimize_wallpapers([str(img)], (100, 300), out_dir, padding=0, quality=80, align="center", valign="center")
+    saved, placements = optimize_wallpapers([str(img)], (100, 300), out_dir, quality=80, align="center", valign="center")
     center_y = placements[0].y
 
     # bottom
-    saved, placements = optimize_wallpapers([str(img)], (100, 300), out_dir, padding=0, quality=80, align="center", valign="bottom")
+    saved, placements = optimize_wallpapers([str(img)], (100, 300), out_dir, quality=80, align="center", valign="bottom")
     bottom_y = placements[0].y
 
     assert top_y < center_y < bottom_y
@@ -66,7 +66,6 @@ def test_pair_align_and_valign_apply_per_side_in_two_screen_mode(tmp_path):
         [str(left), str(right)],
         (400, 200),
         out_dir,
-        padding=0,
         quality=80,
         two_screen=True,
         l_display=(200, 200),

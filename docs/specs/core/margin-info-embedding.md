@@ -65,7 +65,6 @@
 - resolution
 - margins
 - align / valign
-- padding
 - two-screen 関連（有効時のみ）
 - input 件数（パス全文ではなく件数）
 

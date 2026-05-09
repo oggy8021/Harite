@@ -399,9 +399,6 @@ def optimize_wallpapers(
 
     items = _parse_inputs(inputs)
     w_target, h_target = target_resolution
-    padding = int(kwargs.pop("padding", 0) or 0)
-    kwargs.pop("layout", None)
-
     # Compatibility: accept upstream-style kwargs
     two_screen = bool(kwargs.get("two_screen", False))
     margins = kwargs.get("margins", (0, 0, 0, 0))
@@ -447,7 +444,7 @@ def optimize_wallpapers(
         cell_h = inner_h
     else:
         # Simple layout: split inner width horizontally among items
-        cell_w = max(1, (inner_w - padding * (count - 1)) // count)
+        cell_w = max(1, inner_w // count)
         cell_h = inner_h
         cell_w_list = [cell_w] * count
 
@@ -491,7 +488,7 @@ def optimize_wallpapers(
             else:
                 x = int(split_x or 0) + inner_x
         else:
-            x = ml + i * (this_cell_w + padding) + inner_x
+            x = ml + i * this_cell_w + inner_x
 
         y = mt + inner_y
 

@@ -15,7 +15,6 @@ def test_margins_reduce_available_space(tmp_path):
         inputs=[str(left), str(right)],
         target_resolution=(w_target, h_target),
         output_dir=out_dir,
-        padding=0,
         two_screen=False,
         margins=margins,
     )

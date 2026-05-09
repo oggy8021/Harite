@@ -20,9 +20,7 @@ def test_single_monitor_placeholder():
         inputs=inputs,
         target_resolution=target_resolution,
         output_dir=Path("tests/out"),
-        layout="cover",
         scaling="fill",
-        padding=0,
         quality=90,
         random_seed=123,
     )
@@ -50,9 +48,7 @@ def test_dual_monitor_placeholder():
         inputs=inputs,
         target_resolution=target_resolution,
         output_dir=Path("tests/out"),
-        layout="mosaic",
         scaling="fit",
-        padding=10,
         quality=90,
         random_seed=42,
     )
