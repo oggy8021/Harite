@@ -38,6 +38,8 @@
   - [docs/specs/gui/gui-phase8-backlog.md](docs/specs/gui/gui-phase8-backlog.md)
 - repair sequence:
   - [docs/specs/gui/gui-phase8-repair-plan.md](docs/specs/gui/gui-phase8-repair-plan.md)
+- current status / resume overlay:
+  - [docs/specs/gui/gui-phase8-resume-planning-after-2weeks-break.md](docs/specs/gui/gui-phase8-resume-planning-after-2weeks-break.md)
 
 ## Phase7 から受け取る前提
 

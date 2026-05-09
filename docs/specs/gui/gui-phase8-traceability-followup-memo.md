@@ -13,6 +13,13 @@
 - `about` / `help` は先送り合意済みのため、本メモでは検出記録のみとし、是正対象には含めない。
 - 下記の課題は、Phase8 内の新ブランチでまとめて解消する。
 
+## 着手タイミング
+
+- 本メモは「次に必ず着手する」ことを固定する文書ではなく、Margins branch 完了後に見えた GUI traceability debt の受け皿である。
+- Phase8 全体の branch order は [docs/specs/gui/gui-phase8-repair-plan.md](docs/specs/gui/gui-phase8-repair-plan.md) を正本とし、2026-05-09 時点の再開判断は [docs/specs/gui/gui-phase8-resume-planning-after-2weeks-break.md](docs/specs/gui/gui-phase8-resume-planning-after-2weeks-break.md) を参照する。
+- 原則としては、未了の semantics 修復を優先し、その直後の GUI 専用ブランチで本メモを扱う。
+- ただし break 明けの再始動コスト低減を優先して traceability 改善を前倒しする場合は、その判断理由を PR 本文と resume 文書へ明記する。
+
 ## 後続ブランチで解く課題
 
 ### 1. save path close callback の命名不一致
