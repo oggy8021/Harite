@@ -17,6 +17,58 @@ EMBED_POSITION_SLOT_LABELS: dict[str, str] = {
     "bottom": "right bottom",
 }
 
+DEFAULT_BACKGROUND_COLOR_HEX = "#1E1E1E"
+
+
+def is_background_color_literal(value: object | None) -> bool:
+    raw = value
+    if isinstance(raw, (tuple, list)) and len(raw) >= 3:
+        try:
+            return all(0 <= int(channel) <= 255 for channel in raw[:3])
+        except Exception:
+            return False
+
+    normalized = str(raw or "").strip().upper()
+    if not normalized:
+        return False
+    if normalized.startswith("#"):
+        normalized = normalized[1:]
+    if len(normalized) != 6:
+        return False
+    try:
+        int(normalized, 16)
+    except ValueError:
+        return False
+    return True
+
+
+def normalize_background_color(value: object | None) -> str:
+    raw = value
+    if isinstance(raw, (tuple, list)) and len(raw) >= 3:
+        try:
+            red = max(0, min(255, int(raw[0])))
+            green = max(0, min(255, int(raw[1])))
+            blue = max(0, min(255, int(raw[2])))
+            return f"#{red:02X}{green:02X}{blue:02X}"
+        except Exception:
+            return DEFAULT_BACKGROUND_COLOR_HEX
+
+    normalized = str(raw or "").strip().upper()
+    if not is_background_color_literal(normalized):
+        return DEFAULT_BACKGROUND_COLOR_HEX
+    if not normalized.startswith("#"):
+        normalized = f"#{normalized}"
+    return normalized
+
+
+def background_color_rgb(value: object | None) -> tuple[int, int, int]:
+    normalized = normalize_background_color(value)
+    return (
+        int(normalized[1:3], 16),
+        int(normalized[3:5], 16),
+        int(normalized[5:7], 16),
+    )
+
 
 @dataclass
 class PlacementResult:
@@ -448,6 +500,7 @@ def optimize_wallpapers(
     l_display = kwargs.get("l_display")
     r_display = kwargs.get("r_display")
     embed_info = str(kwargs.get("embed_info", "none")).lower()
+    background_color = normalize_background_color(kwargs.get("background_color", DEFAULT_BACKGROUND_COLOR_HEX))
     embed_text = kwargs.get("embed_text")
     embed_position = str(kwargs.get("embed_position", "auto")).lower()
     try:
@@ -456,7 +509,7 @@ def optimize_wallpapers(
         embed_max_lines = 3
 
     # Background image
-    bg = Image.new("RGB", (w_target, h_target), color=(30, 30, 30))
+    bg = Image.new("RGB", (w_target, h_target), color=background_color_rgb(background_color))
 
     placements: List[PlacementResult] = []
     saved_files: List[Path] = []
@@ -698,13 +751,13 @@ def split_composite_for_displays(
         region_w, region_h = region.size
         if region_w == 0 or region_h == 0:
             # fallback: create blank
-            out_img = Image.new("RGB", (target_w, target_h), color=(30, 30, 30))
+            out_img = Image.new("RGB", (target_w, target_h), color=background_color_rgb(background_color))
         else:
             scale = min(target_w / region_w, target_h / region_h)
             new_w = max(1, int(region_w * scale))
             new_h = max(1, int(region_h * scale))
             resized = region.resize((new_w, new_h), Image.LANCZOS)
-            out_img = Image.new("RGB", (target_w, target_h), color=(30, 30, 30))
+            out_img = Image.new("RGB", (target_w, target_h), color=background_color_rgb(background_color))
             ox = (target_w - new_w) // 2
             oy = (target_h - new_h) // 2
             out_img.paste(resized, (ox, oy))

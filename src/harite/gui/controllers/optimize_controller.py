@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 from harite.cli import parse_resolution
-from harite.core import normalize_optimize_input_paths, optimize_wallpapers
+from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, normalize_background_color, normalize_optimize_input_paths, optimize_wallpapers
 from harite.optimize_settings import resolve_optimize_display_settings
 from harite.positioning import parse_position_pair, position_value_for_side
 
@@ -37,6 +37,7 @@ class OptimizeFormState:
     align: tuple[str, str] = ("center", "center")
     valign: tuple[str, str] = ("center", "center")
     quality: int = 90
+    background_color: str = DEFAULT_BACKGROUND_COLOR_HEX
     embed_info: str = "none"
     embed_text: Optional[str] = None
     embed_position: str = "auto"
@@ -45,6 +46,7 @@ class OptimizeFormState:
     def __post_init__(self) -> None:
         self.align = parse_position_pair(self.align, axis="align")
         self.valign = parse_position_pair(self.valign, axis="valign")
+        self.background_color = normalize_background_color(self.background_color)
 
     def align_for(self, side: str) -> str:
         return position_value_for_side(self.align, side, axis="align")
@@ -94,6 +96,7 @@ class OptimizeController:
             align=state.align,
             valign=state.valign,
             embed_info=state.embed_info,
+            background_color=state.background_color,
             embed_text=state.embed_text,
             embed_position=state.embed_position,
             embed_max_lines=resolve_embed_max_lines(state.embed_info, state.embed_max_lines),

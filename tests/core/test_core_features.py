@@ -32,6 +32,29 @@ def test_optimize_wallpapers_creates_output_and_placements(tmp_path):
     assert any('a1' in p.image_path.name or 'a2' in p.image_path.name for p in placements)
 
 
+def test_optimize_wallpapers_uses_selected_background_color(tmp_path):
+    from harite.core import optimize_wallpapers
+
+    inp_dir = tmp_path / "in-bg"
+    out_dir = tmp_path / "out-bg"
+    inp_dir.mkdir()
+    out_dir.mkdir()
+
+    img1 = inp_dir / "a.jpg"
+    make_image(img1, size=(100, 100), color=(100, 150, 200))
+
+    saved, _ = optimize_wallpapers(
+        [str(img1)],
+        (300, 300),
+        out_dir,
+        margins=(40, 40, 40, 40),
+        background_color="#224466",
+    )
+
+    out = Image.open(saved[0]).convert("RGB")
+    assert out.getpixel((5, 5)) == (34, 68, 102)
+
+
 def test_optimize_wallpapers_rejects_directory_input(tmp_path):
     from harite.core import optimize_wallpapers
 

@@ -25,6 +25,7 @@ def test_app_preferences_round_trip_config_with_auto_values():
     assert exported["r_display"] == "auto"
     assert exported["align"] == ["center", "center"]
     assert exported["valign"] == ["center", "center"]
+    assert exported["background_color"] == "#1E1E1E"
     assert exported["plugin"] == "linux"
     assert exported["apply_mode"] == "per-monitor-auto-split"
     assert exported["watch_interval_seconds"] == 120

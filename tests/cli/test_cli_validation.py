@@ -83,6 +83,28 @@ def test_optimize_rejects_invalid_embed_position(tmp_path):
     assert "--embed-position must be one of" in result.output
 
 
+def test_optimize_rejects_invalid_background_color(tmp_path):
+    runner = CliRunner()
+    img = tmp_path / "a.jpg"
+    from PIL import Image
+
+    Image.new("RGB", (10, 10), (100, 100, 100)).save(img)
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--input",
+            str(img),
+            "--resolution",
+            "100x100",
+            "--background-color",
+            "blue",
+        ],
+    )
+    assert result.exit_code == 2
+    assert "--background-color must be a hex RGB value" in result.output
+
+
 def test_optimize_rejects_directory_input(tmp_path):
     runner = CliRunner()
     input_dir = tmp_path / "images"

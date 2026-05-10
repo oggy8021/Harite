@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass, field
 import os
 from typing import Any
 
+from .core import DEFAULT_BACKGROUND_COLOR_HEX, normalize_background_color
 from .optimize_settings import AUTO
 from .positioning import parse_position_pair
 
@@ -34,6 +35,7 @@ class OptimizePreferences:
     align: tuple[str, str] = ("center", "center")
     valign: tuple[str, str] = ("center", "center")
     quality: int = 90
+    background_color: str = DEFAULT_BACKGROUND_COLOR_HEX
     embed_info: str = "none"
     embed_text: str | None = None
     embed_position: str = AUTO
@@ -51,6 +53,7 @@ class OptimizePreferences:
             align=parse_position_pair(config.get("align", "center"), axis="align"),
             valign=parse_position_pair(config.get("valign", "center"), axis="valign"),
             quality=int(config.get("quality", 90)),
+            background_color=normalize_background_color(config.get("background_color", DEFAULT_BACKGROUND_COLOR_HEX)),
             embed_info=str(config.get("embed_info", "none")),
             embed_text=None if config.get("embed_text") is None else str(config.get("embed_text")),
             embed_position=str(config.get("embed_position", AUTO)),

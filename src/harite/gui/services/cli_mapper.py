@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, normalize_background_color
 from harite.positioning import format_position_pair, parse_position_pair
 
 
@@ -22,6 +23,7 @@ class OptimizeRequest:
     align: tuple[str, str] = ("center", "center")
     valign: tuple[str, str] = ("center", "center")
     quality: int = 90
+    background_color: str = DEFAULT_BACKGROUND_COLOR_HEX
     embed_info: str = "none"
     embed_text: Optional[str] = None
     embed_position: str = "auto"
@@ -30,6 +32,7 @@ class OptimizeRequest:
     def __post_init__(self) -> None:
         self.align = parse_position_pair(self.align, axis="align")
         self.valign = parse_position_pair(self.valign, axis="valign")
+        self.background_color = normalize_background_color(self.background_color)
 
 
 def to_cli_args(req: OptimizeRequest) -> list[str]:
@@ -50,6 +53,8 @@ def to_cli_args(req: OptimizeRequest) -> list[str]:
         format_position_pair(req.valign, axis="valign"),
         "--quality",
         str(req.quality),
+        "--background-color",
+        req.background_color,
         "--embed-info",
         req.embed_info,
         "--embed-position",

@@ -70,8 +70,9 @@
 
 ### 未了として扱うべきもの
 
-- `Color`、`About` は backlog 上の deferred 群として残っている
-  - 現時点では [docs/specs/gui/gui-phase8-backlog.md](docs/specs/gui/gui-phase8-backlog.md) の Group 3 が、Phase8 の明示的な残ターゲットである
+- `Color` は 2026-05-10 時点で background color の選択・設定保存・CLI preview 反映まで実装済み
+- `About` は backlog 上の deferred 群として残っている
+  - 現時点では [docs/specs/gui/gui-phase8-backlog.md](docs/specs/gui/gui-phase8-backlog.md) の Group 3 のうち、主な残ターゲットは `About` 側である
 
 ### 現行判定として補足するもの
 
@@ -86,12 +87,12 @@
 - [docs/specs/gui/gui-phase8-traceability-followup-memo.md](docs/specs/gui/gui-phase8-traceability-followup-memo.md) の課題は、`padding` / `mosaic` 整理と `Margins` 4 値意味論修復の後段で扱う前提だった。
 - その前提は満たされ、canonical 名整理と inventory 化まで実施済みである。
 
-### 判断 2. 次の太い未了は `Color` / `About` 側である
+### 判断 2. 次の太い未了は `About` 側である
 
 - traceability 系は、現時点では新規専用ブランチ候補というより、完了済み整理結果の参照先として維持する段に入った。
 - preview / visual assist は、backlog 上の Group 1 定義に対して実装がかなり先行しており、現時点では未了の主題としては扱わない。
-- したがって、Phase8 の残課題として太いのは `Color` と `About` である。
-- このため、Phase8 はまだ close せず、Group 3 の扱い判断または実装完了を待つ段にある。
+- `Color` は background color 選択と設定値浸透まで実装済みになったため、Phase8 の残課題として太いのは `About` である。
+- このため、Phase8 はまだ close せず、Group 3 のうち `About` 実装または扱い判断を待つ段にある。
 
 ### 判断 3. `Margins` 4 値修復は通過済みとして扱う
 
@@ -108,14 +109,14 @@
 1. この docs ブランチでは、本書を resume index として追加し、既存 Phase8 docs からの導線だけを足す
 2. この follow-up では、`padding` / `mosaic` 整理と `Margins` 4 値意味論修復が通過済みであることを本書に反映する
 3. traceability の正本は [docs/specs/gui/gui-phase8-traceability-followup-memo.md](docs/specs/gui/gui-phase8-traceability-followup-memo.md) と [docs/specs/gui/gui-phase8-traceability-audit-inventory.md](docs/specs/gui/gui-phase8-traceability-audit-inventory.md) とする
-4. 次の feature 系ブランチ候補は `Color`、`About` 側から選ぶ
+4. 次の feature 系ブランチ候補は `About` 側から選ぶ
 5. pre-closing では stale 参照や current status のズレだけを軽く整える
 
 ## 現時点の close 判定
 
 - preview / visual assist、traceability、margin text display-target 判断は先行整理済みである。
-- ただし [docs/specs/gui/gui-phase8-backlog.md](docs/specs/gui/gui-phase8-backlog.md) の Group 3 (`Color` / `About`) が未了のため、Phase8 は現時点では close しない。
-- Phase8 を close するときは、少なくとも Group 3 を deferred のまま閉じるのか、実装対象として完了させるのかを docs 上で明示してから判断する。
+- ただし [docs/specs/gui/gui-phase8-backlog.md](docs/specs/gui/gui-phase8-backlog.md) の Group 3 のうち `About` が未了のため、Phase8 は現時点では close しない。
+- Phase8 を close するときは、少なくとも `About` を deferred のまま閉じるのか、実装対象として完了させるのかを docs 上で明示してから判断する。
 
 ## この文書を読んだあとの進み方
 

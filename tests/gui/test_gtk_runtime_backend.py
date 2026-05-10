@@ -1218,17 +1218,48 @@ def test_runtime_backend_right_input_enables_optimize_buttons():
     assert optimize_modern_btn.sensitive is True
 
 
-def test_runtime_backend_color_click_sets_deferred_status():
+def test_runtime_backend_color_click_opens_dialog():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     color_btn = backend.get_object("btnSetColor")
+    color_dialog = backend.get_object("ColorDialog")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
 
     color_btn.click()
 
-    assert status.text == "Color: deferred"
+    assert color_dialog.is_visible() is True
+    assert status.text == "Color: opened"
     assert error.text == "Error: none"
+
+
+def test_runtime_backend_color_apply_updates_handler_and_feedback():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    observed = {}
+
+    def on_set_color(color=None):
+        if color is None:
+            return True
+        observed["color"] = color
+        return True
+
+    backend.connect_signals(
+        {
+            "on_set_color": on_set_color,
+            "on_get_settings_config": lambda: {"background_color": "#1E1E1E"},
+        }
+    )
+
+    backend.get_object("btnSetColor").click()
+    backend.get_object("entColorValue").set_text("#224466")
+    backend.get_object("btnColorApply").click()
+
+    assert observed["color"] == "#224466"
+    assert backend.get_object("ColorDialog").is_visible() is False
+    assert backend.get_object("lblColorState").text == "Color: #224466"
+    assert backend.get_object("lblStatus").text == "Color: updated"
+    assert backend.get_object("lblError").text == "Error: none"
 
 
 def test_runtime_backend_save_click_passes_selected_path_to_handler():
