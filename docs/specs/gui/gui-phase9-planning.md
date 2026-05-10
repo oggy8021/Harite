@@ -129,12 +129,23 @@
 
 - `gtk_backend.py`: backend coordinator / object registry / signal wiring
 - `gtk_runtime_builders.py`: widget builder facade / re-export
+- `gtk_runtime_object_registry.py`: runtime object alias / registry mapping
 - `gtk_layout_builders.py`: layout / shell / footer builder
 - `gtk_tab_builders.py`: main tab / watch tab / margins tab builder
 - `gtk_dialog_builders.py`: settings / color / about builder
+- `gtk_runtime_file_dialog_flow.py`: input/open/srcdir/save-path dialog flow
+- `gtk_runtime_margin_text.py`: margin text sanitization / return-key guard logic
+- `gtk_runtime_margin_text_gtk.py`: margin text GTK styling / keypress bridge
+- `gtk_runtime_owner_sync.py`: owner-driven UI sync orchestration helper
+- `gtk_runtime_settings_dialogs.py`: settings / color / about runtime dialog orchestration
+- `gtk_runtime_signal_wiring.py`: runtime signal binding enumeration
+- `gtk_runtime_save_path_access.py`: save-path dialog/state alias access helper
+- `gtk_runtime_state_labels.py`: current margin / align state label refresh helper
 - `gtk_runtime_sync.py`: owner-to-widget sync 群
 - `gtk_runtime_dialogs.py`: save/open/settings/color/about dialog coordinators
 - `gtk_runtime_preview.py`: preview render helper
+- `gtk_runtime_widget_access.py`: generic widget access / feedback helper
+- `gtk_runtime_watch_ui.py`: watch UI refresh / start-stop handler flow
 - `gtk_runtime_watch.py`: timer bridge / watch-specific runtime helper
 
 ### 契約面
@@ -153,7 +164,29 @@
 - GTK backend の watch timer / watch bridge は [src/harite/gui/adapters/gtk_runtime_watch.py](src/harite/gui/adapters/gtk_runtime_watch.py) へ切り出し済み。
 - GTK backend の widget build は [src/harite/gui/adapters/gtk_runtime_builders.py](src/harite/gui/adapters/gtk_runtime_builders.py) を facade としつつ、[src/harite/gui/adapters/gtk_layout_builders.py](src/harite/gui/adapters/gtk_layout_builders.py) / [src/harite/gui/adapters/gtk_tab_builders.py](src/harite/gui/adapters/gtk_tab_builders.py) / [src/harite/gui/adapters/gtk_dialog_builders.py](src/harite/gui/adapters/gtk_dialog_builders.py) へ再分割済み。header / main tab compose-input-display / action-preview cluster / watch tab / margins tab / settings editor / color-about window / footer-status / runtime state labels / primary margin controls が builder 化済み。
 
-現時点の GTK backend 本体 [src/harite/gui/adapters/gtk_backend.py](src/harite/gui/adapters/gtk_backend.py) は、object registry・signal wiring・dialog runtime coordination・handler 群の coordinator としての比重が以前より高くなっている。`__init__` では runtime state 初期化、window 構築、root / header / main composition、watch / margins tab composition、footer attach composition、dialog runtime bundle の downstream 受け渡し、section bundle 前提の object map 組み立て、section bundle 前提の signal wiring、dialog runtime 準備の helper 化まで進み、一段薄い coordinator に寄ってきている。
+- 現時点の GTK backend 本体 [src/harite/gui/adapters/gtk_backend.py](src/harite/gui/adapters/gtk_backend.py) は、object registry・signal wiring・dialog runtime coordination・handler 群の coordinator としての比重が以前より高い。
+  - `__init__` では以下まで整理済みで、不要 unpack も縮小されて backend 本体は一段薄い coordinator に寄ってきている。
+    - runtime state 初期化
+    - window 構築
+    - root / header / main composition
+    - watch / margins tab composition
+    - footer attach composition
+    - dialog runtime bundle の downstream 受け渡し
+    - section bundle 前提の object map 組み立て
+    - section bundle 前提の signal wiring
+    - dialog runtime 準備の helper 化
+  - 外出し済みの grouped module は以下。
+    - object map alias 列挙: [src/harite/gui/adapters/gtk_runtime_object_registry.py](src/harite/gui/adapters/gtk_runtime_object_registry.py)
+    - signal wiring 列挙: [src/harite/gui/adapters/gtk_runtime_signal_wiring.py](src/harite/gui/adapters/gtk_runtime_signal_wiring.py)
+    - file/dialog flow: [src/harite/gui/adapters/gtk_runtime_file_dialog_flow.py](src/harite/gui/adapters/gtk_runtime_file_dialog_flow.py)
+    - save-path alias access: [src/harite/gui/adapters/gtk_runtime_save_path_access.py](src/harite/gui/adapters/gtk_runtime_save_path_access.py)
+    - margin text の純粋ロジック: [src/harite/gui/adapters/gtk_runtime_margin_text.py](src/harite/gui/adapters/gtk_runtime_margin_text.py)
+    - margin text の GTK bridge: [src/harite/gui/adapters/gtk_runtime_margin_text_gtk.py](src/harite/gui/adapters/gtk_runtime_margin_text_gtk.py)
+    - owner-driven sync orchestration: [src/harite/gui/adapters/gtk_runtime_owner_sync.py](src/harite/gui/adapters/gtk_runtime_owner_sync.py)
+    - settings / color / about runtime dialog flow: [src/harite/gui/adapters/gtk_runtime_settings_dialogs.py](src/harite/gui/adapters/gtk_runtime_settings_dialogs.py)
+    - watch UI 補助: [src/harite/gui/adapters/gtk_runtime_watch_ui.py](src/harite/gui/adapters/gtk_runtime_watch_ui.py)
+    - generic widget access / feedback helper: [src/harite/gui/adapters/gtk_runtime_widget_access.py](src/harite/gui/adapters/gtk_runtime_widget_access.py)
+    - current state label helper: [src/harite/gui/adapters/gtk_runtime_state_labels.py](src/harite/gui/adapters/gtk_runtime_state_labels.py)
 
 ## Workstream
 
@@ -183,8 +216,31 @@
   - GTK backend 分割方針メモ
 - 現在地:
   - sync / preview / dialog / watch は grouped module 化済み。
-  - widget build は facade + 責務別 module へ再分割済みで、header / main tab compose-input-display / action-preview / watch tab / margins tab / settings editor / color-about window / footer-status / runtime state labels / primary margin controls まで分離済み。
-  - backend `__init__` では runtime state 初期化 / window 構築 / root-header-main composition / watch-margins composition / footer-attach composition / dialog runtime bundle pass-through / section bundle object-map assembly / section bundle signal wiring / dialog runtime 準備の helper 化まで進み、受け口も section bundle 前提へ揃いつつあり、残る大塊はさらに coordinator 寄せを継続する段階。
+  - widget build は facade + 責務別 module へ再分割済み。
+    - header
+    - main tab compose-input-display
+    - action-preview
+    - watch tab
+    - margins tab
+    - settings editor
+    - color-about window
+    - footer-status
+    - runtime state labels
+    - primary margin controls
+  - backend `__init__` は coordinator 寄せを継続中で、受け口も section bundle 前提へ揃いつつある。
+    - runtime state 初期化
+    - window 構築
+    - root-header-main composition
+    - watch-margins composition
+    - footer-attach composition
+    - dialog runtime bundle pass-through
+    - section bundle object-map assembly
+    - section bundle signal wiring
+    - dialog runtime 準備の helper 化
+    - object map の alias 列挙は registry module へ退避済み
+    - signal wiring の列挙は wiring module へ退避済み
+    - file/dialog flow・save-path access・margin text pure/GTK split・owner-driven sync orchestration・settings-color-about flow・watch UI flow・generic widget access・current state label refresh もそれぞれ grouped module へ退避し始めている
+    - 不要 unpack 縮小を含めて、残る大塊はさらに coordinator 寄せを継続する段階
 
 ### 4. legacy / compatibility 監査
 
@@ -200,9 +256,9 @@
 3. public handler 契約を壊さずに移動できる最小単位を決める。
 4. fallback / compatibility 項目を別紙で監査する。
 
-## 初手の実装候補
+## 初手 planning 時点の実装候補
 
-### 推奨: GTK backend の owner sync 群から着手する
+### 当初推奨: GTK backend の owner sync 群から着手する
 
 - 初手は preview 群よりも、GTK backend 側の owner sync 群をまとめる方を推奨する。
 - 対象の中心は `_sync_main_state_from_owner`、`_sync_input_state_from_owner`、`_sync_margins_state_from_owner`、`_sync_result_preview_from_owner`、`_sync_watch_state_from_owner` である。
@@ -214,12 +270,12 @@
 - 現在の backend では owner から widget への反映責務が散っており、ここを束ねるだけでも読みやすさの改善が大きい。
 - test も GTK runtime backend 側に多く存在し、focused validation を取りやすい。
 
-### 次点: preview 群の分離
+### 当初の次点: preview 群の分離
 
 - `MainWindow` の `build_result_preview_state` / `build_optimize_cli_preview` と、GTK backend の preview 反映をまとめて preview slice 化する案は次点とする。
 - ただし preview は `MainWindow` と backend の両側にまたがるため、初手としては owner sync 群より edit surface が広い。
 
-### 最初のブランチ候補
+### 当初のブランチ候補
 
 - `feature/gui-phase9-owner-sync-split`
 - `feature/gui-phase9-gtk-sync-refactor`
@@ -227,7 +283,7 @@
 
 ## GTK backend の UI 状態反映処理 分割表
 
-Phase9 の最初の実装 slice では、[src/harite/gui/adapters/gtk_backend.py](src/harite/gui/adapters/gtk_backend.py) の `_sync_*` 群を以下のように分ける。
+Phase9 の初手 planning 時点では、[src/harite/gui/adapters/gtk_backend.py](src/harite/gui/adapters/gtk_backend.py) の `_sync_*` 群を以下のように分ける想定だった。
 
 | 現在の関数 | 主責務 | 依存している owner 側状態 | 分割先の第一候補 | 初手対象 | 備考 |
 | --- | --- | --- | --- | --- | --- |
@@ -238,14 +294,14 @@ Phase9 の最初の実装 slice では、[src/harite/gui/adapters/gtk_backend.py
 | `_sync_result_preview_from_owner` | preview label / image / assist 表示を反映する | `build_result_preview_state()` の返り値 | `gtk_runtime_preview.py` | no | preview renderer と結び付きが強く、初手より 2 手目向き |
 | `_sync_feedback_from_owner` | status / error を footer feedback へ反映する | `status_phase` / `status_message` / `last_error` | `gtk_runtime_sync.py` の feedback sync 群 | yes | 小粒で切り出しやすく、他 sync 群の足場になる |
 
-## 初手で backend 本体に残すもの
+## 初手 planning 時点で backend 本体に残すもの
 
 - object registry (`self._objects` 等)
 - signal handler registry (`self._signal_handlers`)
 - `connect_signals` / `connect`
 - 分割先 module を呼ぶ薄い coordinator
 
-## 初手ではまだ動かさない想定だったもの
+## 初手 planning 時点ではまだ動かさない想定だったもの
 
 - `GtkRuntimeSignalBackend.__init__` の widget 全面構築
 - dialog proxy 群そのもの
