@@ -704,6 +704,59 @@ class _ColorDialogProxy:
             self._on_cancel(True)
 
 
+class _AboutDialogProxy:
+    """Minimal about dialog model used by runtime fallback backend."""
+
+    def __init__(
+        self,
+        window: Any | None = None,
+        title_label: Any | None = None,
+        version_label: Any | None = None,
+        description_label: Any | None = None,
+        credits_label: Any | None = None,
+        license_label: Any | None = None,
+    ) -> None:
+        self._visible = False
+        self._window = window
+        self._title_label = title_label
+        self._version_label = version_label
+        self._description_label = description_label
+        self._credits_label = credits_label
+        self._license_label = license_label
+
+    def show(self) -> None:
+        self._visible = True
+        if self._window is not None:
+            if hasattr(self._window, "show_all"):
+                self._window.show_all()
+            elif hasattr(self._window, "show"):
+                self._window.show()
+            if hasattr(self._window, "present"):
+                self._window.present()
+
+    def hide(self) -> None:
+        self._visible = False
+        if self._window is not None and hasattr(self._window, "hide"):
+            self._window.hide()
+
+    def is_visible(self) -> bool:
+        return self._visible
+
+    def set_content(self, content: dict[str, object]) -> None:
+        if self._title_label is not None and hasattr(self._title_label, "set_text"):
+            self._title_label.set_text(str(content.get("app_name", "Harite")))
+        if self._version_label is not None and hasattr(self._version_label, "set_text"):
+            self._version_label.set_text(f"Version: {content.get('version', '-')}")
+        if self._description_label is not None and hasattr(self._description_label, "set_text"):
+            self._description_label.set_text(str(content.get("description", "")))
+        if self._credits_label is not None and hasattr(self._credits_label, "set_text"):
+            self._credits_label.set_text(f"Credits: {content.get('credits', '-')}")
+        if self._license_label is not None and hasattr(self._license_label, "set_text"):
+            license_name = str(content.get("license_name", "LICENSE"))
+            license_path = str(content.get("license_path", "LICENSE"))
+            self._license_label.set_text(f"License: {license_name} ({license_path})")
+
+
 class GtkRuntimeSignalBackend:
     """Minimal GTK runtime backend that does not require Glade parsing.
 
@@ -1144,6 +1197,51 @@ class GtkRuntimeSignalBackend:
                 color_window.connect(
                     "delete-event",
                     lambda *_args: self._on_color_window_delete_event(),
+                )
+            about_window = gtk_module.Window(title="About Harite")
+            if hasattr(about_window, "set_default_size"):
+                about_window.set_default_size(420, 220)
+            if hasattr(about_window, "set_resizable"):
+                about_window.set_resizable(False)
+            about_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+            about_icon_label = gtk_module.Label(label="H")
+            about_title_label = gtk_module.Label(label="Harite")
+            about_version_label = gtk_module.Label(label="Version: -")
+            about_description_label = gtk_module.Label(label="")
+            about_credits_label = gtk_module.Label(label="Credits: -")
+            about_license_label = gtk_module.Label(label="License: -")
+            for label in (
+                about_icon_label,
+                about_title_label,
+                about_version_label,
+                about_description_label,
+                about_credits_label,
+                about_license_label,
+            ):
+                if hasattr(label, "set_xalign"):
+                    label.set_xalign(0.0)
+            about_close_btn = gtk_module.Button(label="About Close")
+            about_box.pack_start(about_icon_label, False, False, 0)
+            about_box.pack_start(about_title_label, False, False, 0)
+            about_box.pack_start(about_version_label, False, False, 0)
+            about_box.pack_start(about_description_label, False, False, 0)
+            about_box.pack_start(about_credits_label, False, False, 0)
+            about_box.pack_start(about_license_label, False, False, 0)
+            about_box.pack_start(about_close_btn, False, False, 0)
+            if hasattr(about_window, "add"):
+                about_window.add(about_box)
+            about_dialog_proxy = _AboutDialogProxy(
+                about_window,
+                about_title_label,
+                about_version_label,
+                about_description_label,
+                about_credits_label,
+                about_license_label,
+            )
+            if hasattr(about_window, "connect"):
+                about_window.connect(
+                    "delete-event",
+                    lambda *_args: self._on_about_window_delete_event(),
                 )
             srcdir_dialog_proxy = _SrcdirDialogProxy(
                 gtk_module,
@@ -1672,6 +1770,15 @@ class GtkRuntimeSignalBackend:
                 "lblColorState": color_state_label,
                 "btnColorApply": color_apply_btn,
                 "btnColorCancel": color_cancel_btn,
+                "AboutDialog": about_dialog_proxy,
+                "aboutWindow": about_window,
+                "lblAboutIcon": about_icon_label,
+                "lblAboutTitle": about_title_label,
+                "lblAboutVersion": about_version_label,
+                "lblAboutDescription": about_description_label,
+                "lblAboutCredits": about_credits_label,
+                "lblAboutLicense": about_license_label,
+                "btnAboutClose": about_close_btn,
                 "ImgOpenDialog": open_dialog_proxy,
                 "SrcdirDialog": srcdir_dialog_proxy,
                 **{object_name: settings_dialog_proxy for object_name in SETTINGS_DIALOG_OBJECT_ALIASES},
@@ -1785,8 +1892,10 @@ class GtkRuntimeSignalBackend:
                 lambda widget, *_args: self._on_apply_mode_toggled(widget, "per-monitor-auto-split"),
             )
             btn_set_color.connect("clicked", self._on_color_clicked)
+            btn_about.connect("clicked", self._on_about_clicked)
             color_apply_btn.connect("clicked", self._on_color_dialog_apply_clicked)
             color_cancel_btn.connect("clicked", self._on_color_dialog_cancel_clicked)
+            about_close_btn.connect("clicked", self._on_about_dialog_close_clicked)
             btn_open_srcdir_l.connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("L"))
             btn_open_srcdir_r.connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("R"))
             interval_spin.connect("value-changed", self._on_watch_interval_changed)
@@ -3128,6 +3237,26 @@ class GtkRuntimeSignalBackend:
             dialog.set_color(background_color)
         return background_color
 
+    def _refresh_about_dialog_from_getter(self) -> dict[str, object]:
+        getter = self._signal_handlers.get("on_get_about_dialog_info")
+        dialog = self._objects.get("AboutDialog")
+        content: dict[str, object] = {
+            "app_name": "Harite",
+            "version": "-",
+            "description": "壁紙最適化ツール",
+            "credits": "-",
+            "license_name": "LICENSE",
+            "license_path": "LICENSE",
+        }
+        if getter is not None:
+            try:
+                content.update(dict(getter()))
+            except Exception:
+                pass
+        if dialog is not None and hasattr(dialog, "set_content"):
+            dialog.set_content(content)
+        return content
+
     def _store_background_color_in_settings_dialog(self, color: str) -> None:
         dialog = self._objects.get("SettingsDialog")
         if dialog is None or not hasattr(dialog, "get_preferences_config") or not hasattr(dialog, "set_preferences_config"):
@@ -3504,6 +3633,42 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Color", state="opened")
         except Exception as exc:
             self._set_feedback(phase="Color", state="error", error=str(exc))
+
+    def _on_about_clicked(self, *_args: Any) -> None:
+        dialog = self._objects.get("AboutDialog")
+        callback = self._signal_handlers.get("on_about")
+        if dialog is None or not hasattr(dialog, "show"):
+            self._set_feedback(phase="About", state="handler-missing", error="about dialog not available")
+            return
+        try:
+            self._refresh_about_dialog_from_getter()
+            ok = True if callback is None else bool(callback())
+            if not ok:
+                self._set_feedback(phase="About", state="failed", error="about dialog open rejected")
+                return
+            dialog.show()
+            self._set_feedback(phase="About", state="opened")
+        except Exception as exc:
+            self._set_feedback(phase="About", state="error", error=str(exc))
+
+    def _on_about_dialog_close_clicked(self, *_args: Any) -> None:
+        self._close_about_dialog(False)
+
+    def _on_about_window_delete_event(self) -> bool:
+        self._close_about_dialog(True)
+        return True
+
+    def _close_about_dialog(self, destroyed: bool) -> None:
+        dialog = self._objects.get("AboutDialog")
+        if dialog is not None and hasattr(dialog, "hide"):
+            dialog.hide()
+        callback = self._signal_handlers.get("on_close_about_dialog")
+        if callback is not None:
+            try:
+                callback()
+            except Exception:
+                pass
+        self._set_feedback(phase="About", state="closed" if destroyed else "closed")
 
     def _on_color_dialog_apply_clicked(self, *_args: Any) -> None:
         dialog = self._objects.get("ColorDialog")

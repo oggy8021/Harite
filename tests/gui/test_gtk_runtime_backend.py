@@ -1262,6 +1262,31 @@ def test_runtime_backend_color_apply_updates_handler_and_feedback():
     assert backend.get_object("lblError").text == "Error: none"
 
 
+def test_runtime_backend_about_click_opens_dialog():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_about": lambda: True,
+            "on_get_about_dialog_info": lambda: {
+                "app_name": "Harite",
+                "version": "0.1.2",
+                "description": "壁紙最適化ツール（リファクタリング版）",
+                "credits": "Created by oggy8021",
+                "license_name": "MIT License",
+                "license_path": "LICENSE",
+            },
+        }
+    )
+
+    backend.get_object("btnAbout").click()
+
+    assert backend.get_object("AboutDialog").is_visible() is True
+    assert backend.get_object("lblAboutTitle").text == "Harite"
+    assert backend.get_object("lblAboutVersion").text == "Version: 0.1.2"
+    assert backend.get_object("lblStatus").text == "About: opened"
+
+
 def test_runtime_backend_save_click_passes_selected_path_to_handler():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
