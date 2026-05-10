@@ -26,8 +26,10 @@
 ### 2. Phase10 の前提
 
 - [src/harite/gui/app.py](src/harite/gui/app.py) は現時点でも skeleton 的な entrypoint であり、`--bind-ui-backend` / `--present-ui-window` と環境変数前提の技術寄り導線が残っている。
+- XFCE は current GUI の正本運用環境であり、ここでいう暫定は XFCE 対応そのものではない。
+- この option 群は GTK 採用一般で通常要求される常設導線というより、framework-neutral な `MainWindow` と optional GTK backend を橋渡しする bootstrap 導線である。
 - GUI 起動手順は README の常設ユーザー導線というより、manual validation や phase validation 文書に分散している。
-- したがって Phase10 では、単なる見た目 polish ではなく、GUI の起動方法そのものを利用者向けに再整理する必要がある。
+- したがって Phase10 では、単なる見た目 polish ではなく、owner の通常利用環境である XFCE を含む current GUI を追加 option なしで起動できる導線へ再整理する必要がある。
 
 ### 3. Phase11 の前提
 
@@ -100,6 +102,7 @@
 ### Phase10 の完了条件
 
 - GUI の通常起動導線が docs / 実装の両方で説明可能になっている。
+- owner の通常利用環境である XFCE で、`python -m harite.gui.app` 相当の既定導線から current GUI を追加 option なしに起動できる。
 - 補助線、色、アイコンの導入方針が定まり、最低限の一貫した visual rule ができている。
 - Phase11 に送る OS integration 論点が切り分けられている。
 
