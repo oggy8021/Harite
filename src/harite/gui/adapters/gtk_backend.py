@@ -1202,6 +1202,9 @@ class GtkRuntimeSignalBackend:
                 about_window.set_default_size(420, 220)
             if hasattr(about_window, "set_resizable"):
                 about_window.set_resizable(False)
+            about_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+            about_top_spacer = gtk_module.Label(label="")
+            about_bottom_spacer = gtk_module.Label(label="")
             about_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
             about_title_label = gtk_module.Label(label="Harite")
             about_version_label = gtk_module.Label(label="Version: -")
@@ -1230,8 +1233,11 @@ class GtkRuntimeSignalBackend:
             about_close_row.pack_start(about_close_btn, False, False, 0)
             about_close_row.pack_start(about_close_right, True, True, 0)
             about_box.pack_start(about_close_row, False, False, 0)
+            about_shell.pack_start(about_top_spacer, True, True, 0)
+            about_shell.pack_start(about_box, False, False, 0)
+            about_shell.pack_start(about_bottom_spacer, True, True, 0)
             if hasattr(about_window, "add"):
-                about_window.add(about_box)
+                about_window.add(about_shell)
             about_dialog_proxy = _AboutDialogProxy(
                 about_window,
                 about_title_label,
