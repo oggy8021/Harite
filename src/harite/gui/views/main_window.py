@@ -334,9 +334,7 @@ class MainWindow:
                 "margin text does not fit current margin area",
                 error="selected margin area is too small for margin text",
             )
-            self._log(
-                f"Margin text preflight failed: {margin_text_position} margin too small ({area_width}x{area_height})"
-            )
+            self._log(f"Margin text preflight failed: {margin_text_position} margin too small ({area_width}x{area_height})")
             return
 
         self._set_status(
@@ -344,9 +342,7 @@ class MainWindow:
             "margins",
             f"margin text ready in {describe_margin_text_position(margin_text_position)} position ({area_width}x{area_height})",
         )
-        self._log(
-            f"Margin text preflight ready: {describe_margin_text_position(margin_text_position)} position ({area_width}x{area_height})"
-        )
+        self._log(f"Margin text preflight ready: {describe_margin_text_position(margin_text_position)} position ({area_width}x{area_height})")
 
     def _effective_margin_text_max_lines(self) -> int:
         margin_text_mode = str(getattr(self.form_state, "embed_info", "none") or "none").lower()
