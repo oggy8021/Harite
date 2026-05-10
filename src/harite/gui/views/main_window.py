@@ -12,7 +12,10 @@ import os
 from pathlib import Path
 import sys
 
+from harite.core import DEFAULT_BACKGROUND_COLOR_HEX
 from harite.core import describe_embed_position as describe_margin_text_position
+from harite.core import is_background_color_literal
+from harite.core import normalize_background_color
 from harite.core import resolve_embed_margin_region as resolve_margin_text_region
 from harite.apply_settings import resolve_apply_settings
 from harite.config import load_config, save_config
@@ -86,6 +89,7 @@ class MainWindow:
             input_value="",
             resolution="1920x1080",
             output_dir=default_output_dir,
+            background_color=DEFAULT_BACKGROUND_COLOR_HEX,
             embed_position="bottom",
         )
         self.preferences = AppPreferences.defaults(default_plugin=self.plugin_name)
@@ -799,6 +803,7 @@ class MainWindow:
         self.form_state.align = optimize.align
         self.form_state.valign = optimize.valign
         self.form_state.quality = optimize.quality
+        self.form_state.background_color = normalize_background_color(optimize.background_color)
         self.form_state.embed_info = optimize.embed_info
         self.form_state.embed_text = optimize.embed_text
         self.form_state.embed_position = self._normalize_margin_text_position(optimize.embed_position)
@@ -835,6 +840,7 @@ class MainWindow:
         self.preferences.optimize.align = self.form_state.align
         self.preferences.optimize.valign = self.form_state.valign
         self.preferences.optimize.quality = self.form_state.quality
+        self.preferences.optimize.background_color = normalize_background_color(self.form_state.background_color)
         self.preferences.optimize.embed_info = self.form_state.embed_info
         self.preferences.optimize.embed_text = self.form_state.embed_text
         self.preferences.optimize.embed_position = self.form_state.embed_position
@@ -915,10 +921,23 @@ class MainWindow:
         self._log("About requested: planned")
         return False
 
-    def on_set_color(self) -> bool:
-        self._set_status("deferred", "color", "color picker is deferred to phase7")
-        self._log("Color picker requested: deferred to phase7")
-        return False
+    def on_set_color(self, color: str | None = None) -> bool:
+        if color is None:
+            self._set_status("idle", "color", "color dialog opened")
+            self._log("Color dialog opened")
+            return True
+
+        if not is_background_color_literal(color):
+            self._set_status("error", "color", "invalid background color", error="invalid background color")
+            self._log(f"Background color rejected: {color}")
+            return False
+
+        normalized = normalize_background_color(color)
+        self.form_state.background_color = normalized
+        self.preferences.optimize.background_color = normalized
+        self._set_status("success", "color", f"background color updated: {normalized}")
+        self._log(f"Background color updated: {normalized}")
+        return True
 
     def on_save_path_selected(self, save_path: str | None = None) -> bool:
         value = (save_path or "").strip()
@@ -1253,6 +1272,7 @@ class MainWindow:
             align=self.form_state.align,
             valign=self.form_state.valign,
             quality=self.form_state.quality,
+            background_color=self.form_state.background_color,
             embed_info=self.form_state.embed_info,
             embed_text=self.form_state.embed_text,
             embed_position=self.form_state.embed_position,

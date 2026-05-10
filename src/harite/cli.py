@@ -10,7 +10,7 @@ from click.core import ParameterSource
 
 from . import __version__
 from .apply_settings import resolve_apply_settings
-from .core import normalize_optimize_input_paths, optimize_wallpapers
+from .core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color, normalize_optimize_input_paths, optimize_wallpapers
 from .plugins import registry as plugin_registry
 from .config import load_config
 from .optimize_settings import is_auto_value, resolve_optimize_display_settings
@@ -224,6 +224,12 @@ def optimize(
         help="JPEG quality",
         rich_help_panel="詳細調整",
     ),
+    background_color: str = typer.Option(
+        DEFAULT_BACKGROUND_COLOR_HEX,
+        "--background-color",
+        help="Background color as #RRGGBB",
+        rich_help_panel="詳細調整",
+    ),
     random_seed: Optional[int] = typer.Option(
         None,
         "--random-seed",
@@ -353,6 +359,11 @@ def optimize(
     eff_align = parse_position_pair(resolve_option_value("align", align, cfg, ctx) or "center", axis="align")
     eff_valign = parse_position_pair(resolve_option_value("valign", valign, cfg, ctx) or "center", axis="valign")
     eff_quality = int(resolve_option_value("quality", quality, cfg, ctx))
+    raw_background_color = resolve_option_value("background_color", background_color, cfg, ctx)
+    if not is_background_color_literal(raw_background_color):
+        typer.echo("--background-color must be a hex RGB value like #1E1E1E")
+        raise typer.Exit(code=2)
+    eff_background_color = normalize_background_color(raw_background_color)
     eff_random_seed = resolve_option_value("random_seed", random_seed, cfg, ctx)
     eff_margins = resolve_option_value("margins", margins, cfg, ctx)
     eff_embed_text = resolve_option_value("embed_text", embed_text, cfg, ctx)
@@ -376,6 +387,7 @@ def optimize(
         align=eff_align,
         valign=eff_valign,
         embed_info=embed_info,
+        background_color=eff_background_color,
         embed_text=eff_embed_text,
         embed_position=embed_position,
         embed_max_lines=eff_embed_max_lines,

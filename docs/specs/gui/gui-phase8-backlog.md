@@ -118,6 +118,8 @@
 
 - 目的:
   - 背景色を user selectable な機能として GUI に実装する。
+- 2026-05-10 補記:
+  - `Color` は command bar の visible control として復帰し、background color の選択値が optimize state / settings JSON / CLI preview に浸透する形まで実装済み。
 - 先に決めること:
   - `Color` はその場限りの即時指定ではなく、watch と同様に設定値として浸透させ、JSON に保存する
   - 置き場の第一案は `Color` `Prefs` `About` の並びとする

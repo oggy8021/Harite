@@ -47,15 +47,27 @@ def test_on_about_is_planned():
     assert window.status_message == "about dialog is planned"
 
 
-def test_on_set_color_is_planned():
+def test_on_set_color_opens_dialog_state():
     window = MainWindow()
 
     ok = window.on_set_color()
 
-    assert ok is False
-    assert window.status_level == "deferred"
+    assert ok is True
+    assert window.status_level == "idle"
     assert window.status_phase == "color"
-    assert window.status_message == "color picker is deferred to phase7"
+    assert window.status_message == "color dialog opened"
+
+
+def test_on_set_color_updates_background_color():
+    window = MainWindow()
+
+    ok = window.on_set_color("#224466")
+
+    assert ok is True
+    assert window.form_state.background_color == "#224466"
+    assert window.status_level == "success"
+    assert window.status_phase == "color"
+    assert window.status_message == "background color updated: #224466"
 
 
 def test_save_path_selection_and_cancel_have_distinct_meanings():
