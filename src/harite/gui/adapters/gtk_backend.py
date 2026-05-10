@@ -11,6 +11,12 @@ from pathlib import Path
 from typing import Any, Callable
 
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color
+from harite.gui.adapters.gtk_runtime_preview import build_preview_crop_boxes
+from harite.gui.adapters.gtk_runtime_preview import clear_preview_widget
+from harite.gui.adapters.gtk_runtime_preview import get_gdkpixbuf_module
+from harite.gui.adapters.gtk_runtime_preview import preview_target_size
+from harite.gui.adapters.gtk_runtime_preview import set_preview_widget
+from harite.gui.adapters.gtk_runtime_preview import sync_result_preview_from_owner
 from harite.gui.adapters.gtk_runtime_sync import build_margin_settings_preview
 from harite.gui.adapters.gtk_runtime_sync import parse_margin_values
 from harite.gui.adapters.gtk_runtime_sync import refresh_margins_controls
@@ -2213,11 +2219,15 @@ class GtkRuntimeSignalBackend:
         self._sync_watch_state_from_owner(owner)
         self._sync_feedback_from_owner(owner)
 
-    def _sync_input_preview_state_from_owner(self, owner: Any, *, include_feedback: bool = False) -> None:
-        self._sync_input_state_from_owner(owner)
+    def _sync_preview_state_from_owner(self, owner: Any, *, include_input: bool = False, include_feedback: bool = False) -> None:
+        if include_input:
+            self._sync_input_state_from_owner(owner)
         self._sync_result_preview_from_owner(owner)
         if include_feedback:
             self._sync_feedback_from_owner(owner)
+
+    def _sync_input_preview_state_from_owner(self, owner: Any, *, include_feedback: bool = False) -> None:
+        self._sync_preview_state_from_owner(owner, include_input=True, include_feedback=include_feedback)
 
     def _sync_margins_state_with_feedback_from_owner(self, owner: Any) -> None:
         self._sync_margins_state_from_owner(owner)
@@ -2231,89 +2241,16 @@ class GtkRuntimeSignalBackend:
         self._sync_watch_state_from_owner(owner)
 
     def _get_gdkpixbuf_module(self) -> Any | None:
-        try:
-            import gi
-
-            gi.require_version("GdkPixbuf", "2.0")
-            from gi.repository import GdkPixbuf
-
-            return GdkPixbuf
-        except Exception:
-            return None
+        return get_gdkpixbuf_module(self)
 
     def _clear_preview_widget(self, object_name: str, message: str) -> None:
-        widget = self._objects.get(object_name)
-        if widget is None:
-            return
-        if hasattr(widget, "set_text"):
-            widget.set_text(message)
-            return
-        if hasattr(widget, "set_from_pixbuf"):
-            widget.set_from_pixbuf(None)
+        clear_preview_widget(self, object_name, message)
 
     def _preview_target_size(self) -> tuple[int, int]:
-        fallback_width = 160
-        fallback_height = 90
-
-        container = self._objects.get("boxPreviewImagesRow") or self._objects.get("boxPreviewSection")
-        if container is None:
-            return fallback_width, fallback_height
-
-        allocated_width = None
-        if hasattr(container, "get_allocated_width"):
-            try:
-                allocated_width = int(container.get_allocated_width())
-            except Exception:
-                allocated_width = None
-        elif hasattr(container, "allocation"):
-            allocation = getattr(container, "allocation", None)
-            allocated_width = int(getattr(allocation, "width", 0) or 0)
-
-        if not allocated_width or allocated_width <= 0:
-            return fallback_width, fallback_height
-
-        # Keep each preview at roughly half of the preview row while preserving a 16:9 frame.
-        target_width = max(120, min(320, int((allocated_width - 6) * 0.48)))
-        target_height = max(68, int(round(target_width * 9 / 16)))
-        return target_width, target_height
+        return preview_target_size(self)
 
     def _set_preview_widget(self, object_name: str, source_path: Path | None, *, crop_box: tuple[int, int, int, int] | None = None) -> None:
-        widget = self._objects.get(object_name)
-        if widget is None:
-            return
-        if source_path is None:
-            self._clear_preview_widget(object_name, f"{object_name}: not-ready")
-            return
-
-        if hasattr(widget, "set_text"):
-            widget.set_text(str(source_path.name))
-            return
-
-        target_width, target_height = self._preview_target_size()
-        if hasattr(widget, "set_size_request"):
-            try:
-                widget.set_size_request(target_width, target_height)
-            except Exception:
-                pass
-
-        gdkpixbuf = self._get_gdkpixbuf_module()
-        if gdkpixbuf is not None and hasattr(widget, "set_from_pixbuf"):
-            try:
-                pixbuf = gdkpixbuf.Pixbuf.new_from_file(str(source_path))
-                if crop_box is not None:
-                    x, y, width, height = crop_box
-                    pixbuf = pixbuf.new_subpixbuf(int(x), int(y), int(width), int(height))
-                scaled = pixbuf.scale_simple(target_width, target_height, gdkpixbuf.InterpType.BILINEAR)
-                widget.set_from_pixbuf(scaled or pixbuf)
-                return
-            except Exception:
-                pass
-
-        if hasattr(widget, "set_from_file"):
-            try:
-                widget.set_from_file(str(source_path))
-            except Exception:
-                pass
+        set_preview_widget(self, object_name, source_path, crop_box=crop_box)
 
     def _build_preview_crop_boxes(
         self,
@@ -2322,74 +2259,10 @@ class GtkRuntimeSignalBackend:
         l_display: tuple[int, int] | None,
         r_display: tuple[int, int] | None,
     ) -> tuple[tuple[int, int, int, int], tuple[int, int, int, int]] | None:
-        try:
-            from PIL import Image
-
-            with Image.open(source_path) as image:
-                comp_width, comp_height = image.size
-        except Exception:
-            return None
-
-        left_width = int(l_display[0]) if l_display is not None else 1
-        right_width = int(r_display[0]) if r_display is not None else 1
-        total_width = max(1, left_width + right_width)
-        split_x = int(round((left_width / total_width) * comp_width))
-        split_x = max(1, min(comp_width - 1, split_x)) if comp_width > 1 else comp_width
-        return (
-            (0, 0, split_x, comp_height),
-            (split_x, 0, max(1, comp_width - split_x), comp_height),
-        )
+        return build_preview_crop_boxes(source_path, l_display=l_display, r_display=r_display)
 
     def _sync_result_preview_from_owner(self, owner: Any) -> None:
-        builder = getattr(owner, "build_result_preview_state", None)
-        if not callable(builder):
-            self._clear_preview_widget("imgPreviewL", "Preview L: not-ready")
-            self._clear_preview_widget("imgPreviewR", "Preview R: not-ready")
-            self._set_label_text("lblPreviewAssignL", "L display <- -")
-            self._set_label_text("lblPreviewAssignR", "R display <- -")
-            self._set_label_text("lblPreviewResultL", "Result: not-ready")
-            self._set_label_text("lblPreviewResultR", "Result: not-ready")
-            self._set_label_text("lblPreviewState", "Preview: not-ready")
-            self._set_label_text("lblPreviewSource", "Preview source: -")
-            self._set_label_text("lblPreviewAssist", "Assist: not-ready")
-            return
-
-        state = builder()
-        source_path = getattr(state, "source_file", None)
-        if source_path is None:
-            self._clear_preview_widget("imgPreviewL", "Preview L: not-ready")
-            self._clear_preview_widget("imgPreviewR", "Preview R: not-ready")
-            self._set_label_text("lblPreviewAssignL", "L display <- -")
-            self._set_label_text("lblPreviewAssignR", "R display <- -")
-            self._set_label_text("lblPreviewResultL", "Result: not-ready")
-            self._set_label_text("lblPreviewResultR", "Result: not-ready")
-            self._set_label_text("lblPreviewState", "Preview: not-ready")
-            self._set_label_text("lblPreviewSource", "Preview source: -")
-            self._set_label_text("lblPreviewAssist", "Assist: not-ready")
-            return
-
-        mode = str(getattr(state, "apply_mode", "single-file") or "single-file").strip().lower()
-        self._set_label_text("lblPreviewAssignL", str(getattr(state, "l_assignment", "") or "L display <- -"))
-        self._set_label_text("lblPreviewAssignR", str(getattr(state, "r_assignment", "") or "R display <- -"))
-        self._set_label_text("lblPreviewResultL", str(getattr(state, "l_result_note", "") or "Result: not-ready"))
-        self._set_label_text("lblPreviewResultR", str(getattr(state, "r_result_note", "") or "Result: not-ready"))
-        self._set_label_text("lblPreviewSource", f"Preview source: {Path(source_path).name}")
-        self._set_label_text("lblPreviewAssist", str(getattr(state, "assist_summary", "") or "Assist: not-ready"))
-        if mode == "per-monitor-auto-split":
-            boxes = self._build_preview_crop_boxes(
-                Path(source_path),
-                l_display=getattr(state, "l_display", None),
-                r_display=getattr(state, "r_display", None),
-            )
-            self._set_label_text("lblPreviewState", "Preview: pseudo auto-split by display widths")
-            if boxes is not None:
-                self._set_preview_widget("imgPreviewL", Path(source_path), crop_box=boxes[0])
-                self._set_preview_widget("imgPreviewR", Path(source_path), crop_box=boxes[1])
-                return
-
-        self._set_label_text("lblPreviewState", "Preview: same image on both displays")
-        self._set_preview_widget("imgPreviewL", Path(source_path))
-        self._set_preview_widget("imgPreviewR", Path(source_path))
+        sync_result_preview_from_owner(self, owner)
 
     def _get_glib_module(self) -> Any | None:
         glib = getattr(self._gtk, "GLib", None)
@@ -2525,7 +2398,7 @@ class GtkRuntimeSignalBackend:
             callback(text)
             owner = self._get_handler_owner("on_change_input_text")
             if owner is not None:
-                self._sync_result_preview_from_owner(owner)
+                self._sync_preview_state_from_owner(owner)
             self._set_feedback(phase="Input", state="updated")
         except Exception as exc:
             self._set_feedback(phase="Input", state="failed", error=str(exc))
@@ -3305,13 +3178,13 @@ class GtkRuntimeSignalBackend:
             owner = self._get_handler_owner("on_optimize")
             if ok:
                 if owner is not None:
-                    self._sync_result_preview_from_owner(owner)
+                    self._sync_preview_state_from_owner(owner)
                 self._set_feedback(phase="Optimize", state="ok")
                 self._set_label_text("lblOptimizeResult", "Optimize result: success")
                 self._set_label_text("lblApplyTarget", "Apply target: ready")
             else:
                 if owner is not None:
-                    self._sync_result_preview_from_owner(owner)
+                    self._sync_preview_state_from_owner(owner)
                 self._set_feedback(
                     phase="Optimize",
                     state="failed",
@@ -3344,7 +3217,7 @@ class GtkRuntimeSignalBackend:
             callback(mode)
             owner = self._get_handler_owner("on_change_apply_mode")
             if owner is not None:
-                self._sync_result_preview_from_owner(owner)
+                self._sync_preview_state_from_owner(owner)
             self._set_feedback(phase="ApplyMode", state="updated")
         except Exception as exc:
             self._set_feedback(phase="ApplyMode", state="error", error=str(exc))
