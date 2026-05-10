@@ -128,7 +128,10 @@
 ### GTK backend 側
 
 - `gtk_backend.py`: backend coordinator / object registry / signal wiring
-- `gtk_runtime_builders.py`: widget section builder
+- `gtk_runtime_builders.py`: widget builder facade / re-export
+- `gtk_layout_builders.py`: layout / shell / footer builder
+- `gtk_tab_builders.py`: main tab / watch tab / margins tab builder
+- `gtk_dialog_builders.py`: settings / color / about builder
 - `gtk_runtime_sync.py`: owner-to-widget sync 群
 - `gtk_runtime_dialogs.py`: save/open/settings/color/about dialog coordinators
 - `gtk_runtime_preview.py`: preview render helper
@@ -148,9 +151,9 @@
 - GTK backend の preview 反映 / 描画 helper は [src/harite/gui/adapters/gtk_runtime_preview.py](src/harite/gui/adapters/gtk_runtime_preview.py) へ切り出し済み。
 - GTK backend の dialog proxy 群は [src/harite/gui/adapters/gtk_runtime_dialogs.py](src/harite/gui/adapters/gtk_runtime_dialogs.py) へ切り出し済み。
 - GTK backend の watch timer / watch bridge は [src/harite/gui/adapters/gtk_runtime_watch.py](src/harite/gui/adapters/gtk_runtime_watch.py) へ切り出し済み。
-- GTK backend の widget build は [src/harite/gui/adapters/gtk_runtime_builders.py](src/harite/gui/adapters/gtk_runtime_builders.py) へ段階的に切り出し済みで、header / action-preview cluster / watch tab / margins tab が builder 化済み。
+- GTK backend の widget build は [src/harite/gui/adapters/gtk_runtime_builders.py](src/harite/gui/adapters/gtk_runtime_builders.py) を facade としつつ、[src/harite/gui/adapters/gtk_layout_builders.py](src/harite/gui/adapters/gtk_layout_builders.py) / [src/harite/gui/adapters/gtk_tab_builders.py](src/harite/gui/adapters/gtk_tab_builders.py) / [src/harite/gui/adapters/gtk_dialog_builders.py](src/harite/gui/adapters/gtk_dialog_builders.py) へ再分割済み。header / main tab compose-input-display / action-preview cluster / watch tab / margins tab / settings editor / color-about window / footer-status / runtime state labels / primary margin controls が builder 化済み。
 
-現時点の GTK backend 本体 [src/harite/gui/adapters/gtk_backend.py](src/harite/gui/adapters/gtk_backend.py) は、object registry・signal wiring・一部未分離 section build・handler 群の coordinator としての比重が以前より高くなっている。
+現時点の GTK backend 本体 [src/harite/gui/adapters/gtk_backend.py](src/harite/gui/adapters/gtk_backend.py) は、object registry・signal wiring・dialog runtime coordination・handler 群の coordinator としての比重が以前より高くなっている。`__init__` では object map 組み立て、signal 配線、dialog runtime 準備の helper 化まで進み、一段薄い coordinator に寄ってきている。
 
 ## Workstream
 
@@ -180,7 +183,8 @@
   - GTK backend 分割方針メモ
 - 現在地:
   - sync / preview / dialog / watch は grouped module 化済み。
-  - widget build は section builder 化を継続中で、header / action-preview / watch tab / margins tab まで分離済み。
+  - widget build は facade + 責務別 module へ再分割済みで、header / main tab compose-input-display / action-preview / watch tab / margins tab / settings editor / color-about window / footer-status / runtime state labels / primary margin controls まで分離済み。
+  - backend `__init__` では object map 組み立て / signal wiring / dialog runtime 準備の helper 化まで進み、残る大塊はさらに coordinator 寄せを継続する段階。
 
 ### 4. legacy / compatibility 監査
 
@@ -268,10 +272,18 @@ Phase9 の最初の実装 slice では、[src/harite/gui/adapters/gtk_backend.py
 2. watch timer / watch bridge を watch module へ移した。
 3. widget build の一部を builder module へ移し、header / action-preview cluster / watch tab / margins tab を section builder 化した。
 
+### feature/gui-phase9-gtk-builder-sections
+
+1. main tab の compose / input / display 構築を builder module へ移した。
+2. settings editor / color window / about window / footer-status row を builder module へ移した。
+3. runtime state labels と primary margin controls を builder module へ移し、`gtk_backend.py` の `__init__` をさらに coordinator 寄りへ寄せた。
+4. `gtk_runtime_builders.py` の集中を解くため、layout / tab / dialog builder へ再分割し、`gtk_runtime_builders.py` は互換 facade に切り替えた。
+5. backend 側の object map 組み立て / signal wiring / dialog runtime 準備を helper 化し、`__init__` の残塊整理を継続した。
+
 ### 現在の残件
 
 1. `GtkRuntimeSignalBackend.__init__` に残る未分離 section build をどう分けるかを決める。
-2. `_on_*` handler 群の grouped module 化を行うか、backend coordinator に残すかを判断する。
+2. `GtkRuntimeSignalBackend.__init__` に残る coordinator 以外の塊を、helper 化で済ませるか module 化するかを決める。
 3. `MainWindow` の preview 以外の slice をどこまで Phase9 で進めるかを確定する。
 
 ## 非目的

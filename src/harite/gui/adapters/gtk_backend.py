@@ -12,8 +12,17 @@ from typing import Any, Callable
 
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color
 from harite.gui.adapters.gtk_runtime_builders import build_action_cluster_section
+from harite.gui.adapters.gtk_runtime_builders import build_about_dialog_section
+from harite.gui.adapters.gtk_runtime_builders import build_center_body_section
+from harite.gui.adapters.gtk_runtime_builders import build_centered_page_shell
+from harite.gui.adapters.gtk_runtime_builders import build_color_dialog_section
+from harite.gui.adapters.gtk_runtime_builders import build_footer_section
 from harite.gui.adapters.gtk_runtime_builders import build_header_section
+from harite.gui.adapters.gtk_runtime_builders import build_main_tab_section
 from harite.gui.adapters.gtk_runtime_builders import build_margins_tab_section
+from harite.gui.adapters.gtk_runtime_builders import build_primary_margin_controls
+from harite.gui.adapters.gtk_runtime_builders import build_runtime_state_labels
+from harite.gui.adapters.gtk_runtime_builders import build_settings_section
 from harite.gui.adapters.gtk_runtime_builders import build_watch_tab_section
 from harite.gui.adapters.gtk_runtime_dialogs import AboutDialogProxy as _AboutDialogProxy
 from harite.gui.adapters.gtk_runtime_dialogs import ColorDialogProxy as _ColorDialogProxy
@@ -135,118 +144,43 @@ class GtkRuntimeSignalBackend:
             flow_legend_label = header_widgets["flow_legend_label"]
             optimize_btn = header_widgets["optimize_btn"]
 
-            top_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
-            top_margin_label = gtk_module.Label(label="Top margin (px)")
-            if hasattr(top_margin_label, "set_xalign"):
-                top_margin_label.set_xalign(0.0)
-            top_margin_spin = gtk_module.SpinButton()
-            self._configure_spin_button(top_margin_spin, minimum=0, maximum=250, step=1, page=10)
+            primary_margin_controls = build_primary_margin_controls(
+                gtk_module,
+                configure_spin_button=self._configure_spin_button,
+            )
+            top_margin_label = primary_margin_controls["top_margin_label"]
+            top_margin_spin = primary_margin_controls["top_margin_spin"]
+            left_margin_label = primary_margin_controls["left_margin_label"]
+            left_margin_spin = primary_margin_controls["left_margin_spin"]
 
-            # Row 1: center body
-            center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=10)
-            root.pack_start(center_row, True, True, 0)
+            center_body_widgets = build_center_body_section(gtk_module, root)
+            center_row = center_body_widgets["center_row"]
+            command_tabs = center_body_widgets["command_tabs"]
 
-            left_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-            left_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            left_margin_label = gtk_module.Label(label="Left margin (px)")
-            if hasattr(left_margin_label, "set_xalign"):
-                left_margin_label.set_xalign(0.0)
-            left_margin_spin = gtk_module.SpinButton()
-            self._configure_spin_button(left_margin_spin, minimum=0, maximum=500, step=1, page=10)
-
-            command_tabs = gtk_module.Notebook()
-            center_row.pack_start(command_tabs, True, True, 0)
-
-            def _build_centered_page(content: Any) -> Any:
-                page_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-                top_spacer = gtk_module.Label(label="")
-                page_shell.pack_start(top_spacer, True, True, 0)
-                center_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-                page_shell.pack_start(center_shell, False, False, 0)
-                left_spacer = gtk_module.Label(label="")
-                right_spacer = gtk_module.Label(label="")
-                center_shell.pack_start(left_spacer, True, True, 0)
-                center_shell.pack_start(content, False, False, 0)
-                center_shell.pack_start(right_spacer, True, True, 0)
-                bottom_spacer = gtk_module.Label(label="")
-                page_shell.pack_start(bottom_spacer, True, True, 0)
-                return page_shell
-
-            main_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
-            main_section_label = gtk_module.Label(label="Main")
-            main_page_shell = _build_centered_page(main_col)
-
-            compose_grid = gtk_module.Grid()
-            if hasattr(compose_grid, "set_column_spacing"):
-                compose_grid.set_column_spacing(32)
-            if hasattr(compose_grid, "set_row_spacing"):
-                compose_grid.set_row_spacing(12)
-            main_col.pack_start(compose_grid, True, True, 0)
-
-            left_display_grid = gtk_module.Grid()
-            right_display_grid = gtk_module.Grid()
-            if hasattr(left_display_grid, "set_column_spacing"):
-                left_display_grid.set_column_spacing(6)
-            if hasattr(left_display_grid, "set_row_spacing"):
-                left_display_grid.set_row_spacing(8)
-            if hasattr(right_display_grid, "set_column_spacing"):
-                right_display_grid.set_column_spacing(6)
-            if hasattr(right_display_grid, "set_row_spacing"):
-                right_display_grid.set_row_spacing(8)
-            tgl_upper_l = gtk_module.ToggleButton(label="Top-L")
-            tgl_upper_r = gtk_module.ToggleButton(label="Top-R")
-            tgl_lower_l = gtk_module.ToggleButton(label="Bottom-L")
-            tgl_lower_r = gtk_module.ToggleButton(label="Bottom-R")
-            tgl_push_left_l = gtk_module.ToggleButton(label="Left-L")
-            tgl_push_right_l = gtk_module.ToggleButton(label="Right-L")
-            btn_get_img_l = gtk_module.Button(label="Open-L")
-            tgl_push_left_r = gtk_module.ToggleButton(label="Left-R")
-            tgl_push_right_r = gtk_module.ToggleButton(label="Right-R")
-            btn_get_img_r = gtk_module.Button(label="Open-R")
-
-            if hasattr(left_display_grid, "attach"):
-                left_display_grid.attach(tgl_upper_l, 1, 0, 1, 1)
-                left_display_grid.attach(tgl_push_left_l, 0, 1, 1, 1)
-                left_display_grid.attach(btn_get_img_l, 1, 1, 1, 1)
-                left_display_grid.attach(tgl_push_right_l, 2, 1, 1, 1)
-                left_display_grid.attach(tgl_lower_l, 1, 2, 1, 1)
-
-            if hasattr(compose_grid, "attach"):
-                compose_grid.attach(left_display_grid, 0, 0, 1, 1)
-
-            input_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            input_entry_l = gtk_module.Label(label="")
-            if hasattr(input_entry_l, "set_xalign"):
-                input_entry_l.set_xalign(0.0)
-            btn_clr_path_l = gtk_module.Button(label="Clear-L")
-            input_row_l.pack_start(input_entry_l, True, True, 0)
-            input_row_l.pack_start(btn_clr_path_l, False, False, 0)
-            if hasattr(compose_grid, "attach"):
-                compose_grid.attach(input_row_l, 0, 1, 1, 1)
-
-            if hasattr(right_display_grid, "attach"):
-                right_display_grid.attach(tgl_upper_r, 1, 0, 1, 1)
-                right_display_grid.attach(tgl_push_left_r, 0, 1, 1, 1)
-                right_display_grid.attach(btn_get_img_r, 1, 1, 1, 1)
-                right_display_grid.attach(tgl_push_right_r, 2, 1, 1, 1)
-                right_display_grid.attach(tgl_lower_r, 1, 2, 1, 1)
-
-            if hasattr(compose_grid, "attach"):
-                compose_grid.attach(right_display_grid, 1, 0, 1, 1)
-
-            input_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            input_entry_r = gtk_module.Label(label="")
-            if hasattr(input_entry_r, "set_xalign"):
-                input_entry_r.set_xalign(0.0)
-            btn_clr_path_r = gtk_module.Button(label="Clear-R")
-            input_row_r.pack_start(input_entry_r, True, True, 0)
-            input_row_r.pack_start(btn_clr_path_r, False, False, 0)
-            if hasattr(compose_grid, "attach"):
-                compose_grid.attach(input_row_r, 1, 1, 1, 1)
-
-            pick_state_label = gtk_module.Label(label="")
-            if hasattr(pick_state_label, "set_xalign"):
-                pick_state_label.set_xalign(0.0)
+            main_widgets = build_main_tab_section(gtk_module)
+            main_col = main_widgets["main_col"]
+            main_section_label = main_widgets["main_section_label"]
+            main_page_shell = build_centered_page_shell(gtk_module, main_col)
+            compose_grid = main_widgets["compose_grid"]
+            left_display_grid = main_widgets["left_display_grid"]
+            right_display_grid = main_widgets["right_display_grid"]
+            tgl_upper_l = main_widgets["tgl_upper_l"]
+            tgl_upper_r = main_widgets["tgl_upper_r"]
+            tgl_lower_l = main_widgets["tgl_lower_l"]
+            tgl_lower_r = main_widgets["tgl_lower_r"]
+            tgl_push_left_l = main_widgets["tgl_push_left_l"]
+            tgl_push_right_l = main_widgets["tgl_push_right_l"]
+            btn_get_img_l = main_widgets["btn_get_img_l"]
+            tgl_push_left_r = main_widgets["tgl_push_left_r"]
+            tgl_push_right_r = main_widgets["tgl_push_right_r"]
+            btn_get_img_r = main_widgets["btn_get_img_r"]
+            input_row_l = main_widgets["input_row_l"]
+            input_entry_l = main_widgets["input_entry_l"]
+            btn_clr_path_l = main_widgets["btn_clr_path_l"]
+            input_row_r = main_widgets["input_row_r"]
+            input_entry_r = main_widgets["input_entry_r"]
+            btn_clr_path_r = main_widgets["btn_clr_path_r"]
+            pick_state_label = main_widgets["pick_state_label"]
 
             default_apply_mode = _default_apply_mode()
             action_widgets = build_action_cluster_section(gtk_module, compose_grid, default_apply_mode=default_apply_mode)
@@ -277,270 +211,66 @@ class GtkRuntimeSignalBackend:
             preview_assist_label = action_widgets["preview_assist_label"]
             preview_section_label = action_widgets["preview_section_label"]
 
-            do_it_plan_label = gtk_module.Label(label="Debug: apply is immediate")
-            if hasattr(do_it_plan_label, "set_xalign"):
-                do_it_plan_label.set_xalign(0.0)
-
-            save_path_state_label = gtk_module.Label(label="Save path: idle")
-            if hasattr(save_path_state_label, "set_xalign"):
-                save_path_state_label.set_xalign(0.0)
-
-            save_target_label = gtk_module.Label(label="Save target: not-selected")
-            if hasattr(save_target_label, "set_xalign"):
-                save_target_label.set_xalign(0.0)
-
-            priority_note_label = gtk_module.Label(
-                label="Rule: margins define area; align/valign act inside it"
-            )
-            if hasattr(priority_note_label, "set_xalign"):
-                priority_note_label.set_xalign(0.0)
-
-            style_legend_label = gtk_module.Label(label="Current behavior: margins are global to the composite canvas")
-            if hasattr(style_legend_label, "set_xalign"):
-                style_legend_label.set_xalign(0.0)
-
-            current_state_section_label = gtk_module.Label(label="Main Window Current alignment:")
-            if hasattr(current_state_section_label, "set_xalign"):
-                current_state_section_label.set_xalign(0.0)
-
-            current_margins_label = gtk_module.Label(label="margins=0,0,0,0")
-            if hasattr(current_margins_label, "set_xalign"):
-                current_margins_label.set_xalign(0.0)
-
-            current_left_label = gtk_module.Label(label="L: align=center valign=center")
-            if hasattr(current_left_label, "set_xalign"):
-                current_left_label.set_xalign(0.0)
-
-            current_right_label = gtk_module.Label(label="R: align=center valign=center")
-            if hasattr(current_right_label, "set_xalign"):
-                current_right_label.set_xalign(0.0)
+            state_labels = build_runtime_state_labels(gtk_module)
+            do_it_plan_label = state_labels["do_it_plan_label"]
+            save_path_state_label = state_labels["save_path_state_label"]
+            save_target_label = state_labels["save_target_label"]
+            priority_note_label = state_labels["priority_note_label"]
+            style_legend_label = state_labels["style_legend_label"]
+            current_state_section_label = state_labels["current_state_section_label"]
+            current_margins_label = state_labels["current_margins_label"]
+            current_left_label = state_labels["current_left_label"]
+            current_right_label = state_labels["current_right_label"]
 
             command_tabs.append_page(main_page_shell, main_section_label)
 
-            right_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-            right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            right_margin_label = gtk_module.Label(label="Right margin (px)")
-            if hasattr(right_margin_label, "set_xalign"):
-                right_margin_label.set_xalign(0.0)
-            right_margin_spin = gtk_module.SpinButton()
-            self._configure_spin_button(right_margin_spin, minimum=0, maximum=500, step=1, page=10)
-
-            bottom_margin_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
-            bottom_margin_label = gtk_module.Label(label="Bottom margin (px)")
-            if hasattr(bottom_margin_label, "set_xalign"):
-                bottom_margin_label.set_xalign(0.0)
-            bottom_margin_spin = gtk_module.SpinButton()
-            self._configure_spin_button(bottom_margin_spin, minimum=0, maximum=250, step=1, page=10)
-
-            open_dialog_proxy = _OpenDialogProxy(
-                gtk_module,
-                window,
-                self._on_open_dialog_confirmed,
-                self._on_open_dialog_canceled,
-            )
-            save_path_dialog_proxy = _SavePathDialogProxy(
-                gtk_module,
-                window,
-                self._on_save_path_filename_changed,
-                self._on_native_save_path_confirmed,
-                self._on_native_save_path_canceled,
-            )
-            prefs_window = gtk_module.Window(title="Settings")
-            if hasattr(prefs_window, "set_default_size"):
-                prefs_window.set_default_size(520, 420)
-            if hasattr(prefs_window, "set_resizable"):
-                prefs_window.set_resizable(True)
-            settings_dialog_proxy = _SettingsDialogProxy(prefs_window)
-            if hasattr(prefs_window, "connect"):
-                prefs_window.connect(
-                    "delete-event",
-                    lambda *_args: self._on_preferences_window_delete_event(),
-                )
-            color_window = gtk_module.Window(title="Background Color")
-            if hasattr(color_window, "set_default_size"):
-                color_window.set_default_size(360, 140)
-            if hasattr(color_window, "set_resizable"):
-                color_window.set_resizable(False)
-            color_value_entry = gtk_module.Entry()
-            color_state_label = gtk_module.Label(label=f"Color: {DEFAULT_BACKGROUND_COLOR_HEX}")
-            if hasattr(color_state_label, "set_xalign"):
-                color_state_label.set_xalign(0.0)
-            color_apply_btn = gtk_module.Button(label="Color Apply")
-            color_cancel_btn = gtk_module.Button(label="Color Cancel")
-            color_editor_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            color_editor_title = gtk_module.Label(label="Background color (#RRGGBB)")
-            if hasattr(color_editor_title, "set_xalign"):
-                color_editor_title.set_xalign(0.0)
-            color_editor_box.pack_start(color_editor_title, False, False, 0)
-            color_editor_box.pack_start(color_value_entry, False, False, 0)
-            color_actions = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            color_actions.pack_start(color_apply_btn, False, False, 0)
-            color_actions.pack_start(color_cancel_btn, False, False, 0)
-            color_editor_box.pack_start(color_actions, False, False, 0)
-            if hasattr(color_window, "add"):
-                color_window.add(color_editor_box)
-            color_dialog_proxy = _ColorDialogProxy(
-                gtk_module,
-                window,
-                color_window,
-                color_value_entry,
-                color_state_label,
-                self._on_color_dialog_confirmed,
-                self._on_color_dialog_canceled,
-            )
-            if hasattr(color_window, "connect"):
-                color_window.connect(
-                    "delete-event",
-                    lambda *_args: self._on_color_window_delete_event(),
-                )
-            about_window = gtk_module.Window(title="About Harite")
-            if hasattr(about_window, "set_default_size"):
-                about_window.set_default_size(420, 220)
-            if hasattr(about_window, "set_resizable"):
-                about_window.set_resizable(False)
-            about_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-            about_top_spacer = gtk_module.Label(label="")
-            about_bottom_spacer = gtk_module.Label(label="")
-            about_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            about_title_label = gtk_module.Label(label="Harite")
-            about_version_label = gtk_module.Label(label="Version: -")
-            about_description_label = gtk_module.Label(label="")
-            about_credits_label = gtk_module.Label(label="Credits: -")
-            about_license_label = gtk_module.Label(label="License: -")
-            for label in (
-                about_title_label,
-                about_version_label,
-                about_description_label,
-                about_credits_label,
-                about_license_label,
-            ):
-                if hasattr(label, "set_xalign"):
-                    label.set_xalign(0.5)
-            about_close_btn = gtk_module.Button(label="About Close")
-            about_box.pack_start(about_title_label, False, False, 0)
-            about_box.pack_start(about_version_label, False, False, 0)
-            about_box.pack_start(about_description_label, False, False, 0)
-            about_box.pack_start(about_credits_label, False, False, 0)
-            about_box.pack_start(about_license_label, False, False, 0)
-            about_close_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-            about_close_left = gtk_module.Label(label="")
-            about_close_right = gtk_module.Label(label="")
-            about_close_row.pack_start(about_close_left, True, True, 0)
-            about_close_row.pack_start(about_close_btn, False, False, 0)
-            about_close_row.pack_start(about_close_right, True, True, 0)
-            about_box.pack_start(about_close_row, False, False, 0)
-            about_shell.pack_start(about_top_spacer, True, True, 0)
-            about_shell.pack_start(about_box, False, False, 0)
-            about_shell.pack_start(about_bottom_spacer, True, True, 0)
-            if hasattr(about_window, "add"):
-                about_window.add(about_shell)
-            about_dialog_proxy = _AboutDialogProxy(
-                about_window,
-                about_title_label,
-                about_version_label,
-                about_description_label,
-                about_credits_label,
-                about_license_label,
-            )
-            if hasattr(about_window, "connect"):
-                about_window.connect(
-                    "delete-event",
-                    lambda *_args: self._on_about_window_delete_event(),
-                )
-            srcdir_dialog_proxy = _SrcdirDialogProxy(
-                gtk_module,
-                window,
-                self._on_srcdir_dialog_confirmed,
-                self._on_srcdir_dialog_canceled,
-            )
-
-            prefs_apply_btn = gtk_module.Button(label="Settings Apply")
-            prefs_load_btn = gtk_module.Button(label="Settings Load")
-            prefs_save_btn = gtk_module.Button(label="Settings Save")
-            prefs_close_btn = gtk_module.Button(label="Settings Close")
-            prefs_state_label = gtk_module.Label(label="Settings: idle")
-            if hasattr(prefs_state_label, "set_xalign"):
-                prefs_state_label.set_xalign(0.0)
-            prefs_editor_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            prefs_editor_title = gtk_module.Label(label="Settings")
-            if hasattr(prefs_editor_title, "set_xalign"):
-                prefs_editor_title.set_xalign(0.0)
-            prefs_editor_box.pack_start(prefs_editor_title, False, False, 0)
-
-            def _prefs_row(label_text: str, *widgets: Any) -> Any:
-                row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-                row_label = gtk_module.Label(label=label_text)
-                if hasattr(row_label, "set_xalign"):
-                    row_label.set_xalign(0.0)
-                row.pack_start(row_label, False, False, 0)
-                for widget in widgets:
-                    row.pack_start(widget, True, True, 0)
-                prefs_editor_box.pack_start(row, False, False, 0)
-                return row
-
-            prefs_resolution_entry = gtk_module.Entry()
-            prefs_scaling_entry = gtk_module.Entry()
-            prefs_two_screen_auto = gtk_module.RadioButton.new_with_label(None, "TwoScreen Auto")
-            prefs_two_screen_on = gtk_module.RadioButton.new_with_label_from_widget(prefs_two_screen_auto, "TwoScreen On")
-            prefs_two_screen_off = gtk_module.RadioButton.new_with_label_from_widget(prefs_two_screen_auto, "TwoScreen Off")
-            if hasattr(prefs_two_screen_off, "set_active"):
-                prefs_two_screen_off.set_active(True)
-            prefs_l_display_entry = gtk_module.Entry()
-            prefs_r_display_entry = gtk_module.Entry()
-            prefs_margins_entry = gtk_module.Entry()
-            prefs_align_entry = gtk_module.Entry()
-            prefs_valign_entry = gtk_module.Entry()
-            prefs_quality_spin = gtk_module.SpinButton()
-            self._configure_spin_button(prefs_quality_spin, minimum=1, maximum=100, step=1, page=10, initial=90)
-            prefs_margin_text_mode_entry = gtk_module.Entry()
-            prefs_margin_text_entry = gtk_module.Entry()
-            prefs_margin_text_position_entry = gtk_module.Entry()
-            prefs_margin_text_max_lines_spin = gtk_module.SpinButton()
-            self._configure_spin_button(
-                prefs_margin_text_max_lines_spin,
-                minimum=1,
-                maximum=20,
-                step=1,
-                page=5,
-                initial=3,
-            )
-            prefs_plugin_entry = gtk_module.Entry()
-            prefs_apply_single = gtk_module.RadioButton.new_with_label(None, "Apply Default")
-            prefs_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(prefs_apply_single, "Apply Auto-split")
-            if hasattr(prefs_apply_single, "set_active"):
-                prefs_apply_single.set_active(True)
-            prefs_apply_single.connect(
-                "toggled",
-                lambda widget, *_args: self._on_preferences_apply_mode_toggled(widget, "single-file"),
-            )
-            prefs_apply_per_monitor.connect(
-                "toggled",
-                lambda widget, *_args: self._on_preferences_apply_mode_toggled(widget, "per-monitor-auto-split"),
-            )
-            prefs_import_path_entry = gtk_module.Entry()
-            prefs_export_path_entry = gtk_module.Entry()
-
-            prefs_apply_mode_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            prefs_apply_mode_shell.pack_start(prefs_apply_single, False, False, 0)
-            prefs_apply_mode_shell.pack_start(prefs_apply_per_monitor, False, False, 0)
-
-            _prefs_row("Resolution", prefs_resolution_entry)
-            _prefs_row("Scaling", prefs_scaling_entry)
-            _prefs_row("Plugin", prefs_plugin_entry)
-            _prefs_row("Apply", prefs_apply_mode_shell)
-            _prefs_row("Import path", prefs_import_path_entry)
-            _prefs_row("Export path", prefs_export_path_entry)
-
-            prefs_actions = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-            prefs_actions.pack_start(prefs_apply_btn, False, False, 0)
-            prefs_actions.pack_start(prefs_load_btn, False, False, 0)
-            prefs_actions.pack_start(prefs_save_btn, False, False, 0)
-            prefs_actions.pack_start(prefs_close_btn, False, False, 0)
-            prefs_editor_box.pack_start(prefs_actions, False, False, 0)
-            prefs_editor_box.pack_start(prefs_state_label, False, False, 0)
-
-            if hasattr(prefs_window, "add"):
-                prefs_window.add(prefs_editor_box)
+            dialog_runtime = self._build_dialog_runtime_widgets(gtk_module=gtk_module, window=window)
+            open_dialog_proxy = dialog_runtime["open_dialog_proxy"]
+            save_path_dialog_proxy = dialog_runtime["save_path_dialog_proxy"]
+            prefs_window = dialog_runtime["prefs_window"]
+            prefs_apply_btn = dialog_runtime["prefs_apply_btn"]
+            prefs_load_btn = dialog_runtime["prefs_load_btn"]
+            prefs_save_btn = dialog_runtime["prefs_save_btn"]
+            prefs_close_btn = dialog_runtime["prefs_close_btn"]
+            prefs_state_label = dialog_runtime["prefs_state_label"]
+            prefs_editor_box = dialog_runtime["prefs_editor_box"]
+            prefs_editor_title = dialog_runtime["prefs_editor_title"]
+            prefs_resolution_entry = dialog_runtime["prefs_resolution_entry"]
+            prefs_scaling_entry = dialog_runtime["prefs_scaling_entry"]
+            prefs_two_screen_auto = dialog_runtime["prefs_two_screen_auto"]
+            prefs_two_screen_on = dialog_runtime["prefs_two_screen_on"]
+            prefs_two_screen_off = dialog_runtime["prefs_two_screen_off"]
+            prefs_l_display_entry = dialog_runtime["prefs_l_display_entry"]
+            prefs_r_display_entry = dialog_runtime["prefs_r_display_entry"]
+            prefs_margins_entry = dialog_runtime["prefs_margins_entry"]
+            prefs_align_entry = dialog_runtime["prefs_align_entry"]
+            prefs_valign_entry = dialog_runtime["prefs_valign_entry"]
+            prefs_quality_spin = dialog_runtime["prefs_quality_spin"]
+            prefs_margin_text_mode_entry = dialog_runtime["prefs_margin_text_mode_entry"]
+            prefs_margin_text_entry = dialog_runtime["prefs_margin_text_entry"]
+            prefs_margin_text_position_entry = dialog_runtime["prefs_margin_text_position_entry"]
+            prefs_margin_text_max_lines_spin = dialog_runtime["prefs_margin_text_max_lines_spin"]
+            prefs_plugin_entry = dialog_runtime["prefs_plugin_entry"]
+            prefs_apply_single = dialog_runtime["prefs_apply_single"]
+            prefs_apply_per_monitor = dialog_runtime["prefs_apply_per_monitor"]
+            prefs_import_path_entry = dialog_runtime["prefs_import_path_entry"]
+            prefs_export_path_entry = dialog_runtime["prefs_export_path_entry"]
+            settings_dialog_proxy = dialog_runtime["settings_dialog_proxy"]
+            color_window = dialog_runtime["color_window"]
+            color_value_entry = dialog_runtime["color_value_entry"]
+            color_state_label = dialog_runtime["color_state_label"]
+            color_apply_btn = dialog_runtime["color_apply_btn"]
+            color_cancel_btn = dialog_runtime["color_cancel_btn"]
+            color_dialog_proxy = dialog_runtime["color_dialog_proxy"]
+            about_window = dialog_runtime["about_window"]
+            about_title_label = dialog_runtime["about_title_label"]
+            about_version_label = dialog_runtime["about_version_label"]
+            about_description_label = dialog_runtime["about_description_label"]
+            about_credits_label = dialog_runtime["about_credits_label"]
+            about_license_label = dialog_runtime["about_license_label"]
+            about_close_btn = dialog_runtime["about_close_btn"]
+            about_dialog_proxy = dialog_runtime["about_dialog_proxy"]
+            srcdir_dialog_proxy = dialog_runtime["srcdir_dialog_proxy"]
 
             watch_widgets = build_watch_tab_section(gtk_module, configure_spin_button=self._configure_spin_button)
             watch_tab_box = watch_widgets["watch_tab_box"]
@@ -599,294 +329,240 @@ class GtkRuntimeSignalBackend:
             margin_position_right_top = margins_widgets["margin_position_right_top"]
             margin_text_max_lines_spin = margins_widgets["margin_text_max_lines_spin"]
             self._current_state_summary_display = margins_widgets["current_state_summary_display"]
-            margins_page_shell = _build_centered_page(margins_tab_box)
+            margins_page_shell = build_centered_page_shell(gtk_module, margins_tab_box)
             command_tabs.append_page(margins_page_shell, margins_tab_title)
 
-            watch_page_shell = _build_centered_page(watch_tab_box)
+            watch_page_shell = build_centered_page_shell(gtk_module, watch_tab_box)
             command_tabs.append_page(watch_page_shell, watch_tab_title)
 
-            # Row 4: status row (Glade statusbar equivalent)
-            footer_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
-            root.pack_start(footer_col, False, False, 0)
-
-            status_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
-            footer_col.pack_start(status_row, False, False, 0)
-            status_label = gtk_module.Label(label="Status: ready")
-            if hasattr(status_label, "set_xalign"):
-                status_label.set_xalign(0.0)
-            status_row.pack_start(status_label, False, False, 0)
-            status_spacer = gtk_module.Label(label="")
-            status_row.pack_start(status_spacer, True, True, 0)
-            watch_summary_label = gtk_module.Label(label="Watch: stopped")
-            if hasattr(watch_summary_label, "set_xalign"):
-                watch_summary_label.set_xalign(0.0)
-
-            error_label = gtk_module.Label(label="Error: none")
-            if hasattr(error_label, "set_xalign"):
-                error_label.set_xalign(0.0)
+            footer_widgets = build_footer_section(gtk_module, root)
+            footer_col = footer_widgets["footer_col"]
+            status_row = footer_widgets["status_row"]
+            status_label = footer_widgets["status_label"]
+            status_spacer = footer_widgets["status_spacer"]
+            watch_summary_label = footer_widgets["watch_summary_label"]
+            error_label = footer_widgets["error_label"]
 
             if hasattr(window, "add"):
                 window.add(root)
 
-            self._objects = {
-                "WallPosit_MainWindow": window,
-                "main_window": window,
-                "boxRoot": root,
-                "lblTopMargin": top_margin_label,
-                "spnTopMargin": top_margin_spin,
-                "lblLeftMargin": left_margin_label,
-                "spnLeftMargin": left_margin_spin,
-                "lblTitle": title,
-                "lblSubtitle": subtitle,
-                "lblMainSection": main_section_label,
-                "boxMainSection": main_col,
-                "composeGrid": compose_grid,
-                "leftDisplayCol": left_display_grid,
-                "rightDisplayCol": right_display_grid,
-                "inputRowL": input_row_l,
-                "inputRowR": input_row_r,
-                "actionClusterRow": action_cluster_row,
-                "actionClusterCol": optimize_group,
-                "tglUpperL": tgl_upper_l,
-                "tglUpperR": tgl_upper_r,
-                "tglPushLeftL": tgl_push_left_l,
-                "tglPushRightL": tgl_push_right_l,
-                "tglLowerL": tgl_lower_l,
-                "tglPushLeftR": tgl_push_left_r,
-                "tglPushRightR": tgl_push_right_r,
-                "tglLowerR": tgl_lower_r,
-                "btnGetImgL": btn_get_img_l,
-                "btnGetImgR": btn_get_img_r,
-                "lblPickState": pick_state_label,
-                "entPathL": input_entry_l,
-                "btnClrPathL": btn_clr_path_l,
-                "entPathR": input_entry_r,
-                "btnClrPathR": btn_clr_path_r,
-                "vbox5": right_margin_col,
-                "lblRightMargin": right_margin_label,
-                "spnRightMargin": right_margin_spin,
-                "hbox12": bottom_margin_row,
-                "lblBottomMargin": bottom_margin_label,
-                "spnBottomMargin": bottom_margin_spin,
-                "lblOptimizeSection": optimize_section_label,
-                "boxOptimizeSection": optimize_row,
-                "btnSave": optimize_btn,
-                "btnOptimize": optimize_modern_btn,
-                "lblOptimizeResult": optimize_result,
-                "lblApplySection": apply_section_label,
-                "boxApplySection": apply_row,
-                "btnSetWall": apply_btn,
-                "lblApplyTarget": apply_target,
-                "lblPreviewSection": preview_section_label,
-                "boxPreviewSection": preview_group,
-                "boxPreviewImagesRow": preview_images_row,
-                "imgPreviewL": preview_left,
-                "imgPreviewR": preview_right,
-                "lblPreviewAssignL": preview_left_assignment,
-                "lblPreviewAssignR": preview_right_assignment,
-                "lblPreviewResultL": preview_left_result,
-                "lblPreviewResultR": preview_right_result,
-                "lblPreviewState": preview_state_label,
-                "lblPreviewSource": preview_source_label,
-                "lblPreviewAssist": preview_assist_label,
-                "radApplySingle": rad_apply_single,
-                "radApplyPerMonitor": rad_apply_per_monitor,
-                "lblApplyMode": apply_mode_label,
-                "lblDoItPlanned": do_it_plan_label,
-                "lblSaveTarget": save_target_label,
-                "lblPriorityRule": priority_note_label,
-                "lblStyleLegend": style_legend_label,
-                "lblCurrentStateSection": current_state_section_label,
-                "lblCurrentMargins": current_margins_label,
-                "lblCurrentStateL": current_left_label,
-                "lblCurrentStateR": current_right_label,
-                "lblCommandSection": command_section_label,
-                "commandTabs": command_tabs,
-                "hbox14": command_bar,
-                "btnSetting": btn_setting,
-                "btnSettings": btn_setting,
-                "btnSettingsApply": prefs_apply_btn,
-                "btnSettingsLoad": prefs_load_btn,
-                "btnSettingsSave": prefs_save_btn,
-                "btnSettingsClose": prefs_close_btn,
-                "lblSettingsState": prefs_state_label,
-                "boxSettingsEditor": prefs_editor_box,
-                "settingsWindow": prefs_window,
-                "lblSettingsEditorTitle": prefs_editor_title,
-                "entSettingsResolution": prefs_resolution_entry,
-                "entSettingsScaling": prefs_scaling_entry,
-                "radSettingsTwoScreenAuto": prefs_two_screen_auto,
-                "radSettingsTwoScreenOn": prefs_two_screen_on,
-                "radSettingsTwoScreenOff": prefs_two_screen_off,
-                "entSettingsLDisplay": prefs_l_display_entry,
-                "entSettingsRDisplay": prefs_r_display_entry,
-                "entSettingsMargins": prefs_margins_entry,
-                "entSettingsAlign": prefs_align_entry,
-                "entSettingsValign": prefs_valign_entry,
-                "spnSettingsQuality": prefs_quality_spin,
-                "entSettingsMarginTextMode": prefs_margin_text_mode_entry,
-                "entSettingsMarginText": prefs_margin_text_entry,
-                "entSettingsMarginTextPosition": prefs_margin_text_position_entry,
-                "spnSettingsMarginTextMaxLines": prefs_margin_text_max_lines_spin,
-                "entSettingsPlugin": prefs_plugin_entry,
-                "radSettingsApplySingle": prefs_apply_single,
-                "radSettingsApplyPerMonitor": prefs_apply_per_monitor,
-                "entSettingsImportPath": prefs_import_path_entry,
-                "entSettingsExportPath": prefs_export_path_entry,
-                "btnSetColor": btn_set_color,
-                "ColorDialog": color_dialog_proxy,
-                "colorWindow": color_window,
-                "entColorValue": color_value_entry,
-                "lblColorState": color_state_label,
-                "btnColorApply": color_apply_btn,
-                "btnColorCancel": color_cancel_btn,
-                "AboutDialog": about_dialog_proxy,
-                "aboutWindow": about_window,
-                "lblAboutTitle": about_title_label,
-                "lblAboutVersion": about_version_label,
-                "lblAboutDescription": about_description_label,
-                "lblAboutCredits": about_credits_label,
-                "lblAboutLicense": about_license_label,
-                "btnAboutClose": about_close_btn,
-                "ImgOpenDialog": open_dialog_proxy,
-                "SrcdirDialog": srcdir_dialog_proxy,
-                **{object_name: settings_dialog_proxy for object_name in SETTINGS_DIALOG_OBJECT_ALIASES},
-                "watchTab": watch_tab_box,
-                "marginsTab": margins_tab_box,
-                "watchControlsRow": watch_controls_row,
-                "watchDetailRow": watch_detail_row,
-                "lblMarginsTabTitle": margins_tab_title,
-                "lblMarginsSection": margins_section_label,
-                "marginTextTabs": margin_text_tabs,
-                "marginSettingsPage": margin_settings_page,
-                "marginTextPage": margin_text_page,
-                "lblMarginSettingsPreview": margin_settings_preview_label,
-                "lblMarginTextSection": margin_text_section_label,
-                "lblMarginTextMode": margin_text_mode_label,
-                "radMarginTextModeOff": margin_text_mode_off,
-                "radMarginTextModeSettings": margin_text_mode_settings,
-                "radMarginTextModeText": margin_text_mode_text,
-                "radMarginTextModeBoth": margin_text_mode_both,
-                "txtMarginText": margin_text_entry,
-                "radMarginTextPositionLeftTop": margin_position_left_top,
-                "radMarginTextPositionRightBottom": margin_position_right_bottom,
-                "radMarginTextPositionLeftBottom": margin_position_left_bottom,
-                "radMarginTextPositionRightTop": margin_position_right_top,
-                "spnMarginTextMaxLines": margin_text_max_lines_spin,
-                "btnOpenSrcdirL": btn_open_srcdir_l,
-                "btnOpenSrcdirR": btn_open_srcdir_r,
-                "lblWatchSection": watch_label,
-                "lblWatchTabTitle": watch_tab_title,
-                "spnInterval": interval_spin,
-                "lblInterval": interval_label,
-                "btnDaemonize": btn_daemonize,
-                "btnCancelDaemonize": btn_cancel_daemonize,
-                "btnAbout": btn_about,
-                "btnHelp": btn_help,
-                "statusbar": footer_col,
-                "flowRow": flow_row,
-                "lblFlowLegend": flow_legend_label,
-                "lblStatus": status_label,
-                "lblError": error_label,
-                "lblWatchSummary": watch_summary_label,
-                "lblWatchSources": watch_sources_label,
-                "lblWatchCurrent": watch_current_label,
-                "lblWatchOutput": watch_output_label,
-                **{object_name: save_path_state_label for object_name in SAVE_PATH_STATE_LABEL_ALIASES},
-                **{object_name: save_path_dialog_proxy for object_name in SAVE_PATH_DIALOG_OBJECT_ALIASES},
-            }
-
-            for object_name, widget in self._objects.items():
-                if hasattr(widget, "set_name"):
-                    widget.set_name(object_name)
-                elif not hasattr(widget, "get_name"):
-                    setattr(widget, "name", object_name)
-
-            # Why: fallback window must still exercise MainWindow handlers even when
-            # legacy glade cannot be parsed at runtime.
-            try:
-                input_entry_l.connect("changed", self._on_input_changed)
-            except Exception:
-                pass
-            try:
-                input_entry_r.connect("changed", self._on_input_changed)
-            except Exception:
-                pass
-            tgl_upper_l.connect("pressed", lambda *_args: self._on_direction_pressed("tglUpperL"))
-            tgl_upper_l.connect("toggled", lambda *_args: self._on_direction_toggled("tglUpperL"))
-            tgl_upper_l.connect("released", lambda *_args: self._on_direction_released("tglUpperL"))
-            tgl_lower_l.connect("pressed", lambda *_args: self._on_direction_pressed("tglLowerL"))
-            tgl_lower_l.connect("toggled", lambda *_args: self._on_direction_toggled("tglLowerL"))
-            tgl_lower_l.connect("released", lambda *_args: self._on_direction_released("tglLowerL"))
-            tgl_upper_r.connect("pressed", lambda *_args: self._on_direction_pressed("tglUpperR"))
-            tgl_upper_r.connect("toggled", lambda *_args: self._on_direction_toggled("tglUpperR"))
-            tgl_upper_r.connect("released", lambda *_args: self._on_direction_released("tglUpperR"))
-            tgl_lower_r.connect("pressed", lambda *_args: self._on_direction_pressed("tglLowerR"))
-            tgl_lower_r.connect("toggled", lambda *_args: self._on_direction_toggled("tglLowerR"))
-            tgl_lower_r.connect("released", lambda *_args: self._on_direction_released("tglLowerR"))
-            tgl_push_left_l.connect("pressed", lambda *_args: self._on_direction_pressed("tglPushLeftL"))
-            tgl_push_left_l.connect("toggled", lambda *_args: self._on_direction_toggled("tglPushLeftL"))
-            tgl_push_left_l.connect("released", lambda *_args: self._on_direction_released("tglPushLeftL"))
-            tgl_push_right_l.connect("pressed", lambda *_args: self._on_direction_pressed("tglPushRightL"))
-            tgl_push_right_l.connect("toggled", lambda *_args: self._on_direction_toggled("tglPushRightL"))
-            tgl_push_right_l.connect("released", lambda *_args: self._on_direction_released("tglPushRightL"))
-            tgl_push_left_r.connect("pressed", lambda *_args: self._on_direction_pressed("tglPushLeftR"))
-            tgl_push_left_r.connect("toggled", lambda *_args: self._on_direction_toggled("tglPushLeftR"))
-            tgl_push_left_r.connect("released", lambda *_args: self._on_direction_released("tglPushLeftR"))
-            tgl_push_right_r.connect("pressed", lambda *_args: self._on_direction_pressed("tglPushRightR"))
-            tgl_push_right_r.connect("toggled", lambda *_args: self._on_direction_toggled("tglPushRightR"))
-            tgl_push_right_r.connect("released", lambda *_args: self._on_direction_released("tglPushRightR"))
-            btn_get_img_l.connect("clicked", lambda *_args: self._on_pick_input_clicked("L"))
-            btn_get_img_r.connect("clicked", lambda *_args: self._on_pick_input_clicked("R"))
-            btn_clr_path_l.connect("clicked", lambda *_args: self._on_clear_input_clicked("L"))
-            btn_clr_path_r.connect("clicked", lambda *_args: self._on_clear_input_clicked("R"))
-            top_margin_spin.connect("value-changed", self._on_margin_changed)
-            left_margin_spin.connect("value-changed", self._on_margin_changed)
-            right_margin_spin.connect("value-changed", self._on_margin_changed)
-            bottom_margin_spin.connect("value-changed", self._on_margin_changed)
-            optimize_btn.connect("clicked", self._on_save_clicked)
-            optimize_modern_btn.connect("clicked", self._on_optimize_clicked)
-            apply_btn.connect("clicked", self._on_apply_clicked)
-            btn_setting.connect("clicked", self._on_settings_clicked)
-            prefs_apply_btn.connect("clicked", self._on_preferences_apply_clicked)
-            prefs_load_btn.connect("clicked", self._on_preferences_load_clicked)
-            prefs_save_btn.connect("clicked", self._on_preferences_save_clicked)
-            prefs_close_btn.connect("clicked", self._on_preferences_close_clicked)
-            rad_apply_single.connect(
-                "toggled",
-                lambda widget, *_args: self._on_apply_mode_toggled(widget, "single-file"),
+            self._objects = self._build_runtime_object_map(
+                window=window,
+                root=root,
+                top_margin_label=top_margin_label,
+                top_margin_spin=top_margin_spin,
+                left_margin_label=left_margin_label,
+                left_margin_spin=left_margin_spin,
+                title=title,
+                subtitle=subtitle,
+                main_section_label=main_section_label,
+                main_col=main_col,
+                compose_grid=compose_grid,
+                left_display_grid=left_display_grid,
+                right_display_grid=right_display_grid,
+                input_row_l=input_row_l,
+                input_row_r=input_row_r,
+                action_cluster_row=action_cluster_row,
+                optimize_group=optimize_group,
+                tgl_upper_l=tgl_upper_l,
+                tgl_upper_r=tgl_upper_r,
+                tgl_push_left_l=tgl_push_left_l,
+                tgl_push_right_l=tgl_push_right_l,
+                tgl_lower_l=tgl_lower_l,
+                tgl_push_left_r=tgl_push_left_r,
+                tgl_push_right_r=tgl_push_right_r,
+                tgl_lower_r=tgl_lower_r,
+                btn_get_img_l=btn_get_img_l,
+                btn_get_img_r=btn_get_img_r,
+                pick_state_label=pick_state_label,
+                input_entry_l=input_entry_l,
+                btn_clr_path_l=btn_clr_path_l,
+                input_entry_r=input_entry_r,
+                btn_clr_path_r=btn_clr_path_r,
+                right_margin_col=right_margin_col,
+                right_margin_label=right_margin_label,
+                right_margin_spin=right_margin_spin,
+                bottom_margin_row=bottom_margin_row,
+                bottom_margin_label=bottom_margin_label,
+                bottom_margin_spin=bottom_margin_spin,
+                optimize_section_label=optimize_section_label,
+                optimize_row=optimize_row,
+                optimize_btn=optimize_btn,
+                optimize_modern_btn=optimize_modern_btn,
+                optimize_result=optimize_result,
+                apply_section_label=apply_section_label,
+                apply_row=apply_row,
+                apply_btn=apply_btn,
+                apply_target=apply_target,
+                preview_section_label=preview_section_label,
+                preview_group=preview_group,
+                preview_images_row=preview_images_row,
+                preview_left=preview_left,
+                preview_right=preview_right,
+                preview_left_assignment=preview_left_assignment,
+                preview_right_assignment=preview_right_assignment,
+                preview_left_result=preview_left_result,
+                preview_right_result=preview_right_result,
+                preview_state_label=preview_state_label,
+                preview_source_label=preview_source_label,
+                preview_assist_label=preview_assist_label,
+                rad_apply_single=rad_apply_single,
+                rad_apply_per_monitor=rad_apply_per_monitor,
+                apply_mode_label=apply_mode_label,
+                do_it_plan_label=do_it_plan_label,
+                save_target_label=save_target_label,
+                priority_note_label=priority_note_label,
+                style_legend_label=style_legend_label,
+                current_state_section_label=current_state_section_label,
+                current_margins_label=current_margins_label,
+                current_left_label=current_left_label,
+                current_right_label=current_right_label,
+                command_section_label=command_section_label,
+                command_tabs=command_tabs,
+                command_bar=command_bar,
+                btn_setting=btn_setting,
+                prefs_apply_btn=prefs_apply_btn,
+                prefs_load_btn=prefs_load_btn,
+                prefs_save_btn=prefs_save_btn,
+                prefs_close_btn=prefs_close_btn,
+                prefs_state_label=prefs_state_label,
+                prefs_editor_box=prefs_editor_box,
+                prefs_window=prefs_window,
+                prefs_editor_title=prefs_editor_title,
+                prefs_resolution_entry=prefs_resolution_entry,
+                prefs_scaling_entry=prefs_scaling_entry,
+                prefs_two_screen_auto=prefs_two_screen_auto,
+                prefs_two_screen_on=prefs_two_screen_on,
+                prefs_two_screen_off=prefs_two_screen_off,
+                prefs_l_display_entry=prefs_l_display_entry,
+                prefs_r_display_entry=prefs_r_display_entry,
+                prefs_margins_entry=prefs_margins_entry,
+                prefs_align_entry=prefs_align_entry,
+                prefs_valign_entry=prefs_valign_entry,
+                prefs_quality_spin=prefs_quality_spin,
+                prefs_margin_text_mode_entry=prefs_margin_text_mode_entry,
+                prefs_margin_text_entry=prefs_margin_text_entry,
+                prefs_margin_text_position_entry=prefs_margin_text_position_entry,
+                prefs_margin_text_max_lines_spin=prefs_margin_text_max_lines_spin,
+                prefs_plugin_entry=prefs_plugin_entry,
+                prefs_apply_single=prefs_apply_single,
+                prefs_apply_per_monitor=prefs_apply_per_monitor,
+                prefs_import_path_entry=prefs_import_path_entry,
+                prefs_export_path_entry=prefs_export_path_entry,
+                btn_set_color=btn_set_color,
+                color_dialog_proxy=color_dialog_proxy,
+                color_window=color_window,
+                color_value_entry=color_value_entry,
+                color_state_label=color_state_label,
+                color_apply_btn=color_apply_btn,
+                color_cancel_btn=color_cancel_btn,
+                about_dialog_proxy=about_dialog_proxy,
+                about_window=about_window,
+                about_title_label=about_title_label,
+                about_version_label=about_version_label,
+                about_description_label=about_description_label,
+                about_credits_label=about_credits_label,
+                about_license_label=about_license_label,
+                about_close_btn=about_close_btn,
+                open_dialog_proxy=open_dialog_proxy,
+                srcdir_dialog_proxy=srcdir_dialog_proxy,
+                settings_dialog_proxy=settings_dialog_proxy,
+                watch_tab_box=watch_tab_box,
+                margins_tab_box=margins_tab_box,
+                watch_controls_row=watch_controls_row,
+                watch_detail_row=watch_detail_row,
+                margins_tab_title=margins_tab_title,
+                margins_section_label=margins_section_label,
+                margin_text_tabs=margin_text_tabs,
+                margin_settings_page=margin_settings_page,
+                margin_text_page=margin_text_page,
+                margin_settings_preview_label=margin_settings_preview_label,
+                margin_text_section_label=margin_text_section_label,
+                margin_text_mode_label=margin_text_mode_label,
+                margin_text_mode_off=margin_text_mode_off,
+                margin_text_mode_settings=margin_text_mode_settings,
+                margin_text_mode_text=margin_text_mode_text,
+                margin_text_mode_both=margin_text_mode_both,
+                margin_text_entry=margin_text_entry,
+                margin_position_left_top=margin_position_left_top,
+                margin_position_right_bottom=margin_position_right_bottom,
+                margin_position_left_bottom=margin_position_left_bottom,
+                margin_position_right_top=margin_position_right_top,
+                margin_text_max_lines_spin=margin_text_max_lines_spin,
+                btn_open_srcdir_l=btn_open_srcdir_l,
+                btn_open_srcdir_r=btn_open_srcdir_r,
+                watch_label=watch_label,
+                watch_tab_title=watch_tab_title,
+                interval_spin=interval_spin,
+                interval_label=interval_label,
+                btn_daemonize=btn_daemonize,
+                btn_cancel_daemonize=btn_cancel_daemonize,
+                btn_about=btn_about,
+                btn_help=btn_help,
+                footer_col=footer_col,
+                flow_row=flow_row,
+                flow_legend_label=flow_legend_label,
+                status_label=status_label,
+                error_label=error_label,
+                watch_summary_label=watch_summary_label,
+                watch_sources_label=watch_sources_label,
+                watch_current_label=watch_current_label,
+                watch_output_label=watch_output_label,
+                save_path_state_label=save_path_state_label,
+                save_path_dialog_proxy=save_path_dialog_proxy,
             )
-            rad_apply_per_monitor.connect(
-                "toggled",
-                lambda widget, *_args: self._on_apply_mode_toggled(widget, "per-monitor-auto-split"),
+
+            self._assign_object_names()
+            self._connect_runtime_widgets(
+                input_entry_l=input_entry_l,
+                input_entry_r=input_entry_r,
+                tgl_upper_l=tgl_upper_l,
+                tgl_lower_l=tgl_lower_l,
+                tgl_upper_r=tgl_upper_r,
+                tgl_lower_r=tgl_lower_r,
+                tgl_push_left_l=tgl_push_left_l,
+                tgl_push_right_l=tgl_push_right_l,
+                tgl_push_left_r=tgl_push_left_r,
+                tgl_push_right_r=tgl_push_right_r,
+                btn_get_img_l=btn_get_img_l,
+                btn_get_img_r=btn_get_img_r,
+                btn_clr_path_l=btn_clr_path_l,
+                btn_clr_path_r=btn_clr_path_r,
+                top_margin_spin=top_margin_spin,
+                left_margin_spin=left_margin_spin,
+                right_margin_spin=right_margin_spin,
+                bottom_margin_spin=bottom_margin_spin,
+                optimize_btn=optimize_btn,
+                optimize_modern_btn=optimize_modern_btn,
+                apply_btn=apply_btn,
+                btn_setting=btn_setting,
+                prefs_apply_btn=prefs_apply_btn,
+                prefs_load_btn=prefs_load_btn,
+                prefs_save_btn=prefs_save_btn,
+                prefs_close_btn=prefs_close_btn,
+                rad_apply_single=rad_apply_single,
+                rad_apply_per_monitor=rad_apply_per_monitor,
+                btn_set_color=btn_set_color,
+                btn_about=btn_about,
+                color_apply_btn=color_apply_btn,
+                color_cancel_btn=color_cancel_btn,
+                about_close_btn=about_close_btn,
+                btn_open_srcdir_l=btn_open_srcdir_l,
+                btn_open_srcdir_r=btn_open_srcdir_r,
+                interval_spin=interval_spin,
+                btn_daemonize=btn_daemonize,
+                btn_cancel_daemonize=btn_cancel_daemonize,
+                margin_text_mode_off=margin_text_mode_off,
+                margin_text_mode_settings=margin_text_mode_settings,
+                margin_text_mode_text=margin_text_mode_text,
+                margin_text_mode_both=margin_text_mode_both,
+                margin_text_entry=margin_text_entry,
+                margin_position_left_top=margin_position_left_top,
+                margin_position_right_bottom=margin_position_right_bottom,
+                margin_position_left_bottom=margin_position_left_bottom,
+                margin_position_right_top=margin_position_right_top,
+                margin_text_max_lines_spin=margin_text_max_lines_spin,
             )
-            btn_set_color.connect("clicked", self._on_color_clicked)
-            btn_about.connect("clicked", self._on_about_clicked)
-            color_apply_btn.connect("clicked", self._on_color_dialog_apply_clicked)
-            color_cancel_btn.connect("clicked", self._on_color_dialog_cancel_clicked)
-            about_close_btn.connect("clicked", self._on_about_dialog_close_clicked)
-            btn_open_srcdir_l.connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("L"))
-            btn_open_srcdir_r.connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("R"))
-            interval_spin.connect("value-changed", self._on_watch_interval_changed)
-            btn_daemonize.connect("clicked", self._on_watch_start_clicked)
-            btn_cancel_daemonize.connect("clicked", self._on_watch_stop_clicked)
-            margin_text_mode_off.connect("toggled", lambda widget, *_args: self._on_margin_text_mode_toggled(widget, "none"))
-            margin_text_mode_settings.connect("toggled", lambda widget, *_args: self._on_margin_text_mode_toggled(widget, "params"))
-            margin_text_mode_text.connect("toggled", lambda widget, *_args: self._on_margin_text_mode_toggled(widget, "free"))
-            margin_text_mode_both.connect("toggled", lambda widget, *_args: self._on_margin_text_mode_toggled(widget, "combo"))
-            if hasattr(margin_text_entry, "get_buffer") and hasattr(margin_text_entry.get_buffer(), "connect"):
-                margin_text_entry.get_buffer().connect("changed", lambda *_args: self._on_margin_text_changed(margin_text_entry))
-            else:
-                margin_text_entry.connect("changed", self._on_margin_text_changed)
-            try:
-                margin_text_entry.connect("key-press-event", self._on_margin_text_key_press)
-            except Exception:
-                pass
-            margin_position_left_top.connect("toggled", lambda widget, *_args: self._on_margin_position_toggled(widget, "top"))
-            margin_position_right_bottom.connect("toggled", lambda widget, *_args: self._on_margin_position_toggled(widget, "bottom"))
-            margin_position_left_bottom.connect("toggled", lambda widget, *_args: self._on_margin_position_toggled(widget, "left"))
-            margin_position_right_top.connect("toggled", lambda widget, *_args: self._on_margin_position_toggled(widget, "right"))
-            margin_text_max_lines_spin.connect("value-changed", self._on_margin_text_max_lines_changed)
             self._refresh_current_state_labels()
             self._refresh_margins_controls()
         else:
@@ -906,6 +582,383 @@ class GtkRuntimeSignalBackend:
         owner = self._get_connected_owner()
         if owner is not None:
             self._sync_non_preview_state_from_owner(owner)
+
+    def _assign_object_names(self) -> None:
+        for object_name, widget in self._objects.items():
+            if hasattr(widget, "set_name"):
+                widget.set_name(object_name)
+            elif not hasattr(widget, "get_name"):
+                setattr(widget, "name", object_name)
+
+    def _build_runtime_object_map(self, **widgets: Any) -> dict[str, Any]:
+        return {
+            "WallPosit_MainWindow": widgets["window"],
+            "main_window": widgets["window"],
+            "boxRoot": widgets["root"],
+            "lblTopMargin": widgets["top_margin_label"],
+            "spnTopMargin": widgets["top_margin_spin"],
+            "lblLeftMargin": widgets["left_margin_label"],
+            "spnLeftMargin": widgets["left_margin_spin"],
+            "lblTitle": widgets["title"],
+            "lblSubtitle": widgets["subtitle"],
+            "lblMainSection": widgets["main_section_label"],
+            "boxMainSection": widgets["main_col"],
+            "composeGrid": widgets["compose_grid"],
+            "leftDisplayCol": widgets["left_display_grid"],
+            "rightDisplayCol": widgets["right_display_grid"],
+            "inputRowL": widgets["input_row_l"],
+            "inputRowR": widgets["input_row_r"],
+            "actionClusterRow": widgets["action_cluster_row"],
+            "actionClusterCol": widgets["optimize_group"],
+            "tglUpperL": widgets["tgl_upper_l"],
+            "tglUpperR": widgets["tgl_upper_r"],
+            "tglPushLeftL": widgets["tgl_push_left_l"],
+            "tglPushRightL": widgets["tgl_push_right_l"],
+            "tglLowerL": widgets["tgl_lower_l"],
+            "tglPushLeftR": widgets["tgl_push_left_r"],
+            "tglPushRightR": widgets["tgl_push_right_r"],
+            "tglLowerR": widgets["tgl_lower_r"],
+            "btnGetImgL": widgets["btn_get_img_l"],
+            "btnGetImgR": widgets["btn_get_img_r"],
+            "lblPickState": widgets["pick_state_label"],
+            "entPathL": widgets["input_entry_l"],
+            "btnClrPathL": widgets["btn_clr_path_l"],
+            "entPathR": widgets["input_entry_r"],
+            "btnClrPathR": widgets["btn_clr_path_r"],
+            "vbox5": widgets["right_margin_col"],
+            "lblRightMargin": widgets["right_margin_label"],
+            "spnRightMargin": widgets["right_margin_spin"],
+            "hbox12": widgets["bottom_margin_row"],
+            "lblBottomMargin": widgets["bottom_margin_label"],
+            "spnBottomMargin": widgets["bottom_margin_spin"],
+            "lblOptimizeSection": widgets["optimize_section_label"],
+            "boxOptimizeSection": widgets["optimize_row"],
+            "btnSave": widgets["optimize_btn"],
+            "btnOptimize": widgets["optimize_modern_btn"],
+            "lblOptimizeResult": widgets["optimize_result"],
+            "lblApplySection": widgets["apply_section_label"],
+            "boxApplySection": widgets["apply_row"],
+            "btnSetWall": widgets["apply_btn"],
+            "lblApplyTarget": widgets["apply_target"],
+            "lblPreviewSection": widgets["preview_section_label"],
+            "boxPreviewSection": widgets["preview_group"],
+            "boxPreviewImagesRow": widgets["preview_images_row"],
+            "imgPreviewL": widgets["preview_left"],
+            "imgPreviewR": widgets["preview_right"],
+            "lblPreviewAssignL": widgets["preview_left_assignment"],
+            "lblPreviewAssignR": widgets["preview_right_assignment"],
+            "lblPreviewResultL": widgets["preview_left_result"],
+            "lblPreviewResultR": widgets["preview_right_result"],
+            "lblPreviewState": widgets["preview_state_label"],
+            "lblPreviewSource": widgets["preview_source_label"],
+            "lblPreviewAssist": widgets["preview_assist_label"],
+            "radApplySingle": widgets["rad_apply_single"],
+            "radApplyPerMonitor": widgets["rad_apply_per_monitor"],
+            "lblApplyMode": widgets["apply_mode_label"],
+            "lblDoItPlanned": widgets["do_it_plan_label"],
+            "lblSaveTarget": widgets["save_target_label"],
+            "lblPriorityRule": widgets["priority_note_label"],
+            "lblStyleLegend": widgets["style_legend_label"],
+            "lblCurrentStateSection": widgets["current_state_section_label"],
+            "lblCurrentMargins": widgets["current_margins_label"],
+            "lblCurrentStateL": widgets["current_left_label"],
+            "lblCurrentStateR": widgets["current_right_label"],
+            "lblCommandSection": widgets["command_section_label"],
+            "commandTabs": widgets["command_tabs"],
+            "hbox14": widgets["command_bar"],
+            "btnSetting": widgets["btn_setting"],
+            "btnSettings": widgets["btn_setting"],
+            "btnSettingsApply": widgets["prefs_apply_btn"],
+            "btnSettingsLoad": widgets["prefs_load_btn"],
+            "btnSettingsSave": widgets["prefs_save_btn"],
+            "btnSettingsClose": widgets["prefs_close_btn"],
+            "lblSettingsState": widgets["prefs_state_label"],
+            "boxSettingsEditor": widgets["prefs_editor_box"],
+            "settingsWindow": widgets["prefs_window"],
+            "lblSettingsEditorTitle": widgets["prefs_editor_title"],
+            "entSettingsResolution": widgets["prefs_resolution_entry"],
+            "entSettingsScaling": widgets["prefs_scaling_entry"],
+            "radSettingsTwoScreenAuto": widgets["prefs_two_screen_auto"],
+            "radSettingsTwoScreenOn": widgets["prefs_two_screen_on"],
+            "radSettingsTwoScreenOff": widgets["prefs_two_screen_off"],
+            "entSettingsLDisplay": widgets["prefs_l_display_entry"],
+            "entSettingsRDisplay": widgets["prefs_r_display_entry"],
+            "entSettingsMargins": widgets["prefs_margins_entry"],
+            "entSettingsAlign": widgets["prefs_align_entry"],
+            "entSettingsValign": widgets["prefs_valign_entry"],
+            "spnSettingsQuality": widgets["prefs_quality_spin"],
+            "entSettingsMarginTextMode": widgets["prefs_margin_text_mode_entry"],
+            "entSettingsMarginText": widgets["prefs_margin_text_entry"],
+            "entSettingsMarginTextPosition": widgets["prefs_margin_text_position_entry"],
+            "spnSettingsMarginTextMaxLines": widgets["prefs_margin_text_max_lines_spin"],
+            "entSettingsPlugin": widgets["prefs_plugin_entry"],
+            "radSettingsApplySingle": widgets["prefs_apply_single"],
+            "radSettingsApplyPerMonitor": widgets["prefs_apply_per_monitor"],
+            "entSettingsImportPath": widgets["prefs_import_path_entry"],
+            "entSettingsExportPath": widgets["prefs_export_path_entry"],
+            "btnSetColor": widgets["btn_set_color"],
+            "ColorDialog": widgets["color_dialog_proxy"],
+            "colorWindow": widgets["color_window"],
+            "entColorValue": widgets["color_value_entry"],
+            "lblColorState": widgets["color_state_label"],
+            "btnColorApply": widgets["color_apply_btn"],
+            "btnColorCancel": widgets["color_cancel_btn"],
+            "AboutDialog": widgets["about_dialog_proxy"],
+            "aboutWindow": widgets["about_window"],
+            "lblAboutTitle": widgets["about_title_label"],
+            "lblAboutVersion": widgets["about_version_label"],
+            "lblAboutDescription": widgets["about_description_label"],
+            "lblAboutCredits": widgets["about_credits_label"],
+            "lblAboutLicense": widgets["about_license_label"],
+            "btnAboutClose": widgets["about_close_btn"],
+            "ImgOpenDialog": widgets["open_dialog_proxy"],
+            "SrcdirDialog": widgets["srcdir_dialog_proxy"],
+            **{object_name: widgets["settings_dialog_proxy"] for object_name in SETTINGS_DIALOG_OBJECT_ALIASES},
+            "watchTab": widgets["watch_tab_box"],
+            "marginsTab": widgets["margins_tab_box"],
+            "watchControlsRow": widgets["watch_controls_row"],
+            "watchDetailRow": widgets["watch_detail_row"],
+            "lblMarginsTabTitle": widgets["margins_tab_title"],
+            "lblMarginsSection": widgets["margins_section_label"],
+            "marginTextTabs": widgets["margin_text_tabs"],
+            "marginSettingsPage": widgets["margin_settings_page"],
+            "marginTextPage": widgets["margin_text_page"],
+            "lblMarginSettingsPreview": widgets["margin_settings_preview_label"],
+            "lblMarginTextSection": widgets["margin_text_section_label"],
+            "lblMarginTextMode": widgets["margin_text_mode_label"],
+            "radMarginTextModeOff": widgets["margin_text_mode_off"],
+            "radMarginTextModeSettings": widgets["margin_text_mode_settings"],
+            "radMarginTextModeText": widgets["margin_text_mode_text"],
+            "radMarginTextModeBoth": widgets["margin_text_mode_both"],
+            "txtMarginText": widgets["margin_text_entry"],
+            "radMarginTextPositionLeftTop": widgets["margin_position_left_top"],
+            "radMarginTextPositionRightBottom": widgets["margin_position_right_bottom"],
+            "radMarginTextPositionLeftBottom": widgets["margin_position_left_bottom"],
+            "radMarginTextPositionRightTop": widgets["margin_position_right_top"],
+            "spnMarginTextMaxLines": widgets["margin_text_max_lines_spin"],
+            "btnOpenSrcdirL": widgets["btn_open_srcdir_l"],
+            "btnOpenSrcdirR": widgets["btn_open_srcdir_r"],
+            "lblWatchSection": widgets["watch_label"],
+            "lblWatchTabTitle": widgets["watch_tab_title"],
+            "spnInterval": widgets["interval_spin"],
+            "lblInterval": widgets["interval_label"],
+            "btnDaemonize": widgets["btn_daemonize"],
+            "btnCancelDaemonize": widgets["btn_cancel_daemonize"],
+            "btnAbout": widgets["btn_about"],
+            "btnHelp": widgets["btn_help"],
+            "statusbar": widgets["footer_col"],
+            "flowRow": widgets["flow_row"],
+            "lblFlowLegend": widgets["flow_legend_label"],
+            "lblStatus": widgets["status_label"],
+            "lblError": widgets["error_label"],
+            "lblWatchSummary": widgets["watch_summary_label"],
+            "lblWatchSources": widgets["watch_sources_label"],
+            "lblWatchCurrent": widgets["watch_current_label"],
+            "lblWatchOutput": widgets["watch_output_label"],
+            **{object_name: widgets["save_path_state_label"] for object_name in SAVE_PATH_STATE_LABEL_ALIASES},
+            **{object_name: widgets["save_path_dialog_proxy"] for object_name in SAVE_PATH_DIALOG_OBJECT_ALIASES},
+        }
+
+    def _build_dialog_runtime_widgets(self, *, gtk_module: Any, window: Any) -> dict[str, Any]:
+        open_dialog_proxy = _OpenDialogProxy(
+            gtk_module,
+            window,
+            self._on_open_dialog_confirmed,
+            self._on_open_dialog_canceled,
+        )
+        save_path_dialog_proxy = _SavePathDialogProxy(
+            gtk_module,
+            window,
+            self._on_save_path_filename_changed,
+            self._on_native_save_path_confirmed,
+            self._on_native_save_path_canceled,
+        )
+
+        settings_widgets = build_settings_section(gtk_module, configure_spin_button=self._configure_spin_button)
+        prefs_window = settings_widgets["prefs_window"]
+        settings_dialog_proxy = _SettingsDialogProxy(prefs_window)
+        if hasattr(prefs_window, "connect"):
+            prefs_window.connect(
+                "delete-event",
+                lambda *_args: self._on_preferences_window_delete_event(),
+            )
+
+        prefs_apply_single = settings_widgets["prefs_apply_single"]
+        prefs_apply_per_monitor = settings_widgets["prefs_apply_per_monitor"]
+        prefs_apply_single.connect(
+            "toggled",
+            lambda widget, *_args: self._on_preferences_apply_mode_toggled(widget, "single-file"),
+        )
+        prefs_apply_per_monitor.connect(
+            "toggled",
+            lambda widget, *_args: self._on_preferences_apply_mode_toggled(widget, "per-monitor-auto-split"),
+        )
+
+        color_widgets = build_color_dialog_section(gtk_module, default_color_hex=DEFAULT_BACKGROUND_COLOR_HEX)
+        color_window = color_widgets["color_window"]
+        color_value_entry = color_widgets["color_value_entry"]
+        color_state_label = color_widgets["color_state_label"]
+        color_dialog_proxy = _ColorDialogProxy(
+            gtk_module,
+            window,
+            color_window,
+            color_value_entry,
+            color_state_label,
+            self._on_color_dialog_confirmed,
+            self._on_color_dialog_canceled,
+        )
+        if hasattr(color_window, "connect"):
+            color_window.connect(
+                "delete-event",
+                lambda *_args: self._on_color_window_delete_event(),
+            )
+
+        about_widgets = build_about_dialog_section(gtk_module)
+        about_window = about_widgets["about_window"]
+        about_dialog_proxy = _AboutDialogProxy(
+            about_window,
+            about_widgets["about_title_label"],
+            about_widgets["about_version_label"],
+            about_widgets["about_description_label"],
+            about_widgets["about_credits_label"],
+            about_widgets["about_license_label"],
+        )
+        if hasattr(about_window, "connect"):
+            about_window.connect(
+                "delete-event",
+                lambda *_args: self._on_about_window_delete_event(),
+            )
+
+        srcdir_dialog_proxy = _SrcdirDialogProxy(
+            gtk_module,
+            window,
+            self._on_srcdir_dialog_confirmed,
+            self._on_srcdir_dialog_canceled,
+        )
+
+        return {
+            "open_dialog_proxy": open_dialog_proxy,
+            "save_path_dialog_proxy": save_path_dialog_proxy,
+            **settings_widgets,
+            "settings_dialog_proxy": settings_dialog_proxy,
+            **color_widgets,
+            "color_dialog_proxy": color_dialog_proxy,
+            **about_widgets,
+            "about_dialog_proxy": about_dialog_proxy,
+            "srcdir_dialog_proxy": srcdir_dialog_proxy,
+        }
+
+    def _connect_runtime_widgets(self, **widgets: Any) -> None:
+        # Why: fallback window must still exercise MainWindow handlers even when
+        # legacy glade cannot be parsed at runtime.
+        try:
+            widgets["input_entry_l"].connect("changed", self._on_input_changed)
+        except Exception:
+            pass
+        try:
+            widgets["input_entry_r"].connect("changed", self._on_input_changed)
+        except Exception:
+            pass
+
+        for widget_name, handler_key in (
+            ("tgl_upper_l", "tglUpperL"),
+            ("tgl_lower_l", "tglLowerL"),
+            ("tgl_upper_r", "tglUpperR"),
+            ("tgl_lower_r", "tglLowerR"),
+            ("tgl_push_left_l", "tglPushLeftL"),
+            ("tgl_push_right_l", "tglPushRightL"),
+            ("tgl_push_left_r", "tglPushLeftR"),
+            ("tgl_push_right_r", "tglPushRightR"),
+        ):
+            widget = widgets[widget_name]
+            widget.connect("pressed", lambda *_args, key=handler_key: self._on_direction_pressed(key))
+            widget.connect("toggled", lambda *_args, key=handler_key: self._on_direction_toggled(key))
+            widget.connect("released", lambda *_args, key=handler_key: self._on_direction_released(key))
+
+        widgets["btn_get_img_l"].connect("clicked", lambda *_args: self._on_pick_input_clicked("L"))
+        widgets["btn_get_img_r"].connect("clicked", lambda *_args: self._on_pick_input_clicked("R"))
+        widgets["btn_clr_path_l"].connect("clicked", lambda *_args: self._on_clear_input_clicked("L"))
+        widgets["btn_clr_path_r"].connect("clicked", lambda *_args: self._on_clear_input_clicked("R"))
+
+        for widget_name in ("top_margin_spin", "left_margin_spin", "right_margin_spin", "bottom_margin_spin"):
+            widgets[widget_name].connect("value-changed", self._on_margin_changed)
+
+        widgets["optimize_btn"].connect("clicked", self._on_save_clicked)
+        widgets["optimize_modern_btn"].connect("clicked", self._on_optimize_clicked)
+        widgets["apply_btn"].connect("clicked", self._on_apply_clicked)
+        widgets["btn_setting"].connect("clicked", self._on_settings_clicked)
+        widgets["prefs_apply_btn"].connect("clicked", self._on_preferences_apply_clicked)
+        widgets["prefs_load_btn"].connect("clicked", self._on_preferences_load_clicked)
+        widgets["prefs_save_btn"].connect("clicked", self._on_preferences_save_clicked)
+        widgets["prefs_close_btn"].connect("clicked", self._on_preferences_close_clicked)
+        widgets["rad_apply_single"].connect(
+            "toggled",
+            lambda widget, *_args: self._on_apply_mode_toggled(widget, "single-file"),
+        )
+        widgets["rad_apply_per_monitor"].connect(
+            "toggled",
+            lambda widget, *_args: self._on_apply_mode_toggled(widget, "per-monitor-auto-split"),
+        )
+        widgets["btn_set_color"].connect("clicked", self._on_color_clicked)
+        widgets["btn_about"].connect("clicked", self._on_about_clicked)
+        widgets["color_apply_btn"].connect("clicked", self._on_color_dialog_apply_clicked)
+        widgets["color_cancel_btn"].connect("clicked", self._on_color_dialog_cancel_clicked)
+        widgets["about_close_btn"].connect("clicked", self._on_about_dialog_close_clicked)
+        widgets["btn_open_srcdir_l"].connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("L"))
+        widgets["btn_open_srcdir_r"].connect("clicked", lambda *_args: self._on_pick_srcdir_clicked("R"))
+        widgets["interval_spin"].connect("value-changed", self._on_watch_interval_changed)
+        widgets["btn_daemonize"].connect("clicked", self._on_watch_start_clicked)
+        widgets["btn_cancel_daemonize"].connect("clicked", self._on_watch_stop_clicked)
+        widgets["margin_text_mode_off"].connect(
+            "toggled",
+            lambda widget, *_args: self._on_margin_text_mode_toggled(widget, "none"),
+        )
+        widgets["margin_text_mode_settings"].connect(
+            "toggled",
+            lambda widget, *_args: self._on_margin_text_mode_toggled(widget, "params"),
+        )
+        widgets["margin_text_mode_text"].connect(
+            "toggled",
+            lambda widget, *_args: self._on_margin_text_mode_toggled(widget, "free"),
+        )
+        widgets["margin_text_mode_both"].connect(
+            "toggled",
+            lambda widget, *_args: self._on_margin_text_mode_toggled(widget, "combo"),
+        )
+
+        margin_text_entry = widgets["margin_text_entry"]
+        if hasattr(margin_text_entry, "get_buffer") and hasattr(margin_text_entry.get_buffer(), "connect"):
+            margin_text_entry.get_buffer().connect(
+                "changed",
+                lambda *_args: self._on_margin_text_changed(margin_text_entry),
+            )
+        else:
+            margin_text_entry.connect("changed", self._on_margin_text_changed)
+        try:
+            margin_text_entry.connect("key-press-event", self._on_margin_text_key_press)
+        except Exception:
+            pass
+
+        widgets["margin_position_left_top"].connect(
+            "toggled",
+            lambda widget, *_args: self._on_margin_position_toggled(widget, "top"),
+        )
+        widgets["margin_position_right_bottom"].connect(
+            "toggled",
+            lambda widget, *_args: self._on_margin_position_toggled(widget, "bottom"),
+        )
+        widgets["margin_position_left_bottom"].connect(
+            "toggled",
+            lambda widget, *_args: self._on_margin_position_toggled(widget, "left"),
+        )
+        widgets["margin_position_right_top"].connect(
+            "toggled",
+            lambda widget, *_args: self._on_margin_position_toggled(widget, "right"),
+        )
+        widgets["margin_text_max_lines_spin"].connect(
+            "value-changed",
+            self._on_margin_text_max_lines_changed,
+        )
 
     def _configure_spin_button(
         self,
