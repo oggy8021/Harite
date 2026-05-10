@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import sys
 
+from harite import __version__
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX
 from harite.core import describe_embed_position as describe_margin_text_position
 from harite.core import is_background_color_literal
@@ -82,6 +83,7 @@ class MainWindow:
         self.open_image_dialog_side: str | None = None
         self._save_path_dialog_open = False
         self.settings_dialog_open = False
+        self.about_dialog_open = False
         self.input_path_l = ""
         self.input_path_r = ""
         default_output_dir = self._default_output_dir()
@@ -917,9 +919,23 @@ class MainWindow:
         return True
 
     def on_about(self) -> bool:
-        self._set_status("planned", "about", "about dialog is planned")
-        self._log("About requested: planned")
-        return False
+        self.about_dialog_open = True
+        self._set_status("idle", "about", "about dialog opened")
+        self._log("About dialog opened")
+        return True
+
+    def on_get_about_dialog_info(self) -> dict[str, str]:
+        return {
+            "app_name": self.title,
+            "version": __version__,
+            "description": "壁紙最適化ツール（リファクタリング版）",
+            "credits": "Created by oggy8021",
+            "license_name": "MIT License",
+        }
+
+    def on_close_about_dialog(self) -> None:
+        self.about_dialog_open = False
+        self._log("About dialog closed")
 
     def on_set_color(self, color: str | None = None) -> bool:
         if color is None:

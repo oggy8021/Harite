@@ -40,6 +40,8 @@ RUNTIME_HANDLER_MAP: dict[str, str] = {
     "on_close_error_dialog": "on_close_error_dialog",
     "on_close_settings_dialog": "on_close_settings_dialog",
     "on_close_color_dialog": "on_close_color_dialog",
+    "on_get_about_dialog_info": "on_get_about_dialog_info",
+    "on_close_about_dialog": "on_close_about_dialog",
 }
 
 

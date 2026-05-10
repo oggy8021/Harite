@@ -36,15 +36,26 @@ def test_on_clear_input_resets_optimize_state():
     assert window.status_message == "input is required"
 
 
-def test_on_about_is_planned():
+def test_on_about_opens_dialog():
     window = MainWindow()
 
     ok = window.on_about()
 
-    assert ok is False
-    assert window.status_level == "planned"
+    assert ok is True
+    assert window.about_dialog_open is True
+    assert window.status_level == "idle"
     assert window.status_phase == "about"
-    assert window.status_message == "about dialog is planned"
+    assert window.status_message == "about dialog opened"
+
+
+def test_on_get_about_dialog_info_returns_metadata():
+    window = MainWindow()
+
+    info = window.on_get_about_dialog_info()
+
+    assert info["app_name"] == "Harite"
+    assert info["version"]
+    assert info["license_name"] == "MIT License"
 
 
 def test_on_set_color_opens_dialog_state():
