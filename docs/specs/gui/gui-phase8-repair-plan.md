@@ -123,6 +123,12 @@
 - 完了条件:
   - 左右どちらへ出すかを user-facing に指定できる。
   - 最高位要求である margin 入力一体性を壊していない。
+- 2026-05-10 時点の現行判定:
+  - [docs/specs/gui/gui-phase8-margin-tab-grid-re-layout-contract.md](docs/specs/gui/gui-phase8-margin-tab-grid-re-layout-contract.md) の `Position:` は、既に `Left/Right x Top/Bottom` の 4 候補から 1 つを user-facing に選ぶ contract になっている。
+  - 現行実装も 4 象限選択を `embed_position=top|left|right|bottom` として扱っており、visible requirement としての display 指定は branch 6 の到達物で実質充足済みとみなせる。
+  - したがって、branch 7 を独立実装として必須扱いにはしない。
+  - branch 7 を再起動する条件は、visible requirement の追加ではなく、内部状態を `display target + vertical position` に分離したい等の別責務が明示された場合に限る。
+  - 現行仕様判断の要約は [docs/specs/gui/gui-phase8-margin-text-placement-note.md](docs/specs/gui/gui-phase8-margin-text-placement-note.md) を参照。
 
 ## PR の切り方
 

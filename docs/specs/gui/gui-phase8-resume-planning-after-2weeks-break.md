@@ -33,7 +33,7 @@
 
 ### 5. margins contract
 
-- [docs/specs/gui/gui-margin-tab-grid-re-layout-contract.md](docs/specs/gui/gui-margin-tab-grid-re-layout-contract.md) は、`feature/margin-tab-grid-re-layout` のローカル contract として役目を果たした。
+- [docs/specs/gui/gui-phase8-margin-tab-grid-re-layout-contract.md](docs/specs/gui/gui-phase8-margin-tab-grid-re-layout-contract.md) は、`feature/margin-tab-grid-re-layout` のローカル contract として役目を果たした。
 - 表示性・機能性・Optimize / Apply を含む確認が済んだため、この contract は「閉じたブランチの正本」として参照し、次ブランチの入口文書にはしない。
 
 ### 6. traceability follow-up memo
@@ -59,15 +59,20 @@
 ### docs と実装がまだずれているもの
 
 - repair-plan 上は `phase8-gui-margins-tab` が「これから実施」に見えるが、実態は完了済み
-- [docs/specs/gui/gui-margin-tab-grid-re-layout-contract.md](docs/specs/gui/gui-margin-tab-grid-re-layout-contract.md) の固定 visible layout 冒頭には `Margins` のままとある一方、Grid contract と実装・実機確認では `Margins (for each display)` へ進んでいる
+- [docs/specs/gui/gui-phase8-margin-tab-grid-re-layout-contract.md](docs/specs/gui/gui-phase8-margin-tab-grid-re-layout-contract.md) の固定 visible layout 冒頭には `Margins` のままとある一方、Grid contract と実装・実機確認では `Margins (for each display)` へ進んでいる
 - traceability follow-up memo は「semantics 修復の後段に置く」と読めるが、どの docs ブランチで再開判断を固定したかの追記がまだ薄い
 
 ### 未了として扱うべきもの
 
-- `margin text` display-target は未着手
 - preview / visual assist、`Color`、`About` は backlog 上の別群として残っている
 - GUI traceability debt の整理は未着手
   - 次の専用ブランチ候補として [docs/specs/gui/gui-phase8-traceability-followup-memo.md](docs/specs/gui/gui-phase8-traceability-followup-memo.md) を正本に使う
+
+### 現行判定として補足するもの
+
+- `margin text` display-target は、branch 7 の独立 feature としては現時点では起こさない。
+- 理由は、[docs/specs/gui/gui-phase8-margin-tab-grid-re-layout-contract.md](docs/specs/gui/gui-phase8-margin-tab-grid-re-layout-contract.md) の `Position:` が既に `Left/Right x Top/Bottom` の 4 候補を user-facing に持ち、visible requirement としては実質充足済みだからである。
+- 今後これを再起動する場合は、visible requirement の不足ではなく、内部 state 分離や schema 再設計の別責務として扱う。
 
 ## 再計画
 
@@ -98,10 +103,10 @@
 2. この follow-up では、`padding` / `mosaic` 整理と `Margins` 4 値意味論修復が通過済みであることを本書に反映する
 3. 実装ブランチの第一候補は `phase8-gui-traceability-followup` 相当とする
 4. [docs/specs/gui/gui-phase8-traceability-followup-memo.md](docs/specs/gui/gui-phase8-traceability-followup-memo.md) を次ブランチの正本として使う
-5. preview / visual assist や `margin text` display-target は、traceability 改善と混ぜず後段の別ブランチで扱う
+5. preview / visual assist は、traceability 改善と混ぜず後段の別ブランチで扱う
 
 ## この文書を読んだあとの進み方
 
 - repair-plan の順と現在地 overlay の差を再確認したいときは [docs/specs/gui/gui-phase8-repair-plan.md](docs/specs/gui/gui-phase8-repair-plan.md) を参照する
 - GUI traceability ブランチへ進むなら [docs/specs/gui/gui-phase8-traceability-followup-memo.md](docs/specs/gui/gui-phase8-traceability-followup-memo.md) を正本として使う
-- 完了済み Margins レイアウトの確認結果を辿るときだけ [docs/specs/gui/gui-margin-tab-grid-re-layout-contract.md](docs/specs/gui/gui-margin-tab-grid-re-layout-contract.md) を参照する
+- 完了済み Margins レイアウトの確認結果を辿るときだけ [docs/specs/gui/gui-phase8-margin-tab-grid-re-layout-contract.md](docs/specs/gui/gui-phase8-margin-tab-grid-re-layout-contract.md) を参照する
