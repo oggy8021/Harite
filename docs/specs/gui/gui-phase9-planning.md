@@ -153,7 +153,7 @@
 - GTK backend の watch timer / watch bridge は [src/harite/gui/adapters/gtk_runtime_watch.py](src/harite/gui/adapters/gtk_runtime_watch.py) へ切り出し済み。
 - GTK backend の widget build は [src/harite/gui/adapters/gtk_runtime_builders.py](src/harite/gui/adapters/gtk_runtime_builders.py) を facade としつつ、[src/harite/gui/adapters/gtk_layout_builders.py](src/harite/gui/adapters/gtk_layout_builders.py) / [src/harite/gui/adapters/gtk_tab_builders.py](src/harite/gui/adapters/gtk_tab_builders.py) / [src/harite/gui/adapters/gtk_dialog_builders.py](src/harite/gui/adapters/gtk_dialog_builders.py) へ再分割済み。header / main tab compose-input-display / action-preview cluster / watch tab / margins tab / settings editor / color-about window / footer-status / runtime state labels / primary margin controls が builder 化済み。
 
-現時点の GTK backend 本体 [src/harite/gui/adapters/gtk_backend.py](src/harite/gui/adapters/gtk_backend.py) は、object registry・signal wiring・dialog runtime coordination・handler 群の coordinator としての比重が以前より高くなっている。`__init__` では object map 組み立て、signal 配線、dialog runtime 準備の helper 化まで進み、一段薄い coordinator に寄ってきている。
+現時点の GTK backend 本体 [src/harite/gui/adapters/gtk_backend.py](src/harite/gui/adapters/gtk_backend.py) は、object registry・signal wiring・dialog runtime coordination・handler 群の coordinator としての比重が以前より高くなっている。`__init__` では runtime state 初期化、window 構築、root / header / main composition、watch / margins tab composition、footer attach composition、dialog runtime bundle の downstream 受け渡し、section bundle 前提の object map 組み立て、section bundle 前提の signal wiring、dialog runtime 準備の helper 化まで進み、一段薄い coordinator に寄ってきている。
 
 ## Workstream
 
@@ -184,7 +184,7 @@
 - 現在地:
   - sync / preview / dialog / watch は grouped module 化済み。
   - widget build は facade + 責務別 module へ再分割済みで、header / main tab compose-input-display / action-preview / watch tab / margins tab / settings editor / color-about window / footer-status / runtime state labels / primary margin controls まで分離済み。
-  - backend `__init__` では object map 組み立て / signal wiring / dialog runtime 準備の helper 化まで進み、残る大塊はさらに coordinator 寄せを継続する段階。
+  - backend `__init__` では runtime state 初期化 / window 構築 / root-header-main composition / watch-margins composition / footer-attach composition / dialog runtime bundle pass-through / section bundle object-map assembly / section bundle signal wiring / dialog runtime 準備の helper 化まで進み、受け口も section bundle 前提へ揃いつつあり、残る大塊はさらに coordinator 寄せを継続する段階。
 
 ### 4. legacy / compatibility 監査
 

@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 from typing import Any, Callable
 
-from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color
+from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, normalize_background_color
 from harite.gui.adapters.gtk_runtime_builders import build_action_cluster_section
 from harite.gui.adapters.gtk_runtime_builders import build_about_dialog_section
 from harite.gui.adapters.gtk_runtime_builders import build_center_body_section
@@ -107,189 +107,93 @@ class GtkRuntimeSignalBackend:
     def __init__(self, gtk_module: Any) -> None:
         self._gtk = gtk_module
         self._signal_handlers: dict[str, Callable[..., Any]] = {}
-        self._input_path_l = ""
-        self._input_path_r = ""
-        self._prefs_apply_mode_preserved: str | None = None
-        self._prefs_apply_mode_syncing = False
-        self._watch_srcdir_l = ""
-        self._watch_srcdir_r = ""
-        self._watch_running = False
-        self._watch_state_l = WatchCycleState()
-        self._watch_state_r = WatchCycleState()
-        self._watch_previous_l: Path | None = None
-        self._watch_previous_r: Path | None = None
-        self._watch_timer_source_id: int | None = None
+        self._initialize_runtime_state()
 
-        window = gtk_module.Window(title="Harite")
-        if hasattr(window, "set_resizable"):
-            # P5-2 policy: modern desktop UX expects a resizable main window.
-            window.set_resizable(True)
-        if hasattr(window, "set_default_size"):
-            window.set_default_size(1040, 720)
+        window = self._build_runtime_window(gtk_module)
 
         if hasattr(gtk_module, "Box") and hasattr(gtk_module, "Label"):
-            root = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=10)
-            root.set_border_width(10)
-            header_widgets = build_header_section(gtk_module, root)
-            header_col = header_widgets["header_col"]
-            title = header_widgets["title"]
-            subtitle = header_widgets["subtitle"]
-            command_bar = header_widgets["command_bar"]
-            command_section_label = header_widgets["command_section_label"]
-            btn_setting = header_widgets["btn_setting"]
-            btn_help = header_widgets["btn_help"]
-            btn_about = header_widgets["btn_about"]
-            btn_set_color = header_widgets["btn_set_color"]
-            flow_row = header_widgets["flow_row"]
-            flow_legend_label = header_widgets["flow_legend_label"]
-            optimize_btn = header_widgets["optimize_btn"]
-
-            primary_margin_controls = build_primary_margin_controls(
-                gtk_module,
-                configure_spin_button=self._configure_spin_button,
-            )
-            top_margin_label = primary_margin_controls["top_margin_label"]
-            top_margin_spin = primary_margin_controls["top_margin_spin"]
-            left_margin_label = primary_margin_controls["left_margin_label"]
-            left_margin_spin = primary_margin_controls["left_margin_spin"]
-
-            center_body_widgets = build_center_body_section(gtk_module, root)
-            center_row = center_body_widgets["center_row"]
-            command_tabs = center_body_widgets["command_tabs"]
-
-            main_widgets = build_main_tab_section(gtk_module)
-            main_col = main_widgets["main_col"]
-            main_section_label = main_widgets["main_section_label"]
-            main_page_shell = build_centered_page_shell(gtk_module, main_col)
-            compose_grid = main_widgets["compose_grid"]
-            left_display_grid = main_widgets["left_display_grid"]
-            right_display_grid = main_widgets["right_display_grid"]
-            tgl_upper_l = main_widgets["tgl_upper_l"]
-            tgl_upper_r = main_widgets["tgl_upper_r"]
-            tgl_lower_l = main_widgets["tgl_lower_l"]
-            tgl_lower_r = main_widgets["tgl_lower_r"]
-            tgl_push_left_l = main_widgets["tgl_push_left_l"]
-            tgl_push_right_l = main_widgets["tgl_push_right_l"]
-            btn_get_img_l = main_widgets["btn_get_img_l"]
-            tgl_push_left_r = main_widgets["tgl_push_left_r"]
-            tgl_push_right_r = main_widgets["tgl_push_right_r"]
-            btn_get_img_r = main_widgets["btn_get_img_r"]
-            input_row_l = main_widgets["input_row_l"]
-            input_entry_l = main_widgets["input_entry_l"]
-            btn_clr_path_l = main_widgets["btn_clr_path_l"]
-            input_row_r = main_widgets["input_row_r"]
-            input_entry_r = main_widgets["input_entry_r"]
-            btn_clr_path_r = main_widgets["btn_clr_path_r"]
-            pick_state_label = main_widgets["pick_state_label"]
-
-            default_apply_mode = _default_apply_mode()
-            action_widgets = build_action_cluster_section(gtk_module, compose_grid, default_apply_mode=default_apply_mode)
-            action_cluster_row = action_widgets["action_cluster_row"]
-            optimize_group = action_widgets["optimize_group"]
-            apply_group = action_widgets["apply_group"]
-            optimize_section_label = action_widgets["optimize_section_label"]
-            optimize_row = action_widgets["optimize_row"]
-            optimize_modern_btn = action_widgets["optimize_modern_btn"]
-            optimize_result = action_widgets["optimize_result"]
-            apply_section_label = action_widgets["apply_section_label"]
-            apply_row = action_widgets["apply_row"]
-            apply_btn = action_widgets["apply_btn"]
-            apply_target = action_widgets["apply_target"]
-            rad_apply_single = action_widgets["rad_apply_single"]
-            rad_apply_per_monitor = action_widgets["rad_apply_per_monitor"]
-            apply_mode_label = action_widgets["apply_mode_label"]
-            preview_group = action_widgets["preview_group"]
-            preview_images_row = action_widgets["preview_images_row"]
-            preview_left = action_widgets["preview_left"]
-            preview_right = action_widgets["preview_right"]
-            preview_left_assignment = action_widgets["preview_left_assignment"]
-            preview_right_assignment = action_widgets["preview_right_assignment"]
-            preview_left_result = action_widgets["preview_left_result"]
-            preview_right_result = action_widgets["preview_right_result"]
-            preview_state_label = action_widgets["preview_state_label"]
-            preview_source_label = action_widgets["preview_source_label"]
-            preview_assist_label = action_widgets["preview_assist_label"]
-            preview_section_label = action_widgets["preview_section_label"]
-
-            state_labels = build_runtime_state_labels(gtk_module)
-            do_it_plan_label = state_labels["do_it_plan_label"]
-            save_path_state_label = state_labels["save_path_state_label"]
-            save_target_label = state_labels["save_target_label"]
-            priority_note_label = state_labels["priority_note_label"]
-            style_legend_label = state_labels["style_legend_label"]
-            current_state_section_label = state_labels["current_state_section_label"]
-            current_margins_label = state_labels["current_margins_label"]
-            current_left_label = state_labels["current_left_label"]
-            current_right_label = state_labels["current_right_label"]
-
-            command_tabs.append_page(main_page_shell, main_section_label)
+            main_runtime = self._build_main_runtime_widgets(gtk_module)
+            root = main_runtime["root"]
+            header_col = main_runtime["header_col"]
+            title = main_runtime["title"]
+            subtitle = main_runtime["subtitle"]
+            command_bar = main_runtime["command_bar"]
+            command_section_label = main_runtime["command_section_label"]
+            btn_setting = main_runtime["btn_setting"]
+            btn_help = main_runtime["btn_help"]
+            btn_about = main_runtime["btn_about"]
+            btn_set_color = main_runtime["btn_set_color"]
+            flow_row = main_runtime["flow_row"]
+            flow_legend_label = main_runtime["flow_legend_label"]
+            optimize_btn = main_runtime["optimize_btn"]
+            top_margin_label = main_runtime["top_margin_label"]
+            top_margin_spin = main_runtime["top_margin_spin"]
+            left_margin_label = main_runtime["left_margin_label"]
+            left_margin_spin = main_runtime["left_margin_spin"]
+            center_row = main_runtime["center_row"]
+            command_tabs = main_runtime["command_tabs"]
+            main_col = main_runtime["main_col"]
+            main_section_label = main_runtime["main_section_label"]
+            compose_grid = main_runtime["compose_grid"]
+            left_display_grid = main_runtime["left_display_grid"]
+            right_display_grid = main_runtime["right_display_grid"]
+            tgl_upper_l = main_runtime["tgl_upper_l"]
+            tgl_upper_r = main_runtime["tgl_upper_r"]
+            tgl_lower_l = main_runtime["tgl_lower_l"]
+            tgl_lower_r = main_runtime["tgl_lower_r"]
+            tgl_push_left_l = main_runtime["tgl_push_left_l"]
+            tgl_push_right_l = main_runtime["tgl_push_right_l"]
+            btn_get_img_l = main_runtime["btn_get_img_l"]
+            tgl_push_left_r = main_runtime["tgl_push_left_r"]
+            tgl_push_right_r = main_runtime["tgl_push_right_r"]
+            btn_get_img_r = main_runtime["btn_get_img_r"]
+            input_row_l = main_runtime["input_row_l"]
+            input_entry_l = main_runtime["input_entry_l"]
+            btn_clr_path_l = main_runtime["btn_clr_path_l"]
+            input_row_r = main_runtime["input_row_r"]
+            input_entry_r = main_runtime["input_entry_r"]
+            btn_clr_path_r = main_runtime["btn_clr_path_r"]
+            pick_state_label = main_runtime["pick_state_label"]
+            action_cluster_row = main_runtime["action_cluster_row"]
+            optimize_group = main_runtime["optimize_group"]
+            apply_group = main_runtime["apply_group"]
+            optimize_section_label = main_runtime["optimize_section_label"]
+            optimize_row = main_runtime["optimize_row"]
+            optimize_modern_btn = main_runtime["optimize_modern_btn"]
+            optimize_result = main_runtime["optimize_result"]
+            apply_section_label = main_runtime["apply_section_label"]
+            apply_row = main_runtime["apply_row"]
+            apply_btn = main_runtime["apply_btn"]
+            apply_target = main_runtime["apply_target"]
+            rad_apply_single = main_runtime["rad_apply_single"]
+            rad_apply_per_monitor = main_runtime["rad_apply_per_monitor"]
+            apply_mode_label = main_runtime["apply_mode_label"]
+            preview_group = main_runtime["preview_group"]
+            preview_images_row = main_runtime["preview_images_row"]
+            preview_left = main_runtime["preview_left"]
+            preview_right = main_runtime["preview_right"]
+            preview_left_assignment = main_runtime["preview_left_assignment"]
+            preview_right_assignment = main_runtime["preview_right_assignment"]
+            preview_left_result = main_runtime["preview_left_result"]
+            preview_right_result = main_runtime["preview_right_result"]
+            preview_state_label = main_runtime["preview_state_label"]
+            preview_source_label = main_runtime["preview_source_label"]
+            preview_assist_label = main_runtime["preview_assist_label"]
+            preview_section_label = main_runtime["preview_section_label"]
+            do_it_plan_label = main_runtime["do_it_plan_label"]
+            save_path_state_label = main_runtime["save_path_state_label"]
+            save_target_label = main_runtime["save_target_label"]
+            priority_note_label = main_runtime["priority_note_label"]
+            style_legend_label = main_runtime["style_legend_label"]
+            current_state_section_label = main_runtime["current_state_section_label"]
+            current_margins_label = main_runtime["current_margins_label"]
+            current_left_label = main_runtime["current_left_label"]
+            current_right_label = main_runtime["current_right_label"]
 
             dialog_runtime = self._build_dialog_runtime_widgets(gtk_module=gtk_module, window=window)
-            open_dialog_proxy = dialog_runtime["open_dialog_proxy"]
-            save_path_dialog_proxy = dialog_runtime["save_path_dialog_proxy"]
-            prefs_window = dialog_runtime["prefs_window"]
-            prefs_apply_btn = dialog_runtime["prefs_apply_btn"]
-            prefs_load_btn = dialog_runtime["prefs_load_btn"]
-            prefs_save_btn = dialog_runtime["prefs_save_btn"]
-            prefs_close_btn = dialog_runtime["prefs_close_btn"]
-            prefs_state_label = dialog_runtime["prefs_state_label"]
-            prefs_editor_box = dialog_runtime["prefs_editor_box"]
-            prefs_editor_title = dialog_runtime["prefs_editor_title"]
-            prefs_resolution_entry = dialog_runtime["prefs_resolution_entry"]
-            prefs_scaling_entry = dialog_runtime["prefs_scaling_entry"]
-            prefs_two_screen_auto = dialog_runtime["prefs_two_screen_auto"]
-            prefs_two_screen_on = dialog_runtime["prefs_two_screen_on"]
-            prefs_two_screen_off = dialog_runtime["prefs_two_screen_off"]
-            prefs_l_display_entry = dialog_runtime["prefs_l_display_entry"]
-            prefs_r_display_entry = dialog_runtime["prefs_r_display_entry"]
-            prefs_margins_entry = dialog_runtime["prefs_margins_entry"]
-            prefs_align_entry = dialog_runtime["prefs_align_entry"]
-            prefs_valign_entry = dialog_runtime["prefs_valign_entry"]
-            prefs_quality_spin = dialog_runtime["prefs_quality_spin"]
-            prefs_margin_text_mode_entry = dialog_runtime["prefs_margin_text_mode_entry"]
-            prefs_margin_text_entry = dialog_runtime["prefs_margin_text_entry"]
-            prefs_margin_text_position_entry = dialog_runtime["prefs_margin_text_position_entry"]
-            prefs_margin_text_max_lines_spin = dialog_runtime["prefs_margin_text_max_lines_spin"]
-            prefs_plugin_entry = dialog_runtime["prefs_plugin_entry"]
-            prefs_apply_single = dialog_runtime["prefs_apply_single"]
-            prefs_apply_per_monitor = dialog_runtime["prefs_apply_per_monitor"]
-            prefs_import_path_entry = dialog_runtime["prefs_import_path_entry"]
-            prefs_export_path_entry = dialog_runtime["prefs_export_path_entry"]
-            settings_dialog_proxy = dialog_runtime["settings_dialog_proxy"]
-            color_window = dialog_runtime["color_window"]
-            color_value_entry = dialog_runtime["color_value_entry"]
-            color_state_label = dialog_runtime["color_state_label"]
-            color_apply_btn = dialog_runtime["color_apply_btn"]
-            color_cancel_btn = dialog_runtime["color_cancel_btn"]
-            color_dialog_proxy = dialog_runtime["color_dialog_proxy"]
-            about_window = dialog_runtime["about_window"]
-            about_title_label = dialog_runtime["about_title_label"]
-            about_version_label = dialog_runtime["about_version_label"]
-            about_description_label = dialog_runtime["about_description_label"]
-            about_credits_label = dialog_runtime["about_credits_label"]
-            about_license_label = dialog_runtime["about_license_label"]
-            about_close_btn = dialog_runtime["about_close_btn"]
-            about_dialog_proxy = dialog_runtime["about_dialog_proxy"]
-            srcdir_dialog_proxy = dialog_runtime["srcdir_dialog_proxy"]
-
-            watch_widgets = build_watch_tab_section(gtk_module, configure_spin_button=self._configure_spin_button)
-            watch_tab_box = watch_widgets["watch_tab_box"]
-            watch_label = watch_widgets["watch_label"]
-            watch_tab_title = watch_widgets["watch_tab_title"]
-            watch_controls_row = watch_widgets["watch_controls_row"]
-            watch_detail_row = watch_widgets["watch_detail_row"]
-            btn_open_srcdir_l = watch_widgets["btn_open_srcdir_l"]
-            btn_open_srcdir_r = watch_widgets["btn_open_srcdir_r"]
-            interval_spin = watch_widgets["interval_spin"]
-            interval_label = watch_widgets["interval_label"]
-            btn_daemonize = watch_widgets["btn_daemonize"]
-            btn_cancel_daemonize = watch_widgets["btn_cancel_daemonize"]
-            watch_sources_label = watch_widgets["watch_sources_label"]
-            watch_current_label = watch_widgets["watch_current_label"]
-            watch_output_label = watch_widgets["watch_output_label"]
-
-            margins_widgets = build_margins_tab_section(
+            tab_runtime = self._build_secondary_tab_runtime_widgets(
                 gtk_module,
+                command_tabs=command_tabs,
                 top_margin_label=top_margin_label,
                 top_margin_spin=top_margin_spin,
                 left_margin_label=left_margin_label,
@@ -300,268 +204,71 @@ class GtkRuntimeSignalBackend:
                 current_margins_label=current_margins_label,
                 current_left_label=current_left_label,
                 current_right_label=current_right_label,
-                configure_spin_button=self._configure_spin_button,
-                apply_margin_text_widget_style=self._apply_margin_text_widget_style,
             )
-            margins_tab_box = margins_widgets["margins_tab_box"]
-            margins_section_label = margins_widgets["margins_section_label"]
-            right_margin_col = margins_widgets["right_margin_col"]
-            right_margin_label = margins_widgets["right_margin_label"]
-            right_margin_spin = margins_widgets["right_margin_spin"]
-            bottom_margin_row = margins_widgets["bottom_margin_row"]
-            bottom_margin_label = margins_widgets["bottom_margin_label"]
-            bottom_margin_spin = margins_widgets["bottom_margin_spin"]
-            margins_tab_title = margins_widgets["margins_tab_title"]
-            margin_text_tabs = margins_widgets["margin_text_tabs"]
-            margin_settings_page = margins_widgets["margin_settings_page"]
-            margin_text_page = margins_widgets["margin_text_page"]
-            margin_settings_preview_label = margins_widgets["margin_settings_preview_label"]
-            margin_text_section_label = margins_widgets["margin_text_section_label"]
-            margin_text_mode_label = margins_widgets["margin_text_mode_label"]
-            margin_text_mode_off = margins_widgets["margin_text_mode_off"]
-            margin_text_mode_settings = margins_widgets["margin_text_mode_settings"]
-            margin_text_mode_text = margins_widgets["margin_text_mode_text"]
-            margin_text_mode_both = margins_widgets["margin_text_mode_both"]
-            margin_text_entry = margins_widgets["margin_text_entry"]
-            margin_position_left_top = margins_widgets["margin_position_left_top"]
-            margin_position_right_bottom = margins_widgets["margin_position_right_bottom"]
-            margin_position_left_bottom = margins_widgets["margin_position_left_bottom"]
-            margin_position_right_top = margins_widgets["margin_position_right_top"]
-            margin_text_max_lines_spin = margins_widgets["margin_text_max_lines_spin"]
-            self._current_state_summary_display = margins_widgets["current_state_summary_display"]
-            margins_page_shell = build_centered_page_shell(gtk_module, margins_tab_box)
-            command_tabs.append_page(margins_page_shell, margins_tab_title)
+            watch_tab_box = tab_runtime["watch_tab_box"]
+            watch_label = tab_runtime["watch_label"]
+            watch_tab_title = tab_runtime["watch_tab_title"]
+            watch_controls_row = tab_runtime["watch_controls_row"]
+            watch_detail_row = tab_runtime["watch_detail_row"]
+            btn_open_srcdir_l = tab_runtime["btn_open_srcdir_l"]
+            btn_open_srcdir_r = tab_runtime["btn_open_srcdir_r"]
+            interval_spin = tab_runtime["interval_spin"]
+            interval_label = tab_runtime["interval_label"]
+            btn_daemonize = tab_runtime["btn_daemonize"]
+            btn_cancel_daemonize = tab_runtime["btn_cancel_daemonize"]
+            watch_sources_label = tab_runtime["watch_sources_label"]
+            watch_current_label = tab_runtime["watch_current_label"]
+            watch_output_label = tab_runtime["watch_output_label"]
+            margins_tab_box = tab_runtime["margins_tab_box"]
+            margins_section_label = tab_runtime["margins_section_label"]
+            right_margin_col = tab_runtime["right_margin_col"]
+            right_margin_label = tab_runtime["right_margin_label"]
+            right_margin_spin = tab_runtime["right_margin_spin"]
+            bottom_margin_row = tab_runtime["bottom_margin_row"]
+            bottom_margin_label = tab_runtime["bottom_margin_label"]
+            bottom_margin_spin = tab_runtime["bottom_margin_spin"]
+            margins_tab_title = tab_runtime["margins_tab_title"]
+            margin_text_tabs = tab_runtime["margin_text_tabs"]
+            margin_settings_page = tab_runtime["margin_settings_page"]
+            margin_text_page = tab_runtime["margin_text_page"]
+            margin_settings_preview_label = tab_runtime["margin_settings_preview_label"]
+            margin_text_section_label = tab_runtime["margin_text_section_label"]
+            margin_text_mode_label = tab_runtime["margin_text_mode_label"]
+            margin_text_mode_off = tab_runtime["margin_text_mode_off"]
+            margin_text_mode_settings = tab_runtime["margin_text_mode_settings"]
+            margin_text_mode_text = tab_runtime["margin_text_mode_text"]
+            margin_text_mode_both = tab_runtime["margin_text_mode_both"]
+            margin_text_entry = tab_runtime["margin_text_entry"]
+            margin_position_left_top = tab_runtime["margin_position_left_top"]
+            margin_position_right_bottom = tab_runtime["margin_position_right_bottom"]
+            margin_position_left_bottom = tab_runtime["margin_position_left_bottom"]
+            margin_position_right_top = tab_runtime["margin_position_right_top"]
+            margin_text_max_lines_spin = tab_runtime["margin_text_max_lines_spin"]
+            self._current_state_summary_display = tab_runtime["current_state_summary_display"]
 
-            watch_page_shell = build_centered_page_shell(gtk_module, watch_tab_box)
-            command_tabs.append_page(watch_page_shell, watch_tab_title)
-
-            footer_widgets = build_footer_section(gtk_module, root)
-            footer_col = footer_widgets["footer_col"]
-            status_row = footer_widgets["status_row"]
-            status_label = footer_widgets["status_label"]
-            status_spacer = footer_widgets["status_spacer"]
-            watch_summary_label = footer_widgets["watch_summary_label"]
-            error_label = footer_widgets["error_label"]
-
-            if hasattr(window, "add"):
-                window.add(root)
+            footer_runtime = self._build_footer_runtime_widgets(
+                gtk_module,
+                window=window,
+                root=root,
+            )
+            footer_col = footer_runtime["footer_col"]
+            status_label = footer_runtime["status_label"]
+            watch_summary_label = footer_runtime["watch_summary_label"]
+            error_label = footer_runtime["error_label"]
 
             self._objects = self._build_runtime_object_map(
                 window=window,
-                root=root,
-                top_margin_label=top_margin_label,
-                top_margin_spin=top_margin_spin,
-                left_margin_label=left_margin_label,
-                left_margin_spin=left_margin_spin,
-                title=title,
-                subtitle=subtitle,
-                main_section_label=main_section_label,
-                main_col=main_col,
-                compose_grid=compose_grid,
-                left_display_grid=left_display_grid,
-                right_display_grid=right_display_grid,
-                input_row_l=input_row_l,
-                input_row_r=input_row_r,
-                action_cluster_row=action_cluster_row,
-                optimize_group=optimize_group,
-                tgl_upper_l=tgl_upper_l,
-                tgl_upper_r=tgl_upper_r,
-                tgl_push_left_l=tgl_push_left_l,
-                tgl_push_right_l=tgl_push_right_l,
-                tgl_lower_l=tgl_lower_l,
-                tgl_push_left_r=tgl_push_left_r,
-                tgl_push_right_r=tgl_push_right_r,
-                tgl_lower_r=tgl_lower_r,
-                btn_get_img_l=btn_get_img_l,
-                btn_get_img_r=btn_get_img_r,
-                pick_state_label=pick_state_label,
-                input_entry_l=input_entry_l,
-                btn_clr_path_l=btn_clr_path_l,
-                input_entry_r=input_entry_r,
-                btn_clr_path_r=btn_clr_path_r,
-                right_margin_col=right_margin_col,
-                right_margin_label=right_margin_label,
-                right_margin_spin=right_margin_spin,
-                bottom_margin_row=bottom_margin_row,
-                bottom_margin_label=bottom_margin_label,
-                bottom_margin_spin=bottom_margin_spin,
-                optimize_section_label=optimize_section_label,
-                optimize_row=optimize_row,
-                optimize_btn=optimize_btn,
-                optimize_modern_btn=optimize_modern_btn,
-                optimize_result=optimize_result,
-                apply_section_label=apply_section_label,
-                apply_row=apply_row,
-                apply_btn=apply_btn,
-                apply_target=apply_target,
-                preview_section_label=preview_section_label,
-                preview_group=preview_group,
-                preview_images_row=preview_images_row,
-                preview_left=preview_left,
-                preview_right=preview_right,
-                preview_left_assignment=preview_left_assignment,
-                preview_right_assignment=preview_right_assignment,
-                preview_left_result=preview_left_result,
-                preview_right_result=preview_right_result,
-                preview_state_label=preview_state_label,
-                preview_source_label=preview_source_label,
-                preview_assist_label=preview_assist_label,
-                rad_apply_single=rad_apply_single,
-                rad_apply_per_monitor=rad_apply_per_monitor,
-                apply_mode_label=apply_mode_label,
-                do_it_plan_label=do_it_plan_label,
-                save_target_label=save_target_label,
-                priority_note_label=priority_note_label,
-                style_legend_label=style_legend_label,
-                current_state_section_label=current_state_section_label,
-                current_margins_label=current_margins_label,
-                current_left_label=current_left_label,
-                current_right_label=current_right_label,
-                command_section_label=command_section_label,
-                command_tabs=command_tabs,
-                command_bar=command_bar,
-                btn_setting=btn_setting,
-                prefs_apply_btn=prefs_apply_btn,
-                prefs_load_btn=prefs_load_btn,
-                prefs_save_btn=prefs_save_btn,
-                prefs_close_btn=prefs_close_btn,
-                prefs_state_label=prefs_state_label,
-                prefs_editor_box=prefs_editor_box,
-                prefs_window=prefs_window,
-                prefs_editor_title=prefs_editor_title,
-                prefs_resolution_entry=prefs_resolution_entry,
-                prefs_scaling_entry=prefs_scaling_entry,
-                prefs_two_screen_auto=prefs_two_screen_auto,
-                prefs_two_screen_on=prefs_two_screen_on,
-                prefs_two_screen_off=prefs_two_screen_off,
-                prefs_l_display_entry=prefs_l_display_entry,
-                prefs_r_display_entry=prefs_r_display_entry,
-                prefs_margins_entry=prefs_margins_entry,
-                prefs_align_entry=prefs_align_entry,
-                prefs_valign_entry=prefs_valign_entry,
-                prefs_quality_spin=prefs_quality_spin,
-                prefs_margin_text_mode_entry=prefs_margin_text_mode_entry,
-                prefs_margin_text_entry=prefs_margin_text_entry,
-                prefs_margin_text_position_entry=prefs_margin_text_position_entry,
-                prefs_margin_text_max_lines_spin=prefs_margin_text_max_lines_spin,
-                prefs_plugin_entry=prefs_plugin_entry,
-                prefs_apply_single=prefs_apply_single,
-                prefs_apply_per_monitor=prefs_apply_per_monitor,
-                prefs_import_path_entry=prefs_import_path_entry,
-                prefs_export_path_entry=prefs_export_path_entry,
-                btn_set_color=btn_set_color,
-                color_dialog_proxy=color_dialog_proxy,
-                color_window=color_window,
-                color_value_entry=color_value_entry,
-                color_state_label=color_state_label,
-                color_apply_btn=color_apply_btn,
-                color_cancel_btn=color_cancel_btn,
-                about_dialog_proxy=about_dialog_proxy,
-                about_window=about_window,
-                about_title_label=about_title_label,
-                about_version_label=about_version_label,
-                about_description_label=about_description_label,
-                about_credits_label=about_credits_label,
-                about_license_label=about_license_label,
-                about_close_btn=about_close_btn,
-                open_dialog_proxy=open_dialog_proxy,
-                srcdir_dialog_proxy=srcdir_dialog_proxy,
-                settings_dialog_proxy=settings_dialog_proxy,
-                watch_tab_box=watch_tab_box,
-                margins_tab_box=margins_tab_box,
-                watch_controls_row=watch_controls_row,
-                watch_detail_row=watch_detail_row,
-                margins_tab_title=margins_tab_title,
-                margins_section_label=margins_section_label,
-                margin_text_tabs=margin_text_tabs,
-                margin_settings_page=margin_settings_page,
-                margin_text_page=margin_text_page,
-                margin_settings_preview_label=margin_settings_preview_label,
-                margin_text_section_label=margin_text_section_label,
-                margin_text_mode_label=margin_text_mode_label,
-                margin_text_mode_off=margin_text_mode_off,
-                margin_text_mode_settings=margin_text_mode_settings,
-                margin_text_mode_text=margin_text_mode_text,
-                margin_text_mode_both=margin_text_mode_both,
-                margin_text_entry=margin_text_entry,
-                margin_position_left_top=margin_position_left_top,
-                margin_position_right_bottom=margin_position_right_bottom,
-                margin_position_left_bottom=margin_position_left_bottom,
-                margin_position_right_top=margin_position_right_top,
-                margin_text_max_lines_spin=margin_text_max_lines_spin,
-                btn_open_srcdir_l=btn_open_srcdir_l,
-                btn_open_srcdir_r=btn_open_srcdir_r,
-                watch_label=watch_label,
-                watch_tab_title=watch_tab_title,
-                interval_spin=interval_spin,
-                interval_label=interval_label,
-                btn_daemonize=btn_daemonize,
-                btn_cancel_daemonize=btn_cancel_daemonize,
-                btn_about=btn_about,
-                btn_help=btn_help,
-                footer_col=footer_col,
-                flow_row=flow_row,
-                flow_legend_label=flow_legend_label,
-                status_label=status_label,
-                error_label=error_label,
-                watch_summary_label=watch_summary_label,
-                watch_sources_label=watch_sources_label,
-                watch_current_label=watch_current_label,
-                watch_output_label=watch_output_label,
-                save_path_state_label=save_path_state_label,
-                save_path_dialog_proxy=save_path_dialog_proxy,
+                main_runtime=main_runtime,
+                dialog_runtime=dialog_runtime,
+                tab_runtime=tab_runtime,
+                footer_runtime=footer_runtime,
             )
 
             self._assign_object_names()
             self._connect_runtime_widgets(
-                input_entry_l=input_entry_l,
-                input_entry_r=input_entry_r,
-                tgl_upper_l=tgl_upper_l,
-                tgl_lower_l=tgl_lower_l,
-                tgl_upper_r=tgl_upper_r,
-                tgl_lower_r=tgl_lower_r,
-                tgl_push_left_l=tgl_push_left_l,
-                tgl_push_right_l=tgl_push_right_l,
-                tgl_push_left_r=tgl_push_left_r,
-                tgl_push_right_r=tgl_push_right_r,
-                btn_get_img_l=btn_get_img_l,
-                btn_get_img_r=btn_get_img_r,
-                btn_clr_path_l=btn_clr_path_l,
-                btn_clr_path_r=btn_clr_path_r,
-                top_margin_spin=top_margin_spin,
-                left_margin_spin=left_margin_spin,
-                right_margin_spin=right_margin_spin,
-                bottom_margin_spin=bottom_margin_spin,
-                optimize_btn=optimize_btn,
-                optimize_modern_btn=optimize_modern_btn,
-                apply_btn=apply_btn,
-                btn_setting=btn_setting,
-                prefs_apply_btn=prefs_apply_btn,
-                prefs_load_btn=prefs_load_btn,
-                prefs_save_btn=prefs_save_btn,
-                prefs_close_btn=prefs_close_btn,
-                rad_apply_single=rad_apply_single,
-                rad_apply_per_monitor=rad_apply_per_monitor,
-                btn_set_color=btn_set_color,
-                btn_about=btn_about,
-                color_apply_btn=color_apply_btn,
-                color_cancel_btn=color_cancel_btn,
-                about_close_btn=about_close_btn,
-                btn_open_srcdir_l=btn_open_srcdir_l,
-                btn_open_srcdir_r=btn_open_srcdir_r,
-                interval_spin=interval_spin,
-                btn_daemonize=btn_daemonize,
-                btn_cancel_daemonize=btn_cancel_daemonize,
-                margin_text_mode_off=margin_text_mode_off,
-                margin_text_mode_settings=margin_text_mode_settings,
-                margin_text_mode_text=margin_text_mode_text,
-                margin_text_mode_both=margin_text_mode_both,
-                margin_text_entry=margin_text_entry,
-                margin_position_left_top=margin_position_left_top,
-                margin_position_right_bottom=margin_position_right_bottom,
-                margin_position_left_bottom=margin_position_left_bottom,
-                margin_position_right_top=margin_position_right_top,
-                margin_text_max_lines_spin=margin_text_max_lines_spin,
+                main_runtime=main_runtime,
+                dialog_runtime=dialog_runtime,
+                tab_runtime=tab_runtime,
             )
             self._refresh_current_state_labels()
             self._refresh_margins_controls()
@@ -590,7 +297,133 @@ class GtkRuntimeSignalBackend:
             elif not hasattr(widget, "get_name"):
                 setattr(widget, "name", object_name)
 
-    def _build_runtime_object_map(self, **widgets: Any) -> dict[str, Any]:
+    def _initialize_runtime_state(self) -> None:
+        self._input_path_l = ""
+        self._input_path_r = ""
+        self._prefs_apply_mode_preserved: str | None = None
+        self._prefs_apply_mode_syncing = False
+        self._watch_srcdir_l = ""
+        self._watch_srcdir_r = ""
+        self._watch_running = False
+        self._watch_state_l = WatchCycleState()
+        self._watch_state_r = WatchCycleState()
+        self._watch_previous_l: Path | None = None
+        self._watch_previous_r: Path | None = None
+        self._watch_timer_source_id: int | None = None
+
+    def _build_runtime_window(self, gtk_module: Any) -> Any:
+        window = gtk_module.Window(title="Harite")
+        if hasattr(window, "set_resizable"):
+            # P5-2 policy: modern desktop UX expects a resizable main window.
+            window.set_resizable(True)
+        if hasattr(window, "set_default_size"):
+            window.set_default_size(1040, 720)
+        return window
+
+    def _build_main_runtime_widgets(self, gtk_module: Any) -> dict[str, Any]:
+        root = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=10)
+        root.set_border_width(10)
+
+        header_widgets = build_header_section(gtk_module, root)
+        primary_margin_controls = build_primary_margin_controls(
+            gtk_module,
+            configure_spin_button=self._configure_spin_button,
+        )
+        center_body_widgets = build_center_body_section(gtk_module, root)
+        main_widgets = build_main_tab_section(gtk_module)
+        main_page_shell = build_centered_page_shell(gtk_module, main_widgets["main_col"])
+        action_widgets = build_action_cluster_section(
+            gtk_module,
+            main_widgets["compose_grid"],
+            default_apply_mode=_default_apply_mode(),
+        )
+        state_labels = build_runtime_state_labels(gtk_module)
+
+        center_body_widgets["command_tabs"].append_page(main_page_shell, main_widgets["main_section_label"])
+
+        return {
+            "root": root,
+            **header_widgets,
+            **primary_margin_controls,
+            **center_body_widgets,
+            **main_widgets,
+            **action_widgets,
+            **state_labels,
+        }
+
+    def _build_secondary_tab_runtime_widgets(
+        self,
+        gtk_module: Any,
+        *,
+        command_tabs: Any,
+        top_margin_label: Any,
+        top_margin_spin: Any,
+        left_margin_label: Any,
+        left_margin_spin: Any,
+        priority_note_label: Any,
+        style_legend_label: Any,
+        current_state_section_label: Any,
+        current_margins_label: Any,
+        current_left_label: Any,
+        current_right_label: Any,
+    ) -> dict[str, Any]:
+        watch_widgets = build_watch_tab_section(gtk_module, configure_spin_button=self._configure_spin_button)
+        margins_widgets = build_margins_tab_section(
+            gtk_module,
+            top_margin_label=top_margin_label,
+            top_margin_spin=top_margin_spin,
+            left_margin_label=left_margin_label,
+            left_margin_spin=left_margin_spin,
+            priority_note_label=priority_note_label,
+            style_legend_label=style_legend_label,
+            current_state_section_label=current_state_section_label,
+            current_margins_label=current_margins_label,
+            current_left_label=current_left_label,
+            current_right_label=current_right_label,
+            configure_spin_button=self._configure_spin_button,
+            apply_margin_text_widget_style=self._apply_margin_text_widget_style,
+        )
+
+        margins_page_shell = build_centered_page_shell(gtk_module, margins_widgets["margins_tab_box"])
+        command_tabs.append_page(margins_page_shell, margins_widgets["margins_tab_title"])
+
+        watch_page_shell = build_centered_page_shell(gtk_module, watch_widgets["watch_tab_box"])
+        command_tabs.append_page(watch_page_shell, watch_widgets["watch_tab_title"])
+
+        return {
+            **watch_widgets,
+            **margins_widgets,
+        }
+
+    def _build_footer_runtime_widgets(self, gtk_module: Any, *, window: Any, root: Any) -> dict[str, Any]:
+        footer_widgets = build_footer_section(gtk_module, root)
+
+        if hasattr(window, "add"):
+            window.add(root)
+
+        return {
+            "footer_col": footer_widgets["footer_col"],
+            "status_label": footer_widgets["status_label"],
+            "watch_summary_label": footer_widgets["watch_summary_label"],
+            "error_label": footer_widgets["error_label"],
+        }
+
+    def _build_runtime_object_map(
+        self,
+        *,
+        window: Any,
+        main_runtime: dict[str, Any],
+        dialog_runtime: dict[str, Any],
+        tab_runtime: dict[str, Any],
+        footer_runtime: dict[str, Any],
+    ) -> dict[str, Any]:
+        widgets = {
+            "window": window,
+            **main_runtime,
+            **dialog_runtime,
+            **tab_runtime,
+            **footer_runtime,
+        }
         return {
             "WallPosit_MainWindow": widgets["window"],
             "main_window": widgets["window"],
@@ -848,7 +681,18 @@ class GtkRuntimeSignalBackend:
             "srcdir_dialog_proxy": srcdir_dialog_proxy,
         }
 
-    def _connect_runtime_widgets(self, **widgets: Any) -> None:
+    def _connect_runtime_widgets(
+        self,
+        *,
+        main_runtime: dict[str, Any],
+        dialog_runtime: dict[str, Any],
+        tab_runtime: dict[str, Any],
+    ) -> None:
+        widgets = {
+            **main_runtime,
+            **dialog_runtime,
+            **tab_runtime,
+        }
         # Why: fallback window must still exercise MainWindow handlers even when
         # legacy glade cannot be parsed at runtime.
         try:
