@@ -692,6 +692,7 @@ def split_composite_for_displays(
     composite_path: Path,
     displays: List[Display],
     output_dir: Path,
+    background_color: object | None = None,
 ) -> dict:
     """合成画像を各ディスプレイ向けに分割してファイルを作成する。
 
@@ -712,6 +713,9 @@ def split_composite_for_displays(
     output_dir.mkdir(parents=True, exist_ok=True)
     comp = Image.open(composite_path).convert("RGB")
     comp_w, comp_h = comp.size
+    normalized_background_color = normalize_background_color(
+        DEFAULT_BACKGROUND_COLOR_HEX if background_color is None else background_color
+    )
 
     if not displays:
         return {}
@@ -751,13 +755,13 @@ def split_composite_for_displays(
         region_w, region_h = region.size
         if region_w == 0 or region_h == 0:
             # fallback: create blank
-            out_img = Image.new("RGB", (target_w, target_h), color=background_color_rgb(background_color))
+            out_img = Image.new("RGB", (target_w, target_h), color=background_color_rgb(normalized_background_color))
         else:
             scale = min(target_w / region_w, target_h / region_h)
             new_w = max(1, int(region_w * scale))
             new_h = max(1, int(region_h * scale))
             resized = region.resize((new_w, new_h), Image.LANCZOS)
-            out_img = Image.new("RGB", (target_w, target_h), color=background_color_rgb(background_color))
+            out_img = Image.new("RGB", (target_w, target_h), color=background_color_rgb(normalized_background_color))
             ox = (target_w - new_w) // 2
             oy = (target_h - new_h) // 2
             out_img.paste(resized, (ox, oy))

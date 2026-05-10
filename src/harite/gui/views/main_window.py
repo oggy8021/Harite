@@ -934,6 +934,7 @@ class MainWindow:
 
         normalized = normalize_background_color(color)
         self.form_state.background_color = normalized
+        self.preferences.optimize.background_color = normalized
         self._set_status("success", "color", f"background color updated: {normalized}")
         self._log(f"Background color updated: {normalized}")
         return True

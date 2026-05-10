@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 from typing import Any, Callable
 
-from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, normalize_background_color
+from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color
 from harite.positioning import format_position_pair, parse_position_pair
 from harite.watch import WatchCycleState, collect_watch_input_images, run_watch_cycle
 
@@ -572,7 +572,36 @@ class _ColorDialogProxy:
         native_hex_box.pack_start(native_hex_entry, False, False, 0)
         if hasattr(content_area, "pack_start"):
             content_area.pack_start(native_hex_box, False, False, 0)
+        if hasattr(native_hex_entry, "connect"):
+            native_hex_entry.connect("changed", lambda entry, *_args: self._on_native_hex_entry_changed(dialog, entry))
+        if hasattr(dialog, "connect"):
+            dialog.connect("notify::rgba", lambda chooser, *_args: self._sync_native_hex_entry_from_dialog(chooser, native_hex_entry))
         setattr(dialog, "_harite_hex_entry", native_hex_entry)
+
+    def _sync_native_hex_entry_from_dialog(self, dialog: Any, entry: Any) -> None:
+        if entry is None or not hasattr(entry, "set_text") or not hasattr(dialog, "get_rgba"):
+            return
+        try:
+            color = self._color_from_rgba(dialog.get_rgba())
+        except Exception:
+            return
+        current = str(entry.get_text() or "") if hasattr(entry, "get_text") else ""
+        if current != color:
+            entry.set_text(color)
+
+    def _on_native_hex_entry_changed(self, dialog: Any, entry: Any) -> None:
+        if entry is None or not hasattr(entry, "get_text") or not hasattr(dialog, "set_rgba"):
+            return
+        value = str(entry.get_text() or "").strip()
+        if not is_background_color_literal(value):
+            return
+        rgba = self._rgba_from_color(normalize_background_color(value))
+        if rgba is None:
+            return
+        try:
+            dialog.set_rgba(rgba)
+        except Exception:
+            return
 
     def _rgba_from_color(self, color: str) -> Any | None:
         gdk = self._load_gdk_module()
@@ -3087,15 +3116,25 @@ class GtkRuntimeSignalBackend:
     def _refresh_color_dialog_from_getter(self) -> str:
         getter = self._signal_handlers.get("on_get_settings_config")
         dialog = self._objects.get("ColorDialog")
-        background_color = DEFAULT_BACKGROUND_COLOR_HEX
+        background_color = dialog.get_color() if dialog is not None and hasattr(dialog, "get_color") else DEFAULT_BACKGROUND_COLOR_HEX
         if getter is not None:
             try:
-                background_color = normalize_background_color(dict(getter()).get("background_color", DEFAULT_BACKGROUND_COLOR_HEX))
+                config = dict(getter())
+                if "background_color" in config:
+                    background_color = normalize_background_color(config.get("background_color"))
             except Exception:
-                background_color = DEFAULT_BACKGROUND_COLOR_HEX
+                pass
         if dialog is not None and hasattr(dialog, "set_color"):
             dialog.set_color(background_color)
         return background_color
+
+    def _store_background_color_in_settings_dialog(self, color: str) -> None:
+        dialog = self._objects.get("SettingsDialog")
+        if dialog is None or not hasattr(dialog, "get_preferences_config") or not hasattr(dialog, "set_preferences_config"):
+            return
+        config = dict(dialog.get_preferences_config())
+        config["background_color"] = normalize_background_color(color)
+        dialog.set_preferences_config(config)
 
     def _is_toggle_active(self, object_name: str) -> bool:
         toggle = self._objects.get(object_name)
@@ -3479,6 +3518,7 @@ class GtkRuntimeSignalBackend:
             color = dialog.get_color()
             ok = callback(color)
             if ok:
+                self._store_background_color_in_settings_dialog(color)
                 if hasattr(dialog, "hide"):
                     dialog.hide()
                 self._set_label_text("lblColorState", f"Color: {color}")
@@ -3503,6 +3543,7 @@ class GtkRuntimeSignalBackend:
         try:
             ok = callback(color)
             if ok:
+                self._store_background_color_in_settings_dialog(color)
                 dialog = self._objects.get("ColorDialog")
                 if dialog is not None and hasattr(dialog, "hide"):
                     dialog.hide()

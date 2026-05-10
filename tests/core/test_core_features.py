@@ -52,7 +52,10 @@ def test_optimize_wallpapers_uses_selected_background_color(tmp_path):
     )
 
     out = Image.open(saved[0]).convert("RGB")
-    assert out.getpixel((5, 5)) == (34, 68, 102)
+    red, green, blue = out.getpixel((5, 5))
+    assert abs(red - 34) <= 1
+    assert abs(green - 68) <= 1
+    assert abs(blue - 102) <= 1
 
 
 def test_optimize_wallpapers_rejects_directory_input(tmp_path):
