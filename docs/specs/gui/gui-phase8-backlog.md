@@ -130,6 +130,8 @@
 
 - 目的:
   - `About` は軽量な情報ダイアログとして実装し、その他の legacy 痕跡は backlog に残すか close するかを決める。
+- 2026-05-10 補記:
+  - `About` は placeholder から軽量情報ダイアログへ移行し、app 名、版数、短い説明、credits、license 表示を持つ最小構成まで実装済み。
 - 対象候補:
   - `About` はアプリ名、アイコン、版数、短い説明、クレジット、ライセンス導線を持つ軽量ダイアログとして扱う
   - 構成は標準的な About ダイアログを参照してよいが、固有アイコンや文言を複製せず Harite 用に組み直す
@@ -150,6 +152,11 @@
 - PR2: preview 入口と visual assist 最小セット
 - PR3: embed 系 GUI 昇格の最小設計
 - PR4: `Color` / `About` と deferred の扱い判断
+
+## close 補記
+
+- Group 3 の `Color` / `About` は 2026-05-10 時点で実装到達済みとして扱う。
+- Phase8 全体の close 判定は [docs/specs/gui/gui-phase8-closing.md](docs/specs/gui/gui-phase8-closing.md) を正本とする。
 
 ## 修復計画への導線
 
