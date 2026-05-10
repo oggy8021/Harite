@@ -1274,7 +1274,6 @@ def test_runtime_backend_about_click_opens_dialog():
                 "description": "壁紙最適化ツール（リファクタリング版）",
                 "credits": "Created by oggy8021",
                 "license_name": "MIT License",
-                "license_path": "LICENSE",
             },
         }
     )

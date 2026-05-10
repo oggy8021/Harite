@@ -753,8 +753,7 @@ class _AboutDialogProxy:
             self._credits_label.set_text(f"Credits: {content.get('credits', '-')}")
         if self._license_label is not None and hasattr(self._license_label, "set_text"):
             license_name = str(content.get("license_name", "LICENSE"))
-            license_path = str(content.get("license_path", "LICENSE"))
-            self._license_label.set_text(f"License: {license_name} ({license_path})")
+            self._license_label.set_text(f"License: {license_name}")
 
 
 class GtkRuntimeSignalBackend:
@@ -1204,14 +1203,12 @@ class GtkRuntimeSignalBackend:
             if hasattr(about_window, "set_resizable"):
                 about_window.set_resizable(False)
             about_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-            about_icon_label = gtk_module.Label(label="H")
             about_title_label = gtk_module.Label(label="Harite")
             about_version_label = gtk_module.Label(label="Version: -")
             about_description_label = gtk_module.Label(label="")
             about_credits_label = gtk_module.Label(label="Credits: -")
             about_license_label = gtk_module.Label(label="License: -")
             for label in (
-                about_icon_label,
                 about_title_label,
                 about_version_label,
                 about_description_label,
@@ -1219,15 +1216,20 @@ class GtkRuntimeSignalBackend:
                 about_license_label,
             ):
                 if hasattr(label, "set_xalign"):
-                    label.set_xalign(0.0)
+                    label.set_xalign(0.5)
             about_close_btn = gtk_module.Button(label="About Close")
-            about_box.pack_start(about_icon_label, False, False, 0)
             about_box.pack_start(about_title_label, False, False, 0)
             about_box.pack_start(about_version_label, False, False, 0)
             about_box.pack_start(about_description_label, False, False, 0)
             about_box.pack_start(about_credits_label, False, False, 0)
             about_box.pack_start(about_license_label, False, False, 0)
-            about_box.pack_start(about_close_btn, False, False, 0)
+            about_close_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+            about_close_left = gtk_module.Label(label="")
+            about_close_right = gtk_module.Label(label="")
+            about_close_row.pack_start(about_close_left, True, True, 0)
+            about_close_row.pack_start(about_close_btn, False, False, 0)
+            about_close_row.pack_start(about_close_right, True, True, 0)
+            about_box.pack_start(about_close_row, False, False, 0)
             if hasattr(about_window, "add"):
                 about_window.add(about_box)
             about_dialog_proxy = _AboutDialogProxy(
@@ -1772,7 +1774,6 @@ class GtkRuntimeSignalBackend:
                 "btnColorCancel": color_cancel_btn,
                 "AboutDialog": about_dialog_proxy,
                 "aboutWindow": about_window,
-                "lblAboutIcon": about_icon_label,
                 "lblAboutTitle": about_title_label,
                 "lblAboutVersion": about_version_label,
                 "lblAboutDescription": about_description_label,
@@ -3246,7 +3247,6 @@ class GtkRuntimeSignalBackend:
             "description": "壁紙最適化ツール",
             "credits": "-",
             "license_name": "LICENSE",
-            "license_path": "LICENSE",
         }
         if getter is not None:
             try:

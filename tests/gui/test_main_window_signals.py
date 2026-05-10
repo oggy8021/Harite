@@ -54,7 +54,6 @@ def test_on_get_about_dialog_info_returns_metadata():
     info = window.on_get_about_dialog_info()
 
     assert info["app_name"] == "Harite"
-    assert info["icon_text"] == "H"
     assert info["version"]
     assert info["license_name"] == "MIT License"
 

@@ -925,16 +925,12 @@ class MainWindow:
         return True
 
     def on_get_about_dialog_info(self) -> dict[str, str]:
-        repo_root = Path(__file__).resolve().parents[4]
-        license_path = repo_root / "LICENSE"
         return {
             "app_name": self.title,
-            "icon_text": "H",
             "version": __version__,
             "description": "壁紙最適化ツール（リファクタリング版）",
             "credits": "Created by oggy8021",
             "license_name": "MIT License",
-            "license_path": str(license_path),
         }
 
     def on_close_about_dialog(self) -> None:
