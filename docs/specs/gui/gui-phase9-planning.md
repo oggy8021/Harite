@@ -207,6 +207,11 @@
   - MainWindow 分割方針メモ
 - 現在地:
   - preview / CLI preview は委譲化済み。margins / settings / watch は未着手または後続。
+  - 2026-05-10 時点の追加判断として、Phase9 内での MainWindow 追加整理線は「margins / margin text は追加分離候補、settings と watch は判断先行で止める」を基本とする。
+    - margins / margin text は `_current_margin_values`、`_margin_text_area`、`_update_margin_text_preflight_status`、`on_change_margins`、`on_change_margin_text_*` が比較的まとまった関心事を成し、pure logic と preflight 判定の外出し余地が大きい。
+    - settings は `AppPreferences` と `form_state` / `preferences` / watch 設定へ横断反映しており、Phase9 時点では state owner との結びつきが強い。委譲先境界は説明可能だが、追加分離を close 必須にはしない。
+    - watch は plugin 適用、optimize 実行、出力 cleanup、状態遷移が密に絡むため、Phase9 では「watch slice として分ける対象である」判断までを確定し、実装上の追加分離は後段判断でもよい。
+    - したがって Phase9 close に必要な最小線は、preview 以外では margins / margin text を最有力追加分離候補として明示し、settings / watch は owner-coordinator 依存が強い slice として分離方針のみ確定しておくことで足りる。
 
 ### 3. GTK backend 分割
 
@@ -241,6 +246,10 @@
     - signal wiring の列挙は wiring module へ退避済み
     - file/dialog flow・save-path access・margin text pure/GTK split・owner-driven sync orchestration・settings-color-about flow・watch UI flow・generic widget access・current state label refresh もそれぞれ grouped module へ退避し始めている
     - 不要 unpack 縮小を含めて、残る大塊はさらに coordinator 寄せを継続する段階
+  - 2026-05-10 時点の追加判断として、Phase9 close に必要な `__init__` 側の最小追加整理線は「section bundle 前提の helper 化まで」とする。
+    - 現時点で backend ローカルに残る主な塊は `_build_dialog_runtime_widgets` 内の dialog widget / proxy 組み立て配線と `_configure_spin_button` のような小粒 helper であり、前者は dialog runtime 準備 helper の範囲、後者は backend 局所設定として扱える。
+    - したがって Phase9 では、`__init__` から直接読める大塊を helper / section bundle 単位へ落とせていれば十分とし、これ以上の追加 module 化は close の必須条件にしない。
+    - Phase10 以降で通常起動導線や runtime 境界を再整理する際に、dialog runtime assembly の更なる module 化や local helper の吸収を再判定する。
 
 ### 4. legacy / compatibility 監査
 
@@ -248,6 +257,24 @@
   - 互換の名目で残っているものを、維持・縮退・削除候補へ分ける。
 - 成果物:
   - compatibility 監査メモ
+- 現在地:
+  - current runtime は repo 内の glade prototype を直接使わず、legacy UI 資産は [docs/legacy-ui/README.md](docs/legacy-ui/README.md) と [src/harite/gui/resources/README.md](src/harite/gui/resources/README.md) の方針どおり docs 側の証跡へ寄せる整理が進んでいる。
+  - XFCE 自体は legacy ではなく、[docs/manual-validation-gate.md](docs/manual-validation-gate.md) のとおり current GUI 実機確認の正本環境として継続して扱っている。
+  - GTK runtime fallback は [src/harite/gui/adapters/gtk_backend.py](src/harite/gui/adapters/gtk_backend.py) と [src/harite/gui/app.py](src/harite/gui/app.py) の現状どおり、legacy Glade を Gtk.Builder が実行時に消費できない場合と partial GTK environment で present / bind flow を維持する安全網として残している。
+  - [src/harite/gui/app.py](src/harite/gui/app.py) の `--bind-ui-backend` / `--present-ui-window` で暫定と呼んでいる対象は XFCE 対応そのものではなく、framework-neutral な [src/harite/gui/views/main_window.py](src/harite/gui/views/main_window.py) と optional な GTK backend を明示 option で橋渡ししている bootstrap 導線である。
+  - この bootstrap 導線の暫定解消条件は、owner の通常利用環境である XFCE で current GUI を追加 option や環境変数なしに既定導線から起動でき、backend bind / present の必要処理が利用者から隠蔽されることである。
+  - handler 名互換は「legacy signal 名へ戻す」のではなく、[docs/manual-validation-gate.md](docs/manual-validation-gate.md) の受け入れ基準どおり current handler 名での dispatch / bind を正本として維持する方針が明文化済みである。
+  - compatibility 項目の維持・縮退・削除判断は、Phase9 の中で一通り確定した。
+
+#### compatibility 監査結果
+
+| 項目 | 現状 | 判定軸 | 現時点の整理候補 | owner 判断 |
+| --- | --- | --- | --- | --- |
+| runtime fallback backend | [src/harite/gui/adapters/gtk_backend.py](src/harite/gui/adapters/gtk_backend.py) は legacy Glade 非依存の current runtime backend として機能し、[src/harite/gui/app.py](src/harite/gui/app.py) でも partial GTK environment の安全網として扱っている。ここでの暫定は XFCE 対応ではなく、framework-neutral な MainWindow と optional backend を明示 option で橋渡しする bootstrap にある | Phase9 内で安全網として維持するか、より薄い bind/present 専用層へ縮退するか | Phase9 では維持。XFCE は正本運用環境として残しつつ、option 依存 bootstrap の解消は Phase10 完了条件として扱う。backend 本体は巨大な何でも屋ではなく、GTK runtime の入口 / 接着点へ寄せ続ける | 維持 |
+| ui_adapter の契約面 | `ui_adapter` は主問題ではないが、dispatch factory / handler map の名前合わせと signal 接続差異吸収を担う薄い層として残っている | Phase9 内で薄い契約層として維持するか、backend / MainWindow 直結へさらに寄せるか | Phase9 では薄い層として維持する。独立ファイルとして最後まで残すかは、Phase10 で通常起動導線を整理したあとに再判定する | 維持 |
+| handler 名互換 | current handler 名での dispatch / bind を正本とし、legacy signal 名へ戻さない方針は [docs/manual-validation-gate.md](docs/manual-validation-gate.md) で固定済み | 入口互換を残す範囲をどこまで許すか | current handler 名を正本として維持し、legacy signal 名への回帰はしない。元々の移植方針とも整合するため、この方針で固定する | 維持 |
+| legacy Glade / legacy UI 資産 | current runtime は repo 内の glade prototype を直接使わず、証跡は [docs/legacy-ui/README.md](docs/legacy-ui/README.md) と [src/harite/gui/resources/README.md](src/harite/gui/resources/README.md) の整理方針へ寄っている | 実装資産としては削除済み扱いを維持し、docs 側証跡のみ残すか | docs 側証跡のみ維持し、runtime 実装依存は増やさない。legacy Glade は復活させない方針で固定する | 維持 |
+| partial GTK environment の安全網 | [src/harite/gui/app.py](src/harite/gui/app.py) は backend load / dispatch connect / present を non-fatal に扱っている | CI / headless / partial GTK での安全網を Phase9 内でどこまで維持するか | GTK 周りの一部失敗を即クラッシュ扱いにせず、起動継続できる安全網として維持する。OS から終了させられる場合を除き、GUI アプリ側はこの non-fatal 方針を保つ | 維持 |
 
 ## 初動タスク
 
@@ -338,9 +365,21 @@ Phase9 の初手 planning 時点では、[src/harite/gui/adapters/gtk_backend.py
 
 ### 現在の残件
 
-1. `GtkRuntimeSignalBackend.__init__` に残る未分離 section build をどう分けるかを決める。
-2. `GtkRuntimeSignalBackend.__init__` に残る coordinator 以外の塊を、helper 化で済ませるか module 化するかを決める。
-3. `MainWindow` の preview 以外の slice をどこまで Phase9 で進めるかを確定する。
+- 現時点の残件は close 判断の文書化のみであり、実質論点は以下の照合で解消した。
+
+### Phase9 close 判断
+
+- [docs/specs/gui/gui-phase9-11-roadmap.md](docs/specs/gui/gui-phase9-11-roadmap.md) の Phase9 完了条件 1「`MainWindow` の責務分離方針が確定している」について:
+  - preview / CLI preview は委譲化済みであり、preview 以外は margins / margin text を最有力追加分離候補、settings / watch は分離方針確定までを Phase9 の到達線としたため、責務分離方針は確定している。
+- 完了条件 2「GTK runtime backend の大ブロックが分割可能な単位で整理されている」について:
+  - sync / preview / dialog / watch / builder 再分割 / object registry / signal wiring / dialog runtime helper 化まで進んでおり、`__init__` 側の最小追加整理線も helper / section bundle 単位までで十分と確定したため、満たしている。
+- 完了条件 3「legacy / compatibility 項目の維持・縮退・削除候補が文書化されている」について:
+  - Workstream 4 の compatibility 監査結果で runtime fallback backend / `ui_adapter` / handler 名互換 / legacy Glade / partial GTK safety net の判断が一通り確定しており、満たしている。
+- 完了条件 4「Phase10 / Phase11 に送るための境界が説明可能になっている」について:
+  - Phase10 には option 依存 bootstrap の解消と通常起動導線整備を送り、Phase11 には OS integration を送る境界が [docs/specs/gui/gui-phase9-11-roadmap.md](docs/specs/gui/gui-phase9-11-roadmap.md) と本 planning の両方で説明可能である。
+- 結論:
+  - 2026-05-10 時点の planning / 実装反映 / compatibility 判断を前提に、Phase9 は close 可能と判断する。
+  - 以後の追加改善候補は Phase9 の未完了条件ではなく、Phase10 以降で扱う通常起動導線整備・visual aid・OS integration 側の論点として扱う。
 
 ## 非目的
 
