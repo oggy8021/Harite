@@ -499,10 +499,12 @@ class _SettingsDialogProxy:
 
 
 class _ColorDialogProxy:
-    """Minimal color dialog model used by runtime fallback backend."""
+    """Color dialog wrapper with native GTK chooser support and fallback UI."""
 
     def __init__(
         self,
+        gtk_module: Any | None = None,
+        parent_window: Any | None = None,
         window: Any | None = None,
         entry: Any | None = None,
         state_label: Any | None = None,
@@ -510,6 +512,8 @@ class _ColorDialogProxy:
         on_cancel: Callable[[bool], None] | None = None,
     ) -> None:
         self._visible = False
+        self._gtk = gtk_module
+        self._parent_window = parent_window
         self._window = window
         self._entry = entry
         self._state_label = state_label
@@ -517,6 +521,87 @@ class _ColorDialogProxy:
         self._on_cancel = on_cancel
         self._color = DEFAULT_BACKGROUND_COLOR_HEX
         self.set_color(self._color)
+
+    def supports_native_dialog(self) -> bool:
+        gtk = self._gtk
+        if gtk is None:
+            return False
+        if not hasattr(gtk, "ColorChooserDialog") or not hasattr(gtk, "ResponseType"):
+            return False
+        return self._load_gdk_module() is not None
+
+    def _load_gdk_module(self) -> Any | None:
+        try:
+            import importlib
+
+            gi = importlib.import_module("gi")
+            gi.require_version("Gdk", "3.0")
+            return importlib.import_module("gi.repository.Gdk")
+        except Exception:
+            return None
+
+    def _build_native_dialog(self) -> Any:
+        gtk = self._gtk
+        assert gtk is not None
+        dialog = gtk.ColorChooserDialog(title="Background Color", parent=self._parent_window)
+        if hasattr(dialog, "set_modal"):
+            dialog.set_modal(True)
+        if hasattr(dialog, "set_transient_for") and self._parent_window is not None:
+            dialog.set_transient_for(self._parent_window)
+        if hasattr(dialog, "set_destroy_with_parent"):
+            dialog.set_destroy_with_parent(True)
+        return dialog
+
+    def _rgba_from_color(self, color: str) -> Any | None:
+        gdk = self._load_gdk_module()
+        if gdk is None or not hasattr(gdk, "RGBA"):
+            return None
+        rgba = gdk.RGBA()
+        rgba.red = int(color[1:3], 16) / 255.0
+        rgba.green = int(color[3:5], 16) / 255.0
+        rgba.blue = int(color[5:7], 16) / 255.0
+        rgba.alpha = 1.0
+        return rgba
+
+    def _color_from_rgba(self, rgba: Any) -> str:
+        red = round(float(getattr(rgba, "red", 0.0)) * 255)
+        green = round(float(getattr(rgba, "green", 0.0)) * 255)
+        blue = round(float(getattr(rgba, "blue", 0.0)) * 255)
+        return normalize_background_color((red, green, blue))
+
+    def open_dialog(self) -> None:
+        if self.supports_native_dialog():
+            self._run_native_dialog()
+            return
+        self.show()
+
+    def _run_native_dialog(self) -> None:
+        gtk = self._gtk
+        if gtk is None:
+            self.show()
+            return
+
+        dialog = self._build_native_dialog()
+        self._visible = True
+        try:
+            rgba = self._rgba_from_color(self._color)
+            if rgba is not None and hasattr(dialog, "set_rgba"):
+                dialog.set_rgba(rgba)
+            if hasattr(dialog, "show_all"):
+                dialog.show_all()
+            response = dialog.run() if hasattr(dialog, "run") else None
+            self._visible = False
+            if response == gtk.ResponseType.OK:
+                if hasattr(dialog, "get_rgba"):
+                    self.set_color(self._color_from_rgba(dialog.get_rgba()))
+                if self._on_confirm is not None:
+                    self._on_confirm(self._color)
+                return
+            if self._on_cancel is not None:
+                self._on_cancel(False)
+        finally:
+            if hasattr(dialog, "destroy"):
+                dialog.destroy()
 
     def show(self) -> None:
         self._visible = True
@@ -624,10 +709,10 @@ class GtkRuntimeSignalBackend:
             btn_help = gtk_module.Button(label="Help")
             btn_about = gtk_module.Button(label="About")
             btn_set_color = gtk_module.Button(label="Color")
+            command_bar.pack_start(btn_set_color, False, False, 0)
             command_bar.pack_start(btn_setting, False, False, 0)
             command_bar.pack_start(btn_help, False, False, 0)
             command_bar.pack_start(btn_about, False, False, 0)
-            command_bar.pack_start(btn_set_color, False, False, 0)
 
             flow_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
             header_col.pack_start(flow_row, False, False, 0)
@@ -983,7 +1068,6 @@ class GtkRuntimeSignalBackend:
                 color_editor_title.set_xalign(0.0)
             color_editor_box.pack_start(color_editor_title, False, False, 0)
             color_editor_box.pack_start(color_value_entry, False, False, 0)
-            color_editor_box.pack_start(color_state_label, False, False, 0)
             color_actions = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
             color_actions.pack_start(color_apply_btn, False, False, 0)
             color_actions.pack_start(color_cancel_btn, False, False, 0)
@@ -991,6 +1075,8 @@ class GtkRuntimeSignalBackend:
             if hasattr(color_window, "add"):
                 color_window.add(color_editor_box)
             color_dialog_proxy = _ColorDialogProxy(
+                gtk_module,
+                window,
                 color_window,
                 color_value_entry,
                 color_state_label,
@@ -3340,14 +3426,14 @@ class GtkRuntimeSignalBackend:
     def _on_color_clicked(self, *_args: Any) -> None:
         dialog = self._objects.get("ColorDialog")
         callback = self._signal_handlers.get("on_set_color")
-        if dialog is None or not hasattr(dialog, "show"):
+        if dialog is None or not hasattr(dialog, "open_dialog"):
             self._set_feedback(phase="Color", state="handler-missing", error="color dialog not available")
             return
         try:
             self._refresh_color_dialog_from_getter()
             if callback is not None:
                 callback()
-            dialog.show()
+            dialog.open_dialog()
             self._set_feedback(phase="Color", state="opened")
         except Exception as exc:
             self._set_feedback(phase="Color", state="error", error=str(exc))
