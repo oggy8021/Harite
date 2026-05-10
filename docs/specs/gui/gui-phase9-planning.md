@@ -121,23 +121,36 @@
 
 - `main_window.py`: state owner / high-level handler entrypoint
 - `main_window_margin_text.py` 相当: margins と margin text preflight
-- `main_window_preview.py` 相当: result preview / CLI preview
+- `main_window_preview.py`: result preview / CLI preview
 - `main_window_settings.py` 相当: settings / about / color
 - `main_window_watch.py` 相当: watch state / watch apply bridge
 
 ### GTK backend 側
 
 - `gtk_backend.py`: backend coordinator / object registry / signal wiring
-- `gtk_runtime_builders.py` 相当: widget section builder
-- `gtk_runtime_sync.py` 相当: owner-to-widget sync 群
-- `gtk_runtime_dialogs.py` 相当: save/open/settings/color/about dialog coordinators
-- `gtk_runtime_preview.py` 相当: preview render helper
-- `gtk_runtime_watch.py` 相当: timer bridge / watch-specific runtime helper
+- `gtk_runtime_builders.py`: widget section builder
+- `gtk_runtime_sync.py`: owner-to-widget sync 群
+- `gtk_runtime_dialogs.py`: save/open/settings/color/about dialog coordinators
+- `gtk_runtime_preview.py`: preview render helper
+- `gtk_runtime_watch.py`: timer bridge / watch-specific runtime helper
 
 ### 契約面
 
 - `ui_adapter.py` は handler map と dispatch factory の薄い責務に留める。
 - Phase9 では新しい抽象層を増やしすぎず、既存 handler 契約を温存しながら内部委譲を進める。
+
+## 実施済み反映
+
+2026-05-10 時点で、Phase9 のうち以下は実装済みである。
+
+- `MainWindow` の preview / CLI preview は [src/harite/gui/views/main_window_preview.py](src/harite/gui/views/main_window_preview.py) へ切り出し済み。
+- GTK backend の owner sync 群は [src/harite/gui/adapters/gtk_runtime_sync.py](src/harite/gui/adapters/gtk_runtime_sync.py) へ切り出し済み。
+- GTK backend の preview 反映 / 描画 helper は [src/harite/gui/adapters/gtk_runtime_preview.py](src/harite/gui/adapters/gtk_runtime_preview.py) へ切り出し済み。
+- GTK backend の dialog proxy 群は [src/harite/gui/adapters/gtk_runtime_dialogs.py](src/harite/gui/adapters/gtk_runtime_dialogs.py) へ切り出し済み。
+- GTK backend の watch timer / watch bridge は [src/harite/gui/adapters/gtk_runtime_watch.py](src/harite/gui/adapters/gtk_runtime_watch.py) へ切り出し済み。
+- GTK backend の widget build は [src/harite/gui/adapters/gtk_runtime_builders.py](src/harite/gui/adapters/gtk_runtime_builders.py) へ段階的に切り出し済みで、header / action-preview cluster / watch tab / margins tab が builder 化済み。
+
+現時点の GTK backend 本体 [src/harite/gui/adapters/gtk_backend.py](src/harite/gui/adapters/gtk_backend.py) は、object registry・signal wiring・一部未分離 section build・handler 群の coordinator としての比重が以前より高くなっている。
 
 ## Workstream
 
@@ -147,6 +160,8 @@
   - `MainWindow` と GTK backend の責務塊を feature / runtime service 単位で列挙する。
 - 成果物:
   - 分割対象一覧
+- 現在地:
+  - `MainWindow` と GTK backend の主要責務塊は列挙済みで、GTK backend 側は module 単位の切り出しまで着手済み。
 
 ### 2. MainWindow 委譲化
 
@@ -154,6 +169,8 @@
   - public handler 名を維持したまま、中身を slice へ逃がす。
 - 成果物:
   - MainWindow 分割方針メモ
+- 現在地:
+  - preview / CLI preview は委譲化済み。margins / settings / watch は未着手または後続。
 
 ### 3. GTK backend 分割
 
@@ -161,6 +178,9 @@
   - widget build / sync / dialog / preview / watch を grouped module 化する。
 - 成果物:
   - GTK backend 分割方針メモ
+- 現在地:
+  - sync / preview / dialog / watch は grouped module 化済み。
+  - widget build は section builder 化を継続中で、header / action-preview / watch tab / margins tab まで分離済み。
 
 ### 4. legacy / compatibility 監査
 
@@ -221,19 +241,38 @@ Phase9 の最初の実装 slice では、[src/harite/gui/adapters/gtk_backend.py
 - `connect_signals` / `connect`
 - 分割先 module を呼ぶ薄い coordinator
 
-## 初手ではまだ動かさないもの
+## 初手ではまだ動かさない想定だったもの
 
 - `GtkRuntimeSignalBackend.__init__` の widget 全面構築
 - dialog proxy 群そのもの
 - watch timer の start / stop / GLib 接続
 - preview renderer 本体 (`_set_preview_widget`、`_build_preview_crop_boxes` など)
 
-## feature/gui-phase9-ui-state-sync での最小到達点
+上記は初手 planning 時点の安全側想定であり、このうち dialog proxy・watch timer・preview renderer・widget build の一部 section builder 化は 2026-05-10 時点で実施済みである。
 
-1. `_sync_input_state_from_owner`、`_sync_main_state_from_owner`、`_sync_margins_state_from_owner`、`_sync_watch_state_from_owner`、`_sync_feedback_from_owner` を grouped module へ移す。
-2. `gtk_backend.py` 側には wrapper か薄い委譲だけ残す。
-3. preview 専用処理は同ブランチでは原則据え置く。
-4. focused validation は `tests/gui/test_gtk_runtime_backend.py` の該当反映系テストを優先する。
+## 完了済み slice
+
+### feature/gui-phase9-ui-state-sync
+
+1. `_sync_input_state_from_owner`、`_sync_main_state_from_owner`、`_sync_margins_state_from_owner`、`_sync_watch_state_from_owner`、`_sync_feedback_from_owner` を grouped module へ移した。
+2. `gtk_backend.py` 側には wrapper と薄い委譲を残した。
+
+### feature/gui-phase9-preview-state-sync
+
+1. `MainWindow` の `build_result_preview_state` / `build_optimize_cli_preview` を preview module へ移した。
+2. GTK backend の preview 反映 / 描画 helper を preview module へ移した。
+
+### feature/gui-phase9-gtk-backend-responsibility-split
+
+1. dialog proxy 群を dialog module へ移した。
+2. watch timer / watch bridge を watch module へ移した。
+3. widget build の一部を builder module へ移し、header / action-preview cluster / watch tab / margins tab を section builder 化した。
+
+### 現在の残件
+
+1. `GtkRuntimeSignalBackend.__init__` に残る未分離 section build をどう分けるかを決める。
+2. `_on_*` handler 群の grouped module 化を行うか、backend coordinator に残すかを判断する。
+3. `MainWindow` の preview 以外の slice をどこまで Phase9 で進めるかを確定する。
 
 ## 非目的
 
