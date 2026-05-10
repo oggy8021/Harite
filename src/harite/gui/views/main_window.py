@@ -7,7 +7,7 @@ package remains importable in environments without GUI libraries.
 from __future__ import annotations
 
 import ctypes
-from dataclasses import dataclass, replace
+from dataclasses import replace
 import os
 from pathlib import Path
 import sys
@@ -22,26 +22,18 @@ from harite.apply_settings import resolve_apply_settings
 from harite.config import load_config, save_config
 from harite.display_context import build_two_screen_optimize_context
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
-from harite.gui.services.cli_mapper import OptimizeRequest, to_cli_args
-from harite.optimize_settings import resolve_optimize_display_settings
+from harite.gui.views.main_window_preview import build_optimize_cli_preview
+from harite.gui.views.main_window_preview import build_preview_assignments
+from harite.gui.views.main_window_preview import build_preview_assist_summary
+from harite.gui.views.main_window_preview import build_preview_result_notes
+from harite.gui.views.main_window_preview import build_result_preview_state
+from harite.gui.views.main_window_preview import format_display_summary
+from harite.gui.views.main_window_preview import format_preview_assignment_name
+from harite.gui.views.main_window_preview import ResultPreviewState
 from harite.positioning import reset_position_pair, update_position_pair
 from harite.plugins import registry as plugin_registry
 from harite.preferences import AppPreferences
 from harite.watch import WatchCycleState, collect_watch_input_images, run_watch_cycle
-
-
-@dataclass(frozen=True)
-class ResultPreviewState:
-    source_file: Path | None
-    apply_mode: str
-    l_display: tuple[int, int] | None = None
-    r_display: tuple[int, int] | None = None
-    assist_summary: str = "Assist: not-ready"
-    l_assignment: str = "L display <- -"
-    r_assignment: str = "R display <- -"
-    l_result_note: str = "Result: not-ready"
-    r_result_note: str = "Result: not-ready"
-
 
 class MainWindow:
     """Framework-neutral placeholder for the first standalone GUI window."""
@@ -525,9 +517,7 @@ class MainWindow:
             return None
 
     def _format_display_summary(self, display: tuple[int, int] | None) -> str | None:
-        if display is None:
-            return None
-        return f"{display[0]}x{display[1]}"
+        return format_display_summary(display)
 
     def _build_preview_assist_summary(
         self,
@@ -535,81 +525,19 @@ class MainWindow:
         l_display: tuple[int, int] | None,
         r_display: tuple[int, int] | None,
     ) -> str:
-        if apply_mode == "per-monitor-auto-split":
-            left = self._format_display_summary(l_display)
-            right = self._format_display_summary(r_display)
-            if left and right:
-                return f"Assist: auto-split as L {left} | R {right}"
-            return "Assist: auto-split by current left/right display widths"
-        return "Assist: same optimized image will be applied to both displays"
+        return build_preview_assist_summary(apply_mode, l_display, r_display)
 
     def _format_preview_assignment_name(self, value: str, max_length: int = 36) -> str:
-        name = Path(value).name
-        if len(name) <= max_length:
-            return name
-
-        tail_length = 12
-        head_length = max_length - tail_length - 3
-        if head_length < 8:
-            head_length = 8
-            tail_length = max(4, max_length - head_length - 3)
-        return f"{name[:head_length]}...{name[-tail_length:]}"
+        return format_preview_assignment_name(value, max_length=max_length)
 
     def _build_preview_assignments(self, input_values: list[str]) -> tuple[str, str]:
-        normalized = [self._format_preview_assignment_name(value) for value in input_values if str(value or "").strip()]
-        if len(normalized) >= 2:
-            return f"L display <- {normalized[0]}", f"R display <- {normalized[1]}"
-        if len(normalized) == 1:
-            return f"L display <- {normalized[0]}", f"R display <- {normalized[0]}"
-        return "L display <- -", "R display <- -"
+        return build_preview_assignments(input_values)
 
     def _build_preview_result_notes(self, apply_mode: str) -> tuple[str, str]:
-        if apply_mode == "per-monitor-auto-split":
-            return (
-                "Result: auto-split left crop",
-                "Result: auto-split right crop",
-            )
-        return (
-            "Result: full optimized image",
-            "Result: full optimized image",
-        )
+        return build_preview_result_notes(apply_mode)
 
     def build_result_preview_state(self) -> ResultPreviewState:
-        source_file = self.last_saved_files[-1] if self.last_saved_files else None
-        if source_file is None:
-            return ResultPreviewState(source_file=None, apply_mode=self.apply_mode)
-
-        input_values = [part.strip() for part in self.form_state.input_value.split(",") if part.strip()]
-        l_display = self._parse_resolution_value(self.form_state.l_display)
-        r_display = self._parse_resolution_value(self.form_state.r_display)
-
-        try:
-            display_settings = resolve_optimize_display_settings(
-                input_values=input_values,
-                resolution=self.form_state.resolution,
-                two_screen=self.form_state.two_screen,
-                l_display=self.form_state.l_display,
-                r_display=self.form_state.r_display,
-            )
-            l_display = self._parse_resolution_value(display_settings.l_display) or l_display
-            r_display = self._parse_resolution_value(display_settings.r_display) or r_display
-        except Exception:
-            pass
-
-        l_assignment, r_assignment = self._build_preview_assignments(input_values)
-        l_result_note, r_result_note = self._build_preview_result_notes(self.apply_mode)
-
-        return ResultPreviewState(
-            source_file=source_file,
-            apply_mode=self.apply_mode,
-            l_display=l_display,
-            r_display=r_display,
-            assist_summary=self._build_preview_assist_summary(self.apply_mode, l_display, r_display),
-            l_assignment=l_assignment,
-            r_assignment=r_assignment,
-            l_result_note=l_result_note,
-            r_result_note=r_result_note,
-        )
+        return build_result_preview_state(self)
 
     def on_change_apply_mode(self, mode: str) -> bool:
         value = (mode or "").strip().lower()
@@ -1276,28 +1204,7 @@ class MainWindow:
         self._log("Source directory dialog closed")
 
     def build_optimize_cli_preview(self) -> str:
-        req = OptimizeRequest(
-            input_value=self.form_state.input_value,
-            resolution=self.form_state.resolution,
-            output_dir=Path(self.form_state.output_dir),
-            scaling=self.form_state.scaling,
-            two_screen=self.form_state.two_screen,
-            margins=self.form_state.margins,
-            l_display=self.form_state.l_display,
-            r_display=self.form_state.r_display,
-            align=self.form_state.align,
-            valign=self.form_state.valign,
-            quality=self.form_state.quality,
-            background_color=self.form_state.background_color,
-            embed_info=self.form_state.embed_info,
-            embed_text=self.form_state.embed_text,
-            embed_position=self.form_state.embed_position,
-            embed_max_lines=self._effective_margin_text_max_lines(),
-        )
-        args = to_cli_args(req)
-        preview = "harite " + " ".join(args)
-        self._log(f"CLI preview: {preview}")
-        return preview
+        return build_optimize_cli_preview(self)
 
     def suggest_next_action(self) -> str:
         """Return the recommended next operation in the Optimize/Apply flow."""
