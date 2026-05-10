@@ -27,8 +27,8 @@
 - [docs/specs/gui/gui-phase7-workstream4-gui-candidate-recheck.md](docs/specs/gui/gui-phase7-workstream4-gui-candidate-recheck.md)
 - [docs/specs/core/margin-info-embedding.md](docs/specs/core/margin-info-embedding.md)
 - [docs/specs/core/monitor-split-design.md](docs/specs/core/monitor-split-design.md)
-- [docs/specs/gui/gui-standalone-design.md](docs/specs/gui/gui-standalone-design.md)
-- [docs/specs/gui/gui-glade-layout-reconstruction.md](docs/specs/gui/gui-glade-layout-reconstruction.md)
+- [docs/specs/gui/gui-before-phase5-standalone-design.md](docs/specs/gui/gui-before-phase5-standalone-design.md)
+- [docs/specs/gui/gui-before-phase5-glade-layout-reconstruction.md](docs/specs/gui/gui-before-phase5-glade-layout-reconstruction.md)
 
 ## 文書構成
 

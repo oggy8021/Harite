@@ -5,7 +5,7 @@
 ## 位置づけ
 
 - 本メモは、`src/harite/gui/views` と `src/harite/gui/adapters` の間で今回顕在化した traceability 低下要因を、Phase8 内の後続ブランチで解く課題として固定するための短い設計メモである。
-- layout 正本は [docs/specs/gui/gui-margin-tab-grid-re-layout-contract.md](docs/specs/gui/gui-margin-tab-grid-re-layout-contract.md)、Phase8 backlog は [docs/specs/gui/gui-phase8-backlog.md](docs/specs/gui/gui-phase8-backlog.md) を参照する。
+- layout 正本は [docs/specs/gui/gui-phase8-margin-tab-grid-re-layout-contract.md](docs/specs/gui/gui-phase8-margin-tab-grid-re-layout-contract.md)、Phase8 backlog は [docs/specs/gui/gui-phase8-backlog.md](docs/specs/gui/gui-phase8-backlog.md) を参照する。
 
 ## 今回の扱い
 
