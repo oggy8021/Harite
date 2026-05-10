@@ -550,7 +550,29 @@ class _ColorDialogProxy:
             dialog.set_transient_for(self._parent_window)
         if hasattr(dialog, "set_destroy_with_parent"):
             dialog.set_destroy_with_parent(True)
+        self._attach_native_hex_entry(dialog)
         return dialog
+
+    def _attach_native_hex_entry(self, dialog: Any) -> None:
+        gtk = self._gtk
+        if gtk is None or not hasattr(dialog, "get_content_area"):
+            return
+        content_area = dialog.get_content_area()
+        if content_area is None or not hasattr(gtk, "Box") or not hasattr(gtk, "Label") or not hasattr(gtk, "Entry"):
+            return
+
+        native_hex_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
+        native_hex_label = gtk.Label(label="Hex (#RRGGBB)")
+        if hasattr(native_hex_label, "set_xalign"):
+            native_hex_label.set_xalign(0.0)
+        native_hex_entry = gtk.Entry()
+        if hasattr(native_hex_entry, "set_text"):
+            native_hex_entry.set_text(self._color)
+        native_hex_box.pack_start(native_hex_label, False, False, 0)
+        native_hex_box.pack_start(native_hex_entry, False, False, 0)
+        if hasattr(content_area, "pack_start"):
+            content_area.pack_start(native_hex_box, False, False, 0)
+        setattr(dialog, "_harite_hex_entry", native_hex_entry)
 
     def _rgba_from_color(self, color: str) -> Any | None:
         gdk = self._load_gdk_module()
@@ -592,7 +614,13 @@ class _ColorDialogProxy:
             response = dialog.run() if hasattr(dialog, "run") else None
             self._visible = False
             if response == gtk.ResponseType.OK:
-                if hasattr(dialog, "get_rgba"):
+                native_hex_entry = getattr(dialog, "_harite_hex_entry", None)
+                native_hex_value = None
+                if native_hex_entry is not None and hasattr(native_hex_entry, "get_text"):
+                    native_hex_value = str(native_hex_entry.get_text() or "").strip()
+                if native_hex_value and is_background_color_literal(native_hex_value):
+                    self.set_color(native_hex_value)
+                elif hasattr(dialog, "get_rgba"):
                     self.set_color(self._color_from_rgba(dialog.get_rgba()))
                 if self._on_confirm is not None:
                     self._on_confirm(self._color)
