@@ -11,6 +11,14 @@ from pathlib import Path
 from typing import Any, Callable
 
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color
+from harite.gui.adapters.gtk_runtime_sync import build_margin_settings_preview
+from harite.gui.adapters.gtk_runtime_sync import parse_margin_values
+from harite.gui.adapters.gtk_runtime_sync import refresh_margins_controls
+from harite.gui.adapters.gtk_runtime_sync import sync_feedback_from_owner
+from harite.gui.adapters.gtk_runtime_sync import sync_input_state_from_owner
+from harite.gui.adapters.gtk_runtime_sync import sync_main_state_from_owner
+from harite.gui.adapters.gtk_runtime_sync import sync_margins_state_from_owner
+from harite.gui.adapters.gtk_runtime_sync import sync_watch_state_from_owner
 from harite.positioning import format_position_pair, parse_position_pair
 from harite.watch import WatchCycleState, collect_watch_input_images, run_watch_cycle
 
@@ -1937,17 +1945,13 @@ class GtkRuntimeSignalBackend:
         self._signal_handlers.update(mapping)
         owner = self._get_connected_owner()
         if owner is not None:
-            self._sync_main_state_from_owner(owner)
-            self._sync_margins_state_from_owner(owner)
-            self._sync_watch_state_from_owner(owner)
+            self._sync_non_preview_state_from_owner(owner)
 
     def connect(self, handler_name: str, callback: Callable[..., Any]) -> None:
         self._signal_handlers[handler_name] = callback
         owner = self._get_connected_owner()
         if owner is not None:
-            self._sync_main_state_from_owner(owner)
-            self._sync_margins_state_from_owner(owner)
-            self._sync_watch_state_from_owner(owner)
+            self._sync_non_preview_state_from_owner(owner)
 
     def _configure_spin_button(
         self,
@@ -2179,156 +2183,52 @@ class GtkRuntimeSignalBackend:
         return None
 
     def _sync_watch_state_from_owner(self, owner: Any) -> None:
-        self._watch_srcdir_l = str(getattr(owner, "watch_srcdir_l", self._watch_srcdir_l) or "")
-        self._watch_srcdir_r = str(getattr(owner, "watch_srcdir_r", self._watch_srcdir_r) or "")
-        self._watch_running = bool(getattr(owner, "watch_running", self._watch_running))
-        self._watch_state_l = getattr(owner, "_watch_state_l", self._watch_state_l)
-        self._watch_state_r = getattr(owner, "_watch_state_r", self._watch_state_r)
-        self._watch_previous_l = getattr(owner, "_watch_previous_l", self._watch_previous_l)
-        self._watch_previous_r = getattr(owner, "_watch_previous_r", self._watch_previous_r)
-        interval_seconds = int(getattr(owner, "watch_interval_seconds", 0) or 0)
-        self._set_spin_value("spnInterval", interval_seconds if interval_seconds > 0 else 60)
-        self._refresh_watch_source_labels()
-        self._refresh_watch_summary_label()
-        self._refresh_watch_current_label()
-        form_state = getattr(owner, "form_state", None)
-        self._refresh_watch_output_label(getattr(form_state, "output_dir", None) if form_state is not None else None)
+        sync_watch_state_from_owner(self, owner)
 
     def _parse_margin_values(self, value: object | None) -> tuple[int, int, int, int]:
-        raw = str(value or "").strip()
-        if not raw:
-            return (0, 0, 0, 0)
-
-        parts = [part.strip() for part in raw.split(",")]
-        if len(parts) != 4:
-            return (0, 0, 0, 0)
-
-        try:
-            return tuple(int(part) for part in parts)
-        except ValueError:
-            return (0, 0, 0, 0)
+        return parse_margin_values(value)
 
     def _sync_main_state_from_owner(self, owner: Any) -> None:
-        form_state = getattr(owner, "form_state", None)
-        if form_state is None:
-            return
-
-        margin_left, margin_right, margin_top, margin_bottom = self._parse_margin_values(
-            getattr(form_state, "margins", None)
-        )
-        self._set_spin_value("spnLeftMargin", margin_left)
-        self._set_spin_value("spnRightMargin", margin_right)
-        self._set_spin_value("spnTopMargin", margin_top)
-        self._set_spin_value("spnBottomMargin", margin_bottom)
-
-        align_left, align_right = parse_position_pair(getattr(form_state, "align", "center"), axis="align")
-        valign_left, valign_right = parse_position_pair(getattr(form_state, "valign", "center"), axis="valign")
-
-        self._set_toggle_active("tglPushLeftL", align_left == "left")
-        self._set_toggle_active("tglPushRightL", align_left == "right")
-        self._set_toggle_active("tglPushLeftR", align_right == "left")
-        self._set_toggle_active("tglPushRightR", align_right == "right")
-        self._set_toggle_active("tglUpperL", valign_left == "top")
-        self._set_toggle_active("tglLowerL", valign_left == "bottom")
-        self._set_toggle_active("tglUpperR", valign_right == "top")
-        self._set_toggle_active("tglLowerR", valign_right == "bottom")
-
-        self._refresh_current_state_labels()
+        sync_main_state_from_owner(self, owner)
 
     def _sync_input_state_from_owner(self, owner: Any) -> None:
-        form_state = getattr(owner, "form_state", None)
-        if form_state is None:
-            return
-
-        self._input_path_l = str(getattr(owner, "input_path_l", "") or "")
-        self._input_path_r = str(getattr(owner, "input_path_r", "") or "")
-        self._set_entry_text("entPathL", self._format_input_display(self._input_path_l))
-        self._set_entry_text("entPathR", self._format_input_display(self._input_path_r))
-
-        self._set_button_enabled("btnSave", bool(getattr(owner, "can_optimize", False)))
-        self._set_button_enabled("btnOptimize", bool(getattr(owner, "can_optimize", False)))
-        self._set_button_enabled("btnSetWall", bool(getattr(owner, "can_apply", False)))
-        self._set_save_path_dialog_open_state(bool(getattr(owner, "save_path_dialog_open", False)))
-        self._set_label_text("lblOptimizeResult", "Optimize result: not-run")
-        self._set_label_text("lblApplyTarget", "Apply target: not-ready")
+        sync_input_state_from_owner(self, owner)
 
     def _sync_margins_state_from_owner(self, owner: Any) -> None:
-        form_state = getattr(owner, "form_state", None)
-        if form_state is None:
-            return
-
-        margin_text_mode = str(getattr(form_state, "embed_info", "none") or "none").lower()
-        margin_text_position = str(getattr(form_state, "embed_position", "bottom") or "bottom").lower()
-        if margin_text_position == "auto":
-            margin_text_position = "bottom"
-        self._set_toggle_active("radMarginTextModeOff", margin_text_mode == "none")
-        self._set_toggle_active("radMarginTextModeSettings", margin_text_mode == "params")
-        self._set_toggle_active("radMarginTextModeText", margin_text_mode == "free")
-        self._set_toggle_active("radMarginTextModeBoth", margin_text_mode == "combo")
-        self._set_entry_text("txtMarginText", getattr(form_state, "embed_text", None))
-        self._set_toggle_active("radMarginTextPositionLeftTop", margin_text_position == "top")
-        self._set_toggle_active("radMarginTextPositionRightBottom", margin_text_position == "bottom")
-        self._set_toggle_active("radMarginTextPositionLeftBottom", margin_text_position == "left")
-        self._set_toggle_active("radMarginTextPositionRightTop", margin_text_position == "right")
-        self._set_spin_value("spnMarginTextMaxLines", int(getattr(form_state, "embed_max_lines", 3) or 3))
-        self._refresh_margins_controls(owner)
+        sync_margins_state_from_owner(self, owner)
 
     def _build_margin_settings_preview(self, owner: Any | None = None) -> str:
-        form_state = getattr(owner, "form_state", None) if owner is not None else None
-        resolution = str(getattr(form_state, "resolution", "-") or "-")
-        margins = self._parse_margin_values(getattr(form_state, "margins", None)) if form_state is not None else (
-            self._read_spin_int("spnLeftMargin"),
-            self._read_spin_int("spnRightMargin"),
-            self._read_spin_int("spnTopMargin"),
-            self._read_spin_int("spnBottomMargin"),
-        )
-        left, right, top, bottom = margins
-        if form_state is not None:
-            align_left, align_right = parse_position_pair(getattr(form_state, "align", "center"), axis="align")
-            valign_left, valign_right = parse_position_pair(getattr(form_state, "valign", "center"), axis="valign")
-            two_screen = bool(getattr(form_state, "two_screen", False))
-        else:
-            align_left, valign_left = self._current_side_state("L")
-            align_right, valign_right = self._current_side_state("R")
-            two_screen = False
-        split_text = "Auto-Split" if two_screen else "No Split"
-        return "\n".join(
-            (
-                f"resolution={resolution}",
-                f"margins=L{left},R{right},U{top},B{bottom}",
-                f"align={align_left},{align_right} valign={valign_left},{valign_right}",
-                split_text,
-            )
-        )
+        return build_margin_settings_preview(self, owner)
 
     def _refresh_margins_controls(self, owner: Any | None = None) -> None:
-        form_state = getattr(owner, "form_state", None) if owner is not None else None
-        margin_text_mode = str(getattr(form_state, "embed_info", "none") or "none").strip().lower() if form_state is not None else "none"
-
-        settings_enabled = margin_text_mode in {"params", "combo"}
-        text_enabled = margin_text_mode in {"free", "combo"}
-
-        self._set_widget_enabled("marginSettingsPage", settings_enabled)
-        self._set_widget_enabled("marginTextPage", text_enabled)
-        self._set_widget_enabled("txtMarginText", text_enabled)
-        entry = self._objects.get("txtMarginText")
-        if entry is not None and hasattr(entry, "set_editable"):
-            entry.set_editable(bool(text_enabled))
-
-        if margin_text_mode == "params":
-            self._set_notebook_page("marginTextTabs", 0)
-        elif margin_text_mode in {"free", "combo"}:
-            self._set_notebook_page("marginTextTabs", 1)
-        else:
-            self._set_notebook_page("marginTextTabs", 0)
-
-        self._set_label_text("lblMarginSettingsPreview", self._build_margin_settings_preview(owner))
+        refresh_margins_controls(self, owner)
 
     def _sync_feedback_from_owner(self, owner: Any) -> None:
-        phase = str(getattr(owner, "status_phase", "") or "").strip() or "watch"
-        message = str(getattr(owner, "status_message", "") or "").strip() or "state-updated"
-        error = str(getattr(owner, "last_error", "") or "").strip() or None
-        self._set_feedback(phase=phase.capitalize(), state=message, error=error)
+        sync_feedback_from_owner(self, owner)
+
+    def _sync_non_preview_state_from_owner(self, owner: Any) -> None:
+        self._sync_input_state_from_owner(owner)
+        self._sync_main_state_from_owner(owner)
+        self._sync_margins_state_from_owner(owner)
+        self._sync_watch_state_from_owner(owner)
+        self._sync_feedback_from_owner(owner)
+
+    def _sync_input_preview_state_from_owner(self, owner: Any, *, include_feedback: bool = False) -> None:
+        self._sync_input_state_from_owner(owner)
+        self._sync_result_preview_from_owner(owner)
+        if include_feedback:
+            self._sync_feedback_from_owner(owner)
+
+    def _sync_margins_state_with_feedback_from_owner(self, owner: Any) -> None:
+        self._sync_margins_state_from_owner(owner)
+        self._sync_feedback_from_owner(owner)
+
+    def _sync_watch_state_with_feedback_from_owner(self, owner: Any) -> None:
+        self._sync_watch_state_from_owner(owner)
+        self._sync_feedback_from_owner(owner)
+
+    def _sync_watch_state_only_from_owner(self, owner: Any) -> None:
+        self._sync_watch_state_from_owner(owner)
 
     def _get_gdkpixbuf_module(self) -> Any | None:
         try:
@@ -2693,8 +2593,7 @@ class GtkRuntimeSignalBackend:
             callback(filename, side)
             owner = self._get_handler_owner("on_pick_input")
             if owner is not None:
-                self._sync_input_state_from_owner(owner)
-                self._sync_result_preview_from_owner(owner)
+                self._sync_input_preview_state_from_owner(owner)
             else:
                 entry_name = "entPathL" if side == "L" else "entPathR"
                 if side == "L":
@@ -2757,9 +2656,7 @@ class GtkRuntimeSignalBackend:
             callback(side)
             owner = self._get_handler_owner("on_clear_input")
             if owner is not None:
-                self._sync_input_state_from_owner(owner)
-                self._sync_result_preview_from_owner(owner)
-                self._sync_feedback_from_owner(owner)
+                self._sync_input_preview_state_from_owner(owner, include_feedback=True)
             else:
                 self._set_feedback(phase=f"Clear-{side}", state="ok")
         except TypeError:
@@ -2767,9 +2664,7 @@ class GtkRuntimeSignalBackend:
                 callback()
                 owner = self._get_handler_owner("on_clear_input")
                 if owner is not None:
-                    self._sync_input_state_from_owner(owner)
-                    self._sync_result_preview_from_owner(owner)
-                    self._sync_feedback_from_owner(owner)
+                    self._sync_input_preview_state_from_owner(owner, include_feedback=True)
                 else:
                     self._set_feedback(phase=f"Clear-{side}", state="ok")
             except Exception as exc:
@@ -2893,14 +2788,13 @@ class GtkRuntimeSignalBackend:
             ok = callback()
             if not ok:
                 if owner is not None:
-                    self._sync_watch_state_from_owner(owner)
-                    self._sync_feedback_from_owner(owner)
+                    self._sync_watch_state_with_feedback_from_owner(owner)
                 else:
                     self._set_feedback(phase="Watch", state="start-failed", error="watch start returned false")
                 return
 
             if owner is not None:
-                self._sync_watch_state_from_owner(owner)
+                self._sync_watch_state_only_from_owner(owner)
                 interval_seconds = int(getattr(owner, "watch_interval_seconds", 0) or 0)
                 self._start_watch_timer(interval_seconds)
                 self._set_feedback(phase="Watch", state="started")
@@ -2940,7 +2834,7 @@ class GtkRuntimeSignalBackend:
             owner = self._get_handler_owner("on_watch_stop")
             if owner is not None:
                 self._stop_watch_timer()
-                self._sync_watch_state_from_owner(owner)
+                self._sync_watch_state_only_from_owner(owner)
                 self._set_feedback(phase="Watch", state="stopped")
                 return
 
@@ -2966,8 +2860,7 @@ class GtkRuntimeSignalBackend:
                 return
             owner = self._get_handler_owner("on_change_margin_text_mode")
             if owner is not None:
-                self._sync_margins_state_from_owner(owner)
-                self._sync_feedback_from_owner(owner)
+                self._sync_margins_state_with_feedback_from_owner(owner)
                 return
             self._set_feedback(phase="Margins", state="info-updated")
         except Exception as exc:
@@ -2997,8 +2890,7 @@ class GtkRuntimeSignalBackend:
                 return
             owner = self._get_handler_owner("on_change_margin_text")
             if owner is not None:
-                self._sync_margins_state_from_owner(owner)
-                self._sync_feedback_from_owner(owner)
+                self._sync_margins_state_with_feedback_from_owner(owner)
                 return
             self._set_feedback(phase="Margins", state="text-updated")
         except Exception as exc:
@@ -3017,8 +2909,7 @@ class GtkRuntimeSignalBackend:
                 return
             owner = self._get_handler_owner("on_change_margin_text_position")
             if owner is not None:
-                self._sync_margins_state_from_owner(owner)
-                self._sync_feedback_from_owner(owner)
+                self._sync_margins_state_with_feedback_from_owner(owner)
                 return
             self._set_feedback(phase="Margins", state="position-updated")
         except Exception as exc:
@@ -3036,8 +2927,7 @@ class GtkRuntimeSignalBackend:
                 return
             owner = self._get_handler_owner("on_change_margin_text_max_lines")
             if owner is not None:
-                self._sync_margins_state_from_owner(owner)
-                self._sync_feedback_from_owner(owner)
+                self._sync_margins_state_with_feedback_from_owner(owner)
                 return
             self._set_feedback(phase="Margins", state="max-lines-updated")
         except Exception as exc:
@@ -3057,12 +2947,11 @@ class GtkRuntimeSignalBackend:
                 return False
             if not ok:
                 if owner is not None:
-                    self._sync_watch_state_from_owner(owner)
-                    self._sync_feedback_from_owner(owner)
+                    self._sync_watch_state_with_feedback_from_owner(owner)
                 return False
 
             if owner is not None:
-                self._sync_watch_state_from_owner(owner)
+                self._sync_watch_state_only_from_owner(owner)
                 return True
 
         selected_left = "-"
@@ -3527,7 +3416,7 @@ class GtkRuntimeSignalBackend:
                 self._sync_preferences_widgets_from_dialog()
                 owner = self._get_handler_owner("on_open_settings_dialog")
                 if owner is not None:
-                    self._sync_watch_state_from_owner(owner)
+                    self._sync_watch_state_only_from_owner(owner)
                 if dialog is not None and hasattr(dialog, "show"):
                     dialog.show()
                 self._set_label_text("lblSettingsState", "Settings: opened")
@@ -3549,10 +3438,7 @@ class GtkRuntimeSignalBackend:
             if ok:
                 owner = self._get_handler_owner(handler_name)
                 if owner is not None:
-                    self._sync_main_state_from_owner(owner)
-                    self._sync_margins_state_from_owner(owner)
-                    self._sync_watch_state_from_owner(owner)
-                    self._sync_feedback_from_owner(owner)
+                    self._sync_non_preview_state_from_owner(owner)
                 if hasattr(dialog, "hide"):
                     dialog.hide()
                 self._set_label_text("lblSettingsState", "Settings: applied")
@@ -3577,10 +3463,7 @@ class GtkRuntimeSignalBackend:
                 self._sync_preferences_widgets_from_dialog()
                 owner = self._get_handler_owner(handler_name)
                 if owner is not None:
-                    self._sync_main_state_from_owner(owner)
-                    self._sync_margins_state_from_owner(owner)
-                    self._sync_watch_state_from_owner(owner)
-                    self._sync_feedback_from_owner(owner)
+                    self._sync_non_preview_state_from_owner(owner)
                 self._set_label_text("lblSettingsState", "Settings: loaded")
                 self._set_feedback(phase="SettingsLoad", state="loaded")
             else:
