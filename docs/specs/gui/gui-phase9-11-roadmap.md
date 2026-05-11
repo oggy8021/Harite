@@ -102,7 +102,7 @@
 ### Phase10 の完了条件
 
 - GUI の通常起動導線が docs / 実装の両方で説明可能になっている。
-- owner の通常利用環境である XFCE で、`python -m harite.gui.app` 相当の既定導線から current GUI を追加 option なしに起動できる。
+- owner の通常利用環境である XFCE で、README 上の正本 GUI 導線から current GUI を追加 option なしに起動できる。
 - 補助線、色、アイコンの導入方針が定まり、最低限の一貫した visual rule ができている。
 - Phase11 に送る OS integration 論点が切り分けられている。
 
@@ -149,7 +149,7 @@
 
 1. Phase9 単独 planning: [docs/specs/gui/gui-phase9-planning.md](docs/specs/gui/gui-phase9-planning.md)
 2. Phase9 の legacy / compatibility 監査メモ
-3. Phase10 の GUI 起動導線メモ
+3. Phase10 の GUI 起動導線メモ: [docs/specs/gui/gui-phase10-1st-planning.md](docs/specs/gui/gui-phase10-1st-planning.md)
 4. Phase10 の visual aid / icon 方針メモ
 5. Phase11 の OS integration 方式比較メモ
 
@@ -157,4 +157,5 @@
 
 - `ui_adapter` を過大評価しない。実際の重心は `MainWindow` と GTK runtime backend にある。
 - Phase10 の「起動方法を整える」は docs 更新だけでは足りず、entrypoint と option 設計の再整理を含む。
+- 2026-05-11 時点の Phase10 初手判断では、README 上の正本 GUI 導線は `harite-gui` を第一候補とし、`harite gui` は将来整理候補として残す。
 - Phase11 は新規抽象化を要するため、post-Phase10 の小粒追加ではなく、独立フェーズとして扱う。
