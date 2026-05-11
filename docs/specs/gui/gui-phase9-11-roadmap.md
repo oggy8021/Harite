@@ -150,7 +150,7 @@
 1. Phase9 単独 planning: [docs/specs/gui/gui-phase9-planning.md](docs/specs/gui/gui-phase9-planning.md)
 2. Phase9 の legacy / compatibility 監査メモ
 3. Phase10 の GUI 起動導線メモ: [docs/specs/gui/gui-phase10-1st-planning.md](docs/specs/gui/gui-phase10-1st-planning.md)
-4. Phase10 の visual aid / icon 方針メモ
+4. Phase10 の visual aid / icon 方針メモ: [docs/specs/gui/gui-phase10-2nd-planning.md](docs/specs/gui/gui-phase10-2nd-planning.md)
 5. Phase11 の OS integration 方式比較メモ
 
 ## 判断メモ
