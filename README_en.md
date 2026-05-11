@@ -26,12 +26,31 @@ harite optimize --input ./imgs --resolution 1920x1080 --output ./out --format js
 
 Use `harite optimize --help` to see all available options.
 
-## Note on `apply --do-it` safety
+## GUI startup
+
+The current GUI's primary startup path is `harite-gui`.
+
+```bash
+harite-gui
+```
+
+You can also start it via the module entrypoint.
+
+```bash
+python -m harite.gui.app
+```
+
+- Normal usage does not require extra options.
+- `--bind-ui-backend` / `--present-ui-window` and their `--no-*` forms remain available as development-time overrides for troubleshooting.
+- In the README, `harite-gui` is treated as the canonical GUI command and `python -m harite.gui.app` as a secondary path.
+
+## Note on `apply` safety
 
 The CLI `apply` command defaults to a dry-run: it will simulate applying a wallpaper
 without changing system settings. To actually change the system wallpaper, pass
-`--do-it`. This is a privileged and platform-specific operation; before using
-`--do-it` on a target machine:
+`--do-it`. The `--dry-run/--do-it` switch is explicit and should be treated with care.
+
+This is a privileged and platform-specific operation; before using `--do-it` on a target machine:
 
 - Verify the plugin you select (default `windows`, or `macos`/`linux`) is appropriate
     for that system.
@@ -80,3 +99,9 @@ sudo dnf install xorg-x11-server-utils xfce4-settings feh dconf
 ```
 
 macOS includes `osascript` by default; Windows uses Win32 APIs so no external tools are necessary.
+
+## Contributing
+
+- Branch naming: use one of the prefixes `feature/`, `fix/`, `docs/`, or `chore/`, followed by a short lowercase description using letters, numbers, `-`, `.`, or `_`.
+- PR checks: `.github/workflows/pr-checks.yml` validates branch names and PR body content.
+- Manual validation notes: if you need a reference for apply / GUI / environment-dependent manual checks, see `docs/manual-validation-gate.md`. At the moment this is not treated as a strict always-on gate.

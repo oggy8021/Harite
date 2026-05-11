@@ -11,7 +11,7 @@ def test_run_constructs_main_window_and_calls_show(monkeypatch):
 
     monkeypatch.setattr(app, "MainWindow", DummyWindow)
 
-    app.run()
+    app.run(bind_ui_backend=False, present_ui_window=False)
 
     assert called["show"] == 1
 
@@ -59,6 +59,74 @@ def test_run_binds_signal_backend_when_enabled(monkeypatch):
     assert set(backend.mapping.keys()) >= {"on_change_input_text", "on_optimize", "on_apply"}
     assert "on_btnOptimize_clicked" not in backend.mapping
     assert "on_btnSetWall_clicked" not in backend.mapping
+
+
+def test_run_uses_no_option_defaults_for_runtime_gui(monkeypatch):
+    called = {"present": 0, "show": 0}
+
+    class DummyWindow:
+        def show(self) -> None:
+            called["show"] += 1
+
+        def on_change_input_text(self, _text: str) -> None:
+            return None
+
+        def on_optimize(self) -> bool:
+            return True
+
+        def on_apply(self) -> bool:
+            return True
+
+    class DummyBackend:
+        def __init__(self):
+            self.mapping = {}
+
+        def connect_signals(self, mapping):
+            self.mapping.update(mapping)
+
+    def fake_backend_loader():
+        return DummyBackend()
+
+    def fake_present(_signal_backend):
+        called["present"] += 1
+        return True
+
+    monkeypatch.delenv("HARITE_GUI_BIND_SIGNALS", raising=False)
+    monkeypatch.delenv("HARITE_GUI_PRESENT_WINDOW", raising=False)
+    monkeypatch.setattr(app, "MainWindow", DummyWindow)
+    monkeypatch.setattr(app, "_load_ui_signal_backend", fake_backend_loader)
+    monkeypatch.setattr(app, "_present_ui_window", fake_present)
+
+    app.run()
+
+    assert called["present"] == 1
+    assert called["show"] == 0
+
+
+def test_run_env_override_can_disable_default_runtime_gui(monkeypatch):
+    called = {"show": 0, "backend": 0, "present": 0}
+
+    class DummyWindow:
+        def show(self) -> None:
+            called["show"] += 1
+
+    def fake_backend_loader():
+        called["backend"] += 1
+        raise AssertionError("backend loader should not be called")
+
+    def fake_present(_signal_backend):
+        called["present"] += 1
+        raise AssertionError("present should not be called")
+
+    monkeypatch.setenv("HARITE_GUI_BIND_SIGNALS", "0")
+    monkeypatch.setenv("HARITE_GUI_PRESENT_WINDOW", "0")
+    monkeypatch.setattr(app, "MainWindow", DummyWindow)
+    monkeypatch.setattr(app, "_load_ui_signal_backend", fake_backend_loader)
+    monkeypatch.setattr(app, "_present_ui_window", fake_present)
+
+    app.run()
+
+    assert called == {"show": 1, "backend": 0, "present": 0}
 
 
 def test_run_continues_when_signal_backend_load_fails(monkeypatch):
@@ -249,4 +317,25 @@ def test_main_uses_none_defaults_without_cli_flags(monkeypatch):
     assert called == {
         "bind_ui_backend": None,
         "present_ui_window": None,
+    }
+
+
+def test_main_can_disable_runtime_gui_defaults(monkeypatch):
+    called = {}
+
+    def fake_run(*, bind_ui_backend=None, present_ui_window=None):
+        called["bind_ui_backend"] = bind_ui_backend
+        called["present_ui_window"] = present_ui_window
+
+    monkeypatch.setattr(app, "run", fake_run)
+
+    exit_code = app.main([
+        "--no-bind-ui-backend",
+        "--no-present-ui-window",
+    ])
+
+    assert exit_code == 0
+    assert called == {
+        "bind_ui_backend": False,
+        "present_ui_window": False,
     }
