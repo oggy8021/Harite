@@ -9,18 +9,25 @@ from typing import Any
 from .views.main_window import MainWindow
 
 
+_TRUTHY_ENV_VALUES = ("1", "true", "yes", "on")
+
+
 def _should_bind_ui_backend(bind_ui_backend: bool | None) -> bool:
     if bind_ui_backend is not None:
         return bind_ui_backend
-    raw = os.getenv("HARITE_GUI_BIND_SIGNALS", "0").strip().lower()
-    return raw in ("1", "true", "yes", "on")
+    raw = os.getenv("HARITE_GUI_BIND_SIGNALS", "").strip().lower()
+    if raw:
+        return raw in _TRUTHY_ENV_VALUES
+    return True
 
 
 def _should_present_ui_window(present_ui_window: bool | None) -> bool:
     if present_ui_window is not None:
         return present_ui_window
-    raw = os.getenv("HARITE_GUI_PRESENT_WINDOW", "0").strip().lower()
-    return raw in ("1", "true", "yes", "on")
+    raw = os.getenv("HARITE_GUI_PRESENT_WINDOW", "").strip().lower()
+    if raw:
+        return raw in _TRUTHY_ENV_VALUES
+    return True
 
 
 def _get_ui_window_id() -> str:
@@ -108,14 +115,14 @@ def main(argv: list[str] | None = None) -> int:
         dest="bind_ui_backend",
         action=argparse.BooleanOptionalAction,
         default=None,
-        help="bind backend signals to MainWindow dispatch (default: follow HARITE_GUI_BIND_SIGNALS)",
+        help="override backend signal binding for development or troubleshooting",
     )
     parser.add_argument(
         "--present-ui-window",
         dest="present_ui_window",
         action=argparse.BooleanOptionalAction,
         default=None,
-        help="present real GTK window when backend is available (default: follow HARITE_GUI_PRESENT_WINDOW)",
+        help="override real GTK window presentation for development or troubleshooting",
     )
     args = parser.parse_args(argv)
 

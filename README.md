@@ -47,9 +47,29 @@ harite optimize --input ./imgs --resolution 1920x1080 --output ./out \
 
 詳細オプションは `harite optimize --help` を参照してください。
 
-### `apply --do-it` の安全性について
+## GUI 起動
 
-`apply` コマンドはデフォルトでドライラン（実際のシステム設定は変更しない）です。実際に壁紙を設定するには `--do-it` を指定してください。`--do-it` はプラットフォーム依存かつシステム設定を変更するため慎重に扱ってください。使用前の手順:
+current GUI の通常起動導線は `harite-gui` です。
+
+```bash
+harite-gui
+```
+
+モジュール経由でも起動できます。
+
+```bash
+python -m harite.gui.app
+```
+
+- 通常利用では追加 option は不要です。
+- `--bind-ui-backend` / `--present-ui-window` とその `--no-*` 版は、開発時の切り分けや挙動確認用 override として残しています。
+- README 上の正本導線は `harite-gui` とし、`python -m harite.gui.app` は補助導線として扱います。
+
+### `apply` の安全な使い方
+
+`apply` コマンドはデフォルトでドライランです。実際に壁紙を設定するには `--do-it` を指定してください。`--dry-run/--do-it` の切り替えで明示的に扱えます。
+
+`--do-it` はプラットフォーム依存かつシステム設定を変更するため慎重に扱ってください。使用前の手順:
 
 - 適切なプラグイン（`windows`, `macos`, `linux`）を選択しているか確認する。
 - Linux/XFCE では `xfconf-query` のプロパティ名が環境により異なります。`xfconf-query -c xfce4-desktop -l` で確認してください。
@@ -102,7 +122,7 @@ macOS では `osascript` がシステムに標準搭載されています。Wind
 
 - **ブランチ命名**: PR 用ブランチは `feature/`、`fix/`、`docs/`、`chore/` のいずれかの接頭辞を付け、続けて小文字英数字と `-._` を使った短い説明を付けてください。例: `feature/cli-compatibility-20260318`。
 - **PR チェック**: `.github/workflows/pr-checks.yml` によりブランチ名と PR 本文が検証されます。PR 作成時は簡潔な概要と動作確認手順を PR 本文に記載してください。
-- **実機検証ゲート**: 実機依存の変更（apply/GUI/環境依存）は CI 通過後に手動スモークを実施してください。手順は `docs/manual-validation-gate.md` を参照してください。
+- **実機確認メモ**: apply / GUI / 環境依存の変更で手元確認が必要な場合は `docs/manual-validation-gate.md` を参照してください。現時点では常に強い制約としては扱っていません。
 - **ドキュメント**: CLI 互換性の仕様は `docs/specs/cli-compatibility.md` にまとめています（旧 WallpaperOptimizer とのマッピングと優先復元項目）。
 - **ローカルでのテスト**: 開発用仮想環境を有効にして `pytest` を実行してください。テスト実行手順は `pyproject.toml` / `tox` 等の設定を参照してください。
 
