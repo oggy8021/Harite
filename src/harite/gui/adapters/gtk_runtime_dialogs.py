@@ -593,14 +593,19 @@ class ColorDialogProxy:
             if response == gtk.ResponseType.OK:
                 native_hex_entry = getattr(dialog, "_harite_hex_entry", None)
                 native_hex_value = None
+                submitted_color = self._color
                 if native_hex_entry is not None and hasattr(native_hex_entry, "get_text"):
                     native_hex_value = str(native_hex_entry.get_text() or "").strip()
                 if native_hex_value and is_background_color_literal(native_hex_value):
                     self.set_color(native_hex_value)
+                    submitted_color = self._color
+                elif native_hex_value:
+                    submitted_color = native_hex_value
                 elif hasattr(dialog, "get_rgba"):
                     self.set_color(self._color_from_rgba(dialog.get_rgba()))
+                    submitted_color = self._color
                 if self._on_confirm is not None:
-                    self._on_confirm(self._color)
+                    self._on_confirm(submitted_color)
                 return
             if self._on_cancel is not None:
                 self._on_cancel(False)
@@ -638,8 +643,13 @@ class ColorDialogProxy:
             self._color = normalize_background_color(self._entry.get_text())
         return self._color
 
+    def get_pending_color(self) -> str:
+        if self._entry is not None and hasattr(self._entry, "get_text"):
+            return str(self._entry.get_text() or "").strip()
+        return self._color
+
     def confirm(self) -> None:
-        color = self.get_color()
+        color = self.get_pending_color()
         if self._on_confirm is not None:
             self._on_confirm(color)
 

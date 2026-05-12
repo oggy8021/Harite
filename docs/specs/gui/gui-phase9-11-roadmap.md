@@ -1,6 +1,6 @@
 # GUI Phase 9-11 Roadmap
 
-最終更新: 2026-05-10
+最終更新: 2026-05-12
 
 ## 現在地
 
@@ -78,13 +78,14 @@
 ### Phase10 の目的
 
 - GUI の起動方法を利用者向けに整える。
-- 補助線や装飾、カラー補助、アイコン導入など、視覚面の改善を「機能を支える補助」として入れる。
+- 補助線や装飾、カラー補助、settings dialog semantics、アイコン導入など、視覚面と操作面の改善を「機能を支える補助」として入れる。
 
 ### Phase10 の主対象
 
 - GUI entrypoint と起動オプション
 - README / docs 上の GUI 起動導線
 - 補助線、強調表示、エラーメッセージの見せ方
+- Settings dialog の action semantics
 - icon library の選定と導入判断
 
 ### Phase10 の論点
@@ -92,6 +93,7 @@
 - `python -m harite.gui.app` と各種 option を、利用者向けにどう見せるか。
 - 開発用 option と通常起動導線をどう分けるか。
 - 色による補助をどこまで導入し、文字情報との冗長化をどう保つか。
+- Settings dialog の `Load / Save / Apply / Close` を、利用者へどう見せるか。
 - icon library を導入するなら、依存・配布・ライセンスをどう扱うか。
 
 ### Phase10 の非目的
@@ -103,7 +105,7 @@
 
 - GUI の通常起動導線が docs / 実装の両方で説明可能になっている。
 - owner の通常利用環境である XFCE で、README 上の正本 GUI 導線から current GUI を追加 option なしに起動できる。
-- 補助線、色、アイコンの導入方針が定まり、最低限の一貫した visual rule ができている。
+- 補助線、色、settings semantics、アイコンの導入方針が定まり、最低限の一貫した visual rule / operation rule ができている。
 - Phase11 に送る OS integration 論点が切り分けられている。
 
 ## Phase11
@@ -150,8 +152,9 @@
 1. Phase9 単独 planning: [docs/specs/gui/gui-phase9-planning.md](docs/specs/gui/gui-phase9-planning.md)
 2. Phase9 の legacy / compatibility 監査メモ
 3. Phase10 の GUI 起動導線メモ: [docs/specs/gui/gui-phase10-1st-planning.md](docs/specs/gui/gui-phase10-1st-planning.md)
-4. Phase10 の visual aid / icon 方針メモ: [docs/specs/gui/gui-phase10-2nd-planning.md](docs/specs/gui/gui-phase10-2nd-planning.md)
-5. Phase11 の OS integration 方式比較メモ
+4. Phase10 の visual aid 方針メモ: [docs/specs/gui/gui-phase10-2nd-planning.md](docs/specs/gui/gui-phase10-2nd-planning.md)
+5. Phase10 の settings semantics メモ: [docs/specs/gui/gui-phase10-3rd-planning.md](docs/specs/gui/gui-phase10-3rd-planning.md)
+6. Phase11 の OS integration 方式比較メモ
 
 ## 判断メモ
 
