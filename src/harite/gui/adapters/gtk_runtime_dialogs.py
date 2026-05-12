@@ -535,11 +535,7 @@ class ColorDialogProxy:
         native_hex_box.pack_start(native_hex_entry, False, False, 0)
         if hasattr(content_area, "pack_start"):
             content_area.pack_start(native_hex_box, False, False, 0)
-        notice_parent = self._prepare_native_notice_parent(gtk, action_area, native_notice_label)
-        if notice_parent is None:
-            notice_parent = content_area
-        if hasattr(notice_parent, "pack_start"):
-            notice_parent.pack_start(native_notice_label, False, False, 0)
+        self._attach_native_notice_label(dialog, content_area, action_area, native_notice_label)
         if hasattr(native_hex_entry, "connect"):
             native_hex_entry.connect("changed", lambda entry, *_args: self._on_native_hex_entry_changed(dialog, entry))
         if hasattr(dialog, "connect"):
@@ -556,7 +552,27 @@ class ColorDialogProxy:
         if hasattr(notice_label, "set_hexpand"):
             notice_label.set_hexpand(True)
 
-    def _prepare_native_notice_parent(self, gtk: Any, action_area: Any, notice_label: Any) -> Any | None:
+    def _attach_native_notice_label(
+        self,
+        dialog: Any,
+        content_area: Any,
+        action_area: Any,
+        notice_label: Any,
+    ) -> None:
+        gtk = self._gtk
+        if gtk is not None:
+            parent_box = self._prepare_native_notice_parent(gtk, dialog, content_area, action_area)
+        else:
+            parent_box = None
+        if parent_box is None:
+            parent_box = content_area
+        if hasattr(parent_box, "pack_start"):
+            parent_box.pack_start(notice_label, False, True, 0)
+
+    def _prepare_native_notice_parent(self, gtk: Any, dialog: Any, content_area: Any, action_area: Any) -> Any | None:
+        parent_box = self._resolve_native_notice_host(dialog, content_area, action_area)
+        if parent_box is not None:
+            return parent_box
         if action_area is None or not hasattr(action_area, "pack_start"):
             return None
         if not hasattr(gtk, "Box"):
@@ -585,6 +601,18 @@ class ColorDialogProxy:
         action_shell.pack_start(action_row, False, False, 0)
         action_area.pack_start(action_shell, True, True, 0)
         return action_shell
+
+    def _resolve_native_notice_host(self, dialog: Any, content_area: Any, action_area: Any) -> Any | None:
+        candidate = None
+        if action_area is not None and hasattr(action_area, "get_parent"):
+            candidate = action_area.get_parent()
+        if candidate is None and content_area is not None and hasattr(content_area, "get_parent"):
+            candidate = content_area.get_parent()
+        if candidate is None or candidate in {dialog, action_area, content_area}:
+            return None
+        if not hasattr(candidate, "pack_start"):
+            return None
+        return candidate
 
     def _set_native_notice(self, dialog: Any, message: str) -> None:
         notice_label = getattr(dialog, "_harite_notice_label", None)
