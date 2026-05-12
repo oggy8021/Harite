@@ -456,6 +456,29 @@ class _NativeColorFakeGtk(_FakeGtk):
     ResponseType = _NativeResponseType
 
 
+class _NativeColorChooserWidget(_Box):
+    def __init__(self):
+        super().__init__()
+        self._rgba = _FakeRgba()
+
+    def set_use_alpha(self, _enabled):
+        return None
+
+    def connect(self, name, callback):
+        super().connect(name, callback)
+
+    def set_rgba(self, rgba):
+        self._rgba = rgba
+        self.emit("notify::rgba", self)
+
+    def get_rgba(self):
+        return self._rgba
+
+
+class _EmbeddedNativeColorFakeGtk(_NativeColorFakeGtk):
+    ColorChooserWidget = _NativeColorChooserWidget
+
+
 def test_runtime_backend_updates_mainwindow_form_state_for_toggles_and_margins():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
@@ -1425,26 +1448,31 @@ def test_runtime_backend_color_pick_button_updates_pending_color(monkeypatch):
     assert backend.get_object("lblColorState").text == "Color: #224466"
 
 
-def test_runtime_backend_native_color_notice_attaches_below_action_row(monkeypatch):
+def test_runtime_backend_color_open_uses_embedded_chooser_with_reserved_notice_row(monkeypatch):
     monkeypatch.setattr(
         "harite.gui.adapters.gtk_runtime_dialogs.ColorDialogProxy._load_gdk_module",
         lambda self: type("_FakeGdk", (), {"RGBA": _FakeRgba}),
     )
-    _NativeColorChooserDialog.next_responses = [
-        _NativeResponseType.OK,
-        _NativeResponseType.CANCEL,
-    ]
-    _NativeColorChooserDialog.next_hex_texts = ["hoge", None]
-    _NativeColorChooserDialog.next_hex_text = None
+    _NativeColorChooserDialog.last_created = None
 
-    backend = GtkRuntimeSignalBackend(_NativeColorFakeGtk)
+    backend = GtkRuntimeSignalBackend(_EmbeddedNativeColorFakeGtk)
 
     backend.get_object("btnSetColor").click()
 
-    action_shell = _NativeColorChooserDialog.last_created._action_area.children[0]
-    assert len(action_shell.children) == 2
-    assert action_shell.children[1] is _NativeColorChooserDialog.last_created._harite_notice_label
-    assert _NativeColorChooserDialog.last_created._harite_notice_label.text == "Color: invalid background color"
+    color_dialog = backend.get_object("ColorDialog")
+    assert color_dialog.is_visible() is True
+    assert _NativeColorChooserDialog.last_created is None
+    assert color_dialog._embedded_color_chooser is not None
+    assert color_dialog._window.child.children[-1] is backend.get_object("lblColorState")
+
+    chooser = color_dialog._embedded_color_chooser
+    rgba = _FakeRgba()
+    rgba.red = 0x22 / 255.0
+    rgba.green = 0x44 / 255.0
+    rgba.blue = 0x66 / 255.0
+    chooser.set_rgba(rgba)
+
+    assert backend.get_object("entColorValue").get_text() == "#224466"
 
 
 def test_runtime_backend_about_click_opens_dialog():

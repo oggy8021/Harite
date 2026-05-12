@@ -127,7 +127,7 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
 def build_color_dialog_section(gtk_module: Any, *, default_color_hex: str) -> dict[str, Any]:
     color_window = gtk_module.Window(title="Background Color")
     if hasattr(color_window, "set_default_size"):
-        color_window.set_default_size(420, 180)
+        color_window.set_default_size(420, 360)
     if hasattr(color_window, "set_resizable"):
         color_window.set_resizable(False)
 
@@ -141,6 +141,8 @@ def build_color_dialog_section(gtk_module: Any, *, default_color_hex: str) -> di
     color_editor_title = gtk_module.Label(label="Background color (#RRGGBB)")
     set_xalign_if_supported(color_editor_title)
     color_editor_box.pack_start(color_editor_title, False, False, 0)
+    color_picker_host = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    color_editor_box.pack_start(color_picker_host, True, True, 0)
     color_editor_box.pack_start(color_value_entry, False, False, 0)
     color_actions = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
     color_actions.pack_start(color_pick_btn, False, False, 0)
@@ -158,6 +160,7 @@ def build_color_dialog_section(gtk_module: Any, *, default_color_hex: str) -> di
         "color_value_entry": color_value_entry,
         "color_state_label": color_state_label,
         "color_notice_separator": color_notice_separator,
+        "color_picker_host": color_picker_host,
         "color_pick_btn": color_pick_btn,
         "color_apply_btn": color_apply_btn,
         "color_cancel_btn": color_cancel_btn,

@@ -456,6 +456,7 @@ class ColorDialogProxy:
         window: Any | None = None,
         entry: Any | None = None,
         state_label: Any | None = None,
+        picker_host: Any | None = None,
         pick_button: Any | None = None,
         on_confirm: Callable[[str], None] | None = None,
         on_cancel: Callable[[bool], None] | None = None,
@@ -466,13 +467,69 @@ class ColorDialogProxy:
         self._window = window
         self._entry = entry
         self._state_label = state_label
+        self._picker_host = picker_host
         self._pick_button = pick_button
         self._on_confirm = on_confirm
         self._on_cancel = on_cancel
         self._color = DEFAULT_BACKGROUND_COLOR_HEX
+        self._embedded_color_chooser = None
+        self._syncing_embedded_color_chooser = False
+        self._attach_embedded_color_chooser()
         if self._pick_button is not None and hasattr(self._pick_button, "connect"):
             self._pick_button.connect("clicked", lambda *_args: self.pick_color())
         self.set_color(self._color)
+
+    def _attach_embedded_color_chooser(self) -> None:
+        gtk = self._gtk
+        if (
+            gtk is None
+            or self._picker_host is None
+            or not hasattr(self._picker_host, "pack_start")
+            or not hasattr(gtk, "ColorChooserWidget")
+        ):
+            return
+        chooser = gtk.ColorChooserWidget()
+        if hasattr(chooser, "set_use_alpha"):
+            chooser.set_use_alpha(False)
+        if hasattr(chooser, "connect"):
+            chooser.connect("notify::rgba", lambda widget, *_args: self._on_embedded_color_chooser_changed(widget))
+        self._picker_host.pack_start(chooser, True, True, 0)
+        self._embedded_color_chooser = chooser
+        if self._entry is not None and hasattr(self._entry, "connect"):
+            self._entry.connect("changed", lambda entry, *_args: self._on_embedded_color_entry_changed(entry))
+
+    def _on_embedded_color_chooser_changed(self, chooser: Any) -> None:
+        if self._syncing_embedded_color_chooser or not hasattr(chooser, "get_rgba"):
+            return
+        try:
+            color = self._color_from_rgba(chooser.get_rgba())
+        except Exception:
+            return
+        self._syncing_embedded_color_chooser = True
+        try:
+            if self._entry is not None and hasattr(self._entry, "set_text"):
+                self._entry.set_text(color)
+        finally:
+            self._syncing_embedded_color_chooser = False
+        if self._state_label is not None and hasattr(self._state_label, "set_text"):
+            self._state_label.set_text(f"Color: {color}")
+
+    def _on_embedded_color_entry_changed(self, entry: Any) -> None:
+        if self._syncing_embedded_color_chooser or self._embedded_color_chooser is None:
+            return
+        if entry is None or not hasattr(entry, "get_text"):
+            return
+        value = str(entry.get_text() or "").strip()
+        if not is_background_color_literal(value):
+            return
+        rgba = self._rgba_from_color(normalize_background_color(value))
+        if rgba is None or not hasattr(self._embedded_color_chooser, "set_rgba"):
+            return
+        self._syncing_embedded_color_chooser = True
+        try:
+            self._embedded_color_chooser.set_rgba(rgba)
+        finally:
+            self._syncing_embedded_color_chooser = False
 
     def supports_native_dialog(self) -> bool:
         gtk = self._gtk
@@ -716,9 +773,6 @@ class ColorDialogProxy:
         return normalize_background_color((red, green, blue))
 
     def open_dialog(self) -> None:
-        if self.supports_native_dialog():
-            self._run_native_dialog()
-            return
         self.show()
 
     def pick_color(self) -> None:
@@ -821,6 +875,14 @@ class ColorDialogProxy:
         self._color = normalize_background_color(color)
         if self._entry is not None and hasattr(self._entry, "set_text"):
             self._entry.set_text(self._color)
+        if self._embedded_color_chooser is not None and hasattr(self._embedded_color_chooser, "set_rgba"):
+            rgba = self._rgba_from_color(self._color)
+            if rgba is not None:
+                self._syncing_embedded_color_chooser = True
+                try:
+                    self._embedded_color_chooser.set_rgba(rgba)
+                finally:
+                    self._syncing_embedded_color_chooser = False
         if self._state_label is not None and hasattr(self._state_label, "set_text"):
             self._state_label.set_text(f"Color: {self._color}")
 
