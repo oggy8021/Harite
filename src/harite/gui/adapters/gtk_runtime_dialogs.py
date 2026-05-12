@@ -536,7 +536,9 @@ class ColorDialogProxy:
         native_hex_box.pack_start(native_hex_entry, False, False, 0)
         if hasattr(content_area, "pack_start"):
             content_area.pack_start(native_hex_box, False, False, 0)
-        notice_parent = action_area if action_area is not None and hasattr(action_area, "pack_start") else content_area
+        notice_parent = self._prepare_native_notice_parent(gtk, action_area, native_notice_label)
+        if notice_parent is None:
+            notice_parent = content_area
         if hasattr(notice_parent, "pack_start"):
             notice_parent.pack_start(native_notice_label, False, False, 0)
         if hasattr(native_hex_entry, "connect"):
@@ -545,6 +547,27 @@ class ColorDialogProxy:
             dialog.connect("notify::rgba", lambda chooser, *_args: self._sync_native_hex_entry_from_dialog(chooser, native_hex_entry))
         setattr(dialog, "_harite_hex_entry", native_hex_entry)
         setattr(dialog, "_harite_notice_label", native_notice_label)
+
+    def _prepare_native_notice_parent(self, gtk: Any, action_area: Any, notice_label: Any) -> Any | None:
+        if action_area is None or not hasattr(action_area, "pack_start"):
+            return None
+        if not hasattr(gtk, "Box"):
+            return action_area
+        if not hasattr(action_area, "get_children") or not hasattr(action_area, "remove"):
+            return action_area
+
+        existing_children = list(action_area.get_children())
+        if not existing_children:
+            return action_area
+
+        action_shell = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
+        action_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
+        for child in existing_children:
+            action_area.remove(child)
+            action_row.pack_start(child, False, False, 0)
+        action_shell.pack_start(action_row, False, False, 0)
+        action_area.pack_start(action_shell, False, False, 0)
+        return action_shell
 
     def _set_native_notice(self, dialog: Any, message: str) -> None:
         notice_label = getattr(dialog, "_harite_notice_label", None)

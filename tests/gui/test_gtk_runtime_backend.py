@@ -65,6 +65,13 @@ class _Box(_WidgetBase):
         child._parent = self
         self.children.append(child)
 
+    def get_children(self):
+        return list(self.children)
+
+    def remove(self, child):
+        self.children.remove(child)
+        child._parent = None
+
 
 class _Grid(_WidgetBase):
     def __init__(self, **_kwargs):
@@ -403,6 +410,8 @@ class _NativeColorChooserDialog:
         self._action_area = _Box()
         self._rgba = _FakeRgba()
         self._signals = {}
+        self._action_area.pack_start(_Button(label="キャンセル(C)"), False, False, 0)
+        self._action_area.pack_start(_Button(label="選択(S)"), False, False, 0)
         _NativeColorChooserDialog.last_created = self
 
     def set_modal(self, _enabled):
@@ -1432,7 +1441,9 @@ def test_runtime_backend_native_color_notice_attaches_below_action_row(monkeypat
 
     backend.get_object("btnSetColor").click()
 
-    assert _NativeColorChooserDialog.last_created._action_area.children[-1] is _NativeColorChooserDialog.last_created._harite_notice_label
+    action_shell = _NativeColorChooserDialog.last_created._action_area.children[0]
+    assert len(action_shell.children) == 2
+    assert action_shell.children[1] is _NativeColorChooserDialog.last_created._harite_notice_label
     assert _NativeColorChooserDialog.last_created._harite_notice_label.text == "Color: invalid background color"
 
 
