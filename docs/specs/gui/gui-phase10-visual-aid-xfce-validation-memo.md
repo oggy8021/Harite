@@ -86,8 +86,8 @@ python -m harite.gui.app --bind-ui-backend --present-ui-window
 - Color を開く。
 - native GTK chooser が開く環境では、その native dialog が開くことを確認する。
 - owner 実観察では native chooser 下端には `キャンセル` と `選択` ボタンだけが見え、custom notice 行は見えていない。この時点では visual aid として未解消扱いであり、ここから先へ進めない。
-- fallback custom dialog が開く環境での dialog 最下部 state/notice 行の確認は、color 向け messaging 実装を積んだ 2 回目の commit/push 後に再実機確認する。
-- native chooser の入力欄に `red`、`black`、`hoge`、`#FFFF00000` などを入れたときは、無視を許容観察にせず、`invalid background color` 等の message が main status / color state に出ることを次回確認する。
+- fallback custom dialog が開く環境では、dialog 最下部の state/notice 行が読めることを確認する。
+- native chooser の入力欄に `red`、`black`、`hoge`、`#FFFF00000` などを入れたときは、message が chooser 内容領域の最下段 notice に出て、Main Window 側へ重複して落ちないことを確認する。
 - native / fallback のどちらが使われたかを Notes に残す。
 
 1. Watch start disabled 条件
@@ -141,7 +141,7 @@ python -m harite.gui.app --bind-ui-backend --present-ui-window
 - 起動導線: `python -m harite.gui.app` と `harite-gui` の両方で起動確認済み。
 - Optimize gating: 正本環境では resolution 未確定状態の再現が困難。自動検出と close 時復帰により、結果的に guard 済みの挙動として観察された。
 - Settings: `Settings: open` 相当のみ視認。ただし本段では完全に先送りし、判定対象から外す。
-- Color: native chooser では下端に `キャンセル` / `選択` のみ表示。旧観察では不正文字列や長すぎる色コードが無視されていたため未解消扱いとし、color messaging 実装を積んだ後に再実機確認する。
+- Color: native chooser では下端に `キャンセル` / `選択` のみ表示し、notice 位置と重複 messaging の整合がなお確認点として残る。fallback custom dialog 側は最下部 notice 行を読む前提で扱う。
 - Watch gating: 起動直後 / 片側のみ / 両側設定後 / 起動後停止の各条件は OK。interval 上限は 86400 で丸め込みあり。現時点で唯一素直に pass と言える。
 
 ## PR コメント短縮版

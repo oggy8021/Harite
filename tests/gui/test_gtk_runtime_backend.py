@@ -1417,6 +1417,7 @@ def test_runtime_backend_native_color_dialog_invalid_hex_shows_feedback(monkeypa
 
     assert backend.get_object("ColorDialog").is_visible() is False
     assert _NativeColorChooserDialog.last_created._harite_notice_label.text == "Color: invalid background color"
+    assert _NativeColorChooserDialog.last_created._content_area.children[-1] is _NativeColorChooserDialog.last_created._harite_notice_label
     assert backend.get_object("lblColorState").text == "Color: canceled"
     assert backend.get_object("lblStatus").text == "Color: canceled"
     assert backend.get_object("lblError").text == "Error: none"

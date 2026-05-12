@@ -521,9 +521,9 @@ class ColorDialogProxy:
             native_hex_entry.set_text(self._color)
         native_hex_box.pack_start(native_hex_label, False, False, 0)
         native_hex_box.pack_start(native_hex_entry, False, False, 0)
-        native_hex_box.pack_start(native_notice_label, False, False, 0)
         if hasattr(content_area, "pack_start"):
             content_area.pack_start(native_hex_box, False, False, 0)
+            content_area.pack_start(native_notice_label, False, False, 0)
         if hasattr(native_hex_entry, "connect"):
             native_hex_entry.connect("changed", lambda entry, *_args: self._on_native_hex_entry_changed(dialog, entry))
         if hasattr(dialog, "connect"):
