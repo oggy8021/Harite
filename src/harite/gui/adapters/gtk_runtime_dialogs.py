@@ -528,8 +528,7 @@ class ColorDialogProxy:
             native_hex_label.set_xalign(0.0)
         native_hex_entry = gtk.Entry()
         native_notice_label = gtk.Label(label="")
-        if hasattr(native_notice_label, "set_xalign"):
-            native_notice_label.set_xalign(0.0)
+        self._configure_native_notice_label(native_notice_label)
         if hasattr(native_hex_entry, "set_text"):
             native_hex_entry.set_text(self._color)
         native_hex_box.pack_start(native_hex_label, False, False, 0)
@@ -548,6 +547,15 @@ class ColorDialogProxy:
         setattr(dialog, "_harite_hex_entry", native_hex_entry)
         setattr(dialog, "_harite_notice_label", native_notice_label)
 
+    def _configure_native_notice_label(self, notice_label: Any) -> None:
+        gtk = self._gtk
+        if hasattr(notice_label, "set_xalign"):
+            notice_label.set_xalign(0.0)
+        if gtk is not None and hasattr(gtk, "Align") and hasattr(notice_label, "set_halign"):
+            notice_label.set_halign(gtk.Align.START)
+        if hasattr(notice_label, "set_hexpand"):
+            notice_label.set_hexpand(True)
+
     def _prepare_native_notice_parent(self, gtk: Any, action_area: Any, notice_label: Any) -> Any | None:
         if action_area is None or not hasattr(action_area, "pack_start"):
             return None
@@ -562,11 +570,20 @@ class ColorDialogProxy:
 
         action_shell = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
         action_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
+        if hasattr(action_shell, "set_hexpand"):
+            action_shell.set_hexpand(True)
+        if hasattr(action_row, "set_hexpand"):
+            action_row.set_hexpand(True)
+        if hasattr(gtk, "Align"):
+            if hasattr(action_shell, "set_halign"):
+                action_shell.set_halign(gtk.Align.FILL)
+            if hasattr(action_row, "set_halign"):
+                action_row.set_halign(gtk.Align.FILL)
         for child in existing_children:
             action_area.remove(child)
             action_row.pack_start(child, False, False, 0)
         action_shell.pack_start(action_row, False, False, 0)
-        action_area.pack_start(action_shell, False, False, 0)
+        action_area.pack_start(action_shell, True, True, 0)
         return action_shell
 
     def _set_native_notice(self, dialog: Any, message: str) -> None:
