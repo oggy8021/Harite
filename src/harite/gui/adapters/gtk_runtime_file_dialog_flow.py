@@ -277,11 +277,15 @@ def on_srcdir_dialog_confirmed(backend: Any) -> None:
             )
             return
 
-        if side == "L":
-            backend._watch_srcdir_l = folder
+        owner = getattr(callback, "__self__", None)
+        if owner is not None:
+            backend._sync_watch_state_only_from_owner(owner)
         else:
-            backend._watch_srcdir_r = folder
-        backend._refresh_watch_source_labels()
+            if side == "L":
+                backend._watch_srcdir_l = folder
+            else:
+                backend._watch_srcdir_r = folder
+            backend._refresh_watch_source_labels()
         if hasattr(dialog, "hide"):
             dialog.hide()
         backend._set_feedback(phase=f"Srcdir-{side}", state="selected")

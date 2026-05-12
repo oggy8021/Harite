@@ -21,6 +21,20 @@ def test_on_change_input_text_updates_state():
     assert window.last_error == ""
 
 
+def test_on_change_input_text_disables_optimize_when_resolution_unresolved():
+    window = MainWindow()
+    window.form_state.resolution = ""
+
+    window.on_change_input_text("a.jpg")
+
+    assert window.can_optimize is False
+    assert window.status_phase == "optimize"
+    assert window.status_message == "resolution is unresolved"
+    assert window.last_error == "resolution is unresolved"
+    assert window.on_optimize() is False
+    assert window.status_message == "resolution is unresolved"
+
+
 def test_on_clear_input_resets_optimize_state():
     window = MainWindow()
     window.on_change_input_text("a.jpg")

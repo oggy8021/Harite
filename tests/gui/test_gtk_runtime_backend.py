@@ -65,6 +65,13 @@ class _Box(_WidgetBase):
         child._parent = self
         self.children.append(child)
 
+    def get_children(self):
+        return list(self.children)
+
+    def remove(self, child):
+        self.children.remove(child)
+        child._parent = None
+
 
 class _Grid(_WidgetBase):
     def __init__(self, **_kwargs):
@@ -379,6 +386,97 @@ class _NativeFakeGtk(_FakeGtk):
     ResponseType = _NativeResponseType
     STOCK_CANCEL = "gtk-cancel"
     STOCK_SAVE = "gtk-save"
+
+
+class _FakeRgba:
+    def __init__(self):
+        self.red = 0.0
+        self.green = 0.0
+        self.blue = 0.0
+        self.alpha = 1.0
+
+
+class _NativeColorChooserDialog:
+    next_response = _NativeResponseType.CANCEL
+    next_hex_text = None
+    next_responses = []
+    next_hex_texts = []
+    last_created = None
+
+    def __init__(self, title="", parent=None):
+        self.title = title
+        self.parent = parent
+        self._content_area = _Box()
+        self._action_area = _Box()
+        self._rgba = _FakeRgba()
+        self._signals = {}
+        self._action_area.pack_start(_Button(label="キャンセル(C)"), False, False, 0)
+        self._action_area.pack_start(_Button(label="選択(S)"), False, False, 0)
+        _NativeColorChooserDialog.last_created = self
+
+    def set_modal(self, _enabled):
+        return None
+
+    def set_transient_for(self, _parent):
+        return None
+
+    def set_destroy_with_parent(self, _enabled):
+        return None
+
+    def get_content_area(self):
+        return self._content_area
+
+    def get_action_area(self):
+        return self._action_area
+
+    def connect(self, name, callback):
+        self._signals.setdefault(name, []).append(callback)
+
+    def set_rgba(self, rgba):
+        self._rgba = rgba
+
+    def get_rgba(self):
+        return self._rgba
+
+    def show_all(self):
+        return None
+
+    def run(self):
+        next_hex_text = self.next_hex_texts.pop(0) if self.next_hex_texts else self.next_hex_text
+        if next_hex_text is not None and hasattr(self, "_harite_hex_entry"):
+            self._harite_hex_entry.set_text(next_hex_text)
+        return self.next_responses.pop(0) if self.next_responses else self.next_response
+
+    def destroy(self):
+        return None
+
+
+class _NativeColorFakeGtk(_FakeGtk):
+    ColorChooserDialog = _NativeColorChooserDialog
+    ResponseType = _NativeResponseType
+
+
+class _NativeColorChooserWidget(_Box):
+    def __init__(self):
+        super().__init__()
+        self._rgba = _FakeRgba()
+
+    def set_use_alpha(self, _enabled):
+        return None
+
+    def connect(self, name, callback):
+        super().connect(name, callback)
+
+    def set_rgba(self, rgba):
+        self._rgba = rgba
+        self.emit("notify::rgba", self)
+
+    def get_rgba(self):
+        return self._rgba
+
+
+class _EmbeddedNativeColorFakeGtk(_NativeColorFakeGtk):
+    ColorChooserWidget = _NativeColorChooserWidget
 
 
 def test_runtime_backend_updates_mainwindow_form_state_for_toggles_and_margins():
@@ -869,6 +967,57 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(m
     assert backend.run_watch_cycle_once() is False
 
 
+def test_runtime_backend_watch_start_button_requires_both_srcdirs(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            return True
+
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+
+    srcdir_dialog = backend.get_object("SrcdirDialog")
+    srcdir_l = backend.get_object("btnOpenSrcdirL")
+    srcdir_r = backend.get_object("btnOpenSrcdirR")
+    watch_start = backend.get_object("btnDaemonize")
+    watch_stop = backend.get_object("btnCancelDaemonize")
+
+    left_dir = tmp_path / "watch-left"
+    right_dir = tmp_path / "watch-right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (right_dir / "right-1.jpg").write_bytes(b"right")
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_pick_watch_srcdir",
+            "on_watch_start",
+            "on_watch_tick",
+            "on_watch_stop",
+            "on_watch_interval_change",
+        ),
+    )
+    backend.connect_signals(dispatch)
+
+    assert watch_start.sensitive is False
+    assert watch_stop.sensitive is False
+
+    srcdir_l.click()
+    srcdir_dialog.set_current_folder(str(left_dir))
+    srcdir_dialog.confirm()
+
+    assert watch_start.sensitive is False
+
+    srcdir_r.click()
+    srcdir_dialog.set_current_folder(str(right_dir))
+    srcdir_dialog.confirm()
+
+    assert watch_start.sensitive is True
+
+
 def test_runtime_backend_connect_signals_syncs_watch_output_from_owner():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
@@ -1258,8 +1407,77 @@ def test_runtime_backend_color_apply_updates_handler_and_feedback():
     assert observed["color"] == "#224466"
     assert backend.get_object("ColorDialog").is_visible() is False
     assert backend.get_object("lblColorState").text == "Color: #224466"
+    assert backend.get_object("lblColorNotice").text == ""
     assert backend.get_object("lblStatus").text == "Color: updated"
     assert backend.get_object("lblError").text == "Error: none"
+
+
+def test_runtime_backend_color_apply_shows_invalid_color_feedback():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    backend.connect_signals(create_mainwindow_signal_dispatch(window, ("on_set_color",)))
+
+    backend.get_object("btnSetColor").click()
+    backend.get_object("entColorValue").set_text("hoge")
+    backend.get_object("btnColorApply").click()
+
+    assert backend.get_object("ColorDialog").is_visible() is True
+    assert backend.get_object("lblColorState").text == "Color: #1E1E1E"
+    assert backend.get_object("lblColorNotice").text == "Color: invalid background color"
+    assert backend.get_object("lblStatus").text == "Color: opened"
+    assert backend.get_object("lblError").text == "Error: none"
+
+
+def test_runtime_backend_color_pick_button_updates_pending_color(monkeypatch):
+    monkeypatch.setattr(
+        "harite.gui.adapters.gtk_runtime_dialogs.ColorDialogProxy._load_gdk_module",
+        lambda self: type("_FakeGdk", (), {"RGBA": _FakeRgba}),
+    )
+    monkeypatch.setattr(
+        "harite.gui.adapters.gtk_runtime_dialogs.ColorDialogProxy.supports_native_dialog",
+        lambda self: False,
+    )
+    _NativeColorChooserDialog.next_response = _NativeResponseType.OK
+    _NativeColorChooserDialog.next_hex_text = "#224466"
+
+    backend = GtkRuntimeSignalBackend(_NativeColorFakeGtk)
+
+    backend.get_object("btnSetColor").click()
+    backend.get_object("btnColorPick").click()
+
+    assert backend.get_object("ColorDialog").is_visible() is True
+    assert backend.get_object("entColorValue").get_text() == "#224466"
+    assert backend.get_object("lblColorState").text == "Color: #224466"
+    assert backend.get_object("lblColorNotice").text == ""
+
+
+def test_runtime_backend_color_open_uses_embedded_chooser_with_reserved_notice_row(monkeypatch):
+    monkeypatch.setattr(
+        "harite.gui.adapters.gtk_runtime_dialogs.ColorDialogProxy._load_gdk_module",
+        lambda self: type("_FakeGdk", (), {"RGBA": _FakeRgba}),
+    )
+    _NativeColorChooserDialog.last_created = None
+
+    backend = GtkRuntimeSignalBackend(_EmbeddedNativeColorFakeGtk)
+
+    backend.get_object("btnSetColor").click()
+
+    color_dialog = backend.get_object("ColorDialog")
+    assert color_dialog.is_visible() is True
+    assert _NativeColorChooserDialog.last_created is None
+    assert color_dialog._embedded_color_chooser is not None
+    assert backend.get_object("btnColorPick").sensitive is False
+    assert color_dialog._window.child.children[-2] is backend.get_object("lblColorState")
+    assert color_dialog._window.child.children[-1] is backend.get_object("lblColorNotice")
+
+    chooser = color_dialog._embedded_color_chooser
+    rgba = _FakeRgba()
+    rgba.red = 0x22 / 255.0
+    rgba.green = 0x44 / 255.0
+    rgba.blue = 0x66 / 255.0
+    chooser.set_rgba(rgba)
+
+    assert backend.get_object("entColorValue").get_text() == "#224466"
 
 
 def test_runtime_backend_about_click_opens_dialog():

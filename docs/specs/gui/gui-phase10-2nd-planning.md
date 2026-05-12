@@ -6,7 +6,7 @@
 
 - 本書は [docs/specs/gui/gui-phase9-11-roadmap.md](docs/specs/gui/gui-phase9-11-roadmap.md) の Phase10 における visual aid 方針メモである。
 - [docs/specs/gui/gui-phase10-1st-planning.md](docs/specs/gui/gui-phase10-1st-planning.md) で起動導線を先に整えたため、本書では visual aid を独立論点として扱う。
-- icon library の採否や比較は Phase10 3rd planning へ送る。
+- Settings dialog の action semantics は Phase10 3rd planning へ送り、icon library の採否や比較はその後段へ送る。
 - 目的は見た目の派手さではなく、current GUI の理解コストと操作ミスを減らす補助線を定義することにある。
 
 ## 現在地
@@ -29,7 +29,7 @@
 
 - Phase10 の段階でアプリ全体を派手に再装飾すること。
 - theme / dark mode / brand refresh を先に決めること。
-- icon library の採否や比較をこの段階で行うこと。
+- Settings dialog の action semantics や icon library の採否や比較をこの段階で行うこと。
 - taskbar / tray / indicator など Phase11 の OS integration に踏み込むこと。
 
 ## 問題の見立て
@@ -51,10 +51,10 @@
 - 母体プログラムは例外を dialog 化していたが、Phase10 ではそのまま modal dialog に戻すかどうかは未決定でよい。
 - ただし dialog を採らない場合でも、各 surface 近傍に annotation 領域や赤系の注意表示を置くなど、修正動機を与える代替線は必要である。
 
-### 4. 今回は icon 判断を先送りできる
+### 4. 今回は icon 判断と settings semantics を先送りできる
 
-- visual aid の初手としては、icon library を先に決めるより、どの面で文字・色・強調が不足しているかを先に切る方が局所的である。
-- したがって 2nd planning では icon library の比較や採用判断へ入らず、3rd planning の独立論点として残す。
+- visual aid の初手としては、icon library や settings 操作語彙を先に決めるより、どの面で文字・色・強調が不足しているかを先に切る方が局所的である。
+- したがって 2nd planning では settings semantics の再設計や icon library の比較へ入らず、まず 3rd planning に settings semantics を送り、その後段で icon 論点を扱う。
 
 ### 5. 説明過多より直感操作寄りへ振ってよい
 
@@ -287,7 +287,8 @@
 
 - dialog 系は局所化を原則とし、直上または親 dialog 内の短命 notice で完結できるものは window 最下部へ返さない。
 - dialog から window への往復は、dialog を閉じた後も全体状態として保持すべき結果や、dialog 単体で閉じない blocking 候補に限る。
-- dialog 内 notice は dialog 最下部の専用エリアを予約し、補助線を含めて main window 側の messaging region と同系統で扱う。
+- ここでいう dialog 最下部とは、action row を含む dialog surface 全体の最下段を指し、content area 内だけの最下段とは区別する。
+- dialog 内 notice は dialog surface 全体の最下段専用エリアを予約し、補助線を含めて main window 側の messaging region と同系統で扱う。
 - error のまま dialog を閉じた場合は、該当変更を反映せず、dialog を開く前の状態へ戻す。
 
 - Save path dialog:
@@ -479,13 +480,13 @@
 2. Main / Margins / Watch の message が、いまどこへ出ているかを surface ごとに棚卸しする。
 3. preview / result / margins / watch で、色や強調に加えて局所 annotation が必要な箇所を短く列挙する。
 4. Main / dialog / watch ごとに、利用者へ出すべき error と internal-only に留める error を分ける。
-5. icon library の採否や比較は 3rd planning で扱う前提を維持する。
+5. Settings dialog の action semantics は 3rd planning で扱い、icon library の採否や比較はその後段で扱う前提を維持する。
 
 ## 完了条件
 
 - visual aid を入れる対象面が footer / preview / margins / settings などの単位で説明可能になっている。
 - text / color / emphasis の優先順位が整理されている。
-- icon library 論点を 3rd planning へ送る境界が整理されている。
+- settings semantics を 3rd planning へ送り、icon 論点をさらに後段へ送る境界が整理されている。
 - messaging の global / local の役割分担が説明可能になっている。
 - error の発生面と、利用者へ出すべきもの / internal-only に留めるものの境界が説明可能になっている。
 - Phase10 の visual rule を決めるための次の観察対象が列挙されている。

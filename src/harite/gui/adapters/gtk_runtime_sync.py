@@ -30,6 +30,8 @@ def sync_watch_state_from_owner(backend: Any, owner: Any) -> None:
     backend._watch_previous_r = getattr(owner, "_watch_previous_r", backend._watch_previous_r)
     interval_seconds = int(getattr(owner, "watch_interval_seconds", 0) or 0)
     backend._set_spin_value("spnInterval", interval_seconds if interval_seconds > 0 else 60)
+    backend._set_button_enabled("btnDaemonize", bool(getattr(owner, "can_start_watch", False)))
+    backend._set_button_enabled("btnCancelDaemonize", bool(getattr(owner, "watch_running", False)))
     backend._refresh_watch_source_labels()
     backend._refresh_watch_summary_label()
     backend._refresh_watch_current_label()

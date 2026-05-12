@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, normalize_background_color
+from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color
 from harite.positioning import format_position_pair, parse_position_pair
 
 
@@ -315,8 +315,8 @@ def on_color_clicked(backend: Any, *_args: Any) -> None:
         refresh_color_dialog_from_getter(backend)
         if callback is not None:
             callback()
-        dialog.open_dialog()
         backend._set_feedback(phase="Color", state="opened")
+        dialog.open_dialog()
     except Exception as exc:
         backend._set_feedback(phase="Color", state="error", error=str(exc))
 
@@ -371,16 +371,37 @@ def on_color_dialog_apply_clicked(backend: Any, *_args: Any) -> None:
         backend._set_feedback(phase="Color", state="handler-missing", error="handler not connected")
         return
     try:
-        color = dialog.get_color()
+        if hasattr(dialog, "clear_notice"):
+            dialog.clear_notice()
+        else:
+            backend._set_label_text("lblColorNotice", "")
+        if hasattr(dialog, "get_pending_color"):
+            color = dialog.get_pending_color()
+        else:
+            color = dialog.get_color()
+        if not is_background_color_literal(color):
+            if hasattr(dialog, "set_notice"):
+                dialog.set_notice("Color: invalid background color")
+            else:
+                backend._set_label_text("lblColorNotice", "Color: invalid background color")
+            return
         ok = callback(color)
+        owner = backend._get_handler_owner("on_set_color")
         if ok:
             store_background_color_in_settings_dialog(backend, color)
             if hasattr(dialog, "hide"):
                 dialog.hide()
-            backend._set_label_text("lblColorState", f"Color: {color}")
+            backend._set_label_text("lblColorState", f"Color: {normalize_background_color(color)}")
+            backend._set_label_text("lblColorNotice", "")
             backend._set_feedback(phase="Color", state="updated")
         else:
-            backend._set_feedback(phase="Color", state="failed", error="color update returned false")
+            if owner is not None and str(getattr(owner, "status_phase", "") or "") == "color":
+                message = str(getattr(owner, "status_message", "color update returned false") or "color update returned false")
+                error = str(getattr(owner, "last_error", "") or "") or None
+                backend._set_label_text("lblColorNotice", f"Color: {message}")
+                backend._set_feedback(phase="Color", state=message, error=error)
+            else:
+                backend._set_feedback(phase="Color", state="failed", error="color update returned false")
     except Exception as exc:
         backend._set_feedback(phase="Color", state="error", error=str(exc))
 
@@ -401,15 +422,23 @@ def on_color_dialog_confirmed(backend: Any, color: str) -> None:
         return
     try:
         ok = callback(color)
+        owner = backend._get_handler_owner("on_set_color")
         if ok:
             store_background_color_in_settings_dialog(backend, color)
             dialog = backend._objects.get("ColorDialog")
             if dialog is not None and hasattr(dialog, "hide"):
                 dialog.hide()
-            backend._set_label_text("lblColorState", f"Color: {color}")
+            backend._set_label_text("lblColorState", f"Color: {normalize_background_color(color)}")
+            backend._set_label_text("lblColorNotice", "")
             backend._set_feedback(phase="Color", state="updated")
         else:
-            backend._set_feedback(phase="Color", state="failed", error="color update returned false")
+            if owner is not None and str(getattr(owner, "status_phase", "") or "") == "color":
+                message = str(getattr(owner, "status_message", "color update returned false") or "color update returned false")
+                error = str(getattr(owner, "last_error", "") or "") or None
+                backend._set_label_text("lblColorNotice", f"Color: {message}")
+                backend._set_feedback(phase="Color", state=message, error=error)
+            else:
+                backend._set_feedback(phase="Color", state="failed", error="color update returned false")
     except Exception as exc:
         backend._set_feedback(phase="Color", state="error", error=str(exc))
 
@@ -424,5 +453,5 @@ def on_color_dialog_canceled(backend: Any, destroyed: bool) -> None:
             callback()
         except Exception:
             pass
-    backend._set_label_text("lblColorState", "Color: canceled")
+    backend._set_label_text("lblColorNotice", "Color: canceled")
     backend._set_feedback(phase="Color", state="closed" if destroyed else "canceled")
