@@ -486,6 +486,10 @@ class ColorDialogProxy:
         if self._pick_button is None:
             return
         embedded_picker_active = self._embedded_color_chooser is not None
+        if embedded_picker_active and hasattr(self._pick_button, "set_no_show_all"):
+            self._pick_button.set_no_show_all(True)
+        elif not embedded_picker_active and hasattr(self._pick_button, "set_no_show_all"):
+            self._pick_button.set_no_show_all(False)
         if hasattr(self._pick_button, "set_sensitive"):
             self._pick_button.set_sensitive(not embedded_picker_active)
         if embedded_picker_active and hasattr(self._pick_button, "hide"):
@@ -872,6 +876,7 @@ class ColorDialogProxy:
         if self._window is not None:
             if hasattr(self._window, "show_all"):
                 self._window.show_all()
+                self._configure_pick_button_role()
             elif hasattr(self._window, "show"):
                 self._window.show()
             if hasattr(self._window, "present"):
