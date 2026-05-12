@@ -8,6 +8,12 @@ def set_xalign_if_supported(widget: Any, value: float = 0.0) -> None:
         widget.set_xalign(value)
 
 
+def build_horizontal_separator(gtk_module: Any) -> Any:
+    if hasattr(gtk_module, "Separator"):
+        return gtk_module.Separator(orientation=gtk_module.Orientation.HORIZONTAL)
+    return gtk_module.Label(label="")
+
+
 def build_header_section(gtk_module: Any, root: Any) -> dict[str, Any]:
     header_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     root.pack_start(header_col, False, False, 0)
@@ -113,8 +119,16 @@ def build_footer_section(gtk_module: Any, root: Any) -> dict[str, Any]:
     status_row.pack_start(status_spacer, True, True, 0)
     watch_summary_label = gtk_module.Label(label="Watch: stopped")
     set_xalign_if_supported(watch_summary_label)
+    status_row.pack_start(watch_summary_label, False, False, 0)
+
+    message_separator = build_horizontal_separator(gtk_module)
+    footer_col.pack_start(message_separator, False, False, 0)
+
+    message_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
+    footer_col.pack_start(message_row, False, False, 0)
     error_label = gtk_module.Label(label="Error: none")
     set_xalign_if_supported(error_label)
+    message_row.pack_start(error_label, False, False, 0)
 
     return {
         "footer_col": footer_col,
@@ -122,5 +136,7 @@ def build_footer_section(gtk_module: Any, root: Any) -> dict[str, Any]:
         "status_label": status_label,
         "status_spacer": status_spacer,
         "watch_summary_label": watch_summary_label,
+        "message_separator": message_separator,
+        "message_row": message_row,
         "error_label": error_label,
     }

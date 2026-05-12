@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from harite.gui.adapters.gtk_layout_builders import set_xalign_if_supported
+from harite.gui.adapters.gtk_layout_builders import build_horizontal_separator, set_xalign_if_supported
 
 
 def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> dict[str, Any]:
@@ -84,6 +84,8 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
     prefs_actions.pack_start(prefs_save_btn, False, False, 0)
     prefs_actions.pack_start(prefs_close_btn, False, False, 0)
     prefs_editor_box.pack_start(prefs_actions, False, False, 0)
+    prefs_notice_separator = build_horizontal_separator(gtk_module)
+    prefs_editor_box.pack_start(prefs_notice_separator, False, False, 0)
     prefs_editor_box.pack_start(prefs_state_label, False, False, 0)
 
     if hasattr(prefs_window, "add"):
@@ -96,6 +98,7 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
         "prefs_save_btn": prefs_save_btn,
         "prefs_close_btn": prefs_close_btn,
         "prefs_state_label": prefs_state_label,
+        "prefs_notice_separator": prefs_notice_separator,
         "prefs_editor_box": prefs_editor_box,
         "prefs_editor_title": prefs_editor_title,
         "prefs_resolution_entry": prefs_resolution_entry,
@@ -142,6 +145,9 @@ def build_color_dialog_section(gtk_module: Any, *, default_color_hex: str) -> di
     color_actions.pack_start(color_apply_btn, False, False, 0)
     color_actions.pack_start(color_cancel_btn, False, False, 0)
     color_editor_box.pack_start(color_actions, False, False, 0)
+    color_notice_separator = build_horizontal_separator(gtk_module)
+    color_editor_box.pack_start(color_notice_separator, False, False, 0)
+    color_editor_box.pack_start(color_state_label, False, False, 0)
     if hasattr(color_window, "add"):
         color_window.add(color_editor_box)
 
@@ -149,6 +155,7 @@ def build_color_dialog_section(gtk_module: Any, *, default_color_hex: str) -> di
         "color_window": color_window,
         "color_value_entry": color_value_entry,
         "color_state_label": color_state_label,
+        "color_notice_separator": color_notice_separator,
         "color_apply_btn": color_apply_btn,
         "color_cancel_btn": color_cancel_btn,
     }

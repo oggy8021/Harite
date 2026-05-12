@@ -64,6 +64,7 @@ class MainWindow:
         self.watch_current_display = "Watch current: idle"
         self.watch_output_display = "Watch output: ."
         self.watch_running = False
+        self.can_start_watch = False
         self._watch_state_l = WatchCycleState()
         self._watch_state_r = WatchCycleState()
         self._watch_previous_l: Path | None = None
@@ -101,6 +102,7 @@ class MainWindow:
             "optimize",
             "apply",
         )
+        self._refresh_action_availability()
         self._update_watch_output_display()
 
     @property
@@ -268,6 +270,7 @@ class MainWindow:
             self._log("Watch srcdir ignored: missing side")
             return False
         self._update_watch_source_display()
+        self._refresh_action_availability()
         self._set_status("idle", "watch", f"watch srcdir {normalized_side} selected")
         self._log(f"Watch srcdir selected ({normalized_side}): {value}")
         return True
@@ -452,6 +455,21 @@ class MainWindow:
         right = self.watch_srcdir_r or "-"
         self.watch_source_display = f"Watch srcdirs: L={left} | R={right}"
 
+    def _can_optimize_now(self) -> bool:
+        return bool(self.form_state.input_value) and self._current_resolution_value() is not None
+
+    def _can_start_watch_now(self) -> bool:
+        return (
+            bool(self.watch_srcdir_l.strip())
+            and bool(self.watch_srcdir_r.strip())
+            and int(self.watch_interval_seconds) > 0
+            and not self.watch_running
+        )
+
+    def _refresh_action_availability(self) -> None:
+        self.can_optimize = self._can_optimize_now()
+        self.can_start_watch = self._can_start_watch_now()
+
     def _update_watch_output_display(self) -> None:
         output_dir = str(Path(self.form_state.output_dir)) if self.form_state.output_dir else self._default_output_dir()
         self.watch_output_display = f"Watch output: {output_dir}"
@@ -482,6 +500,7 @@ class MainWindow:
             self.form_state.two_screen = False
             self.form_state.l_display = None
             self.form_state.r_display = None
+            self._refresh_action_availability()
             return
 
         context = build_two_screen_optimize_context()
@@ -493,6 +512,7 @@ class MainWindow:
             self.form_state.l_display = None
             self.form_state.r_display = None
             self._log("Two-screen unavailable: detected displays < 2")
+            self._refresh_action_availability()
             return
 
         if not self.form_state.two_screen:
@@ -501,6 +521,7 @@ class MainWindow:
         self.form_state.l_display = f"{context.l_display[0]}x{context.l_display[1]}"
         self.form_state.r_display = f"{context.r_display[0]}x{context.r_display[1]}"
         self.form_state.resolution = f"{context.resolution[0]}x{context.resolution[1]}"
+        self._refresh_action_availability()
         self._log(
             "Two-screen auto-configured: "
             f"L={self.form_state.l_display} R={self.form_state.r_display} resolution={self.form_state.resolution}"
@@ -599,20 +620,24 @@ class MainWindow:
     def _apply_input_paths(self) -> None:
         self.form_state.input_value = ",".join(path for path in (self.input_path_l, self.input_path_r) if path)
         self._sync_two_screen_state()
-        self.can_optimize = bool(self.form_state.input_value)
+        self._refresh_action_availability()
         if not self.can_optimize:
             # Input changed to empty; reset apply readiness to avoid stale flow.
-            self.can_apply = False
-            self.last_saved_files = []
-            self.input_path_l = ""
-            self.input_path_r = ""
-            self.save_path_dialog_open = False
-            self._set_status("error", "input", "input is required", error="input is required")
-            self._log("Save path dialog closed by input reset")
-        if self.can_optimize:
+            if not self.form_state.input_value:
+                self.can_apply = False
+                self.last_saved_files = []
+                self.input_path_l = ""
+                self.input_path_r = ""
+                self.save_path_dialog_open = False
+                self._set_status("error", "input", "input is required", error="input is required")
+                self._log("Save path dialog closed by input reset")
+            else:
+                self._set_status("error", "optimize", "resolution is unresolved", error="resolution is unresolved")
+                self._log("Optimize blocked: resolution is unresolved")
+        else:
             self._set_status("idle", "input", "input ready")
             self._log("Input updated")
-        else:
+        if not self.form_state.input_value:
             self._log("Input is empty")
 
     def on_change_input_text(self, text: str) -> None:
@@ -631,8 +656,12 @@ class MainWindow:
 
     def on_optimize(self) -> bool:
         if not self.can_optimize:
-            self._set_status("error", "optimize", "input is required", error="input is required")
-            self._log("Optimize blocked: input is required")
+            if not self.form_state.input_value:
+                message = "input is required"
+            else:
+                message = "resolution is unresolved"
+            self._set_status("error", "optimize", message, error=message)
+            self._log(f"Optimize blocked: {message}")
             return False
 
         self._set_status("running", "optimize", "optimizing")
@@ -758,6 +787,7 @@ class MainWindow:
         self.watch_srcdir_r = settings_value.watch.srcdir_r or ""
         self._update_watch_source_display()
         self._update_watch_output_display()
+        self._refresh_action_availability()
         self.settings_dialog_open = False
         self._set_status("success", "settings", "settings applied")
         self._log("Settings applied")
@@ -1099,12 +1129,14 @@ class MainWindow:
                 selected_right = selected
 
         self.watch_running = True
+        self._refresh_action_availability()
         self._update_watch_summary_display()
         self._update_watch_source_display()
         self._update_watch_current_display(selected_left, selected_right)
         applied, error_message = self._apply_watch_selection(selected_left, selected_right, cycle_phase="start")
         if not applied:
             self.watch_running = False
+            self._refresh_action_availability()
             self._update_watch_summary_display()
             self._set_status("error", "watch", error_message or "watch start apply failed", error=error_message or "watch start apply failed")
             self._log(f"Watch start failed: {error_message or 'watch start apply failed'}")
@@ -1159,6 +1191,7 @@ class MainWindow:
             return False
         self.watch_running = False
         self._watch_plugin_impl = None
+        self._refresh_action_availability()
         self._update_watch_summary_display()
         self._update_watch_current_display()
         self._set_status("idle", "watch", "watch stopped")
@@ -1172,6 +1205,7 @@ class MainWindow:
             self._log(f"Watch interval rejected: {value}")
             return False
         self.watch_interval_seconds = value
+        self._refresh_action_availability()
         self._set_status("idle", "watch", f"watch interval updated: {value}s")
         self._log(f"Watch interval updated: {value}s")
         return True

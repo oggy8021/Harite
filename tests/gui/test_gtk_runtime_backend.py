@@ -869,6 +869,57 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(m
     assert backend.run_watch_cycle_once() is False
 
 
+def test_runtime_backend_watch_start_button_requires_both_srcdirs(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            return True
+
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+
+    srcdir_dialog = backend.get_object("SrcdirDialog")
+    srcdir_l = backend.get_object("btnOpenSrcdirL")
+    srcdir_r = backend.get_object("btnOpenSrcdirR")
+    watch_start = backend.get_object("btnDaemonize")
+    watch_stop = backend.get_object("btnCancelDaemonize")
+
+    left_dir = tmp_path / "watch-left"
+    right_dir = tmp_path / "watch-right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (right_dir / "right-1.jpg").write_bytes(b"right")
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_pick_watch_srcdir",
+            "on_watch_start",
+            "on_watch_tick",
+            "on_watch_stop",
+            "on_watch_interval_change",
+        ),
+    )
+    backend.connect_signals(dispatch)
+
+    assert watch_start.sensitive is False
+    assert watch_stop.sensitive is False
+
+    srcdir_l.click()
+    srcdir_dialog.set_current_folder(str(left_dir))
+    srcdir_dialog.confirm()
+
+    assert watch_start.sensitive is False
+
+    srcdir_r.click()
+    srcdir_dialog.set_current_folder(str(right_dir))
+    srcdir_dialog.confirm()
+
+    assert watch_start.sensitive is True
+
+
 def test_runtime_backend_connect_signals_syncs_watch_output_from_owner():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
