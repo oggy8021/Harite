@@ -145,6 +145,7 @@ def _build_dialog_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, A
         "colorWindow": widgets["color_window"],
         "entColorValue": widgets["color_value_entry"],
         "lblColorState": widgets["color_state_label"],
+        "btnColorPick": widgets["color_pick_btn"],
         "btnColorApply": widgets["color_apply_btn"],
         "btnColorCancel": widgets["color_cancel_btn"],
         "AboutDialog": widgets["about_dialog_proxy"],

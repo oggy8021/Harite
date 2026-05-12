@@ -127,13 +127,14 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
 def build_color_dialog_section(gtk_module: Any, *, default_color_hex: str) -> dict[str, Any]:
     color_window = gtk_module.Window(title="Background Color")
     if hasattr(color_window, "set_default_size"):
-        color_window.set_default_size(360, 140)
+        color_window.set_default_size(420, 180)
     if hasattr(color_window, "set_resizable"):
         color_window.set_resizable(False)
 
     color_value_entry = gtk_module.Entry()
     color_state_label = gtk_module.Label(label=f"Color: {default_color_hex}")
     set_xalign_if_supported(color_state_label)
+    color_pick_btn = gtk_module.Button(label="Pick Color")
     color_apply_btn = gtk_module.Button(label="Color Apply")
     color_cancel_btn = gtk_module.Button(label="Color Cancel")
     color_editor_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
@@ -142,6 +143,7 @@ def build_color_dialog_section(gtk_module: Any, *, default_color_hex: str) -> di
     color_editor_box.pack_start(color_editor_title, False, False, 0)
     color_editor_box.pack_start(color_value_entry, False, False, 0)
     color_actions = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+    color_actions.pack_start(color_pick_btn, False, False, 0)
     color_actions.pack_start(color_apply_btn, False, False, 0)
     color_actions.pack_start(color_cancel_btn, False, False, 0)
     color_editor_box.pack_start(color_actions, False, False, 0)
@@ -156,6 +158,7 @@ def build_color_dialog_section(gtk_module: Any, *, default_color_hex: str) -> di
         "color_value_entry": color_value_entry,
         "color_state_label": color_state_label,
         "color_notice_separator": color_notice_separator,
+        "color_pick_btn": color_pick_btn,
         "color_apply_btn": color_apply_btn,
         "color_cancel_btn": color_cancel_btn,
     }

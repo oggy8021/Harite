@@ -456,6 +456,7 @@ class ColorDialogProxy:
         window: Any | None = None,
         entry: Any | None = None,
         state_label: Any | None = None,
+        pick_button: Any | None = None,
         on_confirm: Callable[[str], None] | None = None,
         on_cancel: Callable[[bool], None] | None = None,
     ) -> None:
@@ -465,15 +466,26 @@ class ColorDialogProxy:
         self._window = window
         self._entry = entry
         self._state_label = state_label
+        self._pick_button = pick_button
         self._on_confirm = on_confirm
         self._on_cancel = on_cancel
         self._color = DEFAULT_BACKGROUND_COLOR_HEX
+        if self._pick_button is not None and hasattr(self._pick_button, "connect"):
+            self._pick_button.connect("clicked", lambda *_args: self.pick_color())
         self.set_color(self._color)
 
     def supports_native_dialog(self) -> bool:
         # Phase10 visual-aid requires the managed dialog so the bottom notice
         # row is consistently available for corrective errors.
         return False
+
+    def supports_native_picker(self) -> bool:
+        gtk = self._gtk
+        if gtk is None:
+            return False
+        if not hasattr(gtk, "ColorChooserDialog") or not hasattr(gtk, "ResponseType"):
+            return False
+        return self._load_gdk_module() is not None
 
     def _load_gdk_module(self) -> Any | None:
         try:
@@ -570,6 +582,39 @@ class ColorDialogProxy:
             self._run_native_dialog()
             return
         self.show()
+
+    def pick_color(self) -> None:
+        if not self.supports_native_picker():
+            return
+        self._run_native_picker_dialog()
+
+    def _run_native_picker_dialog(self) -> None:
+        gtk = self._gtk
+        if gtk is None:
+            return
+
+        dialog = self._build_native_dialog()
+        try:
+            rgba = self._rgba_from_color(self.get_pending_color())
+            if rgba is not None and hasattr(dialog, "set_rgba"):
+                dialog.set_rgba(rgba)
+            if hasattr(dialog, "show_all"):
+                dialog.show_all()
+            response = dialog.run() if hasattr(dialog, "run") else None
+            if response != gtk.ResponseType.OK:
+                return
+
+            native_hex_entry = getattr(dialog, "_harite_hex_entry", None)
+            if native_hex_entry is not None and hasattr(native_hex_entry, "get_text"):
+                native_hex_value = str(native_hex_entry.get_text() or "").strip()
+                if native_hex_value and is_background_color_literal(native_hex_value):
+                    self.set_color(native_hex_value)
+                    return
+            if hasattr(dialog, "get_rgba"):
+                self.set_color(self._color_from_rgba(dialog.get_rgba()))
+        finally:
+            if hasattr(dialog, "destroy"):
+                dialog.destroy()
 
     def _run_native_dialog(self) -> None:
         gtk = self._gtk
