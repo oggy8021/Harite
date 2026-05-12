@@ -392,12 +392,15 @@ class _FakeRgba:
 class _NativeColorChooserDialog:
     next_response = _NativeResponseType.CANCEL
     next_hex_text = None
+    next_responses = []
+    next_hex_texts = []
     last_created = None
 
     def __init__(self, title="", parent=None):
         self.title = title
         self.parent = parent
         self._content_area = _Box()
+        self._action_area = _Box()
         self._rgba = _FakeRgba()
         self._signals = {}
         _NativeColorChooserDialog.last_created = self
@@ -414,6 +417,9 @@ class _NativeColorChooserDialog:
     def get_content_area(self):
         return self._content_area
 
+    def get_action_area(self):
+        return self._action_area
+
     def connect(self, name, callback):
         self._signals.setdefault(name, []).append(callback)
 
@@ -427,9 +433,10 @@ class _NativeColorChooserDialog:
         return None
 
     def run(self):
-        if self.next_hex_text is not None and hasattr(self, "_harite_hex_entry"):
-            self._harite_hex_entry.set_text(self.next_hex_text)
-        return self.next_response
+        next_hex_text = self.next_hex_texts.pop(0) if self.next_hex_texts else self.next_hex_text
+        if next_hex_text is not None and hasattr(self, "_harite_hex_entry"):
+            self._harite_hex_entry.set_text(next_hex_text)
+        return self.next_responses.pop(0) if self.next_responses else self.next_response
 
     def destroy(self):
         return None
@@ -1407,6 +1414,26 @@ def test_runtime_backend_color_pick_button_updates_pending_color(monkeypatch):
     assert backend.get_object("ColorDialog").is_visible() is True
     assert backend.get_object("entColorValue").get_text() == "#224466"
     assert backend.get_object("lblColorState").text == "Color: #224466"
+
+
+def test_runtime_backend_native_color_notice_attaches_below_action_row(monkeypatch):
+    monkeypatch.setattr(
+        "harite.gui.adapters.gtk_runtime_dialogs.ColorDialogProxy._load_gdk_module",
+        lambda self: type("_FakeGdk", (), {"RGBA": _FakeRgba}),
+    )
+    _NativeColorChooserDialog.next_responses = [
+        _NativeResponseType.OK,
+        _NativeResponseType.CANCEL,
+    ]
+    _NativeColorChooserDialog.next_hex_texts = ["hoge", None]
+    _NativeColorChooserDialog.next_hex_text = None
+
+    backend = GtkRuntimeSignalBackend(_NativeColorFakeGtk)
+
+    backend.get_object("btnSetColor").click()
+
+    assert _NativeColorChooserDialog.last_created._action_area.children[-1] is _NativeColorChooserDialog.last_created._harite_notice_label
+    assert _NativeColorChooserDialog.last_created._harite_notice_label.text == "Color: invalid background color"
 
 
 def test_runtime_backend_about_click_opens_dialog():

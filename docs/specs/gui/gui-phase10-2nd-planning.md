@@ -287,7 +287,8 @@
 
 - dialog 系は局所化を原則とし、直上または親 dialog 内の短命 notice で完結できるものは window 最下部へ返さない。
 - dialog から window への往復は、dialog を閉じた後も全体状態として保持すべき結果や、dialog 単体で閉じない blocking 候補に限る。
-- dialog 内 notice は dialog 最下部の専用エリアを予約し、補助線を含めて main window 側の messaging region と同系統で扱う。
+- ここでいう dialog 最下部とは、action row を含む dialog surface 全体の最下段を指し、content area 内だけの最下段とは区別する。
+- dialog 内 notice は dialog surface 全体の最下段専用エリアを予約し、補助線を含めて main window 側の messaging region と同系統で扱う。
 - error のまま dialog を閉じた場合は、該当変更を反映せず、dialog を開く前の状態へ戻す。
 
 - Save path dialog:

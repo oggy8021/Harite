@@ -520,6 +520,7 @@ class ColorDialogProxy:
         content_area = dialog.get_content_area()
         if content_area is None or not hasattr(gtk, "Box") or not hasattr(gtk, "Label") or not hasattr(gtk, "Entry"):
             return
+        action_area = dialog.get_action_area() if hasattr(dialog, "get_action_area") else None
 
         native_hex_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
         native_hex_label = gtk.Label(label="Hex (#RRGGBB)")
@@ -535,7 +536,9 @@ class ColorDialogProxy:
         native_hex_box.pack_start(native_hex_entry, False, False, 0)
         if hasattr(content_area, "pack_start"):
             content_area.pack_start(native_hex_box, False, False, 0)
-            content_area.pack_start(native_notice_label, False, False, 0)
+        notice_parent = action_area if action_area is not None and hasattr(action_area, "pack_start") else content_area
+        if hasattr(notice_parent, "pack_start"):
+            notice_parent.pack_start(native_notice_label, False, False, 0)
         if hasattr(native_hex_entry, "connect"):
             native_hex_entry.connect("changed", lambda entry, *_args: self._on_native_hex_entry_changed(dialog, entry))
         if hasattr(dialog, "connect"):
