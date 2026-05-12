@@ -1392,6 +1392,10 @@ def test_runtime_backend_color_pick_button_updates_pending_color(monkeypatch):
         "harite.gui.adapters.gtk_runtime_dialogs.ColorDialogProxy._load_gdk_module",
         lambda self: type("_FakeGdk", (), {"RGBA": _FakeRgba}),
     )
+    monkeypatch.setattr(
+        "harite.gui.adapters.gtk_runtime_dialogs.ColorDialogProxy.supports_native_dialog",
+        lambda self: False,
+    )
     _NativeColorChooserDialog.next_response = _NativeResponseType.OK
     _NativeColorChooserDialog.next_hex_text = "#224466"
 
