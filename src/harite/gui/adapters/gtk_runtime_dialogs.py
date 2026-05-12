@@ -514,10 +514,14 @@ class ColorDialogProxy:
         if hasattr(native_hex_label, "set_xalign"):
             native_hex_label.set_xalign(0.0)
         native_hex_entry = gtk.Entry()
+        native_notice_label = gtk.Label(label="")
+        if hasattr(native_notice_label, "set_xalign"):
+            native_notice_label.set_xalign(0.0)
         if hasattr(native_hex_entry, "set_text"):
             native_hex_entry.set_text(self._color)
         native_hex_box.pack_start(native_hex_label, False, False, 0)
         native_hex_box.pack_start(native_hex_entry, False, False, 0)
+        native_hex_box.pack_start(native_notice_label, False, False, 0)
         if hasattr(content_area, "pack_start"):
             content_area.pack_start(native_hex_box, False, False, 0)
         if hasattr(native_hex_entry, "connect"):
@@ -525,6 +529,12 @@ class ColorDialogProxy:
         if hasattr(dialog, "connect"):
             dialog.connect("notify::rgba", lambda chooser, *_args: self._sync_native_hex_entry_from_dialog(chooser, native_hex_entry))
         setattr(dialog, "_harite_hex_entry", native_hex_entry)
+        setattr(dialog, "_harite_notice_label", native_notice_label)
+
+    def _set_native_notice(self, dialog: Any, message: str) -> None:
+        notice_label = getattr(dialog, "_harite_notice_label", None)
+        if notice_label is not None and hasattr(notice_label, "set_text"):
+            notice_label.set_text(message)
 
     def _sync_native_hex_entry_from_dialog(self, dialog: Any, entry: Any) -> None:
         if entry is None or not hasattr(entry, "set_text") or not hasattr(dialog, "get_rgba"):
@@ -541,6 +551,7 @@ class ColorDialogProxy:
         if entry is None or not hasattr(entry, "get_text") or not hasattr(dialog, "set_rgba"):
             return
         value = str(entry.get_text() or "").strip()
+        self._set_native_notice(dialog, "")
         if not is_background_color_literal(value):
             return
         rgba = self._rgba_from_color(normalize_background_color(value))
@@ -588,27 +599,33 @@ class ColorDialogProxy:
                 dialog.set_rgba(rgba)
             if hasattr(dialog, "show_all"):
                 dialog.show_all()
-            response = dialog.run() if hasattr(dialog, "run") else None
-            self._visible = False
-            if response == gtk.ResponseType.OK:
+            while True:
+                response = dialog.run() if hasattr(dialog, "run") else None
+                if response != gtk.ResponseType.OK:
+                    self._visible = False
+                    if self._on_cancel is not None:
+                        self._on_cancel(False)
+                    return
+
                 native_hex_entry = getattr(dialog, "_harite_hex_entry", None)
                 native_hex_value = None
                 submitted_color = self._color
                 if native_hex_entry is not None and hasattr(native_hex_entry, "get_text"):
                     native_hex_value = str(native_hex_entry.get_text() or "").strip()
-                if native_hex_value and is_background_color_literal(native_hex_value):
+                if native_hex_value:
+                    if not is_background_color_literal(native_hex_value):
+                        self._set_native_notice(dialog, "Color: invalid background color")
+                        continue
                     self.set_color(native_hex_value)
                     submitted_color = self._color
-                elif native_hex_value:
-                    submitted_color = native_hex_value
                 elif hasattr(dialog, "get_rgba"):
                     self.set_color(self._color_from_rgba(dialog.get_rgba()))
                     submitted_color = self._color
+                self._set_native_notice(dialog, "")
+                self._visible = False
                 if self._on_confirm is not None:
                     self._on_confirm(submitted_color)
                 return
-            if self._on_cancel is not None:
-                self._on_cancel(False)
         finally:
             if hasattr(dialog, "destroy"):
                 dialog.destroy()

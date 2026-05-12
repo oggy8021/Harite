@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, normalize_background_color
+from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color
 from harite.positioning import format_position_pair, parse_position_pair
 
 
@@ -375,6 +375,9 @@ def on_color_dialog_apply_clicked(backend: Any, *_args: Any) -> None:
             color = dialog.get_pending_color()
         else:
             color = dialog.get_color()
+        if not is_background_color_literal(color):
+            backend._set_label_text("lblColorState", "Color: invalid background color")
+            return
         ok = callback(color)
         owner = backend._get_handler_owner("on_set_color")
         if ok:
