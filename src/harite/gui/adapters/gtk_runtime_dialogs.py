@@ -456,6 +456,7 @@ class ColorDialogProxy:
         window: Any | None = None,
         entry: Any | None = None,
         state_label: Any | None = None,
+        notice_label: Any | None = None,
         picker_host: Any | None = None,
         pick_button: Any | None = None,
         on_confirm: Callable[[str], None] | None = None,
@@ -467,6 +468,7 @@ class ColorDialogProxy:
         self._window = window
         self._entry = entry
         self._state_label = state_label
+        self._notice_label = notice_label
         self._picker_host = picker_host
         self._pick_button = pick_button
         self._on_confirm = on_confirm
@@ -477,7 +479,19 @@ class ColorDialogProxy:
         self._attach_embedded_color_chooser()
         if self._pick_button is not None and hasattr(self._pick_button, "connect"):
             self._pick_button.connect("clicked", lambda *_args: self.pick_color())
+        self._configure_pick_button_role()
         self.set_color(self._color)
+
+    def _configure_pick_button_role(self) -> None:
+        if self._pick_button is None:
+            return
+        embedded_picker_active = self._embedded_color_chooser is not None
+        if hasattr(self._pick_button, "set_sensitive"):
+            self._pick_button.set_sensitive(not embedded_picker_active)
+        if embedded_picker_active and hasattr(self._pick_button, "hide"):
+            self._pick_button.hide()
+        elif not embedded_picker_active and hasattr(self._pick_button, "show"):
+            self._pick_button.show()
 
     def _attach_embedded_color_chooser(self) -> None:
         gtk = self._gtk
@@ -511,8 +525,7 @@ class ColorDialogProxy:
                 self._entry.set_text(color)
         finally:
             self._syncing_embedded_color_chooser = False
-        if self._state_label is not None and hasattr(self._state_label, "set_text"):
-            self._state_label.set_text(f"Color: {color}")
+        self._set_current_color_label(color)
 
     def _on_embedded_color_entry_changed(self, entry: Any) -> None:
         if self._syncing_embedded_color_chooser or self._embedded_color_chooser is None:
@@ -773,6 +786,7 @@ class ColorDialogProxy:
         return normalize_background_color((red, green, blue))
 
     def open_dialog(self) -> None:
+        self._set_notice("")
         self.show()
 
     def pick_color(self) -> None:
@@ -883,8 +897,21 @@ class ColorDialogProxy:
                     self._embedded_color_chooser.set_rgba(rgba)
                 finally:
                     self._syncing_embedded_color_chooser = False
+        self._set_current_color_label(self._color)
+
+    def _set_current_color_label(self, color: str) -> None:
         if self._state_label is not None and hasattr(self._state_label, "set_text"):
-            self._state_label.set_text(f"Color: {self._color}")
+            self._state_label.set_text(f"Color: {normalize_background_color(color)}")
+
+    def set_notice(self, message: str) -> None:
+        self._set_notice(message)
+
+    def clear_notice(self) -> None:
+        self._set_notice("")
+
+    def _set_notice(self, message: str) -> None:
+        if self._notice_label is not None and hasattr(self._notice_label, "set_text"):
+            self._notice_label.set_text(str(message or ""))
 
     def get_color(self) -> str:
         if self._entry is not None and hasattr(self._entry, "get_text"):

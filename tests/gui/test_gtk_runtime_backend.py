@@ -1407,6 +1407,7 @@ def test_runtime_backend_color_apply_updates_handler_and_feedback():
     assert observed["color"] == "#224466"
     assert backend.get_object("ColorDialog").is_visible() is False
     assert backend.get_object("lblColorState").text == "Color: #224466"
+    assert backend.get_object("lblColorNotice").text == ""
     assert backend.get_object("lblStatus").text == "Color: updated"
     assert backend.get_object("lblError").text == "Error: none"
 
@@ -1421,7 +1422,8 @@ def test_runtime_backend_color_apply_shows_invalid_color_feedback():
     backend.get_object("btnColorApply").click()
 
     assert backend.get_object("ColorDialog").is_visible() is True
-    assert backend.get_object("lblColorState").text == "Color: invalid background color"
+    assert backend.get_object("lblColorState").text == "Color: #1E1E1E"
+    assert backend.get_object("lblColorNotice").text == "Color: invalid background color"
     assert backend.get_object("lblStatus").text == "Color: opened"
     assert backend.get_object("lblError").text == "Error: none"
 
@@ -1446,6 +1448,7 @@ def test_runtime_backend_color_pick_button_updates_pending_color(monkeypatch):
     assert backend.get_object("ColorDialog").is_visible() is True
     assert backend.get_object("entColorValue").get_text() == "#224466"
     assert backend.get_object("lblColorState").text == "Color: #224466"
+    assert backend.get_object("lblColorNotice").text == ""
 
 
 def test_runtime_backend_color_open_uses_embedded_chooser_with_reserved_notice_row(monkeypatch):
@@ -1463,7 +1466,9 @@ def test_runtime_backend_color_open_uses_embedded_chooser_with_reserved_notice_r
     assert color_dialog.is_visible() is True
     assert _NativeColorChooserDialog.last_created is None
     assert color_dialog._embedded_color_chooser is not None
-    assert color_dialog._window.child.children[-1] is backend.get_object("lblColorState")
+    assert backend.get_object("btnColorPick").sensitive is False
+    assert color_dialog._window.child.children[-2] is backend.get_object("lblColorState")
+    assert color_dialog._window.child.children[-1] is backend.get_object("lblColorNotice")
 
     chooser = color_dialog._embedded_color_chooser
     rgba = _FakeRgba()

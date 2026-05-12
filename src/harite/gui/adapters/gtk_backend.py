@@ -420,6 +420,7 @@ class GtkRuntimeSignalBackend:
         color_window = color_widgets["color_window"]
         color_value_entry = color_widgets["color_value_entry"]
         color_state_label = color_widgets["color_state_label"]
+        color_notice_label = color_widgets["color_notice_label"]
         color_picker_host = color_widgets["color_picker_host"]
         color_pick_btn = color_widgets["color_pick_btn"]
         color_dialog_proxy = _ColorDialogProxy(
@@ -428,6 +429,7 @@ class GtkRuntimeSignalBackend:
             color_window,
             color_value_entry,
             color_state_label,
+            color_notice_label,
             color_picker_host,
             color_pick_btn,
             self._on_color_dialog_confirmed,

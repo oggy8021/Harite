@@ -134,6 +134,8 @@ def build_color_dialog_section(gtk_module: Any, *, default_color_hex: str) -> di
     color_value_entry = gtk_module.Entry()
     color_state_label = gtk_module.Label(label=f"Color: {default_color_hex}")
     set_xalign_if_supported(color_state_label)
+    color_notice_label = gtk_module.Label(label="")
+    set_xalign_if_supported(color_notice_label)
     color_pick_btn = gtk_module.Button(label="Pick Color")
     color_apply_btn = gtk_module.Button(label="Color Apply")
     color_cancel_btn = gtk_module.Button(label="Color Cancel")
@@ -152,6 +154,7 @@ def build_color_dialog_section(gtk_module: Any, *, default_color_hex: str) -> di
     color_notice_separator = build_horizontal_separator(gtk_module)
     color_editor_box.pack_start(color_notice_separator, False, False, 0)
     color_editor_box.pack_start(color_state_label, False, False, 0)
+    color_editor_box.pack_start(color_notice_label, False, False, 0)
     if hasattr(color_window, "add"):
         color_window.add(color_editor_box)
 
@@ -159,6 +162,7 @@ def build_color_dialog_section(gtk_module: Any, *, default_color_hex: str) -> di
         "color_window": color_window,
         "color_value_entry": color_value_entry,
         "color_state_label": color_state_label,
+        "color_notice_label": color_notice_label,
         "color_notice_separator": color_notice_separator,
         "color_picker_host": color_picker_host,
         "color_pick_btn": color_pick_btn,
