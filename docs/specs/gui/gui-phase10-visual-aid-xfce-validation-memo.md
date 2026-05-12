@@ -1,6 +1,6 @@
 # GUI Phase10 Visual Aid XFCE Validation Memo
 
-最終更新: 2026-05-12
+最終更新: 2026-05-13
 対象: Phase10 visual aid implementation
 
 ## 目的
@@ -22,12 +22,12 @@
 - 本メモでいう `最下段` は content area ではなく surface 全体の最下段を指し、dialog では action row より下を正とする。
 - dialog 内 notice は、自前で制御する dialog では surface 全体の最下段専用エリアに置く。
 - dialog 内 notice の文言は、surface 最下段 row の左端から読み始められる配置を正とし、右寄せや中央寄せを正としない。
-- Color dialog は native chooser の picker 面を維持しつつ、Hex 入力を保ち、notice は surface 全体の最下段に置く構成を正とする。
+- Color dialog は picker 面を維持しつつ、Hex 入力、現在選択色 row、notice 専用の最下段 row を分離して持つ構成を正とする。
 
 ## 確認対象
 
 1. MainWindow 最下部に dedicated messaging row が追加され、footer summary と視覚的に分離されていること。
-2. Color dialog は native chooser の picker 面を保ったまま開き、内容領域の最下段 notice エリアが読めること。
+2. Color dialog は picker 面を保ったまま開き、現在選択色 row と notice 専用の最下段 row が分離して読めること。
 3. watch summary が footer summary 側に残り、message row と役割分担できていること。
 4. resolution 未確定時に Optimize が進めないこと。
 5. Watch Start が SrcdirL / SrcdirR の両方と正の interval が揃うまで進めないこと。
@@ -62,7 +62,7 @@ python -m harite.gui.app --bind-ui-backend --present-ui-window
 
 - `harite-gui` でも起動確認してよい。
 - 正本確認では module 起動と script 起動のどちらでもよいが、記録時は実際に使った方を Notes に残す。
-- color dialog は native chooser の picker 面 + Hex 入力 + 最下段 notice の構成を確認対象とする。
+- color dialog は picker 面 + Hex 入力 + 現在選択色 row + 最下段 notice row の構成を確認対象とする。
 - owner 実観察では `python -m harite.gui.app` と `harite-gui` の両方で起動確認している。
 
 期待:
@@ -92,10 +92,10 @@ python -m harite.gui.app --bind-ui-backend --present-ui-window
 1. Color dialog notice
 
 - Color を開く。
-- native chooser の picker 面に Hex 入力欄が追加された dialog が開くことを確認する。
-- action row の下に dialog 最下段の state/notice 行が読めることを確認する。
+- picker 面と Hex 入力欄を持つ dialog が開くことを確認する。
+- `Color: #...` の現在選択色 row と、その下の notice 専用最下段 row が分離して見えることを確認する。
 - notice 文言が最下段 row の左端から読み始められることを確認する。
-- 入力欄に `red`、`black`、`hoge`、`#FFFF00000` などを入れたときは、message が action row の下にある dialog 最下段 notice に出て、Main Window 側へ重複して落ちないことを確認する。
+- 入力欄に `red`、`black`、`hoge`、`#FFFF00000` などを入れたときは、message が dialog 最下段 notice row に出て、現在選択色 row と Main Window 側へ重複して落ちないことを確認する。
 
 1. Watch start disabled 条件
 
@@ -147,8 +147,13 @@ python -m harite.gui.app --bind-ui-backend --present-ui-window
 - 起動導線: `python -m harite.gui.app` と `harite-gui` の両方で起動確認済み。
 - Optimize gating: 正本環境では resolution 未確定状態の再現が困難。自動検出と close 時復帰により、結果的に guard 済みの挙動として観察された。
 - Settings: `Settings: open` 相当のみ視認。ただし本段では完全に先送りし、判定対象から外す。
-- Color: 最新 HEAD では native chooser の picker 面と `Hex (#RRGGBB)` 入力欄は見えている。notice は action row の下に来ているが、最下段 row の右寄せ寄りに見え、左端始まりには揃っていない。surface 全体の最下段までは寄せられたが、横方向の配置はなお確認継続とする。Main Window 側への重複表示はこの観察では見えていない。
+- Color: 2026-05-12 時点の HEAD では picker 面と `Hex (#RRGGBB)` 入力欄は見えていたが、notice の横配置が不安定で、最下段専用 row も未分離だった。ここは 2026-05-13 の追観察で解消確認に進んだため、下記の更新を正本とする。
 - Watch gating: 起動直後 / 片側のみ / 両側設定後 / 起動後停止の各条件は OK。interval 上限は 86400 で丸め込みあり。現時点で唯一素直に pass と言える。
+
+### 2026-05-13 owner 追観察メモ
+
+- Color: pass。picker 面、Hex 入力、現在選択色 row、notice 専用の最下段 row が分離して見える。`Pick Color` の責務重複も解消され、notice は最下段独立 row として扱える。Main Window 側への重複表示もこの観察では見えていない。
+- MainWindow / Optimize gating / Watch gating: 本追観察では再評価を増やしていない。2026-05-12 の観察結果を継続前提とする。
 
 ## PR コメント短縮版
 
