@@ -16,10 +16,16 @@
 - Settings dialog の 4 操作の意味づけは [docs/specs/gui/gui-phase10-3rd-planning.md](docs/specs/gui/gui-phase10-3rd-planning.md) で扱う。
 - Settings dialog notice は今回の visual aid 実機確認対象から外し、Phase10 3rd planning 側へ先送りする。
 
+## 固定の決定事項
+
+- dialog 内で直せる corrective error は、まず dialog 内短命 notice で閉じ、Main Window 最下部との往復は避ける。
+- dialog 内 notice は、自前で制御する dialog では内容領域の最下段専用エリアに置く。
+- Color dialog は Phase10 visual aid の範囲では自前の custom dialog を正とし、最下部 notice を常に読める状態に揃える。
+
 ## 確認対象
 
 1. MainWindow 最下部に dedicated messaging row が追加され、footer summary と視覚的に分離されていること。
-2. Color dialog は native GTK chooser を許容し、fallback custom dialog が使われる場合に限り最下部 notice エリアが読めること。
+2. Color dialog は custom dialog で開き、内容領域の最下段 notice エリアが読めること。
 3. watch summary が footer summary 側に残り、message row と役割分担できていること。
 4. resolution 未確定時に Optimize が進めないこと。
 5. Watch Start が SrcdirL / SrcdirR の両方と正の interval が揃うまで進めないこと。
@@ -54,7 +60,6 @@ python -m harite.gui.app --bind-ui-backend --present-ui-window
 
 - `harite-gui` でも起動確認してよい。
 - 正本確認では module 起動と script 起動のどちらでもよいが、記録時は実際に使った方を Notes に残す。
-- color dialog は native GTK chooser が使える環境では native 表示を許容する。
 - owner 実観察では `python -m harite.gui.app` と `harite-gui` の両方で起動確認している。
 
 期待:
@@ -84,11 +89,9 @@ python -m harite.gui.app --bind-ui-backend --present-ui-window
 1. Color dialog notice
 
 - Color を開く。
-- native GTK chooser が開く環境では、その native dialog が開くことを確認する。
-- owner 実観察では native chooser 下端には `キャンセル` と `選択` ボタンだけが見え、custom notice 行は見えていない。この時点では visual aid として未解消扱いであり、ここから先へ進めない。
-- fallback custom dialog が開く環境では、dialog 最下部の state/notice 行が読めることを確認する。
-- native chooser の入力欄に `red`、`black`、`hoge`、`#FFFF00000` などを入れたときは、message が chooser 内容領域の最下段 notice に出て、Main Window 側へ重複して落ちないことを確認する。
-- native / fallback のどちらが使われたかを Notes に残す。
+- custom color dialog が開くことを確認する。
+- dialog 最下部の state/notice 行が読めることを確認する。
+- 入力欄に `red`、`black`、`hoge`、`#FFFF00000` などを入れたときは、message が dialog 最下部 notice に出て、Main Window 側へ重複して落ちないことを確認する。
 
 1. Watch start disabled 条件
 
@@ -111,13 +114,13 @@ python -m harite.gui.app --bind-ui-backend --present-ui-window
 - 対象PR: [number]
 - 評価日: [YYYY-MM-DD]
 - 評価者: owner
-- 備考: Color dialog notice は native chooser 利用時 `n/a` としてよい。
+- 備考: Color dialog は custom dialog 前提で評価する。
 
 ### 判定結果
 
 - MainWindow dedicated message row: pass/warn/fail
 - Settings dialog notice: n-a
-- Color dialog notice: pass/warn/fail/n-a
+- Color dialog notice: pass/warn/fail
 - Optimize disabled condition: pass/warn/fail
 - Watch start disabled condition: pass/warn/fail
 - Overall: pass/warn/fail
@@ -126,7 +129,6 @@ python -m harite.gui.app --bind-ui-backend --present-ui-window
 
 - `Overall: pass` は、`MainWindow dedicated message row`、`Color dialog notice`、`Optimize disabled condition`、`Watch start disabled condition` が pass であることを前提とする。
 - `Settings dialog notice` は今回 `n/a` とし、Overall 判定には含めない。
-- `Color dialog notice` が native chooser 利用で `n/a` の場合は、そのことを Notes に残したうえで pass 判定の妨げにしない。
 
 ### Notes
 
@@ -141,7 +143,7 @@ python -m harite.gui.app --bind-ui-backend --present-ui-window
 - 起動導線: `python -m harite.gui.app` と `harite-gui` の両方で起動確認済み。
 - Optimize gating: 正本環境では resolution 未確定状態の再現が困難。自動検出と close 時復帰により、結果的に guard 済みの挙動として観察された。
 - Settings: `Settings: open` 相当のみ視認。ただし本段では完全に先送りし、判定対象から外す。
-- Color: native chooser では下端に `キャンセル` / `選択` のみ表示し、notice 位置と重複 messaging の整合がなお確認点として残る。fallback custom dialog 側は最下部 notice 行を読む前提で扱う。
+- Color: custom dialog を正とし、最下部 notice 行で invalid background color を読む前提で扱う。
 - Watch gating: 起動直後 / 片側のみ / 両側設定後 / 起動後停止の各条件は OK。interval 上限は 86400 で丸め込みあり。現時点で唯一素直に pass と言える。
 
 ## PR コメント短縮版
@@ -150,7 +152,7 @@ python -m harite.gui.app --bind-ui-backend --present-ui-window
 ### Phase10 visual aid XFCE check
 - MainWindow dedicated message row: pass/warn/fail
 - Settings dialog notice: n-a
-- Color dialog notice: pass/warn/fail/n-a
+- Color dialog notice: pass/warn/fail
 - Optimize gating: pass/warn/fail
 - Watch gating: pass/warn/fail
 - Notes: [layout impression or repro]

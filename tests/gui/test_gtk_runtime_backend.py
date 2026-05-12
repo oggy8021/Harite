@@ -3,7 +3,6 @@ from __future__ import annotations
 from PIL import Image
 
 from harite.gui.adapters.gtk_backend import GtkRuntimeSignalBackend
-from harite.gui.adapters.gtk_runtime_dialogs import ColorDialogProxy
 from harite.gui.adapters.ui_adapter import create_mainwindow_signal_dispatch
 from harite.gui.views.main_window import MainWindow
 
@@ -374,83 +373,12 @@ class _NativeFileChooserDialog:
         return None
 
 
-class _FakeRgba:
-    def __init__(self):
-        self.red = 0.0
-        self.green = 0.0
-        self.blue = 0.0
-        self.alpha = 1.0
-
-
-class _FakeGdk:
-    RGBA = _FakeRgba
-
-
-class _NativeColorChooserDialog:
-    next_response = _NativeResponseType.CANCEL
-    next_hex_text = None
-    next_responses = []
-    next_hex_texts = []
-    last_created = None
-
-    def __init__(self, title="", parent=None):
-        self.title = title
-        self.parent = parent
-        self._content_area = _Box()
-        self._rgba = _FakeRgba()
-        self._signals = {}
-        _NativeColorChooserDialog.last_created = self
-
-    def set_modal(self, _enabled):
-        return None
-
-    def set_transient_for(self, _parent):
-        return None
-
-    def set_destroy_with_parent(self, _enabled):
-        return None
-
-    def get_content_area(self):
-        return self._content_area
-
-    def connect(self, name, callback):
-        self._signals.setdefault(name, []).append(callback)
-
-    def set_rgba(self, rgba):
-        self._rgba = rgba
-
-    def get_rgba(self):
-        return self._rgba
-
-    def show_all(self):
-        return None
-
-    def run(self):
-        if self.next_hex_texts:
-            next_hex_text = self.next_hex_texts.pop(0)
-        else:
-            next_hex_text = self.next_hex_text
-        if next_hex_text is not None and hasattr(self, "_harite_hex_entry"):
-            self._harite_hex_entry.set_text(next_hex_text)
-        if self.next_responses:
-            return self.next_responses.pop(0)
-        return self.next_response
-
-    def destroy(self):
-        return None
-
-
 class _NativeFakeGtk(_FakeGtk):
     FileChooserDialog = _NativeFileChooserDialog
     FileChooserAction = _NativeFileChooserAction
     ResponseType = _NativeResponseType
     STOCK_CANCEL = "gtk-cancel"
     STOCK_SAVE = "gtk-save"
-
-
-class _NativeColorFakeGtk(_FakeGtk):
-    ColorChooserDialog = _NativeColorChooserDialog
-    ResponseType = _NativeResponseType
 
 
 def test_runtime_backend_updates_mainwindow_form_state_for_toggles_and_margins():
@@ -1397,29 +1325,6 @@ def test_runtime_backend_color_apply_shows_invalid_color_feedback():
     assert backend.get_object("ColorDialog").is_visible() is True
     assert backend.get_object("lblColorState").text == "Color: invalid background color"
     assert backend.get_object("lblStatus").text == "Color: opened"
-    assert backend.get_object("lblError").text == "Error: none"
-
-
-def test_runtime_backend_native_color_dialog_invalid_hex_shows_feedback(monkeypatch):
-    monkeypatch.setattr(ColorDialogProxy, "_load_gdk_module", lambda self: _FakeGdk)
-    _NativeColorChooserDialog.next_responses = [
-        _NativeColorFakeGtk.ResponseType.OK,
-        _NativeColorFakeGtk.ResponseType.CANCEL,
-    ]
-    _NativeColorChooserDialog.next_hex_texts = ["hoge", None]
-    _NativeColorChooserDialog.next_hex_text = None
-
-    backend = GtkRuntimeSignalBackend(_NativeColorFakeGtk)
-    window = MainWindow()
-    backend.connect_signals(create_mainwindow_signal_dispatch(window, ("on_set_color",)))
-
-    backend.get_object("btnSetColor").click()
-
-    assert backend.get_object("ColorDialog").is_visible() is False
-    assert _NativeColorChooserDialog.last_created._harite_notice_label.text == "Color: invalid background color"
-    assert _NativeColorChooserDialog.last_created._content_area.children[-1] is _NativeColorChooserDialog.last_created._harite_notice_label
-    assert backend.get_object("lblColorState").text == "Color: canceled"
-    assert backend.get_object("lblStatus").text == "Color: canceled"
     assert backend.get_object("lblError").text == "Error: none"
 
 
