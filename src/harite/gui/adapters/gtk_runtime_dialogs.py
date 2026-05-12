@@ -570,7 +570,7 @@ class ColorDialogProxy:
             parent_box.pack_start(notice_label, False, True, 0)
 
     def _prepare_native_notice_parent(self, gtk: Any, dialog: Any, content_area: Any, action_area: Any) -> Any | None:
-        parent_box = self._resolve_native_notice_host(dialog, content_area, action_area)
+        parent_box = self._resolve_native_notice_host(gtk, dialog, content_area, action_area)
         if parent_box is not None:
             return parent_box
         if action_area is None or not hasattr(action_area, "pack_start"):
@@ -602,17 +602,70 @@ class ColorDialogProxy:
         action_area.pack_start(action_shell, True, True, 0)
         return action_shell
 
-    def _resolve_native_notice_host(self, dialog: Any, content_area: Any, action_area: Any) -> Any | None:
-        candidate = None
-        if action_area is not None and hasattr(action_area, "get_parent"):
-            candidate = action_area.get_parent()
-        if candidate is None and content_area is not None and hasattr(content_area, "get_parent"):
-            candidate = content_area.get_parent()
+    def _resolve_native_notice_host(self, gtk: Any, dialog: Any, content_area: Any, action_area: Any) -> Any | None:
+        candidate = self._get_dialog_internal_vbox(gtk, dialog)
+        if self._is_valid_native_notice_host(candidate, dialog, content_area, action_area):
+            return candidate
+
+        shared_ancestor = self._find_shared_native_notice_ancestor(content_area, action_area)
+        if self._is_valid_native_notice_host(shared_ancestor, dialog, content_area, action_area):
+            return shared_ancestor
+
+        for widget in (action_area, content_area):
+            candidate = self._get_parent_widget(widget)
+            if self._is_valid_native_notice_host(candidate, dialog, content_area, action_area):
+                return candidate
+        return None
+
+    def _get_dialog_internal_vbox(self, gtk: Any, dialog: Any) -> Any | None:
+        buildable = getattr(gtk, "Buildable", None)
+        if buildable is not None and hasattr(buildable, "get_internal_child"):
+            for builder in (None, dialog):
+                try:
+                    candidate = buildable.get_internal_child(dialog, builder, "vbox")
+                except Exception:
+                    continue
+                if candidate is not None:
+                    return candidate
+        if hasattr(dialog, "get_internal_child"):
+            for args in ((None, "vbox"), (dialog, "vbox"), ("vbox",)):
+                try:
+                    candidate = dialog.get_internal_child(*args)
+                except Exception:
+                    continue
+                if candidate is not None:
+                    return candidate
+        return None
+
+    def _find_shared_native_notice_ancestor(self, content_area: Any, action_area: Any) -> Any | None:
+        if content_area is None or action_area is None:
+            return None
+        action_ancestors = self._collect_parent_widgets(action_area)
+        for candidate in self._collect_parent_widgets(content_area):
+            if candidate in action_ancestors:
+                return candidate
+        return None
+
+    def _collect_parent_widgets(self, widget: Any) -> list[Any]:
+        ancestors: list[Any] = []
+        current = self._get_parent_widget(widget)
+        while current is not None and current not in ancestors:
+            ancestors.append(current)
+            current = self._get_parent_widget(current)
+        return ancestors
+
+    def _get_parent_widget(self, widget: Any) -> Any | None:
+        if widget is None or not hasattr(widget, "get_parent"):
+            return None
+        try:
+            return widget.get_parent()
+        except Exception:
+            return None
+
+    def _is_valid_native_notice_host(self, candidate: Any, dialog: Any, content_area: Any, action_area: Any) -> bool:
         if candidate is None or candidate in {dialog, action_area, content_area}:
-            return None
-        if not hasattr(candidate, "pack_start"):
-            return None
-        return candidate
+            return False
+        return hasattr(candidate, "pack_start")
 
     def _set_native_notice(self, dialog: Any, message: str) -> None:
         notice_label = getattr(dialog, "_harite_notice_label", None)
