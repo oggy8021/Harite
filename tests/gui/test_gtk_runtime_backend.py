@@ -1902,11 +1902,14 @@ def test_runtime_backend_settings_preserves_explicit_apply_mode_when_unedited(tm
 
     backend.connect_signals(
         {
+            "on_open_settings_dialog": lambda: True,
             "on_apply_settings": lambda config: observed.__setitem__("apply", config) or True,
             "on_save_settings_file": lambda path, config=None: observed.__setitem__("save", (path, config)) or True,
             "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
         }
     )
+
+    backend.get_object("btnSettings").click()
 
     assert backend.get_object("radSettingsApplySingle").get_active() is False
     assert backend.get_object("radSettingsApplyPerMonitor").get_active() is False
@@ -1936,10 +1939,12 @@ def test_runtime_backend_settings_can_override_preserved_explicit_apply_mode(tmp
 
     backend.connect_signals(
         {
+            "on_open_settings_dialog": lambda: True,
             "on_apply_settings": lambda config: observed.__setitem__("apply", config) or True,
             "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
         }
     )
+    backend.get_object("btnSettings").click()
     backend.get_object("radSettingsApplyPerMonitor").click()
     backend.get_object("btnSettingsOk").click()
 
