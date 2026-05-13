@@ -9,6 +9,17 @@ from .optimize_settings import AUTO
 from .positioning import parse_position_pair
 
 
+def _decode_optional_auto_string(value: object | None, *, default: str | None = None) -> str | None:
+    if value is None:
+        return default
+    raw = str(value).strip()
+    if not raw:
+        return default
+    if raw.lower() == AUTO:
+        return AUTO
+    return raw
+
+
 def _decode_two_screen_mode(value: object) -> str:
     if value is None:
         return "off"
@@ -44,11 +55,11 @@ class OptimizePreferences:
     @classmethod
     def from_config_dict(cls, config: dict[str, Any]) -> "OptimizePreferences":
         return cls(
-            resolution=str(config.get("resolution", "1920x1080")),
+            resolution=_decode_optional_auto_string(config.get("resolution"), default=AUTO) or AUTO,
             scaling=str(config.get("scaling", "fit")),
             two_screen_mode=_decode_two_screen_mode(config.get("two_screen", False)),
-            l_display=None if config.get("l_display") is None else str(config.get("l_display")),
-            r_display=None if config.get("r_display") is None else str(config.get("r_display")),
+            l_display=_decode_optional_auto_string(config.get("l_display")),
+            r_display=_decode_optional_auto_string(config.get("r_display")),
             margins=None if config.get("margins") is None else str(config.get("margins")),
             align=parse_position_pair(config.get("align", "center"), axis="align"),
             valign=parse_position_pair(config.get("valign", "center"), axis="valign"),

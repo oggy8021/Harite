@@ -828,13 +828,11 @@ class MainWindow:
 
     def _normalize_settings_display_payload(self, config: dict[str, object]) -> dict[str, object]:
         normalized = dict(config)
-        input_values = [value.strip() for value in str(self.form_state.input_value or "").split(",") if value.strip()]
-        context = build_two_screen_optimize_context() if len(input_values) >= 2 else None
+        context = build_two_screen_optimize_context()
         if context is not None:
             normalized["resolution"] = f"{context.resolution[0]}x{context.resolution[1]}"
             normalized["l_display"] = f"{context.l_display[0]}x{context.l_display[1]}"
             normalized["r_display"] = f"{context.r_display[0]}x{context.r_display[1]}"
-            normalized["two_screen"] = True
             return normalized
 
         resolution = str(normalized.get("resolution") or "").strip()
@@ -848,10 +846,9 @@ class MainWindow:
             and self.form_state.l_display in {None, "", "auto"}
             and self.form_state.r_display in {None, "", "auto"}
         ):
-            normalized["resolution"] = "auto"
-            normalized["l_display"] = "auto"
-            normalized["r_display"] = "auto"
-            normalized["two_screen"] = "auto" if len(input_values) >= 2 else False
+            normalized.pop("resolution", None)
+            normalized.pop("l_display", None)
+            normalized.pop("r_display", None)
         return normalized
 
     def _build_settings_dialog_config(self) -> dict[str, object]:

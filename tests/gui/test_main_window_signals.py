@@ -687,7 +687,6 @@ def test_on_get_settings_config_expands_current_detected_display_values(monkeypa
     )
 
     window = MainWindow()
-    window.form_state.input_value = "left.jpg,right.jpg"
 
     config = window.on_get_settings_config()
 
@@ -701,9 +700,9 @@ def test_on_get_settings_config_uses_auto_for_fully_unresolved_defaults():
 
     config = window.on_get_settings_config()
 
-    assert config["resolution"] == "auto"
-    assert config["l_display"] == "auto"
-    assert config["r_display"] == "auto"
+    assert "resolution" not in config
+    assert "l_display" not in config
+    assert "r_display" not in config
 
 
 def test_settings_file_save_normalizes_fully_unresolved_defaults(tmp_path):
@@ -713,9 +712,45 @@ def test_settings_file_save_normalizes_fully_unresolved_defaults(tmp_path):
     assert window.on_save_settings_file(str(target)) is True
 
     saved = load_config(target)
-    assert saved["resolution"] == "auto"
-    assert saved["l_display"] == "auto"
-    assert saved["r_display"] == "auto"
+    assert "resolution" not in saved
+    assert "l_display" not in saved
+    assert "r_display" not in saved
+
+
+def test_settings_file_save_prefers_detected_display_context_without_inputs(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="L", width=2048, height=1280, x_offset=0),
+                Display(name="R", width=2048, height=1280, x_offset=2048),
+            ),
+            resolution=(4096, 1280),
+            l_display=(2048, 1280),
+            r_display=(2048, 1280),
+        ),
+    )
+    window = MainWindow()
+    target = tmp_path / "prefs-detected.json"
+
+    assert window.on_save_settings_file(str(target)) is True
+
+    saved = load_config(target)
+    assert saved["resolution"] == "4096x1280"
+    assert saved["l_display"] == "2048x1280"
+    assert saved["r_display"] == "2048x1280"
+
+
+def test_settings_file_load_missing_display_settings_keeps_resolution_unresolved(tmp_path):
+    target = tmp_path / "prefs-missing-display.json"
+    target.write_text('{"plugin":"linux","apply_mode":"per-monitor-auto-split"}', encoding="utf-8")
+
+    window = MainWindow()
+
+    assert window.on_load_settings_file(str(target)) is True
+    assert window.form_state.resolution == "auto"
+    assert window.form_state.l_display is None
+    assert window.form_state.r_display is None
 
 
 def test_settings_file_save_and_load_round_trip(tmp_path):

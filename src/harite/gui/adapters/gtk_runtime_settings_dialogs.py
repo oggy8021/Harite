@@ -4,6 +4,7 @@ from typing import Any
 
 from harite.config import resolve_default_settings_path
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color
+from harite.optimize_settings import AUTO
 from harite.positioning import format_position_pair, parse_position_pair
 
 
@@ -82,11 +83,14 @@ def sync_preferences_widgets_from_dialog(backend: Any) -> dict[str, object]:
     if dialog is None or not hasattr(dialog, "get_preferences_config"):
         return {}
     config = dict(dialog.get_preferences_config())
-    backend._set_entry_text("entSettingsResolution", config.get("resolution", "1920x1080"))
+    resolution = config.get("resolution")
+    backend._set_entry_text("entSettingsResolution", "" if resolution in {None, AUTO} else resolution)
     backend._set_entry_text("entSettingsScaling", config.get("scaling", "fit"))
     set_preferences_two_screen_mode(backend, config.get("two_screen", False))
-    backend._set_entry_text("entSettingsLDisplay", config.get("l_display"))
-    backend._set_entry_text("entSettingsRDisplay", config.get("r_display"))
+    l_display = config.get("l_display")
+    r_display = config.get("r_display")
+    backend._set_entry_text("entSettingsLDisplay", "" if l_display in {None, AUTO} else l_display)
+    backend._set_entry_text("entSettingsRDisplay", "" if r_display in {None, AUTO} else r_display)
     backend._set_entry_text("entSettingsMargins", config.get("margins"))
     backend._set_entry_text("entSettingsAlign", format_position_pair(config.get("align", "center"), axis="align"))
     backend._set_entry_text("entSettingsValign", format_position_pair(config.get("valign", "center"), axis="valign"))
@@ -111,11 +115,8 @@ def sync_preferences_dialog_from_widgets(backend: Any) -> dict[str, object]:
 
     config.update(
         {
-            "resolution": backend._read_entry_text("entSettingsResolution") or "1920x1080",
             "scaling": backend._read_entry_text("entSettingsScaling") or "fit",
             "two_screen": read_preferences_two_screen_mode(backend),
-            "l_display": _empty_to_none(backend._read_entry_text("entSettingsLDisplay")),
-            "r_display": _empty_to_none(backend._read_entry_text("entSettingsRDisplay")),
             "margins": _empty_to_none(backend._read_entry_text("entSettingsMargins")),
             "align": list(parse_position_pair(backend._read_entry_text("entSettingsAlign") or "center", axis="align")),
             "valign": list(parse_position_pair(backend._read_entry_text("entSettingsValign") or "center", axis="valign")),
@@ -128,6 +129,22 @@ def sync_preferences_dialog_from_widgets(backend: Any) -> dict[str, object]:
             "apply_mode": read_preferences_apply_mode(backend),
         }
     )
+
+    resolution = _empty_to_none(backend._read_entry_text("entSettingsResolution"))
+    l_display = _empty_to_none(backend._read_entry_text("entSettingsLDisplay"))
+    r_display = _empty_to_none(backend._read_entry_text("entSettingsRDisplay"))
+    if resolution is None:
+        config.pop("resolution", None)
+    else:
+        config["resolution"] = resolution
+    if l_display is None:
+        config.pop("l_display", None)
+    else:
+        config["l_display"] = l_display
+    if r_display is None:
+        config.pop("r_display", None)
+    else:
+        config["r_display"] = r_display
     if dialog is not None:
         if hasattr(dialog, "set_preferences_config"):
             dialog.set_preferences_config(config)
