@@ -114,10 +114,12 @@ def _build_main_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, Any
 def _build_dialog_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, Any]:
     return {
         "btnSettingsApply": widgets["prefs_apply_btn"],
-        "btnSettingsLoad": widgets["prefs_load_btn"],
+        "btnSettingsOk": widgets["prefs_ok_btn"],
         "btnSettingsSave": widgets["prefs_save_btn"],
         "btnSettingsClose": widgets["prefs_close_btn"],
+        "btnSettingsCancel": widgets["prefs_cancel_btn"],
         "lblSettingsState": widgets["prefs_state_label"],
+        "lblSettingsNotice": widgets["prefs_notice_label"],
         "boxSettingsEditor": widgets["prefs_editor_box"],
         "settingsWindow": widgets["prefs_window"],
         "lblSettingsEditorTitle": widgets["prefs_editor_title"],
@@ -139,7 +141,6 @@ def _build_dialog_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, A
         "entSettingsPlugin": widgets["prefs_plugin_entry"],
         "radSettingsApplySingle": widgets["prefs_apply_single"],
         "radSettingsApplyPerMonitor": widgets["prefs_apply_per_monitor"],
-        "entSettingsImportPath": widgets["prefs_import_path_entry"],
         "entSettingsExportPath": widgets["prefs_export_path_entry"],
         "ColorDialog": widgets["color_dialog_proxy"],
         "colorWindow": widgets["color_window"],

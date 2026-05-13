@@ -12,16 +12,22 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
     if hasattr(prefs_window, "set_resizable"):
         prefs_window.set_resizable(True)
 
-    prefs_apply_btn = gtk_module.Button(label="Settings Apply")
-    prefs_load_btn = gtk_module.Button(label="Settings Load")
     prefs_save_btn = gtk_module.Button(label="Settings Save")
-    prefs_close_btn = gtk_module.Button(label="Settings Close")
-    prefs_state_label = gtk_module.Label(label="Settings: idle")
+    prefs_ok_btn = gtk_module.Button(label="OK")
+    prefs_cancel_btn = gtk_module.Button(label="Cancel")
+    prefs_state_label = gtk_module.Label(label="Settings: current values")
     set_xalign_if_supported(prefs_state_label)
+    prefs_notice_label = gtk_module.Label(label="")
+    set_xalign_if_supported(prefs_notice_label)
     prefs_editor_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+    prefs_header_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
     prefs_editor_title = gtk_module.Label(label="Settings")
     set_xalign_if_supported(prefs_editor_title)
-    prefs_editor_box.pack_start(prefs_editor_title, False, False, 0)
+    prefs_header_spacer = gtk_module.Label(label="")
+    prefs_header_row.pack_start(prefs_editor_title, False, False, 0)
+    prefs_header_row.pack_start(prefs_header_spacer, True, True, 0)
+    prefs_header_row.pack_start(prefs_save_btn, False, False, 0)
+    prefs_editor_box.pack_start(prefs_header_row, False, False, 0)
 
     def _prefs_row(label_text: str, *widgets: Any) -> Any:
         row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
@@ -64,7 +70,6 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
     prefs_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(prefs_apply_single, "Apply Auto-split")
     if hasattr(prefs_apply_single, "set_active"):
         prefs_apply_single.set_active(True)
-    prefs_import_path_entry = gtk_module.Entry()
     prefs_export_path_entry = gtk_module.Entry()
 
     prefs_apply_mode_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
@@ -75,31 +80,33 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
     _prefs_row("Scaling", prefs_scaling_entry)
     _prefs_row("Plugin", prefs_plugin_entry)
     _prefs_row("Apply", prefs_apply_mode_shell)
-    _prefs_row("Import path", prefs_import_path_entry)
     _prefs_row("Export path", prefs_export_path_entry)
 
     prefs_actions = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-    prefs_actions.pack_start(prefs_apply_btn, False, False, 0)
-    prefs_actions.pack_start(prefs_load_btn, False, False, 0)
-    prefs_actions.pack_start(prefs_save_btn, False, False, 0)
-    prefs_actions.pack_start(prefs_close_btn, False, False, 0)
+    prefs_actions.pack_start(prefs_cancel_btn, False, False, 0)
+    prefs_actions.pack_start(prefs_ok_btn, False, False, 0)
     prefs_editor_box.pack_start(prefs_actions, False, False, 0)
     prefs_notice_separator = build_horizontal_separator(gtk_module)
     prefs_editor_box.pack_start(prefs_notice_separator, False, False, 0)
     prefs_editor_box.pack_start(prefs_state_label, False, False, 0)
+    prefs_editor_box.pack_start(prefs_notice_label, False, False, 0)
 
     if hasattr(prefs_window, "add"):
         prefs_window.add(prefs_editor_box)
 
     return {
         "prefs_window": prefs_window,
-        "prefs_apply_btn": prefs_apply_btn,
-        "prefs_load_btn": prefs_load_btn,
+        "prefs_apply_btn": prefs_ok_btn,
+        "prefs_load_btn": None,
         "prefs_save_btn": prefs_save_btn,
-        "prefs_close_btn": prefs_close_btn,
+        "prefs_close_btn": prefs_cancel_btn,
+        "prefs_ok_btn": prefs_ok_btn,
+        "prefs_cancel_btn": prefs_cancel_btn,
         "prefs_state_label": prefs_state_label,
+        "prefs_notice_label": prefs_notice_label,
         "prefs_notice_separator": prefs_notice_separator,
         "prefs_editor_box": prefs_editor_box,
+        "prefs_header_row": prefs_header_row,
         "prefs_editor_title": prefs_editor_title,
         "prefs_resolution_entry": prefs_resolution_entry,
         "prefs_scaling_entry": prefs_scaling_entry,
@@ -119,7 +126,7 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
         "prefs_plugin_entry": prefs_plugin_entry,
         "prefs_apply_single": prefs_apply_single,
         "prefs_apply_per_monitor": prefs_apply_per_monitor,
-        "prefs_import_path_entry": prefs_import_path_entry,
+        "prefs_import_path_entry": None,
         "prefs_export_path_entry": prefs_export_path_entry,
     }
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color
@@ -66,6 +67,18 @@ def on_preferences_apply_mode_toggled(backend: Any, widget: Any, mode: str) -> N
     backend._prefs_apply_mode_preserved = None
 
 
+def build_settings_open_notice(backend: Any) -> str:
+    export_path = backend._read_entry_text("entSettingsExportPath")
+    if not export_path:
+        return "現在は未保存です"
+    try:
+        if Path(export_path).expanduser().exists():
+            return ""
+    except Exception:
+        pass
+    return "現在は未保存です"
+
+
 def sync_preferences_widgets_from_dialog(backend: Any) -> dict[str, object]:
     dialog = backend._objects.get("SettingsDialog")
     if dialog is None or not hasattr(dialog, "get_preferences_config"):
@@ -86,8 +99,6 @@ def sync_preferences_widgets_from_dialog(backend: Any) -> dict[str, object]:
     backend._set_spin_value("spnSettingsMarginTextMaxLines", int(config.get("embed_max_lines", 3)))
     backend._set_entry_text("entSettingsPlugin", config.get("plugin", "windows"))
     set_preferences_apply_mode(backend, config.get("apply_mode", "single-file"))
-    if hasattr(dialog, "get_import_path"):
-        backend._set_entry_text("entSettingsImportPath", dialog.get_import_path())
     if hasattr(dialog, "get_export_path"):
         backend._set_entry_text("entSettingsExportPath", dialog.get_export_path())
     return config
@@ -122,13 +133,10 @@ def sync_preferences_dialog_from_widgets(backend: Any) -> dict[str, object]:
         }
     )
 
-    import_path = backend._read_entry_text("entSettingsImportPath")
     export_path = backend._read_entry_text("entSettingsExportPath")
     if dialog is not None:
         if hasattr(dialog, "set_preferences_config"):
             dialog.set_preferences_config(config)
-        if hasattr(dialog, "set_import_path"):
-            dialog.set_import_path(import_path)
         if hasattr(dialog, "set_export_path"):
             dialog.set_export_path(export_path)
     return config
@@ -208,9 +216,10 @@ def on_settings_clicked(backend: Any, *_args: Any) -> None:
             owner = backend._get_handler_owner("on_open_settings_dialog")
             if owner is not None:
                 backend._sync_watch_state_only_from_owner(owner)
+            backend._set_label_text("lblSettingsState", "Settings: current values")
+            backend._set_label_text("lblSettingsNotice", build_settings_open_notice(backend))
             if dialog is not None and hasattr(dialog, "show"):
                 dialog.show()
-            backend._set_label_text("lblSettingsState", "Settings: opened")
             backend._set_feedback(phase="Settings", state="opened")
         else:
             backend._set_feedback(phase="Settings", state="deferred")
@@ -226,6 +235,7 @@ def on_preferences_apply_clicked(backend: Any, *_args: Any) -> None:
         backend._set_feedback(phase="SettingsApply", state="handler-missing", error="handler not connected")
         return
     try:
+        backend._set_label_text("lblSettingsNotice", "")
         ok = callback(sync_preferences_dialog_from_widgets(backend))
         if ok:
             owner = backend._get_handler_owner(handler_name)
@@ -233,36 +243,17 @@ def on_preferences_apply_clicked(backend: Any, *_args: Any) -> None:
                 backend._sync_non_preview_state_from_owner(owner)
             if hasattr(dialog, "hide"):
                 dialog.hide()
-            backend._set_label_text("lblSettingsState", "Settings: applied")
             backend._set_feedback(phase="SettingsApply", state="applied")
         else:
+            backend._set_label_text("lblSettingsNotice", "Settings: apply returned false")
             backend._set_feedback(phase="SettingsApply", state="failed", error="settings apply returned false")
     except Exception as exc:
+        backend._set_label_text("lblSettingsNotice", f"Settings: {exc}")
         backend._set_feedback(phase="SettingsApply", state="error", error=str(exc))
 
 
 def on_preferences_load_clicked(backend: Any, *_args: Any) -> None:
-    handler_name = "on_load_settings_file"
-    callback = backend._signal_handlers.get(handler_name)
-    dialog = backend._objects.get("SettingsDialog")
-    if callback is None or dialog is None or not hasattr(dialog, "get_import_path"):
-        backend._set_feedback(phase="SettingsLoad", state="handler-missing", error="handler not connected")
-        return
-    try:
-        sync_preferences_dialog_from_widgets(backend)
-        ok = callback(dialog.get_import_path())
-        if ok:
-            refresh_preferences_dialog_config_from_getter(backend)
-            sync_preferences_widgets_from_dialog(backend)
-            owner = backend._get_handler_owner(handler_name)
-            if owner is not None:
-                backend._sync_non_preview_state_from_owner(owner)
-            backend._set_label_text("lblSettingsState", "Settings: loaded")
-            backend._set_feedback(phase="SettingsLoad", state="loaded")
-        else:
-            backend._set_feedback(phase="SettingsLoad", state="failed", error="settings load returned false")
-    except Exception as exc:
-        backend._set_feedback(phase="SettingsLoad", state="error", error=str(exc))
+    backend._set_feedback(phase="SettingsLoad", state="unavailable")
 
 
 def on_preferences_save_clicked(backend: Any, *_args: Any) -> None:
@@ -272,22 +263,26 @@ def on_preferences_save_clicked(backend: Any, *_args: Any) -> None:
         backend._set_feedback(phase="SettingsSave", state="handler-missing", error="handler not connected")
         return
     try:
+        backend._set_label_text("lblSettingsNotice", "")
         config = sync_preferences_dialog_from_widgets(backend)
         try:
             ok = callback(dialog.get_export_path(), config)
         except TypeError:
             ok = callback(dialog.get_export_path())
         if ok:
-            backend._set_label_text("lblSettingsState", "Settings: saved")
+            backend._set_label_text("lblSettingsNotice", "Settings: saved")
             backend._set_feedback(phase="SettingsSave", state="saved")
         else:
+            backend._set_label_text("lblSettingsNotice", "Settings: save returned false")
             backend._set_feedback(phase="SettingsSave", state="failed", error="settings save returned false")
     except Exception as exc:
+        backend._set_label_text("lblSettingsNotice", f"Settings: {exc}")
         backend._set_feedback(phase="SettingsSave", state="error", error=str(exc))
 
 
 def on_preferences_close_clicked(backend: Any, *_args: Any) -> None:
     dialog = backend._objects.get("SettingsDialog")
+    backend._set_label_text("lblSettingsNotice", "")
     if dialog is not None and hasattr(dialog, "hide"):
         dialog.hide()
     callback = backend._signal_handlers.get("on_close_settings_dialog")
@@ -296,7 +291,6 @@ def on_preferences_close_clicked(backend: Any, *_args: Any) -> None:
             callback()
         except Exception:
             pass
-    backend._set_label_text("lblSettingsState", "Settings: closed")
     backend._set_feedback(phase="Settings", state="closed")
 
 
