@@ -740,7 +740,15 @@ class MainWindow:
     def on_apply(self) -> bool:
         return self._apply_latest()
 
+    def _restore_input_paths_from_form_state(self) -> None:
+        parts = [part.strip() for part in str(self.form_state.input_value or "").split(",") if part.strip()]
+        self.input_path_l = parts[0] if len(parts) >= 1 else ""
+        self.input_path_r = parts[1] if len(parts) >= 2 else ""
+
     def on_open_settings_dialog(self) -> bool:
+        self._restore_input_paths_from_form_state()
+        if self.input_path_l and self.input_path_r:
+            self._sync_two_screen_state()
         self.settings_dialog_open = True
         self._set_status("idle", "settings", "settings dialog opened")
         self._log("Settings dialog opened")
@@ -818,19 +826,36 @@ class MainWindow:
         self.preferences.optimize.r_display = self.form_state.r_display
         return self.preferences.to_config_dict()
 
+    def _normalize_settings_display_payload(self, config: dict[str, object]) -> dict[str, object]:
+        normalized = dict(config)
+        input_values = [value.strip() for value in str(self.form_state.input_value or "").split(",") if value.strip()]
+        context = build_two_screen_optimize_context() if len(input_values) >= 2 else None
+        if context is not None:
+            normalized["resolution"] = f"{context.resolution[0]}x{context.resolution[1]}"
+            normalized["l_display"] = f"{context.l_display[0]}x{context.l_display[1]}"
+            normalized["r_display"] = f"{context.r_display[0]}x{context.r_display[1]}"
+            normalized["two_screen"] = True
+            return normalized
+
+        resolution = str(normalized.get("resolution") or "").strip()
+        left_display = normalized.get("l_display")
+        right_display = normalized.get("r_display")
+        if (
+            resolution == "1920x1080"
+            and left_display in {None, "", "auto"}
+            and right_display in {None, "", "auto"}
+            and str(self.form_state.resolution or "").strip() == "1920x1080"
+            and self.form_state.l_display in {None, "", "auto"}
+            and self.form_state.r_display in {None, "", "auto"}
+        ):
+            normalized["resolution"] = "auto"
+            normalized["l_display"] = "auto"
+            normalized["r_display"] = "auto"
+            normalized["two_screen"] = "auto" if len(input_values) >= 2 else False
+        return normalized
+
     def _build_settings_dialog_config(self) -> dict[str, object]:
-        config = self.export_settings_config()
-        if not (self.input_path_l and self.input_path_r):
-            return config
-
-        context = build_two_screen_optimize_context()
-        if context is None:
-            return config
-
-        config["resolution"] = f"{context.resolution[0]}x{context.resolution[1]}"
-        config["l_display"] = f"{context.l_display[0]}x{context.l_display[1]}"
-        config["r_display"] = f"{context.r_display[0]}x{context.r_display[1]}"
-        return config
+        return self._normalize_settings_display_payload(self.export_settings_config())
 
     def load_settings_config(self, config: dict[str, object]) -> bool:
         return self.on_apply_settings(AppPreferences.from_config_dict(config, default_plugin=self.plugin_name))
@@ -846,7 +871,7 @@ class MainWindow:
         value = (path or "").strip()
         target_path = Path(value) if value else self._resolve_settings_file_path()
         try:
-            payload = config if config is not None else self._build_settings_dialog_config()
+            payload = self._normalize_settings_display_payload(config) if config is not None else self._build_settings_dialog_config()
             save_config(target_path, payload)
         except Exception as exc:
             self._set_status("error", "settings", "settings save failed", error=str(exc))

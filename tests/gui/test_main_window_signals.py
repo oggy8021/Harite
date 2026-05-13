@@ -3,6 +3,7 @@ from pathlib import Path
 from PIL import Image
 
 from harite.apply_settings import EffectiveApplySettings
+from harite.config import load_config
 from harite.display_context import TwoScreenOptimizeContext
 from harite.preferences import AppPreferences
 from harite.gui.views.main_window import MainWindow
@@ -575,13 +576,30 @@ def test_on_apply_per_monitor_auto_split_requires_context(monkeypatch, tmp_path)
     assert window.last_error == "per-monitor apply requires at least two detected displays"
 
 
-def test_open_settings_dialog_tracks_state():
+def test_open_settings_dialog_tracks_state(monkeypatch):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="L", width=2560, height=1440, x_offset=0),
+                Display(name="R", width=1536, height=864, x_offset=2560),
+            ),
+            resolution=(4096, 1440),
+            l_display=(2560, 1440),
+            r_display=(1536, 864),
+        ),
+    )
+
     window = MainWindow()
+    window.form_state.input_value = "left.jpg,right.jpg"
 
     ok = window.on_open_settings_dialog()
 
     assert ok is True
     assert window.settings_dialog_open is True
+    assert window.form_state.resolution == "4096x1440"
+    assert window.form_state.l_display == "2560x1440"
+    assert window.form_state.r_display == "1536x864"
     assert "Settings dialog opened" in window.logs
 
 
@@ -669,14 +687,35 @@ def test_on_get_settings_config_expands_current_detected_display_values(monkeypa
     )
 
     window = MainWindow()
-    window.input_path_l = "left.jpg"
-    window.input_path_r = "right.jpg"
+    window.form_state.input_value = "left.jpg,right.jpg"
 
     config = window.on_get_settings_config()
 
     assert config["resolution"] == "3200x1080"
     assert config["l_display"] == "1920x1080"
     assert config["r_display"] == "1280x1024"
+
+
+def test_on_get_settings_config_uses_auto_for_fully_unresolved_defaults():
+    window = MainWindow()
+
+    config = window.on_get_settings_config()
+
+    assert config["resolution"] == "auto"
+    assert config["l_display"] == "auto"
+    assert config["r_display"] == "auto"
+
+
+def test_settings_file_save_normalizes_fully_unresolved_defaults(tmp_path):
+    window = MainWindow()
+    target = tmp_path / "prefs-unresolved.json"
+
+    assert window.on_save_settings_file(str(target)) is True
+
+    saved = load_config(target)
+    assert saved["resolution"] == "auto"
+    assert saved["l_display"] == "auto"
+    assert saved["r_display"] == "auto"
 
 
 def test_settings_file_save_and_load_round_trip(tmp_path):
