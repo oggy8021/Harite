@@ -3,6 +3,7 @@ from pathlib import Path
 from PIL import Image
 
 from harite.apply_settings import EffectiveApplySettings
+from harite.config import load_config
 from harite.display_context import TwoScreenOptimizeContext
 from harite.preferences import AppPreferences
 from harite.gui.views.main_window import MainWindow
@@ -575,13 +576,30 @@ def test_on_apply_per_monitor_auto_split_requires_context(monkeypatch, tmp_path)
     assert window.last_error == "per-monitor apply requires at least two detected displays"
 
 
-def test_open_settings_dialog_tracks_state():
+def test_open_settings_dialog_tracks_state(monkeypatch):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="L", width=2560, height=1440, x_offset=0),
+                Display(name="R", width=1536, height=864, x_offset=2560),
+            ),
+            resolution=(4096, 1440),
+            l_display=(2560, 1440),
+            r_display=(1536, 864),
+        ),
+    )
+
     window = MainWindow()
+    window.form_state.input_value = "left.jpg,right.jpg"
 
     ok = window.on_open_settings_dialog()
 
     assert ok is True
     assert window.settings_dialog_open is True
+    assert window.form_state.resolution == "4096x1440"
+    assert window.form_state.l_display == "2560x1440"
+    assert window.form_state.r_display == "1536x864"
     assert "Settings dialog opened" in window.logs
 
 
@@ -654,6 +672,87 @@ def test_export_and_reload_settings_config_round_trips():
     assert other.watch_srcdir_r == "/watch/right"
 
 
+def test_on_get_settings_config_expands_current_detected_display_values(monkeypatch):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="L", width=1920, height=1080, x_offset=0),
+                Display(name="R", width=1280, height=1024, x_offset=1920),
+            ),
+            resolution=(3200, 1080),
+            l_display=(1920, 1080),
+            r_display=(1280, 1024),
+        ),
+    )
+
+    window = MainWindow()
+
+    config = window.on_get_settings_config()
+
+    assert config["resolution"] == "3200x1080"
+    assert config["l_display"] == "1920x1080"
+    assert config["r_display"] == "1280x1024"
+
+
+def test_on_get_settings_config_uses_auto_for_fully_unresolved_defaults():
+    window = MainWindow()
+
+    config = window.on_get_settings_config()
+
+    assert "resolution" not in config
+    assert "l_display" not in config
+    assert "r_display" not in config
+
+
+def test_settings_file_save_normalizes_fully_unresolved_defaults(tmp_path):
+    window = MainWindow()
+    target = tmp_path / "prefs-unresolved.json"
+
+    assert window.on_save_settings_file(str(target)) is True
+
+    saved = load_config(target)
+    assert "resolution" not in saved
+    assert "l_display" not in saved
+    assert "r_display" not in saved
+
+
+def test_settings_file_save_prefers_detected_display_context_without_inputs(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="L", width=2048, height=1280, x_offset=0),
+                Display(name="R", width=2048, height=1280, x_offset=2048),
+            ),
+            resolution=(4096, 1280),
+            l_display=(2048, 1280),
+            r_display=(2048, 1280),
+        ),
+    )
+    window = MainWindow()
+    target = tmp_path / "prefs-detected.json"
+
+    assert window.on_save_settings_file(str(target)) is True
+
+    saved = load_config(target)
+    assert saved["resolution"] == "4096x1280"
+    assert saved["l_display"] == "2048x1280"
+    assert saved["r_display"] == "2048x1280"
+
+
+def test_settings_file_load_missing_display_settings_keeps_resolution_unresolved(tmp_path):
+    target = tmp_path / "prefs-missing-display.json"
+    target.write_text('{"plugin":"linux","apply_mode":"per-monitor-auto-split"}', encoding="utf-8")
+
+    window = MainWindow()
+
+    assert window.on_load_settings_file(str(target)) is True
+    assert window.form_state.resolution == "auto"
+    assert window.form_state.l_display is None
+    assert window.form_state.r_display is None
+
+
 def test_settings_file_save_and_load_round_trip(tmp_path):
     window = MainWindow()
     window.form_state.resolution = "auto"
@@ -686,16 +785,16 @@ def test_settings_file_save_and_load_round_trip(tmp_path):
     assert other.watch_srcdir_r == "/watch/right"
 
 
-def test_settings_file_handlers_require_path():
+def test_settings_file_handlers_use_default_fixed_path_when_path_is_empty(monkeypatch, tmp_path):
     window = MainWindow()
+    target = tmp_path / "xdg-config" / "harite" / "harite-preferences.json"
+    monkeypatch.setattr("harite.gui.views.main_window.resolve_default_settings_path", lambda: target)
 
-    assert window.on_save_settings_file("") is False
-    assert window.status_phase == "settings"
-    assert window.last_error == "settings path is required"
+    assert window.on_save_settings_file("") is True
+    assert target.exists() is True
 
-    assert window.on_load_settings_file("") is False
+    assert window.on_load_settings_file("") is True
     assert window.status_phase == "settings"
-    assert window.last_error == "settings path is required"
 
 
 def test_settings_file_save_accepts_explicit_dialog_config(tmp_path):

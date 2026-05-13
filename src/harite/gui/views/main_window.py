@@ -19,7 +19,7 @@ from harite.core import is_background_color_literal
 from harite.core import normalize_background_color
 from harite.core import resolve_embed_margin_region as resolve_margin_text_region
 from harite.apply_settings import resolve_apply_settings
-from harite.config import load_config, save_config
+from harite.config import load_config, resolve_default_settings_path, save_config
 from harite.display_context import build_two_screen_optimize_context
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
 from harite.gui.views.main_window_preview import build_optimize_cli_preview
@@ -740,14 +740,22 @@ class MainWindow:
     def on_apply(self) -> bool:
         return self._apply_latest()
 
+    def _restore_input_paths_from_form_state(self) -> None:
+        parts = [part.strip() for part in str(self.form_state.input_value or "").split(",") if part.strip()]
+        self.input_path_l = parts[0] if len(parts) >= 1 else ""
+        self.input_path_r = parts[1] if len(parts) >= 2 else ""
+
     def on_open_settings_dialog(self) -> bool:
+        self._restore_input_paths_from_form_state()
+        if self.input_path_l and self.input_path_r:
+            self._sync_two_screen_state()
         self.settings_dialog_open = True
         self._set_status("idle", "settings", "settings dialog opened")
         self._log("Settings dialog opened")
         return True
 
     def on_get_settings_config(self) -> dict[str, object]:
-        return self.export_settings_config()
+        return self._build_settings_dialog_config()
 
     def on_apply_settings(self, settings: AppPreferences | dict[str, object]) -> bool:
         settings_value = settings
@@ -818,8 +826,39 @@ class MainWindow:
         self.preferences.optimize.r_display = self.form_state.r_display
         return self.preferences.to_config_dict()
 
+    def _normalize_settings_display_payload(self, config: dict[str, object]) -> dict[str, object]:
+        normalized = dict(config)
+        context = build_two_screen_optimize_context()
+        if context is not None:
+            normalized["resolution"] = f"{context.resolution[0]}x{context.resolution[1]}"
+            normalized["l_display"] = f"{context.l_display[0]}x{context.l_display[1]}"
+            normalized["r_display"] = f"{context.r_display[0]}x{context.r_display[1]}"
+            return normalized
+
+        resolution = str(normalized.get("resolution") or "").strip()
+        left_display = normalized.get("l_display")
+        right_display = normalized.get("r_display")
+        if (
+            resolution == "1920x1080"
+            and left_display in {None, "", "auto"}
+            and right_display in {None, "", "auto"}
+            and str(self.form_state.resolution or "").strip() == "1920x1080"
+            and self.form_state.l_display in {None, "", "auto"}
+            and self.form_state.r_display in {None, "", "auto"}
+        ):
+            normalized.pop("resolution", None)
+            normalized.pop("l_display", None)
+            normalized.pop("r_display", None)
+        return normalized
+
+    def _build_settings_dialog_config(self) -> dict[str, object]:
+        return self._normalize_settings_display_payload(self.export_settings_config())
+
     def load_settings_config(self, config: dict[str, object]) -> bool:
         return self.on_apply_settings(AppPreferences.from_config_dict(config, default_plugin=self.plugin_name))
+
+    def _resolve_settings_file_path(self) -> Path:
+        return resolve_default_settings_path()
 
     def on_save_settings_file(
         self,
@@ -827,36 +866,30 @@ class MainWindow:
         config: dict[str, object] | None = None,
     ) -> bool:
         value = (path or "").strip()
-        if not value:
-            self._set_status("error", "settings", "settings path is required", error="settings path is required")
-            self._log("Settings save failed: path is required")
-            return False
+        target_path = Path(value) if value else self._resolve_settings_file_path()
         try:
-            payload = config if config is not None else self.export_settings_config()
-            save_config(Path(value), payload)
+            payload = self._normalize_settings_display_payload(config) if config is not None else self._build_settings_dialog_config()
+            save_config(target_path, payload)
         except Exception as exc:
             self._set_status("error", "settings", "settings save failed", error=str(exc))
             self._log(f"Settings save failed: {exc}")
             return False
         self._set_status("success", "settings", "settings saved")
-        self._log(f"Settings saved: {value}")
+        self._log(f"Settings saved: {target_path}")
         return True
 
     def on_load_settings_file(self, path: str | None = None) -> bool:
         value = (path or "").strip()
-        if not value:
-            self._set_status("error", "settings", "settings path is required", error="settings path is required")
-            self._log("Settings load failed: path is required")
-            return False
+        target_path = Path(value) if value else self._resolve_settings_file_path()
         try:
-            config = load_config(Path(value))
+            config = load_config(target_path)
         except Exception as exc:
             self._set_status("error", "settings", "settings load failed", error=str(exc))
             self._log(f"Settings load failed: {exc}")
             return False
         ok = self.load_settings_config(config)
         if ok:
-            self._log(f"Settings loaded: {value}")
+            self._log(f"Settings loaded: {target_path}")
         return ok
 
     def on_clear_input(self, side: str | None = None) -> bool:

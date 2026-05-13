@@ -1788,9 +1788,14 @@ def test_runtime_backend_cross_layout_places_top_and_bottom_per_side():
     ]
 
 
-def test_runtime_backend_settings_button_dispatches_open_handler():
+def test_runtime_backend_settings_button_dispatches_open_handler(monkeypatch, tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     observed = {"opened": 0}
+    export_path = tmp_path / "settings-not-saved-yet.json"
+    monkeypatch.setattr(
+        "harite.gui.adapters.gtk_runtime_settings_dialogs.resolve_default_settings_path",
+        lambda: export_path,
+    )
 
     backend.connect_signals(
         {
@@ -1809,16 +1814,16 @@ def test_runtime_backend_settings_button_dispatches_open_handler():
     assert backend.get_object("radSettingsApplySingle").label == "Apply Default"
     assert backend.get_object("radSettingsApplyPerMonitor").label == "Apply Auto-split"
     assert backend.get_object("radSettingsApplySingle").get_active() is True
+    assert backend.get_object("lblSettingsNotice").text == "現在は未保存です"
     assert backend.get_object("btnPrefsApply") is None
     assert backend.get_object("spnPrefsWatchInterval") is None
 
 
-def test_runtime_backend_settings_apply_load_save_and_close_dispatch_handlers(tmp_path):
+def test_runtime_backend_settings_ok_save_and_cancel_dispatch_handlers(tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     dialog = backend.get_object("SettingsDialog")
-    observed = {"apply": None, "load": None, "save": None, "close": 0}
+    observed = {"apply": None, "save": None, "close": 0}
 
-    import_path = tmp_path / "load-prefs.json"
     export_path = tmp_path / "save-prefs.json"
     dialog.set_preferences_config(
         {
@@ -1829,14 +1834,12 @@ def test_runtime_backend_settings_apply_load_save_and_close_dispatch_handlers(tm
             "watch_srcdir_l": "/watch/left",
         }
     )
-    dialog.set_import_path(str(import_path))
     dialog.set_export_path(str(export_path))
     dialog.show()
 
     backend.connect_signals(
         {
             "on_apply_settings": lambda config: observed.__setitem__("apply", config) or True,
-            "on_load_settings_file": lambda path: observed.__setitem__("load", path) or True,
             "on_save_settings_file": lambda path, config=None: observed.__setitem__("save", (path, config)) or True,
             "on_get_settings_config": lambda: {"plugin": "xfce", "apply_mode": "per-monitor-auto-split"},
             "on_close_settings_dialog": lambda: observed.__setitem__("close", observed["close"] + 1) or True,
@@ -1845,15 +1848,13 @@ def test_runtime_backend_settings_apply_load_save_and_close_dispatch_handlers(tm
 
     backend.get_object("entSettingsResolution").set_text("auto")
     backend.get_object("entSettingsPlugin").set_text("xfce")
-    backend.get_object("entSettingsImportPath").set_text(str(import_path))
-    backend.get_object("entSettingsExportPath").set_text(str(export_path))
     backend.get_object("radSettingsTwoScreenAuto").set_active(True)
     backend.get_object("radSettingsTwoScreenOn").set_active(False)
     backend.get_object("radSettingsTwoScreenOff").set_active(False)
     backend.get_object("radSettingsApplySingle").set_active(False)
     backend.get_object("radSettingsApplyPerMonitor").set_active(True)
 
-    backend.get_object("btnSettingsApply").click()
+    backend.get_object("btnSettingsOk").click()
     assert observed["apply"]["resolution"] == "auto"
     assert observed["apply"]["two_screen"] == "auto"
     assert observed["apply"]["align"] == ["center", "center"]
@@ -1863,17 +1864,11 @@ def test_runtime_backend_settings_apply_load_save_and_close_dispatch_handlers(tm
     assert observed["apply"]["watch_interval_seconds"] == 60
     assert observed["apply"]["watch_srcdir_l"] == "/watch/left"
     assert dialog.is_visible() is False
-    assert backend.get_object("lblSettingsState").text == "Settings: applied"
+    assert backend.get_object("lblSettingsState").text == "Settings: current values"
+    assert backend.get_object("lblStatus").text == "SettingsApply: applied"
 
     dialog.show()
-    backend.get_object("btnSettingsLoad").click()
-    assert observed["load"] == str(import_path)
-    assert dialog.get_preferences_config()["plugin"] == "xfce"
-    assert backend.get_object("entSettingsPlugin").get_text() == "xfce"
-    assert backend.get_object("entSettingsAlign").get_text() == "center,center"
-    assert backend.get_object("entSettingsValign").get_text() == "center,center"
-    assert backend.get_object("radSettingsApplyPerMonitor").get_active() is True
-    assert backend.get_object("lblSettingsState").text == "Settings: loaded"
+    backend.get_object("lblSettingsState").set_text("Settings: current values")
 
     backend.get_object("entSettingsPlugin").set_text("saved-plugin")
 
@@ -1882,54 +1877,13 @@ def test_runtime_backend_settings_apply_load_save_and_close_dispatch_handlers(tm
     assert observed["save"][1]["plugin"] == "saved-plugin"
     assert observed["save"][1]["watch_interval_seconds"] == 60
     assert observed["save"][1]["watch_srcdir_l"] == "/watch/left"
-    assert backend.get_object("lblSettingsState").text == "Settings: saved"
+    assert backend.get_object("lblSettingsState").text == "Settings: current values"
+    assert backend.get_object("lblSettingsNotice").text == "Settings: saved"
 
-    backend.get_object("btnSettingsClose").click()
+    backend.get_object("btnSettingsCancel").click()
     assert observed["close"] == 1
     assert dialog.is_visible() is False
-    assert backend.get_object("lblSettingsState").text == "Settings: closed"
-
-
-def test_runtime_backend_prefs_load_updates_watch_tab_state(tmp_path):
-    backend = GtkRuntimeSignalBackend(_FakeGtk)
-    window = MainWindow()
-    import_path = tmp_path / "watch-prefs.json"
-    import_path.write_text(
-        """
-{
-    "margins": "5,15,25,35",
-    "align": ["right", "center"],
-    "valign": ["center", "top"],
-  "plugin": "linux",
-  "apply_mode": "per-monitor-auto-split",
-  "watch_interval_seconds": 45,
-  "watch_srcdir_l": "/watch/left",
-  "watch_srcdir_r": "/watch/right"
-}
-""".strip(),
-        encoding="utf-8",
-    )
-
-    dispatch = create_mainwindow_signal_dispatch(
-        window,
-        (
-            "on_open_settings_dialog",
-            "on_get_settings_config",
-            "on_load_settings_file",
-            "on_close_settings_dialog",
-        ),
-    )
-    backend.connect_signals(dispatch)
-
-    backend.get_object("btnSettings").click()
-    backend.get_object("entSettingsImportPath").set_text(str(import_path))
-    backend.get_object("btnSettingsLoad").click()
-
-    assert backend.get_object("lblWatchSources").text == "Watch srcdirs: L=/watch/left | R=/watch/right"
-    assert backend.get_object("spnInterval").get_value_as_int() == 45
-    assert backend.get_object("lblCurrentMargins").text == "margins=5,15,25,35"
-    assert backend.get_object("lblCurrentStateL").text == "L: align=right valign=center"
-    assert backend.get_object("lblCurrentStateR").text == "R: align=center valign=top"
+    assert backend.get_object("lblSettingsNotice").text == ""
 
 
 def test_runtime_backend_settings_preserves_explicit_apply_mode_when_unedited(tmp_path):
@@ -1937,7 +1891,6 @@ def test_runtime_backend_settings_preserves_explicit_apply_mode_when_unedited(tm
     dialog = backend.get_object("SettingsDialog")
     observed = {"apply": None, "save": None}
 
-    import_path = tmp_path / "explicit-load.json"
     export_path = tmp_path / "explicit-save.json"
     dialog.set_preferences_config(
         {
@@ -1945,29 +1898,27 @@ def test_runtime_backend_settings_preserves_explicit_apply_mode_when_unedited(tm
             "apply_mode": "per-monitor-explicit",
         }
     )
-    dialog.set_import_path(str(import_path))
     dialog.set_export_path(str(export_path))
     dialog.show()
 
     backend.connect_signals(
         {
+            "on_open_settings_dialog": lambda: True,
             "on_apply_settings": lambda config: observed.__setitem__("apply", config) or True,
-            "on_load_settings_file": lambda path: True,
             "on_save_settings_file": lambda path, config=None: observed.__setitem__("save", (path, config)) or True,
             "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
         }
     )
 
-    backend.get_object("btnSettingsLoad").click()
+    backend.get_object("btnSettings").click()
 
     assert backend.get_object("radSettingsApplySingle").get_active() is False
     assert backend.get_object("radSettingsApplyPerMonitor").get_active() is False
 
-    backend.get_object("btnSettingsApply").click()
+    backend.get_object("btnSettingsOk").click()
     assert observed["apply"]["apply_mode"] == "per-monitor-explicit"
 
     dialog.show()
-    backend.get_object("entSettingsExportPath").set_text(str(export_path))
     backend.get_object("btnSettingsSave").click()
     assert observed["save"][0] == str(export_path)
     assert observed["save"][1]["apply_mode"] == "per-monitor-explicit"
@@ -1978,27 +1929,24 @@ def test_runtime_backend_settings_can_override_preserved_explicit_apply_mode(tmp
     dialog = backend.get_object("SettingsDialog")
     observed = {"apply": None}
 
-    import_path = tmp_path / "explicit-load.json"
     dialog.set_preferences_config(
         {
             "plugin": "linux",
             "apply_mode": "per-monitor-explicit",
         }
     )
-    dialog.set_import_path(str(import_path))
     dialog.show()
 
     backend.connect_signals(
         {
+            "on_open_settings_dialog": lambda: True,
             "on_apply_settings": lambda config: observed.__setitem__("apply", config) or True,
-            "on_load_settings_file": lambda path: True,
             "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
         }
     )
-
-    backend.get_object("btnSettingsLoad").click()
+    backend.get_object("btnSettings").click()
     backend.get_object("radSettingsApplyPerMonitor").click()
-    backend.get_object("btnSettingsApply").click()
+    backend.get_object("btnSettingsOk").click()
 
     assert observed["apply"]["apply_mode"] == "per-monitor-auto-split"
 

@@ -1,8 +1,17 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 import json
+import sys
+
+
+def resolve_default_settings_path() -> Path:
+    if sys.platform.startswith("linux"):
+        config_home = Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"))
+        return config_home / "harite" / "harite-preferences.json"
+    return Path.home() / "harite-preferences.json"
 
 
 def load_config(path: Path) -> dict[str, Any]:
