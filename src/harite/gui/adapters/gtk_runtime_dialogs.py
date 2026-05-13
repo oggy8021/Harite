@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Callable
 
+from harite.config import resolve_default_settings_path
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color
 
 
@@ -402,7 +403,7 @@ class SettingsDialogProxy:
         self._visible = False
         self._window = window
         self._preferences_config: dict[str, object] = {}
-        default_path = str(Path.home() / "harite-preferences.json")
+        default_path = str(resolve_default_settings_path())
         self._import_path = default_path
         self._export_path = default_path
 

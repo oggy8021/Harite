@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
+from harite.config import resolve_default_settings_path
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color
 from harite.positioning import format_position_pair, parse_position_pair
 
@@ -68,11 +68,9 @@ def on_preferences_apply_mode_toggled(backend: Any, widget: Any, mode: str) -> N
 
 
 def build_settings_open_notice(backend: Any) -> str:
-    export_path = backend._read_entry_text("entSettingsExportPath")
-    if not export_path:
-        return "現在は未保存です"
+    export_path = resolve_default_settings_path()
     try:
-        if Path(export_path).expanduser().exists():
+        if export_path.exists():
             return ""
     except Exception:
         pass
@@ -99,8 +97,6 @@ def sync_preferences_widgets_from_dialog(backend: Any) -> dict[str, object]:
     backend._set_spin_value("spnSettingsMarginTextMaxLines", int(config.get("embed_max_lines", 3)))
     backend._set_entry_text("entSettingsPlugin", config.get("plugin", "windows"))
     set_preferences_apply_mode(backend, config.get("apply_mode", "single-file"))
-    if hasattr(dialog, "get_export_path"):
-        backend._set_entry_text("entSettingsExportPath", dialog.get_export_path())
     return config
 
 
@@ -132,13 +128,9 @@ def sync_preferences_dialog_from_widgets(backend: Any) -> dict[str, object]:
             "apply_mode": read_preferences_apply_mode(backend),
         }
     )
-
-    export_path = backend._read_entry_text("entSettingsExportPath")
     if dialog is not None:
         if hasattr(dialog, "set_preferences_config"):
             dialog.set_preferences_config(config)
-        if hasattr(dialog, "set_export_path"):
-            dialog.set_export_path(export_path)
     return config
 
 

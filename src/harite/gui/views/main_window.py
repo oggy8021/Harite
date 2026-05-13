@@ -19,7 +19,7 @@ from harite.core import is_background_color_literal
 from harite.core import normalize_background_color
 from harite.core import resolve_embed_margin_region as resolve_margin_text_region
 from harite.apply_settings import resolve_apply_settings
-from harite.config import load_config, save_config
+from harite.config import load_config, resolve_default_settings_path, save_config
 from harite.display_context import build_two_screen_optimize_context
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
 from harite.gui.views.main_window_preview import build_optimize_cli_preview
@@ -747,7 +747,7 @@ class MainWindow:
         return True
 
     def on_get_settings_config(self) -> dict[str, object]:
-        return self.export_settings_config()
+        return self._build_settings_dialog_config()
 
     def on_apply_settings(self, settings: AppPreferences | dict[str, object]) -> bool:
         settings_value = settings
@@ -818,8 +818,25 @@ class MainWindow:
         self.preferences.optimize.r_display = self.form_state.r_display
         return self.preferences.to_config_dict()
 
+    def _build_settings_dialog_config(self) -> dict[str, object]:
+        config = self.export_settings_config()
+        if not (self.input_path_l and self.input_path_r):
+            return config
+
+        context = build_two_screen_optimize_context()
+        if context is None:
+            return config
+
+        config["resolution"] = f"{context.resolution[0]}x{context.resolution[1]}"
+        config["l_display"] = f"{context.l_display[0]}x{context.l_display[1]}"
+        config["r_display"] = f"{context.r_display[0]}x{context.r_display[1]}"
+        return config
+
     def load_settings_config(self, config: dict[str, object]) -> bool:
         return self.on_apply_settings(AppPreferences.from_config_dict(config, default_plugin=self.plugin_name))
+
+    def _resolve_settings_file_path(self) -> Path:
+        return resolve_default_settings_path()
 
     def on_save_settings_file(
         self,
@@ -827,36 +844,30 @@ class MainWindow:
         config: dict[str, object] | None = None,
     ) -> bool:
         value = (path or "").strip()
-        if not value:
-            self._set_status("error", "settings", "settings path is required", error="settings path is required")
-            self._log("Settings save failed: path is required")
-            return False
+        target_path = Path(value) if value else self._resolve_settings_file_path()
         try:
-            payload = config if config is not None else self.export_settings_config()
-            save_config(Path(value), payload)
+            payload = config if config is not None else self._build_settings_dialog_config()
+            save_config(target_path, payload)
         except Exception as exc:
             self._set_status("error", "settings", "settings save failed", error=str(exc))
             self._log(f"Settings save failed: {exc}")
             return False
         self._set_status("success", "settings", "settings saved")
-        self._log(f"Settings saved: {value}")
+        self._log(f"Settings saved: {target_path}")
         return True
 
     def on_load_settings_file(self, path: str | None = None) -> bool:
         value = (path or "").strip()
-        if not value:
-            self._set_status("error", "settings", "settings path is required", error="settings path is required")
-            self._log("Settings load failed: path is required")
-            return False
+        target_path = Path(value) if value else self._resolve_settings_file_path()
         try:
-            config = load_config(Path(value))
+            config = load_config(target_path)
         except Exception as exc:
             self._set_status("error", "settings", "settings load failed", error=str(exc))
             self._log(f"Settings load failed: {exc}")
             return False
         ok = self.load_settings_config(config)
         if ok:
-            self._log(f"Settings loaded: {value}")
+            self._log(f"Settings loaded: {target_path}")
         return ok
 
     def on_clear_input(self, side: str | None = None) -> bool:

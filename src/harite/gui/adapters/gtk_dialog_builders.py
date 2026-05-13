@@ -12,7 +12,7 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
     if hasattr(prefs_window, "set_resizable"):
         prefs_window.set_resizable(True)
 
-    prefs_save_btn = gtk_module.Button(label="Settings Save")
+    prefs_save_btn = gtk_module.Button(label="Save")
     prefs_ok_btn = gtk_module.Button(label="OK")
     prefs_cancel_btn = gtk_module.Button(label="Cancel")
     prefs_state_label = gtk_module.Label(label="Settings: current values")
@@ -70,8 +70,6 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
     prefs_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(prefs_apply_single, "Apply Auto-split")
     if hasattr(prefs_apply_single, "set_active"):
         prefs_apply_single.set_active(True)
-    prefs_export_path_entry = gtk_module.Entry()
-
     prefs_apply_mode_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
     prefs_apply_mode_shell.pack_start(prefs_apply_single, False, False, 0)
     prefs_apply_mode_shell.pack_start(prefs_apply_per_monitor, False, False, 0)
@@ -80,7 +78,6 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
     _prefs_row("Scaling", prefs_scaling_entry)
     _prefs_row("Plugin", prefs_plugin_entry)
     _prefs_row("Apply", prefs_apply_mode_shell)
-    _prefs_row("Export path", prefs_export_path_entry)
 
     prefs_actions = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
     prefs_actions.pack_start(prefs_cancel_btn, False, False, 0)
@@ -127,7 +124,7 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
         "prefs_apply_single": prefs_apply_single,
         "prefs_apply_per_monitor": prefs_apply_per_monitor,
         "prefs_import_path_entry": None,
-        "prefs_export_path_entry": prefs_export_path_entry,
+        "prefs_export_path_entry": None,
     }
 
 

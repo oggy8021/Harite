@@ -1788,12 +1788,14 @@ def test_runtime_backend_cross_layout_places_top_and_bottom_per_side():
     ]
 
 
-def test_runtime_backend_settings_button_dispatches_open_handler(tmp_path):
+def test_runtime_backend_settings_button_dispatches_open_handler(monkeypatch, tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     observed = {"opened": 0}
     export_path = tmp_path / "settings-not-saved-yet.json"
-
-    backend.get_object("SettingsDialog").set_export_path(str(export_path))
+    monkeypatch.setattr(
+        "harite.gui.adapters.gtk_runtime_settings_dialogs.resolve_default_settings_path",
+        lambda: export_path,
+    )
 
     backend.connect_signals(
         {
@@ -1846,7 +1848,6 @@ def test_runtime_backend_settings_ok_save_and_cancel_dispatch_handlers(tmp_path)
 
     backend.get_object("entSettingsResolution").set_text("auto")
     backend.get_object("entSettingsPlugin").set_text("xfce")
-    backend.get_object("entSettingsExportPath").set_text(str(export_path))
     backend.get_object("radSettingsTwoScreenAuto").set_active(True)
     backend.get_object("radSettingsTwoScreenOn").set_active(False)
     backend.get_object("radSettingsTwoScreenOff").set_active(False)
@@ -1918,7 +1919,6 @@ def test_runtime_backend_settings_preserves_explicit_apply_mode_when_unedited(tm
     assert observed["apply"]["apply_mode"] == "per-monitor-explicit"
 
     dialog.show()
-    backend.get_object("entSettingsExportPath").set_text(str(export_path))
     backend.get_object("btnSettingsSave").click()
     assert observed["save"][0] == str(export_path)
     assert observed["save"][1]["apply_mode"] == "per-monitor-explicit"

@@ -128,6 +128,7 @@
 
 - action row の上側に、編集中の current state を読むための state row を置く余地を持つ。
 - action row の近傍には `OK / Cancel` のみを置き、本文右上部に永続化専用の `Save` を置く。
+- 設定ファイルの保存先は利用者に選ばせず、一意に決まる既定パスを使う。少なくとも Linux では XDG 規約に沿う固定パスを前提にする。
 - action row の下側には、短命 corrective error や file operation の失敗を出す notice 専用最下段 row を置く。
 - 設定ファイルがまだ存在しない間は、notice row に「現在は未保存です」を出し、`OK` では自動生成しないことを利用者へ明示する。
 - `Save` / `Apply` / `OK` のような成否を Main Window へ往復させるのではなく、まず Settings dialog 内で閉じる。

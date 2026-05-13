@@ -654,6 +654,31 @@ def test_export_and_reload_settings_config_round_trips():
     assert other.watch_srcdir_r == "/watch/right"
 
 
+def test_on_get_settings_config_expands_current_detected_display_values(monkeypatch):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="L", width=1920, height=1080, x_offset=0),
+                Display(name="R", width=1280, height=1024, x_offset=1920),
+            ),
+            resolution=(3200, 1080),
+            l_display=(1920, 1080),
+            r_display=(1280, 1024),
+        ),
+    )
+
+    window = MainWindow()
+    window.input_path_l = "left.jpg"
+    window.input_path_r = "right.jpg"
+
+    config = window.on_get_settings_config()
+
+    assert config["resolution"] == "3200x1080"
+    assert config["l_display"] == "1920x1080"
+    assert config["r_display"] == "1280x1024"
+
+
 def test_settings_file_save_and_load_round_trip(tmp_path):
     window = MainWindow()
     window.form_state.resolution = "auto"
@@ -686,16 +711,16 @@ def test_settings_file_save_and_load_round_trip(tmp_path):
     assert other.watch_srcdir_r == "/watch/right"
 
 
-def test_settings_file_handlers_require_path():
+def test_settings_file_handlers_use_default_fixed_path_when_path_is_empty(monkeypatch, tmp_path):
     window = MainWindow()
+    target = tmp_path / "xdg-config" / "harite" / "harite-preferences.json"
+    monkeypatch.setattr("harite.gui.views.main_window.resolve_default_settings_path", lambda: target)
 
-    assert window.on_save_settings_file("") is False
-    assert window.status_phase == "settings"
-    assert window.last_error == "settings path is required"
+    assert window.on_save_settings_file("") is True
+    assert target.exists() is True
 
-    assert window.on_load_settings_file("") is False
+    assert window.on_load_settings_file("") is True
     assert window.status_phase == "settings"
-    assert window.last_error == "settings path is required"
 
 
 def test_settings_file_save_accepts_explicit_dialog_config(tmp_path):
