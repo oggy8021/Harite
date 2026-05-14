@@ -31,3 +31,6 @@ harite-xfce-logs/*
 *.tar.gz
 .pr-flow-test
 .pr-flow-test/*
+
+# phase10-mock
+docs/specs/gui/mock-assets/*
