@@ -154,7 +154,8 @@
 3. Phase10 の GUI 起動導線メモ: [docs/specs/gui/gui-phase10-1st-planning.md](docs/specs/gui/gui-phase10-1st-planning.md)
 4. Phase10 の visual aid 方針メモ: [docs/specs/gui/gui-phase10-2nd-planning.md](docs/specs/gui/gui-phase10-2nd-planning.md)
 5. Phase10 の settings semantics メモ: [docs/specs/gui/gui-phase10-3rd-planning.md](docs/specs/gui/gui-phase10-3rd-planning.md)
-6. Phase11 の OS integration 方式比較メモ
+6. Phase10 の icon 導入メモ: [docs/specs/gui/gui-phase10-4th-planning.md](docs/specs/gui/gui-phase10-4th-planning.md)
+7. Phase11 の OS integration 方式比較メモ
 
 ## 判断メモ
 
