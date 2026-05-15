@@ -14,7 +14,6 @@ def build_action_cluster_section(gtk_module: Any, compose_grid: Any, *, default_
 
     optimize_section_label = gtk_module.Label(label="Optimize")
     set_xalign_if_supported(optimize_section_label)
-    optimize_group.pack_start(optimize_section_label, False, False, 0)
 
     optimize_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
     optimize_group.pack_start(optimize_row, False, False, 0)
@@ -29,7 +28,6 @@ def build_action_cluster_section(gtk_module: Any, compose_grid: Any, *, default_
 
     apply_section_label = gtk_module.Label(label="Apply")
     set_xalign_if_supported(apply_section_label)
-    apply_group.pack_start(apply_section_label, False, False, 0)
 
     apply_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
     apply_group.pack_start(apply_row, False, False, 0)
@@ -203,13 +201,14 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     if hasattr(compose_grid, "attach"):
         compose_grid.attach(left_display_grid, 0, 0, 1, 1)
 
-    input_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+    input_row_l = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     input_entry_l = gtk_module.Label(label="")
     set_xalign_if_supported(input_entry_l)
     btn_clr_path_l = gtk_module.Button(label="Clear-L")
     set_button_icon_if_supported(gtk_module, btn_clr_path_l, "icons", "lucide", "folder-x.svg")
-    input_row_l.pack_start(input_entry_l, True, True, 0)
-    input_row_l.pack_start(btn_clr_path_l, False, False, 0)
+    input_row_l.pack_start(input_entry_l, False, False, 0)
+    if hasattr(left_display_grid, "attach"):
+        left_display_grid.attach(btn_clr_path_l, 1, 3, 1, 1)
     if hasattr(compose_grid, "attach"):
         compose_grid.attach(input_row_l, 0, 1, 1, 1)
 
@@ -223,13 +222,14 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     if hasattr(compose_grid, "attach"):
         compose_grid.attach(right_display_grid, 1, 0, 1, 1)
 
-    input_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+    input_row_r = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     input_entry_r = gtk_module.Label(label="")
     set_xalign_if_supported(input_entry_r)
     btn_clr_path_r = gtk_module.Button(label="Clear-R")
     set_button_icon_if_supported(gtk_module, btn_clr_path_r, "icons", "lucide", "folder-x.svg")
-    input_row_r.pack_start(input_entry_r, True, True, 0)
-    input_row_r.pack_start(btn_clr_path_r, False, False, 0)
+    input_row_r.pack_start(input_entry_r, False, False, 0)
+    if hasattr(right_display_grid, "attach"):
+        right_display_grid.attach(btn_clr_path_r, 1, 3, 1, 1)
     if hasattr(compose_grid, "attach"):
         compose_grid.attach(input_row_r, 1, 1, 1, 1)
 
