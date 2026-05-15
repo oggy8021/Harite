@@ -386,14 +386,28 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
         watch_srcdir_row.set_hexpand(True)
     watch_tab_box.pack_start(watch_srcdir_row, False, False, 0)
 
+    left_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+    right_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(left_source_block, gtk_module.Align.CENTER)
+        set_halign_if_supported(right_source_block, gtk_module.Align.CENTER)
+
     btn_open_srcdir_l = gtk_module.Button(label="Srcdir-L")
     btn_open_srcdir_r = gtk_module.Button(label="Srcdir-R")
     set_button_icon_if_supported(gtk_module, btn_open_srcdir_l, "icons", "lucide", "folder-open.svg")
     set_button_icon_if_supported(gtk_module, btn_open_srcdir_r, "icons", "lucide", "folder-open.svg")
-    watch_srcdir_row.pack_start(btn_open_srcdir_l, False, False, 0)
+    watch_source_label_l = gtk_module.Label(label="L: -")
+    watch_source_label_r = gtk_module.Label(label="R: -")
+    set_xalign_if_supported(watch_source_label_l, 0.5)
+    set_xalign_if_supported(watch_source_label_r, 0.5)
+    left_source_block.pack_start(btn_open_srcdir_l, False, False, 0)
+    left_source_block.pack_start(watch_source_label_l, False, False, 0)
+    right_source_block.pack_start(btn_open_srcdir_r, False, False, 0)
+    right_source_block.pack_start(watch_source_label_r, False, False, 0)
+    watch_srcdir_row.pack_start(left_source_block, False, False, 0)
     watch_srcdir_middle_spacer = gtk_module.Label(label="")
     watch_srcdir_row.pack_start(watch_srcdir_middle_spacer, True, True, 0)
-    watch_srcdir_row.pack_start(btn_open_srcdir_r, False, False, 0)
+    watch_srcdir_row.pack_start(right_source_block, False, False, 0)
 
     watch_controls_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=10)
     if hasattr(gtk_module, "Align"):
@@ -416,9 +430,6 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(watch_detail_row, gtk_module.Align.CENTER)
     watch_tab_box.pack_start(watch_detail_row, False, False, 0)
-    watch_sources_label = gtk_module.Label(label="Watch srcdirs: L=- | R=-")
-    set_xalign_if_supported(watch_sources_label)
-    watch_detail_row.pack_start(watch_sources_label, False, False, 0)
     watch_current_label = gtk_module.Label(label="Watch current: idle")
     set_xalign_if_supported(watch_current_label)
     watch_detail_row.pack_start(watch_current_label, False, False, 0)
@@ -432,13 +443,16 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
         "watch_tab_title": watch_tab_title,
         "watch_controls_row": watch_controls_row,
         "watch_detail_row": watch_detail_row,
+        "left_source_block": left_source_block,
+        "right_source_block": right_source_block,
         "btn_open_srcdir_l": btn_open_srcdir_l,
         "btn_open_srcdir_r": btn_open_srcdir_r,
+        "watch_source_label_l": watch_source_label_l,
+        "watch_source_label_r": watch_source_label_r,
         "interval_spin": interval_spin,
         "interval_label": interval_label,
         "btn_daemonize": btn_daemonize,
         "btn_cancel_daemonize": btn_cancel_daemonize,
-        "watch_sources_label": watch_sources_label,
         "watch_current_label": watch_current_label,
         "watch_output_label": watch_output_label,
     }
@@ -641,7 +655,7 @@ def build_margins_tab_section(
     margin_position_label = gtk_module.Label(label="Position:")
     set_xalign_if_supported(margin_position_label)
     margin_position_shell.pack_start(margin_position_label, False, False, 0)
-    margin_position_columns_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=56)
+    margin_position_columns_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=168)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(margin_position_columns_row, gtk_module.Align.CENTER)
     margin_position_left_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
