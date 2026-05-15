@@ -468,8 +468,12 @@ def build_margins_tab_section(
 
     margins_layout_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
     if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(margins_layout_col, gtk_module.Align.CENTER)
-    margins_tab_box.pack_start(margins_layout_col, False, False, 0)
+        set_halign_if_supported(margins_layout_col, gtk_module.Align.FILL)
+    if hasattr(margins_layout_col, "set_hexpand"):
+        margins_layout_col.set_hexpand(True)
+    if hasattr(margins_layout_col, "set_vexpand"):
+        margins_layout_col.set_vexpand(True)
+    margins_tab_box.pack_start(margins_layout_col, True, True, 0)
 
     current_state_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     current_state_box.pack_start(current_state_section_label, False, False, 0)
@@ -660,28 +664,31 @@ def build_margins_tab_section(
     if hasattr(margins_cross_grid, "set_row_spacing"):
         margins_cross_grid.set_row_spacing(12)
     if hasattr(margins_cross_grid, "set_column_homogeneous"):
-        margins_cross_grid.set_column_homogeneous(True)
+        margins_cross_grid.set_column_homogeneous(False)
     if hasattr(margins_cross_grid, "set_row_homogeneous"):
-        margins_cross_grid.set_row_homogeneous(True)
+        margins_cross_grid.set_row_homogeneous(False)
     if hasattr(margins_cross_grid, "set_hexpand"):
         margins_cross_grid.set_hexpand(True)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(margins_cross_grid, gtk_module.Align.FILL)
         set_halign_if_supported(left_margin_box, gtk_module.Align.CENTER)
-        set_halign_if_supported(center_stack, gtk_module.Align.CENTER)
+        set_halign_if_supported(center_stack, gtk_module.Align.FILL)
         set_halign_if_supported(right_margin_box, gtk_module.Align.CENTER)
-
-    center_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=10)
-    if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(center_margin_shell, gtk_module.Align.CENTER)
-    center_margin_shell.pack_start(top_margin_shell, False, False, 0)
-    center_margin_shell.pack_start(center_stack, False, False, 0)
-    center_margin_shell.pack_start(bottom_margin_shell, False, False, 0)
+        set_halign_if_supported(top_margin_shell, gtk_module.Align.CENTER)
+        set_halign_if_supported(bottom_margin_shell, gtk_module.Align.CENTER)
+    if hasattr(margins_cross_grid, "set_vexpand"):
+        margins_cross_grid.set_vexpand(True)
+    if hasattr(center_stack, "set_hexpand"):
+        center_stack.set_hexpand(True)
+    if hasattr(center_stack, "set_vexpand"):
+        center_stack.set_vexpand(True)
 
     if hasattr(margins_cross_grid, "attach"):
+        margins_cross_grid.attach(top_margin_shell, 1, 0, 1, 1)
         margins_cross_grid.attach(left_margin_box, 0, 1, 1, 1)
-        margins_cross_grid.attach(center_margin_shell, 1, 1, 1, 1)
+        margins_cross_grid.attach(center_stack, 1, 1, 1, 1)
         margins_cross_grid.attach(right_margin_box, 2, 1, 1, 1)
+        margins_cross_grid.attach(bottom_margin_shell, 1, 2, 1, 1)
 
     margins_layout_col.pack_start(margins_cross_grid, True, True, 0)
 
