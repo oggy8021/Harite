@@ -159,6 +159,10 @@ def _default_apply_mode() -> str:
     return "per-monitor-auto-split" if is_xfce_session else "single-file"
 
 
+def _debug_layout_enabled() -> bool:
+    return os.environ.get("HARITE_DEBUG_LAYOUT", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 class GtkRuntimeSignalBackend:
     """Minimal GTK runtime backend that does not require Glade parsing.
 
@@ -220,6 +224,7 @@ class GtkRuntimeSignalBackend:
             )
 
             self._assign_object_names()
+            self._maybe_enable_debug_layout_overlay(window)
             self._connect_runtime_widgets(
                 main_runtime=main_runtime,
                 dialog_runtime=dialog_runtime,
@@ -265,6 +270,43 @@ class GtkRuntimeSignalBackend:
         self._watch_previous_l: Path | None = None
         self._watch_previous_r: Path | None = None
         self._watch_timer_source_id: int | None = None
+
+    def _maybe_enable_debug_layout_overlay(self, window: Any) -> None:
+        if not _debug_layout_enabled():
+            return
+
+        css_provider_factory = getattr(self._gtk, "CssProvider", None)
+        style_context = getattr(self._gtk, "StyleContext", None)
+        if css_provider_factory is None or style_context is None:
+            return
+
+        css_provider = css_provider_factory()
+        css = b"""
+box {
+    border: 1px solid rgba(220, 60, 60, 0.45);
+}
+
+grid {
+    border: 1px solid rgba(60, 120, 220, 0.55);
+}
+
+notebook {
+    border: 1px solid rgba(60, 180, 120, 0.45);
+}
+"""
+        if hasattr(css_provider, "load_from_data"):
+            css_provider.load_from_data(css)
+        else:
+            return
+
+        priority = getattr(self._gtk, "STYLE_PROVIDER_PRIORITY_APPLICATION", 600)
+        screen = window.get_screen() if hasattr(window, "get_screen") else None
+        if screen is None and hasattr(self._gtk, "Gdk") and hasattr(self._gtk.Gdk, "Screen"):
+            screen = self._gtk.Gdk.Screen.get_default()
+        if screen is None or not hasattr(style_context, "add_provider_for_screen"):
+            return
+
+        style_context.add_provider_for_screen(screen, css_provider, priority)
 
     def _build_runtime_window(self, gtk_module: Any) -> Any:
         window = gtk_module.Window(title="Harite")
