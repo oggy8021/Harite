@@ -372,36 +372,16 @@ def build_primary_margin_controls(gtk_module: Any, *, configure_spin_button: Any
 
 
 def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> dict[str, Any]:
-    watch_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    watch_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=24)
     if hasattr(watch_tab_box, "set_border_width"):
-        watch_tab_box.set_border_width(0)
+        watch_tab_box.set_border_width(24)
     watch_label = gtk_module.Label(label="")
     watch_tab_title = gtk_module.Label(label="Watch (stopped)")
     set_xalign_if_supported(watch_tab_title)
-
-    watch_top_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    watch_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    watch_bottom_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    watch_left_outer_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    watch_right_outer_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     watch_main_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=16)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(watch_main_col, gtk_module.Align.CENTER)
-    if hasattr(watch_top_spacer, "set_vexpand"):
-        watch_top_spacer.set_vexpand(True)
-    if hasattr(watch_bottom_spacer, "set_vexpand"):
-        watch_bottom_spacer.set_vexpand(True)
-    if hasattr(watch_left_outer_spacer, "set_hexpand"):
-        watch_left_outer_spacer.set_hexpand(True)
-    if hasattr(watch_right_outer_spacer, "set_hexpand"):
-        watch_right_outer_spacer.set_hexpand(True)
-
-    watch_tab_box.pack_start(watch_top_spacer, True, True, 0)
-    watch_center_row.pack_start(watch_left_outer_spacer, True, True, 0)
-    watch_center_row.pack_start(watch_main_col, False, False, 0)
-    watch_center_row.pack_start(watch_right_outer_spacer, True, True, 0)
-    watch_tab_box.pack_start(watch_center_row, True, True, 0)
-    watch_tab_box.pack_start(watch_bottom_spacer, True, True, 0)
+    watch_tab_box.pack_start(watch_main_col, False, False, 0)
 
     watch_srcdir_row = gtk_module.Grid()
     if hasattr(gtk_module, "Align"):
