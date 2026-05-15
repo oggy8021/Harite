@@ -197,7 +197,8 @@ def _build_tab_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, Any]
         "lblInterval": widgets["interval_label"],
         "btnDaemonize": widgets["btn_daemonize"],
         "btnCancelDaemonize": widgets["btn_cancel_daemonize"],
-        "lblWatchSources": widgets["watch_sources_label"],
+        "lblWatchSourceL": widgets["watch_source_label_l"],
+        "lblWatchSourceR": widgets["watch_source_label_r"],
         "lblWatchCurrent": widgets["watch_current_label"],
         "lblWatchOutput": widgets["watch_output_label"],
     }

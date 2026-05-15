@@ -2,25 +2,30 @@ from __future__ import annotations
 
 from typing import Any
 
-from harite.gui.adapters.gtk_layout_builders import set_xalign_if_supported
+from harite.gui.adapters.gtk_layout_builders import (
+    set_button_icon_if_supported,
+    set_halign_if_supported,
+    set_xalign_if_supported,
+)
 
 
-def build_action_cluster_section(gtk_module: Any, compose_grid: Any, *, default_apply_mode: str) -> dict[str, Any]:
-    action_cluster_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=18)
+def build_action_cluster_section(gtk_module: Any, main_col: Any, *, default_apply_mode: str) -> dict[str, Any]:
+    action_cluster_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=24)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(action_cluster_row, gtk_module.Align.CENTER)
     optimize_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     apply_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-    if hasattr(compose_grid, "attach"):
-        compose_grid.attach(action_cluster_row, 0, 2, 2, 1)
+    main_col.pack_start(action_cluster_row, False, False, 0)
 
     optimize_section_label = gtk_module.Label(label="Optimize")
     set_xalign_if_supported(optimize_section_label)
-    optimize_group.pack_start(optimize_section_label, False, False, 0)
 
     optimize_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
     optimize_group.pack_start(optimize_row, False, False, 0)
     optimize_modern_btn = gtk_module.Button(label="Optimize")
     if hasattr(optimize_modern_btn, "set_sensitive"):
         optimize_modern_btn.set_sensitive(False)
+    set_button_icon_if_supported(gtk_module, optimize_modern_btn, "icons", "lucide", "image.svg")
     optimize_row.pack_start(optimize_modern_btn, False, False, 0)
     optimize_result = gtk_module.Label(label="Optimize result: not-run")
     set_xalign_if_supported(optimize_result)
@@ -28,13 +33,13 @@ def build_action_cluster_section(gtk_module: Any, compose_grid: Any, *, default_
 
     apply_section_label = gtk_module.Label(label="Apply")
     set_xalign_if_supported(apply_section_label)
-    apply_group.pack_start(apply_section_label, False, False, 0)
 
     apply_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
     apply_group.pack_start(apply_row, False, False, 0)
     apply_btn = gtk_module.Button(label="Apply")
     if hasattr(apply_btn, "set_sensitive"):
         apply_btn.set_sensitive(False)
+    set_button_icon_if_supported(gtk_module, apply_btn, "icons", "lucide", "wallpaper.svg")
     apply_row.pack_start(apply_btn, False, False, 0)
     apply_target = gtk_module.Label(label="Apply target: not-ready")
     set_xalign_if_supported(apply_target)
@@ -62,9 +67,6 @@ def build_action_cluster_section(gtk_module: Any, compose_grid: Any, *, default_
 
     preview_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     action_cluster_row.pack_start(preview_group, False, False, 0)
-
-    action_cluster_spacer = gtk_module.Label(label="")
-    action_cluster_row.pack_start(action_cluster_spacer, True, True, 0)
     action_cluster_row.pack_start(optimize_group, False, False, 0)
     action_cluster_row.pack_start(apply_group, False, False, 0)
 
@@ -152,14 +154,29 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     main_section_label = gtk_module.Label(label="Main")
 
     compose_grid = gtk_module.Grid()
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(compose_grid, gtk_module.Align.CENTER)
     if hasattr(compose_grid, "set_column_spacing"):
-        compose_grid.set_column_spacing(32)
+        compose_grid.set_column_spacing(24)
     if hasattr(compose_grid, "set_row_spacing"):
         compose_grid.set_row_spacing(12)
-    main_col.pack_start(compose_grid, True, True, 0)
+    if hasattr(compose_grid, "set_column_homogeneous"):
+        compose_grid.set_column_homogeneous(True)
+    main_col.pack_start(compose_grid, False, False, 0)
 
     left_display_grid = gtk_module.Grid()
     right_display_grid = gtk_module.Grid()
+    left_panel = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
+    center_panel = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
+    right_panel = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(left_panel, gtk_module.Align.FILL)
+        set_halign_if_supported(center_panel, gtk_module.Align.CENTER)
+        set_halign_if_supported(right_panel, gtk_module.Align.FILL)
+    if hasattr(left_panel, "set_hexpand"):
+        left_panel.set_hexpand(True)
+    if hasattr(right_panel, "set_hexpand"):
+        right_panel.set_hexpand(True)
     if hasattr(left_display_grid, "set_column_spacing"):
         left_display_grid.set_column_spacing(6)
     if hasattr(left_display_grid, "set_row_spacing"):
@@ -180,6 +197,17 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     tgl_push_right_r = gtk_module.ToggleButton(label="Right-R")
     btn_get_img_r = gtk_module.Button(label="Open-R")
 
+    set_button_icon_if_supported(gtk_module, tgl_upper_l, "icons", "lucide", "arrow-up.svg")
+    set_button_icon_if_supported(gtk_module, tgl_upper_r, "icons", "lucide", "arrow-up.svg")
+    set_button_icon_if_supported(gtk_module, tgl_lower_l, "icons", "lucide", "arrow-down.svg")
+    set_button_icon_if_supported(gtk_module, tgl_lower_r, "icons", "lucide", "arrow-down.svg")
+    set_button_icon_if_supported(gtk_module, tgl_push_left_l, "icons", "lucide", "arrow-left.svg")
+    set_button_icon_if_supported(gtk_module, tgl_push_right_l, "icons", "lucide", "arrow-right.svg")
+    set_button_icon_if_supported(gtk_module, btn_get_img_l, "icons", "lucide", "folder-open.svg")
+    set_button_icon_if_supported(gtk_module, tgl_push_left_r, "icons", "lucide", "arrow-left.svg")
+    set_button_icon_if_supported(gtk_module, tgl_push_right_r, "icons", "lucide", "arrow-right.svg")
+    set_button_icon_if_supported(gtk_module, btn_get_img_r, "icons", "lucide", "folder-open.svg")
+
     if hasattr(left_display_grid, "attach"):
         left_display_grid.attach(tgl_upper_l, 1, 0, 1, 1)
         left_display_grid.attach(tgl_push_left_l, 0, 1, 1, 1)
@@ -187,17 +215,31 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
         left_display_grid.attach(tgl_push_right_l, 2, 1, 1, 1)
         left_display_grid.attach(tgl_lower_l, 1, 2, 1, 1)
 
-    if hasattr(compose_grid, "attach"):
-        compose_grid.attach(left_display_grid, 0, 0, 1, 1)
-
-    input_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+    input_row_l = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(input_row_l, gtk_module.Align.FILL)
+    if hasattr(input_row_l, "set_hexpand"):
+        input_row_l.set_hexpand(True)
     input_entry_l = gtk_module.Label(label="")
-    set_xalign_if_supported(input_entry_l)
+    set_xalign_if_supported(input_entry_l, 0.5)
     btn_clr_path_l = gtk_module.Button(label="Clear-L")
-    input_row_l.pack_start(input_entry_l, True, True, 0)
-    input_row_l.pack_start(btn_clr_path_l, False, False, 0)
-    if hasattr(compose_grid, "attach"):
-        compose_grid.attach(input_row_l, 0, 1, 1, 1)
+    set_button_icon_if_supported(gtk_module, btn_clr_path_l, "icons", "lucide", "folder-x.svg")
+    input_path_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(input_path_row_l, gtk_module.Align.CENTER)
+    if hasattr(input_path_row_l, "set_hexpand"):
+        input_path_row_l.set_hexpand(True)
+    input_path_row_l.pack_start(input_entry_l, False, False, 0)
+    clear_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(clear_row_l, gtk_module.Align.END)
+    if hasattr(clear_row_l, "set_hexpand"):
+        clear_row_l.set_hexpand(True)
+    clear_row_l.pack_start(btn_clr_path_l, False, False, 0)
+    input_row_l.pack_start(input_path_row_l, False, False, 0)
+    input_row_l.pack_start(clear_row_l, False, False, 0)
+    left_panel.pack_start(left_display_grid, False, False, 0)
+    left_panel.pack_start(input_row_l, False, False, 0)
 
     if hasattr(right_display_grid, "attach"):
         right_display_grid.attach(tgl_upper_r, 1, 0, 1, 1)
@@ -206,20 +248,40 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
         right_display_grid.attach(tgl_push_right_r, 2, 1, 1, 1)
         right_display_grid.attach(tgl_lower_r, 1, 2, 1, 1)
 
-    if hasattr(compose_grid, "attach"):
-        compose_grid.attach(right_display_grid, 1, 0, 1, 1)
-
-    input_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+    input_row_r = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(input_row_r, gtk_module.Align.FILL)
+    if hasattr(input_row_r, "set_hexpand"):
+        input_row_r.set_hexpand(True)
     input_entry_r = gtk_module.Label(label="")
-    set_xalign_if_supported(input_entry_r)
+    set_xalign_if_supported(input_entry_r, 0.5)
     btn_clr_path_r = gtk_module.Button(label="Clear-R")
-    input_row_r.pack_start(input_entry_r, True, True, 0)
-    input_row_r.pack_start(btn_clr_path_r, False, False, 0)
-    if hasattr(compose_grid, "attach"):
-        compose_grid.attach(input_row_r, 1, 1, 1, 1)
+    set_button_icon_if_supported(gtk_module, btn_clr_path_r, "icons", "lucide", "folder-x.svg")
+    input_path_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(input_path_row_r, gtk_module.Align.CENTER)
+    if hasattr(input_path_row_r, "set_hexpand"):
+        input_path_row_r.set_hexpand(True)
+    input_path_row_r.pack_start(input_entry_r, False, False, 0)
+    clear_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(clear_row_r, gtk_module.Align.END)
+    if hasattr(clear_row_r, "set_hexpand"):
+        clear_row_r.set_hexpand(True)
+    clear_row_r.pack_start(btn_clr_path_r, False, False, 0)
+    input_row_r.pack_start(input_path_row_r, False, False, 0)
+    input_row_r.pack_start(clear_row_r, False, False, 0)
+    right_panel.pack_start(right_display_grid, False, False, 0)
+    right_panel.pack_start(input_row_r, False, False, 0)
 
     pick_state_label = gtk_module.Label(label="")
-    set_xalign_if_supported(pick_state_label)
+    set_xalign_if_supported(pick_state_label, 0.5)
+    center_panel.pack_start(pick_state_label, False, False, 0)
+
+    if hasattr(compose_grid, "attach"):
+        compose_grid.attach(left_panel, 0, 0, 1, 1)
+        compose_grid.attach(center_panel, 1, 0, 1, 1)
+        compose_grid.attach(right_panel, 2, 0, 1, 1)
 
     return {
         "main_col": main_col,
@@ -310,56 +372,115 @@ def build_primary_margin_controls(gtk_module: Any, *, configure_spin_button: Any
 
 
 def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> dict[str, Any]:
-    watch_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=16)
-    watch_label = gtk_module.Label(label="Watch")
-    set_xalign_if_supported(watch_label)
+    watch_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(watch_tab_box, "set_border_width"):
+        watch_tab_box.set_border_width(0)
+    watch_label = gtk_module.Label(label="")
     watch_tab_title = gtk_module.Label(label="Watch (stopped)")
     set_xalign_if_supported(watch_tab_title)
-    watch_tab_box.pack_start(watch_label, False, False, 0)
+    watch_top_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    watch_srcdir_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    watch_between_srcdir_and_controls = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    watch_controls_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    watch_between_controls_and_detail = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    watch_detail_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    watch_bottom_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(watch_top_row, "set_size_request"):
+        watch_top_row.set_size_request(-1, 16)
+    if hasattr(watch_between_srcdir_and_controls, "set_size_request"):
+        watch_between_srcdir_and_controls.set_size_request(-1, 54)
+    if hasattr(watch_between_controls_and_detail, "set_size_request"):
+        watch_between_controls_and_detail.set_size_request(-1, 54)
+    if hasattr(watch_bottom_row, "set_size_request"):
+        watch_bottom_row.set_size_request(-1, 16)
+    if hasattr(watch_top_row, "set_vexpand"):
+        watch_top_row.set_vexpand(True)
+    if hasattr(watch_bottom_row, "set_vexpand"):
+        watch_bottom_row.set_vexpand(True)
+    watch_tab_box.pack_start(watch_top_row, True, True, 0)
+    watch_tab_box.pack_start(watch_srcdir_row, False, False, 0)
+    watch_tab_box.pack_start(watch_between_srcdir_and_controls, False, False, 0)
+    watch_tab_box.pack_start(watch_controls_shell, False, False, 0)
+    watch_tab_box.pack_start(watch_between_controls_and_detail, False, False, 0)
+    watch_tab_box.pack_start(watch_detail_shell, False, False, 0)
+    watch_tab_box.pack_start(watch_bottom_row, True, True, 0)
 
-    watch_srcdir_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    watch_tab_box.pack_start(watch_srcdir_shell, False, False, 0)
-    watch_srcdir_left_spacer = gtk_module.Label(label="")
-    watch_srcdir_shell.pack_start(watch_srcdir_left_spacer, True, True, 0)
-    watch_srcdir_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=48)
-    watch_srcdir_shell.pack_start(watch_srcdir_row, False, False, 0)
-    watch_srcdir_right_spacer = gtk_module.Label(label="")
-    watch_srcdir_shell.pack_start(watch_srcdir_right_spacer, True, True, 0)
+    left_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+    right_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(left_source_block, gtk_module.Align.CENTER)
+        set_halign_if_supported(right_source_block, gtk_module.Align.CENTER)
+
     btn_open_srcdir_l = gtk_module.Button(label="Srcdir-L")
     btn_open_srcdir_r = gtk_module.Button(label="Srcdir-R")
-    watch_srcdir_row.pack_start(btn_open_srcdir_l, False, False, 0)
-    watch_srcdir_row.pack_start(btn_open_srcdir_r, False, False, 0)
+    set_button_icon_if_supported(gtk_module, btn_open_srcdir_l, "icons", "lucide", "folder-open.svg")
+    set_button_icon_if_supported(gtk_module, btn_open_srcdir_r, "icons", "lucide", "folder-open.svg")
+    watch_source_label_l = gtk_module.Label(label="L: -")
+    watch_source_label_r = gtk_module.Label(label="R: -")
+    set_xalign_if_supported(watch_source_label_l, 0.5)
+    set_xalign_if_supported(watch_source_label_r, 0.5)
+    left_source_block.pack_start(btn_open_srcdir_l, False, False, 0)
+    left_source_block.pack_start(watch_source_label_l, False, False, 0)
+    right_source_block.pack_start(btn_open_srcdir_r, False, False, 0)
+    right_source_block.pack_start(watch_source_label_r, False, False, 0)
+    watch_srcdir_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    watch_srcdir_middle_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    watch_srcdir_right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(watch_srcdir_left_gap, "set_hexpand"):
+        watch_srcdir_left_gap.set_hexpand(True)
+    if hasattr(watch_srcdir_middle_gap, "set_hexpand"):
+        watch_srcdir_middle_gap.set_hexpand(True)
+    if hasattr(watch_srcdir_right_gap, "set_hexpand"):
+        watch_srcdir_right_gap.set_hexpand(True)
+    watch_srcdir_row.pack_start(watch_srcdir_left_gap, True, True, 0)
+    watch_srcdir_row.pack_start(left_source_block, False, False, 0)
+    watch_srcdir_row.pack_start(watch_srcdir_middle_gap, True, True, 0)
+    watch_srcdir_row.pack_start(right_source_block, False, False, 0)
+    watch_srcdir_row.pack_start(watch_srcdir_right_gap, True, True, 0)
 
-    watch_controls_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-    watch_tab_box.pack_start(watch_controls_shell, False, False, 0)
-    watch_controls_left_spacer = gtk_module.Label(label="")
-    watch_controls_shell.pack_start(watch_controls_left_spacer, True, True, 0)
-    watch_controls_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-    watch_controls_shell.pack_start(watch_controls_row, False, False, 0)
-    watch_controls_right_spacer = gtk_module.Label(label="")
-    watch_controls_shell.pack_start(watch_controls_right_spacer, True, True, 0)
+    watch_controls_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=10)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(watch_controls_row, gtk_module.Align.CENTER)
 
     interval_spin = gtk_module.SpinButton()
     configure_spin_button(interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
     interval_label = gtk_module.Label(label="Interval")
     btn_daemonize = gtk_module.Button(label="Watch Start")
     btn_cancel_daemonize = gtk_module.Button(label="Watch Stop")
+    set_button_icon_if_supported(gtk_module, btn_daemonize, "icons", "lucide", "play.svg")
+    set_button_icon_if_supported(gtk_module, btn_cancel_daemonize, "icons", "lucide", "pause.svg")
     watch_controls_row.pack_start(interval_label, False, False, 0)
     watch_controls_row.pack_start(interval_spin, False, False, 0)
     watch_controls_row.pack_start(btn_daemonize, False, False, 0)
     watch_controls_row.pack_start(btn_cancel_daemonize, False, False, 0)
+    watch_controls_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    watch_controls_right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(watch_controls_left_gap, "set_hexpand"):
+        watch_controls_left_gap.set_hexpand(True)
+    if hasattr(watch_controls_right_gap, "set_hexpand"):
+        watch_controls_right_gap.set_hexpand(True)
+    watch_controls_shell.pack_start(watch_controls_left_gap, True, True, 0)
+    watch_controls_shell.pack_start(watch_controls_row, False, False, 0)
+    watch_controls_shell.pack_start(watch_controls_right_gap, True, True, 0)
 
     watch_detail_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
-    watch_tab_box.pack_start(watch_detail_row, False, False, 0)
-    watch_sources_label = gtk_module.Label(label="Watch srcdirs: L=- | R=-")
-    set_xalign_if_supported(watch_sources_label)
-    watch_detail_row.pack_start(watch_sources_label, False, False, 0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(watch_detail_row, gtk_module.Align.CENTER)
     watch_current_label = gtk_module.Label(label="Watch current: idle")
     set_xalign_if_supported(watch_current_label)
     watch_detail_row.pack_start(watch_current_label, False, False, 0)
     watch_output_label = gtk_module.Label(label="Watch output: .")
     set_xalign_if_supported(watch_output_label)
     watch_detail_row.pack_start(watch_output_label, False, False, 0)
+    watch_detail_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    watch_detail_right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(watch_detail_left_gap, "set_hexpand"):
+        watch_detail_left_gap.set_hexpand(True)
+    if hasattr(watch_detail_right_gap, "set_hexpand"):
+        watch_detail_right_gap.set_hexpand(True)
+    watch_detail_shell.pack_start(watch_detail_left_gap, True, True, 0)
+    watch_detail_shell.pack_start(watch_detail_row, False, False, 0)
+    watch_detail_shell.pack_start(watch_detail_right_gap, True, True, 0)
 
     return {
         "watch_tab_box": watch_tab_box,
@@ -367,13 +488,16 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
         "watch_tab_title": watch_tab_title,
         "watch_controls_row": watch_controls_row,
         "watch_detail_row": watch_detail_row,
+        "left_source_block": left_source_block,
+        "right_source_block": right_source_block,
         "btn_open_srcdir_l": btn_open_srcdir_l,
         "btn_open_srcdir_r": btn_open_srcdir_r,
+        "watch_source_label_l": watch_source_label_l,
+        "watch_source_label_r": watch_source_label_r,
         "interval_spin": interval_spin,
         "interval_label": interval_label,
         "btn_daemonize": btn_daemonize,
         "btn_cancel_daemonize": btn_cancel_daemonize,
-        "watch_sources_label": watch_sources_label,
         "watch_current_label": watch_current_label,
         "watch_output_label": watch_output_label,
     }
@@ -396,11 +520,19 @@ def build_margins_tab_section(
     apply_margin_text_widget_style: Any,
 ) -> dict[str, Any]:
     margins_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
+    if hasattr(margins_tab_box, "set_border_width"):
+        margins_tab_box.set_border_width(0)
     margins_section_label = gtk_module.Label(label="")
     set_xalign_if_supported(margins_section_label)
 
     margins_layout_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
-    margins_tab_box.pack_start(margins_layout_col, False, False, 0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(margins_layout_col, gtk_module.Align.FILL)
+    if hasattr(margins_layout_col, "set_hexpand"):
+        margins_layout_col.set_hexpand(True)
+    if hasattr(margins_layout_col, "set_vexpand"):
+        margins_layout_col.set_vexpand(True)
+    margins_tab_box.pack_start(margins_layout_col, True, True, 0)
 
     current_state_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     current_state_box.pack_start(current_state_section_label, False, False, 0)
@@ -417,15 +549,28 @@ def build_margins_tab_section(
     top_margin_box.pack_start(top_margin_label, False, False, 0)
     top_margin_box.pack_start(top_margin_spin, False, False, 0)
     top_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    top_margin_shell_left = gtk_module.Label(label="")
-    top_margin_shell_right = gtk_module.Label(label="")
-    top_margin_shell.pack_start(top_margin_shell_left, True, True, 0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(top_margin_shell, gtk_module.Align.CENTER)
+        set_halign_if_supported(top_margin_box, gtk_module.Align.CENTER)
     top_margin_shell.pack_start(top_margin_box, False, False, 0)
-    top_margin_shell.pack_start(top_margin_shell_right, True, True, 0)
 
     left_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     left_margin_box.pack_start(left_margin_label, False, False, 0)
     left_margin_box.pack_start(left_margin_spin, False, False, 0)
+    left_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    left_margin_top_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    left_margin_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    left_margin_bottom_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(left_margin_top_spacer, "set_vexpand"):
+        left_margin_top_spacer.set_vexpand(True)
+    if hasattr(left_margin_bottom_spacer, "set_vexpand"):
+        left_margin_bottom_spacer.set_vexpand(True)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(left_margin_center_row, gtk_module.Align.CENTER)
+    left_margin_center_row.pack_start(left_margin_box, False, False, 0)
+    left_margin_shell.pack_start(left_margin_top_spacer, True, True, 0)
+    left_margin_shell.pack_start(left_margin_center_row, False, False, 0)
+    left_margin_shell.pack_start(left_margin_bottom_spacer, True, True, 0)
 
     right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     right_margin_label = gtk_module.Label(label="Right margin (px)")
@@ -435,6 +580,20 @@ def build_margins_tab_section(
     right_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     right_margin_box.pack_start(right_margin_label, False, False, 0)
     right_margin_box.pack_start(right_margin_spin, False, False, 0)
+    right_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    right_margin_top_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    right_margin_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    right_margin_bottom_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(right_margin_top_spacer, "set_vexpand"):
+        right_margin_top_spacer.set_vexpand(True)
+    if hasattr(right_margin_bottom_spacer, "set_vexpand"):
+        right_margin_bottom_spacer.set_vexpand(True)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(right_margin_center_row, gtk_module.Align.CENTER)
+    right_margin_center_row.pack_start(right_margin_box, False, False, 0)
+    right_margin_shell.pack_start(right_margin_top_spacer, True, True, 0)
+    right_margin_shell.pack_start(right_margin_center_row, False, False, 0)
+    right_margin_shell.pack_start(right_margin_bottom_spacer, True, True, 0)
 
     bottom_margin_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
     bottom_margin_label = gtk_module.Label(label="Bottom margin (px)")
@@ -445,23 +604,21 @@ def build_margins_tab_section(
     bottom_margin_box.pack_start(bottom_margin_label, False, False, 0)
     bottom_margin_box.pack_start(bottom_margin_spin, False, False, 0)
     bottom_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    bottom_margin_shell_left = gtk_module.Label(label="")
-    bottom_margin_shell_right = gtk_module.Label(label="")
-    bottom_margin_shell.pack_start(bottom_margin_shell_left, True, True, 0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(bottom_margin_shell, gtk_module.Align.CENTER)
+        set_halign_if_supported(bottom_margin_box, gtk_module.Align.CENTER)
     bottom_margin_shell.pack_start(bottom_margin_box, False, False, 0)
-    bottom_margin_shell.pack_start(bottom_margin_shell_right, True, True, 0)
 
     center_stack = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
 
     center_state_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    center_state_left = gtk_module.Label(label="")
-    center_state_right = gtk_module.Label(label="")
     center_state_display_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(center_state_shell, gtk_module.Align.CENTER)
+        set_halign_if_supported(center_state_display_box, gtk_module.Align.CENTER)
     center_state_display_box.pack_start(current_state_title_display, False, False, 0)
     center_state_display_box.pack_start(current_state_summary_display, False, False, 0)
-    center_state_shell.pack_start(center_state_left, True, True, 0)
     center_state_shell.pack_start(center_state_display_box, False, False, 0)
-    center_state_shell.pack_start(center_state_right, True, True, 0)
     center_stack.pack_start(center_state_shell, False, False, 0)
 
     margin_text_mode_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
@@ -539,42 +696,37 @@ def build_margins_tab_section(
     margin_text_tabs.append_page(margin_settings_page, settings_tab_label)
     margin_text_tabs.append_page(margin_text_page, text_tab_label)
 
-    margin_position_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
+    margin_position_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     margin_position_label = gtk_module.Label(label="Position:")
     set_xalign_if_supported(margin_position_label)
     margin_position_shell.pack_start(margin_position_label, False, False, 0)
-    margin_position_left_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+    margin_position_columns_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=168)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(margin_position_columns_row, gtk_module.Align.CENTER)
+    margin_position_left_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
     margin_position_left_label = gtk_module.Label(label="Left:")
     set_xalign_if_supported(margin_position_left_label)
     margin_position_left_top = gtk_module.RadioButton.new_with_label(None, "Top")
     margin_position_left_bottom = gtk_module.RadioButton.new_with_label_from_widget(margin_position_left_top, "Bottom")
-    margin_position_left_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    margin_position_left_shell_left = gtk_module.Label(label="")
-    margin_position_left_shell_right = gtk_module.Label(label="")
-    margin_position_right_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+    margin_position_right_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
     margin_position_right_label = gtk_module.Label(label="Right:")
     set_xalign_if_supported(margin_position_right_label)
     margin_position_right_top = gtk_module.RadioButton.new_with_label_from_widget(margin_position_left_top, "Top")
     margin_position_right_bottom = gtk_module.RadioButton.new_with_label_from_widget(margin_position_left_top, "Bottom")
-    margin_position_right_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    margin_position_right_shell_left = gtk_module.Label(label="")
-    margin_position_right_shell_right = gtk_module.Label(label="")
     if hasattr(margin_position_right_bottom, "set_active"):
         margin_position_right_bottom.set_active(True)
-    margin_position_left_row.pack_start(margin_position_left_label, False, False, 0)
-    margin_position_left_row.pack_start(margin_position_left_top, False, False, 0)
-    margin_position_left_row.pack_start(margin_position_left_bottom, False, False, 0)
-    margin_position_left_shell.pack_start(margin_position_left_shell_left, True, True, 0)
-    margin_position_left_shell.pack_start(margin_position_left_row, False, False, 0)
-    margin_position_left_shell.pack_start(margin_position_left_shell_right, True, True, 0)
-    margin_position_right_row.pack_start(margin_position_right_label, False, False, 0)
-    margin_position_right_row.pack_start(margin_position_right_top, False, False, 0)
-    margin_position_right_row.pack_start(margin_position_right_bottom, False, False, 0)
-    margin_position_right_shell.pack_start(margin_position_right_shell_left, True, True, 0)
-    margin_position_right_shell.pack_start(margin_position_right_row, False, False, 0)
-    margin_position_right_shell.pack_start(margin_position_right_shell_right, True, True, 0)
-    margin_position_shell.pack_start(margin_position_left_shell, False, False, 0)
-    margin_position_shell.pack_start(margin_position_right_shell, False, False, 0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(margin_position_left_col, gtk_module.Align.CENTER)
+        set_halign_if_supported(margin_position_right_col, gtk_module.Align.CENTER)
+    margin_position_left_col.pack_start(margin_position_left_label, False, False, 0)
+    margin_position_left_col.pack_start(margin_position_left_top, False, False, 0)
+    margin_position_left_col.pack_start(margin_position_left_bottom, False, False, 0)
+    margin_position_right_col.pack_start(margin_position_right_label, False, False, 0)
+    margin_position_right_col.pack_start(margin_position_right_top, False, False, 0)
+    margin_position_right_col.pack_start(margin_position_right_bottom, False, False, 0)
+    margin_position_columns_row.pack_start(margin_position_left_col, False, False, 0)
+    margin_position_columns_row.pack_start(margin_position_right_col, False, False, 0)
+    margin_position_shell.pack_start(margin_position_columns_row, False, False, 0)
 
     margin_text_max_lines_spin = gtk_module.SpinButton()
     configure_spin_button(margin_text_max_lines_spin, minimum=1, maximum=20, step=1, page=5, initial=3)
@@ -585,46 +737,42 @@ def build_margins_tab_section(
     notes_box.pack_start(priority_note_label, False, False, 0)
     notes_box.pack_start(style_legend_label, False, False, 0)
 
-    center_stack.pack_start(bottom_margin_shell, False, False, 0)
     center_stack.pack_start(margin_position_shell, False, False, 0)
     center_stack.pack_start(notes_box, False, False, 0)
 
-    margins_grid_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=28)
-    left_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    center_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    right_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    margins_grid_shell.pack_start(left_margin_shell, False, False, 0)
-    margins_grid_shell.pack_start(center_margin_shell, True, True, 0)
-    margins_grid_shell.pack_start(right_margin_shell, False, False, 0)
+    margins_cross_grid = gtk_module.Grid()
+    if hasattr(margins_cross_grid, "set_column_spacing"):
+        margins_cross_grid.set_column_spacing(24)
+    if hasattr(margins_cross_grid, "set_row_spacing"):
+        margins_cross_grid.set_row_spacing(12)
+    if hasattr(margins_cross_grid, "set_column_homogeneous"):
+        margins_cross_grid.set_column_homogeneous(False)
+    if hasattr(margins_cross_grid, "set_row_homogeneous"):
+        margins_cross_grid.set_row_homogeneous(False)
+    if hasattr(margins_cross_grid, "set_hexpand"):
+        margins_cross_grid.set_hexpand(True)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(margins_cross_grid, gtk_module.Align.FILL)
+        set_halign_if_supported(left_margin_shell, gtk_module.Align.FILL)
+        set_halign_if_supported(center_stack, gtk_module.Align.FILL)
+        set_halign_if_supported(right_margin_shell, gtk_module.Align.FILL)
+        set_halign_if_supported(top_margin_shell, gtk_module.Align.CENTER)
+        set_halign_if_supported(bottom_margin_shell, gtk_module.Align.CENTER)
+    if hasattr(margins_cross_grid, "set_vexpand"):
+        margins_cross_grid.set_vexpand(True)
+    if hasattr(center_stack, "set_hexpand"):
+        center_stack.set_hexpand(True)
+    if hasattr(center_stack, "set_vexpand"):
+        center_stack.set_vexpand(True)
 
-    left_margin_spacer_top = gtk_module.Label(label="")
-    left_margin_spacer_bottom = gtk_module.Label(label="")
-    left_margin_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    left_margin_center_left = gtk_module.Label(label="")
-    left_margin_center_right = gtk_module.Label(label="")
-    left_margin_center_row.pack_start(left_margin_center_left, True, True, 0)
-    left_margin_center_row.pack_start(left_margin_box, False, False, 0)
-    left_margin_center_row.pack_start(left_margin_center_right, True, True, 0)
-    left_margin_shell.pack_start(left_margin_spacer_top, True, True, 0)
-    left_margin_shell.pack_start(left_margin_center_row, False, False, 0)
-    left_margin_shell.pack_start(left_margin_spacer_bottom, True, True, 0)
+    if hasattr(margins_cross_grid, "attach"):
+        margins_cross_grid.attach(top_margin_shell, 1, 0, 1, 1)
+        margins_cross_grid.attach(left_margin_shell, 0, 1, 1, 1)
+        margins_cross_grid.attach(center_stack, 1, 1, 1, 1)
+        margins_cross_grid.attach(right_margin_shell, 2, 1, 1, 1)
+        margins_cross_grid.attach(bottom_margin_shell, 1, 2, 1, 1)
 
-    right_margin_spacer_top = gtk_module.Label(label="")
-    right_margin_spacer_bottom = gtk_module.Label(label="")
-    right_margin_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    right_margin_center_left = gtk_module.Label(label="")
-    right_margin_center_right = gtk_module.Label(label="")
-    right_margin_center_row.pack_start(right_margin_center_left, True, True, 0)
-    right_margin_center_row.pack_start(right_margin_box, False, False, 0)
-    right_margin_center_row.pack_start(right_margin_center_right, True, True, 0)
-    right_margin_shell.pack_start(right_margin_spacer_top, True, True, 0)
-    right_margin_shell.pack_start(right_margin_center_row, False, False, 0)
-    right_margin_shell.pack_start(right_margin_spacer_bottom, True, True, 0)
-
-    center_margin_shell.pack_start(top_margin_shell, False, False, 0)
-    center_margin_shell.pack_start(center_stack, True, True, 0)
-
-    margins_layout_col.pack_start(margins_grid_shell, False, False, 0)
+    margins_layout_col.pack_start(margins_cross_grid, True, True, 0)
 
     margins_tab_title = gtk_module.Label(label="Margins (for each display)")
     set_xalign_if_supported(margins_tab_title)

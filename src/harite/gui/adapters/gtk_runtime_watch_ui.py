@@ -7,7 +7,8 @@ from typing import Any
 def refresh_watch_source_labels(backend: Any) -> None:
     left = backend._watch_srcdir_l or "-"
     right = backend._watch_srcdir_r or "-"
-    backend._set_label_text("lblWatchSources", f"Watch srcdirs: L={left} | R={right}")
+    backend._set_label_text("lblWatchSourceL", f"L: {left}")
+    backend._set_label_text("lblWatchSourceR", f"R: {right}")
 
 
 def refresh_watch_summary_label(backend: Any) -> None:

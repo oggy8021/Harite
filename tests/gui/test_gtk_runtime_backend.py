@@ -847,7 +847,8 @@ def test_runtime_backend_shows_phase6_labels_and_controls():
     style_legend = backend.get_object("lblStyleLegend")
     command_section = backend.get_object("lblCommandSection")
     flow_legend = backend.get_object("lblFlowLegend")
-    watch_sources = backend.get_object("lblWatchSources")
+    watch_source_l = backend.get_object("lblWatchSourceL")
+    watch_source_r = backend.get_object("lblWatchSourceR")
     watch_current = backend.get_object("lblWatchCurrent")
     watch_output = backend.get_object("lblWatchOutput")
     prefs_btn = backend.get_object("btnSetting")
@@ -867,7 +868,7 @@ def test_runtime_backend_shows_phase6_labels_and_controls():
 
     assert do_it.text == "Debug: apply is immediate"
     assert priority.text == "Rule: margins define area; align/valign act inside it"
-    assert watch_section.text == "Watch"
+    assert watch_section.text == ""
     assert interval.text == "Interval"
     assert color_btn.label == "Color"
     assert backend.get_object("btnOpenSave") is None
@@ -877,7 +878,8 @@ def test_runtime_backend_shows_phase6_labels_and_controls():
     assert save_path_state.text == "Save path: idle"
     assert watch_start.label == "Watch Start"
     assert watch_stop.label == "Watch Stop"
-    assert watch_sources.text == "Watch srcdirs: L=- | R=-"
+    assert watch_source_l.text == "L: -"
+    assert watch_source_r.text == "R: -"
     assert watch_current.text == "Watch current: idle"
     assert watch_output.text == "Watch output: ."
     assert pick_state.text == ""
@@ -915,7 +917,8 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(m
     interval = backend.get_object("spnInterval")
     watch_start = backend.get_object("btnDaemonize")
     watch_stop = backend.get_object("btnCancelDaemonize")
-    watch_sources = backend.get_object("lblWatchSources")
+    watch_source_l = backend.get_object("lblWatchSourceL")
+    watch_source_r = backend.get_object("lblWatchSourceR")
     watch_current = backend.get_object("lblWatchCurrent")
     watch_output = backend.get_object("lblWatchOutput")
     watch_tab_title = backend.get_object("lblWatchTabTitle")
@@ -944,7 +947,8 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(m
     srcdir_dialog.set_current_folder(str(left_dir))
     srcdir_dialog.confirm()
 
-    assert watch_sources.text == f"Watch srcdirs: L={left_dir} | R=-"
+    assert watch_source_l.text == f"L: {left_dir}"
+    assert watch_source_r.text == "R: -"
     assert watch_output.text == f"Watch output: {tmp_path / 'watch-output'}"
 
     interval.set_value(90)
@@ -1765,12 +1769,12 @@ def test_runtime_backend_cross_layout_places_top_and_bottom_per_side():
     right_col = backend.get_object("rightDisplayCol")
 
     assert compose_grid.children == [
-        (left_col, 0, 0, 1, 1),
-        (backend.get_object("inputRowL"), 0, 1, 1, 1),
-        (right_col, 1, 0, 1, 1),
-        (backend.get_object("inputRowR"), 1, 1, 1, 1),
-        (backend.get_object("actionClusterRow"), 0, 2, 2, 1),
+        (left_col._parent, 0, 0, 1, 1),
+        (backend.get_object("lblPickState")._parent, 1, 0, 1, 1),
+        (right_col._parent, 2, 0, 1, 1),
     ]
+
+    assert backend.get_object("actionClusterRow") in backend.get_object("boxMainSection").children
 
     assert left_col.children == [
         (backend.get_object("tglUpperL"), 1, 0, 1, 1),
