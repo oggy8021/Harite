@@ -498,6 +498,20 @@ def build_margins_tab_section(
     left_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     left_margin_box.pack_start(left_margin_label, False, False, 0)
     left_margin_box.pack_start(left_margin_spin, False, False, 0)
+    left_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    left_margin_top_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    left_margin_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    left_margin_bottom_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(left_margin_top_spacer, "set_vexpand"):
+        left_margin_top_spacer.set_vexpand(True)
+    if hasattr(left_margin_bottom_spacer, "set_vexpand"):
+        left_margin_bottom_spacer.set_vexpand(True)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(left_margin_center_row, gtk_module.Align.CENTER)
+    left_margin_center_row.pack_start(left_margin_box, False, False, 0)
+    left_margin_shell.pack_start(left_margin_top_spacer, True, True, 0)
+    left_margin_shell.pack_start(left_margin_center_row, False, False, 0)
+    left_margin_shell.pack_start(left_margin_bottom_spacer, True, True, 0)
 
     right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     right_margin_label = gtk_module.Label(label="Right margin (px)")
@@ -507,6 +521,20 @@ def build_margins_tab_section(
     right_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     right_margin_box.pack_start(right_margin_label, False, False, 0)
     right_margin_box.pack_start(right_margin_spin, False, False, 0)
+    right_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    right_margin_top_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    right_margin_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    right_margin_bottom_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(right_margin_top_spacer, "set_vexpand"):
+        right_margin_top_spacer.set_vexpand(True)
+    if hasattr(right_margin_bottom_spacer, "set_vexpand"):
+        right_margin_bottom_spacer.set_vexpand(True)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(right_margin_center_row, gtk_module.Align.CENTER)
+    right_margin_center_row.pack_start(right_margin_box, False, False, 0)
+    right_margin_shell.pack_start(right_margin_top_spacer, True, True, 0)
+    right_margin_shell.pack_start(right_margin_center_row, False, False, 0)
+    right_margin_shell.pack_start(right_margin_bottom_spacer, True, True, 0)
 
     bottom_margin_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
     bottom_margin_label = gtk_module.Label(label="Bottom margin (px)")
@@ -666,9 +694,9 @@ def build_margins_tab_section(
         margins_cross_grid.set_hexpand(True)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(margins_cross_grid, gtk_module.Align.FILL)
-        set_halign_if_supported(left_margin_box, gtk_module.Align.CENTER)
+        set_halign_if_supported(left_margin_shell, gtk_module.Align.FILL)
         set_halign_if_supported(center_stack, gtk_module.Align.FILL)
-        set_halign_if_supported(right_margin_box, gtk_module.Align.CENTER)
+        set_halign_if_supported(right_margin_shell, gtk_module.Align.FILL)
         set_halign_if_supported(top_margin_shell, gtk_module.Align.CENTER)
         set_halign_if_supported(bottom_margin_shell, gtk_module.Align.CENTER)
     if hasattr(margins_cross_grid, "set_vexpand"):
@@ -680,9 +708,9 @@ def build_margins_tab_section(
 
     if hasattr(margins_cross_grid, "attach"):
         margins_cross_grid.attach(top_margin_shell, 1, 0, 1, 1)
-        margins_cross_grid.attach(left_margin_box, 0, 1, 1, 1)
+        margins_cross_grid.attach(left_margin_shell, 0, 1, 1, 1)
         margins_cross_grid.attach(center_stack, 1, 1, 1, 1)
-        margins_cross_grid.attach(right_margin_box, 2, 1, 1, 1)
+        margins_cross_grid.attach(right_margin_shell, 2, 1, 1, 1)
         margins_cross_grid.attach(bottom_margin_shell, 1, 2, 1, 1)
 
     margins_layout_col.pack_start(margins_cross_grid, True, True, 0)
