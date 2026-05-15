@@ -381,8 +381,7 @@ notebook {
             apply_margin_text_widget_style=self._apply_margin_text_widget_style,
         )
 
-        margins_page_shell = build_centered_page_shell(gtk_module, margins_widgets["margins_tab_box"])
-        command_tabs.append_page(margins_page_shell, margins_widgets["margins_tab_title"])
+        command_tabs.append_page(margins_widgets["margins_tab_box"], margins_widgets["margins_tab_title"])
 
         watch_page_shell = build_centered_page_shell(gtk_module, watch_widgets["watch_tab_box"])
         command_tabs.append_page(watch_page_shell, watch_widgets["watch_tab_title"])

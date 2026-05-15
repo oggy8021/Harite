@@ -222,7 +222,7 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     input_path_row_l.pack_start(input_entry_l, False, False, 0)
     clear_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(clear_row_l, gtk_module.Align.CENTER)
+        set_halign_if_supported(clear_row_l, gtk_module.Align.END)
     clear_row_l.pack_start(btn_clr_path_l, False, False, 0)
     input_row_l.pack_start(input_path_row_l, False, False, 0)
     input_row_l.pack_start(clear_row_l, False, False, 0)
@@ -249,7 +249,7 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     input_path_row_r.pack_start(input_entry_r, False, False, 0)
     clear_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(clear_row_r, gtk_module.Align.CENTER)
+        set_halign_if_supported(clear_row_r, gtk_module.Align.START)
     clear_row_r.pack_start(btn_clr_path_r, False, False, 0)
     input_row_r.pack_start(input_path_row_r, False, False, 0)
     input_row_r.pack_start(clear_row_r, False, False, 0)
@@ -629,28 +629,50 @@ def build_margins_tab_section(
     notes_box.pack_start(priority_note_label, False, False, 0)
     notes_box.pack_start(style_legend_label, False, False, 0)
 
-    center_stack.pack_start(bottom_margin_shell, False, False, 0)
     center_stack.pack_start(margin_position_shell, False, False, 0)
     center_stack.pack_start(notes_box, False, False, 0)
 
-    top_controls_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=28)
+    margins_cross_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=24)
     if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(top_controls_row, gtk_module.Align.CENTER)
+        set_halign_if_supported(margins_cross_row, gtk_module.Align.CENTER)
+
+    left_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    left_margin_spacer_top = gtk_module.Label(label="")
+    left_margin_spacer_bottom = gtk_module.Label(label="")
+    left_margin_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(left_margin_center_row, gtk_module.Align.CENTER)
         set_halign_if_supported(left_margin_box, gtk_module.Align.CENTER)
-        set_halign_if_supported(right_margin_box, gtk_module.Align.CENTER)
-    top_controls_row.pack_start(left_margin_box, False, False, 0)
-    top_controls_row.pack_start(top_margin_shell, False, False, 0)
-    top_controls_row.pack_start(right_margin_box, False, False, 0)
+    left_margin_center_row.pack_start(left_margin_box, False, False, 0)
+    left_margin_shell.pack_start(left_margin_spacer_top, True, True, 0)
+    left_margin_shell.pack_start(left_margin_center_row, False, False, 0)
+    left_margin_shell.pack_start(left_margin_spacer_bottom, True, True, 0)
 
     center_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=10)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(center_margin_shell, gtk_module.Align.CENTER)
         set_halign_if_supported(center_stack, gtk_module.Align.CENTER)
+    center_margin_shell.pack_start(top_margin_shell, False, False, 0)
     center_margin_shell.pack_start(center_stack, False, False, 0)
     center_margin_shell.pack_start(bottom_margin_shell, False, False, 0)
 
-    margins_layout_col.pack_start(top_controls_row, False, False, 0)
-    margins_layout_col.pack_start(center_margin_shell, False, False, 0)
+    right_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    right_margin_spacer_top = gtk_module.Label(label="")
+    right_margin_spacer_bottom = gtk_module.Label(label="")
+    right_margin_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(right_margin_center_row, gtk_module.Align.CENTER)
+        set_halign_if_supported(right_margin_box, gtk_module.Align.CENTER)
+    right_margin_center_row.pack_start(right_margin_box, False, False, 0)
+    right_margin_shell.pack_start(right_margin_spacer_top, True, True, 0)
+    right_margin_shell.pack_start(right_margin_center_row, False, False, 0)
+    right_margin_shell.pack_start(right_margin_spacer_bottom, True, True, 0)
+
+    margins_cross_row.pack_start(left_margin_shell, False, False, 0)
+    margins_cross_row.pack_start(center_margin_shell, False, False, 0)
+    margins_cross_row.pack_start(right_margin_shell, False, False, 0)
+
+    margins_layout_col.pack_start(margins_cross_row, False, False, 0)
 
     margins_tab_title = gtk_module.Label(label="Margins (for each display)")
     set_xalign_if_supported(margins_tab_title)
