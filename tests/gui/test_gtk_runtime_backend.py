@@ -867,7 +867,7 @@ def test_runtime_backend_shows_phase6_labels_and_controls():
 
     assert do_it.text == "Debug: apply is immediate"
     assert priority.text == "Rule: margins define area; align/valign act inside it"
-    assert watch_section.text == "Watch"
+    assert watch_section.text == ""
     assert interval.text == "Interval"
     assert color_btn.label == "Color"
     assert backend.get_object("btnOpenSave") is None
