@@ -160,6 +160,8 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
         compose_grid.set_column_spacing(24)
     if hasattr(compose_grid, "set_row_spacing"):
         compose_grid.set_row_spacing(12)
+    if hasattr(compose_grid, "set_column_homogeneous"):
+        compose_grid.set_column_homogeneous(True)
     main_col.pack_start(compose_grid, False, False, 0)
 
     left_display_grid = gtk_module.Grid()
@@ -168,9 +170,13 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     center_panel = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
     right_panel = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
     if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(left_panel, gtk_module.Align.CENTER)
+        set_halign_if_supported(left_panel, gtk_module.Align.FILL)
         set_halign_if_supported(center_panel, gtk_module.Align.CENTER)
-        set_halign_if_supported(right_panel, gtk_module.Align.CENTER)
+        set_halign_if_supported(right_panel, gtk_module.Align.FILL)
+    if hasattr(left_panel, "set_hexpand"):
+        left_panel.set_hexpand(True)
+    if hasattr(right_panel, "set_hexpand"):
+        right_panel.set_hexpand(True)
     if hasattr(left_display_grid, "set_column_spacing"):
         left_display_grid.set_column_spacing(6)
     if hasattr(left_display_grid, "set_row_spacing"):
@@ -211,14 +217,18 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
 
     input_row_l = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(input_row_l, gtk_module.Align.CENTER)
+        set_halign_if_supported(input_row_l, gtk_module.Align.FILL)
+    if hasattr(input_row_l, "set_hexpand"):
+        input_row_l.set_hexpand(True)
     input_entry_l = gtk_module.Label(label="")
-    set_xalign_if_supported(input_entry_l)
+    set_xalign_if_supported(input_entry_l, 0.5)
     btn_clr_path_l = gtk_module.Button(label="Clear-L")
     set_button_icon_if_supported(gtk_module, btn_clr_path_l, "icons", "lucide", "folder-x.svg")
     input_path_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(input_path_row_l, gtk_module.Align.CENTER)
+    if hasattr(input_path_row_l, "set_hexpand"):
+        input_path_row_l.set_hexpand(True)
     input_path_row_l.pack_start(input_entry_l, False, False, 0)
     clear_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     if hasattr(gtk_module, "Align"):
@@ -240,14 +250,18 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
 
     input_row_r = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(input_row_r, gtk_module.Align.CENTER)
+        set_halign_if_supported(input_row_r, gtk_module.Align.FILL)
+    if hasattr(input_row_r, "set_hexpand"):
+        input_row_r.set_hexpand(True)
     input_entry_r = gtk_module.Label(label="")
-    set_xalign_if_supported(input_entry_r)
+    set_xalign_if_supported(input_entry_r, 0.5)
     btn_clr_path_r = gtk_module.Button(label="Clear-R")
     set_button_icon_if_supported(gtk_module, btn_clr_path_r, "icons", "lucide", "folder-x.svg")
     input_path_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(input_path_row_r, gtk_module.Align.CENTER)
+    if hasattr(input_path_row_r, "set_hexpand"):
+        input_path_row_r.set_hexpand(True)
     input_path_row_r.pack_start(input_entry_r, False, False, 0)
     clear_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     if hasattr(gtk_module, "Align"):
