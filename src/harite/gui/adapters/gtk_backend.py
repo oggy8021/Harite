@@ -383,8 +383,7 @@ notebook {
 
         command_tabs.append_page(margins_widgets["margins_tab_box"], margins_widgets["margins_tab_title"])
 
-        watch_page_shell = build_centered_page_shell(gtk_module, watch_widgets["watch_tab_box"])
-        command_tabs.append_page(watch_page_shell, watch_widgets["watch_tab_title"])
+        command_tabs.append_page(watch_widgets["watch_tab_box"], watch_widgets["watch_tab_title"])
 
         return {
             **watch_widgets,
