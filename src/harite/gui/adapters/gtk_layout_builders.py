@@ -63,12 +63,13 @@ def build_header_section(gtk_module: Any, root: Any) -> dict[str, Any]:
     title_row.pack_start(command_bar, False, False, 0)
 
     btn_setting = gtk_module.Button(label="Settings")
-    btn_help = gtk_module.Button(label="Help")
     btn_about = gtk_module.Button(label="About")
     btn_set_color = gtk_module.Button(label="Color")
+    set_button_icon_if_supported(gtk_module, btn_set_color, "icons", "lucide", "palette.svg")
+    set_button_icon_if_supported(gtk_module, btn_setting, "icons", "lucide", "settings.svg")
+    set_button_icon_if_supported(gtk_module, btn_about, "icons", "lucide", "info.svg")
     command_bar.pack_start(btn_set_color, False, False, 0)
     command_bar.pack_start(btn_setting, False, False, 0)
-    command_bar.pack_start(btn_help, False, False, 0)
     command_bar.pack_start(btn_about, False, False, 0)
 
     flow_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
@@ -94,7 +95,6 @@ def build_header_section(gtk_module: Any, root: Any) -> dict[str, Any]:
         "command_bar": command_bar,
         "command_section_label": command_section_label,
         "btn_setting": btn_setting,
-        "btn_help": btn_help,
         "btn_about": btn_about,
         "btn_set_color": btn_set_color,
         "flow_row": flow_row,

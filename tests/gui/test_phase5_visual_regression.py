@@ -20,7 +20,6 @@ def test_phase5_visual_tokens_snapshot_is_stable():
         "apply": backend.get_object("btnSetWall").label,
         "prefs": backend.get_object("btnSetting").label,
         "about": backend.get_object("btnAbout").label,
-        "help": backend.get_object("btnHelp").label,
         "open_l": backend.get_object("btnGetImgL").label,
         "open_r": backend.get_object("btnGetImgR").label,
     }
@@ -36,7 +35,6 @@ def test_phase5_visual_tokens_snapshot_is_stable():
         "apply": "Apply",
         "prefs": "Settings",
         "about": "About",
-        "help": "Help",
         "open_l": "Open-L",
         "open_r": "Open-R",
     }

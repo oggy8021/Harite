@@ -260,7 +260,6 @@
 ### 今回は後段送りに置く面
 
 - btn_setting: 現在ボタンフェイス文字列 Settings / 代替短縮文字列案 Settings / lucide icon URL <https://lucide.dev/icons/settings> / header command だが、まずは文字 face を維持する。
-- btn_help: 現在ボタンフェイス文字列 Help / 代替短縮文字列案 Help / lucide icon URL <https://lucide.dev/icons/circle-question-mark> / Phase10 first wave の主題からは外す。
 - btn_about: 現在ボタンフェイス文字列 About / 代替短縮文字列案 About / lucide icon URL <https://lucide.dev/icons/info> / app icon と論点が混ざりやすいため後段送り。
 - btn_set_color: 現在ボタンフェイス文字列 Color / 代替短縮文字列案 Color / lucide icon URL <https://lucide.dev/icons/swatch-book> / color semantics は別論点が残るため後段送り。
 - prefs_save_btn: 現在ボタンフェイス文字列 Save / 代替短縮文字列案 Save / lucide icon URL <https://lucide.dev/icons/save> / Settings dialog の標準 face を優先する。

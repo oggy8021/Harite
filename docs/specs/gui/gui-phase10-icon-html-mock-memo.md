@@ -26,7 +26,7 @@
 
 ## 対象面
 
-- Main Window 側では、Color、Settings、Help、About、direction toggle 8 件、open / clear 4 件、Save As、Optimize、Apply をまとめて並べる。
+- Main Window 側では、Color、Settings、About、direction toggle 8 件、open / clear 4 件、Save As、Optimize、Apply をまとめて並べる。
 - Watch 側では、Watch Start と Watch Stop を pair で並べる。
 - Watch 側では、Srcdir-L / Srcdir-R も含め、左右戦略が見える形で並べる。
 - margin tab は、今回の icon 導入論点では操作 icon が少なく、mock の主対象から外す。
@@ -53,7 +53,7 @@
 2. open / clear が path 補助操作として自然に分離して見えるか。
 3. Save As / Optimize / Apply が Main Window 上で過不足ない重みで並ぶか。
 4. Watch Start / Watch Stop が pair として自然に読めるか。
-5. Color / Settings / Help / About の header command 群が icon 化されても騒がしすぎないか。
+5. Color / Settings / About の header command 群が icon 化されても騒がしすぎないか。
 6. Srcdir-L / Srcdir-R を含む Watch 面の左右戦略が読めるか。
 7. icon 単独で足りるか、短い文字併記を残した方がよいか。最終判定は GTK 実機で行う。
 8. Lucide の arrow-normal と arrow-big で、direction cross の読みがどこまで変わるか。
@@ -73,7 +73,7 @@
 - Save As は save、Optimize は image、Apply は wallpaper を初手に置く。
 - Feather 比較では Apply に完全同名 icon がないため、display 系の近似として monitor を当てる。
 - watch 系は play / pause の pair を初手に置く。
-- Color は swatch-book、Settings は settings、Help は circle-question-mark、About は info を初手に置く。
+- Color は swatch-book、Settings は settings、About は info を初手に置く。
 - Srcdir-L / Srcdir-R は folder-open 系を共通に置き、左右戦略は文字で補う。
 - margin tab は今回の mock 対象から外す。
 
@@ -120,7 +120,7 @@
 
 ## 最小着手テンプレ
 
-1. Main Window 面に Color / Settings / Help / About、direction / open / clear / Save As / Optimize / Apply をまとめて置く。
+1. Main Window 面に Color / Settings / About、direction / open / clear / Save As / Optimize / Apply をまとめて置く。
 2. Watch 面は同一 HTML の下段 section として置き、Main Window と横幅を揃える。
 3. Main Window 面は実ウィンドウっぽい外形を薄く持たせる。
 4. Watch 面では Srcdir-L / Srcdir-R と Watch Start / Stop の左右感を一緒に置く。

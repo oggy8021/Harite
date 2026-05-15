@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from PIL import Image
 
 from harite.gui.adapters.gtk_backend import GtkRuntimeSignalBackend
@@ -186,9 +188,17 @@ class _Button(_WidgetBase):
         super().__init__()
         self.label = label
         self.sensitive = True
+        self.image = None
+        self.always_show_image = False
 
     def set_sensitive(self, enabled):
         self.sensitive = bool(enabled)
+
+    def set_image(self, image):
+        self.image = image
+
+    def set_always_show_image(self, enabled):
+        self.always_show_image = bool(enabled)
 
     def click(self):
         self.emit("clicked", self)
@@ -271,6 +281,21 @@ class _RadioButton(_ToggleButton):
         self.emit("clicked", self)
 
 
+class _Image(_WidgetBase):
+    def __init__(self):
+        super().__init__()
+        self.file_path = ""
+
+    @classmethod
+    def new_from_file(cls, file_path):
+        image = cls()
+        image.file_path = str(file_path)
+        return image
+
+    def set_from_file(self, file_path):
+        self.file_path = str(file_path)
+
+
 class _FakeGtk:
     Orientation = _Orientation
     Window = _Window
@@ -284,6 +309,7 @@ class _FakeGtk:
     ToggleButton = _ToggleButton
     SpinButton = _SpinButton
     RadioButton = _RadioButton
+    Image = _Image
 
 
 class _FakeGLib:
@@ -812,8 +838,8 @@ def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path):
     assert backend.get_object("lblPreviewState").text == "Preview: same image on both displays"
     assert backend.get_object("lblPreviewSource").text == "Preview source: preview.jpg"
     assert backend.get_object("lblPreviewAssist").text == "Assist: same optimized image will be applied to both displays"
-    assert backend.get_object("imgPreviewL").text == "preview.jpg"
-    assert backend.get_object("imgPreviewR").text == "preview.jpg"
+    assert Path(backend.get_object("imgPreviewL").file_path).name == "preview.jpg"
+    assert Path(backend.get_object("imgPreviewR").file_path).name == "preview.jpg"
 
     backend.get_object("entPathR").set_text("right.jpg")
     backend.get_object("entPathR").emit("changed", backend.get_object("entPathR"))
@@ -853,7 +879,6 @@ def test_runtime_backend_shows_phase6_labels_and_controls():
     watch_output = backend.get_object("lblWatchOutput")
     prefs_btn = backend.get_object("btnSetting")
     about_btn = backend.get_object("btnAbout")
-    help_btn = backend.get_object("btnHelp")
     save_btn = backend.get_object("btnSave")
     optimize_btn = backend.get_object("btnOptimize")
     apply_btn = backend.get_object("btnSetWall")
@@ -888,7 +913,9 @@ def test_runtime_backend_shows_phase6_labels_and_controls():
     assert flow_legend.text == "Compose -> Optimize -> Apply"
     assert prefs_btn.label == "Settings"
     assert about_btn.label == "About"
-    assert help_btn.label == "Help"
+    assert color_btn.image is not None
+    assert prefs_btn.image is not None
+    assert about_btn.image is not None
     assert save_btn.label == "Save As"
     assert optimize_btn.label == "Optimize"
     assert apply_btn.label == "Apply"
@@ -1506,8 +1533,6 @@ def test_runtime_backend_about_click_opens_dialog():
     assert backend.get_object("lblAboutTitle").text == "Harite"
     assert backend.get_object("lblAboutVersion").text == "Version: 0.1.2"
     assert backend.get_object("lblStatus").text == "About: opened"
-
-
 def test_runtime_backend_save_click_passes_selected_path_to_handler():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
