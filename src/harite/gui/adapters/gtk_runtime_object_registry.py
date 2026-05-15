@@ -105,7 +105,6 @@ def _build_main_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, Any
         "btnSettings": widgets["btn_setting"],
         "btnSetColor": widgets["btn_set_color"],
         "btnAbout": widgets["btn_about"],
-        "btnHelp": widgets["btn_help"],
         "flowRow": widgets["flow_row"],
         "lblFlowLegend": widgets["flow_legend_label"],
     }
