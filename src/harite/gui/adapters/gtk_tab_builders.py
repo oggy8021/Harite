@@ -388,9 +388,9 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
     if hasattr(watch_top_row, "set_size_request"):
         watch_top_row.set_size_request(-1, 16)
     if hasattr(watch_between_srcdir_and_controls, "set_size_request"):
-        watch_between_srcdir_and_controls.set_size_request(-1, 18)
+        watch_between_srcdir_and_controls.set_size_request(-1, 54)
     if hasattr(watch_between_controls_and_detail, "set_size_request"):
-        watch_between_controls_and_detail.set_size_request(-1, 18)
+        watch_between_controls_and_detail.set_size_request(-1, 54)
     if hasattr(watch_bottom_row, "set_size_request"):
         watch_bottom_row.set_size_request(-1, 16)
     if hasattr(watch_top_row, "set_vexpand"):
