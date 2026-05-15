@@ -66,7 +66,14 @@
 
 ### Watch の構造
 
-- Watch は 3 段で扱う。
+- Watch はまず 5 行で扱う。
+  1. 上余白行
+  2. source 行
+  3. controls 行
+  4. 状態ラベル行
+  5. 下余白行
+
+- そのうえで実質の内容は 3 段で読む。
   1. 上段の source block（`Srcdir-L` / `Srcdir-R` と各 path）
   2. 中段 `Interval` と `Watch Start/Stop`
   3. 下段の状態ラベル群
@@ -84,10 +91,17 @@
 
 ### 幅の使い方
 
-- 上段は左右方向に 3 分割で扱う。
-  - 左セルの中央に左 source block
-  - 中央セルは余白
-  - 右セルの中央に右 source block
+- source 行は左右方向に 5 分割で扱う。
+  - 1 列目は左余白
+  - 2 列目に左 source block
+  - 3 列目は中央余白
+  - 4 列目に右 source block
+  - 5 列目は右余白
+
+- controls 行は左右方向に 3 分割で扱う。
+  - 左余白
+  - 中央列に `Interval` と `Watch Start/Stop`
+  - 右余白
 
 - 各 source block は少なくとも次の 2 要素を縦に持つ。
   1. `Srcdir-L/R` button
