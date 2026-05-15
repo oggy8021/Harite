@@ -331,7 +331,7 @@ notebook {
         main_page_shell = build_centered_page_shell(gtk_module, main_widgets["main_col"])
         action_widgets = build_action_cluster_section(
             gtk_module,
-            main_widgets["compose_grid"],
+            main_widgets["main_col"],
             default_apply_mode=_default_apply_mode(),
         )
         state_labels = build_runtime_state_labels(gtk_module)

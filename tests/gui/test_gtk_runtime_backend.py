@@ -1765,12 +1765,12 @@ def test_runtime_backend_cross_layout_places_top_and_bottom_per_side():
     right_col = backend.get_object("rightDisplayCol")
 
     assert compose_grid.children == [
-        (left_col, 0, 0, 1, 1),
-        (backend.get_object("inputRowL"), 0, 1, 1, 1),
-        (right_col, 1, 0, 1, 1),
-        (backend.get_object("inputRowR"), 1, 1, 1, 1),
-        (backend.get_object("actionClusterRow"), 0, 2, 2, 1),
+        (left_col._parent, 0, 0, 1, 1),
+        (backend.get_object("lblPickState")._parent, 1, 0, 1, 1),
+        (right_col._parent, 2, 0, 1, 1),
     ]
+
+    assert backend.get_object("actionClusterRow") in backend.get_object("boxMainSection").children
 
     assert left_col.children == [
         (backend.get_object("tglUpperL"), 1, 0, 1, 1),
