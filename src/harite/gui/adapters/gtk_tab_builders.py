@@ -641,7 +641,7 @@ def build_margins_tab_section(
     margin_position_label = gtk_module.Label(label="Position:")
     set_xalign_if_supported(margin_position_label)
     margin_position_shell.pack_start(margin_position_label, False, False, 0)
-    margin_position_columns_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=32)
+    margin_position_columns_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=56)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(margin_position_columns_row, gtk_module.Align.CENTER)
     margin_position_left_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
