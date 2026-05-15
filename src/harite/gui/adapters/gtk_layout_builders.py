@@ -2,10 +2,31 @@ from __future__ import annotations
 
 from typing import Any
 
+from harite.gui.resource_access import gui_resource_path
+
 
 def set_xalign_if_supported(widget: Any, value: float = 0.0) -> None:
     if hasattr(widget, "set_xalign"):
         widget.set_xalign(value)
+
+
+def set_button_icon_if_supported(gtk_module: Any, widget: Any, *resource_parts: str) -> None:
+    image_factory = getattr(gtk_module, "Image", None)
+    if image_factory is None or not hasattr(widget, "set_image"):
+        return
+
+    with gui_resource_path(*resource_parts) as resource_path:
+        if hasattr(image_factory, "new_from_file"):
+            image = image_factory.new_from_file(str(resource_path))
+        else:
+            image = image_factory()
+            if not hasattr(image, "set_from_file"):
+                return
+            image.set_from_file(str(resource_path))
+
+    widget.set_image(image)
+    if hasattr(widget, "set_always_show_image"):
+        widget.set_always_show_image(True)
 
 
 def build_horizontal_separator(gtk_module: Any) -> Any:
@@ -58,6 +79,7 @@ def build_header_section(gtk_module: Any, root: Any) -> dict[str, Any]:
     optimize_btn = gtk_module.Button(label="Save As")
     if hasattr(optimize_btn, "set_sensitive"):
         optimize_btn.set_sensitive(False)
+    set_button_icon_if_supported(gtk_module, optimize_btn, "icons", "lucide", "save.svg")
     flow_row.pack_start(optimize_btn, False, False, 0)
 
     return {

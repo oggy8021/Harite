@@ -12,3 +12,5 @@
 1. legacy UI の証跡は docs/legacy-ui にのみ置く
 2. current runtime で使う資産だけをこのディレクトリに置く
 3. signal や layout の追跡は docs/specs/gui/ の文書で管理する
+4. product icon のような runtime asset は package 内 resource としてここへ置く
+5. runtime からは importlib.resources 経由で参照し、docs/mock asset とは混線させない

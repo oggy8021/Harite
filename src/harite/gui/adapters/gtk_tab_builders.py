@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from harite.gui.adapters.gtk_layout_builders import set_xalign_if_supported
+from harite.gui.adapters.gtk_layout_builders import set_button_icon_if_supported, set_xalign_if_supported
 
 
 def build_action_cluster_section(gtk_module: Any, compose_grid: Any, *, default_apply_mode: str) -> dict[str, Any]:
@@ -21,6 +21,7 @@ def build_action_cluster_section(gtk_module: Any, compose_grid: Any, *, default_
     optimize_modern_btn = gtk_module.Button(label="Optimize")
     if hasattr(optimize_modern_btn, "set_sensitive"):
         optimize_modern_btn.set_sensitive(False)
+    set_button_icon_if_supported(gtk_module, optimize_modern_btn, "icons", "lucide", "image.svg")
     optimize_row.pack_start(optimize_modern_btn, False, False, 0)
     optimize_result = gtk_module.Label(label="Optimize result: not-run")
     set_xalign_if_supported(optimize_result)
@@ -35,6 +36,7 @@ def build_action_cluster_section(gtk_module: Any, compose_grid: Any, *, default_
     apply_btn = gtk_module.Button(label="Apply")
     if hasattr(apply_btn, "set_sensitive"):
         apply_btn.set_sensitive(False)
+    set_button_icon_if_supported(gtk_module, apply_btn, "icons", "lucide", "wallpaper.svg")
     apply_row.pack_start(apply_btn, False, False, 0)
     apply_target = gtk_module.Label(label="Apply target: not-ready")
     set_xalign_if_supported(apply_target)
@@ -180,6 +182,17 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     tgl_push_right_r = gtk_module.ToggleButton(label="Right-R")
     btn_get_img_r = gtk_module.Button(label="Open-R")
 
+    set_button_icon_if_supported(gtk_module, tgl_upper_l, "icons", "lucide", "arrow-up.svg")
+    set_button_icon_if_supported(gtk_module, tgl_upper_r, "icons", "lucide", "arrow-up.svg")
+    set_button_icon_if_supported(gtk_module, tgl_lower_l, "icons", "lucide", "arrow-down.svg")
+    set_button_icon_if_supported(gtk_module, tgl_lower_r, "icons", "lucide", "arrow-down.svg")
+    set_button_icon_if_supported(gtk_module, tgl_push_left_l, "icons", "lucide", "arrow-left.svg")
+    set_button_icon_if_supported(gtk_module, tgl_push_right_l, "icons", "lucide", "arrow-right.svg")
+    set_button_icon_if_supported(gtk_module, btn_get_img_l, "icons", "lucide", "folder-open.svg")
+    set_button_icon_if_supported(gtk_module, tgl_push_left_r, "icons", "lucide", "arrow-left.svg")
+    set_button_icon_if_supported(gtk_module, tgl_push_right_r, "icons", "lucide", "arrow-right.svg")
+    set_button_icon_if_supported(gtk_module, btn_get_img_r, "icons", "lucide", "folder-open.svg")
+
     if hasattr(left_display_grid, "attach"):
         left_display_grid.attach(tgl_upper_l, 1, 0, 1, 1)
         left_display_grid.attach(tgl_push_left_l, 0, 1, 1, 1)
@@ -194,6 +207,7 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     input_entry_l = gtk_module.Label(label="")
     set_xalign_if_supported(input_entry_l)
     btn_clr_path_l = gtk_module.Button(label="Clear-L")
+    set_button_icon_if_supported(gtk_module, btn_clr_path_l, "icons", "lucide", "folder-x.svg")
     input_row_l.pack_start(input_entry_l, True, True, 0)
     input_row_l.pack_start(btn_clr_path_l, False, False, 0)
     if hasattr(compose_grid, "attach"):
@@ -213,6 +227,7 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     input_entry_r = gtk_module.Label(label="")
     set_xalign_if_supported(input_entry_r)
     btn_clr_path_r = gtk_module.Button(label="Clear-R")
+    set_button_icon_if_supported(gtk_module, btn_clr_path_r, "icons", "lucide", "folder-x.svg")
     input_row_r.pack_start(input_entry_r, True, True, 0)
     input_row_r.pack_start(btn_clr_path_r, False, False, 0)
     if hasattr(compose_grid, "attach"):
@@ -327,6 +342,8 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
     watch_srcdir_shell.pack_start(watch_srcdir_right_spacer, True, True, 0)
     btn_open_srcdir_l = gtk_module.Button(label="Srcdir-L")
     btn_open_srcdir_r = gtk_module.Button(label="Srcdir-R")
+    set_button_icon_if_supported(gtk_module, btn_open_srcdir_l, "icons", "lucide", "folder-open.svg")
+    set_button_icon_if_supported(gtk_module, btn_open_srcdir_r, "icons", "lucide", "folder-open.svg")
     watch_srcdir_row.pack_start(btn_open_srcdir_l, False, False, 0)
     watch_srcdir_row.pack_start(btn_open_srcdir_r, False, False, 0)
 
@@ -344,6 +361,8 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
     interval_label = gtk_module.Label(label="Interval")
     btn_daemonize = gtk_module.Button(label="Watch Start")
     btn_cancel_daemonize = gtk_module.Button(label="Watch Stop")
+    set_button_icon_if_supported(gtk_module, btn_daemonize, "icons", "lucide", "play.svg")
+    set_button_icon_if_supported(gtk_module, btn_cancel_daemonize, "icons", "lucide", "pause.svg")
     watch_controls_row.pack_start(interval_label, False, False, 0)
     watch_controls_row.pack_start(interval_spin, False, False, 0)
     watch_controls_row.pack_start(btn_daemonize, False, False, 0)
