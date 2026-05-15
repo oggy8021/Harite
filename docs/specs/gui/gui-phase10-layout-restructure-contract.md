@@ -162,6 +162,8 @@
   4. position
   5. notes
 
+- `position` は横一列の説明行ではなく、`Left` 列と `Right` 列を並べ、その下に各 `Top` / `Bottom` を縦に積む形を基本とする。
+
 ### 余白の契約
 
 - Margins では外側の無意味な左右余白を作らない。
