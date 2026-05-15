@@ -10,6 +10,11 @@ def set_xalign_if_supported(widget: Any, value: float = 0.0) -> None:
         widget.set_xalign(value)
 
 
+def set_halign_if_supported(widget: Any, value: Any) -> None:
+    if hasattr(widget, "set_halign"):
+        widget.set_halign(value)
+
+
 def set_button_icon_if_supported(gtk_module: Any, widget: Any, *resource_parts: str) -> None:
     image_factory = getattr(gtk_module, "Image", None)
     if image_factory is None or not hasattr(widget, "set_image"):

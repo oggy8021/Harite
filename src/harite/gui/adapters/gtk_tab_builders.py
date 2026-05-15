@@ -2,11 +2,17 @@ from __future__ import annotations
 
 from typing import Any
 
-from harite.gui.adapters.gtk_layout_builders import set_button_icon_if_supported, set_xalign_if_supported
+from harite.gui.adapters.gtk_layout_builders import (
+    set_button_icon_if_supported,
+    set_halign_if_supported,
+    set_xalign_if_supported,
+)
 
 
 def build_action_cluster_section(gtk_module: Any, compose_grid: Any, *, default_apply_mode: str) -> dict[str, Any]:
     action_cluster_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=24)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(action_cluster_row, gtk_module.Align.CENTER)
     optimize_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     apply_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     if hasattr(compose_grid, "attach"):
@@ -149,6 +155,8 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     main_section_label = gtk_module.Label(label="Main")
 
     compose_grid = gtk_module.Grid()
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(compose_grid, gtk_module.Align.CENTER)
     if hasattr(compose_grid, "set_column_spacing"):
         compose_grid.set_column_spacing(32)
     if hasattr(compose_grid, "set_row_spacing"):
@@ -327,26 +335,30 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
     set_xalign_if_supported(watch_tab_title)
     watch_tab_box.pack_start(watch_label, False, False, 0)
 
-    watch_controls_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    watch_tab_box.pack_start(watch_controls_shell, False, False, 0)
-    watch_controls_left_spacer = gtk_module.Label(label="")
-    watch_controls_shell.pack_start(watch_controls_left_spacer, True, True, 0)
-    watch_controls_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=56)
-    watch_controls_shell.pack_start(watch_controls_row, False, False, 0)
-    watch_controls_right_spacer = gtk_module.Label(label="")
-    watch_controls_shell.pack_start(watch_controls_right_spacer, True, True, 0)
-
-    watch_left_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
-    watch_interval_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-    watch_right_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
-    watch_controls_row.pack_start(watch_left_group, False, False, 0)
-    watch_controls_row.pack_start(watch_interval_group, False, False, 0)
-    watch_controls_row.pack_start(watch_right_group, False, False, 0)
+    watch_srcdir_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    watch_tab_box.pack_start(watch_srcdir_shell, False, False, 0)
+    watch_srcdir_left_spacer = gtk_module.Label(label="")
+    watch_srcdir_shell.pack_start(watch_srcdir_left_spacer, True, True, 0)
+    watch_srcdir_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=48)
+    watch_srcdir_shell.pack_start(watch_srcdir_row, False, False, 0)
+    watch_srcdir_right_spacer = gtk_module.Label(label="")
+    watch_srcdir_shell.pack_start(watch_srcdir_right_spacer, True, True, 0)
 
     btn_open_srcdir_l = gtk_module.Button(label="Srcdir-L")
     btn_open_srcdir_r = gtk_module.Button(label="Srcdir-R")
     set_button_icon_if_supported(gtk_module, btn_open_srcdir_l, "icons", "lucide", "folder-open.svg")
     set_button_icon_if_supported(gtk_module, btn_open_srcdir_r, "icons", "lucide", "folder-open.svg")
+    watch_srcdir_row.pack_start(btn_open_srcdir_l, False, False, 0)
+    watch_srcdir_row.pack_start(btn_open_srcdir_r, False, False, 0)
+
+    watch_controls_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    watch_tab_box.pack_start(watch_controls_shell, False, False, 0)
+    watch_controls_left_spacer = gtk_module.Label(label="")
+    watch_controls_shell.pack_start(watch_controls_left_spacer, True, True, 0)
+    watch_controls_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
+    watch_controls_shell.pack_start(watch_controls_row, False, False, 0)
+    watch_controls_right_spacer = gtk_module.Label(label="")
+    watch_controls_shell.pack_start(watch_controls_right_spacer, True, True, 0)
 
     interval_spin = gtk_module.SpinButton()
     configure_spin_button(interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
@@ -355,12 +367,10 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
     btn_cancel_daemonize = gtk_module.Button(label="Watch Stop")
     set_button_icon_if_supported(gtk_module, btn_daemonize, "icons", "lucide", "play.svg")
     set_button_icon_if_supported(gtk_module, btn_cancel_daemonize, "icons", "lucide", "pause.svg")
-    watch_left_group.pack_start(btn_open_srcdir_l, False, False, 0)
-    watch_left_group.pack_start(btn_daemonize, False, False, 0)
-    watch_interval_group.pack_start(interval_label, False, False, 0)
-    watch_interval_group.pack_start(interval_spin, False, False, 0)
-    watch_right_group.pack_start(btn_open_srcdir_r, False, False, 0)
-    watch_right_group.pack_start(btn_cancel_daemonize, False, False, 0)
+    watch_controls_row.pack_start(interval_label, False, False, 0)
+    watch_controls_row.pack_start(interval_spin, False, False, 0)
+    watch_controls_row.pack_start(btn_daemonize, False, False, 0)
+    watch_controls_row.pack_start(btn_cancel_daemonize, False, False, 0)
 
     watch_detail_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
     watch_tab_box.pack_start(watch_detail_row, False, False, 0)
