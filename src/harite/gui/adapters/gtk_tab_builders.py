@@ -372,19 +372,43 @@ def build_primary_margin_controls(gtk_module: Any, *, configure_spin_button: Any
 
 
 def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> dict[str, Any]:
-    watch_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=16)
+    watch_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     if hasattr(watch_tab_box, "set_border_width"):
         watch_tab_box.set_border_width(0)
     watch_label = gtk_module.Label(label="")
     watch_tab_title = gtk_module.Label(label="Watch (stopped)")
     set_xalign_if_supported(watch_tab_title)
 
-    watch_srcdir_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=48)
+    watch_top_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    watch_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    watch_bottom_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    watch_left_outer_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    watch_right_outer_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    watch_main_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=16)
     if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(watch_srcdir_row, gtk_module.Align.FILL)
-    if hasattr(watch_srcdir_row, "set_hexpand"):
-        watch_srcdir_row.set_hexpand(True)
-    watch_tab_box.pack_start(watch_srcdir_row, False, False, 0)
+        set_halign_if_supported(watch_main_col, gtk_module.Align.CENTER)
+    if hasattr(watch_top_spacer, "set_vexpand"):
+        watch_top_spacer.set_vexpand(True)
+    if hasattr(watch_bottom_spacer, "set_vexpand"):
+        watch_bottom_spacer.set_vexpand(True)
+    if hasattr(watch_left_outer_spacer, "set_hexpand"):
+        watch_left_outer_spacer.set_hexpand(True)
+    if hasattr(watch_right_outer_spacer, "set_hexpand"):
+        watch_right_outer_spacer.set_hexpand(True)
+
+    watch_tab_box.pack_start(watch_top_spacer, True, True, 0)
+    watch_center_row.pack_start(watch_left_outer_spacer, True, True, 0)
+    watch_center_row.pack_start(watch_main_col, False, False, 0)
+    watch_center_row.pack_start(watch_right_outer_spacer, True, True, 0)
+    watch_tab_box.pack_start(watch_center_row, True, True, 0)
+    watch_tab_box.pack_start(watch_bottom_spacer, True, True, 0)
+
+    watch_srcdir_row = gtk_module.Grid()
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(watch_srcdir_row, gtk_module.Align.CENTER)
+    if hasattr(watch_srcdir_row, "set_column_spacing"):
+        watch_srcdir_row.set_column_spacing(96)
+    watch_main_col.pack_start(watch_srcdir_row, False, False, 0)
 
     left_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     right_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
@@ -404,15 +428,16 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
     left_source_block.pack_start(watch_source_label_l, False, False, 0)
     right_source_block.pack_start(btn_open_srcdir_r, False, False, 0)
     right_source_block.pack_start(watch_source_label_r, False, False, 0)
-    watch_srcdir_row.pack_start(left_source_block, False, False, 0)
-    watch_srcdir_middle_spacer = gtk_module.Label(label="")
-    watch_srcdir_row.pack_start(watch_srcdir_middle_spacer, True, True, 0)
-    watch_srcdir_row.pack_start(right_source_block, False, False, 0)
+    watch_srcdir_middle_gap = gtk_module.Label(label="")
+    if hasattr(watch_srcdir_row, "attach"):
+        watch_srcdir_row.attach(left_source_block, 0, 0, 1, 1)
+        watch_srcdir_row.attach(watch_srcdir_middle_gap, 1, 0, 1, 1)
+        watch_srcdir_row.attach(right_source_block, 2, 0, 1, 1)
 
     watch_controls_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=10)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(watch_controls_row, gtk_module.Align.CENTER)
-    watch_tab_box.pack_start(watch_controls_row, False, False, 0)
+    watch_main_col.pack_start(watch_controls_row, False, False, 0)
 
     interval_spin = gtk_module.SpinButton()
     configure_spin_button(interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
@@ -429,7 +454,7 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
     watch_detail_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(watch_detail_row, gtk_module.Align.CENTER)
-    watch_tab_box.pack_start(watch_detail_row, False, False, 0)
+    watch_main_col.pack_start(watch_detail_row, False, False, 0)
     watch_current_label = gtk_module.Label(label="Watch current: idle")
     set_xalign_if_supported(watch_current_label)
     watch_detail_row.pack_start(watch_current_label, False, False, 0)
