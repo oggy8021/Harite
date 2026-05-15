@@ -385,6 +385,14 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
     watch_between_controls_and_detail = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     watch_detail_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     watch_bottom_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(watch_top_row, "set_size_request"):
+        watch_top_row.set_size_request(-1, 16)
+    if hasattr(watch_between_srcdir_and_controls, "set_size_request"):
+        watch_between_srcdir_and_controls.set_size_request(-1, 18)
+    if hasattr(watch_between_controls_and_detail, "set_size_request"):
+        watch_between_controls_and_detail.set_size_request(-1, 18)
+    if hasattr(watch_bottom_row, "set_size_request"):
+        watch_bottom_row.set_size_request(-1, 16)
     if hasattr(watch_top_row, "set_vexpand"):
         watch_top_row.set_vexpand(True)
     if hasattr(watch_bottom_row, "set_vexpand"):
