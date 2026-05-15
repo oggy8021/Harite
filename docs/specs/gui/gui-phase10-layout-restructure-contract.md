@@ -66,12 +66,14 @@
 
 ### Watch の構造
 
-- Watch はまず 5 行で扱う。
+- Watch はまず 7 行で扱う。
   1. 上余白行
   2. source 行
-  3. controls 行
-  4. 状態ラベル行
-  5. 下余白行
+  3. source-control 間の余白行
+  4. controls 行
+  5. controls-detail 間の余白行
+  6. 状態ラベル行
+  7. 下余白行
 
 - そのうえで実質の内容は 3 段で読む。
   1. 上段の source block（`Srcdir-L` / `Srcdir-R` と各 path）

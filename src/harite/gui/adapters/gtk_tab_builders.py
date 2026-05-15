@@ -380,7 +380,9 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
     set_xalign_if_supported(watch_tab_title)
     watch_top_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     watch_srcdir_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    watch_between_srcdir_and_controls = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     watch_controls_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    watch_between_controls_and_detail = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     watch_detail_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     watch_bottom_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     if hasattr(watch_top_row, "set_vexpand"):
@@ -389,7 +391,9 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
         watch_bottom_row.set_vexpand(True)
     watch_tab_box.pack_start(watch_top_row, True, True, 0)
     watch_tab_box.pack_start(watch_srcdir_row, False, False, 0)
+    watch_tab_box.pack_start(watch_between_srcdir_and_controls, False, False, 0)
     watch_tab_box.pack_start(watch_controls_shell, False, False, 0)
+    watch_tab_box.pack_start(watch_between_controls_and_detail, False, False, 0)
     watch_tab_box.pack_start(watch_detail_shell, False, False, 0)
     watch_tab_box.pack_start(watch_bottom_row, True, True, 0)
 
