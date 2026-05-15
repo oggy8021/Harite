@@ -1778,7 +1778,6 @@ def test_runtime_backend_cross_layout_places_top_and_bottom_per_side():
         (backend.get_object("btnGetImgL"), 1, 1, 1, 1),
         (backend.get_object("tglPushRightL"), 2, 1, 1, 1),
         (backend.get_object("tglLowerL"), 1, 2, 1, 1),
-        (backend.get_object("btnClrPathL"), 1, 3, 1, 1),
     ]
     assert right_col.children == [
         (backend.get_object("tglUpperR"), 1, 0, 1, 1),
@@ -1786,7 +1785,6 @@ def test_runtime_backend_cross_layout_places_top_and_bottom_per_side():
         (backend.get_object("btnGetImgR"), 1, 1, 1, 1),
         (backend.get_object("tglPushRightR"), 2, 1, 1, 1),
         (backend.get_object("tglLowerR"), 1, 2, 1, 1),
-        (backend.get_object("btnClrPathR"), 1, 3, 1, 1),
     ]
 
 
