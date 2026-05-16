@@ -106,6 +106,7 @@
 - まずは XFCE で watch on/off と app identity を壊さず読めることを優先する。
 - watch 状態の初手対応は単純で、enabled 側を `wallopt.png`、disabled 側を `wallopt_off.png` として扱ってよい。
 - したがって icon 側は on/off の 2 状態をそのまま資産名で読み分ける前提に置く。
+- tray icon の視認性と意匠の補助判断は [docs/specs/gui/gui-phase11-2nd-planning.md](docs/specs/gui/gui-phase11-2nd-planning.md) に切り出す。
 
 ### 6. `Settings` / `BaseColor` の責務境界
 
