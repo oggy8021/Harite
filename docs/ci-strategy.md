@@ -26,7 +26,7 @@
 
 キャッシュとアーティファクト
 
-- 仮想環境・依存キャッシュ（pip cache, Poetry cache）を有効にする。
+- 仮想環境・依存キャッシュ（pip cache、Poetry cache）を有効にする。
 - 失敗時に必要なログ（pytest-xml、stderr/out）とビルドアーティファクトを短期間保持（例: 7日）。
 
 プルリクエストワークフロー

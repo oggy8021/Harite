@@ -103,7 +103,7 @@ Phase5 方針メモ:
 
 - `hbox11`: 上マージン調整
 - `hbox2`: 中央レイアウト本体
-  - `vbox4`: 左マージン列（`lblLMergin`, `spnLMergin`）
+  - `vbox4`: 左マージン列（`lblLMergin`、`spnLMergin`）
   - `hbox5`: 中央 + 右マージン列
     - `vbox3`: 中央操作群
       - 左画像ブロック: `tglUpperL` / `tglPushLeftL` / `btnGetImgL` / `tglPushRightL` / `tglLowerL`
@@ -111,7 +111,7 @@ Phase5 方針メモ:
       - 左右は独立指示系で、各画像を囲むように配置される
       - パス表示 + クリア
       - 固定/非固定ラジオ
-    - `vbox5`: 右マージン列（`lblRMergin`, `spnRMergin`）
+    - `vbox5`: 右マージン列（`lblRMergin`、`spnRMergin`）
 - `hbox12`: 下マージン調整
 - `hbox14`: 主要コマンドバー
 - `statusbar`: 実行状態表示
@@ -120,30 +120,30 @@ Phase5 方針メモ:
 
 ### マージン
 
-- `spnTopMergin`, `spnLMergin`, `spnRMergin`, `spnBtmMergin`
+- `spnTopMergin`、`spnLMergin`、`spnRMergin`、`spnBtmMergin`
 
 ### 画像入力・配置
 
-- パス: `entPathL`, `entPathR`
-- 取得: `btnGetImgL`, `btnGetImgR`
-- クリア: `btnClrPathL`, `btnClrPathR`
+- パス: `entPathL`、`entPathR`
+- 取得: `btnGetImgL`、`btnGetImgR`
+- クリア: `btnClrPathL`、`btnClrPathR`
 - 位置トグル:
-  - 上下: `tglUpperL`, `tglUpperR`, `tglLowerL`, `tglLowerR`
-  - 左右: `tglPushLeftL`, `tglPushRightL`, `tglPushLeftR`, `tglPushRightR`
-- 固定モード: `radFixed`, `radNoFixed`
+  - 上下: `tglUpperL`、`tglUpperR`、`tglLowerL`、`tglLowerR`
+  - 左右: `tglPushLeftL`、`tglPushRightL`、`tglPushLeftR`、`tglPushRightR`
+- 固定モード: `radFixed`、`radNoFixed`
 
 ### 下部バー
 
-- `btnSetting`, `btnSetColor`, `btnSave`, `btnSetWall`
-- `spnInterval`, `lblInterval`
-- `btnDaemonize`, `btnCancelDaemonize`
-- `btnAbout`, `btnHelp`
+- `btnSetting`、`btnSetColor`、`btnSave`、`btnSetWall`
+- `spnInterval`、`lblInterval`
+- `btnDaemonize`、`btnCancelDaemonize`
+- `btnAbout`、`btnHelp`
 
 ## シグナル導線（MainWindow 主要分）
 
 - window close: `on_WallPosit_MainWindow_delete_event`
 - margin change: `on_spnMergin_value_changed`
-- toggle buttons: `on_tglBtn_pressed`, `on_tglBtn_released`, `on_tglBtn_toggled`
+- toggle buttons: `on_tglBtn_pressed`、`on_tglBtn_released`、`on_tglBtn_toggled`
 - image pick: `on_btnGetImg_clicked`
 - path update: `on_entPath_insert_text`
 - path clear: `on_btnClrPath_clicked`
@@ -182,16 +182,16 @@ Phase5 方針メモ:
 - B（中）: Glade 上の stock 指定はあるが、ハンドラで意味値が直接は確定しないもの。
 - C（低）: 現行実装都合で置換が必要で、同等表現で意味維持を狙うもの。
 
-本書の `tgl*`, `btnSave`, `btnSetWall` は A 扱いとする。
+本書の `tgl*`、`btnSave`、`btnSetWall` は A 扱いとする。
 
 ### 2) MainWindow のフェイス基準（優先再現）
 
-- 位置トグル（`tglUpper*`, `tglLower*`, `tglPush*`）
+- 位置トグル（`tglUpper*`、`tglLower*`、`tglPush*`）
   - 要件: 方向性（上/下/左/右）がアイコンまたは同等表現で判別できること。
-- 画像取得/クリア（`btnGetImg*`, `btnClrPath*`）
+- 画像取得/クリア（`btnGetImg*`、`btnClrPath*`）
   - 要件: open/clear の操作種別が一目で分かること。
   - 補足: `btnClrPath*` は旧Gladeで `relief=none`。補助操作として主操作より弱い見え方を維持する。
-- 下部コマンド（`btnSave`, `btnSetWall`, `btnDaemonize`, `btnCancelDaemonize` 等）
+- 下部コマンド（`btnSave`、`btnSetWall`、`btnDaemonize`、`btnCancelDaemonize` 等）
   - 要件: save/apply/execute/stop の意味差がボタンフェイスで区別できること。
 
 ### 3) 反映箇所（実装・文書・テスト）
@@ -232,7 +232,7 @@ Phase5 方針メモ:
 このPRで実施できること:
 
 - MainWindow の骨格（縦5段 + 中央十字配置）を Glade 近似へ寄せる（必要に応じて列/行を増減）。
-- 主要ウィジェットIDの互換導線（`btnSave`, `btnSetWall`, `entPathL` など）を維持する。
+- 主要ウィジェットIDの互換導線（`btnSave`、`btnSetWall`、`entPathL` など）を維持する。
 - `resizable=True` を採用し、旧制約との差分理由を記録する。
 
 このPRでは実施しないこと（後続PR推奨）:

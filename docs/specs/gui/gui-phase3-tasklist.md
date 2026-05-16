@@ -52,7 +52,7 @@
 
 - 完了: Phase 3 Step 1-5（設計固定、mapping再分類、状態モデル、統合テスト観点、UI loader試作）
 - 完了: 実機検証補助の強化（smoke validate、markdown出力、失敗チェック表示、PRコメントテンプレート）
-- 完了: `.pyc` 追跡解除と再発防止（`__pycache__/`, `*.pyc` ignore）
+- 完了: `.pyc` 追跡解除と再発防止（`__pycache__/`、`*.pyc` ignore）
 - 完了: M1-1（glade signal handler 抽出 + `MainWindow` への mapping 検証）
 - 完了: M1-2（adapter dispatch API 追加 + bind metadata へ接続ハンドラ記録）
 - 完了: M1-3（backend signal connect 実装: `connect_signals(mapping)` / `connect(name, callback)` を adapter で吸収）
@@ -111,7 +111,7 @@ Exit Criteria（この再開PRの完了条件）:
 - [x] M2-1: OS別の実機確認マトリクスを定義（pass/fail/not-available）
 - [x] M2-2: 実機確認成果物の命名規則を定義（json/md/screenshot）
 - [x] M2-3a: 手動検証結果を1ファイルへ束ねるレポート出力を smoke script に追加
-- [x] M2-3b: 1環境以上でテンプレート運用実績を作成し、PRコメントに添付（PR146/XFCE, PR162/Windows）
+- [x] M2-3b: 1環境以上でテンプレート運用実績を作成し、PRコメントに添付（PR146/XFCE、PR162/Windows）
 - [x] M2-4: XFCE で Step1-5（GUI起動/入力更新/Optimize/Apply dry-run/3画面添付）を pass
 
 ## M3 詳細進捗
@@ -122,7 +122,7 @@ Exit Criteria（この再開PRの完了条件）:
 - [x] M3-4a: スクリーンショット実ファイル存在チェック（`--verify-screenshot-files`）を追加
 - [x] M3-5a: 厳格運用モード（`--strict-manual`）を追加
 - [x] M3-6a: `pr-comment` 出力に `### Screenshots` を追加し、スクリーンショット検証を report/pr-comment 両方で強制可能化
-- [x] M3-2b: 実機確認1件分を `pr-comment` へ添付して標準フォーマット運用を確定（PR146/XFCE, PR162/Windows）
+- [x] M3-2b: 実機確認1件分を `pr-comment` へ添付して標準フォーマット運用を確定（PR146/XFCE、PR162/Windows）
 - [x] M3-3b: XFCE で MainWindow/Optimize/Apply の3画面を添付し、実機結果を標準フォーマットで記録
 
 ## 追加メモ（2026-04-12）
@@ -130,7 +130,7 @@ Exit Criteria（この再開PRの完了条件）:
 - legacy glade の runtime 非互換を回避するため、GTK runtime fallback window 経路で実機検証を実施した。
 - fallback 経路で Step1-5 は達成済み。次段では本UI配置で同手順を再確認し、最終収束する。
 
-## 追い込み計画（M2/M3 UI品質収束, 2026-04-12 起票）
+## 追い込み計画（M2/M3 UI品質収束、2026-04-12 起票）
 
 目的:
 
@@ -178,7 +178,7 @@ Exit Criteria（この再開PRの完了条件）:
 - Step 2: `docs/specs/gui-signal-mapping.md`（Phase 3 での再分類表）
 - Step 3: `docs/specs/gui-mainwindow-state-model.md`
 - Step 4: `docs/specs/gui-integration-test-matrix.md`
-- Step 5: `src/harite/gui/adapters/ui_loader.py`, `src/harite/gui/app.py`, `tests/gui/test_ui_loader_prototype.py`
+- Step 5: `src/harite/gui/adapters/ui_loader.py`、`src/harite/gui/app.py`、`tests/gui/test_ui_loader_prototype.py`
 
 ## DoD
 

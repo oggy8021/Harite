@@ -16,9 +16,9 @@
 ## 対象範囲
 
 - 対象コマンド: `harite optimize`
-- 対象オプション: `--config`, `--two-screen`, `--l-display`, `--r-display`, `--margins`
-- 実装参照: `src/harite/cli.py`, `src/harite/core.py`
-- 参照仕様: `docs/specs/cli-compatibility.md`, `docs/specs/optimize-input-and-two-screen.md`
+- 対象オプション: `--config`、`--two-screen`、`--l-display`、`--r-display`、`--margins`
+- 実装参照: `src/harite/cli.py`、`src/harite/core.py`
+- 参照仕様: `docs/specs/cli-compatibility.md`、`docs/specs/optimize-input-and-two-screen.md`
 
 ## 優先復元対象（上位4）
 
@@ -47,7 +47,7 @@
 ### `--config` 優先順位
 
 - 優先順は `CLI引数 > --config の値 > 既定値`。
-- `--resolution`, `--input` など必須相当項目は、上記優先順で最終値が解決できない場合にエラーとする。
+- `--resolution`、`--input` など必須相当項目は、上記優先順で最終値が解決できない場合にエラーとする。
 
 ### `--two-screen` と左右ディスプレイ指定
 

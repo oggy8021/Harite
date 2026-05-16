@@ -10,7 +10,7 @@
 **含まれるテスト**
 
 - `tests/core/test_core_features.py`
-  - スモークおよび代表的な動作検証：`optimize_wallpapers`, `compute_placement`, `split_composite_for_displays` の基本動作。
+  - スモークおよび代表的な動作検証：`optimize_wallpapers`、`compute_placement`、`split_composite_for_displays` の基本動作。
 - `tests/core/test_core_edgecases.py`
   - エッジケース検証：透過 PNG、非常に大きな画像、アップスケールの取り扱い、オフスクリーン（x_offset が合成画像範囲外）のディスプレイ処理。
 

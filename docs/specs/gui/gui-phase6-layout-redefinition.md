@@ -84,7 +84,7 @@
 配置対象:
 
 - title (`Harite`)
-- text menu (`Prefs`, `Help`, `About`)
+- text menu (`Prefs`、`Help`、`About`)
 - flow legend (`Compose -> Optimize -> Apply`)
 - `Save As`
 
@@ -107,8 +107,8 @@
 - `entPathL/R`
 - `btnGetImgL/R`
 - `btnClrPathL/R`
-- `tglUpper*`, `tglLower*`, `tglPushLeft*`, `tglPushRight*`
-- `radFixed`, `radNoFixed`
+- `tglUpper*`、`tglLower*`、`tglPushLeft*`、`tglPushRight*`
+- `radFixed`、`radNoFixed`
 - top/left/right/bottom margins
 
 判断:
@@ -174,9 +174,9 @@
 
 配置対象:
 
-- `Srcdir-L`, `Srcdir-R`
+- `Srcdir-L`、`Srcdir-R`
 - interval
-- `Watch Start`, `Watch Stop`
+- `Watch Start`、`Watch Stop`
 - watch sources / current
 
 判断:
@@ -216,7 +216,7 @@
 
 役割:
 
-- status, error, save target, watch state, logs を集約する
+- status、error、save target、watch state、logs を集約する
 
 配置対象:
 

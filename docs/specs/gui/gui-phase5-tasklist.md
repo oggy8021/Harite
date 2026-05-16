@@ -35,7 +35,7 @@
 
 - P5-2 はクローズ済み（`[x]`）。
 - 実装済み:
-  - `src/harite/gui/views/main_window.py` に Phase5 レイアウトメタデータ（`layout_version`, `layout_sections`）を反映。
+  - `src/harite/gui/views/main_window.py` に Phase5 レイアウトメタデータ（`layout_version`、`layout_sections`）を反映。
   - `src/harite/gui/adapters/gtk_backend.py` を Glade近似の縦5段/中央十字配置を軸に再編（列/行増減を許容）。
   - Window 方針を `resizable=True` に確定。
 - ドキュメント済み:
@@ -126,7 +126,7 @@
   - 完了記録（部分）: Open-L/Open-R 導線追加後も Owner 実行の固定回帰コマンドが 100% pass（2026-04-13）
   - 進捗: fallback UI に `Style cues` / `Commands` / `Flow` ラベルを追加し、`About/Help (secondary)` と `planned` の視認軸を明示（2026-04-13, 2026-04-14更新）
   - 進捗: `About/Help` のみ secondary 表記を維持し、`Save/Optimize/Apply/Prefs` からは primary/secondary 区別語彙を除去（2026-04-14）
-  - 進捗: `test_gtk_runtime_backend` / `test_phase5_visual_regression` に新語彙（`Style cues`, `Commands`, ボタンラベル簡素化）の回帰チェックを反映（2026-04-14）
+  - 進捗: `test_gtk_runtime_backend` / `test_phase5_visual_regression` に新語彙（`Style cues`、`Commands`、ボタンラベル簡素化）の回帰チェックを反映（2026-04-14）
   - 完了記録（部分）: visual tier 整備後も Owner 実行の固定回帰コマンドが 100% pass（2026-04-13）
   - 進捗: `Save/Optimize/Apply` は機能名中心の簡潔ラベルへ移行し、`About/Help` 以外の secondary/primary 表記ノイズを削減（2026-04-14）
   - 進捗: `tgl` 系ボタンの語彙を `Top/Bottom/Left/Right` へ統一し、左右対称の見た目ルールを固定（2026-04-13）
@@ -203,11 +203,11 @@
 
 - [x] P5-10 feat(gui): watch 導線の実処理導入（srcdirL/srcdirR）
   - 対象: watch start/stop/interval の planned 導線を実処理へ昇格
-  - 要件: watch 用の左右画像向けパスは `srcdirL`, `srcdirR` で指定可能、未指定も許容
+  - 要件: watch 用の左右画像向けパスは `srcdirL`、`srcdirR` で指定可能、未指定も許容
   - 補足: MainWindow の `entPathL` / `entPathR` とは責務を分離（watch 用入力と通常入力を混同しない）
   - 進捗: `spnInterval` も upstream では `GtkSpinButton` の adjustment (`60 1 86400 1 10 0`) で駆動されると確認。fallback 側へ同等の range/increment/初期値を補完し、margin と同種のステッパ不発を予防（2026-04-15）
   - 進捗: upstream `SettingDialog.py` / `SrcdirDialog.py` / `WindowBase.py` を再読し、`btnOpenSrcdir_clicked -> SrcdirDialog.openDialog(current_srcdir, side)` と `spnInterval_value_changed` / `btnDaemonize_clicked` の責務境界を整理した（2026-04-16）
-  - 進捗: MainWindow に watch 専用 state (`watch_srcdir_l/r`, `watch_current_display`, `watch_running`) を追加し、`on_pick_watch_srcdir` と start/stop/interval を actual 化した。fallback backend にも `SrcdirDialog` proxy、`Srcdir-L/R`、watch status labels を追加し、`srcdirL/srcdirR` の有無分岐を回帰テストへ固定し始めた（2026-04-16）
+  - 進捗: MainWindow に watch 専用 state (`watch_srcdir_l/r`、`watch_current_display`、`watch_running`) を追加し、`on_pick_watch_srcdir` と start/stop/interval を actual 化した。fallback backend にも `SrcdirDialog` proxy、`Srcdir-L/R`、watch status labels を追加し、`srcdirL/srcdirR` の有無分岐を回帰テストへ固定し始めた（2026-04-16）
   - 完了記録（部分）: owner 実行の固定 GUI 回帰コマンドが pass。`tests/gui/test_main_window_signals.py` / `test_ui_adapter_dispatch.py` / `test_ui_adapter_mapping_validation.py` / `test_gtk_runtime_backend.py` / `test_phase5_visual_regression.py` の watch/srcdir 回帰を含めて green を確認した（2026-04-16）
   - 完了記録: owner の XFCE 実機で Srcdir chooser 起動、`srcdirL/srcdirR` 反映、watch start/stop 表示、interval 更新の 4 項目が pass。P5-10 の受け入れ条件を満たした（2026-04-16, owner確認）
   - 追加条件: 旧 `SettingDialog` / `SrcdirDialog` の導線対応表を提出し、実装前レビュー合意を得る

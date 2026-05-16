@@ -34,11 +34,11 @@
 上流確認元:
 
 - ローカル参照先は `/memories/repo/upstream-reference.md` に記録済みの wallpaperoptimizer リポジトリ。
-- 今回の確認では upstream の tray / indicator 実装として `AppIndicator.py`, `Applet.py`, `WindowBase.py` を読んだ。
+- 今回の確認では upstream の tray / indicator 実装として `AppIndicator.py`、`Applet.py`、`WindowBase.py` を読んだ。
 
 確認結果:
 
-- tray / indicator menu の項目名は `Visible/Invisible`, `Settings`, `BaseColor`, `About`, `Quit` だった。
+- tray / indicator menu の項目名は `Visible/Invisible`、`Settings`、`BaseColor`、`About`、`Quit` だった。
 - watch 状態は icon の 2 状態切り替えで表現されていた。
 - active 側と stopped 側で別 icon を使い分けていた。
 - tray icon は application icon と同じ画像資産を兼用していた。
@@ -50,7 +50,7 @@
 - watch 状態を tray icon の 2 状態で読む考え方。
 - tray icon と application icon を同一資産系で扱う考え方。
 - tray menu から main GUI へ戻れること。
-- `Visible/Invisible`, `Settings`, `BaseColor`, `About`, `Quit` の基本 menu 構成を強い踏襲候補として持つこと。
+- `Visible/Invisible`、`Settings`、`BaseColor`、`About`、`Quit` の基本 menu 構成を強い踏襲候補として持つこと。
 - 初手は既存 icon、既存 dialog、既存 handler、既存 GUI semantics の流用を正本に置くこと。
 
 ## そのまま踏襲しない点

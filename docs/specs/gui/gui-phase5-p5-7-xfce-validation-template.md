@@ -55,10 +55,10 @@ python scripts/gui_layout_smoke.py --simulate --validate --auto-artifacts --arti
   - glade のように grid 化できない場合は、きれいに並べる代替手法を提案してください。
   - GUI 版は本来、パスを入力させるフォームは不要です。ファイル選択ダイアログでパス指定する想定です。
   - 仮配置の場合は、レイアウト確認の外に置いてください。
-  - `entPathL`, `entPathR` は `OpenL`, `OpenR` で取得した画像パスを表示する想定だったことを再確認しました。
+  - `entPathL`、`entPathR` は `OpenL`、`OpenR` で取得した画像パスを表示する想定だったことを再確認しました。
   - 母体プログラムを explain し、確認してください。
   - 最終的に Core などに渡す際に 1 つへまとめることは問題ありません。
-  - watch 用の左右画像向けパスは `srcdirL`, `srcdirR` で指定します。未指定も許容します。
+  - watch 用の左右画像向けパスは `srcdirL`、`srcdirR` で指定します。未指定も許容します。
   - 実施先PR: P5-9 `feat(gui): watch 導線の実処理導入（srcdirL/srcdirR）`
 
 - Optimize

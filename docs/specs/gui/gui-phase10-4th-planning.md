@@ -220,7 +220,7 @@
 - icon set 比較メモ: [docs/specs/gui/gui-phase10-iconset-comparison.md](docs/specs/gui/gui-phase10-iconset-comparison.md)
 - icon source 候補の shortlist と、その採否理由。
 - Phase10 で触る widget / surface の対象一覧。
-- Main Window icon 適用前の軽量 HTML mock: [docs/specs/gui/gui-phase10-icon-html-mock-memo.md](docs/specs/gui/gui-phase10-icon-html-mock-memo.md), [docs/specs/gui/gui-phase10-icon-mock.html](docs/specs/gui/gui-phase10-icon-mock.html)
+- Main Window icon 適用前の軽量 HTML mock: [docs/specs/gui/gui-phase10-icon-html-mock-memo.md](docs/specs/gui/gui-phase10-icon-html-mock-memo.md)、[docs/specs/gui/gui-phase10-icon-mock.html](docs/specs/gui/gui-phase10-icon-mock.html)
 - asset failure をどこで検出し、どこで失敗扱いにするかの実装メモ。
 - application icon は別系統 asset として扱う前提確認。
 - fixed window size 前提で崩してよい箇所と崩してはいけない箇所の確認メモ。

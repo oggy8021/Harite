@@ -54,7 +54,7 @@
   - 拡張子を限定させてファイルをしているなどの機能が、 wallpaperoptimizer:WallpaperOptimizer>Widget>ImgOpenDialog.py にあります。
   - 現状は、入力させたパスの承認機能でしょうか？
   - OpenRは、省略します
-  - Top, Bottom, Left, Right と対象にある tgl系操作は片方を有効にすると、もう片方は押下前に復帰するのが本来です。両方同時押しは矛盾があるため、受け入れないとの仕様が WallpaperOptimizerにはあります。 `gui-phase5-p5-4-retrofit-modernize.md` としても予定は決まっていないですね。これも実装を計画してください。
+  - Top、Bottom、Left、Right と対象にある tgl系操作は片方を有効にすると、もう片方は押下前に復帰するのが本来です。両方同時押しは矛盾があるため、受け入れないとの仕様が WallpaperOptimizerにはあります。 `gui-phase5-p5-4-retrofit-modernize.md` としても予定は決まっていないですね。これも実装を計画してください。
   - Saveの体験がよくないですね。どこになんというファイル名で保存されたかが分からないです。wallpaperoptimizer:WallpaperOptimizer>Widget>SaveWallpaperDialog.py 保存場所を指定する機能となっています。
   - Save Cancel
     - SaveDialog: cancel-failed Error:cancel returned false とあります。
@@ -65,9 +65,9 @@
   - MainWindow回帰により実施見送り（blocked）
 - Style consistency:
   - 現状以下が左寄せで並びます。暫定許容でしょうか。
-    - Top-L, Top-R
-    - Left-L, Open-L, RightL, Left-R, Open-R, RightR
-    - Bottom-L, Bottom-R
+    - Top-L、Top-R
+    - Left-L、Open-L、RightL、Left-R、Open-R、RightR
+    - Bottom-L、Bottom-R
 - Notes:
 
 ### WallpaperOptimizerにおける Dialog の呼び出し関係

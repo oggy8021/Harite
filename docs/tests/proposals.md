@@ -24,7 +24,7 @@
 ## 推奨次アクション（短いタスク順）
 
 1. `tests/conftest.py` を追加（共通 make_image 等）。
-2. `requirements-dev.txt` を作る（pytest, Pillow 等）。
+2. `requirements-dev.txt` を作る（pytest、Pillow 等）。
 3. `pytest.ini` を追加しマーカ定義（slow）を追加。
 4. `harite.workspace` のパーサに対する単体テストを 3 件追加。
 5. CI ワークフローに `slow` ジョブを追加（必須でない）。

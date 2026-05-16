@@ -10,8 +10,8 @@
 ## 対象範囲
 
 - 対象コマンド: `harite optimize`
-- 対象オプション: `--input`, `--two-screen`, `--l-display`, `--r-display`
-- 実装参照: `src/harite/cli.py`, `src/harite/core.py`
+- 対象オプション: `--input`、`--two-screen`、`--l-display`、`--r-display`
+- 実装参照: `src/harite/cli.py`、`src/harite/core.py`
 
 ## `--input` の仕様
 
