@@ -107,6 +107,7 @@
 - watch 状態の初手対応は単純で、enabled 側を `harite.svg`、disabled 側を `harite_off.svg` として扱ってよい。
 - したがって icon 側は on/off の 2 状態をそのまま資産名で読み分ける前提に置く。
 - tray icon の視認性と意匠の補助判断は [docs/specs/gui/gui-phase11-2nd-planning.md](docs/specs/gui/gui-phase11-2nd-planning.md) に切り出す。
+- application / taskbar / about / main window の icon surface 判断は [docs/specs/gui/gui-phase11-3rd-planning.md](docs/specs/gui/gui-phase11-3rd-planning.md) に切り出す。
 
 ### 6. `Settings` / `BaseColor` の責務境界
 

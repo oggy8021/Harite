@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from harite.gui.adapters.gtk_layout_builders import build_horizontal_separator, set_xalign_if_supported
+from harite.gui.adapters.gtk_layout_builders import build_horizontal_separator
+from harite.gui.adapters.gtk_layout_builders import build_image_from_resource_if_supported
+from harite.gui.adapters.gtk_layout_builders import set_window_icon_if_supported
+from harite.gui.adapters.gtk_layout_builders import set_xalign_if_supported
 
 
 def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> dict[str, Any]:
@@ -178,14 +181,16 @@ def build_color_dialog_section(gtk_module: Any, *, default_color_hex: str) -> di
 def build_about_dialog_section(gtk_module: Any) -> dict[str, Any]:
     about_window = gtk_module.Window(title="About Harite")
     if hasattr(about_window, "set_default_size"):
-        about_window.set_default_size(420, 220)
+        about_window.set_default_size(420, 320)
     if hasattr(about_window, "set_resizable"):
         about_window.set_resizable(False)
+    set_window_icon_if_supported(gtk_module, about_window, "icons", "product", "harite_app.svg")
 
     about_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     about_top_spacer = gtk_module.Label(label="")
     about_bottom_spacer = gtk_module.Label(label="")
     about_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+    about_icon = build_image_from_resource_if_supported(gtk_module, "icons", "product", "harite_app.svg")
     about_title_label = gtk_module.Label(label="Harite")
     about_version_label = gtk_module.Label(label="Version: -")
     about_description_label = gtk_module.Label(label="")
@@ -201,6 +206,14 @@ def build_about_dialog_section(gtk_module: Any) -> dict[str, Any]:
         set_xalign_if_supported(label, 0.5)
 
     about_close_btn = gtk_module.Button(label="About Close")
+    if about_icon is not None:
+        about_icon_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+        about_icon_left = gtk_module.Label(label="")
+        about_icon_right = gtk_module.Label(label="")
+        about_icon_row.pack_start(about_icon_left, True, True, 0)
+        about_icon_row.pack_start(about_icon, False, False, 0)
+        about_icon_row.pack_start(about_icon_right, True, True, 0)
+        about_box.pack_start(about_icon_row, False, False, 0)
     about_box.pack_start(about_title_label, False, False, 0)
     about_box.pack_start(about_version_label, False, False, 0)
     about_box.pack_start(about_description_label, False, False, 0)

@@ -15,23 +15,48 @@ def set_halign_if_supported(widget: Any, value: Any) -> None:
         widget.set_halign(value)
 
 
-def set_button_icon_if_supported(gtk_module: Any, widget: Any, *resource_parts: str) -> None:
+def build_image_from_resource_if_supported(gtk_module: Any, *resource_parts: str) -> Any | None:
     image_factory = getattr(gtk_module, "Image", None)
-    if image_factory is None or not hasattr(widget, "set_image"):
-        return
+    if image_factory is None:
+        return None
 
     with gui_resource_path(*resource_parts) as resource_path:
         if hasattr(image_factory, "new_from_file"):
-            image = image_factory.new_from_file(str(resource_path))
-        else:
-            image = image_factory()
-            if not hasattr(image, "set_from_file"):
-                return
-            image.set_from_file(str(resource_path))
+            return image_factory.new_from_file(str(resource_path))
+
+        image = image_factory()
+        if not hasattr(image, "set_from_file"):
+            return None
+        image.set_from_file(str(resource_path))
+        return image
+
+
+def set_button_icon_if_supported(gtk_module: Any, widget: Any, *resource_parts: str) -> None:
+    if not hasattr(widget, "set_image"):
+        return
+
+    image = build_image_from_resource_if_supported(gtk_module, *resource_parts)
+    if image is None:
+        return
 
     widget.set_image(image)
     if hasattr(widget, "set_always_show_image"):
         widget.set_always_show_image(True)
+
+
+def set_window_icon_if_supported(gtk_module: Any, widget: Any, *resource_parts: str) -> None:
+    with gui_resource_path(*resource_parts) as resource_path:
+        if hasattr(widget, "set_icon_from_file"):
+            widget.set_icon_from_file(str(resource_path))
+            return
+        if hasattr(widget, "set_default_icon_from_file"):
+            widget.set_default_icon_from_file(str(resource_path))
+            return
+
+        window_class = getattr(gtk_module, "Window", None)
+        default_setter = getattr(window_class, "set_default_icon_from_file", None)
+        if callable(default_setter):
+            default_setter(str(resource_path))
 
 
 def build_horizontal_separator(gtk_module: Any) -> Any:
