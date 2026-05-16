@@ -41,6 +41,12 @@ def _load_ui_signal_backend() -> Any:
     return load_gtk_builder_signal_backend()
 
 
+def _initialize_tasktray(signal_backend: Any) -> Any | None:
+    from .adapters.tasktray_adapter import initialize_tasktray
+
+    return initialize_tasktray(signal_backend)
+
+
 def _present_ui_window(signal_backend: Any) -> bool:
     from .adapters.gtk_backend import present_gtk_window
 
@@ -93,6 +99,15 @@ def run(
         except Exception as exc:
             # Non-fatal: runtime fallback should remain usable in partial environments.
             print(f"UI runtime fallback dispatch skipped: {exc}")
+
+        try:
+            tasktray_adapter = _initialize_tasktray(signal_backend)
+            if tasktray_adapter is not None:
+                setattr(signal_backend, "_tasktray_adapter", tasktray_adapter)
+                setattr(window, "_tasktray_adapter", tasktray_adapter)
+                print("UI task tray ready")
+        except Exception as exc:
+            print(f"UI task tray skipped: {exc}")
 
     if signal_backend is not None and _should_present_ui_window(present_ui_window):
         try:
