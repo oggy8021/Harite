@@ -104,7 +104,7 @@
 - owner 既存 icon を Phase11 初手の正本候補に置いてよい。
 - multi-scale icon や smoothing 改善は将来論点として残す。
 - まずは XFCE で watch on/off と app identity を壊さず読めることを優先する。
-- watch 状態の初手対応は単純で、enabled 側を `wallopt.png`、disabled 側を `wallopt_off.png` として扱ってよい。
+- watch 状態の初手対応は単純で、enabled 側を `harite.svg`、disabled 側を `harite_off.svg` として扱ってよい。
 - したがって icon 側は on/off の 2 状態をそのまま資産名で読み分ける前提に置く。
 - tray icon の視認性と意匠の補助判断は [docs/specs/gui/gui-phase11-2nd-planning.md](docs/specs/gui/gui-phase11-2nd-planning.md) に切り出す。
 
@@ -139,7 +139,7 @@
 - ただし `Settings` / `BaseColor` の責務は tray へ移さず、tray は既存 dialog を開く要求だけを担う。
 - 変更結果の正本は settings JSON に永続化され、その反映結果が current GUI にも戻る、という shared persistence 前提で扱ってよい。
 - `Visible/Invisible` は 1 項目トグル寄り、watch は二項分離寄り、という実装観点で進めてよい。
-- watch 二項分離の state 表現は、enabled 側が `wallopt.png`、disabled 側が `wallopt_off.png` という単純対応で進めてよい。
+- watch 二項分離の state 表現は、enabled 側が `harite.svg`、disabled 側が `harite_off.svg` という単純対応で進めてよい。
 - watch 二項分離の enabled/disabled は tray 局所 state にせず、既存 watch state へ伝播して全同種 state を追随させる。
 - 初手の新規開発は、既存資産を前提にした event 線の接続を中心とし、新しい意味面の追加は極力避ける。
 - したがって初手の主論点は menu 項目の存廃より、XFCE での実装基盤と watch 二項分離の state handling へ寄る。
@@ -166,7 +166,7 @@
 - Phase11 初手で狙う常駐導線の正本 surface が説明可能になっている。
 - tray icon と app icon の関係が説明可能になっている。
 - tray menu の最小項目と対象外項目が切り分けられている。
-- watch 状態を icon と menu のどちらでどう読むか、特に watch は二項分離かつ `wallopt.png` / `wallopt_off.png` 対応で、既存 watch state への伝播前提が説明可能になっている。
+- watch 状態を icon と menu のどちらでどう読むか、特に watch は二項分離かつ `harite.svg` / `harite_off.svg` 対応で、既存 watch state への伝播前提が説明可能になっている。
 - `Settings` / `BaseColor` について、tray は dialog-open request のみを担い、dialog semantics は current GUI 側が所有し、最終的に settings JSON 永続化と current GUI 反映へ戻ることが説明可能になっている。
 - 既存資産流用を正本とし、初手の新規開発が event wiring 中心で足りることが説明可能になっている。
 - XFCE を first target に置く理由と、他 OS を後段へ送る理由が説明可能になっている。
