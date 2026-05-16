@@ -7,7 +7,7 @@
 範囲
 
 - 入力: `xfconf-query --list` などから得られる設定キー一覧/値文字列、検出されるディスプレイ情報（`detect_displays()` が返す幅/高さ/位置）。
-- 出力: 候補リスト（identifier, index?, resolution?, position?）, スコア、選択ルール。
+- 出力: 候補リスト（identifier、index?、resolution?、position?）、スコア、選択ルール。
 
 設計目標
 
@@ -17,7 +17,7 @@
 
 主要処理フロー
 
-1. 正規化 (`_normalize_identifier`)：小文字化、記号削除、common aliases（e.g. `wallpaper`/`backdrop`）マップ適用。
+1. 正規化 (`_normalize_identifier`)：小文字化、記号削除、common aliases（e.g。`wallpaper`/`backdrop`）マップ適用。
 2. トークン化 / 変種生成 (`_name_variants`)：単語分割、複合トークン抽出。
 3. 候補抽出：キー文字列から index/resolution/position 情報を正規表現で抽出。
 4. スコアリング：

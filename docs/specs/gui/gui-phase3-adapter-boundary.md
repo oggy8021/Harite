@@ -18,7 +18,7 @@
 
 1. Domain/Controller 層
 
-- 対象: `OptimizeController`, `OptimizeFormState`, `MainWindow` ロジック
+- 対象: `OptimizeController`、`OptimizeFormState`、`MainWindow` ロジック
 - 役割: 入力検証、最適化実行、apply導線、ログ/エラー状態管理
 - 制約: UIライブラリ（GTK/PySide 等）を import しない
 
@@ -37,7 +37,7 @@
 ## Adapter インターフェース（最小）
 
 - `initialize()` : UI初期化（widget生成、signal接続）
-- `render(state)` : `MainWindow` の状態（can_optimize, last_error, logs など）を反映
+- `render(state)` : `MainWindow` の状態（can_optimize、last_error、logs など）を反映
 - `bind_handlers(main_window)` : signal -> handler の接続
 - `run_loop()` : フレームワークのメインループ開始
 

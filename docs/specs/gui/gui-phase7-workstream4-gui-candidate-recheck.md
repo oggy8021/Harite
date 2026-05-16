@@ -174,10 +174,7 @@
   - こう読むと、`Auto-split` 側は monitor 別 apply target を内部生成する動作、`No Split` 側は追加分割せず 1 ファイルをそのまま適用する動作として対置できる。
 
 - helper text の責務:
-  - `Auto-split`: split the optimized image and apply per display.
-  - `No Split`: apply the optimized image as a single file.
-
-- Phase7 ではまだ固定しない点:
+  - `Auto-split`: split the optimized image and apply per display。- `No Split`: apply the optimized image as a single file。- Phase7 ではまだ固定しない点:
   - `Prefs` 側にも `No Split` / `Auto-split` をそのまま持ち込むか。
 
 ## explicit mapping の扱い
@@ -298,7 +295,7 @@
 
 ## Phase8 候補バックログ素案
 
-### P8-A. 制作支援の最小セット
+### P8-A。制作支援の最小セット
 
 - 目的:
   - current GUI の「作れるが見えにくい」を改善する。
@@ -310,7 +307,7 @@
   - current Phase7 で最も不足が明確で、embed 系を主導線へ上げるかどうかの判断材料にも直結する。
   - 要望としての優先度も高く、Phase8 に入った時点で最初に着手する候補として自然である。
 
-### P8-B. preview / visual assist の拡張
+### P8-B。preview / visual assist の拡張
 
 - 目的:
   - 生成前後の見た目確認を GUI 内で閉じる。
@@ -321,7 +318,7 @@
 - 優先理由:
   - single-screen / two-screen / embed / auto-split の複数論点を横断して支える基盤になり得る。
 
-### P8-C. embed 系の GUI 昇格再設計
+### P8-C。embed 系の GUI 昇格再設計
 
 - 目的:
   - current state / prefs 接続済みの embed 系を、MainWindow 内の制作機能として再設計する。
@@ -332,7 +329,7 @@
 - 優先理由:
   - current state / prefs 接続はあるため、設計が決まれば進めやすい。
 
-### P8-D. deferred 項目の close 判断
+### P8-D。deferred 項目の close 判断
 
 - 目的:
   - legacy 痕跡だけで残っている項目を backlog として残すか閉じるかを決める。

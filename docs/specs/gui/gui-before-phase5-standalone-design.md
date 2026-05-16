@@ -98,7 +98,7 @@
 
 ### 最新化ポリシー
 
-- 禁止: pygtk, appindicator, Python2 時代 API
+- 禁止: pygtk、appindicator、Python2 時代 API
 - 推奨: GTK4 + Builder XML + controller 分離
 - 将来の常駐機能は別モジュールに分離し、MVP には入れない
 
@@ -134,10 +134,10 @@
 - 入力: `--input`
 - 出力先: `--output`
 - 解像度: `--resolution`
-- 基本設定: `--scaling`, `--quality`
-- two-screen: `--two-screen`, `--l-display`, `--r-display`, `--margins`
-- 配置: `--align`, `--valign`
-- margin text: `--embed-info`, `--embed-text`, `--embed-position`
+- 基本設定: `--scaling`、`--quality`
+- two-screen: `--two-screen`、`--l-display`、`--r-display`、`--margins`
+- 配置: `--align`、`--valign`
+- margin text: `--embed-info`、`--embed-text`、`--embed-position`
 - 適用: `apply --plugin ... --file ... [--do-it]`
 
 ## モジュール分割案
@@ -215,6 +215,6 @@
 
 ## 次アクション
 
-- A. 旧母体の Glade 実体ファイル回収（可能なら最優先）
-- B. `gui` サブパッケージ骨格の追加（実装ゼロの起動確認まで）
-- C. MainWindow の項目定義を UI ID 一覧として別紙化
+- A。旧母体の Glade 実体ファイル回収（可能なら最優先）
+- B。`gui` サブパッケージ骨格の追加（実装ゼロの起動確認まで）
+- C。MainWindow の項目定義を UI ID 一覧として別紙化

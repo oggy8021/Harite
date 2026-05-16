@@ -7,7 +7,7 @@
 概要
 
 - 旧実装は `Options.py`/`OptionsBase.py` により多くの細かなオプションを提供し、`Core.py` により合成〜適用までを一括で実行していた。
-- 現行は `src/harite/cli.py`（`typer`）で主要コマンドを `optimize`, `compute-placement`, `apply` として提供しており、機能は概ねカバー済みだが一部細目とデーモン機能が未移植。
+- 現行は `src/harite/cli.py`（`typer`）で主要コマンドを `optimize`、`compute-placement`、`apply` として提供しており、機能は概ねカバー済みだが一部細目とデーモン機能が未移植。
 
 対応表（代表）
 

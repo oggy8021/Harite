@@ -26,7 +26,7 @@
   - 備考: ここでの失敗はコード品質指摘だが必須修正対象とするかは運用次第。
 
 - `test`（テストマトリクス）
-  - 実行環境: `ubuntu-latest`, `macos-latest`, `windows-latest`（matrix）
+  - 実行環境: `ubuntu-latest`、`macos-latest`、`windows-latest`（matrix）
   - 役割: 各 OS 上でのユニットテストを実行し互換性を確認。
   - 備考: 現状は Python 3.12 のみで回しており、CI の重さが出やすいポイント。重要だが、全組合せを PR 毎に必須にするかはコストと頻度を考慮して判断すること。
 

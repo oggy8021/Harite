@@ -215,7 +215,7 @@
 - 担当: owner
 - レビュー担当: TBD
 - 予定実機環境: XFCE
-- 判定対象導線: `tglUpper/Lower*`, `tglPushLeft/Right*`, `spn*Mergin`
+- 判定対象導線: `tglUpper/Lower*`、`tglPushLeft/Right*`、`spn*Mergin`
 
 ### 12-2. 上流読解ソース（P5-8）
 
@@ -279,7 +279,7 @@
 - [x] 排他制御と `align/valign` 更新順序の依存有無
   - 母体は `pressed -> toggled(active時のみ) -> released(両方OFFならcenter/middle)` の責務分離になっている
 - [x] 例外導線（初期状態/未選択状態）での上流既定値
-  - `Options.py` の既定値は `align=center`, `valign=middle`, `mergin=0,0,0,0`, `fixed=False`, `interval=60`。Harite 側では vertical の `middle` を `center` 表現へ正規化している
+  - `Options.py` の既定値は `align=center`、`valign=middle`、`mergin=0,0,0,0`、`fixed=False`、`interval=60`。Harite 側では vertical の `middle` を `center` 表現へ正規化している
 - [x] 現行 fallback 実装の「対向ボタン無効化」は母体差分として維持するか、`pressed/released` ベースへ寄せ直すか
   - 母体寄せへ変更済み。無効化UXは廃止した
 - [x] 現行 fallback 実装は `on_radFixed_toggled(False)` を呼んでいるが、母体のトグル処理は `align/valign` 更新であり、責務が一致していない
@@ -326,7 +326,7 @@
 - 担当: owner
 - レビュー担当: TBD
 - 予定実機環境: XFCE
-- 判定対象導線: `btnGetImgL`, `btnGetImgR`, `ImgOpenDialog`, `entPathL`, `entPathR`
+- 判定対象導線: `btnGetImgL`、`btnGetImgR`、`ImgOpenDialog`、`entPathL`、`entPathR`
 
 ### 13-2. 上流読解ソース（P5-9）
 
@@ -340,7 +340,7 @@
 - 読解メモ1: upstream は `btnOpen_clicked -> RESPONSE_OK`、cancel/destroy は `RESPONSE_CANCEL` として扱い、`openDialog` は OK 時だけ filename を返し、それ以外は `False` を返す
 - 読解メモ2: 初期 path が空なら home directory、非空なら `abspath(path)` を初期位置に使う
 - 読解メモ3: title は既定タイトルへ `(<L/R>)` を付けて side を区別する
-- 読解メモ4: filter は `image/png`, `image/jpeg`, `image/bmp`, `image/gif` と `*.png`, `*.jpeg`, `*.jpg`, `*.bmp`, `*.gif`、および all files で構成される
+- 読解メモ4: filter は `image/png`、`image/jpeg`、`image/bmp`、`image/gif` と `*.png`、`*.jpeg`、`*.jpg`、`*.bmp`、`*.gif`、および all files で構成される
 - 読解メモ5: caller は選択 path を内部 args に保持し、entry には basename のみを表示する
 
 ### 13-3. 対応関係マトリクス（P5-9）
@@ -430,7 +430,7 @@ upstream の save path 確定責務は維持しつつ、dialog 実体は modern 
 - 担当: owner
 - レビュー担当: TBD
 - 予定実機環境: XFCE
-- 判定対象導線: `btnSave`, `SaveWallpaperDialog`, `btnOpenSave`, `btnCancelSave`, save path 表示
+- 判定対象導線: `btnSave`、`SaveWallpaperDialog`、`btnOpenSave`、`btnCancelSave`、save path 表示
 
 ### 14-2. 上流読解ソース（P5-11）
 
@@ -546,7 +546,7 @@ watch 用 `srcdirL/srcdirR` は通常入力 `entPathL/R` と責務分離しつ�
 - 担当: owner
 - レビュー担当: TBD
 - 予定実機環境: XFCE
-- 判定対象導線: `btnSetting`, `btnOpenSrcdirL/R`, `SrcdirDialog`, `spnInterval`, `btnDaemonize`, `btnCancelDaemonize`
+- 判定対象導線: `btnSetting`、`btnOpenSrcdirL/R`、`SrcdirDialog`、`spnInterval`、`btnDaemonize`、`btnCancelDaemonize`
 
 ### 15-2. 上流読解ソース（P5-10）
 
@@ -569,7 +569,7 @@ watch 用 `srcdirL/srcdirR` は通常入力 `entPathL/R` と責務分離しつ�
 | watch start | caller が watch 用 source dir をもとに実処理を開始 | `collect_watch_input_images` / `select_next_image` を使って初回選択を確定し、status へ反映する | source dir 指定あり/なしの分岐がテストで固定される |
 | watch stop | caller が watch 状態を停止へ遷移 | running/idle を分けて停止状態を返す | idle stop は無害、running stop は stopped へ遷移する |
 
-- 実装メモ1: MainWindow は `watch_srcdir_l/r`, `watch_source_display`, `watch_current_display`, `watch_running` を保持し、watch 専用 state を通常入力から分離した（2026-04-16）
+- 実装メモ1: MainWindow は `watch_srcdir_l/r`、`watch_source_display`、`watch_current_display`、`watch_running` を保持し、watch 専用 state を通常入力から分離した（2026-04-16）
 - 実装メモ2: fallback backend は `SrcdirDialog` proxy と `btnOpenSrcdirL/R`、`lblWatchSources`、`lblWatchCurrent` を追加し、実 GTK では native folder chooser を優先、fallback では proxy state で回せる形にした（2026-04-16）
 - 実装メモ3: 回帰テストでは `srcdirL/srcdirR` 指定あり/なし、watch interval 更新、fallback watch labels を固定し始めた。owner 実行は未実施（2026-04-16）
 - 実装メモ4: 現実装の watch start は source dir 検証と初回選択結果の可視化までで、壁紙 plugin apply や interval ごとの継続切替はまだ接続していない（2026-04-16）

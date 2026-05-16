@@ -100,7 +100,7 @@
 | 目的 | import/run と state contract の回帰検出 | 実機依存挙動と運用証跡の確認 |
 | 実行環境 | headless（backend 非依存） | 実機（Windows/XFCE/macOS 利用可能環境） |
 | 主対象 | `tests/gui/*` と `scripts/gui_layout_smoke.py --simulate --validate` | `scripts/gui_layout_smoke.py --auto-artifacts` または `--strict-manual` |
-| 成功基準 | pytest green, GUI smoke pass | Result matrix 記録と PR 添付証跡の整合 |
+| 成功基準 | pytest green、GUI smoke pass | Result matrix 記録と PR 添付証跡の整合 |
 | 失敗時対応 | 同PR内で修正必須 | 原因記録後に修正PRを先行 |
 
 運用メモ:

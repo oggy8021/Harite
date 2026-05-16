@@ -9,7 +9,7 @@
 
 ## Group 1: preview / visual assist
 
-### P8-1A. 最小 preview
+### P8-1A。最小 preview
 
 - 目的:
   - optimize 実行後の生成結果を GUI 内で確認できるようにする。
@@ -28,7 +28,7 @@
   - 生成前 preview
   - `Color` や embed controls との同時実装
 
-### P8-1B. visual assist の拡張
+### P8-1B。visual assist の拡張
 
 - 目的:
   - preview を単なる画像表示で終わらせず、配置理解の補助まで広げる。
@@ -47,7 +47,7 @@
 
 ## Group 2: embed 系 GUI 昇格
 
-### P8-2A. MainWindow 入口の再配置
+### P8-2A。MainWindow 入口の再配置
 
 - 目的:
   - `embed-text` / margin info を `Prefs` 既定値保持だけで終わらせず、MainWindow の制作機能として扱う。
@@ -88,7 +88,7 @@
 - 依存:
   - preview 方針の固定後に扱う
 
-### P8-2B. 作業単位編集と既定値の分離
+### P8-2B。作業単位編集と既定値の分離
 
 - 目的:
   - embed 系を「保存される既定値」と「今回だけの編集値」に分ける。
@@ -114,7 +114,7 @@
 
 ## Group 3: `Color` / deferred legacy
 
-### P8-3A. `Color` の再定義
+### P8-3A。`Color` の再定義
 
 - 目的:
   - 背景色を user selectable な機能として GUI に実装する。
@@ -126,7 +126,7 @@
 - 依存:
   - `Prefs` と並ぶ補助 control として扱うため、preview 方針とは切り分けて進められる
 
-### P8-3B. `About` 実装と deferred 整理
+### P8-3B。`About` 実装と deferred 整理
 
 - 目的:
   - `About` は軽量な情報ダイアログとして実装し、その他の legacy 痕跡は backlog に残すか close するかを決める。

@@ -25,7 +25,7 @@
 データ収集項目
 
 - 実行ログ（--verbose 出力）
-- 環境変数 (`DISPLAY`, `XDG_SESSION_TYPE`, `XAUTHORITY` 等)
+- 環境変数 (`DISPLAY`、`XDG_SESSION_TYPE`、`XAUTHORITY` 等)
 - xrandr / xfce4の出力とコマンドの終了コード
 - Python のトレースバック（例外発生時）
 

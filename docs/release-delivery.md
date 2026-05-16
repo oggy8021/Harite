@@ -24,7 +24,7 @@ python -m build --sdist --wheel
 
 ## .venv 非依存のインストール手順（利用側）
 
-### A. pipx 推奨（CLI ツール用途）
+### A。pipx 推奨（CLI ツール用途）
 
 ```bash
 pipx install /abs/path/to/dist/harite-<version>-py3-none-any.whl
@@ -32,7 +32,7 @@ harite optimize --help
 harite apply --help
 ```
 
-### B. pip --user（pipx がない場合）
+### B。pip --user（pipx がない場合）
 
 ```bash
 python -m pip install --user /abs/path/to/dist/harite-<version>-py3-none-any.whl
@@ -42,13 +42,13 @@ harite apply --help
 
 ## アンインストール手順
 
-### A. pipx の場合
+### A。pipx の場合
 
 ```bash
 pipx uninstall harite
 ```
 
-### B. pip --user の場合
+### B。pip --user の場合
 
 ```bash
 python -m pip uninstall -y harite

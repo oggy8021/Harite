@@ -1,8 +1,6 @@
 # GUI Manual Validation Report Template
 
-Use this template in PR comments for device validation.
-
-## Manual device validation
+Use this template in PR comments for device validation。## Manual device validation
 
 - PR: [number]
 - Scope: [OS/desktop/plugin]

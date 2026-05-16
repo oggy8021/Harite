@@ -1,6 +1,6 @@
 # GUI Phase 9-11 Roadmap
 
-最終更新: 2026-05-12
+最終更新: 2026-05-16
 
 ## 現在地
 
@@ -155,7 +155,9 @@
 4. Phase10 の visual aid 方針メモ: [docs/specs/gui/gui-phase10-2nd-planning.md](docs/specs/gui/gui-phase10-2nd-planning.md)
 5. Phase10 の settings semantics メモ: [docs/specs/gui/gui-phase10-3rd-planning.md](docs/specs/gui/gui-phase10-3rd-planning.md)
 6. Phase10 の icon 導入メモ: [docs/specs/gui/gui-phase10-4th-planning.md](docs/specs/gui/gui-phase10-4th-planning.md)
-7. Phase11 の OS integration 方式比較メモ
+7. Phase11 の初手 planning: [docs/specs/gui/gui-phase11-1st-planning.md](docs/specs/gui/gui-phase11-1st-planning.md)
+8. Phase11 の OS integration 方式比較メモ
+9. 現時点では [docs/specs/gui/gui-phase11-1st-planning.md](docs/specs/gui/gui-phase11-1st-planning.md) に主要判断を統合済みであり、追加メモは feature 実装で blocker が出た場合のみ作る。
 
 ## 判断メモ
 
@@ -164,3 +166,4 @@
 - 2026-05-11 時点の Phase10 初手判断では、README 上の正本 GUI 導線は `harite-gui` を第一候補とし、`harite gui` は将来整理候補として残す。
 - Phase10 close 判断の補助文書は [docs/specs/gui/gui-phase10-closing-check.md](docs/specs/gui/gui-phase10-closing-check.md) とする。
 - Phase11 は新規抽象化を要するため、post-Phase10 の小粒追加ではなく、独立フェーズとして扱う。
+- Phase11 実装は feature で進め、planning の追加分割は既定路線にしない。

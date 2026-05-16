@@ -47,10 +47,10 @@
 
 未解決4件の扱い:
 
-- `btnClrPathL`, `btnClrPathR`
+- `btnClrPathL`、`btnClrPathR`
   - glade signal は `on_btnClrPath_clicked`。
   - 旧実装では `WindowBase._initializeWindow()` の `signal_autoconnect` 辞書で `on_btnClrPath_clicked -> btnGetImg_clicked` に束ねており、共有ハンドラ方式。
-- `btnCancelSave`, `btnOpenSave`
+- `btnCancelSave`、`btnOpenSave`
   - 現行取り込み glade は `on_btnCancelSave_clicked` / `on_btnOpenSave_clicked`。
   	- 旧 `SaveWallpaperDialog.py` は `on_btnCancel_clicked` / `on_btnOpen_clicked` を接続しており、命名差分がある。
   	- 現行側は意味正規化として `on_btnCancelSave_clicked -> MainWindow.on_save_path_selection_canceled`、`on_btnOpenSave_clicked -> MainWindow.on_save_path_selected` を採用している。
@@ -64,10 +64,10 @@
 
 現時点判定:
 
-- MainWindow の `tgl*`, `btnSave`, `btnSetWall` は A。
-- `btnClrPath*`, `btnCancelSave`, `btnOpenSave` は B（命名・接続差分の追跡継続）。
+- MainWindow の `tgl*`、`btnSave`、`btnSetWall` は A。
+- `btnClrPath*`、`btnCancelSave`、`btnOpenSave` は B（命名・接続差分の追跡継続）。
 - `btnClrPath*` は B（共有ハンドラ方式の継続可否を追跡）。
-- `btnCancelSave`, `btnOpenSave` は A-（命名差分はあるが意味正規化で解消済み）。
+- `btnCancelSave`、`btnOpenSave` は A-（命名差分はあるが意味正規化で解消済み）。
 
 ### MVP で扱う候補
 

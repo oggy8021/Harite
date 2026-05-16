@@ -17,7 +17,7 @@
 ## 現行実装の整理
 
 - GUI runtime の選択 UI は 4 象限 radio のままとする。
-- object 名は `radMarginTextPositionLeftTop`, `radMarginTextPositionLeftBottom`, `radMarginTextPositionRightTop`, `radMarginTextPositionRightBottom` を使う。
+- object 名は `radMarginTextPositionLeftTop`、`radMarginTextPositionLeftBottom`、`radMarginTextPositionRightTop`、`radMarginTextPositionRightBottom` を使う。
 - GUI state と config/CLI/core の橋渡しは、単一の `embed_position` 値で行う。
 - `embed_position` の現行対応は次の 4 値である。
   - `top` = left top
@@ -33,7 +33,7 @@
 
 - user は `Left/Right` と `Top/Bottom` の組で配置先を選べる。
 - margin 数値 4 項目との一体感を崩さず、`Margins` tab の visible complexity を増やさない。
-- 既存の `embed_position` をそのまま使うため、GUI, prefs, CLI preview, core の境界を広く触らずに済む。
+- 既存の `embed_position` をそのまま使うため、GUI、prefs、CLI preview、core の境界を広く触らずに済む。
 - branch 6 のレイアウト contract と実装が一致しており、別 branch で追加 UI を起こす必要が薄い。
 
 ## 非対象

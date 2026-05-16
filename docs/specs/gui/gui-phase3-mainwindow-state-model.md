@@ -50,7 +50,7 @@
 
 - `plugin_name: str`
   - 意味: 現在選択中 plugin
-  - 主な更新契機: `_default_plugin_name`, `on_change_plugin`
+  - 主な更新契機: `_default_plugin_name`、`on_change_plugin`
   - UI反映: plugin ドロップダウン現在値
 
 ### 5. 実行結果状態
@@ -65,10 +65,10 @@
 - `form_state: OptimizeFormState`
   - 意味: optimize 実行入力の集約状態
   - 主なフィールド:
-    - 入力: `input_value`, `resolution`, `output_dir`
-    - 配置/品質: `scaling`, `align`, `valign`, `quality`
-    - two-screen: `two_screen`, `margins`, `l_display`, `r_display`
-    - margin text: `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`
+    - 入力: `input_value`、`resolution`、`output_dir`
+    - 配置/品質: `scaling`、`align`、`valign`、`quality`
+    - two-screen: `two_screen`、`margins`、`l_display`、`r_display`
+    - margin text: `embed_info`、`embed_text`、`embed_position`、`embed_max_lines`
   - UI反映: 各入力コンポーネント
 
 ## 状態遷移（主要フロー）

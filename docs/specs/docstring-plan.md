@@ -4,7 +4,7 @@ docstring-plan
 ## 依頼
 
 - docstring 生成の基本ルール
-  - Google Style で、各関数の `Summary`, `Args`, `Returns` を作成してください。
+  - Google Style で、各関数の `Summary`、`Args`、`Returns` を作成してください。
   - 説明文は 「日本語」 で、極力 「ショート（簡潔）」 に記述してください。
   - 4/9 の上位モデル（5.3-Codex）復帰時に設計意図が伝わる、最小限かつ的確な表現を優先してください。
 - 型ヒント（Type Hints）の同期

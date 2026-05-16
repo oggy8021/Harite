@@ -11,7 +11,7 @@
 
 - OS: Linux Mint (XFCE)
 - Python: 3.12
-- 関連コマンド: `xfconf-query`, `xrandr`
+- 関連コマンド: `xfconf-query`、`xrandr`
 - 検証スクリプト: `scripts/xfce_smoke_runner.py`
 
 ## 実施ログ（要約）

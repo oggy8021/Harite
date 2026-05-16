@@ -42,8 +42,8 @@
 競合時は以下の順で解決する。
 
 1. 固定モード（`radFixed`）
-2. margin（`spnTopMergin`, `spnLMergin`, `spnRMergin`, `spnBtmMergin`）
-3. 位置トグル（`tglUpper*`, `tglLower*`, `tglPush*`）
+2. margin（`spnTopMergin`、`spnLMergin`、`spnRMergin`、`spnBtmMergin`）
+3. 位置トグル（`tglUpper*`、`tglLower*`、`tglPush*`）
 
 補足:
 
@@ -68,7 +68,7 @@
 ## 4. 後続への引き継ぎ
 
 - P5-4: 文言/配色/余白トークンを最終統一。
-- P5-4以降: preview window（入力画像/Optimize結果）と color picker, watch 導線を段階実装。
+- P5-4以降: preview window（入力画像/Optimize結果）と color picker、watch 導線を段階実装。
 - P5-4以降: SaveDialog確定イベントから Optimize 実行までの一連導線を仕上げ、旧Save導線の体験一致を完成させる。
 
 ## 5. 透過性ルール（CLI準拠とGUI拡張の境界）
@@ -78,5 +78,5 @@
   - 旧 `argparse` 由来の公開オプションではなく、SaveDialog で選ばれた保存先を損なわないための GUI 専用導線。
   - CLI からは `--output`（ディレクトリ）を使い、GUI からは必要に応じてファイル直指定を使う。
 - 未実装または段階導入中の項目は、UI上で必ず `planned` と明示する。
-  - 対象: `Color`, `watch`, `do-it`。
+  - 対象: `Color`、`watch`、`do-it`。
   - 禁止: 実行可能に見える表示のまま、内部で何も起きない状態を放置すること。

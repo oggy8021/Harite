@@ -171,7 +171,7 @@
 
 ### `fixed`
 
-- 母体では `fixed` は単なる補助フラグではなく、`Img1 -> left`, `Img2 -> right` を先に binding する起点だった。
+- 母体では `fixed` は単なる補助フラグではなく、`Img1 -> left`、`Img2 -> right` を先に binding する起点だった。
 - その後に contain 判定、縮小、寄せ、merge が続くため、母体ではかなり強い値だった。
 - Harite 現行では内部値は `fixed: bool` として残っており、GUI にも `入替不可` / `入替可`、Prefs にも `Fixed` が残っている。
 - ただし current optimize 実装では `fixed` は読まれているだけで、配置拘束には使われていない。
