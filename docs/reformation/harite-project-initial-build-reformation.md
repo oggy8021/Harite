@@ -1,4 +1,4 @@
-# Harite 1.0 Reformation Plan
+# Harite Project Initial Build Reformation
 
 最終更新: 2026-05-16
 
@@ -7,7 +7,7 @@
 - 本書は [docs/specs/gui/gui-phase11-closing.md](docs/specs/gui/gui-phase11-closing.md) の次に置く親文書である。
 - Phase9-11 で達成したのは、10年前遺産を current GUI と OS integration を含む現代的な形へ更新することだった。
 - したがって次段では、GUI をさらに作り込むことより、製品として閉じるための整理、packaging、文書体系再編、仕様書整備を主題に置く。
-- 本書は `spec` そのものではなく、`1.0.0` へ向けた再編計画の親文書として扱う。
+- 本書は `spec` そのものではなく、初期製造を閉じて `1.0.0` へ向かうための再編計画の親文書として扱う。
 
 ## 現在地
 
@@ -144,10 +144,10 @@
 
 ## 初手の子文書名案
 
-- `docs/reformation/harite-1.0-ws1-release-prep.md`
-- `docs/reformation/harite-1.0-ws2-docs-reformation.md`
-- `docs/reformation/harite-1.0-ws3-spec-authoring.md`
-- `docs/reformation/harite-1.0-ws4-feature-overview.md`
+- `docs/reformation/harite-project-initial-build-reformation-ws1-release-prep.md`
+- `docs/reformation/harite-project-initial-build-reformation-ws2-docs-reformation.md`
+- `docs/reformation/harite-project-initial-build-reformation-ws3-spec-authoring.md`
+- `docs/reformation/harite-project-initial-build-reformation-ws4-feature-overview.md`
 
 ## 非目的
 

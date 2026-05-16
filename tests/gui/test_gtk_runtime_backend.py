@@ -3,8 +3,17 @@ from __future__ import annotations
 from pathlib import Path
 
 from PIL import Image
+import pytest
 
 from harite.gui.adapters.gtk_backend import GtkRuntimeSignalBackend
+from harite.gui.adapters.gtk_backend import load_gtk_runtime_signal_backend
+from harite.gui.adapters.gtk_backend import present_gtk_window
+from harite.gui.adapters.gtk_runtime_dialogs import ColorDialogProxy
+from harite.gui.adapters.gtk_runtime_file_dialog_flow import format_input_display
+from harite.gui.adapters.gtk_runtime_file_dialog_flow import notify_open_dialog_destroy
+from harite.gui.adapters.gtk_runtime_margin_text_gtk import apply_margin_text_widget_style
+from harite.gui.adapters.gtk_runtime_margin_text_gtk import on_margin_text_key_press
+from harite.gui.adapters.gtk_runtime_watch import get_glib_module
 from harite.gui.adapters.ui_adapter import create_mainwindow_signal_dispatch
 from harite.gui.views.main_window import MainWindow
 
@@ -666,6 +675,19 @@ def test_runtime_backend_current_state_panel_defaults_are_available():
     assert backend.get_object("lblCurrentStateSection").text == "Main Window Current alignment:"
 
 
+def test_runtime_backend_wires_required_runtime_widget_signals():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    input_left = backend.get_object("entPathL")
+    input_right = backend.get_object("entPathR")
+    margin_text = backend.get_object("txtMarginText")
+
+    assert "changed" in input_left._signals
+    assert "changed" in input_right._signals
+    assert "key-press-event" in margin_text._signals
+    assert "changed" in margin_text.get_buffer()._signals
+
+
 def test_runtime_backend_adds_margins_tab_and_syncs_owner_state():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
@@ -857,7 +879,7 @@ def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path):
     assert backend.get_object("lblCurrentStateR").text == "R: align=center valign=center"
 
 
-def test_runtime_backend_shows_phase6_labels_and_controls():
+def test_runtime_backend_shows_current_labels_and_controls():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     do_it = backend.get_object("lblDoItPlanned")
@@ -891,7 +913,7 @@ def test_runtime_backend_shows_phase6_labels_and_controls():
     tgl_push_right_r = backend.get_object("tglPushRightR")
     tgl_lower_r = backend.get_object("tglLowerR")
 
-    assert do_it.text == "Debug: apply is immediate"
+    assert do_it.text == "Apply updates wallpaper immediately"
     assert priority.text == "Rule: margins define area; align/valign act inside it"
     assert watch_section.text == ""
     assert interval.text == "Interval"
@@ -1066,6 +1088,69 @@ def test_runtime_backend_connect_signals_syncs_watch_output_from_owner():
     backend.connect_signals(dispatch)
 
     assert backend.get_object("lblWatchOutput").text == "Watch output: /gui/pictures"
+
+
+def test_runtime_backend_watch_interval_change_uses_integer_contract_without_owner():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    interval = backend.get_object("spnInterval")
+    status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+    observed = {}
+
+    def on_watch_interval_change(seconds):
+        observed["seconds"] = seconds
+        return True
+
+    backend.connect_signals({"on_watch_interval_change": on_watch_interval_change})
+
+    interval.set_value(75)
+    interval.emit("value-changed", interval)
+
+    assert observed == {"seconds": 75}
+    assert status.text == "Watch: interval-updated(75s)"
+    assert error.text == "Error: none"
+
+
+def test_runtime_backend_watch_interval_change_reports_legacy_widget_signature_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    interval = backend.get_object("spnInterval")
+
+    backend.connect_signals({"on_watch_interval_change": lambda widget, extra: True})
+
+    interval.set_value(75)
+    interval.emit("value-changed", interval)
+
+    assert backend.get_object("lblStatus").text == "Watch: error"
+    assert "required positional argument" in backend.get_object("lblError").text or "positional arguments" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_watch_start_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals({"on_watch_start": lambda: (_ for _ in ()).throw(RuntimeError("watch start exploded"))})
+
+    with pytest.raises(RuntimeError, match="watch start exploded"):
+        backend.get_object("btnDaemonize").click()
+
+
+def test_runtime_backend_watch_stop_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    backend._watch_running = True
+
+    backend.connect_signals({"on_watch_stop": lambda: (_ for _ in ()).throw(RuntimeError("watch stop exploded"))})
+
+    with pytest.raises(RuntimeError, match="watch stop exploded"):
+        backend.get_object("btnCancelDaemonize").click()
+
+
+def test_runtime_backend_watch_tick_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    backend._watch_running = True
+
+    backend.connect_signals({"on_watch_tick": lambda: (_ for _ in ()).throw(RuntimeError("watch tick exploded"))})
+
+    with pytest.raises(RuntimeError, match="watch tick exploded"):
+        backend.run_watch_cycle_once()
 
 
 def test_runtime_backend_watch_start_registers_timer_and_stop_removes_it(monkeypatch, tmp_path):
@@ -1343,6 +1428,16 @@ def test_runtime_backend_clear_button_reports_missing_clear_handler():
     assert backend.get_object("lblError").text == "Error: handler not connected"
 
 
+def test_runtime_backend_clear_button_reports_legacy_handler_signature_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals({"on_clear_input": lambda: True})
+    backend.get_object("btnClrPathL").click()
+
+    assert backend.get_object("lblStatus").text == "Clear-L: failed"
+    assert "takes 0 positional arguments" in backend.get_object("lblError").text
+
+
 def test_runtime_backend_open_r_opens_dialog_without_entry_path_requirement():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
@@ -1443,6 +1538,54 @@ def test_runtime_backend_color_apply_updates_handler_and_feedback():
     assert backend.get_object("lblError").text == "Error: none"
 
 
+def test_runtime_backend_color_open_reports_settings_getter_failure():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_set_color": lambda *_args: True,
+            "on_get_settings_config": lambda: (_ for _ in ()).throw(RuntimeError("color settings getter failed")),
+        }
+    )
+
+    backend.get_object("btnSetColor").click()
+
+    assert backend.get_object("ColorDialog").is_visible() is False
+    assert backend.get_object("lblStatus").text == "Color: error"
+    assert backend.get_object("lblError").text == "Error: color settings getter failed"
+
+
+def test_runtime_backend_color_open_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_set_color": lambda *_args: (_ for _ in ()).throw(RuntimeError("color open exploded")),
+            "on_get_settings_config": lambda: {"background_color": "#1E1E1E"},
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="color open exploded"):
+        backend.get_object("btnSetColor").click()
+
+
+def test_runtime_backend_color_apply_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_set_color": lambda color=None: (_ for _ in ()).throw(RuntimeError("color apply exploded")) if color is not None else True,
+            "on_get_settings_config": lambda: {"background_color": "#1E1E1E"},
+        }
+    )
+
+    backend.get_object("btnSetColor").click()
+    backend.get_object("entColorValue").set_text("#224466")
+
+    with pytest.raises(RuntimeError, match="color apply exploded"):
+        backend.get_object("btnColorApply").click()
+
+
 def test_runtime_backend_color_apply_shows_invalid_color_feedback():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
@@ -1511,6 +1654,209 @@ def test_runtime_backend_color_open_uses_embedded_chooser_with_reserved_notice_r
     assert backend.get_object("entColorValue").get_text() == "#224466"
 
 
+def test_color_dialog_proxy_gdk_probe_propagates_unexpected_runtime_error(monkeypatch):
+    def fake_import_module(name):
+        if name == "gi":
+            raise RuntimeError("gdk probe failed")
+        raise AssertionError(f"unexpected import: {name}")
+
+    monkeypatch.setattr("importlib.import_module", fake_import_module)
+
+    with pytest.raises(RuntimeError, match="gdk probe failed"):
+        ColorDialogProxy()._load_gdk_module()
+
+
+def test_color_dialog_proxy_native_hex_sync_propagates_unexpected_rgba_conversion_failure(monkeypatch):
+    color_dialog = ColorDialogProxy()
+    entry = _Entry()
+
+    class _Dialog:
+        def get_rgba(self):
+            return object()
+
+    monkeypatch.setattr(color_dialog, "_color_from_rgba", lambda _rgba: (_ for _ in ()).throw(RuntimeError("rgba sync failed")))
+
+    with pytest.raises(RuntimeError, match="rgba sync failed"):
+        color_dialog._sync_native_hex_entry_from_dialog(_Dialog(), entry)
+
+
+def test_color_dialog_proxy_embedded_chooser_change_propagates_unexpected_rgba_conversion_failure(monkeypatch):
+    color_dialog = ColorDialogProxy(entry=_Entry())
+
+    class _Chooser:
+        def get_rgba(self):
+            return object()
+
+    monkeypatch.setattr(color_dialog, "_color_from_rgba", lambda _rgba: (_ for _ in ()).throw(RuntimeError("embedded rgba sync failed")))
+
+    with pytest.raises(RuntimeError, match="embedded rgba sync failed"):
+        color_dialog._on_embedded_color_chooser_changed(_Chooser())
+
+
+def test_color_dialog_proxy_native_hex_change_propagates_unexpected_set_rgba_failure(monkeypatch):
+    color_dialog = ColorDialogProxy()
+
+    class _Dialog:
+        def set_rgba(self, _rgba):
+            raise RuntimeError("native set_rgba failed")
+
+    entry = _Entry()
+    entry.set_text("#224466")
+    monkeypatch.setattr(color_dialog, "_rgba_from_color", lambda _color: object())
+
+    with pytest.raises(RuntimeError, match="native set_rgba failed"):
+        color_dialog._on_native_hex_entry_changed(_Dialog(), entry)
+
+
+def test_color_dialog_proxy_internal_vbox_probe_allows_signature_mismatch_fallback():
+    class _Buildable:
+        @staticmethod
+        def get_internal_child(_dialog, _builder, _name):
+            raise TypeError("signature mismatch")
+
+    class _Gtk:
+        Buildable = _Buildable
+
+    class _Dialog:
+        def get_internal_child(self, name):
+            if name == "vbox":
+                return "vbox-child"
+            return None
+
+    color_dialog = ColorDialogProxy()
+
+    assert color_dialog._get_dialog_internal_vbox(_Gtk, _Dialog()) == "vbox-child"
+
+
+def test_color_dialog_proxy_internal_vbox_probe_propagates_unexpected_runtime_error():
+    class _Buildable:
+        @staticmethod
+        def get_internal_child(_dialog, _builder, _name):
+            raise RuntimeError("internal child probe failed")
+
+    class _Gtk:
+        Buildable = _Buildable
+
+    color_dialog = ColorDialogProxy()
+
+    with pytest.raises(RuntimeError, match="internal child probe failed"):
+        color_dialog._get_dialog_internal_vbox(_Gtk, object())
+
+
+def test_color_dialog_proxy_get_parent_widget_allows_signature_mismatch_fallback():
+    class _Widget:
+        def get_parent(self):
+            raise TypeError("signature mismatch")
+
+    color_dialog = ColorDialogProxy()
+
+    assert color_dialog._get_parent_widget(_Widget()) is None
+
+
+def test_color_dialog_proxy_get_parent_widget_propagates_unexpected_runtime_error():
+    class _Widget:
+        def get_parent(self):
+            raise RuntimeError("parent probe failed")
+
+    color_dialog = ColorDialogProxy()
+
+    with pytest.raises(RuntimeError, match="parent probe failed"):
+        color_dialog._get_parent_widget(_Widget())
+
+
+def test_apply_margin_text_widget_style_allows_expected_import_failure(monkeypatch):
+    monkeypatch.setattr("importlib.import_module", lambda _name: (_ for _ in ()).throw(ImportError("gdk unavailable")))
+
+    apply_margin_text_widget_style(object(), object(), object())
+
+
+def test_apply_margin_text_widget_style_propagates_unexpected_runtime_error(monkeypatch):
+    def fake_import_module(name):
+        if name == "gi":
+            raise RuntimeError("style probe failed")
+        raise AssertionError(f"unexpected import: {name}")
+
+    monkeypatch.setattr("importlib.import_module", fake_import_module)
+
+    with pytest.raises(RuntimeError, match="style probe failed"):
+        apply_margin_text_widget_style(object(), object(), object())
+
+
+def test_on_margin_text_key_press_allows_expected_import_failure(monkeypatch):
+    monkeypatch.setattr("importlib.import_module", lambda _name: (_ for _ in ()).throw(ImportError("gdk unavailable")))
+
+    event = type("_Event", (), {"keyval": 13})()
+
+    assert on_margin_text_key_press(_TextView(), event) is False
+
+
+def test_on_margin_text_key_press_propagates_unexpected_runtime_error(monkeypatch):
+    def fake_import_module(name):
+        if name == "gi":
+            raise RuntimeError("key press probe failed")
+        raise AssertionError(f"unexpected import: {name}")
+
+    monkeypatch.setattr("importlib.import_module", fake_import_module)
+
+    event = type("_Event", (), {"keyval": 13})()
+
+    with pytest.raises(RuntimeError, match="key press probe failed"):
+        on_margin_text_key_press(_TextView(), event)
+
+
+def test_get_glib_module_allows_expected_import_failure(monkeypatch):
+    backend = type("_Backend", (), {"_gtk": object()})()
+    monkeypatch.setattr("importlib.import_module", lambda _name: (_ for _ in ()).throw(ImportError("glib unavailable")))
+
+    assert get_glib_module(backend) is None
+
+
+def test_get_glib_module_propagates_unexpected_runtime_error(monkeypatch):
+    backend = type("_Backend", (), {"_gtk": object()})()
+
+    def fake_import_module(name):
+        if name == "gi":
+            raise RuntimeError("glib probe failed")
+        raise AssertionError(f"unexpected import: {name}")
+
+    monkeypatch.setattr("importlib.import_module", fake_import_module)
+
+    with pytest.raises(RuntimeError, match="glib probe failed"):
+        get_glib_module(backend)
+
+
+def test_load_gtk_runtime_signal_backend_propagates_unexpected_runtime_error(monkeypatch):
+    def fake_import_module(name):
+        if name == "gi":
+            raise RuntimeError("gtk backend probe failed")
+        raise AssertionError(f"unexpected import: {name}")
+
+    monkeypatch.setattr("importlib.import_module", fake_import_module)
+
+    with pytest.raises(RuntimeError, match="gtk backend probe failed"):
+        load_gtk_runtime_signal_backend()
+
+
+def test_present_gtk_window_propagates_unexpected_runtime_error(monkeypatch):
+    def fake_import_module(name):
+        if name == "gi":
+            raise RuntimeError("gtk runtime probe failed")
+        raise AssertionError(f"unexpected import: {name}")
+
+    monkeypatch.setattr("importlib.import_module", fake_import_module)
+
+    with pytest.raises(RuntimeError, match="gtk runtime probe failed"):
+        present_gtk_window(object())
+
+
+def test_format_input_display_uses_basename_and_truncates_long_names():
+    display = format_input_display("/tmp/Higashiyama-Kaii-Cho-Long-Long-Long-700x1244.jpg")
+
+    assert display.startswith("Higashiyama-Kaii-")
+    assert display.endswith("700x1244.jpg")
+    assert len(display) <= 36
+
+
 def test_runtime_backend_about_click_opens_dialog():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
@@ -1533,6 +1879,58 @@ def test_runtime_backend_about_click_opens_dialog():
     assert backend.get_object("lblAboutTitle").text == "Harite"
     assert backend.get_object("lblAboutVersion").text == "Version: 0.1.2"
     assert backend.get_object("lblStatus").text == "About: opened"
+
+
+def test_runtime_backend_about_open_reports_info_getter_failure():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_about": lambda: True,
+            "on_get_about_dialog_info": lambda: (_ for _ in ()).throw(RuntimeError("about info getter failed")),
+        }
+    )
+
+    backend.get_object("btnAbout").click()
+
+    assert backend.get_object("AboutDialog").is_visible() is False
+    assert backend.get_object("lblStatus").text == "About: error"
+    assert backend.get_object("lblError").text == "Error: about info getter failed"
+
+
+def test_runtime_backend_about_open_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_about": lambda: (_ for _ in ()).throw(RuntimeError("about open exploded")),
+            "on_get_about_dialog_info": lambda: {
+                "app_name": "Harite",
+                "version": "0.1.2",
+                "description": "壁紙最適化ツール（リファクタリング版）",
+                "credits": "Created by oggy8021",
+                "license_name": "MIT License",
+            },
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="about open exploded"):
+        backend.get_object("btnAbout").click()
+
+
+def test_runtime_backend_color_confirm_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_set_color": lambda _color=None: (_ for _ in ()).throw(RuntimeError("color confirm exploded")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="color confirm exploded"):
+        backend._on_color_dialog_confirmed("#224466")
+
+
 def test_runtime_backend_save_click_passes_selected_path_to_handler():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
@@ -1640,6 +2038,21 @@ def test_runtime_backend_native_save_path_chooser_cancel_does_not_continue_save_
     assert error.text == "Error: none"
 
 
+def test_runtime_backend_save_click_handler_failure_surfaces_feedback():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    def on_save_as():
+        raise RuntimeError("save path open failed")
+
+    backend.connect_signals({"on_save_as": on_save_as})
+
+    backend.get_object("btnSave").click()
+
+    assert backend.get_object("lblStatus").text == "SavePath: error"
+    assert backend.get_object("lblError").text == "Error: save path open failed"
+    assert backend.get_object("SavePathDialog").is_visible() is False
+
+
 def test_runtime_backend_save_click_without_path_uses_default_filename():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
@@ -1728,6 +2141,84 @@ def test_runtime_backend_prefers_save_path_dialog_close_handler_name():
     backend.get_object("btnSave").click()
 
     assert observed["destroy"] == 1
+
+
+def test_runtime_backend_save_path_destroy_callback_exception_propagates():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_close_save_path_dialog": lambda: (_ for _ in ()).throw(RuntimeError("save-path close failed")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="save-path close failed"):
+        backend._notify_save_path_dialog_destroy()
+
+
+def test_runtime_backend_srcdir_destroy_callback_exception_propagates():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_close_srcdir_dialog": lambda: (_ for _ in ()).throw(RuntimeError("srcdir close failed")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="srcdir close failed"):
+        backend._notify_srcdir_dialog_destroy()
+
+
+def test_runtime_backend_open_dialog_destroy_callback_exception_propagates():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_close_open_image_dialog": lambda: (_ for _ in ()).throw(RuntimeError("open-dialog close failed")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="open-dialog close failed"):
+        notify_open_dialog_destroy(backend)
+
+
+def test_runtime_backend_settings_close_callback_exception_propagates():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_close_settings_dialog": lambda: (_ for _ in ()).throw(RuntimeError("settings close failed")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="settings close failed"):
+        backend._on_preferences_close_clicked()
+
+
+def test_runtime_backend_about_close_callback_exception_propagates():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_close_about_dialog": lambda: (_ for _ in ()).throw(RuntimeError("about close failed")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="about close failed"):
+        backend._on_about_dialog_close_clicked()
+
+
+def test_runtime_backend_color_close_callback_exception_propagates():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_close_color_dialog": lambda: (_ for _ in ()).throw(RuntimeError("color close failed")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="color close failed"):
+        backend._on_color_dialog_cancel_clicked()
 
 
 def test_runtime_backend_apply_success_updates_apply_target():
@@ -1848,6 +2339,31 @@ def test_runtime_backend_settings_button_dispatches_open_handler(monkeypatch, tm
     assert backend.get_object("spnPrefsWatchInterval") is None
 
 
+def test_runtime_backend_settings_open_reports_notice_build_failure(monkeypatch):
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    class _BrokenPath:
+        def exists(self):
+            raise RuntimeError("settings path probe failed")
+
+    monkeypatch.setattr(
+        "harite.gui.adapters.gtk_runtime_settings_dialogs.resolve_default_settings_path",
+        lambda: _BrokenPath(),
+    )
+
+    backend.connect_signals(
+        {
+            "on_open_settings_dialog": lambda: True,
+            "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "single-file"},
+        }
+    )
+
+    backend.get_object("btnSettings").click()
+
+    assert backend.get_object("lblStatus").text == "Settings: error"
+    assert backend.get_object("lblError").text == "Error: settings path probe failed"
+
+
 def test_runtime_backend_settings_ok_save_and_cancel_dispatch_handlers(tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     dialog = backend.get_object("SettingsDialog")
@@ -1869,7 +2385,7 @@ def test_runtime_backend_settings_ok_save_and_cancel_dispatch_handlers(tmp_path)
     backend.connect_signals(
         {
             "on_apply_settings": lambda config: observed.__setitem__("apply", config) or True,
-            "on_save_settings_file": lambda path, config=None: observed.__setitem__("save", (path, config)) or True,
+            "on_save_settings_file": lambda path, config: observed.__setitem__("save", (path, config)) or True,
             "on_get_settings_config": lambda: {"plugin": "xfce", "apply_mode": "per-monitor-auto-split"},
             "on_close_settings_dialog": lambda: observed.__setitem__("close", observed["close"] + 1) or True,
         }
@@ -1915,6 +2431,63 @@ def test_runtime_backend_settings_ok_save_and_cancel_dispatch_handlers(tmp_path)
     assert backend.get_object("lblSettingsNotice").text == ""
 
 
+def test_runtime_backend_settings_apply_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    dialog = backend.get_object("SettingsDialog")
+
+    dialog.set_preferences_config({"plugin": "linux", "apply_mode": "single-file"})
+    dialog.show()
+
+    backend.connect_signals(
+        {
+            "on_apply_settings": lambda _config: (_ for _ in ()).throw(RuntimeError("settings apply exploded")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="settings apply exploded"):
+        backend.get_object("btnSettingsOk").click()
+
+
+def test_runtime_backend_settings_save_reports_legacy_handler_signature_error(tmp_path):
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    dialog = backend.get_object("SettingsDialog")
+
+    export_path = tmp_path / "save-prefs.json"
+    dialog.set_preferences_config({"plugin": "linux", "apply_mode": "single-file"})
+    dialog.set_export_path(str(export_path))
+    dialog.show()
+
+    backend.connect_signals(
+        {
+            "on_save_settings_file": lambda path: True,
+        }
+    )
+
+    backend.get_object("btnSettingsSave").click()
+
+    assert backend.get_object("lblStatus").text == "SettingsSave: error"
+    assert "takes 1 positional argument" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_settings_save_propagates_unexpected_runtime_error(tmp_path):
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    dialog = backend.get_object("SettingsDialog")
+
+    export_path = tmp_path / "save-prefs.json"
+    dialog.set_preferences_config({"plugin": "linux", "apply_mode": "single-file"})
+    dialog.set_export_path(str(export_path))
+    dialog.show()
+
+    backend.connect_signals(
+        {
+            "on_save_settings_file": lambda _path, _config: (_ for _ in ()).throw(RuntimeError("settings save exploded")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="settings save exploded"):
+        backend.get_object("btnSettingsSave").click()
+
+
 def test_runtime_backend_settings_preserves_explicit_apply_mode_when_unedited(tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     dialog = backend.get_object("SettingsDialog")
@@ -1934,7 +2507,7 @@ def test_runtime_backend_settings_preserves_explicit_apply_mode_when_unedited(tm
         {
             "on_open_settings_dialog": lambda: True,
             "on_apply_settings": lambda config: observed.__setitem__("apply", config) or True,
-            "on_save_settings_file": lambda path, config=None: observed.__setitem__("save", (path, config)) or True,
+            "on_save_settings_file": lambda path, config: observed.__setitem__("save", (path, config)) or True,
             "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
         }
     )
@@ -2184,6 +2757,69 @@ def test_runtime_backend_toggle_callbacks_follow_upstream_order():
         ("toggled", "tglUpperL", False),
         ("released", "tglUpperL"),
     ]
+
+
+def test_runtime_backend_toggle_position_failure_surfaces_feedback():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    def on_toggle(_name, _active):
+        raise RuntimeError("toggle position failed")
+
+    backend.connect_signals({"on_toggle_position": on_toggle})
+
+    backend.get_object("tglUpperL").click()
+
+    assert backend.get_object("lblStatus").text == "Position: error"
+    assert backend.get_object("lblError").text == "Error: toggle position failed"
+
+
+def test_runtime_backend_toggle_position_reset_failure_surfaces_feedback():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    def on_reset(_name):
+        raise RuntimeError("toggle reset failed")
+
+    backend.connect_signals({"on_toggle_position_reset": on_reset})
+
+    toggle = backend.get_object("tglUpperL")
+    toggle.click()
+    toggle.click()
+
+    assert backend.get_object("lblStatus").text == "Position: error"
+    assert backend.get_object("lblError").text == "Error: toggle reset failed"
+
+
+def test_runtime_backend_toggle_position_pressed_failure_surfaces_feedback():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    def on_pressed(_name):
+        raise RuntimeError("toggle press failed")
+
+    backend.connect_signals({"on_toggle_position_pressed": on_pressed})
+
+    backend.get_object("tglUpperL").click()
+
+    assert backend.get_object("lblStatus").text == "Position: error"
+    assert backend.get_object("lblError").text == "Error: toggle press failed"
+
+
+def test_runtime_backend_toggle_position_opposite_reset_failure_surfaces_feedback():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    def on_reset(name):
+        if name == "tglPushLeftL":
+            raise RuntimeError("toggle opposite reset failed")
+
+    backend.connect_signals({"on_toggle_position_reset": on_reset})
+
+    left = backend.get_object("tglPushLeftL")
+    right = backend.get_object("tglPushRightL")
+    left.set_active(True)
+
+    right.click()
+
+    assert backend.get_object("lblStatus").text == "Position: error"
+    assert backend.get_object("lblError").text == "Error: toggle opposite reset failed"
 
 
 def test_runtime_backend_margin_change_propagates_all_values():

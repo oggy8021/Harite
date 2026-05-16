@@ -43,17 +43,13 @@ def on_watch_interval_changed(backend: Any, widget: Any) -> None:
         elif hasattr(widget, "get_value"):
             interval = int(widget.get_value())
 
-        owner = backend._get_handler_owner("on_watch_interval_change")
-        if owner is not None:
-            ok = callback(interval)
-        else:
-            ok = callback(widget)
+        ok = callback(interval)
 
         if ok:
             backend._set_feedback(phase="Watch", state=f"interval-updated({interval}s)")
         else:
             backend._set_feedback(phase="Watch", state="interval-failed", error="interval returned false")
-    except Exception as exc:
+    except (TypeError, ValueError) as exc:
         backend._set_feedback(phase="Watch", state="error", error=str(exc))
 
 
@@ -96,7 +92,7 @@ def on_watch_start_clicked(backend: Any, *_args: Any) -> None:
             interval_seconds = int(interval_widget.get_value_as_int())
         backend._start_watch_timer(interval_seconds)
         backend._set_feedback(phase="Watch", state="started")
-    except Exception as exc:
+    except TypeError as exc:
         backend._set_feedback(phase="Watch", state="error", error=str(exc))
 
 
@@ -123,5 +119,5 @@ def on_watch_stop_clicked(backend: Any, *_args: Any) -> None:
         refresh_watch_summary_label(backend)
         refresh_watch_current_label(backend)
         backend._set_feedback(phase="Watch", state="stopped")
-    except Exception as exc:
+    except TypeError as exc:
         backend._set_feedback(phase="Watch", state="error", error=str(exc))

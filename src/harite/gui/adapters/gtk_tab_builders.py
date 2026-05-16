@@ -310,7 +310,7 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
 
 
 def build_runtime_state_labels(gtk_module: Any) -> dict[str, Any]:
-    do_it_plan_label = gtk_module.Label(label="Debug: apply is immediate")
+    do_it_plan_label = gtk_module.Label(label="Apply updates wallpaper immediately")
     set_xalign_if_supported(do_it_plan_label)
 
     save_path_state_label = gtk_module.Label(label="Save path: idle")

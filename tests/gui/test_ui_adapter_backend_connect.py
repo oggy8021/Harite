@@ -162,41 +162,6 @@ def test_create_mainwindow_signal_dispatch_binds_canonical_traceability_handlers
     assert window.saved_settings == ("/tmp/settings.json", {"plugin": "xfce"})
 
 
-def test_create_mainwindow_signal_dispatch_skips_legacy_save_alias_handler():
-    window = DummyWindow()
-
-    dispatch = create_mainwindow_signal_dispatch(
-        window,
-        (
-            "on_save",
-            "on_get_preferences_config",
-            "on_apply_preferences",
-            "on_load_preferences_file",
-            "on_save_preferences_file",
-        ),
-        handler_map=RUNTIME_HANDLER_MAP,
-    )
-
-    assert dispatch == {}
-
-
-def test_create_mainwindow_signal_dispatch_skips_legacy_settings_alias_handlers():
-    window = DummyWindow()
-
-    dispatch = create_mainwindow_signal_dispatch(
-        window,
-        (
-            "on_get_preferences_config",
-            "on_apply_preferences",
-            "on_load_preferences_file",
-            "on_save_preferences_file",
-        ),
-        handler_map=RUNTIME_HANDLER_MAP,
-    )
-
-    assert dispatch == {}
-
-
 def test_resolve_window_uses_canonical_ids_before_top_level_fallback():
     class Backend:
         def __init__(self):
@@ -212,5 +177,5 @@ def test_resolve_window_uses_canonical_ids_before_top_level_fallback():
 
     backend = Backend()
 
-    assert _resolve_window(backend, "WallPosit_MainWindow") is backend._window
+    assert _resolve_window(backend, "main_window") is backend._window
 

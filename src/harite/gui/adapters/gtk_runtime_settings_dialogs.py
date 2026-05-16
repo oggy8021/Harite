@@ -70,11 +70,8 @@ def on_preferences_apply_mode_toggled(backend: Any, widget: Any, mode: str) -> N
 
 def build_settings_open_notice(backend: Any) -> str:
     export_path = resolve_default_settings_path()
-    try:
-        if export_path.exists():
-            return ""
-    except Exception:
-        pass
+    if export_path.exists():
+        return ""
     return "現在は未保存です"
 
 
@@ -171,12 +168,9 @@ def refresh_color_dialog_from_getter(backend: Any) -> str:
     dialog = backend._objects.get("ColorDialog")
     background_color = dialog.get_color() if dialog is not None and hasattr(dialog, "get_color") else DEFAULT_BACKGROUND_COLOR_HEX
     if getter is not None:
-        try:
-            config = dict(getter())
-            if "background_color" in config:
-                background_color = normalize_background_color(config.get("background_color"))
-        except Exception:
-            pass
+        config = dict(getter())
+        if "background_color" in config:
+            background_color = normalize_background_color(config.get("background_color"))
     if dialog is not None and hasattr(dialog, "set_color"):
         dialog.set_color(background_color)
     return background_color
@@ -193,10 +187,7 @@ def refresh_about_dialog_from_getter(backend: Any) -> dict[str, object]:
         "license_name": "LICENSE",
     }
     if getter is not None:
-        try:
-            content.update(dict(getter()))
-        except Exception:
-            pass
+        content.update(dict(getter()))
     if dialog is not None and hasattr(dialog, "set_content"):
         dialog.set_content(content)
     return content
@@ -256,7 +247,7 @@ def on_preferences_apply_clicked(backend: Any, *_args: Any) -> None:
         else:
             backend._set_label_text("lblSettingsNotice", "Settings: apply returned false")
             backend._set_feedback(phase="SettingsApply", state="failed", error="settings apply returned false")
-    except Exception as exc:
+    except (TypeError, ValueError) as exc:
         backend._set_label_text("lblSettingsNotice", f"Settings: {exc}")
         backend._set_feedback(phase="SettingsApply", state="error", error=str(exc))
 
@@ -274,17 +265,14 @@ def on_preferences_save_clicked(backend: Any, *_args: Any) -> None:
     try:
         backend._set_label_text("lblSettingsNotice", "")
         config = sync_preferences_dialog_from_widgets(backend)
-        try:
-            ok = callback(dialog.get_export_path(), config)
-        except TypeError:
-            ok = callback(dialog.get_export_path())
+        ok = callback(dialog.get_export_path(), config)
         if ok:
             backend._set_label_text("lblSettingsNotice", "Settings: saved")
             backend._set_feedback(phase="SettingsSave", state="saved")
         else:
             backend._set_label_text("lblSettingsNotice", "Settings: save returned false")
             backend._set_feedback(phase="SettingsSave", state="failed", error="settings save returned false")
-    except Exception as exc:
+    except (TypeError, ValueError) as exc:
         backend._set_label_text("lblSettingsNotice", f"Settings: {exc}")
         backend._set_feedback(phase="SettingsSave", state="error", error=str(exc))
 
@@ -296,10 +284,7 @@ def on_preferences_close_clicked(backend: Any, *_args: Any) -> None:
         dialog.hide()
     callback = backend._signal_handlers.get("on_close_settings_dialog")
     if callback is not None:
-        try:
-            callback()
-        except Exception:
-            pass
+        callback()
     backend._set_feedback(phase="Settings", state="closed")
 
 
@@ -316,11 +301,15 @@ def on_color_clicked(backend: Any, *_args: Any) -> None:
         return
     try:
         refresh_color_dialog_from_getter(backend)
+    except Exception as exc:
+        backend._set_feedback(phase="Color", state="error", error=str(exc))
+        return
+    try:
         if callback is not None:
             callback()
         backend._set_feedback(phase="Color", state="opened")
         dialog.open_dialog()
-    except Exception as exc:
+    except TypeError as exc:
         backend._set_feedback(phase="Color", state="error", error=str(exc))
 
 
@@ -332,13 +321,17 @@ def on_about_clicked(backend: Any, *_args: Any) -> None:
         return
     try:
         refresh_about_dialog_from_getter(backend)
+    except Exception as exc:
+        backend._set_feedback(phase="About", state="error", error=str(exc))
+        return
+    try:
         ok = True if callback is None else bool(callback())
         if not ok:
             backend._set_feedback(phase="About", state="failed", error="about dialog open rejected")
             return
         dialog.show()
         backend._set_feedback(phase="About", state="opened")
-    except Exception as exc:
+    except TypeError as exc:
         backend._set_feedback(phase="About", state="error", error=str(exc))
 
 
@@ -357,10 +350,7 @@ def close_about_dialog(backend: Any, destroyed: bool) -> None:
         dialog.hide()
     callback = backend._signal_handlers.get("on_close_about_dialog")
     if callback is not None:
-        try:
-            callback()
-        except Exception:
-            pass
+        callback()
     backend._set_feedback(phase="About", state="closed" if destroyed else "closed")
 
 
@@ -405,7 +395,7 @@ def on_color_dialog_apply_clicked(backend: Any, *_args: Any) -> None:
                 backend._set_feedback(phase="Color", state=message, error=error)
             else:
                 backend._set_feedback(phase="Color", state="failed", error="color update returned false")
-    except Exception as exc:
+    except (TypeError, ValueError) as exc:
         backend._set_feedback(phase="Color", state="error", error=str(exc))
 
 
@@ -442,7 +432,7 @@ def on_color_dialog_confirmed(backend: Any, color: str) -> None:
                 backend._set_feedback(phase="Color", state=message, error=error)
             else:
                 backend._set_feedback(phase="Color", state="failed", error="color update returned false")
-    except Exception as exc:
+    except (TypeError, ValueError) as exc:
         backend._set_feedback(phase="Color", state="error", error=str(exc))
 
 
@@ -452,9 +442,6 @@ def on_color_dialog_canceled(backend: Any, destroyed: bool) -> None:
         dialog.hide()
     callback = backend._signal_handlers.get("on_close_color_dialog")
     if callback is not None:
-        try:
-            callback()
-        except Exception:
-            pass
+        callback()
     backend._set_label_text("lblColorNotice", "Color: canceled")
     backend._set_feedback(phase="Color", state="closed" if destroyed else "canceled")

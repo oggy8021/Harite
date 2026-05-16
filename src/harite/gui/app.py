@@ -1,4 +1,4 @@
-"""Standalone GUI app entrypoint (skeleton)."""
+"""Standalone GUI app entrypoint."""
 
 from __future__ import annotations
 
@@ -31,14 +31,14 @@ def _should_present_ui_window(present_ui_window: bool | None) -> bool:
 
 
 def _get_ui_window_id() -> str:
-    raw = os.getenv("HARITE_GUI_WINDOW_ID", "WallPosit_MainWindow").strip()
-    return raw or "WallPosit_MainWindow"
+    raw = os.getenv("HARITE_GUI_WINDOW_ID", "main_window").strip()
+    return raw or "main_window"
 
 
 def _load_ui_signal_backend() -> Any:
-    from .adapters.gtk_backend import load_gtk_builder_signal_backend
+    from .adapters.gtk_backend import load_gtk_runtime_signal_backend
 
-    return load_gtk_builder_signal_backend()
+    return load_gtk_runtime_signal_backend()
 
 
 def _initialize_tasktray(signal_backend: Any) -> Any | None:
@@ -59,11 +59,7 @@ def run(
     bind_ui_backend: bool | None = None,
     present_ui_window: bool | None = None,
 ) -> None:
-    """Run standalone GUI skeleton.
-
-    For now this is a placeholder entrypoint to keep CI green while
-    GUI framework integration is being prepared.
-    """
+    """Run the standalone GUI entrypoint."""
     window = MainWindow()
 
     signal_backend = None
@@ -72,10 +68,9 @@ def run(
     if _should_bind_ui_backend(bind_ui_backend):
         try:
             signal_backend = _load_ui_signal_backend()
-            print("UI signal backend ready")
-        except Exception as exc:
+        except Exception:
             # Keep entrypoint safe when GTK/PyGObject is unavailable.
-            print(f"UI signal backend skipped: {exc}")
+            pass
 
     if signal_backend is not None:
         try:
@@ -95,30 +90,26 @@ def run(
             if dispatch:
                 connect_signal_dispatch(signal_backend, dispatch)
                 setattr(window, "_adapter_signal_dispatch", dispatch)
-                print(f"UI runtime fallback dispatch ready: handlers={len(dispatch)}")
-        except Exception as exc:
+        except Exception:
             # Non-fatal: runtime fallback should remain usable in partial environments.
-            print(f"UI runtime fallback dispatch skipped: {exc}")
+            pass
 
         try:
             tasktray_adapter = _initialize_tasktray(signal_backend)
             if tasktray_adapter is not None:
                 setattr(signal_backend, "_tasktray_adapter", tasktray_adapter)
                 setattr(window, "_tasktray_adapter", tasktray_adapter)
-                print("UI task tray ready")
-        except Exception as exc:
-            print(f"UI task tray skipped: {exc}")
+        except Exception:
+            pass
 
     if signal_backend is not None and _should_present_ui_window(present_ui_window):
         try:
-            window_id = _get_ui_window_id()
             presented = _present_ui_window(signal_backend)
             if presented:
                 return
-            print(f"UI window presentation skipped: target window not found (id={window_id})")
-        except Exception as exc:
+        except Exception:
             # Non-fatal in headless CI or partial GTK environments.
-            print(f"UI window presentation skipped: {exc}")
+            pass
 
     window.show()
 

@@ -92,10 +92,7 @@ def notify_open_dialog_destroy(backend: Any) -> None:
     callback = backend._signal_handlers.get("on_close_open_image_dialog")
     if callback is None:
         return
-    try:
-        callback()
-    except Exception:
-        pass
+    callback()
 
 
 def on_open_dialog_confirmed(backend: Any) -> None:
@@ -174,10 +171,7 @@ def format_input_display(path: str) -> str:
     value = str(path or "").strip()
     if not value:
         return ""
-    try:
-        name = Path(value).name or value
-    except Exception:
-        return value
+    name = Path(value).name or value
 
     max_length = 36
     if len(name) <= max_length:
@@ -204,16 +198,6 @@ def on_clear_input_clicked(backend: Any, side: str) -> None:
             backend._sync_input_preview_state_from_owner(owner, include_feedback=True)
         else:
             backend._set_feedback(phase=f"Clear-{side}", state="ok")
-    except TypeError:
-        try:
-            callback()
-            owner = backend._get_handler_owner("on_clear_input")
-            if owner is not None:
-                backend._sync_input_preview_state_from_owner(owner, include_feedback=True)
-            else:
-                backend._set_feedback(phase=f"Clear-{side}", state="ok")
-        except Exception as exc:
-            backend._set_feedback(phase=f"Clear-{side}", state="failed", error=str(exc))
     except Exception as exc:
         backend._set_feedback(phase=f"Clear-{side}", state="failed", error=str(exc))
 
@@ -277,7 +261,7 @@ def on_srcdir_dialog_confirmed(backend: Any) -> None:
             )
             return
 
-        owner = getattr(callback, "__self__", None)
+        owner = backend._get_handler_owner("on_pick_watch_srcdir")
         if owner is not None:
             backend._sync_watch_state_only_from_owner(owner)
         else:

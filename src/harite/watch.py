@@ -1,4 +1,4 @@
-"""Watch command helpers (minimum skeleton stage)."""
+"""Watch command helpers."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -21,7 +21,7 @@ class WatchCycleState:
 def collect_watch_input_images(input_dir: Path) -> List[Path]:
     """Collect image files from an input directory.
 
-    This function performs minimum validation for the first watch phase.
+    This function performs input validation for watch execution.
     """
     if not input_dir.exists() or not input_dir.is_dir():
         raise ValueError("--input must be an existing directory")

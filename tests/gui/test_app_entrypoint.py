@@ -231,7 +231,7 @@ def test_run_can_present_without_prototype_load(monkeypatch):
     assert called["show"] == 0
 
 
-def test_run_runtime_fallback_dispatch_ready_log(monkeypatch, capsys):
+def test_run_runtime_fallback_dispatch_ready_path_is_quiet(monkeypatch, capsys):
     class DummyWindow:
         def show(self) -> None:
             return None
@@ -258,17 +258,18 @@ def test_run_runtime_fallback_dispatch_ready_log(monkeypatch, capsys):
 
     monkeypatch.setattr(app, "MainWindow", DummyWindow)
     monkeypatch.setattr(app, "_load_ui_signal_backend", fake_backend_loader)
+    monkeypatch.setattr(app, "_initialize_tasktray", lambda _signal_backend: None)
 
     app.run(bind_ui_backend=True, present_ui_window=False)
 
     out = capsys.readouterr().out
-    assert "UI runtime fallback dispatch ready" in out
+    assert out == ""
 
 
 def test_present_ui_window_uses_env_window_id(monkeypatch):
     captured = {}
 
-    def fake_present(signal_backend, *, window_id="WallPosit_MainWindow"):
+    def fake_present(signal_backend, *, window_id="main_window"):
         captured["backend"] = signal_backend
         captured["window_id"] = window_id
         return True

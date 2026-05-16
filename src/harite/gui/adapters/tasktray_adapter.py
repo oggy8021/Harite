@@ -7,11 +7,11 @@ from typing import Any
 
 def initialize_tasktray(signal_backend: Any) -> Any | None:
     try:
-        import gi
-
+        gi = import_module("gi")
         gi.require_version("Gtk", "3.0")
-        from gi.repository import GLib, Gtk
-    except Exception as exc:
+        glib_module = import_module("gi.repository.GLib")
+        gtk_module = import_module("gi.repository.Gtk")
+    except (ImportError, ValueError) as exc:
         raise RuntimeError(f"PyGObject/GTK unavailable: {exc}") from exc
 
     indicator_binding = _load_indicator_binding()
@@ -26,8 +26,8 @@ def initialize_tasktray(signal_backend: Any) -> Any | None:
 
     indicator_module, binding_name = indicator_binding
     adapter = GtkTaskTrayAdapter(
-        gtk_module=Gtk,
-        glib_module=GLib,
+        gtk_module=gtk_module,
+        glib_module=glib_module,
         indicator_module=indicator_module,
         binding_name=binding_name,
         signal_backend=signal_backend,
@@ -39,21 +39,21 @@ def initialize_tasktray(signal_backend: Any) -> Any | None:
 
 def _load_indicator_binding() -> tuple[Any, str] | None:
     try:
-        import gi
-    except Exception:
+        gi = import_module("gi")
+    except ImportError:
         return None
 
     for binding_name in ("AyatanaAppIndicator3", "AppIndicator3"):
         try:
             gi.require_version(binding_name, "0.1")
             return import_module(f"gi.repository.{binding_name}"), binding_name
-        except Exception:
+        except (ImportError, ValueError):
             continue
     return None
 
 
 def _resolve_main_window(signal_backend: Any) -> Any | None:
-    for candidate in ("WallPosit_MainWindow", "main_window"):
+    for candidate in ("main_window",):
         window = signal_backend.get_object(candidate)
         if window is not None:
             return window
@@ -181,18 +181,20 @@ class GtkTaskTrayAdapter:
         indicator = self._indicator
         if indicator is not None:
             icon_name = self._current_icon_name(watch_running=watch_running)
-            for method_name in ("set_icon_full", "set_icon"):
-                method = getattr(indicator, method_name, None)
-                if not callable(method):
-                    continue
-                try:
-                    if method_name == "set_icon_full":
-                        method(icon_name, "Harite")
-                    else:
-                        method(icon_name)
-                    break
-                except Exception:
-                    continue
+            self._set_indicator_icon(indicator, icon_name)
+
+    def _set_indicator_icon(self, indicator: Any, icon_name: str) -> None:
+        set_icon_full = getattr(indicator, "set_icon_full", None)
+        if callable(set_icon_full):
+            try:
+                set_icon_full(icon_name, "Harite")
+                return
+            except TypeError:
+                pass
+
+        set_icon = getattr(indicator, "set_icon", None)
+        if callable(set_icon):
+            set_icon(icon_name)
 
     def _window_visible(self) -> bool:
         if hasattr(self._window, "is_visible"):
@@ -233,7 +235,7 @@ class GtkTaskTrayAdapter:
             resource_path = files("harite.gui").joinpath("resources", "icons", "product", resource_name)
             if resource_path.is_file():
                 return str(resource_path)
-        except Exception:
+        except (FileNotFoundError, ModuleNotFoundError):
             pass
         return "applications-graphics" if watch_running else "media-playback-pause"
 
