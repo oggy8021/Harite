@@ -1,5 +1,5 @@
 """Harite package init."""
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 from .cli import run as run  # expose run for console_scripts
 from . import plugins as plugins  # expose plugins for discovery (explicit re-export for linters)
