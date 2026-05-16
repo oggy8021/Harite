@@ -26,6 +26,7 @@ from harite.gui.adapters.gtk_runtime_builders import build_settings_section
 from harite.gui.adapters.gtk_runtime_builders import build_watch_tab_section
 from harite.gui.adapters.gtk_runtime_dialogs import AboutDialogProxy as _AboutDialogProxy
 from harite.gui.adapters.gtk_runtime_dialogs import ColorDialogProxy as _ColorDialogProxy
+from harite.gui.adapters.gtk_layout_builders import set_window_icon_if_supported
 from harite.gui.adapters.gtk_runtime_dialogs import OpenDialogProxy as _OpenDialogProxy
 from harite.gui.adapters.gtk_runtime_dialogs import SavePathDialogProxy as _SavePathDialogProxy
 from harite.gui.adapters.gtk_runtime_dialogs import SettingsDialogProxy as _SettingsDialogProxy
@@ -310,6 +311,7 @@ notebook {
 
     def _build_runtime_window(self, gtk_module: Any) -> Any:
         window = gtk_module.Window(title="Harite")
+        set_window_icon_if_supported(gtk_module, window, "icons", "product", "harite_app.svg")
         if hasattr(window, "set_resizable"):
             # P5-2 policy: modern desktop UX expects a resizable main window.
             window.set_resizable(True)

@@ -159,6 +159,7 @@
 8. Phase11 の OS integration 方式比較メモ
 9. 現時点では [docs/specs/gui/gui-phase11-1st-planning.md](docs/specs/gui/gui-phase11-1st-planning.md) に主要判断を統合済みであり、追加メモは feature 実装で blocker が出た場合のみ作る。
 10. tray icon の視認性 blocker に対する補助メモ: [docs/specs/gui/gui-phase11-2nd-planning.md](docs/specs/gui/gui-phase11-2nd-planning.md)
+11. application / taskbar / about / main window の icon surface 分離メモ: [docs/specs/gui/gui-phase11-3rd-planning.md](docs/specs/gui/gui-phase11-3rd-planning.md)
 
 ## 判断メモ
 
@@ -169,3 +170,4 @@
 - Phase11 は新規抽象化を要するため、post-Phase10 の小粒追加ではなく、独立フェーズとして扱う。
 - Phase11 実装は feature で進め、planning の追加分割は既定路線にしない。
 - ただし feature 実装中に icon visibility のような局所 blocker が出た場合は、補助 planning を追加してよい。
+- tray icon と application icon family の surface 分離が必要になった場合も、補助 planning を追加してよい。

@@ -7,6 +7,7 @@
 - 本書は [docs/specs/gui/gui-phase11-1st-planning.md](docs/specs/gui/gui-phase11-1st-planning.md) を補う、blocker 起点の補助メモである。
 - Phase11 初手実装により tray / indicator 自体は XFCE 実機で成立したが、tray icon の見え方と意匠が暫定のままで、panel 上の視認性に課題が残った。
 - したがって本書では、tray icon の asset / motif / state 表現だけを 2nd planning として切り出す。
+- application / taskbar / about / main window 側の icon surface は [docs/specs/gui/gui-phase11-3rd-planning.md](docs/specs/gui/gui-phase11-3rd-planning.md) に切り出す。
 
 ## 実装到達点
 
