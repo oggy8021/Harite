@@ -162,4 +162,5 @@
 - `ui_adapter` を過大評価しない。実際の重心は `MainWindow` と GTK runtime backend にある。
 - Phase10 の「起動方法を整える」は docs 更新だけでは足りず、entrypoint と option 設計の再整理を含む。
 - 2026-05-11 時点の Phase10 初手判断では、README 上の正本 GUI 導線は `harite-gui` を第一候補とし、`harite gui` は将来整理候補として残す。
+- Phase10 close 判断の補助文書は [docs/specs/gui/gui-phase10-closing-check.md](docs/specs/gui/gui-phase10-closing-check.md) とする。
 - Phase11 は新規抽象化を要するため、post-Phase10 の小粒追加ではなく、独立フェーズとして扱う。
