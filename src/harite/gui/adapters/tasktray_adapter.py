@@ -228,9 +228,9 @@ class GtkTaskTrayAdapter:
             self._window.present()
 
     def _current_icon_name(self, *, watch_running: bool) -> str:
-        resource_name = "wallpaper.svg" if watch_running else "pause.svg"
+        resource_name = "harite.svg" if watch_running else "harite_off.svg"
         try:
-            resource_path = files("harite.gui").joinpath("resources", "icons", "lucide", resource_name)
+            resource_path = files("harite.gui").joinpath("resources", "icons", "product", resource_name)
             if resource_path.is_file():
                 return str(resource_path)
         except Exception:

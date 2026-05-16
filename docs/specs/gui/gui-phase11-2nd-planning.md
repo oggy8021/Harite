@@ -19,7 +19,8 @@
 ## 今回見えた問題
 
 - tray icon が panel 上で色的に埋もれやすい。
-- 現行実装は `wallpaper.svg` / `pause.svg` を暫定 icon として使っており、planning で決めた `wallopt.png` / `wallopt_off.png` の正本設計と一致していない。
+- 現行実装は `wallpaper.svg` / `pause.svg` を暫定 icon として使っており、今回採る `harite.svg` / `harite_off.svg` の正本設計と一致していない。
+- 過去の `wallopt.png` 自体は application icon 候補としては辛うじて残せるが、そのまま正本に据えるには意匠面が弱い。
 - 「app icon をそのまま流用する」読みでは、XFCE panel 上の 16px / 22px 相当で潰れやすい。
 - 暫定 icon の説明が事前共有されておらず、実機確認時に「出ていない」のか「埋もれている」のかの切り分けが遅れた。
 
@@ -28,6 +29,7 @@
 ### 1. tray icon は app icon の完全流用を正本にしない
 
 - 1st planning では「tray icon は application icon を兼ねてよい」としたが、これは「必ず同一意匠に固定する」という意味ではない。
+- 過去の `wallopt.png` は application icon 候補として保留してよいが、tray icon の正本判断まで拘束しない。
 - XFCE panel 上の視認性を優先し、tray icon には tray 専用の簡略化意匠を許容する。
 - したがって app icon と tray icon は、同じ motif family に属していてよいが、同一絵柄である必要はない。
 
@@ -41,21 +43,32 @@
 ### 3. running / stopped の差は色ではなく形でも読めるようにする
 
 - state 差分を色だけに依存しない。
-- enabled / running 側は通常シンボル、disabled / stopped 側は欠け、停止記号、slash など形差分で読む。
-- したがって `wallopt.png` / `wallopt_off.png` は、単なる色違いではなく形でも区別可能な 2 状態 asset とする。
+- enabled / running 側は base motif のみで読み、disabled / stopped 側は大きい斜線で停止状態を読む。
+- 再生 / 一時停止記号の重畳は、単色 small icon では情報量が重くなりやすいため採らない。
+- したがって `off` 側は大斜線の shape 差分を primary cue に置く。
+- したがって `harite.svg` / `harite_off.svg` は、単なる色違いではなく形でも区別可能な 2 状態 asset とする。
 
 ### 4. source of truth は tray 向け vector design でよい
 
 - Linux/XFCE 初手では、tray 専用意匠の source を SVG で持つ考え方は妥当である。
+- application icon 候補として残す側も、見た目の古さを引きずらないため SVG への再設計を優先してよい。
 - ただし runtime で最終的に何形式を使うかは実装基盤事情に従ってよく、Phase11 初手では source SVG と runtime asset 名を混同しない。
-- したがって `wallopt` / `wallopt_off` は最終 runtime asset 名として維持しつつ、元デザインは SVG で起こしてよい。
+- したがって `harite.svg` / `harite_off.svg` を最終 runtime asset 名に置き、元デザインは SVG で起こしてよい。
 
 ## tray icon の設計原則
+
+### 0. 旧 wallopt icon の意味は捨てない
+
+- out 直下の旧 `wallopt.png` / `wallopt_off.png` には、過去の Harite の意図がすでに入っている。
+- 2 つの display に対して貼ること、両 corner のめくれで「貼る」感を出すこと、display size が違っても収まる貼り方を提供すること、が元の意味である。
+- display size 差を含めたのは、過去に同サイズ display を一度に揃えにくく、順次 replacement していく実利用を反映していたためである。
+- したがって SVG 再設計では、旧 png の見た目をそのままなぞる必要はないが、「2 画面」「貼る」「異サイズ混在でも収める」という意味核は落とさない。
 
 ### 1. motif
 
 - Harite の tray icon は、「壁紙」「画面」「余白」「切替」のいずれかが極小サイズでも読める motif に寄せる。
 - 複雑なロゴ再現より、1 記号で Harite の道具性を示すことを優先する。
+- 旧 wallopt icon の由来を踏まえ、tray 側でも 2 画面性や貼り込みのニュアンスを完全には捨てず、極小サイズで読める形に圧縮する。
 
 ### 2. contrast
 
@@ -67,44 +80,47 @@
 - tray 用の product icon は [src/harite/gui/resources/README.md](src/harite/gui/resources/README.md) の方針どおり package resource として保持する。
 - docs/mock asset 側とは混線させない。
 
-## 初手候補
+## 採用案
 
-### 候補 A: frame motif
+### A: frame motif
 
 - 角丸の画面フレームを基本とし、中に 1 本だけ余白や壁紙の区切りを示す。
-- off 側は右下欠け、または斜線を足す。
-- 長所は「壁紙ツール」らしさが最も素直に伝わること。
+- 旧 wallopt の 2 display 構図は、大小 2 枠または主副 2 面の差で簡略表現できる。
+- on 側は 2 面の重なりを素直に読み、後ろ面の短いバーは左上、手前面の短いバーは右下に置く。
+- 手前面が奥面を隠す構図を採り、重なり順を明確にする。
+- off 側は大きい斜線を重ね、停止状態を shape 差分で読む。
+- 実験 SVG として [out/harite_candidate_a.svg](out/harite_candidate_a.svg) と [out/harite_candidate_a_off.svg](out/harite_candidate_a_off.svg) を採用候補の現在形とする。
 
-### 候補 B: margin motif
+## 非採用案
 
-- 外枠と内側の余白帯で構成し、「margin / fitting」らしさを出す。
-- off 側は帯の一部を落とすか、停止線を加える。
-- 長所は Harite 固有の機能性に寄せやすいこと。
+### B: margin motif
 
-### 候補 C: H motif
-
-- `H` を幾何学的に簡略化し、tray 専用の symbol として使う。
-- off 側は片側を切るか、中央線を stop 記号に寄せる。
-- 長所は単純で潰れにくいことだが、壁紙ツールらしさは弱い。
+- 外枠と内側の余白帯で構成し、「margin / fitting」らしさを出す案として検討した。
+- display size が違っても収める、という旧意図との相性はよい。
+- ただし 2 面の重なり感そのものは A より弱く、今回の tray icon 正本には採らない。
 
 ## 現時点の判断
 
 - Phase11 初手の tray icon は、app icon そのものより「tray 専用簡略版」を正本に置く。
+- 過去の `wallopt.png` は application icon 候補としては残すが、tray icon の最終 asset 名は `harite.svg` / `harite_off.svg` へ切り替える。
 - state 差分は色差だけでなく shape 差分でも読む。
-- motif の第一候補は frame motif、次点は margin motif とする。
-- `wallopt.png` / `wallopt_off.png` の名前は維持しつつ、source design は SVG で起こしてよい。
-- したがって次の作業は、tray icon 2 状態の SVG 案を少数作成し、XFCE 実機で見比べることに置く。
+- on/off は大斜線の有無で区別し、再生 / 一時停止の重畳は入れない。
+- 採用 motif は frame motif とする。
+- 旧 wallopt icon の「2 画面」「角めくれの貼り込み感」「異サイズ display でも収める」という意味は、SVG 再設計後も motif の判断根拠として継承する。
+- `harite.svg` / `harite_off.svg` の名前で source design を SVG から起こしてよい。
+- したがって次の作業は、A 採用案を symbolic 風の本命 asset として package resource へ移すことに置く。
 
 ## 次アクション
 
-1. tray 専用 icon の source SVG を 2 状態 2 案程度作る。
-2. `wallopt` / `wallopt_off` として package resource に配置する。
+1. A 採用案を白基調の symbolic 風 SVG に整える。
+2. `harite.svg` / `harite_off.svg` として package resource に配置する。
 3. [src/harite/gui/adapters/tasktray_adapter.py](src/harite/gui/adapters/tasktray_adapter.py) の暫定 `wallpaper.svg` / `pause.svg` 参照を差し替える。
 4. XFCE 実機で 16px / 22px 相当の視認性を再確認する。
 
 ## 完了条件
 
 - tray icon が「出る」だけでなく、XFCE panel 上で見失いにくいことが説明可能になっている。
-- `wallopt` / `wallopt_off` の 2 状態差分が shape でも読める。
+- `harite.svg` / `harite_off.svg` の 2 状態差分が shape でも読める。
+- on/off の差分が大斜線だけで自然に読める。
 - app icon と tray icon の関係が「同 motif family だが tray 専用簡略版を許容する」と説明可能になっている。
 - source SVG と runtime asset の関係が整理されている。
