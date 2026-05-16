@@ -11,16 +11,18 @@ def initialize_tasktray(signal_backend: Any) -> Any | None:
 
         gi.require_version("Gtk", "3.0")
         from gi.repository import GLib, Gtk
-    except Exception:
-        return None
+    except Exception as exc:
+        raise RuntimeError(f"PyGObject/GTK unavailable: {exc}") from exc
 
     indicator_binding = _load_indicator_binding()
-    if indicator_binding is None or not hasattr(signal_backend, "get_object"):
-        return None
+    if indicator_binding is None:
+        raise RuntimeError("AppIndicator binding unavailable: tried AyatanaAppIndicator3, AppIndicator3")
+    if not hasattr(signal_backend, "get_object"):
+        raise RuntimeError("signal backend does not provide get_object(name)")
 
     window = _resolve_main_window(signal_backend)
     if window is None:
-        return None
+        raise RuntimeError("main GTK window not found for task tray binding")
 
     indicator_module, binding_name = indicator_binding
     adapter = GtkTaskTrayAdapter(
@@ -44,8 +46,7 @@ def _load_indicator_binding() -> tuple[Any, str] | None:
     for binding_name in ("AyatanaAppIndicator3", "AppIndicator3"):
         try:
             gi.require_version(binding_name, "0.1")
-            repository = import_module("gi.repository")
-            return getattr(repository, binding_name), binding_name
+            return import_module(f"gi.repository.{binding_name}"), binding_name
         except Exception:
             continue
     return None
