@@ -102,8 +102,26 @@ class MainWindow:
             "optimize",
             "apply",
         )
+        self._load_default_settings_on_startup()
         self._refresh_action_availability()
         self._update_watch_output_display()
+
+    def _load_default_settings_on_startup(self) -> None:
+        target_path = self._resolve_settings_file_path()
+        try:
+            if not target_path.exists():
+                return
+            config = load_config(target_path)
+        except Exception as exc:
+            self._log(f"Startup settings load skipped: {exc}")
+            return
+
+        previous_status = (self.status_level, self.status_phase, self.status_message, self.last_error)
+        try:
+            if self.load_settings_config(config):
+                self._log(f"Startup settings loaded: {target_path}")
+        finally:
+            self.status_level, self.status_phase, self.status_message, self.last_error = previous_status
 
     @property
     def save_path_dialog_open(self) -> bool:

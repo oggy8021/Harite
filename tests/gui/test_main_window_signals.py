@@ -4,6 +4,7 @@ from PIL import Image
 
 from harite.apply_settings import EffectiveApplySettings
 from harite.config import load_config
+from harite.config import save_config
 from harite.display_context import TwoScreenOptimizeContext
 from harite.preferences import AppPreferences
 from harite.gui.views.main_window import MainWindow
@@ -795,6 +796,30 @@ def test_settings_file_handlers_use_default_fixed_path_when_path_is_empty(monkey
 
     assert window.on_load_settings_file("") is True
     assert window.status_phase == "settings"
+
+
+def test_main_window_loads_default_settings_on_startup(monkeypatch, tmp_path):
+    target = tmp_path / "harite-preferences.json"
+    save_config(
+        target,
+        {
+            "plugin": "linux",
+            "apply_mode": "per-monitor-auto-split",
+            "watch_interval_seconds": 33,
+            "watch_srcdir_l": "/watch/left",
+            "watch_srcdir_r": "/watch/right",
+        },
+    )
+    monkeypatch.setattr("harite.gui.views.main_window.resolve_default_settings_path", lambda: target)
+
+    window = MainWindow()
+
+    assert window.plugin_name == "linux"
+    assert window.apply_mode == "per-monitor-auto-split"
+    assert window.watch_interval_seconds == 33
+    assert window.watch_srcdir_l == "/watch/left"
+    assert window.watch_srcdir_r == "/watch/right"
+    assert window.can_start_watch is True
 
 
 def test_settings_file_save_accepts_explicit_dialog_config(tmp_path):
