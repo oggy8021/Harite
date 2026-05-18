@@ -2808,7 +2808,10 @@ def test_runtime_backend_settings_open_propagates_unexpected_runtime_error():
 def test_runtime_backend_settings_ok_save_and_cancel_dispatch_handlers(tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     dialog = backend.get_object("SettingsDialog")
+    save_btn = backend.get_object("btnSettingsSave")
     observed = {"apply": None, "save": None, "close": 0}
+
+    assert save_btn.image is not None
 
     export_path = tmp_path / "save-prefs.json"
     dialog.set_preferences_config(
