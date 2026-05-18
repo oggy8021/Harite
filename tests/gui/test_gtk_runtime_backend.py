@@ -2161,6 +2161,69 @@ def test_present_gtk_window_propagates_unexpected_runtime_error(monkeypatch):
         present_gtk_window(object())
 
 
+def test_present_gtk_window_uses_loaded_gtk_module_main(monkeypatch):
+    class _FakeGiModule:
+        @staticmethod
+        def require_version(name, version):
+            assert name == "Gtk"
+            assert version == "3.0"
+
+    class _FakeGtkModule:
+        main_calls = 0
+        main_quit_calls = 0
+
+        @classmethod
+        def main(cls):
+            cls.main_calls += 1
+
+        @classmethod
+        def main_quit(cls):
+            cls.main_quit_calls += 1
+
+    class _FakeWindow:
+        def __init__(self):
+            self._signals = {}
+            self._harite_quit_hooked = False
+            self.show_all_calls = 0
+            self.present_calls = 0
+
+        def connect(self, name, callback):
+            self._signals[name] = callback
+
+        def show_all(self):
+            self.show_all_calls += 1
+
+        def present(self):
+            self.present_calls += 1
+
+    window = _FakeWindow()
+
+    class _FakeBackend:
+        def get_object(self, name):
+            if name == "main_window":
+                return window
+            return None
+
+    def fake_import_module(name):
+        if name == "gi":
+            return _FakeGiModule()
+        if name == "gi.repository.Gtk":
+            return _FakeGtkModule
+        raise AssertionError(f"unexpected import: {name}")
+
+    monkeypatch.setattr("importlib.import_module", fake_import_module)
+
+    assert present_gtk_window(_FakeBackend()) is True
+    assert _FakeGtkModule.main_calls == 1
+    assert window.show_all_calls == 1
+    assert window.present_calls == 1
+    assert "delete-event" in window._signals
+
+    window._signals["delete-event"]()
+
+    assert _FakeGtkModule.main_quit_calls == 1
+
+
 def test_format_input_display_uses_basename_and_truncates_long_names():
     display = format_input_display("/tmp/Higashiyama-Kaii-Cho-Long-Long-Long-700x1244.jpg")
 

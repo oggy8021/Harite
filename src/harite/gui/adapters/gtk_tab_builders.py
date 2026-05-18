@@ -220,8 +220,10 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
         set_halign_if_supported(input_row_l, gtk_module.Align.FILL)
     if hasattr(input_row_l, "set_hexpand"):
         input_row_l.set_hexpand(True)
-    input_entry_l = gtk_module.Label(label="")
-    set_xalign_if_supported(input_entry_l, 0.5)
+    input_display_l = gtk_module.Entry() if hasattr(gtk_module, "Entry") else gtk_module.Label(label="")
+    set_xalign_if_supported(input_display_l, 0.5)
+    if hasattr(input_display_l, "set_editable"):
+        input_display_l.set_editable(False)
     btn_clr_path_l = gtk_module.Button(label="Clear-L")
     set_button_icon_if_supported(gtk_module, btn_clr_path_l, "icons", "lucide", "folder-x.svg")
     input_path_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
@@ -229,7 +231,7 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
         set_halign_if_supported(input_path_row_l, gtk_module.Align.CENTER)
     if hasattr(input_path_row_l, "set_hexpand"):
         input_path_row_l.set_hexpand(True)
-    input_path_row_l.pack_start(input_entry_l, False, False, 0)
+    input_path_row_l.pack_start(input_display_l, False, False, 0)
     clear_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(clear_row_l, gtk_module.Align.END)
@@ -253,8 +255,10 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
         set_halign_if_supported(input_row_r, gtk_module.Align.FILL)
     if hasattr(input_row_r, "set_hexpand"):
         input_row_r.set_hexpand(True)
-    input_entry_r = gtk_module.Label(label="")
-    set_xalign_if_supported(input_entry_r, 0.5)
+    input_display_r = gtk_module.Entry() if hasattr(gtk_module, "Entry") else gtk_module.Label(label="")
+    set_xalign_if_supported(input_display_r, 0.5)
+    if hasattr(input_display_r, "set_editable"):
+        input_display_r.set_editable(False)
     btn_clr_path_r = gtk_module.Button(label="Clear-R")
     set_button_icon_if_supported(gtk_module, btn_clr_path_r, "icons", "lucide", "folder-x.svg")
     input_path_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
@@ -262,7 +266,7 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
         set_halign_if_supported(input_path_row_r, gtk_module.Align.CENTER)
     if hasattr(input_path_row_r, "set_hexpand"):
         input_path_row_r.set_hexpand(True)
-    input_path_row_r.pack_start(input_entry_r, False, False, 0)
+    input_path_row_r.pack_start(input_display_r, False, False, 0)
     clear_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(clear_row_r, gtk_module.Align.END)
@@ -300,10 +304,10 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
         "tgl_push_right_r": tgl_push_right_r,
         "btn_get_img_r": btn_get_img_r,
         "input_row_l": input_row_l,
-        "input_entry_l": input_entry_l,
+        "input_display_l": input_display_l,
         "btn_clr_path_l": btn_clr_path_l,
         "input_row_r": input_row_r,
-        "input_entry_r": input_entry_r,
+        "input_display_r": input_display_r,
         "btn_clr_path_r": btn_clr_path_r,
         "pick_state_label": pick_state_label,
     }
