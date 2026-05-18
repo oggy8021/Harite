@@ -1,12 +1,12 @@
-# Harite Project Initial Build Reformation WS2 Docs Reformation
+# Harite Project Initial Build Reformation WS3 Docs Reformation
 
-最終更新: 2026-05-16
+最終更新: 2026-05-18
 
 ## 位置づけ
 
-- 本書は [docs/reformation/harite-project-initial-build-reformation.md](docs/reformation/harite-project-initial-build-reformation.md) の Workstream 2 を具体化する子文書である。
+- 本書は [docs/reformation/harite-project-initial-build-reformation.md](docs/reformation/harite-project-initial-build-reformation.md) の Workstream 3 を具体化する子文書である。
 - 主題は、planning / closing / validation record / 常設文書 / 将来構想文書が混在した現状 docs を、運用可能な体系へ再編することである。
-- 仕様書本文の執筆は Workstream 3 の主責務とし、本書ではその受け皿を整える。
+- 仕様書本文の執筆は Workstream 4 の主責務とし、本書ではその受け皿を整える。
 
 ## この stream で固定すること
 
@@ -58,4 +58,4 @@
 - docs の役割分類が説明可能になっている。
 - 常設文書と履歴保存文書の境界が説明可能になっている。
 - GUI 系 docs の重さをどこで減らすか説明可能になっている。
-- Workstream 3 の仕様書正本をどこへ受けるか説明可能になっている。
+- Workstream 4 の仕様書正本をどこへ受けるか説明可能になっている。

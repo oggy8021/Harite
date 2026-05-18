@@ -1,10 +1,10 @@
-# Harite Project Initial Build Reformation WS4 Feature Overview
+# Harite Project Initial Build Reformation WS5 Feature Overview
 
-最終更新: 2026-05-16
+最終更新: 2026-05-18
 
 ## 位置づけ
 
-- 本書は [docs/reformation/harite-project-initial-build-reformation.md](docs/reformation/harite-project-initial-build-reformation.md) の Workstream 4 を具体化する子文書である。
+- 本書は [docs/reformation/harite-project-initial-build-reformation.md](docs/reformation/harite-project-initial-build-reformation.md) の Workstream 5 を具体化する子文書である。
 - 主題は、`1.0.0` 後の新運用で扱う後続機能の棚卸しと overview の作成である。
 - 本書は `1.0.0` gate ではなく、その後に開く backlog / planning 入口として扱う。
 
@@ -58,4 +58,4 @@
 - 後続機能 inventory の枠組みが説明可能になっている。
 - `1.0.0` gate の外に置く理由が説明可能になっている。
 - 構想の受け皿として overview を置く理由が説明可能になっている。
-- Workstream 1-3 と混線せずに次段へ送れる状態になっている。
+- Workstream 1・3・4 と混線せずに次段へ送れる状態になっている。

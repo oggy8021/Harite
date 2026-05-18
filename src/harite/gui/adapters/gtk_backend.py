@@ -751,7 +751,7 @@ class GtkRuntimeSignalBackend:
                 self._sync_margins_state_with_feedback_from_owner(owner)
                 return
             self._set_feedback(phase="Margins", state="info-updated")
-        except Exception as exc:
+        except TypeError as exc:
             self._set_feedback(phase="Margins", state="info-error", error=str(exc))
 
     def _on_margin_text_changed(self, entry: Any) -> None:
@@ -781,7 +781,7 @@ class GtkRuntimeSignalBackend:
                 self._sync_margins_state_with_feedback_from_owner(owner)
                 return
             self._set_feedback(phase="Margins", state="text-updated")
-        except Exception as exc:
+        except TypeError as exc:
             self._set_feedback(phase="Margins", state="text-error", error=str(exc))
 
     def _on_margin_position_toggled(self, widget: Any, value: str) -> None:
@@ -800,7 +800,7 @@ class GtkRuntimeSignalBackend:
                 self._sync_margins_state_with_feedback_from_owner(owner)
                 return
             self._set_feedback(phase="Margins", state="position-updated")
-        except Exception as exc:
+        except TypeError as exc:
             self._set_feedback(phase="Margins", state="position-error", error=str(exc))
 
     def _on_margin_text_max_lines_changed(self, spin: Any) -> None:
@@ -818,7 +818,7 @@ class GtkRuntimeSignalBackend:
                 self._sync_margins_state_with_feedback_from_owner(owner)
                 return
             self._set_feedback(phase="Margins", state="max-lines-updated")
-        except Exception as exc:
+        except TypeError as exc:
             self._set_feedback(phase="Margins", state="max-lines-error", error=str(exc))
 
     def run_watch_cycle_once(self) -> bool:
@@ -938,7 +938,7 @@ class GtkRuntimeSignalBackend:
                 value = int(widget.get_value())
             callback(widget_name, value)
             self._set_feedback(phase="Margins", state="updated")
-        except Exception as exc:
+        except TypeError as exc:
             self._set_feedback(phase="Margins", state="error", error=str(exc))
 
     def _run_optimize_path(self, callback: Callable[..., Any] | None) -> None:
@@ -973,7 +973,7 @@ class GtkRuntimeSignalBackend:
                 )
                 self._set_label_text("lblOptimizeResult", "Optimize result: failed")
                 self._set_label_text("lblApplyTarget", "Apply target: not-ready")
-        except Exception as exc:
+        except TypeError as exc:
             self._set_button_enabled("btnSetWall", False)
             self._set_feedback(phase="Optimize", state="error", error=str(exc))
             self._set_label_text("lblOptimizeResult", "Optimize result: error")
@@ -1000,7 +1000,7 @@ class GtkRuntimeSignalBackend:
             if owner is not None:
                 self._sync_preview_state_from_owner(owner)
             self._set_feedback(phase="ApplyMode", state="updated")
-        except Exception as exc:
+        except TypeError as exc:
             self._set_feedback(phase="ApplyMode", state="error", error=str(exc))
 
     def _on_save_clicked(self, *_args: Any) -> None:
@@ -1055,7 +1055,7 @@ class GtkRuntimeSignalBackend:
                     state="failed",
                     error="apply returned false",
                 )
-        except Exception as exc:
+        except TypeError as exc:
             self._set_feedback(phase="Apply", state="error", error=str(exc))
 
     def _on_settings_clicked(self, *_args: Any) -> None:

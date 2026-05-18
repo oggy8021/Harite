@@ -1,12 +1,12 @@
-# Harite Project Initial Build Reformation WS3 Spec Authoring
+# Harite Project Initial Build Reformation WS4 Spec Authoring
 
-最終更新: 2026-05-16
+最終更新: 2026-05-18
 
 ## 位置づけ
 
-- 本書は [docs/reformation/harite-project-initial-build-reformation.md](docs/reformation/harite-project-initial-build-reformation.md) の Workstream 3 を具体化する子文書である。
+- 本書は [docs/reformation/harite-project-initial-build-reformation.md](docs/reformation/harite-project-initial-build-reformation.md) の Workstream 4 を具体化する子文書である。
 - 主題は、planning 履歴の集積ではなく、現行 Harite を読むための仕様書正本を起こすことである。
-- docs 再編の情報設計は Workstream 2 の主責務であり、本書はその結果を受けて仕様本文を整える。
+- docs 再編の情報設計は Workstream 3 の主責務であり、本書はその結果を受けて仕様本文を整える。
 
 ## この stream で固定すること
 
@@ -55,11 +55,11 @@
 1. 仕様書正本の親文書候補と分冊候補を並べる。
 2. 現行 Harite の正本として書くべき章題を列挙する。
 3. README と仕様書の責務分担を仮置きする。
-4. Workstream 2 の docs map と矛盾しない配置案を作る。
+4. Workstream 3 の docs map と矛盾しない配置案を作る。
 
 ## 完了条件
 
 - 仕様書正本の役割が説明可能になっている。
 - 仕様書で扱う章題の骨格が説明可能になっている。
 - planning 履歴と仕様本文の境界が説明可能になっている。
-- Workstream 2 の docs 再編と矛盾しない配置方針が説明可能になっている。
+- Workstream 3 の docs 再編と矛盾しない配置方針が説明可能になっている。

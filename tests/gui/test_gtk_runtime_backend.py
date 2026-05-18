@@ -576,6 +576,35 @@ def test_runtime_backend_input_controls_optimize_button_state():
     assert error.text == "Error: none"
 
 
+def test_runtime_backend_input_change_reports_legacy_handler_signature_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    entry = backend.get_object("entPathL")
+    backend.connect_signals({"on_change_input_text": lambda: None})
+
+    entry.set_text("/tmp/example.jpg")
+    entry.emit("changed", entry)
+
+    assert backend.get_object("lblStatus").text == "Input: failed"
+    assert "takes 0 positional arguments" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_input_change_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    entry = backend.get_object("entPathL")
+    backend.connect_signals(
+        {
+            "on_change_input_text": lambda _text: (_ for _ in ()).throw(RuntimeError("input change exploded")),
+        }
+    )
+
+    entry.set_text("/tmp/example.jpg")
+
+    with pytest.raises(RuntimeError, match="input change exploded"):
+        entry.emit("changed", entry)
+
+
 def test_runtime_backend_optimize_result_controls_apply_button_state():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
@@ -759,6 +788,29 @@ def test_runtime_backend_margins_tab_updates_owner_state_and_cli_preview(tmp_pat
     assert "--embed-max-lines" not in preview
 
 
+def test_runtime_backend_margin_text_mode_reports_legacy_handler_signature_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals({"on_change_margin_text_mode": lambda: True})
+    backend.get_object("radMarginTextModeText").click()
+
+    assert backend.get_object("lblStatus").text == "Margins: info-error"
+    assert "takes 0 positional arguments" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_margin_text_mode_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_change_margin_text_mode": lambda _value: (_ for _ in ()).throw(RuntimeError("margin text mode exploded")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="margin text mode exploded"):
+        backend.get_object("radMarginTextModeText").click()
+
+
 def test_runtime_backend_clamps_margin_text_to_five_lines():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
@@ -785,6 +837,29 @@ def test_runtime_backend_preserves_trailing_newline_while_editing_margin_text():
     assert backend.get_object("txtMarginText").get_text() == "1\n"
 
 
+def test_runtime_backend_margin_text_reports_legacy_handler_signature_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals({"on_change_margin_text": lambda: True})
+    backend.get_object("txtMarginText").set_text("hello")
+
+    assert backend.get_object("lblStatus").text == "Margins: text-error"
+    assert "takes 0 positional arguments" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_margin_text_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_change_margin_text": lambda _value: (_ for _ in ()).throw(RuntimeError("margin text exploded")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="margin text exploded"):
+        backend.get_object("txtMarginText").set_text("hello")
+
+
 def test_runtime_backend_margin_text_preflight_reports_small_margin_error():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
@@ -806,6 +881,52 @@ def test_runtime_backend_margin_text_preflight_reports_small_margin_error():
 
     assert backend.get_object("lblStatus").text == "Margins: margin text does not fit current margin area"
     assert backend.get_object("lblError").text == "Error: selected margin area is too small for margin text"
+
+
+def test_runtime_backend_margin_text_position_reports_legacy_handler_signature_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals({"on_change_margin_text_position": lambda: True})
+    backend.get_object("radMarginTextPositionLeftTop").click()
+
+    assert backend.get_object("lblStatus").text == "Margins: position-error"
+    assert "takes 0 positional arguments" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_margin_text_position_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_change_margin_text_position": lambda _value: (_ for _ in ()).throw(RuntimeError("margin position exploded")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="margin position exploded"):
+        backend.get_object("radMarginTextPositionLeftTop").click()
+
+
+def test_runtime_backend_margin_text_max_lines_reports_legacy_handler_signature_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals({"on_change_margin_text_max_lines": lambda: True})
+    backend.get_object("spnMarginTextMaxLines").emit("value-changed", backend.get_object("spnMarginTextMaxLines"))
+
+    assert backend.get_object("lblStatus").text == "Margins: max-lines-error"
+    assert "takes 0 positional arguments" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_margin_text_max_lines_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_change_margin_text_max_lines": lambda _value: (_ for _ in ()).throw(RuntimeError("margin max lines exploded")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="margin max lines exploded"):
+        backend.get_object("spnMarginTextMaxLines").emit("value-changed", backend.get_object("spnMarginTextMaxLines"))
 
 
 def test_runtime_backend_margin_text_preflight_uses_two_screen_display_slice_area():
@@ -1069,6 +1190,41 @@ def test_runtime_backend_watch_start_button_requires_both_srcdirs(monkeypatch, t
     srcdir_dialog.confirm()
 
     assert watch_start.sensitive is True
+
+
+def test_runtime_backend_watch_srcdir_confirm_reports_legacy_handler_signature_error(tmp_path):
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    left_dir = tmp_path / "watch-left"
+    left_dir.mkdir()
+
+    backend.connect_signals({"on_pick_watch_srcdir": lambda: True})
+
+    backend.get_object("btnOpenSrcdirL").click()
+    backend.get_object("SrcdirDialog").set_current_folder(str(left_dir))
+    backend.get_object("SrcdirDialog").confirm()
+
+    assert backend.get_object("lblStatus").text == "Srcdir-L: error"
+    assert "takes 0 positional arguments" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_watch_srcdir_confirm_propagates_unexpected_runtime_error(tmp_path):
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    left_dir = tmp_path / "watch-left"
+    left_dir.mkdir()
+
+    backend.connect_signals(
+        {
+            "on_pick_watch_srcdir": lambda _folder, _side: (_ for _ in ()).throw(RuntimeError("srcdir confirm exploded")),
+        }
+    )
+
+    backend.get_object("btnOpenSrcdirL").click()
+    backend.get_object("SrcdirDialog").set_current_folder(str(left_dir))
+
+    with pytest.raises(RuntimeError, match="srcdir confirm exploded"):
+        backend.get_object("SrcdirDialog").confirm()
 
 
 def test_runtime_backend_connect_signals_syncs_watch_output_from_owner():
@@ -1365,6 +1521,34 @@ def test_runtime_backend_open_l_truncates_long_display_name():
     assert entry.get_text() == "Higashiyama-Kaii-Cho-...700x1244.jpg"
 
 
+def test_runtime_backend_open_dialog_confirm_reports_legacy_handler_signature_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals({"on_pick_input": lambda: True})
+    backend.get_object("btnGetImgL").click()
+    backend.get_object("ImgOpenDialog").set_filename("/tmp/left.jpg")
+    backend.get_object("ImgOpenDialog").confirm()
+
+    assert backend.get_object("lblPickState").text == "Open-L: error"
+    assert backend.get_object("lblStatus").text == "Open-L: error"
+    assert "takes 0 positional arguments" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_open_dialog_confirm_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_pick_input": lambda _path, _side: (_ for _ in ()).throw(RuntimeError("open confirm exploded")),
+        }
+    )
+    backend.get_object("btnGetImgL").click()
+    backend.get_object("ImgOpenDialog").set_filename("/tmp/left.jpg")
+
+    with pytest.raises(RuntimeError, match="open confirm exploded"):
+        backend.get_object("ImgOpenDialog").confirm()
+
+
 def test_runtime_backend_clear_l_clears_only_left_side_and_keeps_right_input():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
@@ -1436,6 +1620,19 @@ def test_runtime_backend_clear_button_reports_legacy_handler_signature_error():
 
     assert backend.get_object("lblStatus").text == "Clear-L: failed"
     assert "takes 0 positional arguments" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_clear_button_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_clear_input": lambda _side: (_ for _ in ()).throw(RuntimeError("clear input exploded")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="clear input exploded"):
+        backend.get_object("btnClrPathL").click()
 
 
 def test_runtime_backend_open_r_opens_dialog_without_entry_path_requirement():
@@ -1553,6 +1750,20 @@ def test_runtime_backend_color_open_reports_settings_getter_failure():
     assert backend.get_object("ColorDialog").is_visible() is False
     assert backend.get_object("lblStatus").text == "Color: error"
     assert backend.get_object("lblError").text == "Error: color settings getter failed"
+
+
+def test_runtime_backend_color_open_propagates_unexpected_getter_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_set_color": lambda *_args: True,
+            "on_get_settings_config": lambda: (_ for _ in ()).throw(LookupError("unexpected color getter error")),
+        }
+    )
+
+    with pytest.raises(LookupError, match="unexpected color getter error"):
+        backend.get_object("btnSetColor").click()
 
 
 def test_runtime_backend_color_open_propagates_unexpected_runtime_error():
@@ -1898,6 +2109,20 @@ def test_runtime_backend_about_open_reports_info_getter_failure():
     assert backend.get_object("lblError").text == "Error: about info getter failed"
 
 
+def test_runtime_backend_about_open_propagates_unexpected_getter_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_about": lambda: True,
+            "on_get_about_dialog_info": lambda: (_ for _ in ()).throw(LookupError("unexpected about getter error")),
+        }
+    )
+
+    with pytest.raises(LookupError, match="unexpected about getter error"):
+        backend.get_object("btnAbout").click()
+
+
 def test_runtime_backend_about_open_propagates_unexpected_runtime_error():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
@@ -2078,6 +2303,33 @@ def test_runtime_backend_save_click_without_path_uses_default_filename():
     assert error.text == "Error: none"
 
 
+def test_runtime_backend_save_path_confirm_reports_legacy_handler_signature_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals({"on_save_path_selected": lambda: True})
+
+    backend.get_object("SavePathDialog").set_filename("/tmp/from-runtime-dialog.jpg")
+    backend.get_object("btnSave").click()
+
+    assert backend.get_object("lblStatus").text == "SavePath: error"
+    assert "takes 0 positional arguments" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_save_path_confirm_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_save_path_selected": lambda _path: (_ for _ in ()).throw(RuntimeError("save path confirm exploded")),
+        }
+    )
+
+    backend.get_object("SavePathDialog").set_filename("/tmp/from-runtime-dialog.jpg")
+
+    with pytest.raises(RuntimeError, match="save path confirm exploded"):
+        backend.get_object("btnSave").click()
+
+
 def test_runtime_backend_save_path_chooser_proxy_no_longer_exposes_confirm_cancel_buttons():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
@@ -2106,6 +2358,34 @@ def test_runtime_backend_save_path_chooser_cancel_calls_current_handler_on_nativ
     assert save_path_state.text == "Save path: canceled"
     assert status.text == "SavePath: canceled"
     assert error.text == "Error: none"
+
+
+def test_runtime_backend_save_path_cancel_reports_legacy_handler_signature_error():
+    backend = GtkRuntimeSignalBackend(_NativeFakeGtk)
+
+    _NativeFileChooserDialog.next_response = _NativeFakeGtk.ResponseType.CANCEL
+    _NativeFileChooserDialog.next_filename = ""
+    backend.connect_signals({"on_save_path_selection_canceled": lambda _arg: True})
+
+    backend.get_object("btnSave").click()
+
+    assert backend.get_object("lblStatus").text == "SavePath: error"
+    assert "required positional argument" in backend.get_object("lblError").text or "positional arguments" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_save_path_cancel_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_NativeFakeGtk)
+
+    _NativeFileChooserDialog.next_response = _NativeFakeGtk.ResponseType.CANCEL
+    _NativeFileChooserDialog.next_filename = ""
+    backend.connect_signals(
+        {
+            "on_save_path_selection_canceled": lambda: (_ for _ in ()).throw(RuntimeError("save path cancel exploded")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="save path cancel exploded"):
+        backend.get_object("btnSave").click()
 
 
 def test_runtime_backend_save_path_chooser_filename_change_updates_target_label():
@@ -2264,6 +2544,30 @@ def test_runtime_backend_apply_mode_toggle_dispatches_and_updates_label():
     assert backend.get_object("lblStatus").text == "ApplyMode: updated"
 
 
+def test_runtime_backend_apply_mode_reports_legacy_handler_signature_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals({"on_change_apply_mode": lambda: True})
+
+    backend.get_object("radApplyPerMonitor").click()
+
+    assert backend.get_object("lblStatus").text == "ApplyMode: error"
+    assert "takes 0 positional arguments" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_apply_mode_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_change_apply_mode": lambda _mode: (_ for _ in ()).throw(RuntimeError("apply mode exploded")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="apply mode exploded"):
+        backend.get_object("radApplyPerMonitor").click()
+
+
 def test_runtime_backend_apply_mode_can_return_to_default_from_per_monitor():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     observed = []
@@ -2362,6 +2666,42 @@ def test_runtime_backend_settings_open_reports_notice_build_failure(monkeypatch)
 
     assert backend.get_object("lblStatus").text == "Settings: error"
     assert backend.get_object("lblError").text == "Error: settings path probe failed"
+
+
+def test_runtime_backend_settings_open_propagates_unexpected_notice_build_error(monkeypatch):
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    class _BrokenPath:
+        def exists(self):
+            raise LookupError("unexpected settings path probe error")
+
+    monkeypatch.setattr(
+        "harite.gui.adapters.gtk_runtime_settings_dialogs.resolve_default_settings_path",
+        lambda: _BrokenPath(),
+    )
+
+    backend.connect_signals(
+        {
+            "on_open_settings_dialog": lambda: True,
+            "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "single-file"},
+        }
+    )
+
+    with pytest.raises(LookupError, match="unexpected settings path probe error"):
+        backend.get_object("btnSettings").click()
+
+
+def test_runtime_backend_settings_open_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_open_settings_dialog": lambda: (_ for _ in ()).throw(RuntimeError("settings open exploded")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="settings open exploded"):
+        backend.get_object("btnSettings").click()
 
 
 def test_runtime_backend_settings_ok_save_and_cancel_dispatch_handlers(tmp_path):
@@ -2571,6 +2911,30 @@ def test_runtime_backend_optimize_sets_running_state_before_handler_call():
     assert observed["status_when_called"] == "Optimize: running"
 
 
+def test_runtime_backend_optimize_reports_legacy_handler_signature_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals({"on_optimize": lambda _arg: True})
+    backend.get_object("btnOptimize").click()
+
+    assert backend.get_object("lblStatus").text == "Optimize: error"
+    assert "required positional argument" in backend.get_object("lblError").text or "positional arguments" in backend.get_object("lblError").text
+    assert backend.get_object("lblOptimizeResult").text == "Optimize result: error"
+
+
+def test_runtime_backend_optimize_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_optimize": lambda: (_ for _ in ()).throw(RuntimeError("optimize exploded")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="optimize exploded"):
+        backend.get_object("btnOptimize").click()
+
+
 def test_runtime_backend_apply_failure_updates_error_message():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
@@ -2583,6 +2947,29 @@ def test_runtime_backend_apply_failure_updates_error_message():
 
     assert status.text == "Apply: failed"
     assert error.text == "Error: apply returned false"
+
+
+def test_runtime_backend_apply_reports_legacy_handler_signature_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals({"on_apply": lambda _arg: True})
+    backend.get_object("btnSetWall").click()
+
+    assert backend.get_object("lblStatus").text == "Apply: error"
+    assert "required positional argument" in backend.get_object("lblError").text or "positional arguments" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_apply_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_apply": lambda: (_ for _ in ()).throw(RuntimeError("apply exploded")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="apply exploded"):
+        backend.get_object("btnSetWall").click()
 
 
 def test_runtime_backend_optimize_handler_missing_sets_status_and_error():
@@ -2845,6 +3232,29 @@ def test_runtime_backend_margin_change_propagates_all_values():
     assert status.text == "Margins: updated"
     assert error.text == "Error: none"
     assert backend.get_object("lblCurrentMargins").text == "margins=11,22,33,44"
+
+
+def test_runtime_backend_margin_change_reports_legacy_handler_signature_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals({"on_change_margins": lambda _name: True})
+    backend.get_object("spnLeftMargin").emit("value-changed", backend.get_object("spnLeftMargin"))
+
+    assert backend.get_object("lblStatus").text == "Margins: error"
+    assert "positional argument" in backend.get_object("lblError").text
+
+
+def test_runtime_backend_margin_change_propagates_unexpected_runtime_error():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    backend.connect_signals(
+        {
+            "on_change_margins": lambda _name, _value: (_ for _ in ()).throw(RuntimeError("margin change exploded")),
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="margin change exploded"):
+        backend.get_object("spnLeftMargin").emit("value-changed", backend.get_object("spnLeftMargin"))
 
 
 def test_runtime_backend_margin_spin_matches_upstream_adjustments():

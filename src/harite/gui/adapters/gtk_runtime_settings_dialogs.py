@@ -210,7 +210,12 @@ def on_settings_clicked(backend: Any, *_args: Any) -> None:
         return
     try:
         ok = callback()
-        if ok:
+    except TypeError as exc:
+        backend._set_feedback(phase="Settings", state="error", error=str(exc))
+        return
+
+    if ok:
+        try:
             refresh_preferences_dialog_config_from_getter(backend)
             sync_preferences_widgets_from_dialog(backend)
             owner = backend._get_handler_owner("on_open_settings_dialog")
@@ -221,10 +226,10 @@ def on_settings_clicked(backend: Any, *_args: Any) -> None:
             if dialog is not None and hasattr(dialog, "show"):
                 dialog.show()
             backend._set_feedback(phase="Settings", state="opened")
-        else:
-            backend._set_feedback(phase="Settings", state="deferred")
-    except Exception as exc:
-        backend._set_feedback(phase="Settings", state="error", error=str(exc))
+        except (RuntimeError, TypeError, ValueError) as exc:
+            backend._set_feedback(phase="Settings", state="error", error=str(exc))
+    else:
+        backend._set_feedback(phase="Settings", state="deferred")
 
 
 def on_preferences_apply_clicked(backend: Any, *_args: Any) -> None:
@@ -301,7 +306,7 @@ def on_color_clicked(backend: Any, *_args: Any) -> None:
         return
     try:
         refresh_color_dialog_from_getter(backend)
-    except Exception as exc:
+    except (RuntimeError, TypeError, ValueError) as exc:
         backend._set_feedback(phase="Color", state="error", error=str(exc))
         return
     try:
@@ -321,7 +326,7 @@ def on_about_clicked(backend: Any, *_args: Any) -> None:
         return
     try:
         refresh_about_dialog_from_getter(backend)
-    except Exception as exc:
+    except (RuntimeError, TypeError, ValueError) as exc:
         backend._set_feedback(phase="About", state="error", error=str(exc))
         return
     try:

@@ -68,7 +68,7 @@ def run(
     if _should_bind_ui_backend(bind_ui_backend):
         try:
             signal_backend = _load_ui_signal_backend()
-        except Exception:
+        except RuntimeError:
             # Keep entrypoint safe when GTK/PyGObject is unavailable.
             pass
 
@@ -90,7 +90,7 @@ def run(
             if dispatch:
                 connect_signal_dispatch(signal_backend, dispatch)
                 setattr(window, "_adapter_signal_dispatch", dispatch)
-        except Exception:
+        except (ImportError, TypeError):
             # Non-fatal: runtime fallback should remain usable in partial environments.
             pass
 
@@ -99,7 +99,7 @@ def run(
             if tasktray_adapter is not None:
                 setattr(signal_backend, "_tasktray_adapter", tasktray_adapter)
                 setattr(window, "_tasktray_adapter", tasktray_adapter)
-        except Exception:
+        except RuntimeError:
             pass
 
     if signal_backend is not None and _should_present_ui_window(present_ui_window):
@@ -107,7 +107,7 @@ def run(
             presented = _present_ui_window(signal_backend)
             if presented:
                 return
-        except Exception:
+        except RuntimeError:
             # Non-fatal in headless CI or partial GTK environments.
             pass
 
