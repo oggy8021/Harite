@@ -27,7 +27,6 @@ def build_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, Any]:
 
 def _build_main_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, Any]:
     return {
-        "WallPosit_MainWindow": widgets["window"],
         "main_window": widgets["window"],
         "boxRoot": widgets["root"],
         "lblTopMargin": widgets["top_margin_label"],

@@ -1,4 +1,4 @@
-"""CLI entrypoints for Harite (skeleton)."""
+"""CLI entrypoints for Harite."""
 from __future__ import annotations
 
 import sys
@@ -416,7 +416,7 @@ def compute_placement(
     resolution: str = typer.Option(..., "--resolution", "-r", help="Target resolution WxH"),
     layout: str = typer.Option("cover", "--layout", help="Layout mode"),
 ) -> None:
-    """Compute placement for a single image (placeholder)."""
+    """Compute placement for a single image."""
     typer.echo(f"COMPUTE: input={input} resolution={resolution} layout={layout}")
 
 

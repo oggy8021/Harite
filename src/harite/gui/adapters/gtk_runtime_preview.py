@@ -1,18 +1,16 @@
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 from typing import Any
 
 
 def get_gdkpixbuf_module(backend: Any) -> Any | None:
     try:
-        import gi
-
+        gi = importlib.import_module("gi")
         gi.require_version("GdkPixbuf", "2.0")
-        from gi.repository import GdkPixbuf
-
-        return GdkPixbuf
-    except Exception:
+        return importlib.import_module("gi.repository.GdkPixbuf")
+    except (ImportError, ValueError):
         return None
 
 
@@ -39,7 +37,7 @@ def preview_target_size(backend: Any) -> tuple[int, int]:
     if hasattr(container, "get_allocated_width"):
         try:
             allocated_width = int(container.get_allocated_width())
-        except Exception:
+        except (TypeError, ValueError):
             allocated_width = None
     elif hasattr(container, "allocation"):
         allocation = getattr(container, "allocation", None)
@@ -75,7 +73,7 @@ def set_preview_widget(
     if hasattr(widget, "set_size_request"):
         try:
             widget.set_size_request(target_width, target_height)
-        except Exception:
+        except TypeError:
             pass
 
     gdkpixbuf = get_gdkpixbuf_module(backend)
@@ -88,13 +86,13 @@ def set_preview_widget(
             scaled = pixbuf.scale_simple(target_width, target_height, gdkpixbuf.InterpType.BILINEAR)
             widget.set_from_pixbuf(scaled or pixbuf)
             return
-        except Exception:
+        except (FileNotFoundError, OSError, TypeError, ValueError):
             pass
 
     if hasattr(widget, "set_from_file"):
         try:
             widget.set_from_file(str(source_path))
-        except Exception:
+        except (FileNotFoundError, OSError, TypeError, ValueError):
             pass
 
 
@@ -109,7 +107,7 @@ def build_preview_crop_boxes(
 
         with Image.open(source_path) as image:
             comp_width, comp_height = image.size
-    except Exception:
+    except (ImportError, OSError, ValueError):
         return None
 
     left_width = int(l_display[0]) if l_display is not None else 1

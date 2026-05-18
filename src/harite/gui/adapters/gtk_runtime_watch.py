@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 from typing import Any
 
@@ -11,13 +12,10 @@ def get_glib_module(backend: Any) -> Any | None:
     if glib is not None:
         return glib
     try:
-        import gi
-
+        gi = importlib.import_module("gi")
         gi.require_version("Gtk", "3.0")
-        from gi.repository import GLib
-
-        return GLib
-    except Exception:
+        return importlib.import_module("gi.repository.GLib")
+    except (ImportError, ValueError):
         return None
 
 
@@ -78,7 +76,7 @@ def run_watch_cycle_once(backend: Any) -> bool:
         owner = backend._get_handler_owner("on_watch_tick")
         try:
             ok = bool(callback())
-        except Exception as exc:
+        except TypeError as exc:
             backend._set_feedback(phase="Watch", state="error", error=str(exc))
             return False
         if not ok:

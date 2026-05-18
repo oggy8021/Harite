@@ -66,7 +66,7 @@ def on_input_changed(backend: Any, entry: Any) -> None:
         if owner is not None:
             backend._sync_preview_state_from_owner(owner)
         backend._set_feedback(phase="Input", state="updated")
-    except Exception as exc:
+    except TypeError as exc:
         backend._set_feedback(phase="Input", state="failed", error=str(exc))
 
 
@@ -92,10 +92,7 @@ def notify_open_dialog_destroy(backend: Any) -> None:
     callback = backend._signal_handlers.get("on_close_open_image_dialog")
     if callback is None:
         return
-    try:
-        callback()
-    except Exception:
-        pass
+    callback()
 
 
 def on_open_dialog_confirmed(backend: Any) -> None:
@@ -150,7 +147,7 @@ def on_open_dialog_confirmed(backend: Any) -> None:
         backend._set_label_text("lblPickState", f"Open-{side}: selected")
         backend._set_feedback(phase=f"Open-{side}", state="selected")
         notify_open_dialog_destroy(backend)
-    except Exception as exc:
+    except TypeError as exc:
         backend._set_label_text("lblPickState", f"Open-{side}: error")
         backend._set_feedback(phase=f"Open-{side}", state="error", error=str(exc))
 
@@ -174,10 +171,7 @@ def format_input_display(path: str) -> str:
     value = str(path or "").strip()
     if not value:
         return ""
-    try:
-        name = Path(value).name or value
-    except Exception:
-        return value
+    name = Path(value).name or value
 
     max_length = 36
     if len(name) <= max_length:
@@ -204,17 +198,7 @@ def on_clear_input_clicked(backend: Any, side: str) -> None:
             backend._sync_input_preview_state_from_owner(owner, include_feedback=True)
         else:
             backend._set_feedback(phase=f"Clear-{side}", state="ok")
-    except TypeError:
-        try:
-            callback()
-            owner = backend._get_handler_owner("on_clear_input")
-            if owner is not None:
-                backend._sync_input_preview_state_from_owner(owner, include_feedback=True)
-            else:
-                backend._set_feedback(phase=f"Clear-{side}", state="ok")
-        except Exception as exc:
-            backend._set_feedback(phase=f"Clear-{side}", state="failed", error=str(exc))
-    except Exception as exc:
+    except TypeError as exc:
         backend._set_feedback(phase=f"Clear-{side}", state="failed", error=str(exc))
 
 
@@ -277,7 +261,7 @@ def on_srcdir_dialog_confirmed(backend: Any) -> None:
             )
             return
 
-        owner = getattr(callback, "__self__", None)
+        owner = backend._get_handler_owner("on_pick_watch_srcdir")
         if owner is not None:
             backend._sync_watch_state_only_from_owner(owner)
         else:
@@ -290,7 +274,7 @@ def on_srcdir_dialog_confirmed(backend: Any) -> None:
             dialog.hide()
         backend._set_feedback(phase=f"Srcdir-{side}", state="selected")
         backend._notify_srcdir_dialog_destroy()
-    except Exception as exc:
+    except TypeError as exc:
         backend._set_feedback(phase=f"Srcdir-{side}", state="error", error=str(exc))
 
 
@@ -325,7 +309,7 @@ def handle_save_path_confirm(backend: Any, filename: str) -> None:
             backend._notify_save_path_dialog_destroy()
         else:
             backend._set_feedback(phase="SavePath", state="failed", error="save path acceptance returned false")
-    except Exception as exc:
+    except TypeError as exc:
         backend._set_feedback(phase="SavePath", state="error", error=str(exc))
 
 
@@ -334,7 +318,7 @@ def handle_save_path_cancel(backend: Any) -> None:
     if callback is not None:
         try:
             callback()
-        except Exception as exc:
+        except TypeError as exc:
             backend._set_feedback(phase="SavePath", state="error", error=str(exc))
             return
     set_save_path_dialog_open_state(backend, False, state_text="Save path: canceled")

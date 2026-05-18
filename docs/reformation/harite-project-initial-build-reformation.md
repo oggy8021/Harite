@@ -1,13 +1,13 @@
-# Harite 1.0 Reformation Plan
+# Harite Project Initial Build Reformation
 
-最終更新: 2026-05-16
+最終更新: 2026-05-18
 
 ## 位置づけ
 
 - 本書は [docs/specs/gui/gui-phase11-closing.md](docs/specs/gui/gui-phase11-closing.md) の次に置く親文書である。
 - Phase9-11 で達成したのは、10年前遺産を current GUI と OS integration を含む現代的な形へ更新することだった。
 - したがって次段では、GUI をさらに作り込むことより、製品として閉じるための整理、packaging、文書体系再編、仕様書整備を主題に置く。
-- 本書は `spec` そのものではなく、`1.0.0` へ向けた再編計画の親文書として扱う。
+- 本書は `spec` そのものではなく、初期製造を閉じて `1.0.0` へ向かうための再編計画の親文書として扱う。
 
 ## 現在地
 
@@ -20,26 +20,23 @@
 
 - `0.2.0` はここでは採らない。
 - release judgement は、GUI 単体の完成ではなく、製品として閉じる条件で判断する。
-- したがって `1.0.0` の gate は、少なくとも本書の Workstream 1-3 が揃うことに置く。
-- Workstream 4 は `1.0.0` 条件ではなく、post-1.0.0 の新運用入口として扱う。
+- したがって `1.0.0` の gate は、少なくとも本書の Workstream 1・2・3・4 が揃うことに置く。
+- Workstream 5 は `1.0.0` 条件ではなく、post-1.0.0 の新運用入口として扱う。
 
 ## Workstream 構成
 
-### Workstream 1. 仕上げ・掃除・packaging・release 準備
+### Workstream 1. 仕上げ・掃除・owner 判定前整理
 
 主題:
 
 - 大掃除
 - 起動時メッセージの削除または非表示化
-- packaging 整備
-- sdist 作成
-- `1.0.0` release judgement
+- owner 判定前に必要な確認整理
 
 この stream で扱うこと:
 
 - current GUI / tray / application icon 実装を前提に、出荷時に不要なログ、起動ノイズ、暫定説明、余剰導線を整理する。
-- `pyproject.toml`、package data、entrypoint、配布物構成を点検し、sdist / 配布観点で破綻しない状態へ寄せる。
-- release notes、CHANGELOG、version judgement の最小整理を行う。
+- current GUI / tray / application icon 実装を前提に、owner が `1.0.0` 判定前に見るべき確認対象と残論点を小さく固定する。
 
 この stream で扱わないこと:
 
@@ -49,11 +46,37 @@
 
 想定成果物:
 
-- release / packaging 方針メモ
 - 起動時メッセージ整理の判断メモ
-- `1.0.0` 出荷可否を判断できる最小証跡
+- code residue cleanup の判断メモ
+- owner 判定前に必要な最小確認の整理メモ
 
-### Workstream 2. docs 再編と大構想資料の点検
+### Workstream 2. packaging・配布物・release 整理
+
+主題:
+
+- packaging 整備
+- sdist / wheel 成立条件の整理
+- `1.0.0` release judgement
+
+この stream で扱うこと:
+
+- `pyproject.toml`、package data、entrypoint、配布物構成を点検し、sdist / 配布観点で破綻しない状態へ寄せる。
+- release notes、CHANGELOG、version judgement の最小整理を行う。
+- license / notices / 配布説明の整合を、release gate として読める形へ寄せる。
+
+この stream で扱わないこと:
+
+- 起動時メッセージ整理や code residue cleanup そのもの
+- docs 全面再編の設計論そのもの
+- 将来構想の棚卸し
+
+想定成果物:
+
+- release / packaging 方針メモ
+- `1.0.0` 出荷可否を判断できる最小証跡
+- version / CHANGELOG / release notes / 配布説明の整合メモ
+
+### Workstream 3. docs 再編と大構想資料の点検
 
 主題:
 
@@ -78,7 +101,7 @@
 - 常設 docs と履歴 docs の切り分け方針
 - 保持、縮退、統合、アーカイブ候補の一覧
 
-### Workstream 3. 真の読みものとしての仕様書
+### Workstream 4. 真の読みものとしての仕様書
 
 主題:
 
@@ -88,7 +111,7 @@
 
 - Harite の目的、対象利用者、主要環境、主要導線、用語、設定、watch、tray、GUI / CLI 関係、保存 / 適用の基本動作を、履歴依存なしに読める形で書き下ろす。
 - 「どう決まったか」より「今どうなっているか」を正本にする。
-- Workstream 2 の docs 再編結果を受け、常設文書として読む順序を固定する。
+- Workstream 3 の docs 再編結果を受け、常設文書として読む順序を固定する。
 
 この stream で扱わないこと:
 
@@ -102,7 +125,7 @@
 - 必要なら surface ごとの下位仕様
 - README と矛盾しない常設仕様導線
 
-### Workstream 4. post-1.0.0 の新運用と後続機能棚卸し
+### Workstream 5. post-1.0.0 の新運用と後続機能棚卸し
 
 主題:
 
@@ -129,10 +152,10 @@
 
 ## stream 間の順序
 
-1. Workstream 1 と Workstream 2 を初動として始める。
-2. Workstream 3 は Workstream 2 の docs map を受けながら進める。
-3. `1.0.0` judgement は Workstream 1-3 が揃った時点で行う。
-4. Workstream 4 は `1.0.0` 後の運用に送る。
+1. Workstream 1・2・3 を初動として始める。
+2. Workstream 4 は Workstream 3 の docs map を受けながら進める。
+3. `1.0.0` judgement は Workstream 1・2・3・4 が揃った時点で行う。
+4. Workstream 5 は `1.0.0` 後の運用に送る。
 
 ## 1.0.0 の暫定 gate
 
@@ -144,10 +167,11 @@
 
 ## 初手の子文書名案
 
-- `docs/reformation/harite-1.0-ws1-release-prep.md`
-- `docs/reformation/harite-1.0-ws2-docs-reformation.md`
-- `docs/reformation/harite-1.0-ws3-spec-authoring.md`
-- `docs/reformation/harite-1.0-ws4-feature-overview.md`
+- `docs/reformation/harite-project-initial-build-reformation-ws1-release-prep.md`
+- `docs/reformation/harite-project-initial-build-reformation-ws2-packaging-release.md`
+- `docs/reformation/harite-project-initial-build-reformation-ws3-docs-reformation.md`
+- `docs/reformation/harite-project-initial-build-reformation-ws4-spec-authoring.md`
+- `docs/reformation/harite-project-initial-build-reformation-ws5-feature-overview.md`
 
 ## 非目的
 
@@ -157,7 +181,7 @@
 
 ## 完了条件
 
-- reformation 全体の親文書として、Workstream 1-4 の境界が説明可能になっている。
-- `1.0.0` 条件が Workstream 1-3 にあることが説明可能になっている。
-- Workstream 4 が post-1.0.0 の新運用入口であることが説明可能になっている。
+- reformation 全体の親文書として、Workstream 1・2・3・4・5 の境界が説明可能になっている。
+- `1.0.0` 条件が Workstream 1・2・3・4 にあることが説明可能になっている。
+- Workstream 5 が post-1.0.0 の新運用入口であることが説明可能になっている。
 - Phase9-11 の closing 後に、次段の整理がどこから始まるか説明可能になっている。

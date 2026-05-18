@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from PIL import Image
+import pytest
 
 from harite.apply_settings import EffectiveApplySettings
 from harite.config import load_config
@@ -43,13 +44,23 @@ def test_on_clear_input_resets_optimize_state():
     assert window.on_save_as() is True
     assert window.save_path_dialog_open is True
 
-    ok = window.on_clear_input()
+    ok = window.on_clear_input("L")
 
     assert ok is True
     assert window.can_optimize is False
     assert window.save_path_dialog_open is False
     assert window.status_phase == "input"
     assert window.status_message == "input is required"
+
+
+def test_on_clear_input_rejects_invalid_side():
+    window = MainWindow()
+    window.on_change_input_text("a.jpg")
+
+    ok = window.on_clear_input("")
+
+    assert ok is False
+    assert window.last_error == "input clear side is required"
 
 
 def test_on_about_opens_dialog():
@@ -117,13 +128,13 @@ def test_save_path_selection_and_cancel_have_distinct_meanings():
     assert window.status_phase == "save_path"
     assert window.status_message == "save path canceled (path unchanged)"
 
-    assert window.on_save_path_selected() is False
+    assert window.on_save_path_selected("") is False
     assert window.status_level == "idle"
     assert window.status_phase == "save_path"
     assert window.status_message == "save path ignored (closed)"
 
     assert window.on_save_as() is True
-    assert window.on_save_path_selected() is False
+    assert window.on_save_path_selected("") is False
     assert window.status_level == "error"
     assert window.status_phase == "save_path"
     assert window.status_message == "save path is required"
@@ -136,7 +147,7 @@ def test_save_path_selection_and_cancel_have_distinct_meanings():
     assert window.status_message == "input is required"
 
 
-def test_save_path_selected_without_argument_uses_existing_path():
+def test_save_path_selected_uses_explicit_existing_path():
     window = MainWindow()
     window.form_state.save_path = "/tmp/existing-save.jpg"
     window.on_change_input_text("a.jpg")
@@ -152,7 +163,7 @@ def test_save_path_selected_without_argument_uses_existing_path():
 
     window.controller = DummyController()
 
-    ok = window.on_save_path_selected()
+    ok = window.on_save_path_selected("/tmp/existing-save.jpg")
 
     assert ok is True
     assert window.save_path_dialog_open is False
@@ -207,6 +218,22 @@ def test_save_path_selected_runs_export_flow_when_input_ready(monkeypatch, tmp_p
     assert window.status_message == "save completed"
     assert window.controller.calls == [(str(picked), str(picked))]
     assert window.last_saved_files == []
+
+
+def test_save_path_selected_propagates_unexpected_export_runtime_error(tmp_path):
+    class DummyController:
+        def run_export(self, _form_state, _save_path):
+            raise RuntimeError("export runtime exploded")
+
+    window = MainWindow()
+    window.controller = DummyController()
+    window.on_change_input_text("a.jpg")
+    assert window.on_save_as() is True
+
+    picked = tmp_path / "picked" / "save-path.jpg"
+
+    with pytest.raises(RuntimeError, match="export runtime exploded"):
+        window.on_save_path_selected(str(picked))
 
 
 def test_layout_blueprint_defines_grouping_and_flow():
@@ -280,6 +307,22 @@ def test_on_optimize_runs_and_logs(tmp_path):
     assert any("Next action: apply" in line for line in window.logs)
 
 
+def test_on_optimize_propagates_unexpected_runtime_error(monkeypatch):
+    window = MainWindow()
+    window.form_state.resolution = "320x180"
+    window.form_state.output_dir = "/tmp/out"
+    window.on_change_input_text("a.jpg")
+
+    monkeypatch.setattr(
+        window.controller,
+        "run_optimize",
+        lambda _state: (_ for _ in ()).throw(RuntimeError("optimize runtime exploded")),
+    )
+
+    with pytest.raises(RuntimeError, match="optimize runtime exploded"):
+        window.on_optimize()
+
+
 def test_build_result_preview_state_uses_latest_saved_file(tmp_path):
     window = MainWindow()
     saved = tmp_path / "result.jpg"
@@ -342,6 +385,27 @@ def test_build_result_preview_state_truncates_long_assignment_names(tmp_path):
     assert state.r_assignment == "R display <- Higashiyama-Kaii-Zans...-700x394.jpg"
 
 
+def test_build_result_preview_state_propagates_unexpected_display_settings_failure(tmp_path, monkeypatch):
+    window = MainWindow()
+    saved = tmp_path / "result.jpg"
+    saved.write_bytes(b"x")
+
+    window.last_saved_files = [saved]
+    window.form_state.input_value = "left.jpg,right.jpg"
+    window.form_state.two_screen = True
+    window.form_state.resolution = "320x180"
+    window.form_state.l_display = "200x180"
+    window.form_state.r_display = "120x180"
+
+    monkeypatch.setattr(
+        "harite.gui.views.main_window_preview.resolve_optimize_display_settings",
+        lambda **_kwargs: (_ for _ in ()).throw(RuntimeError("preview display settings failed")),
+    )
+
+    with pytest.raises(RuntimeError, match="preview display settings failed"):
+        window.build_result_preview_state()
+
+
 def test_on_close_marks_window_closed():
     window = MainWindow()
     assert window.closed is False
@@ -351,15 +415,14 @@ def test_on_close_marks_window_closed():
     assert "Window closed" in window.logs
 
 
-def test_on_pick_input_appends_unique_paths():
+def test_on_pick_input_rejects_invalid_side():
     window = MainWindow()
 
-    window.on_pick_input("a.jpg")
-    window.on_pick_input("b.jpg")
-    window.on_pick_input("a.jpg")
+    window.on_pick_input("a.jpg", "")
 
-    assert window.form_state.input_value == "a.jpg,b.jpg"
-    assert window.can_optimize is True
+    assert window.last_error == "input side is required"
+    assert window.form_state.input_value == ""
+    assert window.can_optimize is False
 
 
 def test_on_pick_input_updates_side_specific_paths():
@@ -445,19 +508,23 @@ def test_two_screen_auto_disables_without_two_inputs(monkeypatch):
 def test_on_change_margins_updates_form_state():
     window = MainWindow()
 
-    window.on_change_margins(10, 20, 30, 40)
+    window.on_change_margins("spnLeftMargin", 10)
+    window.on_change_margins("spnRightMargin", 20)
+    window.on_change_margins("spnTopMargin", 30)
+    window.on_change_margins("spnBottomMargin", 40)
+
     assert window.form_state.margins == "10,20,30,40"
     assert window.last_error == ""
 
-    window.on_change_margins(-1, 0, 0, 0)
+    window.on_change_margins("spnLeftMargin", -1)
     assert window.last_error == "margins must be non-negative"
 
 
 def test_on_change_margins_keeps_previous_value_on_invalid_input():
     window = MainWindow()
-    window.on_change_margins(1, 2, 3, 4)
+    window.form_state.margins = "1,2,3,4"
 
-    window.on_change_margins(-1, 2, 3, 4)
+    window.on_change_margins("spnLeftMargin", -1)
 
     assert window.form_state.margins == "1,2,3,4"
     assert window.last_error == "margins must be non-negative"
@@ -466,7 +533,7 @@ def test_on_change_margins_keeps_previous_value_on_invalid_input():
 def test_on_change_margins_supports_single_widget_update():
     window = MainWindow()
 
-    window.on_change_margins(1, 2, 3, 4)
+    window.form_state.margins = "1,2,3,4"
     window.on_change_margins("spnTopMargin", 99)
 
     assert window.form_state.margins == "1,2,99,4"
@@ -786,7 +853,7 @@ def test_settings_file_save_and_load_round_trip(tmp_path):
     assert other.watch_srcdir_r == "/watch/right"
 
 
-def test_settings_file_handlers_use_default_fixed_path_when_path_is_empty(monkeypatch, tmp_path):
+def test_settings_file_save_uses_default_fixed_path_when_path_is_empty(monkeypatch, tmp_path):
     window = MainWindow()
     target = tmp_path / "xdg-config" / "harite" / "harite-preferences.json"
     monkeypatch.setattr("harite.gui.views.main_window.resolve_default_settings_path", lambda: target)
@@ -794,8 +861,27 @@ def test_settings_file_handlers_use_default_fixed_path_when_path_is_empty(monkey
     assert window.on_save_settings_file("") is True
     assert target.exists() is True
 
-    assert window.on_load_settings_file("") is True
+
+def test_settings_file_load_rejects_empty_path():
+    window = MainWindow()
+
+    assert window.on_load_settings_file("") is False
     assert window.status_phase == "settings"
+    assert window.last_error == "settings path is required"
+
+
+def test_settings_file_load_propagates_unexpected_runtime_error(monkeypatch, tmp_path):
+    window = MainWindow()
+    target = tmp_path / "prefs.json"
+    target.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.load_config",
+        lambda _path: (_ for _ in ()).throw(RuntimeError("settings load probe failed")),
+    )
+
+    with pytest.raises(RuntimeError, match="settings load probe failed"):
+        window.on_load_settings_file(str(target))
 
 
 def test_main_window_loads_default_settings_on_startup(monkeypatch, tmp_path):
@@ -820,6 +906,19 @@ def test_main_window_loads_default_settings_on_startup(monkeypatch, tmp_path):
     assert window.watch_srcdir_l == "/watch/left"
     assert window.watch_srcdir_r == "/watch/right"
     assert window.can_start_watch is True
+
+
+def test_main_window_startup_settings_load_propagates_unexpected_runtime_error(monkeypatch, tmp_path):
+    target = tmp_path / "harite-preferences.json"
+    target.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr("harite.gui.views.main_window.resolve_default_settings_path", lambda: target)
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.load_config",
+        lambda _path: (_ for _ in ()).throw(RuntimeError("startup settings probe failed")),
+    )
+
+    with pytest.raises(RuntimeError, match="startup settings probe failed"):
+        MainWindow()
 
 
 def test_settings_file_save_accepts_explicit_dialog_config(tmp_path):
@@ -847,6 +946,20 @@ def test_settings_file_save_accepts_explicit_dialog_config(tmp_path):
     assert window.apply_mode == "per-monitor-auto-split"
     assert window.watch_interval_seconds == 33
     assert window.watch_srcdir_l == "/watch/left"
+
+
+def test_settings_file_save_propagates_unexpected_payload_build_failure(monkeypatch, tmp_path):
+    window = MainWindow()
+    target = tmp_path / "prefs-dialog.json"
+
+    monkeypatch.setattr(
+        window,
+        "_build_settings_dialog_config",
+        lambda: (_ for _ in ()).throw(RuntimeError("settings payload build failed")),
+    )
+
+    with pytest.raises(RuntimeError, match="settings payload build failed"):
+        window.on_save_settings_file(str(target))
 
 
 def test_settings_file_round_trips_explicit_apply_mode_without_gui_projection(tmp_path):
@@ -1006,6 +1119,47 @@ def test_watch_start_normalizes_empty_output_dir(monkeypatch, tmp_path):
     assert window.watch_output_display == f"Watch output: {home / 'Pictures'}"
 
 
+def test_watch_start_propagates_unexpected_autosplit_prepare_failure(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+            return True
+
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="L", width=1920, height=1080, x_offset=0),
+                Display(name="R", width=1920, height=1080, x_offset=1920),
+            ),
+            resolution=(3840, 1080),
+            l_display=(1920, 1080),
+            r_display=(1920, 1080),
+        ),
+    )
+
+    window = MainWindow()
+    window.plugin_name = "linux"
+    monkeypatch.setattr(
+        window.controller,
+        "run_optimize",
+        lambda _state: (_ for _ in ()).throw(RuntimeError("watch autosplit prepare exploded")),
+    )
+
+    left_dir = tmp_path / "watch-left"
+    right_dir = tmp_path / "watch-right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (right_dir / "right-1.png").write_bytes(b"right")
+
+    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
+    assert window.on_pick_watch_srcdir(str(right_dir), "R") is True
+
+    with pytest.raises(RuntimeError, match="watch autosplit prepare exploded"):
+        window.on_watch_start()
+
+
 def test_main_window_defaults_output_dir_to_xdg_pictures(monkeypatch, tmp_path):
     home = tmp_path / "home"
     xdg_config = tmp_path / "xdg-config"
@@ -1050,6 +1204,17 @@ def test_main_window_defaults_output_dir_to_home_pictures_when_windows_known_fol
 
     assert window.form_state.output_dir == str(home / "Pictures")
     assert window.watch_output_display == f"Watch output: {home / 'Pictures'}"
+
+
+def test_main_window_windows_pictures_probe_propagates_unexpected_runtime_error(monkeypatch):
+    monkeypatch.setattr("harite.gui.views.main_window.sys.platform", "win32")
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.ctypes.create_unicode_buffer",
+        lambda _size: (_ for _ in ()).throw(RuntimeError("pictures probe failed")),
+    )
+
+    with pytest.raises(RuntimeError, match="pictures probe failed"):
+        MainWindow()._resolve_windows_pictures_dir()
 
 
 def test_watch_single_source_tick_stops_when_plugin_apply_fails(monkeypatch, tmp_path):
@@ -1329,7 +1494,7 @@ def test_on_pick_input_empty_value_sets_error_and_keeps_input():
     window = MainWindow()
     window.on_change_input_text("a.jpg")
 
-    window.on_pick_input("   ")
+    window.on_pick_input("   ", "L")
 
     assert window.form_state.input_value == "a.jpg"
     assert window.last_error == "input path is empty"

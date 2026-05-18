@@ -94,7 +94,7 @@ def build_result_preview_state(owner: Any) -> ResultPreviewState:
         )
         l_display = owner._parse_resolution_value(display_settings.l_display) or l_display
         r_display = owner._parse_resolution_value(display_settings.r_display) or r_display
-    except Exception:
+    except ValueError:
         pass
 
     l_assignment, r_assignment = build_preview_assignments(input_values)

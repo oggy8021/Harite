@@ -1,4 +1,4 @@
-"""GUI view placeholder.
+"""Framework-neutral GUI view model.
 
 This file intentionally avoids hard dependency on GTK/PyGObject so the core
 package remains importable in environments without GUI libraries.
@@ -36,7 +36,7 @@ from harite.preferences import AppPreferences
 from harite.watch import WatchCycleState, collect_watch_input_images, run_watch_cycle
 
 class MainWindow:
-    """Framework-neutral placeholder for the first standalone GUI window."""
+    """Framework-neutral model for the standalone GUI window."""
 
     def __init__(self) -> None:
         self.title = "Harite"
@@ -112,7 +112,7 @@ class MainWindow:
             if not target_path.exists():
                 return
             config = load_config(target_path)
-        except Exception as exc:
+        except (FileNotFoundError, OSError, ValueError) as exc:
             self._log(f"Startup settings load skipped: {exc}")
             return
 
@@ -194,7 +194,7 @@ class MainWindow:
         try:
             buffer = ctypes.create_unicode_buffer(260)
             result = ctypes.windll.shell32.SHGetFolderPathW(None, 0x27, None, 0, buffer)
-        except Exception:
+        except (AttributeError, OSError):
             return None
 
         if result != 0 or not buffer.value:
@@ -247,34 +247,29 @@ class MainWindow:
         self._log(f"Plugin updated: {name}")
         return True
 
-    def on_pick_input(self, path: str, side: str | None = None) -> None:
+    def on_pick_input(self, path: str, side: str) -> None:
         value = (path or "").strip()
         if not value:
             self.last_error = "input path is empty"
             self._log("Pick input ignored: empty path")
             return
 
-        normalized_side = (side or "").strip().upper()
+        normalized_side = side.strip().upper()
         if normalized_side == "L":
             self.input_path_l = value
         elif normalized_side == "R":
             self.input_path_r = value
         else:
-            current = [p.strip() for p in self.form_state.input_value.split(",") if p.strip()]
-            if value not in current:
-                current.append(value)
-            self.input_path_l = current[0] if len(current) >= 1 else ""
-            self.input_path_r = current[1] if len(current) >= 2 else ""
+            self.last_error = "input side is required"
+            self._log("Pick input ignored: missing side")
+            return
 
         self._apply_input_paths()
-        if normalized_side in {"L", "R"}:
-            self._log(f"Input picked ({normalized_side}): {value}")
-        else:
-            self._log(f"Input picked: {value}")
+        self._log(f"Input picked ({normalized_side}): {value}")
 
-    def on_pick_watch_srcdir(self, path: str, side: str | None = None) -> bool:
+    def on_pick_watch_srcdir(self, path: str, side: str) -> bool:
         value = (path or "").strip()
-        normalized_side = (side or "").strip().upper()
+        normalized_side = side.strip().upper()
         if not value:
             self.last_error = "watch srcdir is empty"
             self._log("Watch srcdir ignored: empty path")
@@ -382,25 +377,7 @@ class MainWindow:
             return 3
         return None
 
-    def on_change_margins(self, *args: int | str) -> None:
-        if len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], (int, float)):
-            margin_index = self._margin_index_for_widget(args[0])
-            if margin_index is None:
-                self.last_error = f"unknown margin widget: {args[0]}"
-                self._log(f"Margin update failed: unknown widget {args[0]}")
-                return
-
-            current = list(self._current_margin_values())
-            current[margin_index] = int(args[1])
-            self.on_change_margins(*current)
-            return
-
-        if len(args) != 4 or not all(isinstance(value, (int, float)) for value in args):
-            self.last_error = "invalid margin signal"
-            self._log("Margin update failed: invalid signal")
-            return
-
-        left, right, top, bottom = (int(args[0]), int(args[1]), int(args[2]), int(args[3]))
+    def _apply_margins(self, left: int, right: int, top: int, bottom: int) -> None:
         vals = (left, right, top, bottom)
         if any(v < 0 for v in vals):
             self.last_error = "margins must be non-negative"
@@ -411,6 +388,17 @@ class MainWindow:
         self.last_error = ""
         self._log(f"Margins updated: {self.form_state.margins}")
         self._update_margin_text_preflight_status()
+
+    def on_change_margins(self, widget_name: str, value: int | float) -> None:
+        margin_index = self._margin_index_for_widget(widget_name)
+        if margin_index is None:
+            self.last_error = f"unknown margin widget: {widget_name}"
+            self._log(f"Margin update failed: unknown widget {widget_name}")
+            return
+
+        current = list(self._current_margin_values())
+        current[margin_index] = int(value)
+        self._apply_margins(int(current[0]), int(current[1]), int(current[2]), int(current[3]))
 
     def on_toggle_position_pressed(self, widget_name: str) -> None:
         self._log(f"Toggle pressed: {widget_name}")
@@ -696,7 +684,7 @@ class MainWindow:
             if self.can_apply:
                 self._log("Next action: apply")
             return True
-        except Exception as exc:
+        except ValueError as exc:
             self.can_apply = False
             self._set_status("error", "optimize", "optimize failed", error=str(exc))
             self._log(f"Optimize failed: {exc}")
@@ -885,10 +873,10 @@ class MainWindow:
     ) -> bool:
         value = (path or "").strip()
         target_path = Path(value) if value else self._resolve_settings_file_path()
+        payload = self._normalize_settings_display_payload(config) if config is not None else self._build_settings_dialog_config()
         try:
-            payload = self._normalize_settings_display_payload(config) if config is not None else self._build_settings_dialog_config()
             save_config(target_path, payload)
-        except Exception as exc:
+        except (OSError, TypeError, ValueError) as exc:
             self._set_status("error", "settings", "settings save failed", error=str(exc))
             self._log(f"Settings save failed: {exc}")
             return False
@@ -896,12 +884,16 @@ class MainWindow:
         self._log(f"Settings saved: {target_path}")
         return True
 
-    def on_load_settings_file(self, path: str | None = None) -> bool:
-        value = (path or "").strip()
-        target_path = Path(value) if value else self._resolve_settings_file_path()
+    def on_load_settings_file(self, path: str) -> bool:
+        value = path.strip()
+        if not value:
+            self._set_status("error", "settings", "settings load failed", error="settings path is required")
+            self._log("Settings load failed: settings path is required")
+            return False
+        target_path = Path(value)
         try:
             config = load_config(target_path)
-        except Exception as exc:
+        except (FileNotFoundError, OSError, ValueError) as exc:
             self._set_status("error", "settings", "settings load failed", error=str(exc))
             self._log(f"Settings load failed: {exc}")
             return False
@@ -910,21 +902,19 @@ class MainWindow:
             self._log(f"Settings loaded: {target_path}")
         return ok
 
-    def on_clear_input(self, side: str | None = None) -> bool:
-        normalized_side = (side or "").strip().upper()
+    def on_clear_input(self, side: str) -> bool:
+        normalized_side = side.strip().upper()
         if normalized_side == "L":
             self.input_path_l = ""
         elif normalized_side == "R":
             self.input_path_r = ""
         else:
-            self.input_path_l = ""
-            self.input_path_r = ""
+            self.last_error = "input clear side is required"
+            self._log("Input clear ignored: missing side")
+            return False
 
         self._apply_input_paths()
-        if normalized_side in {"L", "R"}:
-            self._log(f"Input cleared ({normalized_side})")
-        else:
-            self._log("Input cleared")
+        self._log(f"Input cleared ({normalized_side})")
         return True
 
     def on_about(self) -> bool:
@@ -964,14 +954,12 @@ class MainWindow:
         self._log(f"Background color updated: {normalized}")
         return True
 
-    def on_save_path_selected(self, save_path: str | None = None) -> bool:
-        value = (save_path or "").strip()
+    def on_save_path_selected(self, save_path: str) -> bool:
+        value = save_path.strip()
         if not self.save_path_dialog_open and not value:
             self._set_status("idle", "save_path", "save path ignored (closed)")
             self._log("Save path selection ignored: dialog is closed")
             return False
-        if not value:
-            value = (self.form_state.save_path or "").strip()
         if value:
             self.form_state.save_path = value
             self._update_save_target_display(value)
@@ -985,7 +973,7 @@ class MainWindow:
             self._set_status("running", "save", "saving composite")
             try:
                 saved, _placements = self.controller.run_export(self.form_state, value)
-            except Exception as exc:
+            except ValueError as exc:
                 self._set_status("error", "save", "save failed", error=str(exc))
                 self._log(f"Save As failed: {exc}")
                 return False
@@ -1130,7 +1118,7 @@ class MainWindow:
                 apply_mode="per-monitor-auto-split",
                 output_dir=composite_path.parent,
             )
-        except Exception as exc:
+        except ValueError as exc:
             self._log(f"Watch {cycle_phase} auto-split prepare failed: {exc}")
             return False, f"watch {cycle_phase} auto-split prepare failed"
 
@@ -1347,8 +1335,4 @@ class MainWindow:
         }
 
     def show(self) -> None:
-        print(self.title)
-        print(self.subtitle)
-        print("GUI skeleton is ready. Next step: bind real GTK widgets.")
-        print(f"Can optimize: {self.can_optimize}")
-        print(f"Status: {self.status_level}/{self.status_phase} - {self.status_message}")
+        return None

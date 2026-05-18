@@ -2,17 +2,17 @@ import pytest
 from pathlib import Path
 
 
-def test_single_monitor_placeholder():
-    """プレースホルダテスト: 実装が整うまでスキップされます"""
+def test_single_monitor_smoke():
+    """単画面 optimize の基本結果を確認する軽量 smoke test。"""
     try:
-        from harite import core  # 実装後に提供される想定モジュール
-    except Exception:
-        pytest.skip("harite.core が未実装のためスキップ")
+        from harite import core
+    except ImportError:
+        pytest.skip("harite.core を import できないためスキップ")
 
     inputs = [Path("tests/data/img_wide.jpg")]
     target_resolution = (1920, 1080)
 
-    # テスト用画像がまだ追加されていない場合はスキップ
+    # テスト用画像がない環境では smoke を成立させられない。
     if not all(p.exists() for p in inputs):
         pytest.skip("tests/data sample images not present")
 
@@ -31,16 +31,16 @@ def test_single_monitor_placeholder():
     assert p.width >= 1920 or p.height >= 1080
 
 
-def test_dual_monitor_placeholder():
+def test_dual_monitor_smoke():
     try:
         from harite import core
-    except Exception:
-        pytest.skip("harite.core が未実装のためスキップ")
+    except ImportError:
+        pytest.skip("harite.core を import できないためスキップ")
 
     inputs = [Path("tests/data/left.jpg"), Path("tests/data/right.jpg")]
     target_resolution = (3840, 1080)
 
-    # テスト用画像がまだ追加されていない場合はスキップ
+    # テスト用画像がない環境では smoke を成立させられない。
     if not all(p.exists() for p in inputs):
         pytest.skip("tests/data sample images not present")
 

@@ -7,7 +7,7 @@
 - Phase8 は [docs/specs/gui/gui-phase8-closing.md](docs/specs/gui/gui-phase8-closing.md) の判断により close 済みとして扱う。
 - Phase10 は [docs/specs/gui/gui-phase10-closing-check.md](docs/specs/gui/gui-phase10-closing-check.md) の判断により close 済みとして扱う。
 - Phase11 は [docs/specs/gui/gui-phase11-closing.md](docs/specs/gui/gui-phase11-closing.md) の判断により close 済みとして扱う。
-- Phase9-11 を閉じた後の親文書は [docs/reformation/harite-1.0-reformation-plan.md](docs/reformation/harite-1.0-reformation-plan.md) とする。
+- Phase9-11 を閉じた後の親文書は [docs/reformation/harite-project-initial-build-reformation.md](docs/reformation/harite-project-initial-build-reformation.md) とする。
 - 次段では新機能を先に足すのではなく、GUI 中核の構造負債と起動導線の粗さを整理してから、見た目 polish と OS integration へ進む。
 - 2026-05-10 時点の主な構造負債は、`MainWindow` と GTK runtime backend への責務集中である。
 

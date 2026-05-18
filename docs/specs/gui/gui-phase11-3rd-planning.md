@@ -17,17 +17,17 @@
 
 ## 今回の主題
 
-- 旧 [out/wallopt.png](out/wallopt.png) を、application icon family の source SVG へ昇華させる。
+- [out/wallopt.png](out/wallopt.png) を、application icon family の source SVG へ昇華させる。
 - tray icon とは別に、taskbar で見える icon と about 内 symbol の扱いを決める。
 - main window については、最近の desktop app で in-window icon を前面に出さない流れを踏まえて方針を決める。
 
 ## ここで固定すること
 
-### 1. 旧 wallopt.png は application icon family の source へ昇華する
+### 1. wallopt.png は application icon family の source へ昇華する
 
-- 旧 [out/wallopt.png](out/wallopt.png) は tray icon の正本には採らないが、application icon family の由来としては残す。
+- [out/wallopt.png](out/wallopt.png) は tray icon の正本には採らないが、application icon family の由来としては残す。
 - したがって「2 画面」「貼る」「異サイズ display でも収める」という意味核は、application icon 側でより素直に継承する。
-- tray icon のような極小 panel 最適化は優先せず、application icon 側では旧 wallopt の情報量をやや戻してよい。
+- tray icon のような極小 panel 最適化は優先せず、application icon 側では wallopt の情報量をやや戻してよい。
 - source of truth は SVG で持つ。
 
 ### 2. taskbar で見える icon は application icon family を使う

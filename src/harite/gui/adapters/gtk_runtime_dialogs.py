@@ -522,7 +522,7 @@ class ColorDialogProxy:
             return
         try:
             color = self._color_from_rgba(chooser.get_rgba())
-        except Exception:
+        except (TypeError, ValueError):
             return
         self._syncing_embedded_color_chooser = True
         try:
@@ -572,7 +572,7 @@ class ColorDialogProxy:
             gi = importlib.import_module("gi")
             gi.require_version("Gdk", "3.0")
             return importlib.import_module("gi.repository.Gdk")
-        except Exception:
+        except (ImportError, ValueError):
             return None
 
     def _build_native_dialog(self) -> Any:
@@ -698,7 +698,7 @@ class ColorDialogProxy:
             for builder in (None, dialog):
                 try:
                     candidate = buildable.get_internal_child(dialog, builder, "vbox")
-                except Exception:
+                except TypeError:
                     continue
                 if candidate is not None:
                     return candidate
@@ -706,7 +706,7 @@ class ColorDialogProxy:
             for args in ((None, "vbox"), (dialog, "vbox"), ("vbox",)):
                 try:
                     candidate = dialog.get_internal_child(*args)
-                except Exception:
+                except TypeError:
                     continue
                 if candidate is not None:
                     return candidate
@@ -734,7 +734,7 @@ class ColorDialogProxy:
             return None
         try:
             return widget.get_parent()
-        except Exception:
+        except TypeError:
             return None
 
     def _is_valid_native_notice_host(self, candidate: Any, dialog: Any, content_area: Any, action_area: Any) -> bool:
@@ -752,7 +752,7 @@ class ColorDialogProxy:
             return
         try:
             color = self._color_from_rgba(dialog.get_rgba())
-        except Exception:
+        except (TypeError, ValueError):
             return
         current = str(entry.get_text() or "") if hasattr(entry, "get_text") else ""
         if current != color:
@@ -770,7 +770,7 @@ class ColorDialogProxy:
             return
         try:
             dialog.set_rgba(rgba)
-        except Exception:
+        except (TypeError, ValueError):
             return
 
     def _rgba_from_color(self, color: str) -> Any | None:

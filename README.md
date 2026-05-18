@@ -126,4 +126,10 @@ macOS では `osascript` がシステムに標準搭載されています。Wind
 - **ドキュメント**: CLI 互換性の仕様は `docs/specs/cli-compatibility.md` にまとめています（旧 WallpaperOptimizer とのマッピングと優先復元項目）。
 - **ローカルでのテスト**: 開発用仮想環境を有効にして `pytest` を実行してください。テスト実行手順は `pyproject.toml` / `tox` 等の設定を参照してください。
 
+## License
+
+Harite 本体は MIT License です。配布物には [LICENSE](LICENSE) を含めます。
+
+GUI で同梱している Lucide SVG icon については upstream notice を別途保持します。詳細は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) を参照してください。
+
 ご協力ありがとうございます。小さな変更は PR で送ってください。

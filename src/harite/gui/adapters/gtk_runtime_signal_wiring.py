@@ -12,16 +12,10 @@ def connect_runtime_widgets(backend: Any, widgets: dict[str, Any]) -> None:
 
 
 def _connect_input_widgets(backend: Any, widgets: dict[str, Any]) -> None:
-    # Why: fallback window must still exercise MainWindow handlers even when
-    # legacy glade cannot be parsed at runtime.
-    try:
-        widgets["input_entry_l"].connect("changed", backend._on_input_changed)
-    except Exception:
-        pass
-    try:
-        widgets["input_entry_r"].connect("changed", backend._on_input_changed)
-    except Exception:
-        pass
+    # Why: the runtime window must still exercise MainWindow handlers through
+    # direct widget wiring.
+    widgets["input_entry_l"].connect("changed", backend._on_input_changed)
+    widgets["input_entry_r"].connect("changed", backend._on_input_changed)
 
     widgets["btn_get_img_l"].connect("clicked", lambda *_args: backend._on_pick_input_clicked("L"))
     widgets["btn_get_img_r"].connect("clicked", lambda *_args: backend._on_pick_input_clicked("R"))
@@ -106,10 +100,7 @@ def _connect_margin_text_widgets(backend: Any, widgets: dict[str, Any]) -> None:
         )
     else:
         margin_text_entry.connect("changed", backend._on_margin_text_changed)
-    try:
-        margin_text_entry.connect("key-press-event", backend._on_margin_text_key_press)
-    except Exception:
-        pass
+    margin_text_entry.connect("key-press-event", backend._on_margin_text_key_press)
 
     widgets["margin_position_left_top"].connect(
         "toggled",

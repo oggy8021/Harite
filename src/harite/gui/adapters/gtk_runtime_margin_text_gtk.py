@@ -20,7 +20,7 @@ def apply_margin_text_widget_style(gtk_module: Any, shell: Any, entry: Any) -> N
         for widget in (shell, entry):
             if widget is not None and hasattr(widget, "override_background_color") and normal_state is not None:
                 widget.override_background_color(normal_state, rgba)
-    except Exception:
+    except (ImportError, ValueError):
         return
 
 
@@ -34,7 +34,7 @@ def on_margin_text_key_press(widget: Any, event: Any, *, max_lines: int = 5) -> 
             getattr(gdk_module, "KEY_Return", None),
             getattr(gdk_module, "KEY_KP_Enter", None),
         }
-    except Exception:
+    except (ImportError, ValueError):
         return False
 
     current = read_margin_text_widget_text(widget)
