@@ -169,13 +169,6 @@ def optimize(
         help="Output directory",
         rich_help_panel="基本オプション",
     ),
-    format: str = typer.Option(
-        "text",
-        "--format",
-        "-f",
-        help="Output format: text|json",
-        rich_help_panel="基本オプション",
-    ),
     scaling: str = typer.Option(
         "fit",
         "--scaling",
@@ -393,21 +386,9 @@ def optimize(
         embed_max_lines=eff_embed_max_lines,
         embed_font=(str(eff_embed_font) if eff_embed_font is not None else None),
     )
-    fmt = format.lower()
-    if fmt not in ("json", "text"):
-        typer.echo("Invalid --format. Use 'text' or 'json'.")
-        raise typer.Exit(code=2)
-
-    if fmt == "json":
-        out = {
-            "optimized_files": [str(p) for p in saved_files],
-            "layout_metadata": [p.to_dict() for p in placements],
-        }
-        typer.echo(json.dumps(out, ensure_ascii=False))
-    else:
-        typer.echo(f"Saved: {saved_files}")
-        for p in placements:
-            typer.echo(f"Placement: {p}")
+    typer.echo(f"Saved: {saved_files}")
+    for p in placements:
+        typer.echo(f"Placement: {p}")
 
 
 @app.command("compute-placement")
