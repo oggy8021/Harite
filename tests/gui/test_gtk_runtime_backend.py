@@ -5,6 +5,8 @@ from pathlib import Path
 from PIL import Image
 import pytest
 
+from harite.apply_settings import EffectiveApplySettings
+from harite.display_context import TwoScreenOptimizeContext
 from harite.gui.adapters.gtk_backend import GtkRuntimeSignalBackend
 from harite.gui.adapters.gtk_backend import load_gtk_runtime_signal_backend
 from harite.gui.adapters.gtk_backend import present_gtk_window
@@ -16,6 +18,7 @@ from harite.gui.adapters.gtk_runtime_margin_text_gtk import on_margin_text_key_p
 from harite.gui.adapters.gtk_runtime_watch import get_glib_module
 from harite.gui.adapters.ui_adapter import create_mainwindow_signal_dispatch
 from harite.gui.views.main_window import MainWindow
+from harite.workspace import Display
 
 
 class _Orientation:
@@ -1420,7 +1423,7 @@ def test_runtime_backend_shows_owner_watch_start_failure_reason(monkeypatch, tmp
     watch_start.click()
 
     assert status.text == "Watch: dual-source watch requires two detected displays"
-    assert error.text == "Error: dual-source watch requires two detected displays"
+    assert error.text == "Error: none"
     assert watch_tab_title.text == "Watch (stopped)"
 
 
@@ -1473,10 +1476,108 @@ def test_runtime_backend_shows_owner_watch_tick_failure_reason(monkeypatch, tmp_
     assert watch_tab_title.text == "Watch (running)"
 
     assert backend.run_watch_cycle_once() is False
-    assert status.text == "Watch: watch tick single-file apply failed"
-    assert error.text == "Error: watch tick single-file apply failed"
+    assert status.text == "Watch: watch cycle single-file apply failed"
+    assert error.text == "Error: none"
     assert watch_tab_title.text == "Watch (stopped)"
     assert watch_current.text == f"Watch current: L={left_dir / 'left-2.jpg'} | R=-"
+
+
+def test_runtime_backend_watch_cycle_pauses_when_detected_displays_temporarily_drop(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def __init__(self):
+            self.calls = []
+
+        def apply(self, path: object, *, dry_run: bool = True) -> bool:
+            self.calls.append((path, dry_run))
+            return True
+
+    plugin = DummyPlugin()
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="HDMI-1", width=1920, height=1080, x_offset=0, y_offset=0),
+                Display(name="DP-1", width=1920, height=1080, x_offset=1920, y_offset=0),
+            ),
+            resolution=(3840, 1080),
+            l_display=(1920, 1080),
+            r_display=(1920, 1080),
+        ),
+    )
+
+    composite = tmp_path / "watch-composite.jpg"
+    composite.write_bytes(b"composite")
+
+    resolve_calls = 0
+    optimize_calls = 0
+
+    def fake_run_optimize(state):
+        nonlocal optimize_calls
+        optimize_calls += 1
+        return ([composite], [])
+
+    def fake_resolve_apply_settings(**_kwargs):
+        nonlocal resolve_calls
+        resolve_calls += 1
+        if resolve_calls == 1:
+            return EffectiveApplySettings(
+                plugin_name="linux",
+                apply_mode="per-monitor-auto-split",
+                target={"HDMI-1": str(tmp_path / "split1.jpg"), "DP-1": str(tmp_path / "split2.jpg")},
+            )
+        raise ValueError("per-monitor apply requires at least two detected displays")
+
+    monkeypatch.setattr("harite.gui.views.main_window.resolve_apply_settings", fake_resolve_apply_settings)
+
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    window.plugin_name = "linux"
+    monkeypatch.setattr(window.controller, "run_optimize", fake_run_optimize)
+
+    left_dir = tmp_path / "watch-left"
+    right_dir = tmp_path / "watch-right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (left_dir / "left-2.jpg").write_bytes(b"left-2")
+    (right_dir / "right-1.png").write_bytes(b"right")
+    (right_dir / "right-2.png").write_bytes(b"right-2")
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_pick_watch_srcdir",
+            "on_watch_start",
+            "on_watch_tick",
+            "on_watch_stop",
+        ),
+    )
+    backend.connect_signals(dispatch)
+
+    srcdir_dialog = backend.get_object("SrcdirDialog")
+    srcdir_l = backend.get_object("btnOpenSrcdirL")
+    srcdir_r = backend.get_object("btnOpenSrcdirR")
+    watch_start = backend.get_object("btnDaemonize")
+    status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
+    watch_tab_title = backend.get_object("lblWatchTabTitle")
+
+    srcdir_l.click()
+    srcdir_dialog.set_current_folder(str(left_dir))
+    srcdir_dialog.confirm()
+    srcdir_r.click()
+    srcdir_dialog.set_current_folder(str(right_dir))
+    srcdir_dialog.confirm()
+
+    watch_start.click()
+    assert status.text == "Watch: started"
+    assert watch_tab_title.text == "Watch (running)"
+
+    assert backend.run_watch_cycle_once() is True
+    assert status.text == "Watch: watch paused: waiting for two detected displays for auto-split"
+    assert error.text == "Error: none"
+    assert watch_tab_title.text == "Watch (paused)"
 
 
 def test_runtime_backend_open_l_uses_dialog_selection_and_calls_pick_handler():

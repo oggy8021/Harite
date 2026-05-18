@@ -1238,10 +1238,162 @@ def test_watch_single_source_tick_stops_when_plugin_apply_fails(monkeypatch, tmp
     assert window.on_watch_start() is True
     assert window.on_watch_tick() is False
     assert window.watch_running is False
+    assert window.can_start_watch is False
     assert window.status_level == "error"
     assert window.status_phase == "watch"
-    assert window.status_message == "watch tick single-file apply failed"
-    assert window.last_error == "watch tick single-file apply failed"
+    assert window.status_message == "watch cycle single-file apply failed"
+    assert window.last_error == "watch cycle single-file apply failed"
+
+
+def test_watch_dual_source_cycle_pauses_when_detected_displays_temporarily_drop(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def apply(self, _path: object, *, dry_run: bool = True) -> bool:
+            return True
+
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="HDMI-1", width=1920, height=1080, x_offset=0, y_offset=0),
+                Display(name="DP-1", width=1920, height=1080, x_offset=1920, y_offset=0),
+            ),
+            resolution=(3840, 1080),
+            l_display=(1920, 1080),
+            r_display=(1920, 1080),
+        ),
+    )
+
+    composite = tmp_path / "watch-composite.jpg"
+    composite.write_bytes(b"composite")
+
+    window = MainWindow()
+    window.plugin_name = "linux"
+
+    optimize_calls = 0
+
+    def fake_run_optimize(state):
+        nonlocal optimize_calls
+        optimize_calls += 1
+        return ([composite], [])
+
+    def fake_resolve_apply_settings(**_kwargs):
+        if optimize_calls == 1:
+            return EffectiveApplySettings(
+                plugin_name="linux",
+                apply_mode="per-monitor-auto-split",
+                target={"HDMI-1": str(tmp_path / "split1.jpg"), "DP-1": str(tmp_path / "split2.jpg")},
+            )
+        raise ValueError("per-monitor apply requires at least two detected displays")
+
+    monkeypatch.setattr(window.controller, "run_optimize", fake_run_optimize)
+    monkeypatch.setattr("harite.gui.views.main_window.resolve_apply_settings", fake_resolve_apply_settings)
+
+    left_dir = tmp_path / "watch-left"
+    right_dir = tmp_path / "watch-right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (left_dir / "left-2.jpg").write_bytes(b"left-2")
+    (right_dir / "right-1.png").write_bytes(b"right")
+    (right_dir / "right-2.png").write_bytes(b"right-2")
+
+    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
+    assert window.on_pick_watch_srcdir(str(right_dir), "R") is True
+    assert window.on_watch_start() is True
+
+    assert window.on_watch_tick() is True
+    assert window.watch_running is True
+    assert window.watch_paused is True
+    assert window.can_start_watch is False
+    assert window.watch_summary_display == "Watch: paused"
+    assert window.status_level == "paused"
+    assert window.status_message == "watch paused: waiting for two detected displays for auto-split"
+    assert window.last_error == ""
+
+
+def test_watch_dual_source_cycle_resumes_after_transient_display_drop(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def __init__(self):
+            self.calls = []
+
+        def apply(self, path: object, *, dry_run: bool = True) -> bool:
+            self.calls.append((path, dry_run))
+            return True
+
+    plugin = DummyPlugin()
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="HDMI-1", width=1920, height=1080, x_offset=0, y_offset=0),
+                Display(name="DP-1", width=1920, height=1080, x_offset=1920, y_offset=0),
+            ),
+            resolution=(3840, 1080),
+            l_display=(1920, 1080),
+            r_display=(1920, 1080),
+        ),
+    )
+
+    composite = tmp_path / "watch-composite.jpg"
+    composite.write_bytes(b"composite")
+    composite2 = tmp_path / "watch-composite-2.jpg"
+    composite2.write_bytes(b"composite2")
+
+    window = MainWindow()
+    window.plugin_name = "linux"
+
+    optimize_calls = 0
+    resolve_calls = 0
+
+    def fake_run_optimize(state):
+        nonlocal optimize_calls
+        optimize_calls += 1
+        return ([composite], []) if optimize_calls < 3 else ([composite2], [])
+
+    def fake_resolve_apply_settings(**_kwargs):
+        nonlocal resolve_calls
+        resolve_calls += 1
+        if resolve_calls == 1:
+            return EffectiveApplySettings(
+                plugin_name="linux",
+                apply_mode="per-monitor-auto-split",
+                target={"HDMI-1": str(tmp_path / "split1.jpg"), "DP-1": str(tmp_path / "split2.jpg")},
+            )
+        if resolve_calls == 2:
+            raise ValueError("per-monitor apply requires at least two detected displays")
+        return EffectiveApplySettings(
+            plugin_name="linux",
+            apply_mode="per-monitor-auto-split",
+            target={"HDMI-1": str(tmp_path / "split3.jpg"), "DP-1": str(tmp_path / "split4.jpg")},
+        )
+
+    monkeypatch.setattr(window.controller, "run_optimize", fake_run_optimize)
+    monkeypatch.setattr("harite.gui.views.main_window.resolve_apply_settings", fake_resolve_apply_settings)
+
+    left_dir = tmp_path / "watch-left"
+    right_dir = tmp_path / "watch-right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (left_dir / "left-2.jpg").write_bytes(b"left-2")
+    (right_dir / "right-1.png").write_bytes(b"right")
+    (right_dir / "right-2.png").write_bytes(b"right-2")
+
+    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
+    assert window.on_pick_watch_srcdir(str(right_dir), "R") is True
+    assert window.on_watch_start() is True
+    assert window.on_watch_tick() is True
+    assert window.watch_paused is True
+
+    assert window.on_watch_tick() is True
+    assert window.watch_running is True
+    assert window.watch_paused is False
+    assert window.watch_summary_display == "Watch: running"
+    assert window.status_message == "watch resumed"
+    assert window.last_error == ""
+    assert plugin.calls[-1][1] is False
 
 
 def test_watch_single_source_success_cleans_previous_generated_files(monkeypatch, tmp_path):

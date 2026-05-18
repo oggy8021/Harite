@@ -64,7 +64,10 @@ class MainWindow:
         self.watch_current_display = "Watch current: idle"
         self.watch_output_display = "Watch output: ."
         self.watch_running = False
+        self.watch_paused = False
+        self.watch_pause_reason = ""
         self.can_start_watch = False
+        self._watch_feedback_dirty = False
         self._watch_state_l = WatchCycleState()
         self._watch_state_r = WatchCycleState()
         self._watch_previous_l: Path | None = None
@@ -481,6 +484,9 @@ class MainWindow:
         self.watch_output_display = f"Watch output: {output_dir}"
 
     def _update_watch_summary_display(self) -> None:
+        if self.watch_running and self.watch_paused:
+            self.watch_summary_display = "Watch: paused"
+            return
         self.watch_summary_display = "Watch: running" if self.watch_running else "Watch: stopped"
 
     def _update_watch_current_display(self, left: str | None = None, right: str | None = None) -> None:
@@ -497,6 +503,22 @@ class MainWindow:
         self.status_phase = phase
         self.status_message = message
         self.last_error = error
+
+    def _clear_watch_pause(self) -> None:
+        self.watch_paused = False
+        self.watch_pause_reason = ""
+
+    def _pause_watch_for_display_loss(self, message: str) -> None:
+        self.watch_paused = True
+        self.watch_pause_reason = message
+        self._update_watch_summary_display()
+        self._set_status("paused", "watch", message)
+        self._watch_feedback_dirty = True
+
+    def _is_transient_watch_cycle_error(self, exc: ValueError, *, cycle_phase: str) -> bool:
+        if cycle_phase != "tick":
+            return False
+        return str(exc) == "per-monitor apply requires at least two detected displays"
 
     def _sync_two_screen_state(self) -> None:
         if not (self.input_path_l and self.input_path_r):
@@ -1092,8 +1114,12 @@ class MainWindow:
         self._log(f"Watch {cycle_phase} {apply_mode} apply failed: {target}")
         return False
 
+    def _watch_user_cycle_label(self, cycle_phase: str) -> str:
+        return "cycle" if cycle_phase == "tick" else cycle_phase
+
     def _apply_watch_selection(self, left: str, right: str, *, cycle_phase: str) -> tuple[bool, str | None]:
         selected_paths = [path for path in (left, right) if path != "-"]
+        user_cycle_phase = self._watch_user_cycle_label(cycle_phase)
         if not selected_paths:
             return True, None
         if self._watch_plugin_impl is None:
@@ -1103,7 +1129,7 @@ class MainWindow:
             if self._apply_watch_target(selected_paths[0], cycle_phase=cycle_phase, apply_mode="single-file"):
                 self._set_watch_active_generated_files(())
                 return True, None
-            return False, f"watch {cycle_phase} single-file apply failed"
+            return False, f"watch {user_cycle_phase} single-file apply failed"
 
         if not self._watch_dual_auto_split_enabled:
             return False, "dual-source watch auto-split is not enabled"
@@ -1120,7 +1146,10 @@ class MainWindow:
             )
         except ValueError as exc:
             self._log(f"Watch {cycle_phase} auto-split prepare failed: {exc}")
-            return False, f"watch {cycle_phase} auto-split prepare failed"
+            if self._is_transient_watch_cycle_error(exc, cycle_phase=cycle_phase):
+                self._pause_watch_for_display_loss("watch paused: waiting for two detected displays for auto-split")
+                return True, None
+            return False, f"watch {user_cycle_phase} auto-split prepare failed: {exc}"
 
         self._log(f"Watch {cycle_phase} per-monitor auto-split: {effective_apply.target}")
         generated_files = [composite_path]
@@ -1135,9 +1164,11 @@ class MainWindow:
             deduped = tuple(dict.fromkeys(generated_files))
             self._set_watch_active_generated_files(deduped)
             return True, None
-        return False, f"watch {cycle_phase} per-monitor auto-split apply failed"
+        return False, f"watch {user_cycle_phase} per-monitor auto-split apply failed"
 
     def on_watch_start(self) -> bool:
+        self._clear_watch_pause()
+        self._watch_feedback_dirty = False
         sources: list[tuple[str, Path]] = []
         self._ensure_watch_output_dir()
         if self.watch_srcdir_l.strip():
@@ -1213,13 +1244,27 @@ class MainWindow:
                 selected_right = selected
 
         self._update_watch_current_display(selected_left, selected_right)
+        was_paused = self.watch_paused
+        if was_paused:
+            self._clear_watch_pause()
         applied, error_message = self._apply_watch_selection(selected_left, selected_right, cycle_phase="tick")
+        if self.watch_paused:
+            self._log(f"Watch cycle paused: {self.watch_pause_reason}")
+            return True
         if not applied:
             self.watch_running = False
+            self._clear_watch_pause()
+            self._refresh_action_availability()
             self._update_watch_summary_display()
-            self._set_status("error", "watch", error_message or "watch tick apply failed", error=error_message or "watch tick apply failed")
-            self._log(f"Watch tick stopped: {error_message or 'watch tick apply failed'}")
+            self._set_status("error", "watch", error_message or "watch cycle apply failed", error=error_message or "watch cycle apply failed")
+            self._log(f"Watch tick stopped: {error_message or 'watch cycle apply failed'}")
             return False
+        if was_paused:
+            self._clear_watch_pause()
+            self._update_watch_summary_display()
+            self._set_status("success", "watch", "watch resumed")
+            self._watch_feedback_dirty = True
+            self._log("Watch resumed")
         self._log(f"Watch tick: L={selected_left} R={selected_right}")
         return True
 
@@ -1229,6 +1274,7 @@ class MainWindow:
             self._log("Watch stop ignored: watch is idle")
             return False
         self.watch_running = False
+        self._clear_watch_pause()
         self._watch_plugin_impl = None
         self._refresh_action_availability()
         self._update_watch_summary_display()
