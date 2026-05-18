@@ -4,6 +4,7 @@ from typing import Any
 
 from harite.gui.adapters.gtk_layout_builders import build_horizontal_separator
 from harite.gui.adapters.gtk_layout_builders import build_image_from_resource_if_supported
+from harite.gui.adapters.gtk_layout_builders import set_button_icon_if_supported
 from harite.gui.adapters.gtk_layout_builders import set_window_icon_if_supported
 from harite.gui.adapters.gtk_layout_builders import set_xalign_if_supported
 
@@ -16,6 +17,7 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
         prefs_window.set_resizable(True)
 
     prefs_save_btn = gtk_module.Button(label="Save")
+    set_button_icon_if_supported(gtk_module, prefs_save_btn, "icons", "lucide", "save.svg")
     prefs_ok_btn = gtk_module.Button(label="OK")
     prefs_cancel_btn = gtk_module.Button(label="Cancel")
     prefs_state_label = gtk_module.Label(label="Settings: current values")
