@@ -12,10 +12,13 @@ def connect_runtime_widgets(backend: Any, widgets: dict[str, Any]) -> None:
 
 
 def _connect_input_widgets(backend: Any, widgets: dict[str, Any]) -> None:
-    # Why: the runtime window must still exercise MainWindow handlers through
-    # direct widget wiring.
-    widgets["input_entry_l"].connect("changed", backend._on_input_changed)
-    widgets["input_entry_r"].connect("changed", backend._on_input_changed)
+    # The current runtime shows selected input paths as labels. If editable text
+    # widgets return in the future, keep the old input-changed wiring scoped to
+    # those widgets only.
+    for widget_name in ("input_display_l", "input_display_r"):
+        widget = widgets[widget_name]
+        if hasattr(widget, "set_editable") or hasattr(widget, "set_placeholder_text"):
+            widget.connect("changed", backend._on_input_changed)
 
     widgets["btn_get_img_l"].connect("clicked", lambda *_args: backend._on_pick_input_clicked("L"))
     widgets["btn_get_img_r"].connect("clicked", lambda *_args: backend._on_pick_input_clicked("R"))
