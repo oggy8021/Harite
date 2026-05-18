@@ -24,6 +24,7 @@ def sync_watch_state_from_owner(backend: Any, owner: Any) -> None:
     backend._watch_srcdir_l = str(getattr(owner, "watch_srcdir_l", backend._watch_srcdir_l) or "")
     backend._watch_srcdir_r = str(getattr(owner, "watch_srcdir_r", backend._watch_srcdir_r) or "")
     backend._watch_running = bool(getattr(owner, "watch_running", backend._watch_running))
+    backend._watch_paused = bool(getattr(owner, "watch_paused", getattr(backend, "_watch_paused", False)))
     backend._watch_state_l = getattr(owner, "_watch_state_l", backend._watch_state_l)
     backend._watch_state_r = getattr(owner, "_watch_state_r", backend._watch_state_r)
     backend._watch_previous_l = getattr(owner, "_watch_previous_l", backend._watch_previous_l)
@@ -164,4 +165,6 @@ def sync_feedback_from_owner(backend: Any, owner: Any) -> None:
     phase = str(getattr(owner, "status_phase", "") or "").strip() or "watch"
     message = str(getattr(owner, "status_message", "") or "").strip() or "state-updated"
     error = str(getattr(owner, "last_error", "") or "").strip() or None
+    if error == message:
+        error = None
     backend._set_feedback(phase=phase.capitalize(), state=message, error=error)

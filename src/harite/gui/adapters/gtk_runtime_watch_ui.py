@@ -12,7 +12,7 @@ def refresh_watch_source_labels(backend: Any) -> None:
 
 
 def refresh_watch_summary_label(backend: Any) -> None:
-    state = "running" if backend._watch_running else "stopped"
+    state = "paused" if getattr(backend, "_watch_paused", False) and backend._watch_running else ("running" if backend._watch_running else "stopped")
     backend._set_label_text("lblWatchSummary", f"Watch: {state}")
     backend._set_label_text("lblWatchTabTitle", f"Watch ({state})")
 

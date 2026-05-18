@@ -85,7 +85,11 @@ def run_watch_cycle_once(backend: Any) -> bool:
             return False
 
         if owner is not None:
-            backend._sync_watch_state_only_from_owner(owner)
+            if bool(getattr(owner, "_watch_feedback_dirty", False)):
+                backend._sync_watch_state_with_feedback_from_owner(owner)
+                owner._watch_feedback_dirty = False
+            else:
+                backend._sync_watch_state_only_from_owner(owner)
             return True
 
     selected_left = "-"

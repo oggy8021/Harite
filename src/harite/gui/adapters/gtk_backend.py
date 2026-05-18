@@ -257,6 +257,7 @@ class GtkRuntimeSignalBackend:
         self._watch_srcdir_l = ""
         self._watch_srcdir_r = ""
         self._watch_running = False
+        self._watch_paused = False
         self._watch_state_l = WatchCycleState()
         self._watch_state_r = WatchCycleState()
         self._watch_previous_l: Path | None = None
