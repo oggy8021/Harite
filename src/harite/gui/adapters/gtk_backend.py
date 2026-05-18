@@ -1185,5 +1185,5 @@ def present_gtk_window(signal_backend, *, window_id: str = "main_window") -> boo
     if hasattr(window, "present"):
         window.present()
 
-    Gtk.main()
+    gtk_module.main()
     return True
