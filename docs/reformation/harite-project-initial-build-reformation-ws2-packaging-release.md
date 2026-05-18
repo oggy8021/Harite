@@ -8,6 +8,19 @@
 - 主題は、初期製造を `1.0.0` として出荷するための packaging / sdist / release evidence / version judgement を整理することである。
 - 出荷前の起動ノイズ整理、code residue cleanup、owner 判定前整理は [docs/reformation/harite-project-initial-build-reformation-ws1-release-prep.md](docs/reformation/harite-project-initial-build-reformation-ws1-release-prep.md) の主責務とする。
 
+## 現在の状態
+
+- WS1 の cleanup / hardening と、その後の watch hotfix・settings dialog icon 漏れ修正は main へ反映済みであり、WS2 は再び packaging / release judgement の詰めへ戻れる状態にある。
+- packaging 面では、[pyproject.toml](pyproject.toml) の package data / entrypoint 定義は既に存在しており、主論点は「定義があるか」ではなく「`1.0.0` の配布物として十分な実体が sdist / wheel に載るか」である。
+- release 面では、[CHANGELOG.md](CHANGELOG.md) と [pyproject.toml](pyproject.toml) は `0.1.3` で整合しており、[docs/release-notes-draft.md](docs/release-notes-draft.md) も `v1.0.0 draft` 化済みである。
+- したがって再開時点の未充足は、Gate 2 の packaging 前提自体を増やすことよりも、Gate 2 で成立させる配布物を Gate 3 でどう言い切るか、特に README / CHANGELOG / release note 上の書きぶりをどう揃えるかに寄っている。
+
+## 再開時点の直近タスク
+
+1. Gate 2 については、既記載の packaging 必須証跡と Gate 2 ステータスで当面の用は足りる前提とし、追加の保険的列挙は増やさない。
+2. Gate 3 として、[README.md](README.md)、[CHANGELOG.md](CHANGELOG.md)、[docs/release-notes-draft.md](docs/release-notes-draft.md) の書きぶりをレビューし、Gate 2 で成立させる配布物の scope を矛盾なく言い切れる形にする。
+3. その後に、version bump 条件と [docs/release-delivery.md](docs/release-delivery.md) との境界を詰める。
+
 ## この stream で固定すること
 
 - packaging と配布物の成立条件を明示する。
@@ -35,7 +48,7 @@
 
 ## 現時点の論点
 
-### 1. packaging の成立条件をどこまでに置くか
+### 1. packaging の成立条件と必須証跡の範囲をどう置くか
 
 - sdist が作れること
 - entrypoint が配布物でも自然に使えること
@@ -55,7 +68,7 @@
 
 - [pyproject.toml](pyproject.toml) では project 名は `harite`、version は `0.1.3`、script entrypoint は `harite` / `harite-gui` になっている。
 - package data は `"harite.gui" = ["resources/**/*"]` として GUI resource 一式を含める構成になっており、tray / application icon の packaging 方針とは整合している。
-- したがって WS2 の主論点は「package data が未設定」ではなく、「`1.0.0` 出荷物として十分な資産が本当に全てこの定義で拾われるか」と「sdist/wheel 観点の最終確認をどこまで再実施するか」にある。
+- したがって WS2 の主論点は「package data が未設定」ではなく、「`1.0.0` 出荷物として十分な資産が本当に全てこの定義で拾われるか」と「sdist/wheel 観点で何を必須証跡として再確認するか」にある。
 
 #### `sdist/wheel` で見る資産群
 
@@ -93,6 +106,51 @@
 - license 面では、Harite 本体の MIT を [LICENSE](LICENSE) で同梱し、vendor した Lucide icon の upstream notice を [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) で配布物へ残す。
 - [src/harite/gui/resources/README.md](src/harite/gui/resources/README.md) の方針どおり、runtime で使う資産は `src/harite/gui/resources/` 配下に閉じているため、WS2 ではこの閉じ方が配布物でも維持されるかを確認対象にする。
 
+#### Gate 2 で固定する packaging 必須証跡
+
+- build 証跡:
+  - `python -m build --sdist --wheel` が成功し、`dist/harite-<version>-py3-none-any.whl` と `dist/harite-<version>.tar.gz` が生成されること。
+- wheel install / entrypoint 証跡:
+  - clean 環境で wheel を install できること。
+  - install 後に `harite` entrypoint が起動し、少なくとも `optimize --help` / `apply --help` が表示できること。
+  - `harite-gui` entrypoint についても、配布物由来の install 環境で起動導線が破綻していないことを確認対象に含めること。
+- resource 同梱証跡:
+  - `src/harite/gui/resources/` 配下の runtime asset が wheel / sdist で欠落しないこと。
+  - 少なくとも `resources/icons/product/` と `resources/icons/lucide/` の icon 群が、配布物 install 後にも参照可能であること。
+- metadata / license 証跡:
+  - [pyproject.toml](pyproject.toml) の script entrypoint、package data、license-files 定義が配布物実体と矛盾しないこと。
+  - [LICENSE](LICENSE) と [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) が配布物へ残ること。
+- 配布説明整合証跡:
+  - [README.md](README.md) と [docs/release-delivery.md](docs/release-delivery.md) が、実際の deliverables と install 導線を誤って説明していないこと。
+
+この時点では、上記は「Gate 2 で満たすべき必須証跡」の固定であり、全件取得済みを意味しない。WS2 で次に行うのは、どの証跡が既存記録で満たされ、どの証跡を `1.0.0` 前に追加取得するかを切り分けることである。
+
+#### Gate 2 証跡の現時点ステータス
+
+- 既存記録で一定程度満たしているもの:
+  - build 証跡:
+    - [docs/release-delivery.md](docs/release-delivery.md) に `python -m build --sdist --wheel` 成功の実測ログがある。
+  - wheel install / CLI entrypoint 証跡:
+    - [docs/release-delivery.md](docs/release-delivery.md) に clean venv での wheel install 成功、および `.venv` 非依存で `harite optimize --help` / `harite apply --help` 成功の記録がある。
+  - metadata / license 定義:
+    - [pyproject.toml](pyproject.toml) に script entrypoint、package data、license-files の定義が存在する。
+
+- `1.0.0` 前に追加取得したい実生成証跡:
+  - GUI entrypoint 証跡:
+    - 配布物由来の install 環境で `harite-gui` 起動導線が破綻しないことを示す記録は、現本文では未固定である。
+  - resource 同梱証跡:
+    - install 後または配布物展開後に `resources/icons/product/` と `resources/icons/lucide/` が実際に参照可能であることを示す記録は、現本文では未固定である。
+  - license 実体証跡:
+    - [LICENSE](LICENSE) と [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) が実際の配布物に残ることを、artifact contents や展開結果で示す記録は未固定である。
+  - 配布説明整合証跡:
+    - [README.md](README.md) と [docs/release-delivery.md](docs/release-delivery.md) が、最終 `1.0.0` deliverables と install 導線をどう説明するかは、version bump 前に再確認が必要である。
+
+- Gate 2 完成に向けて次に実生成するもの:
+  - `dist/` に生成された wheel / sdist の実ファイル名と生成成功ログ。
+  - clean install 環境での `harite-gui` 起動確認ログ。
+  - 配布物 install 後または展開後の resource / license file 存在確認ログ。
+  - 上記 3 点を踏まえた、Gate 2 充足可否の owner judgement 記録。
+
 ### 2. release 実務文書の現状
 
 - [docs/release-readiness-checklist.md](docs/release-readiness-checklist.md) は現時点で `v0.1.0` 前提のチェックリストであり、初回リリース時の証跡としては有用だが、そのまま `1.0.0` 判定の正本には使えない。
@@ -115,7 +173,8 @@
 
 - [pyproject.toml](pyproject.toml) の version は `0.1.3`、[CHANGELOG.md](CHANGELOG.md) も `0.1.3 (2026-05-16)` まで更新されており、この 2 つは現時点で整合している。
 - [docs/release-notes-draft.md](docs/release-notes-draft.md) は `v1.0.0 draft` として current 化済みであり、stale 状態は解消した。
-- そのため Gate 3 の現時点の主な未充足は「最終 version をいつ `1.0.0` に上げるか」と「release note 上で何を最終同梱範囲として言い切るか」に寄っている。
+- README は GUI 起動導線や外部依存の現状説明を持っており、CHANGELOG はまだ `0.1.3` 単位の記録で止まっているため、Gate 3 ではまずこの 2 つと release note 草案の役割分担を揃える必要がある。
+- そのため Gate 3 の現時点の主な未充足は「Gate 2 で成立した配布物の scope を README / CHANGELOG / release note でどう言い切るか」と「最終 version をいつ `1.0.0` に上げるか」に寄っている。
 - WS2 では、release note 草案を土台にしつつ、最終版で確定させる文言の境界を詰める。
 
 ## `1.0.0` 少数 gate
@@ -134,7 +193,7 @@
 ### Gate 3. release 面の整合
 
 - version、CHANGELOG、release notes 草案、配布説明の間で大きな矛盾がない。
-- `1.0.0` として何を出すか、何をまだ含めないかが説明できる。
+- Gate 2 で成立した配布物について、`1.0.0` として何を出すか、何をまだ含めないかが説明できる。
 - 証跡の置き場:
   - [pyproject.toml](pyproject.toml)
   - [CHANGELOG.md](CHANGELOG.md)
@@ -145,7 +204,7 @@
 
 - [pyproject.toml](pyproject.toml) と [CHANGELOG.md](CHANGELOG.md) は `0.1.3` で整合している。
 - [docs/release-notes-draft.md](docs/release-notes-draft.md) は `v1.0.0 draft` として更新済みであり、草案不在は解消した。
-- ただし final release の version / scope はまだ未確定であり、Gate 3 は完全充足前の段階にある。
+- ただし Gate 2 で成立した配布物の scope をどこまで release 面で言い切るかと、final release の version はまだ未確定であり、Gate 3 は完全充足前の段階にある。
 
 ## WS2 の暫定判断
 
@@ -154,14 +213,15 @@
 - packaging の license 成立条件は、自前 MIT と vendored Lucide notice の両方が配布物に残ることである。
 - release 判定文書は [docs/release-readiness-checklist.md](docs/release-readiness-checklist.md) を source material として参照しつつ、`1.0.0` 用には少数 gate の軽量正本へ縮退させる前提でよい。
 - release 証跡は、必要最小限なら WS2 本文と関連文書、補足は chat 上の owner/agent 判断ログで足りる。
-- Gate 3 については、release notes 草案の current 化は済んだため、現時点の主残論点は version bump と最終同梱範囲の確定である。
+- Gate 3 については、release notes 草案の current 化は済んだため、現時点の主残論点は Gate 2 で成立した配布物の scope を release 面でどう確定文にするかと、version bump の確定である。
+- Gate 3 の最初の実作業は、README、CHANGELOG、release notes の 3 つで「何を出すか」「何をまだ含めないか」の表現をレビューし、必要なら書き分けを修正することである。
 
-## 当初タスク
+## WS2 タスク
 
-1. [pyproject.toml](pyproject.toml) の package data / entrypoint を前提に、`sdist/wheel` 最終確認で見る資産一覧を列挙する。
-2. `1.0.0` 判定に必要な少数 gate を、この WS 文書内で説明可能な形へ絞る。
+1. Gate 2 の既記載内容を前提に、README / CHANGELOG / release note の役割分担と書きぶりをレビューする。
+2. `1.0.0` 判定に必要な少数 gate を、release 面の確定文まで含めて説明可能な形へ絞る。
 3. version bump 前に必要な gate と、その証跡の置き場を文書化する。
-4. release notes / CHANGELOG / 配布説明の整合境界を整理する。
+4. [docs/release-delivery.md](docs/release-delivery.md) を含む配布説明との整合境界を整理する。
 
 ## 完了条件
 

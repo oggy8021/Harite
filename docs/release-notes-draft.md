@@ -1,52 +1,55 @@
 # Harite リリースノート草案
 
-最終更新: 2026-05-16
+最終更新: 2026-05-18
 対象バージョン: v1.0.0 draft
 
 ## 概要
 
-この草案は、Harite を `1.0.0` として初期製造へ寄せるための release note 叩き台です。現時点では version bump 自体は未確定ですが、current GUI を含む現行成果、packaging / license 整理、release 前に残る確認点を 1 か所で読めるようにしています。
+Harite は、マルチディスプレイ環境で壁紙画像を生成・配置・適用するためのツールです。複数の入力画像から壁紙を作成し、画面ごとの配置、余白、固定配置、単画面利用を扱えます。
 
-## 今回の主題
+この草案は `1.0.0` リリース本文の叩き台であり、現時点では version bump 自体は未確定です。ここでは、今回の版で外向けに何を出すか、利用者にとって何が変わるか、既知の制約は何かを整理します。
 
-- current GUI を、GTK ベースの通常利用導線として整理した。
-- tray / application icon、About / Settings 周辺、header icon を含む GUI runtime 資産を current 構成へ統合した。
-- release build に向けて、通常 GUI 起動時の常設 stdout ノイズを削減した。
-- license / third-party notice を配布物へ残す前提を整えた。
+## 今回の要点
 
-## 主な変更
+- GTK ベースの GUI を通常利用向けの構成として整備しました。
+- GUI の icon / dialog / watch 周辺を見直しました。
+- release build に向けて、通常 GUI 起動時の不要な常設ノイズを削減しました。
+- 配布物へ含める license / third-party notice の前提を整理しました。
+
+## 主な内容
 
 ### GUI / UX
 
-- current GUI の visual operation view、header icon、settings/dialog semantics を実装・整理。
-- Main / Margins / Watch tab の layout を再構成し、current GUI 前提の導線へ寄せた。
-- About dialog と application / tray icon 周辺を整理し、XFCE first target の runtime 実装へ統合した。
+- GUI を通常利用向けの構成として整理しました。
+- Main / Margins / Watch tab の構成を見直し、日常利用で迷いにくい導線へ寄せました。
+- Settings / Color / About dialog の役割を整理し、操作上の意味づけを明確化しました。
+- application icon と header icon を含む GUI 資産を整理しました。
 
 ### Runtime / Packaging
 
-- `harite-gui` を含む GUI 起動導線を current runtime 前提で整理。
-- `src/harite/gui/resources/` 配下の runtime asset を package data として配布対象に維持。
-- [LICENSE](LICENSE) に加え、vendor した Lucide icon 用 notice を [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) として配布物へ残す構成を追加。
+- `harite-gui` を GUI の起動導線として提供します。
+- `src/harite/gui/resources/` 配下の GUI 資産を package data として配布対象に含めます。
+- [LICENSE](LICENSE) に加え、vendor した Lucide icon 用 notice を [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) として同梱する前提を整えています。
 
-### Release Prep
+### 安定化 / 整理
 
-- 通常 GUI 起動時の `ready` / `skipped` / skeleton 系 stdout 出力を削除し、release build 前提の常設ノイズを解消。
-- release 判定は大部 checklist ではなく、WS1 で管理する少数 gate へ縮退。
+- 通常 GUI 起動時の `ready` / `skipped` / skeleton 系 stdout 出力を削減しました。
+- watch 周辺の安定化を進め、一時的な display 検出崩れに対する pause / resume の扱いを改善しました。
+- dialog / feedback / icon 周辺の細部を継続的に調整しました。
 
 ## 既知の制約
 
 - Linux の壁紙設定はデスクトップ環境依存です。XFCE 以外では環境差分により挙動が異なる場合があります。
-- tray / indicator 系は XFCE first target の runtime 実装であり、desktop 環境差分は別途残ります。
-- `1.0.0` として何を最終同梱範囲にするか、version bump と最終 release judgement は未確定です。
+- GUI / packaging の最終確認と version bump は継続中であり、本文は確定前の draft です。
 
 ## 検証サマリー
 
 - owner 実行の GUI テスト:
-  - `c:/Users/oggy_/Develop/Repos/Harite/.venv/Scripts/python.exe -m pytest .\tests\gui` 成功
-- current GUI / tray / application icon については、これまでの WS / planning / closing 文書と owner 実機確認を前提に整理済み。
-- packaging / build / clean install の最終確認は、WS1 Gate 2-4 の残作業として継続中。
+  - `python.exe -m pytest .\tests\gui` 成功
+- GUI / application icon については、owner 実機確認を含めて継続的に調整しています。
+- packaging / build / clean install の最終確認は、`1.0.0` 確定前に別途詰めます。
 
-## 配布物案
+## 配布物
 
 - `harite-<version>-py3-none-any.whl`
 - `harite-<version>.tar.gz`
@@ -54,11 +57,10 @@
 ## 未確定事項
 
 - 最終 version を `1.0.0` に上げるタイミング
-- release note 本文へ残す「今回の売り」を GUI 中心で寄せるか、CLI 継続面も併記するか
-- build / install / manual validation の最終証跡をどこまで本文へ埋め込むか
+- release 本文で GUI 中心に寄せる範囲と、CLI 継続面をどこまで併記するか
+- build / install / 実機確認の最終証跡をどこまで release 本文へ反映するか
 
 ## 参照
 
-- [docs/reformation/harite-project-initial-build-reformation-ws1-release-prep.md](docs/reformation/harite-project-initial-build-reformation-ws1-release-prep.md)
 - [docs/release-delivery.md](docs/release-delivery.md)
 - [CHANGELOG.md](CHANGELOG.md)
