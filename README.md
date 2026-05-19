@@ -24,6 +24,12 @@ harite optimize --input left.jpg,right.jpg --resolution 3840x1080 \
 harite-gui
 ```
 
+Linux / XFCE でアプリケーションメニューから起動したい場合は、user-local の launcher を生成できます。
+
+```bash
+harite install-desktop-entry
+```
+
 ## 外部依存（システムツール）
 
 Harite 本体は Python パッケージですが、XFCE での壁紙設定やディスプレイ検出では外部ツールを利用することがあります。
