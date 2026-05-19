@@ -13,6 +13,7 @@ from .apply_settings import resolve_apply_settings
 from .core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color, normalize_optimize_input_paths, optimize_wallpapers
 from .plugins import registry as plugin_registry
 from .config import load_config
+from .linux_xdg_launcher import install_desktop_entry as install_linux_desktop_entry
 from .optimize_settings import is_auto_value, resolve_optimize_display_settings
 from .positioning import parse_position_pair
 from .watch import collect_watch_input_images, run_watch_cycles
@@ -579,6 +580,32 @@ def watch(
             f"apply_failed={stats['apply_failed']} apply_error={stats['apply_error']} "
             f"apply_failed_total={apply_failed_total}"
         )
+
+
+@app.command("install-desktop-entry", help="Install a user-local XDG desktop launcher for Harite GUI.")
+def install_desktop_entry_command(
+    output: Optional[Path] = typer.Option(
+        None,
+        "--output",
+        help="Optional output path for the .desktop file",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Overwrite an existing desktop entry",
+    ),
+) -> None:
+    if not sys.platform.startswith("linux"):
+        typer.echo("install-desktop-entry is only supported on Linux/XDG")
+        raise typer.Exit(code=2)
+
+    try:
+        path = install_linux_desktop_entry(target_path=output, overwrite=force)
+    except FileExistsError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=2)
+
+    typer.echo(f"Installed desktop entry: {path}")
 
 
 def run() -> None:

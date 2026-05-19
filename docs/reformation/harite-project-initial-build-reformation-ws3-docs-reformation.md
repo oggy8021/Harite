@@ -46,6 +46,15 @@
 - 歴史的には有用だが常設参照には重いもの
 - 役割が薄くなったもの
 
+### 4. docs 反映前に小さく実装を先行させる論点
+
+- Linux / XFCE の launcher / autostart のように、常設仕様へ落とす前に最小実装で導線を確定した方がよいテーマがある。
+- その種の論点は、WS3/WS4 の前段で短い implementation event として先行させ、docs は後から実装に寄せる方が自然である。
+
+補助メモ:
+
+- [docs/reformation/harite-project-initial-build-reformation-linux-xdg-launcher.md](docs/reformation/harite-project-initial-build-reformation-linux-xdg-launcher.md)
+
 ## 初動タスク
 
 1. docs を「常設」「履歴」「運用」「将来構想」に仮分類する。

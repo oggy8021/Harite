@@ -24,6 +24,12 @@ See `harite optimize --help` for detailed options.
 harite-gui
 ```
 
+On Linux/XFCE, you can generate a user-local application launcher if you want to start Harite from the application menu.
+
+```bash
+harite install-desktop-entry
+```
+
 ## Dependencies
 
 Harite itself is a Python package, but wallpaper setting and display detection on XFCE may use external tools.
