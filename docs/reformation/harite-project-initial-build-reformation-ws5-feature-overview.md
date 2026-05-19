@@ -46,6 +46,46 @@
 - overview から次の親 planning へどう送るか。
 - 単発メモを増やしすぎず、入口文書で受ける必要がある。
 
+### 4. 用語と責務の再整理候補
+
+- CLI watch の `log_level` は実態として stdout 出力粒度の切り替えであり、一般的な「ログ」機能として読むと誤解しやすい。
+- GUI 側の message history と CLI 側の watch 出力を、同じ「ログ」で語らずに整理し直す余地がある。
+- 将来的には名称、保存先、観測面の分離を WS5 候補として見直す。
+
+### 5. watch の棚卸候補
+
+- watch helper と CLI watch には `sequential` / `random` の選択モードがある。
+- 一方で GUI watch は現状 `sequential` 固定で、対応する mode 選択 UI を持たない。
+- `iterations` は現行 CLI watch と helper には存在するが、GUI と母体相当の操作面には対応概念がない。
+- `iterations` は changer としての通常利用では直感的でなく、回数制限付きの実行確認やテスト補助寄りの性格が強い。
+- 以上を踏まえ、watch mode と `iterations` は、GUI へ露出するか、CLI 専用概念として残すか、あるいは削除・整理するかを棚卸候補として扱う。
+
+### 6. CLI `compute-placement` の棚卸候補
+
+- `compute-placement` は command 名としては残っているが、現行 CLI では受理した値を表示するだけで、placement 計算機能を提供していない。
+- core 層には `compute_placement(...)` 関数が存在する一方、CLI command はその実体へ接続されていない。
+- 用途が不明瞭で常用 command surface として未成立であるため、WS5 では廃止候補として扱う。
+
+### 7. CLI surface 全体の棚卸候補
+
+- CLI には、command 名や option 名は存在するが、実際の効き方や役割が弱い項目がまだ残っている可能性がある。
+- 直近で見えている代表例は、`compute-placement` の未接続、watch の `mode` / `iterations` の CLI 偏在、`log_level` の名称と実態のずれである。
+- `optimize` 側でも `scaling` や `random-seed` は help 上で「効きが限定的」とされており、surface の強さに対して実体が弱い可能性がある。
+- WS5 では CLI command / option を「主力として成立しているもの」「存在はするが未成立または効きが弱いもの」「削除または整理候補」に棚卸しする。
+
+### 8. 設定ファイル名の棚卸候補
+
+- 現行の設定ファイル名は `harite-preferences.json` で、foundation / core などの正本にもこの名称で記載されている。
+- ただし媒体上のファイル名としては `preferences` が残っており、`prefs` をやめた後の残滓として不一致感がある。
+- `設定` / `設定ファイル` という現在の呼び方と揃えるなら、ファイル名も含めて命名を見直す余地がある。
+- そのため `harite-preferences.json` は WS5 での命名棚卸候補として扱う。
+
+### 9. `config` と `設定` の用語不一致候補
+
+- GUI / foundation / core の正本では `設定` / `設定ファイル` を主語にしている一方、CLI help と CLI 実装では `config` が前面に出ている。
+- 母体側では `config` で揃っていた認識に対して、現行文書群では `設定` と `config` が混在しており、呼び方の統一が崩れている。
+- そのため WS5 では、媒体上の help / option 名 / module 名を含めて `config` を軸に揃えるのか、文書側に合わせて `設定` へ寄せるのかを棚卸対象とする。
+
 ## 初動タスク
 
 1. 現在頭にある後続機能案を列挙する。
