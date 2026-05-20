@@ -5,7 +5,7 @@
 ## 1. CLI の責務
 
 - Harite の command surface を提供する。
-- command ごとの入力検証、config 読み込み、core / plugin 呼び出し、終了コード決定を行う。
+- command ごとの入力検証、設定ファイル読み込み、core / plugin 呼び出し、終了コード決定を行う。
 
 CLI は GUI と異なり、1 回の command 実行を明示的に完結させる操作面である。そのため本分冊では、各 command がどの入力を受け、どの層へ委譲し、どの終了コードで返るかを主に扱う。
 
@@ -29,13 +29,13 @@ CLI は GUI と異なり、1 回の command 実行を明示的に完結させる
 sequenceDiagram
     actor User
     participant CLI as cli.py
-    participant Config as config.py
+    participant SettingsFile as settings_file.py
     participant Core as core/apply/slideshow
     participant Plugin as plugins.py
 
     User->>CLI: command + options
-    CLI->>Config: load_config(path)
-    Config-->>CLI: config dict / error
+    CLI->>SettingsFile: 設定ファイルを読む
+    SettingsFile-->>CLI: 設定値 dict / error
     CLI->>CLI: 入力値を検証し、最終採用値を解決
 
     alt optimize
@@ -63,13 +63,13 @@ sequenceDiagram
 ## 4. `optimize`
 
 - 入力画像、表示条件、scaling、margins、align、background_color、embed 系を受け取る。
-- `--config` が与えられた場合は config を読み、CLI 引数を優先して上書きする。
+- `--settings-file` が与えられた場合は設定ファイルを読み、CLI 引数を優先して上書きする。
 - 成功時は `Saved:` と `Placement:` を出力する。
 
 主要な流れ:
 
-1. `--config` があれば JSON を読み込む。
-2. CLI 引数と config 値から、各オプションの最終採用値を解決する。
+1. `--settings-file` があれば設定ファイル JSON を読み込む。
+2. CLI 引数と設定ファイル値から、各オプションの最終採用値を解決する。
 3. `--input` を画像ファイル列として正規化する。
 4. display 条件を解決し、最終的な `resolution` を確定する。
 5. `optimize_wallpapers(...)` を呼び、出力ファイル一覧と配置結果一覧を得る。
@@ -77,16 +77,16 @@ sequenceDiagram
 
 入力値の優先順位と最終採用値:
 
-- ここでいう最終採用値とは、CLI 引数、config、option default を優先順位で重ねたあとに、実際に `optimize_wallpapers(...)` へ渡す値を指す。
-- 優先順位は CLI 引数 > config > option default である。
-- `--input` 未指定時は config 側の `input` を使えるが、最終的に入力列が空なら終了コード `2` で止める。
+- ここでいう最終採用値とは、CLI 引数、設定ファイル値、option default を優先順位で重ねたあとに、実際に `optimize_wallpapers(...)` へ渡す値を指す。
+- 優先順位は CLI 引数 > 設定ファイル値 > option default である。
+- `--input` 未指定時は設定ファイル側の `input` を使えるが、最終的に入力列が空なら終了コード `2` で止める。
 - `optimize` の `--input` は画像ファイル列のみを受け付け、directory が渡された場合は明示エラーで終了する。
 - `quality`, `embed_info`, `embed_position`, `embed_max_lines`, `background_color` は CLI 側で先に妥当性検証する。
 
 display / two-screen 解決:
 
-- `two_screen` は CLI / config で明示されなければ `auto` 扱いになり、入力画像が 2 枚以上あり、two-screen 用の表示情報を取得できる場合だけ有効化される。
-- `resolution`, `l_display`, `r_display` は CLI 引数 > config > two-screen 用表示情報から導いた自動値 の順で解決する。
+- `two_screen` は CLI / 設定ファイルで明示されなければ `auto` 扱いになり、入力画像が 2 枚以上あり、two-screen 用の表示情報を取得できる場合だけ有効化される。
+- `resolution`, `l_display`, `r_display` は CLI 引数 > 設定ファイル値 > two-screen 用表示情報から導いた自動値 の順で解決する。
 - `two_screen` が自動判定のままで two-screen 用の表示情報を取得できない場合、最終的な two-screen 判定は `False` に戻る。
 - `--l-display` / `--r-display` は個別指定できるが、未指定時は two-screen 用表示情報から導いた display size を使う。
 - `--margins` は `l,r,top,bottom` の 4 要素文字列として解釈し、省略時は `(0, 0, 0, 0)` を使う。
@@ -94,14 +94,14 @@ display / two-screen 解決:
 計算規則の補足:
 
 - `resolve_optimize_display_settings(...)` は、まず空文字を除いた入力列 `cleaned_inputs` を作り、`len(cleaned_inputs) >= 2` のときだけ two-screen 用表示情報取得を試みる。
-- `two_screen` が CLI / config で未指定なら `auto` と見なし、最終値は `effective_two_screen = context is not None` で始まる。明示指定がある場合はその bool 値をそのまま使う。
+- `two_screen` が CLI / 設定ファイルで未指定なら `auto` と見なし、最終値は `effective_two_screen = context is not None` で始まる。明示指定がある場合はその bool 値をそのまま使う。
 - `resolution`, `l_display`, `r_display` は、値が `None` または `auto` のときだけ未確定扱いに戻し、context が得られていて `effective_two_screen=True` の場合に限って自動補完する。
 - 自動補完で使う値は `resolution = "{virtual_w}x{virtual_h}"`, `l_display = "{left_w}x{left_h}"`, `r_display = "{right_w}x{right_h}"` である。
 - `two_screen` が自動判定のまま context を得られなかった場合だけ、最後に `effective_two_screen=False` へ戻す。`resolution` が最後まで未確定なら CLI はエラー終了する。
 
 主な失敗条件:
 
-- config 読み込み失敗
+- 設定ファイル読み込み失敗
 - 画像入力不正
 - resolution / display 条件不正
 - background color や embed 系 option 不正
@@ -192,7 +192,7 @@ Windows / macOS ではサポート外であり、終了コード `2` で終了�
 
 - 主な終了コード:
   - `0`: 正常終了
-  - `2`: 入力不正、config 不正、plugin 解決失敗、サポート外
+    - `2`: 入力不正、設定ファイル不正、plugin 解決失敗、サポート外
   - `3`: apply 失敗
 
 共通的な振る舞い:
