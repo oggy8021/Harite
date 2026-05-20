@@ -553,6 +553,24 @@ def test_runtime_backend_updates_mainwindow_apply_mode_state():
     assert window.apply_mode == "per-monitor-auto-split"
 
 
+def test_runtime_backend_exposes_and_updates_slideshow_mode_state():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    dispatch = create_mainwindow_signal_dispatch(window, ("on_change_slideshow_mode",))
+    backend.connect_signals(dispatch)
+
+    assert backend.get_object("radSlideshowModeRandom").get_active() is True
+    assert backend.get_object("radSlideshowModeSequential").get_active() is False
+    assert backend.get_object("lblSlideshowModeHelp").text == "Random rotates images."
+
+    backend.get_object("radSlideshowModeSequential").click()
+
+    assert window.slideshow_mode == "sequential"
+    assert backend.get_object("radSlideshowModeSequential").get_active() is True
+    assert backend.get_object("radSlideshowModeRandom").get_active() is False
+    assert backend.get_object("lblSlideshowModeHelp").text == "Sequential rotates images."
+
+
 def test_runtime_backend_input_controls_optimize_button_state():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
@@ -1113,6 +1131,7 @@ def test_runtime_backend_slideshow_srcdir_selection_and_slideshow_cycle_updates_
         ),
     )
     backend.connect_signals(dispatch)
+    window.slideshow_mode = "sequential"
     window.form_state.output_dir = str(tmp_path / "slideshow-output")
     backend._sync_slideshow_state_from_owner(window)
 
@@ -1351,6 +1370,7 @@ def test_runtime_backend_slideshow_start_registers_timer_and_stop_removes_it(mon
         ),
     )
     backend.connect_signals(dispatch)
+    window.slideshow_mode = "sequential"
 
     srcdir_l.click()
     srcdir_dialog.set_current_folder(str(left_dir))
@@ -1412,6 +1432,7 @@ def test_runtime_backend_shows_owner_slideshow_start_failure_reason(monkeypatch,
         ),
     )
     backend.connect_signals(dispatch)
+    window.slideshow_mode = "sequential"
 
     srcdir_l.click()
     srcdir_dialog.set_current_folder(str(left_dir))
@@ -1466,6 +1487,7 @@ def test_runtime_backend_shows_owner_slideshow_tick_failure_reason(monkeypatch, 
         ),
     )
     backend.connect_signals(dispatch)
+    window.slideshow_mode = "sequential"
 
     srcdir_l.click()
     srcdir_dialog.set_current_folder(str(left_dir))

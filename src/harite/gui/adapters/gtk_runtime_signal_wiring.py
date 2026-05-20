@@ -73,6 +73,14 @@ def _connect_slideshow_widgets(backend: Any, widgets: dict[str, Any]) -> None:
     widgets["btn_open_srcdir_l"].connect("clicked", lambda *_args: backend._on_pick_srcdir_clicked("L"))
     widgets["btn_open_srcdir_r"].connect("clicked", lambda *_args: backend._on_pick_srcdir_clicked("R"))
     widgets["interval_spin"].connect("value-changed", backend._on_slideshow_interval_changed)
+    widgets["rad_slideshow_mode_sequential"].connect(
+        "toggled",
+        lambda widget, *_args: backend._on_slideshow_mode_toggled(widget, "sequential"),
+    )
+    widgets["rad_slideshow_mode_random"].connect(
+        "toggled",
+        lambda widget, *_args: backend._on_slideshow_mode_toggled(widget, "random"),
+    )
     widgets["btn_daemonize"].connect("clicked", backend._on_slideshow_start_clicked)
     widgets["btn_cancel_daemonize"].connect("clicked", backend._on_slideshow_stop_clicked)
 

@@ -15,6 +15,7 @@ RUNTIME_HANDLER_MAP: dict[str, str] = {
     "on_optimize": "on_optimize",
     "on_apply": "on_apply",
     "on_change_apply_mode": "on_change_apply_mode",
+    "on_change_slideshow_mode": "on_change_slideshow_mode",
     "on_change_margin_text_mode": "on_change_margin_text_mode",
     "on_change_margin_text": "on_change_margin_text",
     "on_change_margin_text_position": "on_change_margin_text_position",

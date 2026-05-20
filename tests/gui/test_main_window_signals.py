@@ -588,6 +588,40 @@ def test_on_change_apply_mode_accepts_per_monitor_auto_split():
     assert window.last_error == ""
 
 
+def test_on_change_slideshow_mode_accepts_random():
+    window = MainWindow()
+
+    ok = window.on_change_slideshow_mode("random")
+
+    assert ok is True
+    assert window.slideshow_mode == "random"
+    assert window._slideshow_active_mode == "random"
+    assert window.last_error == ""
+
+
+def test_running_slideshow_keeps_active_mode_until_stop(monkeypatch, tmp_path):
+    window = MainWindow()
+    window.slideshow_mode = "sequential"
+    window._slideshow_active_mode = "sequential"
+    window.slideshow_running = True
+    observed: dict[str, str] = {}
+
+    left_dir = tmp_path / "slideshow-left"
+    left_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+
+    def fake_run_slideshow_cycle(images, mode, state, rng=None):
+        observed["mode"] = mode
+        return images[0], state
+
+    monkeypatch.setattr("harite.gui.views.main_window.run_slideshow_cycle", fake_run_slideshow_cycle)
+
+    assert window.on_change_slideshow_mode("random") is True
+    assert window._run_slideshow_cycle_for_side("L", left_dir) == str(left_dir / "left-1.jpg")
+    assert window.slideshow_mode == "random"
+    assert observed["mode"] == "sequential"
+
+
 def test_on_apply_per_monitor_auto_split_uses_split_mapping(monkeypatch, tmp_path):
     class DummyPlugin:
         def __init__(self):
@@ -682,6 +716,7 @@ def test_apply_settings_updates_runtime_state():
             "plugin": "linux",
             "apply_mode": "per-monitor-auto-split",
             "slideshow_interval_seconds": 120,
+            "slideshow_mode": "random",
             "slideshow_srcdir_l": "/slideshow/left",
             "slideshow_srcdir_r": "/slideshow/right",
         },
@@ -698,6 +733,7 @@ def test_apply_settings_updates_runtime_state():
     assert window.plugin_name == "linux"
     assert window.apply_mode == "per-monitor-auto-split"
     assert window.slideshow_interval_seconds == 120
+    assert window.slideshow_mode == "random"
     assert window.slideshow_srcdir_l == "/slideshow/left"
     assert window.slideshow_srcdir_r == "/slideshow/right"
     assert window.slideshow_source_display == "Slideshow srcdirs: L=/slideshow/left | R=/slideshow/right"
@@ -712,6 +748,7 @@ def test_export_and_reload_settings_config_round_trips():
     window.plugin_name = "linux"
     window.apply_mode = "per-monitor-auto-split"
     window.slideshow_interval_seconds = 90
+    window.slideshow_mode = "random"
     window.slideshow_srcdir_l = "/slideshow/left"
     window.slideshow_srcdir_r = "/slideshow/right"
     window._update_slideshow_source_display()
@@ -725,6 +762,7 @@ def test_export_and_reload_settings_config_round_trips():
     assert exported["plugin"] == "linux"
     assert exported["apply_mode"] == "per-monitor-auto-split"
     assert exported["slideshow_interval_seconds"] == 90
+    assert exported["slideshow_mode"] == "random"
     assert exported["slideshow_srcdir_l"] == "/slideshow/left"
     assert exported["slideshow_srcdir_r"] == "/slideshow/right"
 
@@ -736,6 +774,7 @@ def test_export_and_reload_settings_config_round_trips():
     assert other.form_state.valign == ("center", "center")
     assert other.plugin_name == "linux"
     assert other.slideshow_interval_seconds == 90
+    assert other.slideshow_mode == "random"
     assert other.slideshow_srcdir_l == "/slideshow/left"
     assert other.slideshow_srcdir_r == "/slideshow/right"
 
@@ -998,6 +1037,7 @@ def test_slideshow_handlers_use_srcdirs_and_interval_validation(monkeypatch, tmp
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
 
     window = MainWindow()
+    window.slideshow_mode = "sequential"
 
     assert window.on_slideshow_start() is False
     assert window.status_level == "error"
@@ -1056,6 +1096,7 @@ def test_slideshow_single_source_applies_on_start_and_tick(monkeypatch, tmp_path
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
 
     window = MainWindow()
+    window.slideshow_mode = "sequential"
     left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
@@ -1472,6 +1513,7 @@ def test_slideshow_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch,
 
     window = MainWindow()
     window.plugin_name = "linux"
+    window.slideshow_mode = "sequential"
     observed_inputs = []
     optimize_calls = 0
 

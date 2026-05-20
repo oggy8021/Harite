@@ -36,6 +36,11 @@ core が直接の主責務としないもの:
 - スライドショー面は、入力 directory 群、interval、mode、サイクル state で構成される。
 - 設定面は、optimize / apply / slideshow の論理グループを 1 つの設定ファイルへ統合して保存する。
 
+mode 値の扱い:
+
+- スライドショー mode の内部値と設定値は `sequential` / `random` で統一する。
+- mode の既定値は `random` とする。
+
 補足:
 
 - `PlacementResult` は `image_path`, `x`, `y`, `width`, `height`, `rotation`, `scale`, `score`, `posit` を持つ。
@@ -97,7 +102,7 @@ flowchart TD
 - 現行実装の拡大縮小は `scaling` 引数名にかかわらず `_scale_to_fit(...)` で行われ、式は `scale = min(max_w / w, max_h / h)` である。
 - リサイズ後の大きさは `nw = max(1, int(w * scale))`, `nh = max(1, int(h * scale))` で決まる。
 - 単一画像の `compute_placement(...)` は、この `nw`, `nh` を使って `x = max(0, (target_w - nw) // 2)`, `y = max(0, (target_h - nh) // 2)` を返す。現行の単独 placement は常に中央寄せである。
-- `optimize_wallpapers(...)` は `scaling`, `random_seed` 引数を受け取るが、現行の幾何計算では `random_seed` を使わず、`scaling` も fit 相当の `_scale_to_fit(...)` 以外へ分岐しない。
+- `optimize_wallpapers(...)` の現行幾何計算では、`scaling` も fit 相当の `_scale_to_fit(...)` 以外へ分岐しない。
 - `optimize_wallpapers(...)` では、まず target 全体に対して `inner_w = max(1, w_target - (ml + mr))`, `inner_h = max(1, h_target - (mt + mb))` を作り、ここから各画像の cell を決める。
 - single-screen では `count = len(items)` とし、各 cell 幅は `cell_w = max(1, inner_w // count)`、cell 高さは `cell_h = inner_h` である。
 - single-screen の各画像 `i` の基準位置は `x_base = ml + i * cell_w`, `y_base = mt` である。cell 内の余りは `space_x = max(0, cell_w - nw)`, `space_y = max(0, cell_h - nh)` とし、`align` が `left|center|right` なら `inner_x = 0|space_x // 2|space_x`、`valign` が `top|center|bottom` なら `inner_y = 0|space_y // 2|space_y` になる。最終位置は `x = x_base + inner_x`, `y = y_base + inner_y` である。
@@ -219,7 +224,7 @@ monitor map 解決:
 
 - optimize 面: `resolution`, `scaling`, `two_screen`, `l_display`, `r_display`, `margins`, `align`, `valign`, `quality`, `background_color`, `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`
 - apply 面: `plugin`, `apply_mode`
-- スライドショー面: `slideshow_interval_seconds`, `slideshow_srcdir_l`, `slideshow_srcdir_r`
+- スライドショー面: `slideshow_interval_seconds`, `slideshow_mode`, `slideshow_srcdir_l`, `slideshow_srcdir_r`
 
 主要 key の意味:
 
@@ -227,6 +232,8 @@ monitor map 解決:
 - `align` と `valign` は論理上 pair だが、保存時には list 表現になる。
 - `plugin` は platform 既定値を持つが、設定ファイルで上書きできる。
 - `apply_mode` は desktop session により既定値が変わりうる。
+- `slideshow_mode` は slideshow 関連 key の 1 つとして、interval や srcdir と同じ load / save flow に従う。
+- `slideshow_mode` の保存値は `sequential` または `random` であり、未指定時の既定値は `random` である。
 - `slideshow_srcdir_l` と `slideshow_srcdir_r` は、GUI slideshow の継続運用面と直接つながる。
 
 ### 6.4 設定ファイル load / save flow

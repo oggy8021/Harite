@@ -22,7 +22,6 @@ def test_single_monitor_smoke():
         output_dir=Path("tests/out"),
         scaling="fill",
         quality=90,
-        random_seed=123,
     )
 
     assert len(placements) >= 1
@@ -50,7 +49,6 @@ def test_dual_monitor_smoke():
         output_dir=Path("tests/out"),
         scaling="fit",
         quality=90,
-        random_seed=42,
     )
 
     assert len(placements) == 2

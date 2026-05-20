@@ -57,6 +57,8 @@ class MainWindow:
         self.apply_mode = self._default_apply_mode()
         self._pre_two_screen_resolution: str | None = None
         self.slideshow_interval_seconds = 60
+        self.slideshow_mode = "random"
+        self._slideshow_active_mode = "random"
         self.slideshow_srcdir_l = ""
         self.slideshow_srcdir_r = ""
         self.slideshow_summary_display = "Slideshow: stopped"
@@ -600,6 +602,20 @@ class MainWindow:
         self._log(f"Apply mode updated: {value}")
         return True
 
+    def on_change_slideshow_mode(self, mode: str) -> bool:
+        value = (mode or "").strip().lower()
+        if value not in {"sequential", "random"}:
+            self.last_error = f"unknown slideshow mode: {mode}"
+            self._log(f"Slideshow mode update failed: unknown mode {mode}")
+            return False
+
+        self.slideshow_mode = value
+        if not self.slideshow_running:
+            self._slideshow_active_mode = value
+        self.last_error = ""
+        self._log(f"Slideshow mode updated: {value}")
+        return True
+
     def on_change_margin_text_mode(self, value: str) -> bool:
         normalized = (value or "").strip().lower()
         if normalized not in {"none", "params", "free", "combo"}:
@@ -819,6 +835,9 @@ class MainWindow:
         self.plugin_name = settings_value.apply.plugin_name
         self.apply_mode = settings_value.apply.apply_mode
         self.slideshow_interval_seconds = settings_value.slideshow.interval_seconds
+        self.slideshow_mode = settings_value.slideshow.mode
+        if not self.slideshow_running:
+            self._slideshow_active_mode = self.slideshow_mode
         self.slideshow_srcdir_l = settings_value.slideshow.srcdir_l or ""
         self.slideshow_srcdir_r = settings_value.slideshow.srcdir_r or ""
         self._update_slideshow_source_display()
@@ -844,6 +863,7 @@ class MainWindow:
         self.preferences.apply.plugin_name = self.plugin_name
         self.preferences.apply.apply_mode = self.apply_mode
         self.preferences.slideshow.interval_seconds = self.slideshow_interval_seconds
+        self.preferences.slideshow.mode = self.slideshow_mode
         self.preferences.slideshow.srcdir_l = self.slideshow_srcdir_l or None
         self.preferences.slideshow.srcdir_r = self.slideshow_srcdir_r or None
         if self.form_state.two_screen is None:
@@ -1019,13 +1039,14 @@ class MainWindow:
 
     def _run_slideshow_cycle_for_side(self, side: str, source_dir: Path) -> str:
         images = collect_slideshow_input_images(source_dir)
+        mode = self._slideshow_active_mode if self._slideshow_active_mode else self.slideshow_mode
         if side == "L":
-            selected, state = run_slideshow_cycle(images, "sequential", self._slideshow_state_l)
+            selected, state = run_slideshow_cycle(images, mode, self._slideshow_state_l)
             self._slideshow_state_l = state
             self._slideshow_previous_l = selected
             return str(selected)
 
-        selected, state = run_slideshow_cycle(images, "sequential", self._slideshow_state_r)
+        selected, state = run_slideshow_cycle(images, mode, self._slideshow_state_r)
         self._slideshow_state_r = state
         self._slideshow_previous_r = selected
         return str(selected)
@@ -1169,6 +1190,7 @@ class MainWindow:
     def on_slideshow_start(self) -> bool:
         self._clear_slideshow_pause()
         self._slideshow_feedback_dirty = False
+        self._slideshow_active_mode = self.slideshow_mode
         sources: list[tuple[str, Path]] = []
         self._ensure_slideshow_output_dir()
         if self.slideshow_srcdir_l.strip():
@@ -1274,6 +1296,7 @@ class MainWindow:
             self._log("Slideshow stop ignored: slideshow is idle")
             return False
         self.slideshow_running = False
+        self._slideshow_active_mode = self.slideshow_mode
         self._clear_slideshow_pause()
         self._slideshow_plugin_impl = None
         self._refresh_action_availability()

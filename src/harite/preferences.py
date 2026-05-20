@@ -102,6 +102,7 @@ class ApplyPreferences:
 @dataclass
 class SlideshowPreferences:
     interval_seconds: int = 60
+    mode: str = "random"
     srcdir_l: str | None = None
     srcdir_r: str | None = None
 
@@ -109,6 +110,7 @@ class SlideshowPreferences:
     def from_config_dict(cls, config: dict[str, Any]) -> "SlideshowPreferences":
         return cls(
             interval_seconds=int(config.get("slideshow_interval_seconds", 60)),
+            mode=str(config.get("slideshow_mode", "random")),
             srcdir_l=None if config.get("slideshow_srcdir_l") is None else str(config.get("slideshow_srcdir_l")),
             srcdir_r=None if config.get("slideshow_srcdir_r") is None else str(config.get("slideshow_srcdir_r")),
         )
@@ -116,6 +118,7 @@ class SlideshowPreferences:
     def to_config_dict(self) -> dict[str, Any]:
         return {
             "slideshow_interval_seconds": self.interval_seconds,
+            "slideshow_mode": self.mode,
             "slideshow_srcdir_l": self.srcdir_l,
             "slideshow_srcdir_r": self.srcdir_r,
         }

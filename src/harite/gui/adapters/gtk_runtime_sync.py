@@ -23,6 +23,11 @@ def parse_margin_values(value: object | None) -> tuple[int, int, int, int]:
 def sync_slideshow_state_from_owner(backend: Any, owner: Any) -> None:
     backend._slideshow_srcdir_l = str(getattr(owner, "slideshow_srcdir_l", backend._slideshow_srcdir_l) or "")
     backend._slideshow_srcdir_r = str(getattr(owner, "slideshow_srcdir_r", backend._slideshow_srcdir_r) or "")
+    backend.slideshow_mode = str(getattr(owner, "slideshow_mode", getattr(backend, "slideshow_mode", "random")) or "random")
+    backend._slideshow_active_mode = str(
+        getattr(owner, "_slideshow_active_mode", getattr(backend, "_slideshow_active_mode", backend.slideshow_mode))
+        or backend.slideshow_mode
+    )
     backend._slideshow_running = bool(getattr(owner, "slideshow_running", backend._slideshow_running))
     backend._slideshow_paused = bool(getattr(owner, "slideshow_paused", getattr(backend, "_slideshow_paused", False)))
     backend._slideshow_state_l = getattr(owner, "_slideshow_state_l", backend._slideshow_state_l)
@@ -31,6 +36,14 @@ def sync_slideshow_state_from_owner(backend: Any, owner: Any) -> None:
     backend._slideshow_previous_r = getattr(owner, "_slideshow_previous_r", backend._slideshow_previous_r)
     interval_seconds = int(getattr(owner, "slideshow_interval_seconds", 0) or 0)
     backend._set_spin_value("spnInterval", interval_seconds if interval_seconds > 0 else 60)
+    backend._set_toggle_active("radSlideshowModeSequential", backend.slideshow_mode == "sequential")
+    backend._set_toggle_active("radSlideshowModeRandom", backend.slideshow_mode == "random")
+    backend._set_label_text(
+        "lblSlideshowModeHelp",
+        "Sequential rotates images."
+        if backend.slideshow_mode == "sequential"
+        else "Random rotates images.",
+    )
     backend._set_button_enabled("btnDaemonize", bool(getattr(owner, "can_start_slideshow", False)))
     backend._set_button_enabled("btnCancelDaemonize", bool(getattr(owner, "slideshow_running", False)))
     backend._refresh_slideshow_source_labels()

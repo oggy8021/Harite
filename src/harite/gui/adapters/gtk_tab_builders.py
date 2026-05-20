@@ -442,13 +442,26 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
     slideshow_srcdir_row.pack_start(right_source_block, False, False, 0)
     slideshow_srcdir_row.pack_start(slideshow_srcdir_right_gap, True, True, 0)
 
+    slideshow_controls_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     slideshow_controls_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=10)
+    slideshow_mode_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+    slideshow_mode_help_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
     if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(slideshow_controls_group, gtk_module.Align.CENTER)
         set_halign_if_supported(slideshow_controls_row, gtk_module.Align.CENTER)
+        set_halign_if_supported(slideshow_mode_row, gtk_module.Align.CENTER)
+        set_halign_if_supported(slideshow_mode_help_row, gtk_module.Align.CENTER)
 
     interval_spin = gtk_module.SpinButton()
     configure_spin_button(interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
     interval_label = gtk_module.Label(label="Interval")
+    slideshow_mode_label = gtk_module.Label(label="Mode")
+    rad_slideshow_mode_sequential = gtk_module.RadioButton.new_with_label(None, "sequential")
+    rad_slideshow_mode_random = gtk_module.RadioButton.new_with_label_from_widget(rad_slideshow_mode_sequential, "random")
+    slideshow_mode_help_label = gtk_module.Label(label="Random rotates images.")
+    if hasattr(rad_slideshow_mode_random, "set_active"):
+        rad_slideshow_mode_random.set_active(True)
+    set_xalign_if_supported(slideshow_mode_help_label)
     btn_daemonize = gtk_module.Button(label="Slideshow Start")
     btn_cancel_daemonize = gtk_module.Button(label="Slideshow Stop")
     set_button_icon_if_supported(gtk_module, btn_daemonize, "icons", "lucide", "play.svg")
@@ -457,6 +470,13 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
     slideshow_controls_row.pack_start(interval_spin, False, False, 0)
     slideshow_controls_row.pack_start(btn_daemonize, False, False, 0)
     slideshow_controls_row.pack_start(btn_cancel_daemonize, False, False, 0)
+    slideshow_mode_row.pack_start(slideshow_mode_label, False, False, 0)
+    slideshow_mode_row.pack_start(rad_slideshow_mode_sequential, False, False, 0)
+    slideshow_mode_row.pack_start(rad_slideshow_mode_random, False, False, 0)
+    slideshow_mode_help_row.pack_start(slideshow_mode_help_label, True, True, 0)
+    slideshow_controls_group.pack_start(slideshow_mode_row, False, False, 0)
+    slideshow_controls_group.pack_start(slideshow_mode_help_row, False, False, 0)
+    slideshow_controls_group.pack_start(slideshow_controls_row, False, False, 0)
     slideshow_controls_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     slideshow_controls_right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     if hasattr(slideshow_controls_left_gap, "set_hexpand"):
@@ -464,7 +484,7 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
     if hasattr(slideshow_controls_right_gap, "set_hexpand"):
         slideshow_controls_right_gap.set_hexpand(True)
     slideshow_controls_shell.pack_start(slideshow_controls_left_gap, True, True, 0)
-    slideshow_controls_shell.pack_start(slideshow_controls_row, False, False, 0)
+    slideshow_controls_shell.pack_start(slideshow_controls_group, False, False, 0)
     slideshow_controls_shell.pack_start(slideshow_controls_right_gap, True, True, 0)
 
     slideshow_detail_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
@@ -490,7 +510,10 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
         "slideshow_tab_box": slideshow_tab_box,
         "slideshow_label": slideshow_label,
         "slideshow_tab_title": slideshow_tab_title,
+        "slideshow_controls_group": slideshow_controls_group,
         "slideshow_controls_row": slideshow_controls_row,
+        "slideshow_mode_row": slideshow_mode_row,
+        "slideshow_mode_help_row": slideshow_mode_help_row,
         "slideshow_detail_row": slideshow_detail_row,
         "left_source_block": left_source_block,
         "right_source_block": right_source_block,
@@ -500,6 +523,10 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
         "slideshow_source_label_r": slideshow_source_label_r,
         "interval_spin": interval_spin,
         "interval_label": interval_label,
+        "slideshow_mode_label": slideshow_mode_label,
+        "slideshow_mode_help_label": slideshow_mode_help_label,
+        "rad_slideshow_mode_sequential": rad_slideshow_mode_sequential,
+        "rad_slideshow_mode_random": rad_slideshow_mode_random,
         "btn_daemonize": btn_daemonize,
         "btn_cancel_daemonize": btn_cancel_daemonize,
         "slideshow_current_label": slideshow_current_label,
