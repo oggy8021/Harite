@@ -194,6 +194,7 @@ def _build_tab_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, Any]
         "spnInterval": widgets["interval_spin"],
         "lblInterval": widgets["interval_label"],
         "lblSlideshowMode": widgets["slideshow_mode_label"],
+        "lblSlideshowModeHelp": widgets["slideshow_mode_help_label"],
         "radSlideshowModeSequential": widgets["rad_slideshow_mode_sequential"],
         "radSlideshowModeRandom": widgets["rad_slideshow_mode_random"],
         "btnDaemonize": widgets["btn_daemonize"],

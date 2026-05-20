@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-05-19
+最終更新: 2026-05-20
 
 ## 1. GUI の責務
 
@@ -40,12 +40,65 @@ sequenceDiagram
 
 ## 3. 画面全体構成
 
-- title / menu / flow / save-as
-- compose / input / position
-- margins tab
-- action cluster
-- slideshow tab
-- status footer
+layout 戦略:
+
+- 現行 GUI は top-level window の直下を単一の縦積み root container とし、header、center body、footer の 3 層で構成する。
+- center body は notebook を 1 つ持ち、tab 順は `Main`、`Margins (for each display)`、`Slideshow (...)` とする。
+- `Main` は日常操作の主導線、`Margins` は配置と margin text の詳細調整、`Slideshow` は継続実行面という役割分担を持つ。
+- page ごとの内容は page shell や spacer を使って中央寄せしつつ、各 page 内では必要に応じて fill と center を切り替える。
+- したがって GUI layout の基本方針は「window 全体は縦 3 層」「center body は notebook」「各 page は独立した責務を持つ」である。
+
+Main Window:
+
+- header は 2 行構成で、1 行目は title を左、command bar を右に置く。
+- command bar には `Color`、`Settings`、`About` を右寄せで並べる。
+- 2 行目の flow row では左に `Compose -> Optimize -> Apply` を置き、右に `Save As` を置く。
+- footer も 2 行構成で、1 行目は左に `Status`、右に `Slideshow summary` を置く。
+- footer 2 行目は separator の下に `Error` を置き、status と error を縦 2 段で分離する。
+
+Main tab:
+
+- `Main` tab は縦積みの `main_col` を持ち、その上段に compose grid、下段に action cluster を置く。
+- compose grid は左・中央・右の 3 列構成で、左 panel と右 panel は display ごとの入力・方向操作面、中央 panel は pick state の表示面とする。
+- 左右 panel は同型で、上段に十字配置の direction toggle と `Open-L/R`、下段に選択 path 表示と `Clear-L/R` を置く。
+- direction toggle 群は `Top/Bottom/Left/Right` を display ごとに十字状へ配置し、画像 picker button を中央に置く。
+- action cluster は横 3 群構成で、左から `Preview`、`Optimize`、`Apply` を置く。
+- `Optimize` 群は button と result label を 1 行にまとめる。
+- `Apply` 群は button と target label の行に加え、`apply mode row` と `apply mode help row` を別行で持つ。
+- `apply mode row` は `No Split` / `Auto-Split` の radio を置き、`apply mode help row` は選択意味の説明 label を置く。
+- `Preview` 群は左右 preview box を横並びに置き、その上下に assignment、画像 preview、result、state/source/assist を縦積みする。
+
+Margins tab:
+
+- `Margins` tab は単一の縦積み column を持ち、その中で current state block を上に、cross-grid editor を下に置く。
+- cross-grid editor は上に top margin、左に left margin、右に right margin、下に bottom margin を置き、中央に詳細編集 stack を置く。
+- 中央 stack は上から `current alignment summary`、`embed pattern`、`margin text notebook`、`position selector`、`notes` を縦積みする。
+- `embed pattern` は `Off` / `Settings` / `Text only` / `Both` の radio row を持つ。
+- `margin text notebook` は `Settings` page と `Text` page の 2 page 構成とする。
+- `Settings` page は preview label を中心とした状態確認面、`Text` page は margin text entry 面とする。
+- `position selector` は `Left` 列と `Right` 列を横並びに置き、それぞれ `Top` / `Bottom` radio を持つ。
+- `notes` には line limit hint、priority rule、current behavior legend を縦積みする。
+
+Slideshow tab:
+
+- `Slideshow` tab は外周を縦積みで組み、top spacer、srcdir row、controls shell、detail shell、bottom spacer の順に置く。
+- srcdir row は左右 2 ブロック構成で、`Srcdir-L` / `L: ...` と `Srcdir-R` / `R: ...` を左右対称に配置する。
+- controls shell の中央には `slideshow_controls_group` を置き、その中を `interval/start/stop row`、`mode row`、`mode help row` の 3 段に分ける。
+- `interval/start/stop row` は `Interval`、spin、`Slideshow Start`、`Slideshow Stop` を 1 行にまとめる。
+- `mode row` は `Mode`、`sequential`、`random` を独立 row として中央寄せで置く。
+- `mode help row` は mode の選択規則と runtime 反映条件を補足する説明 label を置く。
+- detail shell は `current` と `output` を縦積みした detail row を中央に置く。
+- したがって slideshow mode は controls row の 1 要素ではなく、`apply mode row` と同様に独立 row と補助説明 row を持つ面として扱う。
+
+Dialogs:
+
+- settings dialog は単一の縦積み editor box を持ち、上から `header row`、`settings rows`、`actions row`、`notice separator`、`state/notice` を並べる。
+- settings dialog の header row は左に title、右に `Save` を置く。
+- settings dialog の現行 runtime 実装で常設 row として露出するのは `Resolution`、`Scaling`、`Plugin`、`Apply` である。
+- settings dialog の `Apply` row は radio を横並びに持つが、main tab の apply mode help label に相当する補助説明 row は持たない。
+- color dialog は title、picker host、値 entry、actions row、separator、state/notice の順で縦積みする。
+- about dialog は content 全体を window 内で上下中央寄せし、icon、title、version、description、credits、license、close button を縦積みする。
+- dialog 群は main window より小さい独立 window として扱い、settings だけ resizable、color/about は fixed-size 寄りの扱いを取る。
 
 ## 4. メイン操作フロー
 
@@ -100,6 +153,7 @@ apply mode の user-facing 意味:
 - mode の user-facing 表記は `sequential` / `random` とする。
 - slideshow tab の mode 既定値は `random` とする。
 - mode は slideshow 関連設定値として load / save 対象に含める。
+- mode 選択面は srcdir row の下、interval/start/stop row の上に独立 row として置く。
 - このため CLI にある `--do-it` / `--dry-run` の説明は GUI にそのまま持ち込まず、GUI 側では status, history, error 表示を中心に説明する。
 
 slideshow start / tick / stop:

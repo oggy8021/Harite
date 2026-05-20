@@ -57,6 +57,7 @@ sequenceDiagram
 - GUI 側の mode 表記は `sequential` / `random` とする。
 - GUI 側の mode 既定値は `random` とする。
 - GUI 側でも `random` を選べるようにし、`sequential` は互換的な選択肢として残す。
+- GUI の mode 選択面は slideshow tab 上で srcdir row と interval/start/stop row の間に独立 row として置く。
 - GUI 実行中に mode 選択値を変えても、その run には反映しない。新しい mode は stop 後の次回 start から使う。
 
 slideshow helper の最小構成:

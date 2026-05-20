@@ -1009,6 +1009,10 @@ class GtkRuntimeSignalBackend:
     def _on_slideshow_mode_toggled(self, widget: Any, mode: str) -> None:
         if hasattr(widget, "get_active") and not widget.get_active():
             return
+        help_text = "Sequential rotates images in order. Changes apply after stop/start."
+        if mode == "random":
+            help_text = "Random avoids immediate repeats when possible. Changes apply after stop/start."
+        self._set_label_text("lblSlideshowModeHelp", help_text)
         callback = self._signal_handlers.get("on_change_slideshow_mode")
         if callback is None:
             self.slideshow_mode = mode

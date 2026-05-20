@@ -561,12 +561,14 @@ def test_runtime_backend_exposes_and_updates_slideshow_mode_state():
 
     assert backend.get_object("radSlideshowModeRandom").get_active() is True
     assert backend.get_object("radSlideshowModeSequential").get_active() is False
+    assert backend.get_object("lblSlideshowModeHelp").text == "Random avoids immediate repeats when possible. Changes apply after stop/start."
 
     backend.get_object("radSlideshowModeSequential").click()
 
     assert window.slideshow_mode == "sequential"
     assert backend.get_object("radSlideshowModeSequential").get_active() is True
     assert backend.get_object("radSlideshowModeRandom").get_active() is False
+    assert backend.get_object("lblSlideshowModeHelp").text == "Sequential rotates images in order. Changes apply after stop/start."
 
 
 def test_runtime_backend_input_controls_optimize_button_state():
