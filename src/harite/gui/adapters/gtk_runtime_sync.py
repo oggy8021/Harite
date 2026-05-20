@@ -40,9 +40,9 @@ def sync_slideshow_state_from_owner(backend: Any, owner: Any) -> None:
     backend._set_toggle_active("radSlideshowModeRandom", backend.slideshow_mode == "random")
     backend._set_label_text(
         "lblSlideshowModeHelp",
-        "Sequential rotates images in order. Changes apply after stop/start."
+        "Sequential rotates images."
         if backend.slideshow_mode == "sequential"
-        else "Random avoids immediate repeats when possible. Changes apply after stop/start.",
+        else "Random rotates images.",
     )
     backend._set_button_enabled("btnDaemonize", bool(getattr(owner, "can_start_slideshow", False)))
     backend._set_button_enabled("btnCancelDaemonize", bool(getattr(owner, "slideshow_running", False)))

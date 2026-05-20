@@ -83,10 +83,10 @@ Slideshow tab:
 
 - `Slideshow` tab は外周を縦積みで組み、top spacer、srcdir row、controls shell、detail shell、bottom spacer の順に置く。
 - srcdir row は左右 2 ブロック構成で、`Srcdir-L` / `L: ...` と `Srcdir-R` / `R: ...` を左右対称に配置する。
-- controls shell の中央には `slideshow_controls_group` を置き、その中を `interval/start/stop row`、`mode row`、`mode help row` の 3 段に分ける。
-- `interval/start/stop row` は `Interval`、spin、`Slideshow Start`、`Slideshow Stop` を 1 行にまとめる。
+- controls shell の中央には `slideshow_controls_group` を置き、その中を `mode row`、`mode help row`、`interval/start/stop row` の 3 段に分ける。
 - `mode row` は `Mode`、`sequential`、`random` を独立 row として中央寄せで置く。
 - `mode help row` は mode の選択規則と runtime 反映条件を補足する説明 label を置く。
+- `interval/start/stop row` は `Interval`、spin、`Slideshow Start`、`Slideshow Stop` を 1 行にまとめる。
 - detail shell は `current` と `output` を縦積みした detail row を中央に置く。
 - したがって slideshow mode は controls row の 1 要素ではなく、`apply mode row` と同様に独立 row と補助説明 row を持つ面として扱う。
 
