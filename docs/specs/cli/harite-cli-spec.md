@@ -57,7 +57,7 @@ sequenceDiagram
             Core-->>CLI: selected image
             CLI->>Plugin: apply(...)
             Plugin-->>CLI: success / failure / exception
-            CLI-->>User: SLIDESHOW cycle/result
+            CLI-->>User: Slideshow cycle/result
         end
     end
 ```
@@ -173,8 +173,8 @@ slideshow helper の計算規則:
 - `run_slideshow_cycle(...)` は、選ばれた画像を `previous_selected` に入れ、`completed = state.completed + 1` とした新 state を返す。
 - `run_slideshow_cycles(...)` は各サイクル後に `on_cycle(selected, state.completed - 1)` を呼ぶため、callback 側へ渡る cycle 番号は 0 始まりである。
 - sleep は毎回ではなく、「まだ次サイクルが残っている場合」にだけ `sleep_fn(interval_sec)` を呼ぶ。`iterations` 到達回では sleep しない。
-- ただし CLI の user-facing `SLIDESHOW cycle=` 表示は callback 値をそのまま出さず、`cycle_index + 1` を使う。したがって内部 callback は 0 始まり、stdout 表示は 1 始まりである。
-- dry-run の各サイクルでは `dry_run_cycles` を 1 件増やし、`detail` のときだけ `SLIDESHOW cycle=... selected=... dry_run=True` を出す。
+- ただし CLI の user-facing `Slideshow cycle=` 表示は callback 値をそのまま出さず、`cycle_index + 1` を使う。したがって内部 callback は 0 始まり、stdout 表示は 1 始まりである。
+- dry-run の各サイクルでは `dry_run_cycles` を 1 件増やし、`detail` のときだけ `Slideshow cycle=... selected=... dry_run=True` を出す。
 - 実 apply では `apply_ok` は成功時だけ、`apply_failed` は plugin が `False` を返したときだけ、`apply_error` は plugin 例外時だけ増える。`apply_failed_total = apply_failed + apply_error` は completed 行でだけ計算する。
 
 出力先:
@@ -213,16 +213,18 @@ Windows / macOS ではサポート外であり、終了コード `2` で終了�
 
 - `info`: 実行開始、完了、dry-run summary
 - `error`: validation error, unknown plugin, apply failed
-- slideshow では `SLIDESHOW start`, `SLIDESHOW cycle`, `SLIDESHOW completed` を中心に実行メッセージを出す
+- Harite 固有の stdout 実行メッセージは、言語に応じた自然な user-facing 表現を使う。
+- 英語表記では通常の文やラベルとして読める形を優先し、全部大文字の強い prefix は使わない。
+- slideshow では `Slideshow start`, `Slideshow cycle`, `Slideshow completed` を中心に実行メッセージを出す
 
 command ごとの代表メッセージ:
 
 - `optimize`: `Saved:` と `Placement:`
 - `apply`: `applied wallpaper` または `failed to apply wallpaper`
-- `slideshow`: `SLIDESHOW start`, `SLIDESHOW interrupted by user`, `SLIDESHOW completed`
+- `slideshow`: `Slideshow start`, `Slideshow interrupted by user`, `Slideshow completed`
 - `install-desktop-entry`: `Installed desktop entry:`
 
-`slideshow` の `SLIDESHOW completed` では、dry-run 時は `dry_run_cycles`、実 apply 時は `apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` を出してサイクルごとの結果を要約する。
+`slideshow` の `Slideshow completed` では、dry-run 時は `dry_run_cycles`、実 apply 時は `apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` を出してサイクルごとの結果を要約する。
 
 重要度の見方:
 

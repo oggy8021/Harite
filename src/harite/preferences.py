@@ -100,24 +100,24 @@ class ApplyPreferences:
 
 
 @dataclass
-class WatchPreferences:
+class SlideshowPreferences:
     interval_seconds: int = 60
     srcdir_l: str | None = None
     srcdir_r: str | None = None
 
     @classmethod
-    def from_config_dict(cls, config: dict[str, Any]) -> "WatchPreferences":
+    def from_config_dict(cls, config: dict[str, Any]) -> "SlideshowPreferences":
         return cls(
-            interval_seconds=int(config.get("watch_interval_seconds", 60)),
-            srcdir_l=None if config.get("watch_srcdir_l") is None else str(config.get("watch_srcdir_l")),
-            srcdir_r=None if config.get("watch_srcdir_r") is None else str(config.get("watch_srcdir_r")),
+            interval_seconds=int(config.get("slideshow_interval_seconds", 60)),
+            srcdir_l=None if config.get("slideshow_srcdir_l") is None else str(config.get("slideshow_srcdir_l")),
+            srcdir_r=None if config.get("slideshow_srcdir_r") is None else str(config.get("slideshow_srcdir_r")),
         )
 
     def to_config_dict(self) -> dict[str, Any]:
         return {
-            "watch_interval_seconds": self.interval_seconds,
-            "watch_srcdir_l": self.srcdir_l,
-            "watch_srcdir_r": self.srcdir_r,
+            "slideshow_interval_seconds": self.interval_seconds,
+            "slideshow_srcdir_l": self.srcdir_l,
+            "slideshow_srcdir_r": self.srcdir_r,
         }
 
 
@@ -125,7 +125,7 @@ class WatchPreferences:
 class AppPreferences:
     optimize: OptimizePreferences = field(default_factory=OptimizePreferences)
     apply: ApplyPreferences = field(default_factory=ApplyPreferences)
-    watch: WatchPreferences = field(default_factory=WatchPreferences)
+    slideshow: SlideshowPreferences = field(default_factory=SlideshowPreferences)
 
     @staticmethod
     def _default_apply_mode(default_plugin: str) -> str:
@@ -157,12 +157,12 @@ class AppPreferences:
                 plugin_name=str(config.get("plugin", default_plugin)),
                 apply_mode=apply_mode,
             ),
-            watch=WatchPreferences.from_config_dict(config),
+            slideshow=SlideshowPreferences.from_config_dict(config),
         )
 
     def to_config_dict(self) -> dict[str, Any]:
         merged: dict[str, Any] = {}
         merged.update(self.optimize.to_config_dict())
         merged.update(self.apply.to_config_dict())
-        merged.update(self.watch.to_config_dict())
+        merged.update(self.slideshow.to_config_dict())
         return merged

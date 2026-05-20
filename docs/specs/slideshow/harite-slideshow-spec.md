@@ -120,7 +120,7 @@ GUI は単なるタイマー処理ではなく、状態表示の責務を強く�
 - 入力 directory からの画像収集
 - サイクル実行
 - dry-run / do-it 切り替え
-- `SLIDESHOW start` / `SLIDESHOW cycle` / `SLIDESHOW completed` 実行メッセージ出力
+- `Slideshow start` / `Slideshow cycle` / `Slideshow completed` 実行メッセージ出力
 
 CLI `slideshow` command の特徴:
 
@@ -128,7 +128,7 @@ CLI `slideshow` command の特徴:
 - `dry_run=False` のときだけ plugin を解決し、各サイクルで `apply(...)` を呼ぶ。
 - plugin が例外を投げてもループ全体を即停止せず、そのサイクルの `apply_error` カウンタを 1 件増やす。
 - plugin が `False` を返した場合は、そのサイクルの `apply_failed` カウンタを 1 件増やす。
-- これらのカウンタは各サイクルの途中で保持され、最後に `SLIDESHOW completed` 行の実行メッセージ要約として出力される。
+- これらのカウンタは各サイクルの途中で保持され、最後に `Slideshow completed` 行の実行メッセージ要約として出力される。
 
 集計規則の補足:
 
@@ -138,7 +138,7 @@ CLI `slideshow` command の特徴:
 ## 8. 出力と観測面
 
 - CLI `slideshow` command は stdout に実行メッセージを出す。
-- CLI の `normal` / `detail` は stdout に出す `SLIDESHOW ...` 実行メッセージの粒度を切り替える。
+- CLI の `normal` / `detail` は stdout に出す自然な user-facing 実行メッセージの粒度を切り替える。現行英語表記では `Slideshow ...` を使い、全部大文字の prefix は使わない。
 - GUI は status, history, output display を併用する。
 - 現行 slideshow には専用保存ファイルへの書き出し機能はない。
 
@@ -158,7 +158,7 @@ CLI の主な観測値:
 完了時 summary の見方:
 
 - dry-run では `cycles` と `dry_run_cycles` が出る。
-- 実 apply では `apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` が `SLIDESHOW completed` 行へ出る。
+- 実 apply では `apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` が `Slideshow completed` 行へ出る。
 
 `detail` 出力では各サイクルが見えるが、`normal` では失敗系と最終実行メッセージ要約が中心になる。
 

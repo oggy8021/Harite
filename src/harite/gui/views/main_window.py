@@ -33,7 +33,7 @@ from harite.gui.views.main_window_preview import ResultPreviewState
 from harite.positioning import reset_position_pair, update_position_pair
 from harite.plugins import registry as plugin_registry
 from harite.preferences import AppPreferences
-from harite.watch import WatchCycleState, collect_watch_input_images, run_watch_cycle
+from harite.slideshow import SlideshowCycleState, collect_slideshow_input_images, run_slideshow_cycle
 
 class MainWindow:
     """Framework-neutral model for the standalone GUI window."""
@@ -56,25 +56,25 @@ class MainWindow:
         self.save_target_display = "Save target: not-selected"
         self.apply_mode = self._default_apply_mode()
         self._pre_two_screen_resolution: str | None = None
-        self.watch_interval_seconds = 60
-        self.watch_srcdir_l = ""
-        self.watch_srcdir_r = ""
-        self.watch_summary_display = "Watch: stopped"
-        self.watch_source_display = "Watch srcdirs: L=- | R=-"
-        self.watch_current_display = "Watch current: idle"
-        self.watch_output_display = "Watch output: ."
-        self.watch_running = False
-        self.watch_paused = False
-        self.watch_pause_reason = ""
-        self.can_start_watch = False
-        self._watch_feedback_dirty = False
-        self._watch_state_l = WatchCycleState()
-        self._watch_state_r = WatchCycleState()
-        self._watch_previous_l: Path | None = None
-        self._watch_previous_r: Path | None = None
-        self._watch_plugin_impl: object | None = None
-        self._watch_dual_auto_split_enabled = False
-        self._watch_active_generated_files: tuple[Path, ...] = ()
+        self.slideshow_interval_seconds = 60
+        self.slideshow_srcdir_l = ""
+        self.slideshow_srcdir_r = ""
+        self.slideshow_summary_display = "Slideshow: stopped"
+        self.slideshow_source_display = "Slideshow srcdirs: L=- | R=-"
+        self.slideshow_current_display = "Slideshow current: idle"
+        self.slideshow_output_display = "Slideshow output: ."
+        self.slideshow_running = False
+        self.slideshow_paused = False
+        self.slideshow_pause_reason = ""
+        self.can_start_slideshow = False
+        self._slideshow_feedback_dirty = False
+        self._slideshow_state_l = SlideshowCycleState()
+        self._slideshow_state_r = SlideshowCycleState()
+        self._slideshow_previous_l: Path | None = None
+        self._slideshow_previous_r: Path | None = None
+        self._slideshow_plugin_impl: object | None = None
+        self._slideshow_dual_auto_split_enabled = False
+        self._slideshow_active_generated_files: tuple[Path, ...] = ()
         self.open_image_dialog_open = False
         self.open_image_dialog_side: str | None = None
         self._save_path_dialog_open = False
@@ -97,8 +97,8 @@ class MainWindow:
             ("compose_input", ("input_value", "cross_layout", "align", "valign")),
             ("margins_tab", ("margins", "margin_text", "margin_area")),
             ("action_cluster", ("optimize", "apply", "saved_files")),
-            ("watch_tab", ("watch_summary", "watch_srcdirs", "watch_interval", "watch_controls", "watch_details")),
-            ("status_footer", ("status_message", "watch_summary")),
+            ("slideshow_tab", ("slideshow_summary", "slideshow_srcdirs", "slideshow_interval", "slideshow_controls", "slideshow_details")),
+            ("status_footer", ("status_message", "slideshow_summary")),
         )
         self.primary_action_flow: tuple[str, ...] = (
             "save_as",
@@ -107,7 +107,7 @@ class MainWindow:
         )
         self._load_default_settings_on_startup()
         self._refresh_action_availability()
-        self._update_watch_output_display()
+        self._update_slideshow_output_display()
 
     def _load_default_settings_on_startup(self) -> None:
         target_path = self._resolve_settings_file_path()
@@ -270,25 +270,25 @@ class MainWindow:
         self._apply_input_paths()
         self._log(f"Input picked ({normalized_side}): {value}")
 
-    def on_pick_watch_srcdir(self, path: str, side: str) -> bool:
+    def on_pick_slideshow_srcdir(self, path: str, side: str) -> bool:
         value = (path or "").strip()
         normalized_side = side.strip().upper()
         if not value:
-            self.last_error = "watch srcdir is empty"
-            self._log("Watch srcdir ignored: empty path")
+            self.last_error = "slideshow srcdir is empty"
+            self._log("Slideshow srcdir ignored: empty path")
             return False
         if normalized_side == "L":
-            self.watch_srcdir_l = value
+            self.slideshow_srcdir_l = value
         elif normalized_side == "R":
-            self.watch_srcdir_r = value
+            self.slideshow_srcdir_r = value
         else:
-            self.last_error = "watch srcdir side is required"
-            self._log("Watch srcdir ignored: missing side")
+            self.last_error = "slideshow srcdir side is required"
+            self._log("Slideshow srcdir ignored: missing side")
             return False
-        self._update_watch_source_display()
+        self._update_slideshow_source_display()
         self._refresh_action_availability()
-        self._set_status("idle", "watch", f"watch srcdir {normalized_side} selected")
-        self._log(f"Watch srcdir selected ({normalized_side}): {value}")
+        self._set_status("idle", "slideshow", f"slideshow srcdir {normalized_side} selected")
+        self._log(f"Slideshow srcdir selected ({normalized_side}): {value}")
         return True
 
     def _current_margin_values(self) -> tuple[int, int, int, int]:
@@ -459,43 +459,43 @@ class MainWindow:
             return
         self.save_target_display = "Save target: not-selected"
 
-    def _update_watch_source_display(self) -> None:
-        left = self.watch_srcdir_l or "-"
-        right = self.watch_srcdir_r or "-"
-        self.watch_source_display = f"Watch srcdirs: L={left} | R={right}"
+    def _update_slideshow_source_display(self) -> None:
+        left = self.slideshow_srcdir_l or "-"
+        right = self.slideshow_srcdir_r or "-"
+        self.slideshow_source_display = f"Slideshow srcdirs: L={left} | R={right}"
 
     def _can_optimize_now(self) -> bool:
         return bool(self.form_state.input_value) and self._current_resolution_value() is not None
 
-    def _can_start_watch_now(self) -> bool:
+    def _can_start_slideshow_now(self) -> bool:
         return (
-            bool(self.watch_srcdir_l.strip())
-            and bool(self.watch_srcdir_r.strip())
-            and int(self.watch_interval_seconds) > 0
-            and not self.watch_running
+            bool(self.slideshow_srcdir_l.strip())
+            and bool(self.slideshow_srcdir_r.strip())
+            and int(self.slideshow_interval_seconds) > 0
+            and not self.slideshow_running
         )
 
     def _refresh_action_availability(self) -> None:
         self.can_optimize = self._can_optimize_now()
-        self.can_start_watch = self._can_start_watch_now()
+        self.can_start_slideshow = self._can_start_slideshow_now()
 
-    def _update_watch_output_display(self) -> None:
+    def _update_slideshow_output_display(self) -> None:
         output_dir = str(Path(self.form_state.output_dir)) if self.form_state.output_dir else self._default_output_dir()
-        self.watch_output_display = f"Watch output: {output_dir}"
+        self.slideshow_output_display = f"Slideshow output: {output_dir}"
 
-    def _update_watch_summary_display(self) -> None:
-        if self.watch_running and self.watch_paused:
-            self.watch_summary_display = "Watch: paused"
+    def _update_slideshow_summary_display(self) -> None:
+        if self.slideshow_running and self.slideshow_paused:
+            self.slideshow_summary_display = "Slideshow: paused"
             return
-        self.watch_summary_display = "Watch: running" if self.watch_running else "Watch: stopped"
+        self.slideshow_summary_display = "Slideshow: running" if self.slideshow_running else "Slideshow: stopped"
 
-    def _update_watch_current_display(self, left: str | None = None, right: str | None = None) -> None:
-        current_left = left if left is not None else (str(self._watch_previous_l) if self._watch_previous_l else "-")
-        current_right = right if right is not None else (str(self._watch_previous_r) if self._watch_previous_r else "-")
-        if not self.watch_running and current_left == "-" and current_right == "-":
-            self.watch_current_display = "Watch current: idle"
+    def _update_slideshow_current_display(self, left: str | None = None, right: str | None = None) -> None:
+        current_left = left if left is not None else (str(self._slideshow_previous_l) if self._slideshow_previous_l else "-")
+        current_right = right if right is not None else (str(self._slideshow_previous_r) if self._slideshow_previous_r else "-")
+        if not self.slideshow_running and current_left == "-" and current_right == "-":
+            self.slideshow_current_display = "Slideshow current: idle"
             return
-        self.watch_current_display = f"Watch current: L={current_left} | R={current_right}"
+        self.slideshow_current_display = f"Slideshow current: L={current_left} | R={current_right}"
 
     def _set_status(self, level: str, phase: str, message: str, *, error: str = "") -> None:
         """Set unified UI status fields and keep last_error in sync."""
@@ -504,18 +504,18 @@ class MainWindow:
         self.status_message = message
         self.last_error = error
 
-    def _clear_watch_pause(self) -> None:
-        self.watch_paused = False
-        self.watch_pause_reason = ""
+    def _clear_slideshow_pause(self) -> None:
+        self.slideshow_paused = False
+        self.slideshow_pause_reason = ""
 
-    def _pause_watch_for_display_loss(self, message: str) -> None:
-        self.watch_paused = True
-        self.watch_pause_reason = message
-        self._update_watch_summary_display()
-        self._set_status("paused", "watch", message)
-        self._watch_feedback_dirty = True
+    def _pause_slideshow_for_display_loss(self, message: str) -> None:
+        self.slideshow_paused = True
+        self.slideshow_pause_reason = message
+        self._update_slideshow_summary_display()
+        self._set_status("paused", "slideshow", message)
+        self._slideshow_feedback_dirty = True
 
-    def _is_transient_watch_cycle_error(self, exc: ValueError, *, cycle_phase: str) -> bool:
+    def _is_transient_slideshow_cycle_error(self, exc: ValueError, *, cycle_phase: str) -> bool:
         if cycle_phase != "tick":
             return False
         return str(exc) == "per-monitor apply requires at least two detected displays"
@@ -818,11 +818,11 @@ class MainWindow:
 
         self.plugin_name = settings_value.apply.plugin_name
         self.apply_mode = settings_value.apply.apply_mode
-        self.watch_interval_seconds = settings_value.watch.interval_seconds
-        self.watch_srcdir_l = settings_value.watch.srcdir_l or ""
-        self.watch_srcdir_r = settings_value.watch.srcdir_r or ""
-        self._update_watch_source_display()
-        self._update_watch_output_display()
+        self.slideshow_interval_seconds = settings_value.slideshow.interval_seconds
+        self.slideshow_srcdir_l = settings_value.slideshow.srcdir_l or ""
+        self.slideshow_srcdir_r = settings_value.slideshow.srcdir_r or ""
+        self._update_slideshow_source_display()
+        self._update_slideshow_output_display()
         self._refresh_action_availability()
         self.settings_dialog_open = False
         self._set_status("success", "settings", "settings applied")
@@ -843,9 +843,9 @@ class MainWindow:
         self.preferences.optimize.embed_max_lines = self.form_state.embed_max_lines
         self.preferences.apply.plugin_name = self.plugin_name
         self.preferences.apply.apply_mode = self.apply_mode
-        self.preferences.watch.interval_seconds = self.watch_interval_seconds
-        self.preferences.watch.srcdir_l = self.watch_srcdir_l or None
-        self.preferences.watch.srcdir_r = self.watch_srcdir_r or None
+        self.preferences.slideshow.interval_seconds = self.slideshow_interval_seconds
+        self.preferences.slideshow.srcdir_l = self.slideshow_srcdir_l or None
+        self.preferences.slideshow.srcdir_r = self.slideshow_srcdir_r or None
         if self.form_state.two_screen is None:
             self.preferences.optimize.two_screen_mode = "auto"
         else:
@@ -1017,126 +1017,126 @@ class MainWindow:
         self._log("Save path canceled")
         return True
 
-    def _run_watch_cycle_for_side(self, side: str, source_dir: Path) -> str:
-        images = collect_watch_input_images(source_dir)
+    def _run_slideshow_cycle_for_side(self, side: str, source_dir: Path) -> str:
+        images = collect_slideshow_input_images(source_dir)
         if side == "L":
-            selected, state = run_watch_cycle(images, "sequential", self._watch_state_l)
-            self._watch_state_l = state
-            self._watch_previous_l = selected
+            selected, state = run_slideshow_cycle(images, "sequential", self._slideshow_state_l)
+            self._slideshow_state_l = state
+            self._slideshow_previous_l = selected
             return str(selected)
 
-        selected, state = run_watch_cycle(images, "sequential", self._watch_state_r)
-        self._watch_state_r = state
-        self._watch_previous_r = selected
+        selected, state = run_slideshow_cycle(images, "sequential", self._slideshow_state_r)
+        self._slideshow_state_r = state
+        self._slideshow_previous_r = selected
         return str(selected)
 
-    def _prepare_watch_apply(self, source_count: int) -> bool:
-        self._watch_dual_auto_split_enabled = False
+    def _prepare_slideshow_apply(self, source_count: int) -> bool:
+        self._slideshow_dual_auto_split_enabled = False
         if source_count < 1:
-            self._watch_plugin_impl = None
+            self._slideshow_plugin_impl = None
             return True
 
         if source_count > 1:
             if self.plugin_name != "linux":
-                message = "dual-source watch requires linux plugin"
-                self._watch_plugin_impl = None
-                self._set_status("error", "watch", message, error=message)
-                self._log(f"Watch start blocked: {message}")
+                message = "dual-source slideshow requires linux plugin"
+                self._slideshow_plugin_impl = None
+                self._set_status("error", "slideshow", message, error=message)
+                self._log(f"Slideshow start blocked: {message}")
                 return False
 
             if build_two_screen_optimize_context() is None:
-                message = "dual-source watch requires two detected displays"
-                self._watch_plugin_impl = None
-                self._set_status("error", "watch", message, error=message)
-                self._log(f"Watch start blocked: {message}")
+                message = "dual-source slideshow requires two detected displays"
+                self._slideshow_plugin_impl = None
+                self._set_status("error", "slideshow", message, error=message)
+                self._log(f"Slideshow start blocked: {message}")
                 return False
 
-            self._watch_dual_auto_split_enabled = True
+            self._slideshow_dual_auto_split_enabled = True
 
         try:
-            self._watch_plugin_impl = plugin_registry.get(self.plugin_name)
+            self._slideshow_plugin_impl = plugin_registry.get(self.plugin_name)
         except KeyError:
             self._set_status(
                 "error",
-                "watch",
+                "slideshow",
                 "unknown plugin",
                 error=f"unknown plugin: {self.plugin_name}",
             )
-            self._log(f"Watch start failed: unknown plugin {self.plugin_name}")
+            self._log(f"Slideshow start failed: unknown plugin {self.plugin_name}")
             return False
         return True
 
-    def _build_watch_two_screen_state(self, left: str, right: str) -> OptimizeFormState:
-        watch_state = replace(self.form_state, input_value=f"{left},{right}")
+    def _build_slideshow_two_screen_state(self, left: str, right: str) -> OptimizeFormState:
+        slideshow_state = replace(self.form_state, input_value=f"{left},{right}")
         context = build_two_screen_optimize_context()
         if context is not None:
-            watch_state.two_screen = True
-            watch_state.l_display = f"{context.l_display[0]}x{context.l_display[1]}"
-            watch_state.r_display = f"{context.r_display[0]}x{context.r_display[1]}"
-            watch_state.resolution = f"{context.resolution[0]}x{context.resolution[1]}"
-        return watch_state
+            slideshow_state.two_screen = True
+            slideshow_state.l_display = f"{context.l_display[0]}x{context.l_display[1]}"
+            slideshow_state.r_display = f"{context.r_display[0]}x{context.r_display[1]}"
+            slideshow_state.resolution = f"{context.resolution[0]}x{context.resolution[1]}"
+        return slideshow_state
 
-    def _ensure_watch_output_dir(self) -> None:
+    def _ensure_slideshow_output_dir(self) -> None:
         output_dir = str(self.form_state.output_dir or "").strip()
         if not output_dir:
             self.form_state.output_dir = self._default_output_dir()
-        self._update_watch_output_display()
+        self._update_slideshow_output_display()
 
-    def _cleanup_watch_generated_files(self, paths: tuple[Path, ...]) -> None:
+    def _cleanup_slideshow_generated_files(self, paths: tuple[Path, ...]) -> None:
         for path in paths:
             try:
                 if path.exists():
                     path.unlink()
-                    self._log(f"Watch cleanup removed: {path}")
+                    self._log(f"Slideshow cleanup removed: {path}")
             except OSError as exc:
-                self._log(f"Watch cleanup failed: {path} ({exc})")
+                self._log(f"Slideshow cleanup failed: {path} ({exc})")
 
-    def _set_watch_active_generated_files(self, paths: tuple[Path, ...]) -> None:
-        previous_paths = self._watch_active_generated_files
-        self._watch_active_generated_files = paths
+    def _set_slideshow_active_generated_files(self, paths: tuple[Path, ...]) -> None:
+        previous_paths = self._slideshow_active_generated_files
+        self._slideshow_active_generated_files = paths
         if previous_paths and previous_paths != paths:
-            self._cleanup_watch_generated_files(previous_paths)
+            self._cleanup_slideshow_generated_files(previous_paths)
 
-    def _apply_watch_target(self, target: object, *, cycle_phase: str, apply_mode: str) -> bool:
-        if self._watch_plugin_impl is None:
+    def _apply_slideshow_target(self, target: object, *, cycle_phase: str, apply_mode: str) -> bool:
+        if self._slideshow_plugin_impl is None:
             return False
 
         try:
-            ok = bool(self._watch_plugin_impl.apply(target, dry_run=False))
+            ok = bool(self._slideshow_plugin_impl.apply(target, dry_run=False))
         except Exception as exc:
-            self._log(f"Watch {cycle_phase} {apply_mode} apply error: {exc}")
+            self._log(f"Slideshow {cycle_phase} {apply_mode} apply error: {exc}")
             return False
 
         if ok:
-            self._log(f"Watch {cycle_phase} {apply_mode} apply ok: {target}")
+            self._log(f"Slideshow {cycle_phase} {apply_mode} apply ok: {target}")
             return True
 
-        self._log(f"Watch {cycle_phase} {apply_mode} apply failed: {target}")
+        self._log(f"Slideshow {cycle_phase} {apply_mode} apply failed: {target}")
         return False
 
-    def _watch_user_cycle_label(self, cycle_phase: str) -> str:
+    def _slideshow_user_cycle_label(self, cycle_phase: str) -> str:
         return "cycle" if cycle_phase == "tick" else cycle_phase
 
-    def _apply_watch_selection(self, left: str, right: str, *, cycle_phase: str) -> tuple[bool, str | None]:
+    def _apply_slideshow_selection(self, left: str, right: str, *, cycle_phase: str) -> tuple[bool, str | None]:
         selected_paths = [path for path in (left, right) if path != "-"]
-        user_cycle_phase = self._watch_user_cycle_label(cycle_phase)
+        user_cycle_phase = self._slideshow_user_cycle_label(cycle_phase)
         if not selected_paths:
             return True, None
-        if self._watch_plugin_impl is None:
-            return False, "watch plugin is not ready"
+        if self._slideshow_plugin_impl is None:
+            return False, "slideshow plugin is not ready"
 
         if len(selected_paths) == 1:
-            if self._apply_watch_target(selected_paths[0], cycle_phase=cycle_phase, apply_mode="single-file"):
-                self._set_watch_active_generated_files(())
+            if self._apply_slideshow_target(selected_paths[0], cycle_phase=cycle_phase, apply_mode="single-file"):
+                self._set_slideshow_active_generated_files(())
                 return True, None
-            return False, f"watch {user_cycle_phase} single-file apply failed"
+            return False, f"slideshow {user_cycle_phase} single-file apply failed"
 
-        if not self._watch_dual_auto_split_enabled:
-            return False, "dual-source watch auto-split is not enabled"
+        if not self._slideshow_dual_auto_split_enabled:
+            return False, "dual-source slideshow auto-split is not enabled"
 
         try:
-            watch_state = self._build_watch_two_screen_state(selected_paths[0], selected_paths[1])
-            saved_files, _placements = self.controller.run_optimize(watch_state)
+            slideshow_state = self._build_slideshow_two_screen_state(selected_paths[0], selected_paths[1])
+            saved_files, _placements = self.controller.run_optimize(slideshow_state)
             composite_path = saved_files[-1]
             effective_apply = resolve_apply_settings(
                 file=composite_path,
@@ -1145,52 +1145,52 @@ class MainWindow:
                 output_dir=composite_path.parent,
             )
         except ValueError as exc:
-            self._log(f"Watch {cycle_phase} auto-split prepare failed: {exc}")
-            if self._is_transient_watch_cycle_error(exc, cycle_phase=cycle_phase):
-                self._pause_watch_for_display_loss("watch paused: waiting for two detected displays for auto-split")
+            self._log(f"Slideshow {cycle_phase} auto-split prepare failed: {exc}")
+            if self._is_transient_slideshow_cycle_error(exc, cycle_phase=cycle_phase):
+                self._pause_slideshow_for_display_loss("slideshow paused: waiting for two detected displays for auto-split")
                 return True, None
-            return False, f"watch {user_cycle_phase} auto-split prepare failed: {exc}"
+            return False, f"slideshow {user_cycle_phase} auto-split prepare failed: {exc}"
 
-        self._log(f"Watch {cycle_phase} per-monitor auto-split: {effective_apply.target}")
+        self._log(f"Slideshow {cycle_phase} per-monitor auto-split: {effective_apply.target}")
         generated_files = [composite_path]
         if isinstance(effective_apply.target, dict):
             generated_files.extend(Path(str(path)) for path in effective_apply.target.values())
 
-        if self._apply_watch_target(
+        if self._apply_slideshow_target(
             effective_apply.target,
             cycle_phase=cycle_phase,
             apply_mode="per-monitor-auto-split",
         ):
             deduped = tuple(dict.fromkeys(generated_files))
-            self._set_watch_active_generated_files(deduped)
+            self._set_slideshow_active_generated_files(deduped)
             return True, None
-        return False, f"watch {user_cycle_phase} per-monitor auto-split apply failed"
+        return False, f"slideshow {user_cycle_phase} per-monitor auto-split apply failed"
 
-    def on_watch_start(self) -> bool:
-        self._clear_watch_pause()
-        self._watch_feedback_dirty = False
+    def on_slideshow_start(self) -> bool:
+        self._clear_slideshow_pause()
+        self._slideshow_feedback_dirty = False
         sources: list[tuple[str, Path]] = []
-        self._ensure_watch_output_dir()
-        if self.watch_srcdir_l.strip():
-            sources.append(("L", Path(self.watch_srcdir_l.strip())))
-        if self.watch_srcdir_r.strip():
-            sources.append(("R", Path(self.watch_srcdir_r.strip())))
+        self._ensure_slideshow_output_dir()
+        if self.slideshow_srcdir_l.strip():
+            sources.append(("L", Path(self.slideshow_srcdir_l.strip())))
+        if self.slideshow_srcdir_r.strip():
+            sources.append(("R", Path(self.slideshow_srcdir_r.strip())))
         if not sources:
-            self._set_status("error", "watch", "watch srcdir is required", error="watch srcdir is required")
-            self._log("Watch start blocked: watch srcdir is required")
+            self._set_status("error", "slideshow", "slideshow srcdir is required", error="slideshow srcdir is required")
+            self._log("Slideshow start blocked: slideshow srcdir is required")
             return False
 
-        if not self._prepare_watch_apply(len(sources)):
+        if not self._prepare_slideshow_apply(len(sources)):
             return False
 
         selected_left = "-"
         selected_right = "-"
         for side, source_dir in sources:
             try:
-                selected = self._run_watch_cycle_for_side(side, source_dir)
+                selected = self._run_slideshow_cycle_for_side(side, source_dir)
             except ValueError as exc:
-                self._set_status("error", "watch", f"watch srcdir {side} invalid", error=str(exc))
-                self._log(f"Watch start failed ({side}): {exc}")
+                self._set_status("error", "slideshow", f"slideshow srcdir {side} invalid", error=str(exc))
+                self._log(f"Slideshow start failed ({side}): {exc}")
                 return False
 
             if side == "L":
@@ -1198,44 +1198,44 @@ class MainWindow:
             else:
                 selected_right = selected
 
-        self.watch_running = True
+        self.slideshow_running = True
         self._refresh_action_availability()
-        self._update_watch_summary_display()
-        self._update_watch_source_display()
-        self._update_watch_current_display(selected_left, selected_right)
-        applied, error_message = self._apply_watch_selection(selected_left, selected_right, cycle_phase="start")
+        self._update_slideshow_summary_display()
+        self._update_slideshow_source_display()
+        self._update_slideshow_current_display(selected_left, selected_right)
+        applied, error_message = self._apply_slideshow_selection(selected_left, selected_right, cycle_phase="start")
         if not applied:
-            self.watch_running = False
+            self.slideshow_running = False
             self._refresh_action_availability()
-            self._update_watch_summary_display()
-            self._set_status("error", "watch", error_message or "watch start apply failed", error=error_message or "watch start apply failed")
-            self._log(f"Watch start failed: {error_message or 'watch start apply failed'}")
+            self._update_slideshow_summary_display()
+            self._set_status("error", "slideshow", error_message or "slideshow start apply failed", error=error_message or "slideshow start apply failed")
+            self._log(f"Slideshow start failed: {error_message or 'slideshow start apply failed'}")
             return False
-        self._set_status("success", "watch", "watch started")
+        self._set_status("success", "slideshow", "slideshow started")
         self._log(
-            f"Watch started: interval={self.watch_interval_seconds}s L={selected_left} R={selected_right}"
+            f"Slideshow started: interval={self.slideshow_interval_seconds}s L={selected_left} R={selected_right}"
         )
         return True
 
-    def on_watch_tick(self) -> bool:
-        if not self.watch_running:
-            self._log("Watch tick ignored: watch is idle")
+    def on_slideshow_tick(self) -> bool:
+        if not self.slideshow_running:
+            self._log("Slideshow tick ignored: slideshow is idle")
             return False
 
         selected_left = "-"
         selected_right = "-"
         sources: list[tuple[str, Path]] = []
-        if self.watch_srcdir_l.strip():
-            sources.append(("L", Path(self.watch_srcdir_l.strip())))
-        if self.watch_srcdir_r.strip():
-            sources.append(("R", Path(self.watch_srcdir_r.strip())))
+        if self.slideshow_srcdir_l.strip():
+            sources.append(("L", Path(self.slideshow_srcdir_l.strip())))
+        if self.slideshow_srcdir_r.strip():
+            sources.append(("R", Path(self.slideshow_srcdir_r.strip())))
 
         for side, source_dir in sources:
             try:
-                selected = self._run_watch_cycle_for_side(side, source_dir)
+                selected = self._run_slideshow_cycle_for_side(side, source_dir)
             except ValueError as exc:
-                self._set_status("error", "watch", f"watch srcdir {side} invalid", error=str(exc))
-                self._log(f"Watch tick failed ({side}): {exc}")
+                self._set_status("error", "slideshow", f"slideshow srcdir {side} invalid", error=str(exc))
+                self._log(f"Slideshow tick failed ({side}): {exc}")
                 return False
 
             if side == "L":
@@ -1243,56 +1243,56 @@ class MainWindow:
             else:
                 selected_right = selected
 
-        self._update_watch_current_display(selected_left, selected_right)
-        was_paused = self.watch_paused
+        self._update_slideshow_current_display(selected_left, selected_right)
+        was_paused = self.slideshow_paused
         if was_paused:
-            self._clear_watch_pause()
-        applied, error_message = self._apply_watch_selection(selected_left, selected_right, cycle_phase="tick")
-        if self.watch_paused:
-            self._log(f"Watch cycle paused: {self.watch_pause_reason}")
+            self._clear_slideshow_pause()
+        applied, error_message = self._apply_slideshow_selection(selected_left, selected_right, cycle_phase="tick")
+        if self.slideshow_paused:
+            self._log(f"Slideshow cycle paused: {self.slideshow_pause_reason}")
             return True
         if not applied:
-            self.watch_running = False
-            self._clear_watch_pause()
+            self.slideshow_running = False
+            self._clear_slideshow_pause()
             self._refresh_action_availability()
-            self._update_watch_summary_display()
-            self._set_status("error", "watch", error_message or "watch cycle apply failed", error=error_message or "watch cycle apply failed")
-            self._log(f"Watch tick stopped: {error_message or 'watch cycle apply failed'}")
+            self._update_slideshow_summary_display()
+            self._set_status("error", "slideshow", error_message or "slideshow cycle apply failed", error=error_message or "slideshow cycle apply failed")
+            self._log(f"Slideshow tick stopped: {error_message or 'slideshow cycle apply failed'}")
             return False
         if was_paused:
-            self._clear_watch_pause()
-            self._update_watch_summary_display()
-            self._set_status("success", "watch", "watch resumed")
-            self._watch_feedback_dirty = True
-            self._log("Watch resumed")
-        self._log(f"Watch tick: L={selected_left} R={selected_right}")
+            self._clear_slideshow_pause()
+            self._update_slideshow_summary_display()
+            self._set_status("success", "slideshow", "slideshow resumed")
+            self._slideshow_feedback_dirty = True
+            self._log("Slideshow resumed")
+        self._log(f"Slideshow tick: L={selected_left} R={selected_right}")
         return True
 
-    def on_watch_stop(self) -> bool:
-        if not self.watch_running:
-            self._set_status("idle", "watch", "watch stop ignored (idle)")
-            self._log("Watch stop ignored: watch is idle")
+    def on_slideshow_stop(self) -> bool:
+        if not self.slideshow_running:
+            self._set_status("idle", "slideshow", "slideshow stop ignored (idle)")
+            self._log("Slideshow stop ignored: slideshow is idle")
             return False
-        self.watch_running = False
-        self._clear_watch_pause()
-        self._watch_plugin_impl = None
+        self.slideshow_running = False
+        self._clear_slideshow_pause()
+        self._slideshow_plugin_impl = None
         self._refresh_action_availability()
-        self._update_watch_summary_display()
-        self._update_watch_current_display()
-        self._set_status("idle", "watch", "watch stopped")
-        self._log("Watch stopped")
+        self._update_slideshow_summary_display()
+        self._update_slideshow_current_display()
+        self._set_status("idle", "slideshow", "slideshow stopped")
+        self._log("Slideshow stopped")
         return True
 
-    def on_watch_interval_change(self, seconds: int) -> bool:
+    def on_slideshow_interval_change(self, seconds: int) -> bool:
         value = int(seconds)
         if value <= 0:
-            self._set_status("error", "watch", "watch interval must be positive", error="watch interval must be positive")
-            self._log(f"Watch interval rejected: {value}")
+            self._set_status("error", "slideshow", "slideshow interval must be positive", error="slideshow interval must be positive")
+            self._log(f"Slideshow interval rejected: {value}")
             return False
-        self.watch_interval_seconds = value
+        self.slideshow_interval_seconds = value
         self._refresh_action_availability()
-        self._set_status("idle", "watch", f"watch interval updated: {value}s")
-        self._log(f"Watch interval updated: {value}s")
+        self._set_status("idle", "slideshow", f"slideshow interval updated: {value}s")
+        self._log(f"Slideshow interval updated: {value}s")
         return True
 
     def on_close(self) -> None:
@@ -1362,7 +1362,7 @@ class MainWindow:
                 "menu-bar-header",
                 "flow-save-right",
                 "center-cross-layout",
-                "watch-tab-center-only",
+                "slideshow-tab-center-only",
                 "actions-right-lower",
                 "status-short-footer",
                 "color-hidden-slot",
@@ -1374,9 +1374,9 @@ class MainWindow:
                 "message": self.status_message,
                 "last_error": self.last_error,
                 "save_target": self.save_target_display,
-                "watch_summary": self.watch_summary_display,
-                "watch_sources": self.watch_source_display,
-                "watch_current": self.watch_current_display,
+                "slideshow_summary": self.slideshow_summary_display,
+                "slideshow_sources": self.slideshow_source_display,
+                "slideshow_current": self.slideshow_current_display,
             },
         }
 

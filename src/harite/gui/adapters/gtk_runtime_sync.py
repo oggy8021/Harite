@@ -20,24 +20,24 @@ def parse_margin_values(value: object | None) -> tuple[int, int, int, int]:
         return (0, 0, 0, 0)
 
 
-def sync_watch_state_from_owner(backend: Any, owner: Any) -> None:
-    backend._watch_srcdir_l = str(getattr(owner, "watch_srcdir_l", backend._watch_srcdir_l) or "")
-    backend._watch_srcdir_r = str(getattr(owner, "watch_srcdir_r", backend._watch_srcdir_r) or "")
-    backend._watch_running = bool(getattr(owner, "watch_running", backend._watch_running))
-    backend._watch_paused = bool(getattr(owner, "watch_paused", getattr(backend, "_watch_paused", False)))
-    backend._watch_state_l = getattr(owner, "_watch_state_l", backend._watch_state_l)
-    backend._watch_state_r = getattr(owner, "_watch_state_r", backend._watch_state_r)
-    backend._watch_previous_l = getattr(owner, "_watch_previous_l", backend._watch_previous_l)
-    backend._watch_previous_r = getattr(owner, "_watch_previous_r", backend._watch_previous_r)
-    interval_seconds = int(getattr(owner, "watch_interval_seconds", 0) or 0)
+def sync_slideshow_state_from_owner(backend: Any, owner: Any) -> None:
+    backend._slideshow_srcdir_l = str(getattr(owner, "slideshow_srcdir_l", backend._slideshow_srcdir_l) or "")
+    backend._slideshow_srcdir_r = str(getattr(owner, "slideshow_srcdir_r", backend._slideshow_srcdir_r) or "")
+    backend._slideshow_running = bool(getattr(owner, "slideshow_running", backend._slideshow_running))
+    backend._slideshow_paused = bool(getattr(owner, "slideshow_paused", getattr(backend, "_slideshow_paused", False)))
+    backend._slideshow_state_l = getattr(owner, "_slideshow_state_l", backend._slideshow_state_l)
+    backend._slideshow_state_r = getattr(owner, "_slideshow_state_r", backend._slideshow_state_r)
+    backend._slideshow_previous_l = getattr(owner, "_slideshow_previous_l", backend._slideshow_previous_l)
+    backend._slideshow_previous_r = getattr(owner, "_slideshow_previous_r", backend._slideshow_previous_r)
+    interval_seconds = int(getattr(owner, "slideshow_interval_seconds", 0) or 0)
     backend._set_spin_value("spnInterval", interval_seconds if interval_seconds > 0 else 60)
-    backend._set_button_enabled("btnDaemonize", bool(getattr(owner, "can_start_watch", False)))
-    backend._set_button_enabled("btnCancelDaemonize", bool(getattr(owner, "watch_running", False)))
-    backend._refresh_watch_source_labels()
-    backend._refresh_watch_summary_label()
-    backend._refresh_watch_current_label()
+    backend._set_button_enabled("btnDaemonize", bool(getattr(owner, "can_start_slideshow", False)))
+    backend._set_button_enabled("btnCancelDaemonize", bool(getattr(owner, "slideshow_running", False)))
+    backend._refresh_slideshow_source_labels()
+    backend._refresh_slideshow_summary_label()
+    backend._refresh_slideshow_current_label()
     form_state = getattr(owner, "form_state", None)
-    backend._refresh_watch_output_label(getattr(form_state, "output_dir", None) if form_state is not None else None)
+    backend._refresh_slideshow_output_label(getattr(form_state, "output_dir", None) if form_state is not None else None)
 
 
 def sync_main_state_from_owner(backend: Any, owner: Any) -> None:
@@ -162,7 +162,7 @@ def sync_margins_state_from_owner(backend: Any, owner: Any) -> None:
 
 
 def sync_feedback_from_owner(backend: Any, owner: Any) -> None:
-    phase = str(getattr(owner, "status_phase", "") or "").strip() or "watch"
+    phase = str(getattr(owner, "status_phase", "") or "").strip() or "slideshow"
     message = str(getattr(owner, "status_message", "") or "").strip() or "state-updated"
     error = str(getattr(owner, "last_error", "") or "").strip() or None
     if error == message:

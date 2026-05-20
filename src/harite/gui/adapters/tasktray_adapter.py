@@ -85,8 +85,8 @@ class GtkTaskTrayAdapter:
         self._indicator: Any | None = None
         self._menu: Any | None = None
         self._visible_item: Any | None = None
-        self._watch_start_item: Any | None = None
-        self._watch_stop_item: Any | None = None
+        self._slideshow_start_item: Any | None = None
+        self._slideshow_stop_item: Any | None = None
 
     def install(self) -> None:
         menu = self._build_menu()
@@ -121,13 +121,13 @@ class GtkTaskTrayAdapter:
         self._visible_item.connect("activate", self._on_toggle_visibility)
         menu.append(self._visible_item)
 
-        self._watch_start_item = self._gtk.MenuItem(label="Start Watch")
-        self._watch_start_item.connect("activate", self._on_watch_start)
-        menu.append(self._watch_start_item)
+        self._slideshow_start_item = self._gtk.MenuItem(label="Start Slideshow")
+        self._slideshow_start_item.connect("activate", self._on_slideshow_start)
+        menu.append(self._slideshow_start_item)
 
-        self._watch_stop_item = self._gtk.MenuItem(label="Stop Watch")
-        self._watch_stop_item.connect("activate", self._on_watch_stop)
-        menu.append(self._watch_stop_item)
+        self._slideshow_stop_item = self._gtk.MenuItem(label="Stop Slideshow")
+        self._slideshow_stop_item.connect("activate", self._on_slideshow_stop)
+        menu.append(self._slideshow_stop_item)
 
         separator = self._gtk.SeparatorMenuItem()
         menu.append(separator)
@@ -156,7 +156,7 @@ class GtkTaskTrayAdapter:
         if indicator_class is None or category is None:
             return None
 
-        icon_name = self._current_icon_name(watch_running=False)
+        icon_name = self._current_icon_name(slideshow_running=False)
         indicator = indicator_class.new("harite-tasktray", icon_name, category)
         if hasattr(indicator, "set_title"):
             indicator.set_title(f"Harite ({self._binding_name})")
@@ -167,20 +167,20 @@ class GtkTaskTrayAdapter:
         return True
 
     def refresh(self) -> None:
-        watch_running = self._watch_running()
-        can_start_watch = self._can_start_watch()
+        slideshow_running = self._slideshow_running()
+        can_start_slideshow = self._can_start_slideshow()
         visible = self._window_visible()
 
         if self._visible_item is not None and hasattr(self._visible_item, "set_label"):
             self._visible_item.set_label("Invisible" if visible else "Visible")
-        if self._watch_start_item is not None and hasattr(self._watch_start_item, "set_sensitive"):
-            self._watch_start_item.set_sensitive(can_start_watch)
-        if self._watch_stop_item is not None and hasattr(self._watch_stop_item, "set_sensitive"):
-            self._watch_stop_item.set_sensitive(watch_running)
+        if self._slideshow_start_item is not None and hasattr(self._slideshow_start_item, "set_sensitive"):
+            self._slideshow_start_item.set_sensitive(can_start_slideshow)
+        if self._slideshow_stop_item is not None and hasattr(self._slideshow_stop_item, "set_sensitive"):
+            self._slideshow_stop_item.set_sensitive(slideshow_running)
 
         indicator = self._indicator
         if indicator is not None:
-            icon_name = self._current_icon_name(watch_running=watch_running)
+            icon_name = self._current_icon_name(slideshow_running=slideshow_running)
             self._set_indicator_icon(indicator, icon_name)
 
     def _set_indicator_icon(self, indicator: Any, icon_name: str) -> None:
@@ -209,17 +209,17 @@ class GtkTaskTrayAdapter:
             return getter()
         return None
 
-    def _watch_running(self) -> bool:
+    def _slideshow_running(self) -> bool:
         owner = self._connected_owner()
         if owner is not None:
-            return bool(getattr(owner, "watch_running", False))
-        return bool(getattr(self._signal_backend, "_watch_running", False))
+            return bool(getattr(owner, "slideshow_running", False))
+        return bool(getattr(self._signal_backend, "_slideshow_running", False))
 
-    def _can_start_watch(self) -> bool:
+    def _can_start_slideshow(self) -> bool:
         owner = self._connected_owner()
         if owner is not None:
-            return bool(getattr(owner, "can_start_watch", False))
-        return not self._watch_running()
+            return bool(getattr(owner, "can_start_slideshow", False))
+        return not self._slideshow_running()
 
     def _present_main_window(self) -> None:
         if hasattr(self._window, "show_all"):
@@ -229,15 +229,15 @@ class GtkTaskTrayAdapter:
         if hasattr(self._window, "present"):
             self._window.present()
 
-    def _current_icon_name(self, *, watch_running: bool) -> str:
-        resource_name = "harite.svg" if watch_running else "harite_off.svg"
+    def _current_icon_name(self, *, slideshow_running: bool) -> str:
+        resource_name = "harite.svg" if slideshow_running else "harite_off.svg"
         try:
             resource_path = files("harite.gui").joinpath("resources", "icons", "product", resource_name)
             if resource_path.is_file():
                 return str(resource_path)
         except (FileNotFoundError, ModuleNotFoundError):
             pass
-        return "applications-graphics" if watch_running else "media-playback-pause"
+        return "applications-graphics" if slideshow_running else "media-playback-pause"
 
     def _invoke_backend(self, method_name: str, *, present_main_window: bool = False) -> None:
         callback = getattr(self._signal_backend, method_name, None)
@@ -256,11 +256,11 @@ class GtkTaskTrayAdapter:
             self._present_main_window()
         self.refresh()
 
-    def _on_watch_start(self, *_args: Any) -> None:
-        self._invoke_backend("_on_watch_start_clicked")
+    def _on_slideshow_start(self, *_args: Any) -> None:
+        self._invoke_backend("_on_slideshow_start_clicked")
 
-    def _on_watch_stop(self, *_args: Any) -> None:
-        self._invoke_backend("_on_watch_stop_clicked")
+    def _on_slideshow_stop(self, *_args: Any) -> None:
+        self._invoke_backend("_on_slideshow_stop_clicked")
 
     def _on_open_settings(self, *_args: Any) -> None:
         self._invoke_backend("_on_settings_clicked")
