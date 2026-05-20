@@ -15,7 +15,7 @@ from harite.gui.adapters.gtk_runtime_file_dialog_flow import format_input_displa
 from harite.gui.adapters.gtk_runtime_file_dialog_flow import notify_open_dialog_destroy
 from harite.gui.adapters.gtk_runtime_margin_text_gtk import apply_margin_text_widget_style
 from harite.gui.adapters.gtk_runtime_margin_text_gtk import on_margin_text_key_press
-from harite.gui.adapters.gtk_runtime_watch import get_glib_module
+from harite.gui.adapters.gtk_runtime_slideshow import get_glib_module
 from harite.gui.adapters.ui_adapter import create_mainwindow_signal_dispatch
 from harite.gui.views.main_window import MainWindow
 from harite.workspace import Display
@@ -697,7 +697,7 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("lblCurrentStateR") is not None
     assert backend.get_object("lblCommandSection") is not None
     assert backend.get_object("lblFlowLegend") is not None
-    assert backend.get_object("lblWatchSection") is not None
+    assert backend.get_object("lblSlideshowSection") is not None
     assert backend.get_object("lblError") is not None
 
 
@@ -743,7 +743,7 @@ def test_runtime_backend_adds_margins_tab_and_syncs_owner_state():
     assert len(notebook.pages) == 3
     assert notebook.pages[0][1].text == "Main"
     assert notebook.pages[1][1].text == "Margins (for each display)"
-    assert notebook.pages[2][1].text == "Watch (stopped)"
+    assert notebook.pages[2][1].text == "Slideshow (stopped)"
     assert backend.get_object("lblMarginsTabTitle").text == "Margins (for each display)"
     assert backend.get_object("radMarginTextModeBoth").get_active() is True
     assert backend.get_object("txtMarginText").get_text() == "margin-note"
@@ -1008,21 +1008,21 @@ def test_runtime_backend_shows_current_labels_and_controls():
 
     do_it = backend.get_object("lblDoItPlanned")
     priority = backend.get_object("lblPriorityRule")
-    watch_section = backend.get_object("lblWatchSection")
+    slideshow_section = backend.get_object("lblSlideshowSection")
     interval = backend.get_object("lblInterval")
     color_btn = backend.get_object("btnSetColor")
     save_path_chooser = backend.get_object("SavePathDialog")
     save_path_state = backend.get_object("lblSavePathState")
-    watch_start = backend.get_object("btnDaemonize")
-    watch_stop = backend.get_object("btnCancelDaemonize")
+    slideshow_start = backend.get_object("btnSlideshowStart")
+    slideshow_stop = backend.get_object("btnSlideshowStop")
     pick_state = backend.get_object("lblPickState")
     style_legend = backend.get_object("lblStyleLegend")
     command_section = backend.get_object("lblCommandSection")
     flow_legend = backend.get_object("lblFlowLegend")
-    watch_source_l = backend.get_object("lblWatchSourceL")
-    watch_source_r = backend.get_object("lblWatchSourceR")
-    watch_current = backend.get_object("lblWatchCurrent")
-    watch_output = backend.get_object("lblWatchOutput")
+    slideshow_source_l = backend.get_object("lblSlideshowSourceL")
+    slideshow_source_r = backend.get_object("lblSlideshowSourceR")
+    slideshow_current = backend.get_object("lblSlideshowCurrent")
+    slideshow_output = backend.get_object("lblSlideshowOutput")
     prefs_btn = backend.get_object("btnSetting")
     about_btn = backend.get_object("btnAbout")
     save_btn = backend.get_object("btnSave")
@@ -1039,7 +1039,7 @@ def test_runtime_backend_shows_current_labels_and_controls():
 
     assert do_it.text == "Apply updates wallpaper immediately"
     assert priority.text == "Rule: margins define area; align/valign act inside it"
-    assert watch_section.text == ""
+    assert slideshow_section.text == ""
     assert interval.text == "Interval"
     assert color_btn.label == "Color"
     assert backend.get_object("btnOpenSave") is None
@@ -1047,12 +1047,12 @@ def test_runtime_backend_shows_current_labels_and_controls():
     assert hasattr(save_path_chooser, "get_filename")
     assert hasattr(save_path_chooser, "set_filename")
     assert save_path_state.text == "Save path: idle"
-    assert watch_start.label == "Watch Start"
-    assert watch_stop.label == "Watch Stop"
-    assert watch_source_l.text == "L: -"
-    assert watch_source_r.text == "R: -"
-    assert watch_current.text == "Watch current: idle"
-    assert watch_output.text == "Watch output: ."
+    assert slideshow_start.label == "Slideshow Start"
+    assert slideshow_stop.label == "Slideshow Stop"
+    assert slideshow_source_l.text == "L: -"
+    assert slideshow_source_r.text == "R: -"
+    assert slideshow_current.text == "Slideshow current: idle"
+    assert slideshow_output.text == "Slideshow output: ."
     assert pick_state.text == ""
     assert style_legend.text == "Current behavior: margins are global to the composite canvas"
     assert command_section.text == ""
@@ -1075,7 +1075,7 @@ def test_runtime_backend_shows_current_labels_and_controls():
     assert tgl_lower_r.label == "Bottom-R"
 
 
-def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(monkeypatch, tmp_path):
+def test_runtime_backend_slideshow_srcdir_selection_and_slideshow_cycle_updates_labels(monkeypatch, tmp_path):
     class DummyPlugin:
         def apply(self, path: str, *, dry_run: bool = True) -> bool:
             return True
@@ -1088,16 +1088,16 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(m
     srcdir_dialog = backend.get_object("SrcdirDialog")
     srcdir_l = backend.get_object("btnOpenSrcdirL")
     interval = backend.get_object("spnInterval")
-    watch_start = backend.get_object("btnDaemonize")
-    watch_stop = backend.get_object("btnCancelDaemonize")
-    watch_source_l = backend.get_object("lblWatchSourceL")
-    watch_source_r = backend.get_object("lblWatchSourceR")
-    watch_current = backend.get_object("lblWatchCurrent")
-    watch_output = backend.get_object("lblWatchOutput")
-    watch_tab_title = backend.get_object("lblWatchTabTitle")
+    slideshow_start = backend.get_object("btnSlideshowStart")
+    slideshow_stop = backend.get_object("btnSlideshowStop")
+    slideshow_source_l = backend.get_object("lblSlideshowSourceL")
+    slideshow_source_r = backend.get_object("lblSlideshowSourceR")
+    slideshow_current = backend.get_object("lblSlideshowCurrent")
+    slideshow_output = backend.get_object("lblSlideshowOutput")
+    slideshow_tab_title = backend.get_object("lblSlideshowTabTitle")
     status = backend.get_object("lblStatus")
 
-    left_dir = tmp_path / "watch-left"
+    left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
     (left_dir / "left-2.jpg").write_bytes(b"left-2")
@@ -1105,46 +1105,46 @@ def test_runtime_backend_watch_srcdir_selection_and_watch_cycle_updates_labels(m
     dispatch = create_mainwindow_signal_dispatch(
         window,
         (
-            "on_pick_watch_srcdir",
-            "on_watch_start",
-            "on_watch_tick",
-            "on_watch_stop",
-            "on_watch_interval_change",
+            "on_pick_slideshow_srcdir",
+            "on_slideshow_start",
+            "on_slideshow_tick",
+            "on_slideshow_stop",
+            "on_slideshow_interval_change",
         ),
     )
     backend.connect_signals(dispatch)
-    window.form_state.output_dir = str(tmp_path / "watch-output")
-    backend._sync_watch_state_from_owner(window)
+    window.form_state.output_dir = str(tmp_path / "slideshow-output")
+    backend._sync_slideshow_state_from_owner(window)
 
     srcdir_l.click()
     srcdir_dialog.set_current_folder(str(left_dir))
     srcdir_dialog.confirm()
 
-    assert watch_source_l.text == f"L: {left_dir}"
-    assert watch_source_r.text == "R: -"
-    assert watch_output.text == f"Watch output: {tmp_path / 'watch-output'}"
+    assert slideshow_source_l.text == f"L: {left_dir}"
+    assert slideshow_source_r.text == "R: -"
+    assert slideshow_output.text == f"Slideshow output: {tmp_path / 'slideshow-output'}"
 
     interval.set_value(90)
     interval.emit("value-changed", interval)
-    assert status.text == "Watch: interval-updated(90s)"
-    assert watch_tab_title.text == "Watch (stopped)"
+    assert status.text == "Slideshow: interval-updated(90s)"
+    assert slideshow_tab_title.text == "Slideshow (stopped)"
 
-    watch_start.click()
-    assert status.text == "Watch: started"
-    assert watch_tab_title.text == "Watch (running)"
-    assert watch_current.text == f"Watch current: L={left_dir / 'left-1.jpg'} | R=-"
+    slideshow_start.click()
+    assert status.text == "Slideshow: started"
+    assert slideshow_tab_title.text == "Slideshow (running)"
+    assert slideshow_current.text == f"Slideshow current: L={left_dir / 'left-1.jpg'} | R=-"
 
-    assert backend.run_watch_cycle_once() is True
-    assert watch_tab_title.text == "Watch (running)"
-    assert watch_current.text == f"Watch current: L={left_dir / 'left-2.jpg'} | R=-"
+    assert backend.run_slideshow_cycle_once() is True
+    assert slideshow_tab_title.text == "Slideshow (running)"
+    assert slideshow_current.text == f"Slideshow current: L={left_dir / 'left-2.jpg'} | R=-"
 
-    watch_stop.click()
-    assert status.text == "Watch: stopped"
-    assert watch_tab_title.text == "Watch (stopped)"
-    assert backend.run_watch_cycle_once() is False
+    slideshow_stop.click()
+    assert status.text == "Slideshow: stopped"
+    assert slideshow_tab_title.text == "Slideshow (stopped)"
+    assert backend.run_slideshow_cycle_once() is False
 
 
-def test_runtime_backend_watch_start_button_requires_both_srcdirs(monkeypatch, tmp_path):
+def test_runtime_backend_slideshow_start_button_requires_both_srcdirs(monkeypatch, tmp_path):
     class DummyPlugin:
         def apply(self, path: str, *, dry_run: bool = True) -> bool:
             return True
@@ -1157,11 +1157,11 @@ def test_runtime_backend_watch_start_button_requires_both_srcdirs(monkeypatch, t
     srcdir_dialog = backend.get_object("SrcdirDialog")
     srcdir_l = backend.get_object("btnOpenSrcdirL")
     srcdir_r = backend.get_object("btnOpenSrcdirR")
-    watch_start = backend.get_object("btnDaemonize")
-    watch_stop = backend.get_object("btnCancelDaemonize")
+    slideshow_start = backend.get_object("btnSlideshowStart")
+    slideshow_stop = backend.get_object("btnSlideshowStop")
 
-    left_dir = tmp_path / "watch-left"
-    right_dir = tmp_path / "watch-right"
+    left_dir = tmp_path / "slideshow-left"
+    right_dir = tmp_path / "slideshow-right"
     left_dir.mkdir()
     right_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
@@ -1170,38 +1170,38 @@ def test_runtime_backend_watch_start_button_requires_both_srcdirs(monkeypatch, t
     dispatch = create_mainwindow_signal_dispatch(
         window,
         (
-            "on_pick_watch_srcdir",
-            "on_watch_start",
-            "on_watch_tick",
-            "on_watch_stop",
-            "on_watch_interval_change",
+            "on_pick_slideshow_srcdir",
+            "on_slideshow_start",
+            "on_slideshow_tick",
+            "on_slideshow_stop",
+            "on_slideshow_interval_change",
         ),
     )
     backend.connect_signals(dispatch)
 
-    assert watch_start.sensitive is False
-    assert watch_stop.sensitive is False
+    assert slideshow_start.sensitive is False
+    assert slideshow_stop.sensitive is False
 
     srcdir_l.click()
     srcdir_dialog.set_current_folder(str(left_dir))
     srcdir_dialog.confirm()
 
-    assert watch_start.sensitive is False
+    assert slideshow_start.sensitive is False
 
     srcdir_r.click()
     srcdir_dialog.set_current_folder(str(right_dir))
     srcdir_dialog.confirm()
 
-    assert watch_start.sensitive is True
+    assert slideshow_start.sensitive is True
 
 
-def test_runtime_backend_watch_srcdir_confirm_reports_legacy_handler_signature_error(tmp_path):
+def test_runtime_backend_slideshow_srcdir_confirm_reports_legacy_handler_signature_error(tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    left_dir = tmp_path / "watch-left"
+    left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
 
-    backend.connect_signals({"on_pick_watch_srcdir": lambda: True})
+    backend.connect_signals({"on_pick_slideshow_srcdir": lambda: True})
 
     backend.get_object("btnOpenSrcdirL").click()
     backend.get_object("SrcdirDialog").set_current_folder(str(left_dir))
@@ -1211,15 +1211,15 @@ def test_runtime_backend_watch_srcdir_confirm_reports_legacy_handler_signature_e
     assert "takes 0 positional arguments" in backend.get_object("lblError").text
 
 
-def test_runtime_backend_watch_srcdir_confirm_propagates_unexpected_runtime_error(tmp_path):
+def test_runtime_backend_slideshow_srcdir_confirm_propagates_unexpected_runtime_error(tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    left_dir = tmp_path / "watch-left"
+    left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
 
     backend.connect_signals(
         {
-            "on_pick_watch_srcdir": lambda _folder, _side: (_ for _ in ()).throw(RuntimeError("srcdir confirm exploded")),
+            "on_pick_slideshow_srcdir": lambda _folder, _side: (_ for _ in ()).throw(RuntimeError("srcdir confirm exploded")),
         }
     )
 
@@ -1230,7 +1230,7 @@ def test_runtime_backend_watch_srcdir_confirm_propagates_unexpected_runtime_erro
         backend.get_object("SrcdirDialog").confirm()
 
 
-def test_runtime_backend_connect_signals_syncs_watch_output_from_owner():
+def test_runtime_backend_connect_signals_syncs_slideshow_output_from_owner():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
     window.form_state.output_dir = "/gui/pictures"
@@ -1238,81 +1238,81 @@ def test_runtime_backend_connect_signals_syncs_watch_output_from_owner():
     dispatch = create_mainwindow_signal_dispatch(
         window,
         (
-            "on_watch_start",
-            "on_watch_tick",
-            "on_watch_stop",
-            "on_watch_interval_change",
+            "on_slideshow_start",
+            "on_slideshow_tick",
+            "on_slideshow_stop",
+            "on_slideshow_interval_change",
         ),
     )
     backend.connect_signals(dispatch)
 
-    assert backend.get_object("lblWatchOutput").text == "Watch output: /gui/pictures"
+    assert backend.get_object("lblSlideshowOutput").text == "Slideshow output: /gui/pictures"
 
 
-def test_runtime_backend_watch_interval_change_uses_integer_contract_without_owner():
+def test_runtime_backend_slideshow_interval_change_uses_integer_contract_without_owner():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     interval = backend.get_object("spnInterval")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
     observed = {}
 
-    def on_watch_interval_change(seconds):
+    def on_slideshow_interval_change(seconds):
         observed["seconds"] = seconds
         return True
 
-    backend.connect_signals({"on_watch_interval_change": on_watch_interval_change})
+    backend.connect_signals({"on_slideshow_interval_change": on_slideshow_interval_change})
 
     interval.set_value(75)
     interval.emit("value-changed", interval)
 
     assert observed == {"seconds": 75}
-    assert status.text == "Watch: interval-updated(75s)"
+    assert status.text == "Slideshow: interval-updated(75s)"
     assert error.text == "Error: none"
 
 
-def test_runtime_backend_watch_interval_change_reports_legacy_widget_signature_error():
+def test_runtime_backend_slideshow_interval_change_reports_legacy_widget_signature_error():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     interval = backend.get_object("spnInterval")
 
-    backend.connect_signals({"on_watch_interval_change": lambda widget, extra: True})
+    backend.connect_signals({"on_slideshow_interval_change": lambda widget, extra: True})
 
     interval.set_value(75)
     interval.emit("value-changed", interval)
 
-    assert backend.get_object("lblStatus").text == "Watch: error"
+    assert backend.get_object("lblStatus").text == "Slideshow: error"
     assert "required positional argument" in backend.get_object("lblError").text or "positional arguments" in backend.get_object("lblError").text
 
 
-def test_runtime_backend_watch_start_propagates_unexpected_runtime_error():
+def test_runtime_backend_slideshow_start_propagates_unexpected_runtime_error():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
-    backend.connect_signals({"on_watch_start": lambda: (_ for _ in ()).throw(RuntimeError("watch start exploded"))})
+    backend.connect_signals({"on_slideshow_start": lambda: (_ for _ in ()).throw(RuntimeError("slideshow start exploded"))})
 
-    with pytest.raises(RuntimeError, match="watch start exploded"):
-        backend.get_object("btnDaemonize").click()
+    with pytest.raises(RuntimeError, match="slideshow start exploded"):
+        backend.get_object("btnSlideshowStart").click()
 
 
-def test_runtime_backend_watch_stop_propagates_unexpected_runtime_error():
+def test_runtime_backend_slideshow_stop_propagates_unexpected_runtime_error():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
-    backend._watch_running = True
+    backend._slideshow_running = True
 
-    backend.connect_signals({"on_watch_stop": lambda: (_ for _ in ()).throw(RuntimeError("watch stop exploded"))})
+    backend.connect_signals({"on_slideshow_stop": lambda: (_ for _ in ()).throw(RuntimeError("slideshow stop exploded"))})
 
-    with pytest.raises(RuntimeError, match="watch stop exploded"):
-        backend.get_object("btnCancelDaemonize").click()
+    with pytest.raises(RuntimeError, match="slideshow stop exploded"):
+        backend.get_object("btnSlideshowStop").click()
 
 
-def test_runtime_backend_watch_tick_propagates_unexpected_runtime_error():
+def test_runtime_backend_slideshow_tick_propagates_unexpected_runtime_error():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
-    backend._watch_running = True
+    backend._slideshow_running = True
 
-    backend.connect_signals({"on_watch_tick": lambda: (_ for _ in ()).throw(RuntimeError("watch tick exploded"))})
+    backend.connect_signals({"on_slideshow_tick": lambda: (_ for _ in ()).throw(RuntimeError("slideshow tick exploded"))})
 
-    with pytest.raises(RuntimeError, match="watch tick exploded"):
-        backend.run_watch_cycle_once()
+    with pytest.raises(RuntimeError, match="slideshow tick exploded"):
+        backend.run_slideshow_cycle_once()
 
 
-def test_runtime_backend_watch_start_registers_timer_and_stop_removes_it(monkeypatch, tmp_path):
+def test_runtime_backend_slideshow_start_registers_timer_and_stop_removes_it(monkeypatch, tmp_path):
     class DummyPlugin:
         def __init__(self):
             self.calls = []
@@ -1331,11 +1331,11 @@ def test_runtime_backend_watch_start_registers_timer_and_stop_removes_it(monkeyp
     srcdir_dialog = backend.get_object("SrcdirDialog")
     srcdir_l = backend.get_object("btnOpenSrcdirL")
     interval = backend.get_object("spnInterval")
-    watch_start = backend.get_object("btnDaemonize")
-    watch_stop = backend.get_object("btnCancelDaemonize")
-    watch_current = backend.get_object("lblWatchCurrent")
+    slideshow_start = backend.get_object("btnSlideshowStart")
+    slideshow_stop = backend.get_object("btnSlideshowStop")
+    slideshow_current = backend.get_object("lblSlideshowCurrent")
 
-    left_dir = tmp_path / "watch-left"
+    left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
     (left_dir / "left-2.jpg").write_bytes(b"left-2")
@@ -1343,11 +1343,11 @@ def test_runtime_backend_watch_start_registers_timer_and_stop_removes_it(monkeyp
     dispatch = create_mainwindow_signal_dispatch(
         window,
         (
-            "on_pick_watch_srcdir",
-            "on_watch_start",
-            "on_watch_tick",
-            "on_watch_stop",
-            "on_watch_interval_change",
+            "on_pick_slideshow_srcdir",
+            "on_slideshow_start",
+            "on_slideshow_tick",
+            "on_slideshow_stop",
+            "on_slideshow_interval_change",
         ),
     )
     backend.connect_signals(dispatch)
@@ -1359,24 +1359,24 @@ def test_runtime_backend_watch_start_registers_timer_and_stop_removes_it(monkeyp
     interval.set_value(45)
     interval.emit("value-changed", interval)
 
-    watch_start.click()
+    slideshow_start.click()
 
-    assert backend._watch_timer_source_id == 1
+    assert backend._slideshow_timer_source_id == 1
     assert _FakeGLib.registered_sources[1]["interval_ms"] == 45000
     assert plugin.calls == [(str(left_dir / "left-1.jpg"), False)]
 
     timer_callback = _FakeGLib.registered_sources[1]["callback"]
     assert timer_callback() is True
-    assert watch_current.text == f"Watch current: L={left_dir / 'left-2.jpg'} | R=-"
+    assert slideshow_current.text == f"Slideshow current: L={left_dir / 'left-2.jpg'} | R=-"
     assert plugin.calls[-1] == (str(left_dir / "left-2.jpg"), False)
 
-    watch_stop.click()
+    slideshow_stop.click()
 
-    assert backend._watch_timer_source_id is None
+    assert backend._slideshow_timer_source_id is None
     assert _FakeGLib.removed_sources == [1]
 
 
-def test_runtime_backend_shows_owner_watch_start_failure_reason(monkeypatch, tmp_path):
+def test_runtime_backend_shows_owner_slideshow_start_failure_reason(monkeypatch, tmp_path):
     monkeypatch.setattr(
         "harite.gui.views.main_window.build_two_screen_optimize_context",
         lambda: None,
@@ -1389,13 +1389,13 @@ def test_runtime_backend_shows_owner_watch_start_failure_reason(monkeypatch, tmp
     srcdir_dialog = backend.get_object("SrcdirDialog")
     srcdir_l = backend.get_object("btnOpenSrcdirL")
     srcdir_r = backend.get_object("btnOpenSrcdirR")
-    watch_start = backend.get_object("btnDaemonize")
+    slideshow_start = backend.get_object("btnSlideshowStart")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
-    watch_tab_title = backend.get_object("lblWatchTabTitle")
+    slideshow_tab_title = backend.get_object("lblSlideshowTabTitle")
 
-    left_dir = tmp_path / "watch-left"
-    right_dir = tmp_path / "watch-right"
+    left_dir = tmp_path / "slideshow-left"
+    right_dir = tmp_path / "slideshow-right"
     left_dir.mkdir()
     right_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
@@ -1404,11 +1404,11 @@ def test_runtime_backend_shows_owner_watch_start_failure_reason(monkeypatch, tmp
     dispatch = create_mainwindow_signal_dispatch(
         window,
         (
-            "on_pick_watch_srcdir",
-            "on_watch_start",
-            "on_watch_tick",
-            "on_watch_stop",
-            "on_watch_interval_change",
+            "on_pick_slideshow_srcdir",
+            "on_slideshow_start",
+            "on_slideshow_tick",
+            "on_slideshow_stop",
+            "on_slideshow_interval_change",
         ),
     )
     backend.connect_signals(dispatch)
@@ -1420,14 +1420,14 @@ def test_runtime_backend_shows_owner_watch_start_failure_reason(monkeypatch, tmp
     srcdir_dialog.set_current_folder(str(right_dir))
     srcdir_dialog.confirm()
 
-    watch_start.click()
+    slideshow_start.click()
 
-    assert status.text == "Watch: dual-source watch requires two detected displays"
+    assert status.text == "Slideshow: dual-source slideshow requires two detected displays"
     assert error.text == "Error: none"
-    assert watch_tab_title.text == "Watch (stopped)"
+    assert slideshow_tab_title.text == "Slideshow (stopped)"
 
 
-def test_runtime_backend_shows_owner_watch_tick_failure_reason(monkeypatch, tmp_path):
+def test_runtime_backend_shows_owner_slideshow_tick_failure_reason(monkeypatch, tmp_path):
     class DummyPlugin:
         def __init__(self):
             self.calls = 0
@@ -1444,13 +1444,13 @@ def test_runtime_backend_shows_owner_watch_tick_failure_reason(monkeypatch, tmp_
 
     srcdir_dialog = backend.get_object("SrcdirDialog")
     srcdir_l = backend.get_object("btnOpenSrcdirL")
-    watch_start = backend.get_object("btnDaemonize")
-    watch_current = backend.get_object("lblWatchCurrent")
-    watch_tab_title = backend.get_object("lblWatchTabTitle")
+    slideshow_start = backend.get_object("btnSlideshowStart")
+    slideshow_current = backend.get_object("lblSlideshowCurrent")
+    slideshow_tab_title = backend.get_object("lblSlideshowTabTitle")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
 
-    left_dir = tmp_path / "watch-left"
+    left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
     (left_dir / "left-2.jpg").write_bytes(b"left-2")
@@ -1458,11 +1458,11 @@ def test_runtime_backend_shows_owner_watch_tick_failure_reason(monkeypatch, tmp_
     dispatch = create_mainwindow_signal_dispatch(
         window,
         (
-            "on_pick_watch_srcdir",
-            "on_watch_start",
-            "on_watch_tick",
-            "on_watch_stop",
-            "on_watch_interval_change",
+            "on_pick_slideshow_srcdir",
+            "on_slideshow_start",
+            "on_slideshow_tick",
+            "on_slideshow_stop",
+            "on_slideshow_interval_change",
         ),
     )
     backend.connect_signals(dispatch)
@@ -1471,18 +1471,18 @@ def test_runtime_backend_shows_owner_watch_tick_failure_reason(monkeypatch, tmp_
     srcdir_dialog.set_current_folder(str(left_dir))
     srcdir_dialog.confirm()
 
-    watch_start.click()
-    assert status.text == "Watch: started"
-    assert watch_tab_title.text == "Watch (running)"
+    slideshow_start.click()
+    assert status.text == "Slideshow: started"
+    assert slideshow_tab_title.text == "Slideshow (running)"
 
-    assert backend.run_watch_cycle_once() is False
-    assert status.text == "Watch: watch cycle single-file apply failed"
+    assert backend.run_slideshow_cycle_once() is False
+    assert status.text == "Slideshow: slideshow cycle single-file apply failed"
     assert error.text == "Error: none"
-    assert watch_tab_title.text == "Watch (stopped)"
-    assert watch_current.text == f"Watch current: L={left_dir / 'left-2.jpg'} | R=-"
+    assert slideshow_tab_title.text == "Slideshow (stopped)"
+    assert slideshow_current.text == f"Slideshow current: L={left_dir / 'left-2.jpg'} | R=-"
 
 
-def test_runtime_backend_watch_cycle_pauses_when_detected_displays_temporarily_drop(monkeypatch, tmp_path):
+def test_runtime_backend_slideshow_cycle_pauses_when_detected_displays_temporarily_drop(monkeypatch, tmp_path):
     class DummyPlugin:
         def __init__(self):
             self.calls = []
@@ -1506,7 +1506,7 @@ def test_runtime_backend_watch_cycle_pauses_when_detected_displays_temporarily_d
         ),
     )
 
-    composite = tmp_path / "watch-composite.jpg"
+    composite = tmp_path / "slideshow-composite.jpg"
     composite.write_bytes(b"composite")
 
     resolve_calls = 0
@@ -1535,8 +1535,8 @@ def test_runtime_backend_watch_cycle_pauses_when_detected_displays_temporarily_d
     window.plugin_name = "linux"
     monkeypatch.setattr(window.controller, "run_optimize", fake_run_optimize)
 
-    left_dir = tmp_path / "watch-left"
-    right_dir = tmp_path / "watch-right"
+    left_dir = tmp_path / "slideshow-left"
+    right_dir = tmp_path / "slideshow-right"
     left_dir.mkdir()
     right_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
@@ -1547,10 +1547,10 @@ def test_runtime_backend_watch_cycle_pauses_when_detected_displays_temporarily_d
     dispatch = create_mainwindow_signal_dispatch(
         window,
         (
-            "on_pick_watch_srcdir",
-            "on_watch_start",
-            "on_watch_tick",
-            "on_watch_stop",
+            "on_pick_slideshow_srcdir",
+            "on_slideshow_start",
+            "on_slideshow_tick",
+            "on_slideshow_stop",
         ),
     )
     backend.connect_signals(dispatch)
@@ -1558,10 +1558,10 @@ def test_runtime_backend_watch_cycle_pauses_when_detected_displays_temporarily_d
     srcdir_dialog = backend.get_object("SrcdirDialog")
     srcdir_l = backend.get_object("btnOpenSrcdirL")
     srcdir_r = backend.get_object("btnOpenSrcdirR")
-    watch_start = backend.get_object("btnDaemonize")
+    slideshow_start = backend.get_object("btnSlideshowStart")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
-    watch_tab_title = backend.get_object("lblWatchTabTitle")
+    slideshow_tab_title = backend.get_object("lblSlideshowTabTitle")
 
     srcdir_l.click()
     srcdir_dialog.set_current_folder(str(left_dir))
@@ -1570,14 +1570,14 @@ def test_runtime_backend_watch_cycle_pauses_when_detected_displays_temporarily_d
     srcdir_dialog.set_current_folder(str(right_dir))
     srcdir_dialog.confirm()
 
-    watch_start.click()
-    assert status.text == "Watch: started"
-    assert watch_tab_title.text == "Watch (running)"
+    slideshow_start.click()
+    assert status.text == "Slideshow: started"
+    assert slideshow_tab_title.text == "Slideshow (running)"
 
-    assert backend.run_watch_cycle_once() is True
-    assert status.text == "Watch: watch paused: waiting for two detected displays for auto-split"
+    assert backend.run_slideshow_cycle_once() is True
+    assert status.text == "Slideshow: slideshow paused: waiting for two detected displays for auto-split"
     assert error.text == "Error: none"
-    assert watch_tab_title.text == "Watch (paused)"
+    assert slideshow_tab_title.text == "Slideshow (paused)"
 
 
 def test_runtime_backend_open_l_uses_dialog_selection_and_calls_pick_handler():
@@ -2804,7 +2804,7 @@ def test_runtime_backend_settings_button_dispatches_open_handler(monkeypatch, tm
     assert backend.get_object("radSettingsApplySingle").get_active() is True
     assert backend.get_object("lblSettingsNotice").text == "現在は未保存です"
     assert backend.get_object("btnPrefsApply") is None
-    assert backend.get_object("spnPrefsWatchInterval") is None
+    assert backend.get_object("spnPrefsSlideshowInterval") is None
 
 
 def test_runtime_backend_settings_open_reports_notice_build_failure(monkeypatch):
@@ -2882,8 +2882,8 @@ def test_runtime_backend_settings_ok_save_and_cancel_dispatch_handlers(tmp_path)
             "resolution": "1920x1080",
             "plugin": "linux",
             "apply_mode": "single-file",
-            "watch_interval_seconds": 60,
-            "watch_srcdir_l": "/watch/left",
+            "slideshow_interval_seconds": 60,
+            "slideshow_srcdir_l": "/slideshow/left",
         }
     )
     dialog.set_export_path(str(export_path))
@@ -2913,8 +2913,8 @@ def test_runtime_backend_settings_ok_save_and_cancel_dispatch_handlers(tmp_path)
     assert observed["apply"]["valign"] == ["center", "center"]
     assert observed["apply"]["plugin"] == "xfce"
     assert observed["apply"]["apply_mode"] == "per-monitor-auto-split"
-    assert observed["apply"]["watch_interval_seconds"] == 60
-    assert observed["apply"]["watch_srcdir_l"] == "/watch/left"
+    assert observed["apply"]["slideshow_interval_seconds"] == 60
+    assert observed["apply"]["slideshow_srcdir_l"] == "/slideshow/left"
     assert dialog.is_visible() is False
     assert backend.get_object("lblSettingsState").text == "Settings: current values"
     assert backend.get_object("lblStatus").text == "SettingsApply: applied"
@@ -2927,8 +2927,8 @@ def test_runtime_backend_settings_ok_save_and_cancel_dispatch_handlers(tmp_path)
     backend.get_object("btnSettingsSave").click()
     assert observed["save"][0] == str(export_path)
     assert observed["save"][1]["plugin"] == "saved-plugin"
-    assert observed["save"][1]["watch_interval_seconds"] == 60
-    assert observed["save"][1]["watch_srcdir_l"] == "/watch/left"
+    assert observed["save"][1]["slideshow_interval_seconds"] == 60
+    assert observed["save"][1]["slideshow_srcdir_l"] == "/slideshow/left"
     assert backend.get_object("lblSettingsState").text == "Settings: current values"
     assert backend.get_object("lblSettingsNotice").text == "Settings: saved"
 
