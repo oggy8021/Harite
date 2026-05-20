@@ -6,7 +6,7 @@ from typing import Any, Callable, Mapping
 
 RUNTIME_HANDLER_MAP: dict[str, str] = {
     "on_open_settings_dialog": "on_open_settings_dialog",
-    "on_get_settings_config": "on_get_settings_config",
+    "on_get_settings": "on_get_settings",
     "on_apply_settings": "on_apply_settings",
     "on_load_settings_file": "on_load_settings_file",
     "on_save_settings_file": "on_save_settings_file",

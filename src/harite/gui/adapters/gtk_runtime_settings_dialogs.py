@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from harite.config import resolve_default_settings_path
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color
 from harite.optimize_settings import AUTO
 from harite.positioning import format_position_pair, parse_position_pair
+from harite.settings_file import resolve_default_settings_path
 
 
 def set_settings_two_screen_mode(backend: Any, value: object) -> None:
@@ -75,11 +75,34 @@ def build_settings_open_notice(backend: Any) -> str:
     return "現在は未保存です"
 
 
+def _dialog_get_settings(dialog: Any) -> dict[str, object]:
+    if dialog is None:
+        return {}
+    getter = getattr(dialog, "get_settings", None)
+    if callable(getter):
+        return dict(getter())
+    return {}
+
+
+def _dialog_set_settings(dialog: Any, settings: dict[str, object]) -> bool:
+    if dialog is None:
+        return False
+    setter = getattr(dialog, "set_settings", None)
+    if callable(setter):
+        setter(settings)
+        return True
+    return False
+
+
+def _settings_getter(backend: Any) -> Any:
+    return backend._signal_handlers.get("on_get_settings")
+
+
 def sync_settings_widgets_from_dialog(backend: Any) -> dict[str, object]:
     dialog = backend._objects.get("SettingsDialog")
-    if dialog is None or not hasattr(dialog, "get_settings_config"):
+    if dialog is None:
         return {}
-    settings = dict(dialog.get_settings_config())
+    settings = _dialog_get_settings(dialog)
     resolution = settings.get("resolution")
     backend._set_entry_text("entSettingsResolution", "" if resolution in {None, AUTO} else resolution)
     backend._set_entry_text("entSettingsScaling", settings.get("scaling", "fit"))
@@ -104,8 +127,8 @@ def sync_settings_widgets_from_dialog(backend: Any) -> dict[str, object]:
 def sync_settings_dialog_from_widgets(backend: Any) -> dict[str, object]:
     dialog = backend._objects.get("SettingsDialog")
     settings: dict[str, object] = {}
-    if dialog is not None and hasattr(dialog, "get_settings_config"):
-        settings = dict(dialog.get_settings_config())
+    if dialog is not None:
+        settings = _dialog_get_settings(dialog)
 
     def _empty_to_none(value: str) -> str | None:
         return value if value else None
@@ -143,28 +166,25 @@ def sync_settings_dialog_from_widgets(backend: Any) -> dict[str, object]:
     else:
         settings["r_display"] = r_display
     if dialog is not None:
-        if hasattr(dialog, "set_settings_config"):
-            dialog.set_settings_config(settings)
+        _dialog_set_settings(dialog, settings)
     return settings
 
 
 def refresh_settings_dialog_from_getter(backend: Any) -> None:
     dialog = backend._objects.get("SettingsDialog")
-    getter = backend._signal_handlers.get("on_get_settings_config")
-    if getter is None or dialog is None or not hasattr(dialog, "set_settings_config"):
+    getter = _settings_getter(backend)
+    if getter is None or dialog is None:
         return
 
-    current_settings: dict[str, object] = {}
-    if hasattr(dialog, "get_settings_config"):
-        current_settings = dict(dialog.get_settings_config())
+    current_settings = _dialog_get_settings(dialog)
 
     refreshed = dict(current_settings)
     refreshed.update(dict(getter()))
-    dialog.set_settings_config(refreshed)
+    _dialog_set_settings(dialog, refreshed)
 
 
 def refresh_color_dialog_from_getter(backend: Any) -> str:
-    getter = backend._signal_handlers.get("on_get_settings_config")
+    getter = _settings_getter(backend)
     dialog = backend._objects.get("ColorDialog")
     background_color = dialog.get_color() if dialog is not None and hasattr(dialog, "get_color") else DEFAULT_BACKGROUND_COLOR_HEX
     if getter is not None:
@@ -195,11 +215,11 @@ def refresh_about_dialog_from_getter(backend: Any) -> dict[str, object]:
 
 def store_background_color_in_settings_dialog(backend: Any, color: str) -> None:
     dialog = backend._objects.get("SettingsDialog")
-    if dialog is None or not hasattr(dialog, "get_settings_config") or not hasattr(dialog, "set_settings_config"):
+    if dialog is None:
         return
-    settings = dict(dialog.get_settings_config())
+    settings = _dialog_get_settings(dialog)
     settings["background_color"] = normalize_background_color(color)
-    dialog.set_settings_config(settings)
+    _dialog_set_settings(dialog, settings)
 
 
 def on_settings_clicked(backend: Any, *_args: Any) -> None:
@@ -236,7 +256,7 @@ def on_settings_apply_clicked(backend: Any, *_args: Any) -> None:
     handler_name = "on_apply_settings"
     callback = backend._signal_handlers.get(handler_name)
     dialog = backend._objects.get("SettingsDialog")
-    if callback is None or dialog is None or not hasattr(dialog, "get_settings_config"):
+    if callback is None or dialog is None:
         backend._set_feedback(phase="SettingsApply", state="handler-missing", error="handler not connected")
         return
     try:
