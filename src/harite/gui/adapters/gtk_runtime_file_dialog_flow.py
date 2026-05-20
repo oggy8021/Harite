@@ -203,7 +203,7 @@ def on_clear_input_clicked(backend: Any, side: str) -> None:
 
 
 def current_srcdir_for_side(backend: Any, side: str) -> str:
-    return backend._watch_srcdir_l if side == "L" else backend._watch_srcdir_r
+    return backend._slideshow_srcdir_l if side == "L" else backend._slideshow_srcdir_r
 
 
 def on_pick_srcdir_clicked(backend: Any, side: str) -> None:
@@ -242,7 +242,7 @@ def on_srcdir_dialog_confirmed(backend: Any) -> None:
         )
         return
 
-    callback = backend._signal_handlers.get("on_pick_watch_srcdir")
+    callback = backend._signal_handlers.get("on_pick_slideshow_srcdir")
     if callback is None:
         backend._set_feedback(
             phase=f"Srcdir-{side}",
@@ -261,15 +261,15 @@ def on_srcdir_dialog_confirmed(backend: Any) -> None:
             )
             return
 
-        owner = backend._get_handler_owner("on_pick_watch_srcdir")
+        owner = backend._get_handler_owner("on_pick_slideshow_srcdir")
         if owner is not None:
-            backend._sync_watch_state_only_from_owner(owner)
+            backend._sync_slideshow_state_only_from_owner(owner)
         else:
             if side == "L":
-                backend._watch_srcdir_l = folder
+                backend._slideshow_srcdir_l = folder
             else:
-                backend._watch_srcdir_r = folder
-            backend._refresh_watch_source_labels()
+                backend._slideshow_srcdir_r = folder
+            backend._refresh_slideshow_source_labels()
         if hasattr(dialog, "hide"):
             dialog.hide()
         backend._set_feedback(phase=f"Srcdir-{side}", state="selected")

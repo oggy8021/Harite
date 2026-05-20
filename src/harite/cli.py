@@ -16,7 +16,7 @@ from .config import load_config
 from .linux_xdg_launcher import install_desktop_entry as install_linux_desktop_entry
 from .optimize_settings import is_auto_value, resolve_optimize_display_settings
 from .positioning import parse_position_pair
-from .watch import collect_watch_input_images, run_watch_cycles
+from .slideshow import collect_slideshow_input_images, run_slideshow_cycles
 
 app = typer.Typer(help="Harite - wallpaper optimizer")
 
@@ -399,7 +399,7 @@ def compute_placement(
     layout: str = typer.Option("cover", "--layout", help="Layout mode"),
 ) -> None:
     """Compute placement for a single image."""
-    typer.echo(f"COMPUTE: input={input} resolution={resolution} layout={layout}")
+    typer.echo(f"Compute: input={input} resolution={resolution} layout={layout}")
 
 
 @app.command()
@@ -465,8 +465,8 @@ def apply(
         raise typer.Exit(code=3)
 
 
-@app.command(help="Watch a directory and rotate wallpapers with the existing apply path.")
-def watch(
+@app.command(help="Rotate wallpapers from a directory using the existing apply path.")
+def slideshow(
     input: Path = typer.Option(..., "--input", help="Input directory containing images"),
     interval_sec: int = typer.Option(..., "--interval-sec", help="Cycle interval in seconds (>=1)"),
     mode: str = typer.Option("sequential", "--mode", help="Selection mode: sequential|random"),
@@ -475,7 +475,7 @@ def watch(
     dry_run: bool = typer.Option(True, "--dry-run/--do-it", help="Dry-run by default; pass --do-it to apply"),
     iterations: Optional[int] = typer.Option(None, "--iterations", help="Maximum cycles; omit for unbounded"),
 ) -> None:
-    """Watch a directory and rotate wallpapers (minimum execution control)."""
+    """Rotate wallpapers from a directory (minimum execution control)."""
     if interval_sec < 1:
         typer.echo("--interval-sec must be >= 1")
         raise typer.Exit(code=2)
@@ -495,13 +495,13 @@ def watch(
         raise typer.Exit(code=2)
 
     try:
-        images = collect_watch_input_images(input)
+        images = collect_slideshow_input_images(input)
     except ValueError as exc:
         typer.echo(str(exc))
         raise typer.Exit(code=2)
 
     typer.echo(
-        f"WATCH start: input={input} images={len(images)} interval_sec={interval_sec} "
+        f"Slideshow start: input={input} images={len(images)} interval_sec={interval_sec} "
         f"mode={mode} log_level={log_level} "
         f"plugin={plugin} dry_run={dry_run} iterations={iterations}"
     )
@@ -527,7 +527,7 @@ def watch(
             stats["dry_run_cycles"] += 1
             if log_level == "detail":
                 typer.echo(
-                    f"WATCH cycle={cycle_index + 1} selected={selected} dry_run=True"
+                    f"Slideshow cycle={cycle_index + 1} selected={selected} dry_run=True"
                 )
             return
 
@@ -536,7 +536,7 @@ def watch(
         except Exception as exc:
             stats["apply_error"] += 1
             typer.echo(
-                f"WATCH cycle={cycle_index + 1} selected={selected} "
+                f"Slideshow cycle={cycle_index + 1} selected={selected} "
                 f"apply=error reason=plugin-exception error_type={type(exc).__name__} message={exc}"
             )
             return
@@ -545,17 +545,17 @@ def watch(
             stats["apply_ok"] += 1
             if log_level == "detail":
                 typer.echo(
-                    f"WATCH cycle={cycle_index + 1} selected={selected} apply=ok dry_run=False"
+                    f"Slideshow cycle={cycle_index + 1} selected={selected} apply=ok dry_run=False"
                 )
         else:
             stats["apply_failed"] += 1
             typer.echo(
-                f"WATCH cycle={cycle_index + 1} selected={selected} "
+                f"Slideshow cycle={cycle_index + 1} selected={selected} "
                 "apply=failed reason=plugin-returned-false dry_run=False"
             )
 
     try:
-        completed = run_watch_cycles(
+        completed = run_slideshow_cycles(
             images=images,
             mode=mode,
             interval_sec=interval_sec,
@@ -563,7 +563,7 @@ def watch(
             on_cycle=_on_cycle,
         )
     except KeyboardInterrupt:
-        typer.echo("WATCH interrupted by user")
+        typer.echo("Slideshow interrupted by user")
         raise typer.Exit(code=0)
     except ValueError as exc:
         typer.echo(str(exc))
@@ -571,12 +571,12 @@ def watch(
 
     if dry_run:
         typer.echo(
-            f"WATCH completed cycles={completed} dry_run_cycles={stats['dry_run_cycles']}"
+            f"Slideshow completed cycles={completed} dry_run_cycles={stats['dry_run_cycles']}"
         )
     else:
         apply_failed_total = stats["apply_failed"] + stats["apply_error"]
         typer.echo(
-            f"WATCH completed cycles={completed} apply_ok={stats['apply_ok']} "
+            f"Slideshow completed cycles={completed} apply_ok={stats['apply_ok']} "
             f"apply_failed={stats['apply_failed']} apply_error={stats['apply_error']} "
             f"apply_failed_total={apply_failed_total}"
         )

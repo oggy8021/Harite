@@ -10,9 +10,9 @@ def test_app_preferences_round_trip_config_with_auto_values():
             "r_display": "auto",
             "plugin": "linux",
             "apply_mode": "per-monitor-auto-split",
-            "watch_interval_seconds": 120,
-            "watch_srcdir_l": "/watch/left",
-            "watch_srcdir_r": "/watch/right",
+            "slideshow_interval_seconds": 120,
+            "slideshow_srcdir_l": "/slideshow/left",
+            "slideshow_srcdir_r": "/slideshow/right",
         },
         default_plugin="windows",
     )
@@ -28,6 +28,6 @@ def test_app_preferences_round_trip_config_with_auto_values():
     assert exported["background_color"] == "#1E1E1E"
     assert exported["plugin"] == "linux"
     assert exported["apply_mode"] == "per-monitor-auto-split"
-    assert exported["watch_interval_seconds"] == 120
-    assert exported["watch_srcdir_l"] == "/watch/left"
-    assert exported["watch_srcdir_r"] == "/watch/right"
+    assert exported["slideshow_interval_seconds"] == 120
+    assert exported["slideshow_srcdir_l"] == "/slideshow/left"
+    assert exported["slideshow_srcdir_r"] == "/slideshow/right"

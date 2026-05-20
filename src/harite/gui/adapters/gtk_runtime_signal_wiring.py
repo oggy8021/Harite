@@ -7,7 +7,7 @@ def connect_runtime_widgets(backend: Any, widgets: dict[str, Any]) -> None:
     _connect_input_widgets(backend, widgets)
     _connect_direction_widgets(backend, widgets)
     _connect_action_widgets(backend, widgets)
-    _connect_watch_widgets(backend, widgets)
+    _connect_slideshow_widgets(backend, widgets)
     _connect_margin_text_widgets(backend, widgets)
 
 
@@ -69,12 +69,12 @@ def _connect_action_widgets(backend: Any, widgets: dict[str, Any]) -> None:
     widgets["about_close_btn"].connect("clicked", backend._on_about_dialog_close_clicked)
 
 
-def _connect_watch_widgets(backend: Any, widgets: dict[str, Any]) -> None:
+def _connect_slideshow_widgets(backend: Any, widgets: dict[str, Any]) -> None:
     widgets["btn_open_srcdir_l"].connect("clicked", lambda *_args: backend._on_pick_srcdir_clicked("L"))
     widgets["btn_open_srcdir_r"].connect("clicked", lambda *_args: backend._on_pick_srcdir_clicked("R"))
-    widgets["interval_spin"].connect("value-changed", backend._on_watch_interval_changed)
-    widgets["btn_daemonize"].connect("clicked", backend._on_watch_start_clicked)
-    widgets["btn_cancel_daemonize"].connect("clicked", backend._on_watch_stop_clicked)
+    widgets["interval_spin"].connect("value-changed", backend._on_slideshow_interval_changed)
+    widgets["btn_daemonize"].connect("clicked", backend._on_slideshow_start_clicked)
+    widgets["btn_cancel_daemonize"].connect("clicked", backend._on_slideshow_stop_clicked)
 
 
 def _connect_margin_text_widgets(backend: Any, widgets: dict[str, Any]) -> None:

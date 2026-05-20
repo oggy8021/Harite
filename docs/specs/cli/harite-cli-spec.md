@@ -14,14 +14,14 @@ CLI は GUI と異なり、1 回の command 実行を明示的に完結させる
 - `optimize`
 - `compute-placement`
 - `apply`
-- `watch`
+- `slideshow`
 - `install-desktop-entry`
 
 位置づけの違い:
 
 - `optimize` は画像生成を担う主 command である。
 - `apply` は既存または生成済み画像の適用を担う。
-- `watch` は単発 command を継続実行へ拡張する。
+- `slideshow` は単発 command を継続実行へ拡張する。
 - `compute-placement` は command 名としては存在するが、現行 CLI では実用的な command surface にはなっていない。
 - `install-desktop-entry` は Linux/XDG 向け補助 command である。
 
@@ -32,7 +32,7 @@ sequenceDiagram
     actor User
     participant CLI as cli.py
     participant Config as config.py
-    participant Core as core/apply/watch
+    participant Core as core/apply/slideshow
     participant Plugin as plugins.py
 
     User->>CLI: command + options
@@ -50,14 +50,14 @@ sequenceDiagram
         CLI->>Plugin: apply(target, dry_run)
         Plugin-->>CLI: success / failure
         CLI-->>User: apply result
-    else watch
-        CLI->>Core: collect_watch_input_images(...)
-        CLI->>Core: run_watch_cycles(...)
+    else slideshow
+        CLI->>Core: collect_slideshow_input_images(...)
+        CLI->>Core: run_slideshow_cycles(...)
         loop each cycle
             Core-->>CLI: selected image
             CLI->>Plugin: apply(...)
             Plugin-->>CLI: success / failure / exception
-            CLI-->>User: WATCH cycle/result
+            CLI-->>User: Slideshow cycle/result
         end
     end
 ```
@@ -127,7 +127,7 @@ display / two-screen 解決:
 
 補足:
 
-- GUI には `--do-it` / `dry-run` という同名オプションは存在しない。そのため GUI の apply / watch は、CLI とは別の操作面として説明する。
+- GUI には `--do-it` / `dry-run` という同名オプションは存在しない。そのため GUI の apply / slideshow は、CLI とは別の操作面として説明する。
 - dry-run 時の「副作用を起こさないこと」は plugin 側の契約でもある。plugin は `dry_run=True` のとき外部コマンドや OS 設定変更を実行しない。
 
 apply mode の決定順:
@@ -144,15 +144,16 @@ apply mode の決定順:
 - plugin が `False` を返した場合は終了コード `3` で扱う。
 - CLI 実装は `resolve_apply_settings(...)` に `output_dir=Path(".")` を渡しているため、`--auto-split` 時の split 出力先既定値は current working directory である。
 
-## 7. `watch`
+## 7. `slideshow`
 
-- 入力 directory を監視ではなく周期実行対象として扱う。
+- command 名も `slideshow` とし、public surface の機能名と揃える。
+- 入力 directory を監視ではなくスライドショー実行対象として扱う。
 - `mode`, `interval_sec`, `iterations`, `log_level`, `plugin`, `dry_run` を扱う。
 
-watch command の意味:
+slideshow command の意味:
 
 - filesystem event を待つ監視ではなく、入力 directory から画像一覧を集め、一定間隔で次画像を選んで apply する。
-- `dry_run` では plugin を解決せず、周期 の進行だけを確認できる。
+- `dry_run` では plugin を解決せず、サイクルの進行だけを確認できる。
 - `--do-it` 時だけ plugin 解決と実 apply を行う。
 - `iterations` は現行 CLI に残っている回数制限用 option だが、GUI や母体相当の操作面には対応概念がない。
 - changer としての通常利用では、指定回数で停止する挙動は直感的ではない。
@@ -161,25 +162,25 @@ watch command の意味:
 
 - `mode=sequential` は index を進めながら順番に選ぶ。
 - `mode=random` は可能なら直前画像を避けて選ぶ。
-- option 名は `log_level` だが、現行仕様としては stdout への watch 出力粒度を切り替える値として扱う。
-- `normal` は要点のみ出し、`detail` は 周期 ごとの詳細を出す。
+- option 名は `log_level` だが、現行仕様としては stdout への実行メッセージ粒度を切り替える値として扱う。
+- `normal` は要点のみ出し、`detail` はサイクルごとの詳細を出す。
 
-watch helper の計算規則:
+slideshow helper の計算規則:
 
 - `select_next_image(...)` の `sequential` は `selected_index = index % len(images)` で選び、次 state の `index` は `index + 1` になる。
 - `random` では、候補数が 2 件以上かつ `previous_selected` が現在候補に含まれている場合だけ、`candidates = [img for img in images if img != previous_selected]` を作ってその中から 1 件選ぶ。
 - `random` では `index` を進めず、そのまま保持する。したがって現行 random の状態更新で効いているのは `previous_selected` と `completed` である。
-- `run_watch_cycle(...)` は、選ばれた画像を `previous_selected` に入れ、`completed = state.completed + 1` とした新 state を返す。
-- `run_watch_cycles(...)` は各 cycle 後に `on_cycle(selected, state.completed - 1)` を呼ぶため、callback 側へ渡る cycle 番号は 0 始まりである。
-- sleep は毎回ではなく、「まだ次 cycle が残っている場合」にだけ `sleep_fn(interval_sec)` を呼ぶ。`iterations` 到達回では sleep しない。
-- ただし CLI の user-facing `WATCH cycle=` 表示は callback 値をそのまま出さず、`cycle_index + 1` を使う。したがって内部 callback は 0 始まり、stdout 表示は 1 始まりである。
-- dry-run の各 cycle では `dry_run_cycles` を 1 件増やし、`detail` のときだけ `WATCH cycle=... selected=... dry_run=True` を出す。
+- `run_slideshow_cycle(...)` は、選ばれた画像を `previous_selected` に入れ、`completed = state.completed + 1` とした新 state を返す。
+- `run_slideshow_cycles(...)` は各サイクル後に `on_cycle(selected, state.completed - 1)` を呼ぶため、callback 側へ渡る cycle 番号は 0 始まりである。
+- sleep は毎回ではなく、「まだ次サイクルが残っている場合」にだけ `sleep_fn(interval_sec)` を呼ぶ。`iterations` 到達回では sleep しない。
+- ただし CLI の user-facing `Slideshow cycle=` 表示は callback 値をそのまま出さず、`cycle_index + 1` を使う。したがって内部 callback は 0 始まり、stdout 表示は 1 始まりである。
+- dry-run の各サイクルでは `dry_run_cycles` を 1 件増やし、`detail` のときだけ `Slideshow cycle=... selected=... dry_run=True` を出す。
 - 実 apply では `apply_ok` は成功時だけ、`apply_failed` は plugin が `False` を返したときだけ、`apply_error` は plugin 例外時だけ増える。`apply_failed_total = apply_failed + apply_error` は completed 行でだけ計算する。
 
 出力先:
 
-- `log_level` が切り替えるのは CLI の `typer.echo(...)` による watch message であり、出力先は標準出力 (stdout) である。
-- 現行 CLI watch には専用保存先や履歴ファイル出力はない。
+- `log_level` が切り替えるのは CLI の `typer.echo(...)` による実行メッセージであり、出力先は標準出力 (stdout) である。
+- 現行 CLI `slideshow` command には専用保存先や履歴ファイル出力はない。
 - plugin 側の logger は別系統であり、`--log-level` では直接制御しない。
 
 ## 8. `install-desktop-entry`
@@ -212,22 +213,24 @@ Windows / macOS ではサポート外であり、終了コード `2` で終了�
 
 - `info`: 実行開始、完了、dry-run summary
 - `error`: validation error, unknown plugin, apply failed
-- watch では `WATCH start`, `WATCH cycle`, `WATCH completed` を中心に状態を出す
+- Harite 固有の stdout 実行メッセージは、言語に応じた自然な user-facing 表現を使う。
+- 英語表記では通常の文やラベルとして読める形を優先し、全部大文字の強い prefix は使わない。
+- slideshow では `Slideshow start`, `Slideshow cycle`, `Slideshow completed` を中心に実行メッセージを出す
 
 command ごとの代表メッセージ:
 
 - `optimize`: `Saved:` と `Placement:`
 - `apply`: `applied wallpaper` または `failed to apply wallpaper`
-- `watch`: `WATCH start`, `WATCH interrupted by user`, `WATCH completed`
+- `slideshow`: `Slideshow start`, `Slideshow interrupted by user`, `Slideshow completed`
 - `install-desktop-entry`: `Installed desktop entry:`
 
-`watch` の `WATCH completed` では、dry-run 時は `dry_run_cycles`、実 apply 時は `apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` を出して周期ごとの結果を要約する。
+`slideshow` の `Slideshow completed` では、dry-run 時は `dry_run_cycles`、実 apply 時は `apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` を出してサイクルごとの結果を要約する。
 
 重要度の見方:
 
 - 明示的な prefix を持たない message もあるが、終了コードと併せて判断する。
-- watch の詳細行は通常の info 相当、plugin 例外や apply failure は error 相当として読む。
-- plugin logger の出力有無や出力先は Python logging 側の設定に依存するため、CLI watch の stdout summary とは分けて考える。
+- slideshow の詳細行は通常の info 相当、plugin 例外や apply failure は error 相当として読む。
+- plugin logger の出力有無や出力先は Python logging 側の設定に依存するため、CLI `slideshow` command の stdout 実行メッセージとは分けて考える。
 
 ## 11. core / GUI / packaging との境界
 
@@ -237,5 +240,5 @@ command ごとの代表メッセージ:
 境界整理:
 
 - CLI は option surface と終了コードを決めるが、最適化や apply target 解決の業務規則自体は core に置く。
-- watch command は CLI 面の summary と plugin 呼び出しを持つが、最小ループの挙動は watch helper に委譲する。
+- `slideshow` command は CLI 面の実行メッセージと plugin 呼び出しを持つが、最小ループの挙動は slideshow helper に委譲する。
 - desktop entry 生成は packaging / launcher 面にまたがるが、CLI からの起動導線としてここに置く。

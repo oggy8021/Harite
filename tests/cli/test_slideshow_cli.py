@@ -5,23 +5,26 @@ from typer.testing import CliRunner
 from harite import cli
 
 
-def _normalize_cli_output(text: str) -> str:
+def _strip_cli_output(text: str) -> str:
     # Remove ANSI escape sequences emitted by rich/typer in CI terminals.
-    cleaned = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text)
-    return cleaned.lower()
+    return re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text)
 
 
-def _require_watch_command(runner: CliRunner) -> None:
-    result = runner.invoke(cli.app, ["watch", "--help"])
-    if result.exit_code != 0 and "No such command 'watch'" in result.output:
-        pytest.skip("watch command is not implemented yet")
+def _normalize_cli_output(text: str) -> str:
+    return _strip_cli_output(text).lower()
 
 
-def test_watch_requires_input_option() -> None:
+def _require_slideshow_command(runner: CliRunner) -> None:
+    result = runner.invoke(cli.app, ["slideshow", "--help"])
+    if result.exit_code != 0 and "No such command 'slideshow'" in result.output:
+        pytest.skip("slideshow command is not implemented yet")
+
+
+def test_slideshow_requires_input_option() -> None:
     runner = CliRunner()
-    _require_watch_command(runner)
+    _require_slideshow_command(runner)
 
-    result = runner.invoke(cli.app, ["watch", "--interval-sec", "1"])
+    result = runner.invoke(cli.app, ["slideshow", "--interval-sec", "1"])
     output = _normalize_cli_output(result.output)
 
     assert result.exit_code == 2
@@ -29,11 +32,11 @@ def test_watch_requires_input_option() -> None:
     assert "input" in output
 
 
-def test_watch_requires_interval_option() -> None:
+def test_slideshow_requires_interval_option() -> None:
     runner = CliRunner()
-    _require_watch_command(runner)
+    _require_slideshow_command(runner)
 
-    result = runner.invoke(cli.app, ["watch", "--input", "."])
+    result = runner.invoke(cli.app, ["slideshow", "--input", "."])
     output = _normalize_cli_output(result.output)
 
     assert result.exit_code == 2
@@ -41,9 +44,9 @@ def test_watch_requires_interval_option() -> None:
     assert "interval" in output
 
 
-def test_watch_rejects_interval_less_than_one(tmp_path) -> None:
+def test_slideshow_rejects_interval_less_than_one(tmp_path) -> None:
     runner = CliRunner()
-    _require_watch_command(runner)
+    _require_slideshow_command(runner)
 
     img_dir = tmp_path / "imgs"
     img_dir.mkdir()
@@ -51,7 +54,7 @@ def test_watch_rejects_interval_less_than_one(tmp_path) -> None:
     result = runner.invoke(
         cli.app,
         [
-            "watch",
+            "slideshow",
             "--input",
             str(img_dir),
             "--interval-sec",
@@ -65,11 +68,11 @@ def test_watch_rejects_interval_less_than_one(tmp_path) -> None:
     assert "interval" in result.output.lower()
 
 
-def test_watch_help_includes_dry_run_and_do_it() -> None:
+def test_slideshow_help_includes_dry_run_and_do_it() -> None:
     runner = CliRunner()
-    _require_watch_command(runner)
+    _require_slideshow_command(runner)
 
-    result = runner.invoke(cli.app, ["watch", "--help"])
+    result = runner.invoke(cli.app, ["slideshow", "--help"])
     output = _normalize_cli_output(result.output)
 
     assert result.exit_code == 0
@@ -78,9 +81,9 @@ def test_watch_help_includes_dry_run_and_do_it() -> None:
     assert "log-level" in output
 
 
-def test_watch_rejects_unknown_log_level(tmp_path) -> None:
+def test_slideshow_rejects_unknown_log_level(tmp_path) -> None:
     runner = CliRunner()
-    _require_watch_command(runner)
+    _require_slideshow_command(runner)
 
     img_dir = tmp_path / "imgs"
     img_dir.mkdir()
@@ -89,7 +92,7 @@ def test_watch_rejects_unknown_log_level(tmp_path) -> None:
     result = runner.invoke(
         cli.app,
         [
-            "watch",
+            "slideshow",
             "--input",
             str(img_dir),
             "--interval-sec",
@@ -106,9 +109,9 @@ def test_watch_rejects_unknown_log_level(tmp_path) -> None:
     assert "--log-level must be one of: normal, detail" in output
 
 
-def test_watch_runs_iterations_and_reports_completion(tmp_path, monkeypatch) -> None:
+def test_slideshow_runs_iterations_and_reports_completion(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
-    _require_watch_command(runner)
+    _require_slideshow_command(runner)
 
     img_dir = tmp_path / "imgs"
     img_dir.mkdir()
@@ -116,7 +119,7 @@ def test_watch_runs_iterations_and_reports_completion(tmp_path, monkeypatch) -> 
 
     captured = {}
 
-    def fake_run_watch_cycles(
+    def fake_run_slideshow_cycles(
         *,
         images,
         mode,
@@ -132,12 +135,12 @@ def test_watch_runs_iterations_and_reports_completion(tmp_path, monkeypatch) -> 
         on_cycle(images[0], 0)
         return 1
 
-    monkeypatch.setattr(cli, "run_watch_cycles", fake_run_watch_cycles)
+    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
 
     result = runner.invoke(
         cli.app,
         [
-            "watch",
+            "slideshow",
             "--input",
             str(img_dir),
             "--interval-sec",
@@ -147,42 +150,43 @@ def test_watch_runs_iterations_and_reports_completion(tmp_path, monkeypatch) -> 
         ],
     )
     output = _normalize_cli_output(result.output)
+    raw_output = _strip_cli_output(result.output)
 
     assert result.exit_code == 0
     assert captured["mode"] == "sequential"
     assert captured["interval_sec"] == 1
     assert captured["iterations"] == 1
     assert len(captured["images"]) == 1
-    assert "watch completed cycles=1" in output
+    assert "Slideshow completed cycles=1" in raw_output
     assert "dry_run_cycles=1" in output
 
 
-def test_watch_handles_keyboard_interrupt_as_normal_exit(tmp_path, monkeypatch) -> None:
+def test_slideshow_handles_keyboard_interrupt_as_normal_exit(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
-    _require_watch_command(runner)
+    _require_slideshow_command(runner)
 
     img_dir = tmp_path / "imgs"
     img_dir.mkdir()
     (img_dir / "a.jpg").write_bytes(b"x")
 
-    def fake_run_watch_cycles(*args, **kwargs):
+    def fake_run_slideshow_cycles(*args, **kwargs):
         raise KeyboardInterrupt()
 
-    monkeypatch.setattr(cli, "run_watch_cycles", fake_run_watch_cycles)
+    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
 
     result = runner.invoke(
         cli.app,
-        ["watch", "--input", str(img_dir), "--interval-sec", "1", "--iterations", "1"],
+        ["slideshow", "--input", str(img_dir), "--interval-sec", "1", "--iterations", "1"],
     )
-    output = _normalize_cli_output(result.output)
+    raw_output = _strip_cli_output(result.output)
 
     assert result.exit_code == 0
-    assert "watch interrupted by user" in output
+    assert "Slideshow interrupted by user" in raw_output
 
 
-def test_watch_dry_run_does_not_resolve_plugin(tmp_path, monkeypatch) -> None:
+def test_slideshow_dry_run_does_not_resolve_plugin(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
-    _require_watch_command(runner)
+    _require_slideshow_command(runner)
 
     img_dir = tmp_path / "imgs"
     img_dir.mkdir()
@@ -193,7 +197,7 @@ def test_watch_dry_run_does_not_resolve_plugin(tmp_path, monkeypatch) -> None:
 
     monkeypatch.setattr(cli.plugin_registry, "get", fake_get_plugin)
 
-    def fake_run_watch_cycles(
+    def fake_run_slideshow_cycles(
         *,
         images,
         mode,
@@ -205,21 +209,22 @@ def test_watch_dry_run_does_not_resolve_plugin(tmp_path, monkeypatch) -> None:
         on_cycle(images[0], 0)
         return 1
 
-    monkeypatch.setattr(cli, "run_watch_cycles", fake_run_watch_cycles)
+    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
 
     result = runner.invoke(
         cli.app,
-        ["watch", "--input", str(img_dir), "--interval-sec", "1", "--iterations", "1"],
+        ["slideshow", "--input", str(img_dir), "--interval-sec", "1", "--iterations", "1"],
     )
     output = _normalize_cli_output(result.output)
+    raw_output = _strip_cli_output(result.output)
 
     assert result.exit_code == 0
     assert "dry_run=true" in output
 
 
-def test_watch_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch) -> None:
+def test_slideshow_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
-    _require_watch_command(runner)
+    _require_slideshow_command(runner)
 
     img_dir = tmp_path / "imgs"
     img_dir.mkdir()
@@ -238,7 +243,7 @@ def test_watch_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch) -> 
 
     monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: fake_plugin)
 
-    def fake_run_watch_cycles(
+    def fake_run_slideshow_cycles(
         *,
         images,
         mode,
@@ -251,12 +256,12 @@ def test_watch_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch) -> 
         on_cycle(images[1], 1)
         return 2
 
-    monkeypatch.setattr(cli, "run_watch_cycles", fake_run_watch_cycles)
+    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
 
     result = runner.invoke(
         cli.app,
         [
-            "watch",
+            "slideshow",
             "--input",
             str(img_dir),
             "--interval-sec",
@@ -271,6 +276,7 @@ def test_watch_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch) -> 
         ],
     )
     output = _normalize_cli_output(result.output)
+    raw_output = _strip_cli_output(result.output)
 
     assert result.exit_code == 0
     assert len(fake_plugin.calls) == 2
@@ -279,16 +285,16 @@ def test_watch_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch) -> 
     assert "apply=failed" in output
     assert "reason=plugin-returned-false" in output
     assert "apply=ok" in output
-    assert "watch completed cycles=2" in output
+    assert "Slideshow completed cycles=2" in raw_output
     assert "apply_ok=1" in output
     assert "apply_failed=1" in output
     assert "apply_error=0" in output
     assert "apply_failed_total=1" in output
 
 
-def test_watch_normal_log_level_suppresses_success_cycle_line(tmp_path, monkeypatch) -> None:
+def test_slideshow_normal_log_level_suppresses_success_cycle_line(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
-    _require_watch_command(runner)
+    _require_slideshow_command(runner)
 
     img_dir = tmp_path / "imgs"
     img_dir.mkdir()
@@ -301,7 +307,7 @@ def test_watch_normal_log_level_suppresses_success_cycle_line(tmp_path, monkeypa
 
     monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
 
-    def fake_run_watch_cycles(
+    def fake_run_slideshow_cycles(
         *,
         images,
         mode,
@@ -313,12 +319,12 @@ def test_watch_normal_log_level_suppresses_success_cycle_line(tmp_path, monkeypa
         on_cycle(images[0], 0)
         return 1
 
-    monkeypatch.setattr(cli, "run_watch_cycles", fake_run_watch_cycles)
+    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
 
     result = runner.invoke(
         cli.app,
         [
-            "watch",
+            "slideshow",
             "--input",
             str(img_dir),
             "--interval-sec",
@@ -333,21 +339,22 @@ def test_watch_normal_log_level_suppresses_success_cycle_line(tmp_path, monkeypa
         ],
     )
     output = _normalize_cli_output(result.output)
+    raw_output = _strip_cli_output(result.output)
 
     assert result.exit_code == 0
     assert "apply=ok" not in output
-    assert "watch completed cycles=1" in output
+    assert "Slideshow completed cycles=1" in raw_output
 
 
-def test_watch_detail_log_level_emits_dry_run_cycle_line(tmp_path, monkeypatch) -> None:
+def test_slideshow_detail_log_level_emits_dry_run_cycle_line(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
-    _require_watch_command(runner)
+    _require_slideshow_command(runner)
 
     img_dir = tmp_path / "imgs"
     img_dir.mkdir()
     (img_dir / "a.jpg").write_bytes(b"x")
 
-    def fake_run_watch_cycles(
+    def fake_run_slideshow_cycles(
         *,
         images,
         mode,
@@ -359,12 +366,12 @@ def test_watch_detail_log_level_emits_dry_run_cycle_line(tmp_path, monkeypatch) 
         on_cycle(images[0], 0)
         return 1
 
-    monkeypatch.setattr(cli, "run_watch_cycles", fake_run_watch_cycles)
+    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
 
     result = runner.invoke(
         cli.app,
         [
-            "watch",
+            "slideshow",
             "--input",
             str(img_dir),
             "--interval-sec",
@@ -376,21 +383,23 @@ def test_watch_detail_log_level_emits_dry_run_cycle_line(tmp_path, monkeypatch) 
         ],
     )
     output = _normalize_cli_output(result.output)
+    raw_output = _strip_cli_output(result.output)
 
     assert result.exit_code == 0
-    assert "watch cycle=1" in output
+    assert "Slideshow cycle=1" in raw_output
+    assert "slideshow cycle=1" in output
     assert "dry_run=true" in output
 
 
-def test_watch_normal_log_level_suppresses_dry_run_cycle_line(tmp_path, monkeypatch) -> None:
+def test_slideshow_normal_log_level_suppresses_dry_run_cycle_line(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
-    _require_watch_command(runner)
+    _require_slideshow_command(runner)
 
     img_dir = tmp_path / "imgs"
     img_dir.mkdir()
     (img_dir / "a.jpg").write_bytes(b"x")
 
-    def fake_run_watch_cycles(
+    def fake_run_slideshow_cycles(
         *,
         images,
         mode,
@@ -402,12 +411,12 @@ def test_watch_normal_log_level_suppresses_dry_run_cycle_line(tmp_path, monkeypa
         on_cycle(images[0], 0)
         return 1
 
-    monkeypatch.setattr(cli, "run_watch_cycles", fake_run_watch_cycles)
+    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
 
     result = runner.invoke(
         cli.app,
         [
-            "watch",
+            "slideshow",
             "--input",
             str(img_dir),
             "--interval-sec",
@@ -419,15 +428,18 @@ def test_watch_normal_log_level_suppresses_dry_run_cycle_line(tmp_path, monkeypa
         ],
     )
     output = _normalize_cli_output(result.output)
+    raw_output = _strip_cli_output(result.output)
 
     assert result.exit_code == 0
-    assert "watch cycle=" not in output
-    assert "watch completed cycles=1" in output
+    assert "Slideshow cycle=" not in raw_output
+    assert "Slideshow completed cycles=1" in raw_output
+    assert "slideshow cycle=" not in output
+    assert "slideshow completed cycles=1" in output
 
 
-def test_watch_do_it_normal_log_level_continues_on_failure(tmp_path, monkeypatch) -> None:
+def test_slideshow_do_it_normal_log_level_continues_on_failure(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
-    _require_watch_command(runner)
+    _require_slideshow_command(runner)
 
     img_dir = tmp_path / "imgs"
     img_dir.mkdir()
@@ -445,7 +457,7 @@ def test_watch_do_it_normal_log_level_continues_on_failure(tmp_path, monkeypatch
     fake_plugin = FakePlugin()
     monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: fake_plugin)
 
-    def fake_run_watch_cycles(
+    def fake_run_slideshow_cycles(
         *,
         images,
         mode,
@@ -458,12 +470,12 @@ def test_watch_do_it_normal_log_level_continues_on_failure(tmp_path, monkeypatch
         on_cycle(images[1], 1)
         return 2
 
-    monkeypatch.setattr(cli, "run_watch_cycles", fake_run_watch_cycles)
+    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
 
     result = runner.invoke(
         cli.app,
         [
-            "watch",
+            "slideshow",
             "--input",
             str(img_dir),
             "--interval-sec",
@@ -478,19 +490,20 @@ def test_watch_do_it_normal_log_level_continues_on_failure(tmp_path, monkeypatch
         ],
     )
     output = _normalize_cli_output(result.output)
+    raw_output = _strip_cli_output(result.output)
 
     assert result.exit_code == 0
     assert len(fake_plugin.calls) == 2
     assert "apply=failed" in output
     assert "apply=ok" not in output
-    assert "watch completed cycles=2" in output
+    assert "Slideshow completed cycles=2" in raw_output
     assert "apply_ok=1" in output
     assert "apply_failed=1" in output
 
 
-def test_watch_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch) -> None:
+def test_slideshow_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
-    _require_watch_command(runner)
+    _require_slideshow_command(runner)
 
     img_dir = tmp_path / "imgs"
     img_dir.mkdir()
@@ -503,7 +516,7 @@ def test_watch_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch) ->
 
     monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
 
-    def fake_run_watch_cycles(
+    def fake_run_slideshow_cycles(
         *,
         images,
         mode,
@@ -515,12 +528,12 @@ def test_watch_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch) ->
         on_cycle(images[0], 0)
         return 1
 
-    monkeypatch.setattr(cli, "run_watch_cycles", fake_run_watch_cycles)
+    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
 
     result = runner.invoke(
         cli.app,
         [
-            "watch",
+            "slideshow",
             "--input",
             str(img_dir),
             "--interval-sec",
@@ -533,12 +546,13 @@ def test_watch_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch) ->
         ],
     )
     output = _normalize_cli_output(result.output)
+    raw_output = _strip_cli_output(result.output)
 
     assert result.exit_code == 0
     assert "apply=error" in output
     assert "reason=plugin-exception" in output
     assert "error_type=runtimeerror" in output
-    assert "watch completed cycles=1" in output
+    assert "Slideshow completed cycles=1" in raw_output
     assert "apply_ok=0" in output
     assert "apply_failed=0" in output
     assert "apply_error=1" in output

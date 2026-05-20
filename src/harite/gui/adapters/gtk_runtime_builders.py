@@ -12,7 +12,7 @@ from harite.gui.adapters.gtk_tab_builders import build_main_tab_section
 from harite.gui.adapters.gtk_tab_builders import build_margins_tab_section
 from harite.gui.adapters.gtk_tab_builders import build_primary_margin_controls
 from harite.gui.adapters.gtk_tab_builders import build_runtime_state_labels
-from harite.gui.adapters.gtk_tab_builders import build_watch_tab_section
+from harite.gui.adapters.gtk_tab_builders import build_slideshow_tab_section
 
 
 __all__ = [
@@ -28,5 +28,5 @@ __all__ = [
     "build_primary_margin_controls",
     "build_runtime_state_labels",
     "build_settings_section",
-    "build_watch_tab_section",
+    "build_slideshow_tab_section",
 ]

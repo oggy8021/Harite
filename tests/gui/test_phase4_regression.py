@@ -26,7 +26,7 @@ def test_phase4_a_layout_structure_sections_are_stable():
         "compose_input",
         "margins_tab",
         "action_cluster",
-        "watch_tab",
+        "slideshow_tab",
         "status_footer",
     ]
 

@@ -258,8 +258,8 @@ def test_layout_blueprint_defines_grouping_and_flow():
     assert bp["status"]["phase"] == "init"
     assert bp["status"]["message"] == "ready"
     assert bp["status"]["save_target"] == "Save target: not-selected"
-    assert bp["status"]["watch_sources"] == "Watch srcdirs: L=- | R=-"
-    assert bp["status"]["watch_current"] == "Watch current: idle"
+    assert bp["status"]["slideshow_sources"] == "Slideshow srcdirs: L=- | R=-"
+    assert bp["status"]["slideshow_current"] == "Slideshow current: idle"
 
 
 def test_save_path_selected_updates_single_save_target_display():
@@ -681,9 +681,9 @@ def test_apply_settings_updates_runtime_state():
             "r_display": "auto",
             "plugin": "linux",
             "apply_mode": "per-monitor-auto-split",
-            "watch_interval_seconds": 120,
-            "watch_srcdir_l": "/watch/left",
-            "watch_srcdir_r": "/watch/right",
+            "slideshow_interval_seconds": 120,
+            "slideshow_srcdir_l": "/slideshow/left",
+            "slideshow_srcdir_r": "/slideshow/right",
         },
         default_plugin=window.plugin_name,
     )
@@ -697,10 +697,10 @@ def test_apply_settings_updates_runtime_state():
     assert window.form_state.r_display == "auto"
     assert window.plugin_name == "linux"
     assert window.apply_mode == "per-monitor-auto-split"
-    assert window.watch_interval_seconds == 120
-    assert window.watch_srcdir_l == "/watch/left"
-    assert window.watch_srcdir_r == "/watch/right"
-    assert window.watch_source_display == "Watch srcdirs: L=/watch/left | R=/watch/right"
+    assert window.slideshow_interval_seconds == 120
+    assert window.slideshow_srcdir_l == "/slideshow/left"
+    assert window.slideshow_srcdir_r == "/slideshow/right"
+    assert window.slideshow_source_display == "Slideshow srcdirs: L=/slideshow/left | R=/slideshow/right"
 
 
 def test_export_and_reload_settings_config_round_trips():
@@ -711,10 +711,10 @@ def test_export_and_reload_settings_config_round_trips():
     window.form_state.r_display = "auto"
     window.plugin_name = "linux"
     window.apply_mode = "per-monitor-auto-split"
-    window.watch_interval_seconds = 90
-    window.watch_srcdir_l = "/watch/left"
-    window.watch_srcdir_r = "/watch/right"
-    window._update_watch_source_display()
+    window.slideshow_interval_seconds = 90
+    window.slideshow_srcdir_l = "/slideshow/left"
+    window.slideshow_srcdir_r = "/slideshow/right"
+    window._update_slideshow_source_display()
 
     exported = window.export_settings_config()
 
@@ -724,9 +724,9 @@ def test_export_and_reload_settings_config_round_trips():
     assert exported["valign"] == ["center", "center"]
     assert exported["plugin"] == "linux"
     assert exported["apply_mode"] == "per-monitor-auto-split"
-    assert exported["watch_interval_seconds"] == 90
-    assert exported["watch_srcdir_l"] == "/watch/left"
-    assert exported["watch_srcdir_r"] == "/watch/right"
+    assert exported["slideshow_interval_seconds"] == 90
+    assert exported["slideshow_srcdir_l"] == "/slideshow/left"
+    assert exported["slideshow_srcdir_r"] == "/slideshow/right"
 
     other = MainWindow()
     assert other.load_settings_config(exported) is True
@@ -735,9 +735,9 @@ def test_export_and_reload_settings_config_round_trips():
     assert other.form_state.align == ("center", "center")
     assert other.form_state.valign == ("center", "center")
     assert other.plugin_name == "linux"
-    assert other.watch_interval_seconds == 90
-    assert other.watch_srcdir_l == "/watch/left"
-    assert other.watch_srcdir_r == "/watch/right"
+    assert other.slideshow_interval_seconds == 90
+    assert other.slideshow_srcdir_l == "/slideshow/left"
+    assert other.slideshow_srcdir_r == "/slideshow/right"
 
 
 def test_on_get_settings_config_expands_current_detected_display_values(monkeypatch):
@@ -829,9 +829,9 @@ def test_settings_file_save_and_load_round_trip(tmp_path):
     window.form_state.r_display = "auto"
     window.plugin_name = "linux"
     window.apply_mode = "per-monitor-auto-split"
-    window.watch_interval_seconds = 75
-    window.watch_srcdir_l = "/watch/left"
-    window.watch_srcdir_r = "/watch/right"
+    window.slideshow_interval_seconds = 75
+    window.slideshow_srcdir_l = "/slideshow/left"
+    window.slideshow_srcdir_r = "/slideshow/right"
 
     target = tmp_path / "prefs.json"
 
@@ -848,9 +848,9 @@ def test_settings_file_save_and_load_round_trip(tmp_path):
     assert other.form_state.valign == ("center", "center")
     assert other.plugin_name == "linux"
     assert other.apply_mode == "per-monitor-auto-split"
-    assert other.watch_interval_seconds == 75
-    assert other.watch_srcdir_l == "/watch/left"
-    assert other.watch_srcdir_r == "/watch/right"
+    assert other.slideshow_interval_seconds == 75
+    assert other.slideshow_srcdir_l == "/slideshow/left"
+    assert other.slideshow_srcdir_r == "/slideshow/right"
 
 
 def test_settings_file_save_uses_default_fixed_path_when_path_is_empty(monkeypatch, tmp_path):
@@ -891,9 +891,9 @@ def test_main_window_loads_default_settings_on_startup(monkeypatch, tmp_path):
         {
             "plugin": "linux",
             "apply_mode": "per-monitor-auto-split",
-            "watch_interval_seconds": 33,
-            "watch_srcdir_l": "/watch/left",
-            "watch_srcdir_r": "/watch/right",
+            "slideshow_interval_seconds": 33,
+            "slideshow_srcdir_l": "/slideshow/left",
+            "slideshow_srcdir_r": "/slideshow/right",
         },
     )
     monkeypatch.setattr("harite.gui.views.main_window.resolve_default_settings_path", lambda: target)
@@ -902,10 +902,10 @@ def test_main_window_loads_default_settings_on_startup(monkeypatch, tmp_path):
 
     assert window.plugin_name == "linux"
     assert window.apply_mode == "per-monitor-auto-split"
-    assert window.watch_interval_seconds == 33
-    assert window.watch_srcdir_l == "/watch/left"
-    assert window.watch_srcdir_r == "/watch/right"
-    assert window.can_start_watch is True
+    assert window.slideshow_interval_seconds == 33
+    assert window.slideshow_srcdir_l == "/slideshow/left"
+    assert window.slideshow_srcdir_r == "/slideshow/right"
+    assert window.can_start_slideshow is True
 
 
 def test_main_window_startup_settings_load_propagates_unexpected_runtime_error(monkeypatch, tmp_path):
@@ -932,8 +932,8 @@ def test_settings_file_save_accepts_explicit_dialog_config(tmp_path):
             "two_screen": "auto",
             "plugin": "linux",
             "apply_mode": "per-monitor-auto-split",
-            "watch_interval_seconds": 33,
-            "watch_srcdir_l": "/watch/left",
+            "slideshow_interval_seconds": 33,
+            "slideshow_srcdir_l": "/slideshow/left",
         },
     ) is True
 
@@ -944,8 +944,8 @@ def test_settings_file_save_accepts_explicit_dialog_config(tmp_path):
     assert window.form_state.two_screen is None
     assert window.plugin_name == "linux"
     assert window.apply_mode == "per-monitor-auto-split"
-    assert window.watch_interval_seconds == 33
-    assert window.watch_srcdir_l == "/watch/left"
+    assert window.slideshow_interval_seconds == 33
+    assert window.slideshow_srcdir_l == "/slideshow/left"
 
 
 def test_settings_file_save_propagates_unexpected_payload_build_failure(monkeypatch, tmp_path):
@@ -990,7 +990,7 @@ def test_on_apply_without_optimized_file_fails():
     assert window.status_phase == "apply"
 
 
-def test_watch_handlers_use_srcdirs_and_interval_validation(monkeypatch, tmp_path):
+def test_slideshow_handlers_use_srcdirs_and_interval_validation(monkeypatch, tmp_path):
     class DummyPlugin:
         def apply(self, path: str, *, dry_run: bool = True) -> bool:
             return True
@@ -999,51 +999,51 @@ def test_watch_handlers_use_srcdirs_and_interval_validation(monkeypatch, tmp_pat
 
     window = MainWindow()
 
-    assert window.on_watch_start() is False
+    assert window.on_slideshow_start() is False
     assert window.status_level == "error"
-    assert window.status_phase == "watch"
-    assert window.last_error == "watch srcdir is required"
+    assert window.status_phase == "slideshow"
+    assert window.last_error == "slideshow srcdir is required"
 
-    left_dir = tmp_path / "watch-left"
+    left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
 
-    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
-    assert window.watch_source_display == f"Watch srcdirs: L={left_dir} | R=-"
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.slideshow_source_display == f"Slideshow srcdirs: L={left_dir} | R=-"
 
-    assert window.on_watch_start() is True
-    assert window.watch_running is True
+    assert window.on_slideshow_start() is True
+    assert window.slideshow_running is True
     assert window.status_level == "success"
-    assert window.status_phase == "watch"
-    assert window.status_message == "watch started"
-    assert window.watch_current_display == f"Watch current: L={left_dir / 'left-1.jpg'} | R=-"
+    assert window.status_phase == "slideshow"
+    assert window.status_message == "slideshow started"
+    assert window.slideshow_current_display == f"Slideshow current: L={left_dir / 'left-1.jpg'} | R=-"
 
     (left_dir / "left-2.jpg").write_bytes(b"left-2")
 
-    assert window.on_watch_tick() is True
-    assert window.watch_current_display == f"Watch current: L={left_dir / 'left-2.jpg'} | R=-"
+    assert window.on_slideshow_tick() is True
+    assert window.slideshow_current_display == f"Slideshow current: L={left_dir / 'left-2.jpg'} | R=-"
 
-    assert window.on_watch_stop() is True
-    assert window.watch_running is False
+    assert window.on_slideshow_stop() is True
+    assert window.slideshow_running is False
     assert window.status_level == "idle"
-    assert window.status_phase == "watch"
-    assert window.status_message == "watch stopped"
+    assert window.status_phase == "slideshow"
+    assert window.status_message == "slideshow stopped"
 
-    assert window.on_watch_tick() is False
+    assert window.on_slideshow_tick() is False
 
-    assert window.on_watch_interval_change(120) is True
-    assert window.watch_interval_seconds == 120
+    assert window.on_slideshow_interval_change(120) is True
+    assert window.slideshow_interval_seconds == 120
     assert window.status_level == "idle"
-    assert window.status_phase == "watch"
-    assert window.status_message == "watch interval updated: 120s"
+    assert window.status_phase == "slideshow"
+    assert window.status_message == "slideshow interval updated: 120s"
 
-    assert window.on_watch_interval_change(0) is False
+    assert window.on_slideshow_interval_change(0) is False
     assert window.status_level == "error"
-    assert window.status_phase == "watch"
-    assert window.last_error == "watch interval must be positive"
+    assert window.status_phase == "slideshow"
+    assert window.last_error == "slideshow interval must be positive"
 
 
-def test_watch_single_source_applies_on_start_and_tick(monkeypatch, tmp_path):
+def test_slideshow_single_source_applies_on_start_and_tick(monkeypatch, tmp_path):
     class DummyPlugin:
         def __init__(self):
             self.calls = []
@@ -1056,22 +1056,22 @@ def test_watch_single_source_applies_on_start_and_tick(monkeypatch, tmp_path):
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
 
     window = MainWindow()
-    left_dir = tmp_path / "watch-left"
+    left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
     (left_dir / "left-2.jpg").write_bytes(b"left-2")
 
-    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
-    assert window.on_watch_start() is True
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.on_slideshow_start() is True
     assert plugin.calls == [(str(left_dir / "left-1.jpg"), False)]
 
-    assert window.on_watch_tick() is True
+    assert window.on_slideshow_tick() is True
     assert plugin.calls[-1] == (str(left_dir / "left-2.jpg"), False)
 
-    assert window.on_watch_stop() is True
+    assert window.on_slideshow_stop() is True
 
 
-def test_watch_single_source_start_fails_when_plugin_apply_fails(monkeypatch, tmp_path):
+def test_slideshow_single_source_start_fails_when_plugin_apply_fails(monkeypatch, tmp_path):
     class DummyPlugin:
         def apply(self, path: str, *, dry_run: bool = True) -> bool:
             return False
@@ -1079,20 +1079,20 @@ def test_watch_single_source_start_fails_when_plugin_apply_fails(monkeypatch, tm
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
 
     window = MainWindow()
-    left_dir = tmp_path / "watch-left"
+    left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
 
-    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
-    assert window.on_watch_start() is False
-    assert window.watch_running is False
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.on_slideshow_start() is False
+    assert window.slideshow_running is False
     assert window.status_level == "error"
-    assert window.status_phase == "watch"
-    assert window.status_message == "watch start single-file apply failed"
-    assert window.last_error == "watch start single-file apply failed"
+    assert window.status_phase == "slideshow"
+    assert window.status_message == "slideshow start single-file apply failed"
+    assert window.last_error == "slideshow start single-file apply failed"
 
 
-def test_watch_start_normalizes_empty_output_dir(monkeypatch, tmp_path):
+def test_slideshow_start_normalizes_empty_output_dir(monkeypatch, tmp_path):
     class DummyPlugin:
         def apply(self, path: str, *, dry_run: bool = True) -> bool:
             return True
@@ -1109,17 +1109,17 @@ def test_watch_start_normalizes_empty_output_dir(monkeypatch, tmp_path):
 
     window = MainWindow()
     window.form_state.output_dir = ""
-    left_dir = tmp_path / "watch-left"
+    left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
 
-    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
-    assert window.on_watch_start() is True
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.on_slideshow_start() is True
     assert window.form_state.output_dir == str(home / "Pictures")
-    assert window.watch_output_display == f"Watch output: {home / 'Pictures'}"
+    assert window.slideshow_output_display == f"Slideshow output: {home / 'Pictures'}"
 
 
-def test_watch_start_propagates_unexpected_autosplit_prepare_failure(monkeypatch, tmp_path):
+def test_slideshow_start_propagates_unexpected_autosplit_prepare_failure(monkeypatch, tmp_path):
     class DummyPlugin:
         def apply(self, path: str, *, dry_run: bool = True) -> bool:
             return True
@@ -1143,21 +1143,21 @@ def test_watch_start_propagates_unexpected_autosplit_prepare_failure(monkeypatch
     monkeypatch.setattr(
         window.controller,
         "run_optimize",
-        lambda _state: (_ for _ in ()).throw(RuntimeError("watch autosplit prepare exploded")),
+        lambda _state: (_ for _ in ()).throw(RuntimeError("slideshow autosplit prepare exploded")),
     )
 
-    left_dir = tmp_path / "watch-left"
-    right_dir = tmp_path / "watch-right"
+    left_dir = tmp_path / "slideshow-left"
+    right_dir = tmp_path / "slideshow-right"
     left_dir.mkdir()
     right_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
     (right_dir / "right-1.png").write_bytes(b"right")
 
-    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
-    assert window.on_pick_watch_srcdir(str(right_dir), "R") is True
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.on_pick_slideshow_srcdir(str(right_dir), "R") is True
 
-    with pytest.raises(RuntimeError, match="watch autosplit prepare exploded"):
-        window.on_watch_start()
+    with pytest.raises(RuntimeError, match="slideshow autosplit prepare exploded"):
+        window.on_slideshow_start()
 
 
 def test_main_window_defaults_output_dir_to_xdg_pictures(monkeypatch, tmp_path):
@@ -1173,7 +1173,7 @@ def test_main_window_defaults_output_dir_to_xdg_pictures(monkeypatch, tmp_path):
     window = MainWindow()
 
     assert window.form_state.output_dir == str(home / "MyPictures")
-    assert window.watch_output_display == f"Watch output: {home / 'MyPictures'}"
+    assert window.slideshow_output_display == f"Slideshow output: {home / 'MyPictures'}"
 
 
 def test_main_window_defaults_output_dir_to_home_pictures_when_xdg_config_missing(monkeypatch, tmp_path):
@@ -1187,7 +1187,7 @@ def test_main_window_defaults_output_dir_to_home_pictures_when_xdg_config_missin
     window = MainWindow()
 
     assert window.form_state.output_dir == str(home / "Pictures")
-    assert window.watch_output_display == f"Watch output: {home / 'Pictures'}"
+    assert window.slideshow_output_display == f"Slideshow output: {home / 'Pictures'}"
 
 
 def test_main_window_defaults_output_dir_to_home_pictures_when_windows_known_folder_unavailable(monkeypatch, tmp_path):
@@ -1203,7 +1203,7 @@ def test_main_window_defaults_output_dir_to_home_pictures_when_windows_known_fol
     window = MainWindow()
 
     assert window.form_state.output_dir == str(home / "Pictures")
-    assert window.watch_output_display == f"Watch output: {home / 'Pictures'}"
+    assert window.slideshow_output_display == f"Slideshow output: {home / 'Pictures'}"
 
 
 def test_main_window_windows_pictures_probe_propagates_unexpected_runtime_error(monkeypatch):
@@ -1217,7 +1217,7 @@ def test_main_window_windows_pictures_probe_propagates_unexpected_runtime_error(
         MainWindow()._resolve_windows_pictures_dir()
 
 
-def test_watch_single_source_tick_stops_when_plugin_apply_fails(monkeypatch, tmp_path):
+def test_slideshow_single_source_tick_stops_when_plugin_apply_fails(monkeypatch, tmp_path):
     class DummyPlugin:
         def __init__(self):
             self.calls = 0
@@ -1229,23 +1229,23 @@ def test_watch_single_source_tick_stops_when_plugin_apply_fails(monkeypatch, tmp
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
 
     window = MainWindow()
-    left_dir = tmp_path / "watch-left"
+    left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
     (left_dir / "left-2.jpg").write_bytes(b"left-2")
 
-    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
-    assert window.on_watch_start() is True
-    assert window.on_watch_tick() is False
-    assert window.watch_running is False
-    assert window.can_start_watch is False
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.on_slideshow_start() is True
+    assert window.on_slideshow_tick() is False
+    assert window.slideshow_running is False
+    assert window.can_start_slideshow is False
     assert window.status_level == "error"
-    assert window.status_phase == "watch"
-    assert window.status_message == "watch cycle single-file apply failed"
-    assert window.last_error == "watch cycle single-file apply failed"
+    assert window.status_phase == "slideshow"
+    assert window.status_message == "slideshow cycle single-file apply failed"
+    assert window.last_error == "slideshow cycle single-file apply failed"
 
 
-def test_watch_dual_source_cycle_pauses_when_detected_displays_temporarily_drop(monkeypatch, tmp_path):
+def test_slideshow_dual_source_cycle_pauses_when_detected_displays_temporarily_drop(monkeypatch, tmp_path):
     class DummyPlugin:
         def apply(self, _path: object, *, dry_run: bool = True) -> bool:
             return True
@@ -1264,7 +1264,7 @@ def test_watch_dual_source_cycle_pauses_when_detected_displays_temporarily_drop(
         ),
     )
 
-    composite = tmp_path / "watch-composite.jpg"
+    composite = tmp_path / "slideshow-composite.jpg"
     composite.write_bytes(b"composite")
 
     window = MainWindow()
@@ -1289,8 +1289,8 @@ def test_watch_dual_source_cycle_pauses_when_detected_displays_temporarily_drop(
     monkeypatch.setattr(window.controller, "run_optimize", fake_run_optimize)
     monkeypatch.setattr("harite.gui.views.main_window.resolve_apply_settings", fake_resolve_apply_settings)
 
-    left_dir = tmp_path / "watch-left"
-    right_dir = tmp_path / "watch-right"
+    left_dir = tmp_path / "slideshow-left"
+    right_dir = tmp_path / "slideshow-right"
     left_dir.mkdir()
     right_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
@@ -1298,21 +1298,21 @@ def test_watch_dual_source_cycle_pauses_when_detected_displays_temporarily_drop(
     (right_dir / "right-1.png").write_bytes(b"right")
     (right_dir / "right-2.png").write_bytes(b"right-2")
 
-    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
-    assert window.on_pick_watch_srcdir(str(right_dir), "R") is True
-    assert window.on_watch_start() is True
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.on_pick_slideshow_srcdir(str(right_dir), "R") is True
+    assert window.on_slideshow_start() is True
 
-    assert window.on_watch_tick() is True
-    assert window.watch_running is True
-    assert window.watch_paused is True
-    assert window.can_start_watch is False
-    assert window.watch_summary_display == "Watch: paused"
+    assert window.on_slideshow_tick() is True
+    assert window.slideshow_running is True
+    assert window.slideshow_paused is True
+    assert window.can_start_slideshow is False
+    assert window.slideshow_summary_display == "Slideshow: paused"
     assert window.status_level == "paused"
-    assert window.status_message == "watch paused: waiting for two detected displays for auto-split"
+    assert window.status_message == "slideshow paused: waiting for two detected displays for auto-split"
     assert window.last_error == ""
 
 
-def test_watch_dual_source_cycle_resumes_after_transient_display_drop(monkeypatch, tmp_path):
+def test_slideshow_dual_source_cycle_resumes_after_transient_display_drop(monkeypatch, tmp_path):
     class DummyPlugin:
         def __init__(self):
             self.calls = []
@@ -1336,9 +1336,9 @@ def test_watch_dual_source_cycle_resumes_after_transient_display_drop(monkeypatc
         ),
     )
 
-    composite = tmp_path / "watch-composite.jpg"
+    composite = tmp_path / "slideshow-composite.jpg"
     composite.write_bytes(b"composite")
-    composite2 = tmp_path / "watch-composite-2.jpg"
+    composite2 = tmp_path / "slideshow-composite-2.jpg"
     composite2.write_bytes(b"composite2")
 
     window = MainWindow()
@@ -1372,8 +1372,8 @@ def test_watch_dual_source_cycle_resumes_after_transient_display_drop(monkeypatc
     monkeypatch.setattr(window.controller, "run_optimize", fake_run_optimize)
     monkeypatch.setattr("harite.gui.views.main_window.resolve_apply_settings", fake_resolve_apply_settings)
 
-    left_dir = tmp_path / "watch-left"
-    right_dir = tmp_path / "watch-right"
+    left_dir = tmp_path / "slideshow-left"
+    right_dir = tmp_path / "slideshow-right"
     left_dir.mkdir()
     right_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
@@ -1381,22 +1381,22 @@ def test_watch_dual_source_cycle_resumes_after_transient_display_drop(monkeypatc
     (right_dir / "right-1.png").write_bytes(b"right")
     (right_dir / "right-2.png").write_bytes(b"right-2")
 
-    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
-    assert window.on_pick_watch_srcdir(str(right_dir), "R") is True
-    assert window.on_watch_start() is True
-    assert window.on_watch_tick() is True
-    assert window.watch_paused is True
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.on_pick_slideshow_srcdir(str(right_dir), "R") is True
+    assert window.on_slideshow_start() is True
+    assert window.on_slideshow_tick() is True
+    assert window.slideshow_paused is True
 
-    assert window.on_watch_tick() is True
-    assert window.watch_running is True
-    assert window.watch_paused is False
-    assert window.watch_summary_display == "Watch: running"
-    assert window.status_message == "watch resumed"
+    assert window.on_slideshow_tick() is True
+    assert window.slideshow_running is True
+    assert window.slideshow_paused is False
+    assert window.slideshow_summary_display == "Slideshow: running"
+    assert window.status_message == "slideshow resumed"
     assert window.last_error == ""
     assert plugin.calls[-1][1] is False
 
 
-def test_watch_single_source_success_cleans_previous_generated_files(monkeypatch, tmp_path):
+def test_slideshow_single_source_success_cleans_previous_generated_files(monkeypatch, tmp_path):
     class DummyPlugin:
         def apply(self, path: str, *, dry_run: bool = True) -> bool:
             return True
@@ -1404,7 +1404,7 @@ def test_watch_single_source_success_cleans_previous_generated_files(monkeypatch
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
 
     window = MainWindow()
-    left_dir = tmp_path / "watch-left"
+    left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
 
@@ -1412,16 +1412,16 @@ def test_watch_single_source_success_cleans_previous_generated_files(monkeypatch
     old_split = tmp_path / "harite_output_0001_HDMI-1.jpg"
     old_composite.write_bytes(b"old-composite")
     old_split.write_bytes(b"old-split")
-    window._watch_active_generated_files = (old_composite, old_split)
+    window._slideshow_active_generated_files = (old_composite, old_split)
 
-    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
-    assert window.on_watch_start() is True
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.on_slideshow_start() is True
 
     assert old_composite.exists() is False
     assert old_split.exists() is False
 
 
-def test_watch_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch, tmp_path):
+def test_slideshow_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch, tmp_path):
     class DummyPlugin:
         def __init__(self):
             self.calls = []
@@ -1457,14 +1457,14 @@ def test_watch_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch, tmp
         ),
     )
 
-    composite = tmp_path / "watch-composite.jpg"
+    composite = tmp_path / "slideshow-composite.jpg"
     composite.write_bytes(b"composite")
-    composite2 = tmp_path / "watch-composite-2.jpg"
+    composite2 = tmp_path / "slideshow-composite-2.jpg"
     composite2.write_bytes(b"composite-2")
-    split1_hdmi = tmp_path / "watch_HDMI-1.jpg"
-    split1_dp = tmp_path / "watch_DP-1.jpg"
-    split2_hdmi = tmp_path / "watch2_HDMI-1.jpg"
-    split2_dp = tmp_path / "watch2_DP-1.jpg"
+    split1_hdmi = tmp_path / "slideshow_HDMI-1.jpg"
+    split1_dp = tmp_path / "slideshow_DP-1.jpg"
+    split2_hdmi = tmp_path / "slideshow2_HDMI-1.jpg"
+    split2_dp = tmp_path / "slideshow2_DP-1.jpg"
     split1_hdmi.write_bytes(b"split1-hdmi")
     split1_dp.write_bytes(b"split1-dp")
     split2_hdmi.write_bytes(b"split2-hdmi")
@@ -1483,8 +1483,8 @@ def test_watch_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch, tmp
 
     monkeypatch.setattr(window.controller, "run_optimize", fake_run_optimize)
 
-    left_dir = tmp_path / "watch-left"
-    right_dir = tmp_path / "watch-right"
+    left_dir = tmp_path / "slideshow-left"
+    right_dir = tmp_path / "slideshow-right"
     left_dir.mkdir()
     right_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
@@ -1492,15 +1492,15 @@ def test_watch_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch, tmp
     (right_dir / "right-1.png").write_bytes(b"right")
     (right_dir / "right-2.png").write_bytes(b"right-2")
 
-    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
-    assert window.on_pick_watch_srcdir(str(right_dir), "R") is True
-    assert window.on_watch_start() is True
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.on_pick_slideshow_srcdir(str(right_dir), "R") is True
+    assert window.on_slideshow_start() is True
 
     assert observed_inputs == [f"{left_dir / 'left-1.jpg'},{right_dir / 'right-1.png'}"]
     assert plugin.calls == [({"HDMI-1": split1_hdmi, "DP-1": split1_dp}, False)]
-    assert any("Watch start per-monitor auto-split" in line for line in window.logs)
+    assert any("Slideshow start per-monitor auto-split" in line for line in window.logs)
 
-    assert window.on_watch_tick() is True
+    assert window.on_slideshow_tick() is True
     assert observed_inputs[-1] == f"{left_dir / 'left-2.jpg'},{right_dir / 'right-2.png'}"
     assert plugin.calls[-1] == ({"HDMI-1": split2_hdmi, "DP-1": split2_dp}, False)
     assert composite.exists() is False
@@ -1511,7 +1511,7 @@ def test_watch_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch, tmp
     assert split2_dp.exists() is True
 
 
-def test_watch_dual_source_start_fails_without_two_detected_displays(monkeypatch, tmp_path):
+def test_slideshow_dual_source_start_fails_without_two_detected_displays(monkeypatch, tmp_path):
     monkeypatch.setattr(
         "harite.gui.views.main_window.build_two_screen_optimize_context",
         lambda: None,
@@ -1520,22 +1520,22 @@ def test_watch_dual_source_start_fails_without_two_detected_displays(monkeypatch
     window = MainWindow()
     window.plugin_name = "linux"
 
-    left_dir = tmp_path / "watch-left"
-    right_dir = tmp_path / "watch-right"
+    left_dir = tmp_path / "slideshow-left"
+    right_dir = tmp_path / "slideshow-right"
     left_dir.mkdir()
     right_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
     (right_dir / "right-1.png").write_bytes(b"right")
 
-    assert window.on_pick_watch_srcdir(str(left_dir), "L") is True
-    assert window.on_pick_watch_srcdir(str(right_dir), "R") is True
-    assert window.on_watch_start() is False
-    assert window.watch_running is False
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.on_pick_slideshow_srcdir(str(right_dir), "R") is True
+    assert window.on_slideshow_start() is False
+    assert window.slideshow_running is False
     assert window.status_level == "error"
-    assert window.status_phase == "watch"
-    assert window.status_message == "dual-source watch requires two detected displays"
-    assert window.last_error == "dual-source watch requires two detected displays"
-    assert any("Watch start blocked: dual-source watch requires two detected displays" in line for line in window.logs)
+    assert window.status_phase == "slideshow"
+    assert window.status_message == "dual-source slideshow requires two detected displays"
+    assert window.last_error == "dual-source slideshow requires two detected displays"
+    assert any("Slideshow start blocked: dual-source slideshow requires two detected displays" in line for line in window.logs)
 
 
 def test_suggest_next_action_transitions(tmp_path):
@@ -1855,3 +1855,4 @@ def test_on_apply_when_plugin_raises_sets_error(monkeypatch, tmp_path):
 
     assert ok is False
     assert window.last_error == "failed to apply wallpaper: boom"
+

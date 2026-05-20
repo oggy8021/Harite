@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from harite.watch import WatchCycleState, run_watch_cycle, run_watch_cycles, select_next_image
+from harite.slideshow import SlideshowCycleState, run_slideshow_cycle, run_slideshow_cycles, select_next_image
 
 
 def test_select_next_image_sequential_cycles() -> None:
@@ -77,12 +77,12 @@ def test_select_next_image_rejects_unknown_mode() -> None:
         select_next_image(images, "shuffle", 0)
 
 
-def test_run_watch_cycle_updates_state_for_sequential_mode() -> None:
+def test_run_slideshow_cycle_updates_state_for_sequential_mode() -> None:
     images = [Path("a.jpg"), Path("b.jpg"), Path("c.jpg")]
-    state = WatchCycleState()
+    state = SlideshowCycleState()
 
-    selected1, state = run_watch_cycle(images, "sequential", state)
-    selected2, state = run_watch_cycle(images, "sequential", state)
+    selected1, state = run_slideshow_cycle(images, "sequential", state)
+    selected2, state = run_slideshow_cycle(images, "sequential", state)
 
     assert selected1 == Path("a.jpg")
     assert selected2 == Path("b.jpg")
@@ -91,12 +91,12 @@ def test_run_watch_cycle_updates_state_for_sequential_mode() -> None:
     assert state.previous_selected == Path("b.jpg")
 
 
-def test_run_watch_cycle_random_avoids_repeat_when_possible() -> None:
+def test_run_slideshow_cycle_random_avoids_repeat_when_possible() -> None:
     images = [Path("a.jpg"), Path("b.jpg"), Path("c.jpg")]
     rng = random.Random(1)
-    state = WatchCycleState(previous_selected=Path("a.jpg"), completed=4)
+    state = SlideshowCycleState(previous_selected=Path("a.jpg"), completed=4)
 
-    selected, next_state = run_watch_cycle(images, "random", state, rng=rng)
+    selected, next_state = run_slideshow_cycle(images, "random", state, rng=rng)
 
     assert selected in (Path("b.jpg"), Path("c.jpg"))
     assert next_state.index == 0
@@ -104,19 +104,19 @@ def test_run_watch_cycle_random_avoids_repeat_when_possible() -> None:
     assert next_state.previous_selected == selected
 
 
-def test_run_watch_cycle_rejects_empty_images() -> None:
+def test_run_slideshow_cycle_rejects_empty_images() -> None:
     with pytest.raises(ValueError, match="images must not be empty"):
-        run_watch_cycle([], "sequential", WatchCycleState())
+        run_slideshow_cycle([], "sequential", SlideshowCycleState())
 
 
-def test_run_watch_cycle_rejects_unknown_mode() -> None:
+def test_run_slideshow_cycle_rejects_unknown_mode() -> None:
     images = [Path("a.jpg")]
 
     with pytest.raises(ValueError, match="mode must be one of"):
-        run_watch_cycle(images, "shuffle", WatchCycleState())
+        run_slideshow_cycle(images, "shuffle", SlideshowCycleState())
 
 
-def test_run_watch_cycles_respects_iterations() -> None:
+def test_run_slideshow_cycles_respects_iterations() -> None:
     images = [Path("a.jpg"), Path("b.jpg")]
     selected: list[Path] = []
     slept: list[float] = []
@@ -127,7 +127,7 @@ def test_run_watch_cycles_respects_iterations() -> None:
     def fake_sleep(sec: float) -> None:
         slept.append(sec)
 
-    completed = run_watch_cycles(
+    completed = run_slideshow_cycles(
         images=images,
         mode="sequential",
         interval_sec=3,
@@ -141,11 +141,11 @@ def test_run_watch_cycles_respects_iterations() -> None:
     assert slept == [3, 3]
 
 
-def test_run_watch_cycles_rejects_invalid_interval() -> None:
+def test_run_slideshow_cycles_rejects_invalid_interval() -> None:
     images = [Path("a.jpg")]
 
     with pytest.raises(ValueError, match="interval_sec must be >= 1"):
-        run_watch_cycles(
+        run_slideshow_cycles(
             images=images,
             mode="sequential",
             interval_sec=0,

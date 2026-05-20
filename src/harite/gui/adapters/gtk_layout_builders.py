@@ -169,9 +169,9 @@ def build_footer_section(gtk_module: Any, root: Any) -> dict[str, Any]:
 
     status_spacer = gtk_module.Label(label="")
     status_row.pack_start(status_spacer, True, True, 0)
-    watch_summary_label = gtk_module.Label(label="Watch: stopped")
-    set_xalign_if_supported(watch_summary_label)
-    status_row.pack_start(watch_summary_label, False, False, 0)
+    slideshow_summary_label = gtk_module.Label(label="Slideshow: stopped")
+    set_xalign_if_supported(slideshow_summary_label)
+    status_row.pack_start(slideshow_summary_label, False, False, 0)
 
     message_separator = build_horizontal_separator(gtk_module)
     footer_col.pack_start(message_separator, False, False, 0)
@@ -187,7 +187,7 @@ def build_footer_section(gtk_module: Any, root: Any) -> dict[str, Any]:
         "status_row": status_row,
         "status_label": status_label,
         "status_spacer": status_spacer,
-        "watch_summary_label": watch_summary_label,
+        "slideshow_summary_label": slideshow_summary_label,
         "message_separator": message_separator,
         "message_row": message_row,
         "error_label": error_label,

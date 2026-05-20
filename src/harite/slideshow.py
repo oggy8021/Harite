@@ -1,4 +1,4 @@
-"""Watch command helpers."""
+"""Slideshow command helpers."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -12,16 +12,16 @@ _IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp"}
 
 
 @dataclass(frozen=True)
-class WatchCycleState:
+class SlideshowCycleState:
     index: int = 0
     previous_selected: Path | None = None
     completed: int = 0
 
 
-def collect_watch_input_images(input_dir: Path) -> List[Path]:
+def collect_slideshow_input_images(input_dir: Path) -> List[Path]:
     """Collect image files from an input directory.
 
-    This function performs input validation for watch execution.
+    This function performs input validation for slideshow execution.
     """
     if not input_dir.exists() or not input_dir.is_dir():
         raise ValueError("--input must be an existing directory")
@@ -41,7 +41,7 @@ def select_next_image(
     previous_selected: Path | None = None,
     rng: random.Random | None = None,
 ) -> tuple[Path, int]:
-    """Select the next image for a watch cycle.
+    """Select the next image for a slideshow cycle.
 
     Returns a tuple of (selected_image, next_index).
     """
@@ -63,13 +63,13 @@ def select_next_image(
     raise ValueError("mode must be one of: sequential, random")
 
 
-def run_watch_cycle(
+def run_slideshow_cycle(
     images: List[Path],
     mode: str,
-    state: WatchCycleState,
+    state: SlideshowCycleState,
     rng: random.Random | None = None,
-) -> tuple[Path, WatchCycleState]:
-    """Run a single watch cycle and return the updated state."""
+) -> tuple[Path, SlideshowCycleState]:
+    """Run a single slideshow cycle and return the updated state."""
     selected, next_index = select_next_image(
         images,
         mode,
@@ -77,7 +77,7 @@ def run_watch_cycle(
         previous_selected=state.previous_selected,
         rng=rng,
     )
-    next_state = WatchCycleState(
+    next_state = SlideshowCycleState(
         index=next_index,
         previous_selected=selected,
         completed=state.completed + 1,
@@ -85,7 +85,7 @@ def run_watch_cycle(
     return selected, next_state
 
 
-def run_watch_cycles(
+def run_slideshow_cycles(
     images: List[Path],
     mode: str,
     interval_sec: int,
@@ -93,19 +93,18 @@ def run_watch_cycles(
     on_cycle: Callable[[Path, int], None],
     sleep_fn: Callable[[float], None] = time.sleep,
 ) -> int:
-    """Run watch cycles and return completed cycle count."""
+    """Run slideshow cycles and return completed cycle count."""
     if interval_sec < 1:
         raise ValueError("interval_sec must be >= 1")
     if iterations is not None and iterations < 1:
         raise ValueError("iterations must be >= 1")
 
-    state = WatchCycleState()
+    state = SlideshowCycleState()
 
     while iterations is None or state.completed < iterations:
-        selected, state = run_watch_cycle(images, mode, state)
+        selected, state = run_slideshow_cycle(images, mode, state)
         on_cycle(selected, state.completed - 1)
 
-        # Sleep only if another cycle may follow.
         if iterations is None or state.completed < iterations:
             sleep_fn(interval_sec)
 

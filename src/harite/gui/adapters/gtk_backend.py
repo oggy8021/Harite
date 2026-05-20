@@ -24,7 +24,7 @@ from harite.gui.adapters.gtk_runtime_builders import build_margins_tab_section
 from harite.gui.adapters.gtk_runtime_builders import build_primary_margin_controls
 from harite.gui.adapters.gtk_runtime_builders import build_runtime_state_labels
 from harite.gui.adapters.gtk_runtime_builders import build_settings_section
-from harite.gui.adapters.gtk_runtime_builders import build_watch_tab_section
+from harite.gui.adapters.gtk_runtime_builders import build_slideshow_tab_section
 from harite.gui.adapters.gtk_runtime_dialogs import AboutDialogProxy as _AboutDialogProxy
 from harite.gui.adapters.gtk_runtime_dialogs import ColorDialogProxy as _ColorDialogProxy
 from harite.gui.adapters.gtk_layout_builders import set_window_icon_if_supported
@@ -60,8 +60,8 @@ from harite.gui.adapters.gtk_runtime_owner_sync import sync_input_preview_state_
 from harite.gui.adapters.gtk_runtime_owner_sync import sync_margins_state_with_feedback_from_owner
 from harite.gui.adapters.gtk_runtime_owner_sync import sync_non_preview_state_from_owner
 from harite.gui.adapters.gtk_runtime_owner_sync import sync_preview_state_from_owner
-from harite.gui.adapters.gtk_runtime_owner_sync import sync_watch_state_only_from_owner
-from harite.gui.adapters.gtk_runtime_owner_sync import sync_watch_state_with_feedback_from_owner
+from harite.gui.adapters.gtk_runtime_owner_sync import sync_slideshow_state_only_from_owner
+from harite.gui.adapters.gtk_runtime_owner_sync import sync_slideshow_state_with_feedback_from_owner
 from harite.gui.adapters.gtk_runtime_preview import build_preview_crop_boxes
 from harite.gui.adapters.gtk_runtime_preview import clear_preview_widget
 from harite.gui.adapters.gtk_runtime_preview import get_gdkpixbuf_module
@@ -111,7 +111,7 @@ from harite.gui.adapters.gtk_runtime_sync import sync_feedback_from_owner
 from harite.gui.adapters.gtk_runtime_sync import sync_input_state_from_owner
 from harite.gui.adapters.gtk_runtime_sync import sync_main_state_from_owner
 from harite.gui.adapters.gtk_runtime_sync import sync_margins_state_from_owner
-from harite.gui.adapters.gtk_runtime_sync import sync_watch_state_from_owner
+from harite.gui.adapters.gtk_runtime_sync import sync_slideshow_state_from_owner
 from harite.gui.adapters.gtk_runtime_widget_access import is_toggle_active
 from harite.gui.adapters.gtk_runtime_widget_access import read_entry_text
 from harite.gui.adapters.gtk_runtime_widget_access import read_spin_int
@@ -125,21 +125,21 @@ from harite.gui.adapters.gtk_runtime_widget_access import set_spin_value
 from harite.gui.adapters.gtk_runtime_widget_access import set_status
 from harite.gui.adapters.gtk_runtime_widget_access import set_toggle_active
 from harite.gui.adapters.gtk_runtime_widget_access import set_widget_enabled
-from harite.gui.adapters.gtk_runtime_watch_ui import on_watch_interval_changed
-from harite.gui.adapters.gtk_runtime_watch_ui import on_watch_start_clicked
-from harite.gui.adapters.gtk_runtime_watch_ui import on_watch_stop_clicked
-from harite.gui.adapters.gtk_runtime_watch_ui import refresh_watch_current_label
-from harite.gui.adapters.gtk_runtime_watch_ui import refresh_watch_output_label
-from harite.gui.adapters.gtk_runtime_watch_ui import refresh_watch_source_labels
-from harite.gui.adapters.gtk_runtime_watch_ui import refresh_watch_summary_label
-from harite.gui.adapters.gtk_runtime_watch import get_glib_module
-from harite.gui.adapters.gtk_runtime_watch import on_watch_timer_event
-from harite.gui.adapters.gtk_runtime_watch import run_watch_cycle_for_side
-from harite.gui.adapters.gtk_runtime_watch import run_watch_cycle_once as run_runtime_watch_cycle_once
-from harite.gui.adapters.gtk_runtime_watch import start_watch_timer
-from harite.gui.adapters.gtk_runtime_watch import stop_watch_timer
+from harite.gui.adapters.gtk_runtime_slideshow_ui import on_slideshow_interval_changed
+from harite.gui.adapters.gtk_runtime_slideshow_ui import on_slideshow_start_clicked
+from harite.gui.adapters.gtk_runtime_slideshow_ui import on_slideshow_stop_clicked
+from harite.gui.adapters.gtk_runtime_slideshow_ui import refresh_slideshow_current_label
+from harite.gui.adapters.gtk_runtime_slideshow_ui import refresh_slideshow_output_label
+from harite.gui.adapters.gtk_runtime_slideshow_ui import refresh_slideshow_source_labels
+from harite.gui.adapters.gtk_runtime_slideshow_ui import refresh_slideshow_summary_label
+from harite.gui.adapters.gtk_runtime_slideshow import get_glib_module
+from harite.gui.adapters.gtk_runtime_slideshow import on_slideshow_timer_event
+from harite.gui.adapters.gtk_runtime_slideshow import run_slideshow_cycle_for_side
+from harite.gui.adapters.gtk_runtime_slideshow import run_slideshow_cycle_once as run_runtime_slideshow_cycle_once
+from harite.gui.adapters.gtk_runtime_slideshow import start_slideshow_timer
+from harite.gui.adapters.gtk_runtime_slideshow import stop_slideshow_timer
 from harite.positioning import format_position_pair, parse_position_pair
-from harite.watch import WatchCycleState
+from harite.slideshow import SlideshowCycleState
 
 
 MARGIN_TEXT_MODE_VISIBLE_LABELS: dict[str, str] = {
@@ -254,15 +254,15 @@ class GtkRuntimeSignalBackend:
         self._input_path_r = ""
         self._prefs_apply_mode_preserved: str | None = None
         self._prefs_apply_mode_syncing = False
-        self._watch_srcdir_l = ""
-        self._watch_srcdir_r = ""
-        self._watch_running = False
-        self._watch_paused = False
-        self._watch_state_l = WatchCycleState()
-        self._watch_state_r = WatchCycleState()
-        self._watch_previous_l: Path | None = None
-        self._watch_previous_r: Path | None = None
-        self._watch_timer_source_id: int | None = None
+        self._slideshow_srcdir_l = ""
+        self._slideshow_srcdir_r = ""
+        self._slideshow_running = False
+        self._slideshow_paused = False
+        self._slideshow_state_l = SlideshowCycleState()
+        self._slideshow_state_r = SlideshowCycleState()
+        self._slideshow_previous_l: Path | None = None
+        self._slideshow_previous_r: Path | None = None
+        self._slideshow_timer_source_id: int | None = None
 
     def _build_runtime_window(self, gtk_module: Any) -> Any:
         window = gtk_module.Window(title="Harite")
@@ -321,7 +321,7 @@ class GtkRuntimeSignalBackend:
         current_left_label: Any,
         current_right_label: Any,
     ) -> dict[str, Any]:
-        watch_widgets = build_watch_tab_section(gtk_module, configure_spin_button=self._configure_spin_button)
+        slideshow_widgets = build_slideshow_tab_section(gtk_module, configure_spin_button=self._configure_spin_button)
         margins_widgets = build_margins_tab_section(
             gtk_module,
             top_margin_label=top_margin_label,
@@ -340,10 +340,10 @@ class GtkRuntimeSignalBackend:
 
         command_tabs.append_page(margins_widgets["margins_tab_box"], margins_widgets["margins_tab_title"])
 
-        command_tabs.append_page(watch_widgets["watch_tab_box"], watch_widgets["watch_tab_title"])
+        command_tabs.append_page(slideshow_widgets["slideshow_tab_box"], slideshow_widgets["slideshow_tab_title"])
 
         return {
-            **watch_widgets,
+            **slideshow_widgets,
             **margins_widgets,
         }
 
@@ -356,7 +356,7 @@ class GtkRuntimeSignalBackend:
         return {
             "footer_col": footer_widgets["footer_col"],
             "status_label": footer_widgets["status_label"],
-            "watch_summary_label": footer_widgets["watch_summary_label"],
+            "slideshow_summary_label": footer_widgets["slideshow_summary_label"],
             "error_label": footer_widgets["error_label"],
         }
 
@@ -566,17 +566,17 @@ class GtkRuntimeSignalBackend:
     def _refresh_save_target_label(self, filename: str | None = None) -> None:
         refresh_save_target_label(self, filename)
 
-    def _refresh_watch_source_labels(self) -> None:
-        refresh_watch_source_labels(self)
+    def _refresh_slideshow_source_labels(self) -> None:
+        refresh_slideshow_source_labels(self)
 
-    def _refresh_watch_summary_label(self) -> None:
-        refresh_watch_summary_label(self)
+    def _refresh_slideshow_summary_label(self) -> None:
+        refresh_slideshow_summary_label(self)
 
-    def _refresh_watch_current_label(self, left: str | None = None, right: str | None = None) -> None:
-        refresh_watch_current_label(self, left, right)
+    def _refresh_slideshow_current_label(self, left: str | None = None, right: str | None = None) -> None:
+        refresh_slideshow_current_label(self, left, right)
 
-    def _refresh_watch_output_label(self, output_dir: str | None = None) -> None:
-        refresh_watch_output_label(self, output_dir)
+    def _refresh_slideshow_output_label(self, output_dir: str | None = None) -> None:
+        refresh_slideshow_output_label(self, output_dir)
 
     def _get_handler_owner(self, handler_name: str) -> Any | None:
         callback = self._signal_handlers.get(handler_name)
@@ -591,8 +591,8 @@ class GtkRuntimeSignalBackend:
                 return owner
         return None
 
-    def _sync_watch_state_from_owner(self, owner: Any) -> None:
-        sync_watch_state_from_owner(self, owner)
+    def _sync_slideshow_state_from_owner(self, owner: Any) -> None:
+        sync_slideshow_state_from_owner(self, owner)
 
     def _parse_margin_values(self, value: object | None) -> tuple[int, int, int, int]:
         return parse_margin_values(value)
@@ -627,11 +627,11 @@ class GtkRuntimeSignalBackend:
     def _sync_margins_state_with_feedback_from_owner(self, owner: Any) -> None:
         sync_margins_state_with_feedback_from_owner(self, owner)
 
-    def _sync_watch_state_with_feedback_from_owner(self, owner: Any) -> None:
-        sync_watch_state_with_feedback_from_owner(self, owner)
+    def _sync_slideshow_state_with_feedback_from_owner(self, owner: Any) -> None:
+        sync_slideshow_state_with_feedback_from_owner(self, owner)
 
-    def _sync_watch_state_only_from_owner(self, owner: Any) -> None:
-        sync_watch_state_only_from_owner(self, owner)
+    def _sync_slideshow_state_only_from_owner(self, owner: Any) -> None:
+        sync_slideshow_state_only_from_owner(self, owner)
 
     def _get_gdkpixbuf_module(self) -> Any | None:
         return get_gdkpixbuf_module(self)
@@ -660,17 +660,17 @@ class GtkRuntimeSignalBackend:
     def _get_glib_module(self) -> Any | None:
         return get_glib_module(self)
 
-    def _stop_watch_timer(self) -> None:
-        stop_watch_timer(self)
+    def _stop_slideshow_timer(self) -> None:
+        stop_slideshow_timer(self)
 
-    def _on_watch_timer_event(self) -> bool:
-        return on_watch_timer_event(self)
+    def _on_slideshow_timer_event(self) -> bool:
+        return on_slideshow_timer_event(self)
 
-    def _start_watch_timer(self, interval_seconds: int) -> bool:
-        return start_watch_timer(self, interval_seconds)
+    def _start_slideshow_timer(self, interval_seconds: int) -> bool:
+        return start_slideshow_timer(self, interval_seconds)
 
-    def _run_watch_cycle_for_side(self, side: str, source_dir: Path) -> str:
-        return run_watch_cycle_for_side(self, side, source_dir)
+    def _run_slideshow_cycle_for_side(self, side: str, source_dir: Path) -> str:
+        return run_slideshow_cycle_for_side(self, side, source_dir)
 
     def _notify_srcdir_dialog_destroy(self) -> None:
         callback = self._signal_handlers.get("on_close_srcdir_dialog")
@@ -726,14 +726,14 @@ class GtkRuntimeSignalBackend:
     def _on_srcdir_dialog_canceled(self, destroyed: bool = False) -> None:
         on_srcdir_dialog_canceled(self, destroyed)
 
-    def _on_watch_interval_changed(self, widget: Any) -> None:
-        on_watch_interval_changed(self, widget)
+    def _on_slideshow_interval_changed(self, widget: Any) -> None:
+        on_slideshow_interval_changed(self, widget)
 
-    def _on_watch_start_clicked(self, *_args: Any) -> None:
-        on_watch_start_clicked(self, *_args)
+    def _on_slideshow_start_clicked(self, *_args: Any) -> None:
+        on_slideshow_start_clicked(self, *_args)
 
-    def _on_watch_stop_clicked(self, *_args: Any) -> None:
-        on_watch_stop_clicked(self, *_args)
+    def _on_slideshow_stop_clicked(self, *_args: Any) -> None:
+        on_slideshow_stop_clicked(self, *_args)
 
     def _on_margin_text_mode_toggled(self, widget: Any, value: str) -> None:
         if hasattr(widget, "get_active") and not widget.get_active():
@@ -822,8 +822,8 @@ class GtkRuntimeSignalBackend:
         except TypeError as exc:
             self._set_feedback(phase="Margins", state="max-lines-error", error=str(exc))
 
-    def run_watch_cycle_once(self) -> bool:
-        return run_runtime_watch_cycle_once(self)
+    def run_slideshow_cycle_once(self) -> bool:
+        return run_runtime_slideshow_cycle_once(self)
 
     def _set_toggle_active(self, object_name: str, active: bool) -> None:
         set_toggle_active(self, object_name, active)

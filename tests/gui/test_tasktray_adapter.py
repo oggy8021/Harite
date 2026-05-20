@@ -42,7 +42,7 @@ class _Window:
 
 
 class _SignalBackend:
-    _watch_running = False
+    _slideshow_running = False
 
 
 def _build_adapter(indicator):
@@ -56,8 +56,8 @@ def _build_adapter(indicator):
     )
     adapter._indicator = indicator
     adapter._visible_item = _MenuItem()
-    adapter._watch_start_item = _MenuItem()
-    adapter._watch_stop_item = _MenuItem()
+    adapter._slideshow_start_item = _MenuItem()
+    adapter._slideshow_stop_item = _MenuItem()
     return adapter
 
 
@@ -91,8 +91,8 @@ def test_tasktray_current_icon_name_falls_back_when_product_icon_is_missing(monk
     adapter = _build_adapter(_FakeIndicator())
     monkeypatch.setattr(tasktray_adapter, "files", lambda _package: _MissingResource())
 
-    assert adapter._current_icon_name(watch_running=False) == "media-playback-pause"
-    assert adapter._current_icon_name(watch_running=True) == "applications-graphics"
+    assert adapter._current_icon_name(slideshow_running=False) == "media-playback-pause"
+    assert adapter._current_icon_name(slideshow_running=True) == "applications-graphics"
 
 
 def test_tasktray_current_icon_name_propagates_unexpected_resource_lookup_failure(monkeypatch):
@@ -100,7 +100,7 @@ def test_tasktray_current_icon_name_propagates_unexpected_resource_lookup_failur
     monkeypatch.setattr(tasktray_adapter, "files", lambda _package: (_ for _ in ()).throw(RuntimeError("resource lookup failed")))
 
     with pytest.raises(RuntimeError, match="resource lookup failed"):
-        adapter._current_icon_name(watch_running=False)
+        adapter._current_icon_name(slideshow_running=False)
 
 
 def test_initialize_tasktray_propagates_unexpected_runtime_error_from_gtk_probe(monkeypatch):

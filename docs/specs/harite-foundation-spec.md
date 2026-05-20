@@ -1,6 +1,6 @@
 # Harite 基本仕様 (Foundation Spec)
 
-最終更新: 2026-05-19
+最終更新: 2026-05-20
 
 ## 1. 文書の目的と適用範囲
 
@@ -11,20 +11,20 @@
 本書の読み方:
 
 - Harite 全体の位置づけ、対象利用者、運用前提を知りたい場合は本書を最初に読む。
-- 各操作面の具体仕様を知りたい場合は、本書末尾の分冊導線から core / CLI / GUI / watch へ進む。
+- 各操作面の具体仕様を知りたい場合は、本書末尾の分冊導線から core / CLI / GUI / スライドショー へ進む。
 - 実装変更時に参照する場合も、まず本書で責務境界を確認してから個別分冊へ降りる。
 
 ## 2. Harite の目的
 
 - Harite は、壁紙画像の最適化と適用を、GUI と CLI の両面から扱うためのツールである。
-- 主な責務は、入力画像の解決、表示条件に応じた最適化、OS / desktop plugin を通じた適用、継続運用としての watch にある。
+- 主な責務は、入力画像の解決、表示条件に応じた最適化、OS / desktop plugin を通じた適用、継続運用としてのスライドショー機能にある。
 - 特に GUI では、compose -> optimize -> apply の流れを日常操作として扱えることを重視する。
 
 目的をもう少し具体化すると、Harite は次の 3 面を一続きの体験として扱う。
 
 1. 入力画像と表示条件から、適切な壁紙出力を作る。
 2. 作られた出力を、現在の OS / desktop 環境へ適用する。
-3. 単発操作だけでなく、watch により継続的な更新運用を行う。
+3. 単発操作だけでなく、スライドショー機能により継続的な更新運用を行う。
 
 そのため Harite は、単なる画像変換ツールでも、単なる壁紙 setter でもなく、最適化と適用の間をつなぐアプリケーションとして位置づけられる。
 
@@ -45,7 +45,7 @@
 - Python ベースのアプリケーションとして動作する。
 - CLI は cross-platform を志向するが、plugin 実装により適用面は OS ごとに差分を持つ。
 - GUI は GTK / PyGObject が利用可能な環境を前提とする。
-- Linux / XFCE では per-monitor apply, watch, tray, desktop entry まわりの説明比重が高い。
+- Linux / XFCE では per-monitor apply, スライドショー, tray, desktop entry まわりの説明比重が高い。
 
 環境前提の整理:
 
@@ -62,12 +62,12 @@ Harite の主な面は以下の 6 つである。
 2. コア仕様 (core): 最適化、設定、適用条件の基底仕様
 3. CLI 仕様 (CLI): command surface
 4. GUI 仕様 (GUI): 画面、操作、状態、tray
-5. watch 仕様 (watch): 継続実行、pause / retry、観測面
+5. スライドショー仕様: 継続実行、pause / retry、観測面
 6. plugin 仕様 (plugin): OS / desktop 環境ごとの適用実行
 
-この 6 面は、責務を分離するための文書分冊であって、実装が完全に独立していることを意味しない。実装上は core, plugin, GUI state, watch state が相互に接続しているため、本書は「どこからどこまでをどの分冊で説明するか」の境界線として機能する。
+この 6 面は、責務を分離するための文書分冊であって、実装が完全に独立していることを意味しない。実装上は core, plugin, GUI state, slideshow state が相互に接続しているため、本書は「どこからどこまでをどの分冊で説明するか」の境界線として機能する。
 
-## 6. GUI / CLI / watch / tray の関係
+## 6. GUI / CLI / スライドショー / tray の関係
 
 ```mermaid
 flowchart TD
@@ -75,22 +75,22 @@ flowchart TD
     User --> CLI[CLI surface]
     GUI --> Core[core logic]
     CLI --> Core
-    GUI --> Watch[GUI watch]
-    CLI --> Watch[CLI watch]
+    GUI --> Slideshow[GUI slideshow]
+    CLI --> Slideshow[CLI slideshow]
     GUI --> Tray[task tray]
-    Watch --> Plugin[OS plugin apply]
+    Slideshow --> Plugin[OS plugin apply]
     Core --> Plugin
 ```
 
 - GUI と CLI は別の操作面だが、基底挙動は core に寄せる。
-- watch は CLI 専用ではなく、GUI 側にも長時間運用の責務を持つ。
-- tray は GUI の補助操作面であり、watch の開始停止と可視状態制御に関与する。
+  - スライドショー機能は CLI 専用ではなく、GUI 側にも長時間運用の責務を持つ。
+- tray は GUI の補助操作面であり、スライドショーの開始停止と可視状態制御に関与する。
 
 操作面ごとの基本役割:
 
 - GUI は日常操作と状態可視化を担う。
 - CLI は明示的な command 実行と再現性の高い呼び出しを担う。
-- watch は単発操作を継続運用へ拡張する。
+- スライドショー機能は単発操作を継続運用へ拡張する。
 - tray は GUI 常駐時の補助導線であり、独立した業務面ではない。
 
 ## 7. 設定 (settings) / save / apply の責務分担
@@ -128,7 +128,7 @@ README に残すもの:
 
 - 各操作面の責務
 - 設定ファイルの意味
-- watch と apply の条件分岐
+- スライドショーと apply の条件分岐
 - GUI / CLI / plugin / tray の境界
 - 失敗時挙動と観測面
 
@@ -141,7 +141,7 @@ src/harite/
   preferences.py          設定モデルと JSON との相互変換
   core.py                 optimize の基底ロジック
   apply_settings.py       apply 対象の解決
-  watch.py                watch の選択ループと cycle state
+  slideshow.py            スライドショー実行の選択ループとサイクル state
   plugins.py              OS / desktop plugin registry と apply 実装
   linux_xdg_launcher.py   Linux/XDG launcher 生成
   gui/
@@ -161,7 +161,7 @@ src/harite/gui/
     起動入口。MainWindow 生成、GTK backend load、tasktray 初期化、window present を束ねる。
   views/
     main_window.py
-      主状態モデル。status, logs, 設定, optimize/apply/watch の業務状態を持つ。
+      主状態モデル。status, history, 設定, optimize/apply/slideshow の業務状態を持つ。
     main_window_preview.py
       preview 表示専用の補助計算を持つ。
   controllers/
@@ -180,7 +180,7 @@ src/harite/gui/
     gtk_layout_builders.py / gtk_tab_builders.py / gtk_dialog_builders.py
       widget 構築責務を分割する。
     gtk_runtime_* modules
-      signal, sync, dialog, watch, helper などの細粒度 runtime 責務を持つ。
+      signal, sync, dialog, slideshow, helper などの細粒度 runtime 責務を持つ。
 ```
 
 ## 10. 分冊導線
@@ -188,10 +188,10 @@ src/harite/gui/
 - core 詳細は [docs/specs/core/harite-core-spec.md](docs/specs/core/harite-core-spec.md)
 - CLI 詳細は [docs/specs/cli/harite-cli-spec.md](docs/specs/cli/harite-cli-spec.md)
 - GUI 詳細は [docs/specs/gui/harite-gui-spec.md](docs/specs/gui/harite-gui-spec.md)
-- watch 詳細は [docs/specs/watch/harite-watch-spec.md](docs/specs/watch/harite-watch-spec.md)
+- スライドショー詳細は [docs/specs/slideshow/harite-slideshow-spec.md](docs/specs/slideshow/harite-slideshow-spec.md)
 
 推奨読順:
 
 1. 本書で全体像と責務境界を掴む。
 2. core で最適化、設定ファイル、適用条件の基底仕様を読む。
-3. その後、必要に応じて CLI / GUI / watch の各分冊へ進む。
+3. その後、必要に応じて CLI / GUI / スライドショー の各分冊へ進む。

@@ -220,7 +220,7 @@ def on_settings_clicked(backend: Any, *_args: Any) -> None:
             sync_preferences_widgets_from_dialog(backend)
             owner = backend._get_handler_owner("on_open_settings_dialog")
             if owner is not None:
-                backend._sync_watch_state_only_from_owner(owner)
+                backend._sync_slideshow_state_only_from_owner(owner)
             backend._set_label_text("lblSettingsState", "Settings: current values")
             backend._set_label_text("lblSettingsNotice", build_settings_open_notice(backend))
             if dialog is not None and hasattr(dialog, "show"):

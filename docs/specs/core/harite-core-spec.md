@@ -27,14 +27,14 @@ core が直接の主責務としないもの:
 
 - optimize 入力は 1 個以上の画像パスである。
 - 画面条件は `resolution`, `two_screen`, `l_display`, `r_display` などで表現する。
-- 設定は `OptimizePreferences`, `ApplyPreferences`, `WatchPreferences`, `AppPreferences` として論理分割される。
+- 設定は `OptimizePreferences`, `ApplyPreferences`, `SlideshowPreferences`, `AppPreferences` として論理分割される。
 
 主要モデルの整理:
 
 - optimize 面は、入力画像、target resolution、margins、align、background_color、embed 系で構成される。
 - apply 面は、`plugin_name`, `apply_mode`, target file または monitor map で構成される。
-- watch 面は、入力 directory 群、interval、mode、cycle state で構成される。
-- 設定面は、optimize / apply / watch の論理グループを 1 つの設定ファイルへ統合して保存する。
+- スライドショー面は、入力 directory 群、interval、mode、サイクル state で構成される。
+- 設定面は、optimize / apply / slideshow の論理グループを 1 つの設定ファイルへ統合して保存する。
 
 補足:
 
@@ -46,13 +46,13 @@ core が直接の主責務としないもの:
 
 - optimize 入力は画像ファイルのみを受け付け、directory は受け付けない。
 - two-screen 文脈では、resolution と左右 display 情報の整合が必要である。
-- watch 入力は directory 単位で扱い、画像列を cycle の対象とする。
+- スライドショー入力は directory 単位で扱い、画像列を cycle の対象とする。
 
 入力解決の基本原則:
 
 - optimize は「何を出力したいか」を先に確定させるため、入力画像と表示条件の両方を要件とする。
 - single-screen と two-screen では、必要なパラメータの意味が一部変わる。
-- watch は optimize と異なり、単発の画像ではなく候補集合を扱う。
+- slideshow は optimize と異なり、単発の画像ではなく候補集合を扱う。
 
 two-screen 文脈で重要な点:
 
@@ -212,14 +212,14 @@ monitor map 解決:
 
 補足:
 
-- 論理的には optimize / apply / watch の 3 群に分かれるが、物理ファイルはネストせず 1 object に merge される。
+- 論理的には optimize / apply / slideshow の 3 群に分かれるが、物理ファイルはネストせず 1 object に merge される。
 - そのため設定ファイルは人手でも編集しやすい一方、論理境界は本文で補う必要がある。
 
 ### 6.3 論理グループ
 
 - optimize 面: `resolution`, `scaling`, `two_screen`, `l_display`, `r_display`, `margins`, `align`, `valign`, `quality`, `background_color`, `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`
 - apply 面: `plugin`, `apply_mode`
-- watch 面: `watch_interval_seconds`, `watch_srcdir_l`, `watch_srcdir_r`
+- スライドショー面: `slideshow_interval_seconds`, `slideshow_srcdir_l`, `slideshow_srcdir_r`
 
 主要 key の意味:
 
@@ -227,7 +227,7 @@ monitor map 解決:
 - `align` と `valign` は論理上 pair だが、保存時には list 表現になる。
 - `plugin` は platform 既定値を持つが、設定ファイルで上書きできる。
 - `apply_mode` は desktop session により既定値が変わりうる。
-- `watch_srcdir_l` と `watch_srcdir_r` は、GUI watch の継続運用面と直接つながる。
+- `slideshow_srcdir_l` と `slideshow_srcdir_r` は、GUI slideshow の継続運用面と直接つながる。
 
 ### 6.4 設定ファイル load / save flow
 
@@ -261,7 +261,7 @@ flowchart TD
 
 - optimize 入力が directory だった場合
 - resolution や margins の形式が不正だった場合
-- watch の入力 directory が存在しない、または空だった場合
+- slideshow の入力 directory が存在しない、または空だった場合
 - per-monitor apply の前提条件を満たさない場合
 - 設定ファイルが見つからない、または JSON として不正だった場合
 
@@ -275,10 +275,10 @@ flowchart TD
 
 - core では個別文言の完全列挙は行わず、どの失敗がどのチャネルへ流れるかを優先して説明する。
 - CLI は利用者向けの即時表示、GUI は状態表示、plugin logger は実行環境観測という住み分けで捉える。
-- watch は CLI / GUI の両面にまたがるため、summary 系メッセージと failure 系メッセージを分けて説明する。
+- slideshow は CLI / GUI の両面にまたがるため、summary 系メッセージと failure 系メッセージを分けて説明する。
 
 ## 9. 他分冊との境界
 
 - command surface の詳細は [docs/specs/cli/harite-cli-spec.md](docs/specs/cli/harite-cli-spec.md)
 - GUI の状態遷移と画面責務は [docs/specs/gui/harite-gui-spec.md](docs/specs/gui/harite-gui-spec.md)
-- watch 実行面は [docs/specs/watch/harite-watch-spec.md](docs/specs/watch/harite-watch-spec.md)
+- slideshow 実行面は [docs/specs/slideshow/harite-slideshow-spec.md](docs/specs/slideshow/harite-slideshow-spec.md)

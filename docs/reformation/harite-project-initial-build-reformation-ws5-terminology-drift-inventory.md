@@ -15,7 +15,7 @@
 - canonical spec: [docs/specs/harite-foundation-spec.md](docs/specs/harite-foundation-spec.md) を起点とする harite-xxx-spec.md 群
 - README: [README.md](README.md), [README_en.md](README_en.md)
 - 現行 docs: reformation, tests overview, release / dev 補助文書を含む docs 配下
-- source: [src/harite/config.py](src/harite/config.py), [src/harite/preferences.py](src/harite/preferences.py), [src/harite/watch.py](src/harite/watch.py), [src/harite/apply_settings.py](src/harite/apply_settings.py), [src/harite/cli.py](src/harite/cli.py), [src/harite/plugins.py](src/harite/plugins.py), [src/harite/gui/views/main_window.py](src/harite/gui/views/main_window.py) など
+- source: [src/harite/config.py](src/harite/config.py), [src/harite/preferences.py](src/harite/preferences.py), [src/harite/watch.py](src/harite/watch.py), [src/harite/apply_settings.py](src/harite/apply_settings.py), [src/harite/cli.py](src/harite/cli.py), [src/harite/plugins.py](src/harite/plugins.py), [src/harite/gui/views/main_window.py](src/harite/gui/views/main_window.py) など。必要に応じて file 名 / module 名の rename も対象に含める。
 - tests: CLI / watch / plugins / GUI / core の現行テスト群
 - ただし履歴証跡は補助参照に留め、正系語の判定根拠には現行面を優先する
 
@@ -55,7 +55,7 @@
 | T06 | GUI watch 表示名 | watch current, output display, watch summary, status, last_error, message history | [gui](docs/specs/gui/harite-gui-spec.md#L225), [watch](docs/specs/watch/harite-watch-spec.md#L107), [watch](docs/specs/watch/harite-watch-spec.md#L142), [gui](docs/specs/gui/harite-gui-spec.md#L235) | GUI 面の user-facing 表示名と内部状態名が混在している | user-facing label と内部 state key を分けて一覧化する。用語統一だけでなく表示責務も整理対象にする | rename・cleanup 第一候補 |
 | T07 | 設定保存と画像保存の語 | settings save, load, apply, save, optimize 結果の出力先 | [foundation](docs/specs/harite-foundation-spec.md#L98), [foundation](docs/specs/harite-foundation-spec.md#L103), [gui](docs/specs/gui/harite-gui-spec.md#L77), [cli](docs/specs/cli/harite-cli-spec.md#L78) | save が設定保存と画像書き出しの両方に使われうる | 設定保存は settings save、画像書き出しは output save など責務境界で言い分ける候補として維持する | rename・cleanup 第一候補 |
 | T08 | preferences 系クラス名と文書語 | OptimizePreferences, ApplyPreferences, WatchPreferences, AppPreferences, 設定モデル, preferences | [core](docs/specs/core/harite-core-spec.md#L30), [foundation](docs/specs/harite-foundation-spec.md#L141), [gui](docs/specs/gui/harite-gui-spec.md#L89) | 実装クラス名が preference 系、本文は設定系で説明している | T01 の整理結果に引かれる前提で、クラス名と本文語の不一致も rename・cleanup 対象として扱う。局所維持で浮かせない。 | rename・cleanup 第一候補 |
-| T09 | source の settings / config / preferences 三層 | resolve_apply_settings, load_config, save_config, AppPreferences, on_apply_settings, on_load_settings_file | [config.py](src/harite/config.py#L17), [preferences.py](src/harite/preferences.py#L125), [apply_settings.py](src/harite/apply_settings.py#L18), [main_window.py](src/harite/gui/views/main_window.py#L788), [main_window.py](src/harite/gui/views/main_window.py#L909) | module 名、関数名、GUI handler 名がそれぞれ別語を主語にしている | spec だけでなく source 命名も棚卸対象に入れる。文書語だけ揃えて済むのか、命名整理まで踏み込むのかを WS5 で判定する | rename・cleanup 第一候補 |
+| T09 | source の settings / config / preferences 三層 | resolve_apply_settings, load_config, save_config, AppPreferences, on_apply_settings, on_load_settings_file | [config.py](src/harite/config.py#L17), [preferences.py](src/harite/preferences.py#L125), [apply_settings.py](src/harite/apply_settings.py#L18), [main_window.py](src/harite/gui/views/main_window.py#L788), [main_window.py](src/harite/gui/views/main_window.py#L909) | file 名、module 名、関数名、GUI handler 名がそれぞれ別語を主語にしている | spec だけでなく source 命名も棚卸対象に入れる。file / module rename まで踏み込み、文書語だけ揃えて済ませない。 | rename・cleanup 第一候補 |
 | T10 | source / tests の watch 単位語 | WatchCycleState, run_watch_cycle, run_watch_cycles, interval_sec, interval_seconds, cycle_phase | [watch.py](src/harite/watch.py#L15), [watch.py](src/harite/watch.py#L88), [cli.py](src/harite/cli.py#L471), [preferences.py](src/harite/preferences.py#L104), [main_window.py](src/harite/gui/views/main_window.py#L1117), [test_watch_runner.py](tests/watch/test_watch_runner.py#L119) | source は cycle 系が強く、GUI state では phase や interval_seconds も混ざる | doc 側の統一だけでは不十分で、source 上の境界語も追跡対象として保持する | rename・cleanup 第一候補 |
 | T11 | source / spec / tests の観測面語 | logger, logging, log_level, status_message, last_error, WATCH ..., message history | [plugins.py](src/harite/plugins.py#L16), [cli.py](src/harite/cli.py#L504), [main_window.py](src/harite/gui/views/main_window.py#L501), [test_phase4_regression.py](tests/gui/test_phase4_regression.py#L48), [test_plugins_linux_mapping.py](tests/plugins/test_plugins_linux_mapping.py#L8) | source は logger と status field、CLI は WATCH 行、tests は caplog や status assert で観測している | source / spec / tests を跨いで、CLI は実行メッセージ、GUI はステータスとメッセージ履歴、plugin はロガーへ固定する。観測面をまたぐ `log` 総称は避ける。 | rename・cleanup 第一候補 |
 | T12 | mapping / monitor map の実装語 | mapping, per-monitor mapping, EffectiveApplySettings, resolve_apply_settings, plugin.apply(mapping, ...) | [apply_settings.py](src/harite/apply_settings.py#L18), [cli.py](src/harite/cli.py#L437), [plugins.py](src/harite/plugins.py#L375), [test_apply_settings.py](tests/test_apply_settings.py#L23), [test_plugins_xfconf.py](tests/plugins/test_plugins_xfconf.py#L41) | spec は apply target / monitor map、source と tests は mapping が優勢 | Linux plugin 層の実装語を monitor map に寄せるのか、上位 spec を mapping まで許容するのかを WS5 判定対象にする | rename・cleanup 第一候補 |
@@ -77,15 +77,15 @@
 | T05 | 適用先 | Apply Target | 上位概念はこれに固定し、Linux plugin 側の monitor mapping は下位語として扱う。 |
 | T06 | 状態表示 / 履歴 | Status / History | GUI の user-facing label は簡潔な表示語へ寄せ、内部 state 名とは切り分ける。 |
 | T07 | 設定を保存 / 画像を書き出す | Save Settings / Export Image | `save` を 1 語で兼用せず、設定保存と画像出力を責務で分離する。`Export Image` を採用し、icon など周辺 surface も追随対象に含める。 |
-| T08 | 設定モデル | Settings Model | classes も `Preferences` 系からの rename を第一候補に置き、T01 と浮かないようにする。 |
-| T09 | 設定 | Settings | source 上の主語もこれに寄せる。`config` はファイル I/O や形式名に用途限定する。 |
+| T08 | 設定モデル | Settings Model | classes も `Preferences` 系からの rename を第一候補に置き、T01 と浮かないようにする。必要なら file / module 名も追随させる。 |
+| T09 | 設定 | Settings | source 上の主語もこれに寄せる。`config` はファイル I/O や形式名に用途限定し、file / module 名にも残滓を残さない。 |
 | T10 | 切替間隔 / 切替サイクル | Interval / Cycle | source / tests 側も T03 と同じ軸で固定し、`周期` は極力使わず、`phase` は補助的な内部語へ下げる。 |
 | T11 | 実行メッセージ / ステータス / メッセージ履歴 / ロガー | Run Messages / Status / Message History / Logger | CLI 行出力、GUI 表示、plugin logger を同じ `log` に畳まず、tests の観測語もこれに追随させる。 |
 | T12 | モニター割当 | Monitor Mapping | apply target の下位に置く実装語として固定し、`mapping` 単独語は避ける。 |
 
 ## spec 外 surface の補足
 
-- source では GUI handler 名に settings が強く、永続化 I/O には config、論理モデルには preferences が残っている。
+- source では GUI handler 名に settings が強く、永続化 I/O には config、論理モデルには preferences が残っている。WS5 ではこの差を file 名 / module 名まで含めて閉じる。
 - tests でも `plugin.apply(mapping, ...)` や `test_run_watch_cycles_*` のように、実装語をそのまま主語にした命名が広く使われている。
 - README 現行面は語彙の密度が薄く、現時点では大きな用語ぶれの主戦場ではない。
 
@@ -119,3 +119,4 @@
 
 6. source / tests の命名まで rename 対象に含める。
    - 文書語だけに留めず、仕様書、tests、source を含む全生産物で高い一貫性を目指す。
+   - この `source` には、関数名や class 名だけでなく file 名と実装 module 名の rename も含める。

@@ -375,39 +375,39 @@ def build_primary_margin_controls(gtk_module: Any, *, configure_spin_button: Any
     }
 
 
-def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> dict[str, Any]:
-    watch_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    if hasattr(watch_tab_box, "set_border_width"):
-        watch_tab_box.set_border_width(0)
-    watch_label = gtk_module.Label(label="")
-    watch_tab_title = gtk_module.Label(label="Watch (stopped)")
-    set_xalign_if_supported(watch_tab_title)
-    watch_top_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    watch_srcdir_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    watch_between_srcdir_and_controls = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    watch_controls_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    watch_between_controls_and_detail = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    watch_detail_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    watch_bottom_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    if hasattr(watch_top_row, "set_size_request"):
-        watch_top_row.set_size_request(-1, 16)
-    if hasattr(watch_between_srcdir_and_controls, "set_size_request"):
-        watch_between_srcdir_and_controls.set_size_request(-1, 54)
-    if hasattr(watch_between_controls_and_detail, "set_size_request"):
-        watch_between_controls_and_detail.set_size_request(-1, 54)
-    if hasattr(watch_bottom_row, "set_size_request"):
-        watch_bottom_row.set_size_request(-1, 16)
-    if hasattr(watch_top_row, "set_vexpand"):
-        watch_top_row.set_vexpand(True)
-    if hasattr(watch_bottom_row, "set_vexpand"):
-        watch_bottom_row.set_vexpand(True)
-    watch_tab_box.pack_start(watch_top_row, True, True, 0)
-    watch_tab_box.pack_start(watch_srcdir_row, False, False, 0)
-    watch_tab_box.pack_start(watch_between_srcdir_and_controls, False, False, 0)
-    watch_tab_box.pack_start(watch_controls_shell, False, False, 0)
-    watch_tab_box.pack_start(watch_between_controls_and_detail, False, False, 0)
-    watch_tab_box.pack_start(watch_detail_shell, False, False, 0)
-    watch_tab_box.pack_start(watch_bottom_row, True, True, 0)
+def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> dict[str, Any]:
+    slideshow_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(slideshow_tab_box, "set_border_width"):
+        slideshow_tab_box.set_border_width(0)
+    slideshow_label = gtk_module.Label(label="")
+    slideshow_tab_title = gtk_module.Label(label="Slideshow (stopped)")
+    set_xalign_if_supported(slideshow_tab_title)
+    slideshow_top_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    slideshow_srcdir_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    slideshow_between_srcdir_and_controls = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    slideshow_controls_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    slideshow_between_controls_and_detail = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    slideshow_detail_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    slideshow_bottom_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(slideshow_top_row, "set_size_request"):
+        slideshow_top_row.set_size_request(-1, 16)
+    if hasattr(slideshow_between_srcdir_and_controls, "set_size_request"):
+        slideshow_between_srcdir_and_controls.set_size_request(-1, 54)
+    if hasattr(slideshow_between_controls_and_detail, "set_size_request"):
+        slideshow_between_controls_and_detail.set_size_request(-1, 54)
+    if hasattr(slideshow_bottom_row, "set_size_request"):
+        slideshow_bottom_row.set_size_request(-1, 16)
+    if hasattr(slideshow_top_row, "set_vexpand"):
+        slideshow_top_row.set_vexpand(True)
+    if hasattr(slideshow_bottom_row, "set_vexpand"):
+        slideshow_bottom_row.set_vexpand(True)
+    slideshow_tab_box.pack_start(slideshow_top_row, True, True, 0)
+    slideshow_tab_box.pack_start(slideshow_srcdir_row, False, False, 0)
+    slideshow_tab_box.pack_start(slideshow_between_srcdir_and_controls, False, False, 0)
+    slideshow_tab_box.pack_start(slideshow_controls_shell, False, False, 0)
+    slideshow_tab_box.pack_start(slideshow_between_controls_and_detail, False, False, 0)
+    slideshow_tab_box.pack_start(slideshow_detail_shell, False, False, 0)
+    slideshow_tab_box.pack_start(slideshow_bottom_row, True, True, 0)
 
     left_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     right_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
@@ -419,91 +419,91 @@ def build_watch_tab_section(gtk_module: Any, *, configure_spin_button: Any) -> d
     btn_open_srcdir_r = gtk_module.Button(label="Srcdir-R")
     set_button_icon_if_supported(gtk_module, btn_open_srcdir_l, "icons", "lucide", "folder-open.svg")
     set_button_icon_if_supported(gtk_module, btn_open_srcdir_r, "icons", "lucide", "folder-open.svg")
-    watch_source_label_l = gtk_module.Label(label="L: -")
-    watch_source_label_r = gtk_module.Label(label="R: -")
-    set_xalign_if_supported(watch_source_label_l, 0.5)
-    set_xalign_if_supported(watch_source_label_r, 0.5)
+    slideshow_source_label_l = gtk_module.Label(label="L: -")
+    slideshow_source_label_r = gtk_module.Label(label="R: -")
+    set_xalign_if_supported(slideshow_source_label_l, 0.5)
+    set_xalign_if_supported(slideshow_source_label_r, 0.5)
     left_source_block.pack_start(btn_open_srcdir_l, False, False, 0)
-    left_source_block.pack_start(watch_source_label_l, False, False, 0)
+    left_source_block.pack_start(slideshow_source_label_l, False, False, 0)
     right_source_block.pack_start(btn_open_srcdir_r, False, False, 0)
-    right_source_block.pack_start(watch_source_label_r, False, False, 0)
-    watch_srcdir_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    watch_srcdir_middle_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    watch_srcdir_right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    if hasattr(watch_srcdir_left_gap, "set_hexpand"):
-        watch_srcdir_left_gap.set_hexpand(True)
-    if hasattr(watch_srcdir_middle_gap, "set_hexpand"):
-        watch_srcdir_middle_gap.set_hexpand(True)
-    if hasattr(watch_srcdir_right_gap, "set_hexpand"):
-        watch_srcdir_right_gap.set_hexpand(True)
-    watch_srcdir_row.pack_start(watch_srcdir_left_gap, True, True, 0)
-    watch_srcdir_row.pack_start(left_source_block, False, False, 0)
-    watch_srcdir_row.pack_start(watch_srcdir_middle_gap, True, True, 0)
-    watch_srcdir_row.pack_start(right_source_block, False, False, 0)
-    watch_srcdir_row.pack_start(watch_srcdir_right_gap, True, True, 0)
+    right_source_block.pack_start(slideshow_source_label_r, False, False, 0)
+    slideshow_srcdir_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    slideshow_srcdir_middle_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    slideshow_srcdir_right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(slideshow_srcdir_left_gap, "set_hexpand"):
+        slideshow_srcdir_left_gap.set_hexpand(True)
+    if hasattr(slideshow_srcdir_middle_gap, "set_hexpand"):
+        slideshow_srcdir_middle_gap.set_hexpand(True)
+    if hasattr(slideshow_srcdir_right_gap, "set_hexpand"):
+        slideshow_srcdir_right_gap.set_hexpand(True)
+    slideshow_srcdir_row.pack_start(slideshow_srcdir_left_gap, True, True, 0)
+    slideshow_srcdir_row.pack_start(left_source_block, False, False, 0)
+    slideshow_srcdir_row.pack_start(slideshow_srcdir_middle_gap, True, True, 0)
+    slideshow_srcdir_row.pack_start(right_source_block, False, False, 0)
+    slideshow_srcdir_row.pack_start(slideshow_srcdir_right_gap, True, True, 0)
 
-    watch_controls_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=10)
+    slideshow_controls_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=10)
     if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(watch_controls_row, gtk_module.Align.CENTER)
+        set_halign_if_supported(slideshow_controls_row, gtk_module.Align.CENTER)
 
     interval_spin = gtk_module.SpinButton()
     configure_spin_button(interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
     interval_label = gtk_module.Label(label="Interval")
-    btn_daemonize = gtk_module.Button(label="Watch Start")
-    btn_cancel_daemonize = gtk_module.Button(label="Watch Stop")
+    btn_daemonize = gtk_module.Button(label="Slideshow Start")
+    btn_cancel_daemonize = gtk_module.Button(label="Slideshow Stop")
     set_button_icon_if_supported(gtk_module, btn_daemonize, "icons", "lucide", "play.svg")
     set_button_icon_if_supported(gtk_module, btn_cancel_daemonize, "icons", "lucide", "pause.svg")
-    watch_controls_row.pack_start(interval_label, False, False, 0)
-    watch_controls_row.pack_start(interval_spin, False, False, 0)
-    watch_controls_row.pack_start(btn_daemonize, False, False, 0)
-    watch_controls_row.pack_start(btn_cancel_daemonize, False, False, 0)
-    watch_controls_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    watch_controls_right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    if hasattr(watch_controls_left_gap, "set_hexpand"):
-        watch_controls_left_gap.set_hexpand(True)
-    if hasattr(watch_controls_right_gap, "set_hexpand"):
-        watch_controls_right_gap.set_hexpand(True)
-    watch_controls_shell.pack_start(watch_controls_left_gap, True, True, 0)
-    watch_controls_shell.pack_start(watch_controls_row, False, False, 0)
-    watch_controls_shell.pack_start(watch_controls_right_gap, True, True, 0)
+    slideshow_controls_row.pack_start(interval_label, False, False, 0)
+    slideshow_controls_row.pack_start(interval_spin, False, False, 0)
+    slideshow_controls_row.pack_start(btn_daemonize, False, False, 0)
+    slideshow_controls_row.pack_start(btn_cancel_daemonize, False, False, 0)
+    slideshow_controls_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    slideshow_controls_right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(slideshow_controls_left_gap, "set_hexpand"):
+        slideshow_controls_left_gap.set_hexpand(True)
+    if hasattr(slideshow_controls_right_gap, "set_hexpand"):
+        slideshow_controls_right_gap.set_hexpand(True)
+    slideshow_controls_shell.pack_start(slideshow_controls_left_gap, True, True, 0)
+    slideshow_controls_shell.pack_start(slideshow_controls_row, False, False, 0)
+    slideshow_controls_shell.pack_start(slideshow_controls_right_gap, True, True, 0)
 
-    watch_detail_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
+    slideshow_detail_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
     if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(watch_detail_row, gtk_module.Align.CENTER)
-    watch_current_label = gtk_module.Label(label="Watch current: idle")
-    set_xalign_if_supported(watch_current_label)
-    watch_detail_row.pack_start(watch_current_label, False, False, 0)
-    watch_output_label = gtk_module.Label(label="Watch output: .")
-    set_xalign_if_supported(watch_output_label)
-    watch_detail_row.pack_start(watch_output_label, False, False, 0)
-    watch_detail_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    watch_detail_right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    if hasattr(watch_detail_left_gap, "set_hexpand"):
-        watch_detail_left_gap.set_hexpand(True)
-    if hasattr(watch_detail_right_gap, "set_hexpand"):
-        watch_detail_right_gap.set_hexpand(True)
-    watch_detail_shell.pack_start(watch_detail_left_gap, True, True, 0)
-    watch_detail_shell.pack_start(watch_detail_row, False, False, 0)
-    watch_detail_shell.pack_start(watch_detail_right_gap, True, True, 0)
+        set_halign_if_supported(slideshow_detail_row, gtk_module.Align.CENTER)
+    slideshow_current_label = gtk_module.Label(label="Slideshow current: idle")
+    set_xalign_if_supported(slideshow_current_label)
+    slideshow_detail_row.pack_start(slideshow_current_label, False, False, 0)
+    slideshow_output_label = gtk_module.Label(label="Slideshow output: .")
+    set_xalign_if_supported(slideshow_output_label)
+    slideshow_detail_row.pack_start(slideshow_output_label, False, False, 0)
+    slideshow_detail_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    slideshow_detail_right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(slideshow_detail_left_gap, "set_hexpand"):
+        slideshow_detail_left_gap.set_hexpand(True)
+    if hasattr(slideshow_detail_right_gap, "set_hexpand"):
+        slideshow_detail_right_gap.set_hexpand(True)
+    slideshow_detail_shell.pack_start(slideshow_detail_left_gap, True, True, 0)
+    slideshow_detail_shell.pack_start(slideshow_detail_row, False, False, 0)
+    slideshow_detail_shell.pack_start(slideshow_detail_right_gap, True, True, 0)
 
     return {
-        "watch_tab_box": watch_tab_box,
-        "watch_label": watch_label,
-        "watch_tab_title": watch_tab_title,
-        "watch_controls_row": watch_controls_row,
-        "watch_detail_row": watch_detail_row,
+        "slideshow_tab_box": slideshow_tab_box,
+        "slideshow_label": slideshow_label,
+        "slideshow_tab_title": slideshow_tab_title,
+        "slideshow_controls_row": slideshow_controls_row,
+        "slideshow_detail_row": slideshow_detail_row,
         "left_source_block": left_source_block,
         "right_source_block": right_source_block,
         "btn_open_srcdir_l": btn_open_srcdir_l,
         "btn_open_srcdir_r": btn_open_srcdir_r,
-        "watch_source_label_l": watch_source_label_l,
-        "watch_source_label_r": watch_source_label_r,
+        "slideshow_source_label_l": slideshow_source_label_l,
+        "slideshow_source_label_r": slideshow_source_label_r,
         "interval_spin": interval_spin,
         "interval_label": interval_label,
         "btn_daemonize": btn_daemonize,
         "btn_cancel_daemonize": btn_cancel_daemonize,
-        "watch_current_label": watch_current_label,
-        "watch_output_label": watch_output_label,
+        "slideshow_current_label": slideshow_current_label,
+        "slideshow_output_label": slideshow_output_label,
     }
 
 

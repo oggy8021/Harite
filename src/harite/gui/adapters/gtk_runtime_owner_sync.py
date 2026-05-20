@@ -7,7 +7,7 @@ def sync_non_preview_state_from_owner(backend: Any, owner: Any) -> None:
     backend._sync_input_state_from_owner(owner)
     backend._sync_main_state_from_owner(owner)
     backend._sync_margins_state_from_owner(owner)
-    backend._sync_watch_state_from_owner(owner)
+    backend._sync_slideshow_state_from_owner(owner)
     backend._sync_feedback_from_owner(owner)
 
 
@@ -39,10 +39,10 @@ def sync_margins_state_with_feedback_from_owner(backend: Any, owner: Any) -> Non
     backend._sync_feedback_from_owner(owner)
 
 
-def sync_watch_state_with_feedback_from_owner(backend: Any, owner: Any) -> None:
-    backend._sync_watch_state_from_owner(owner)
+def sync_slideshow_state_with_feedback_from_owner(backend: Any, owner: Any) -> None:
+    backend._sync_slideshow_state_from_owner(owner)
     backend._sync_feedback_from_owner(owner)
 
 
-def sync_watch_state_only_from_owner(backend: Any, owner: Any) -> None:
-    backend._sync_watch_state_from_owner(owner)
+def sync_slideshow_state_only_from_owner(backend: Any, owner: Any) -> None:
+    backend._sync_slideshow_state_from_owner(owner)

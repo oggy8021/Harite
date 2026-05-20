@@ -165,10 +165,10 @@ def _build_dialog_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, A
 
 def _build_tab_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, Any]:
     return {
-        "watchTab": widgets["watch_tab_box"],
+        "slideshowTab": widgets["slideshow_tab_box"],
         "marginsTab": widgets["margins_tab_box"],
-        "watchControlsRow": widgets["watch_controls_row"],
-        "watchDetailRow": widgets["watch_detail_row"],
+        "slideshowControlsRow": widgets["slideshow_controls_row"],
+        "slideshowDetailRow": widgets["slideshow_detail_row"],
         "lblMarginsTabTitle": widgets["margins_tab_title"],
         "lblMarginsSection": widgets["margins_section_label"],
         "marginTextTabs": widgets["margin_text_tabs"],
@@ -189,16 +189,18 @@ def _build_tab_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, Any]
         "spnMarginTextMaxLines": widgets["margin_text_max_lines_spin"],
         "btnOpenSrcdirL": widgets["btn_open_srcdir_l"],
         "btnOpenSrcdirR": widgets["btn_open_srcdir_r"],
-        "lblWatchSection": widgets["watch_label"],
-        "lblWatchTabTitle": widgets["watch_tab_title"],
+        "lblSlideshowSection": widgets["slideshow_label"],
+        "lblSlideshowTabTitle": widgets["slideshow_tab_title"],
         "spnInterval": widgets["interval_spin"],
         "lblInterval": widgets["interval_label"],
         "btnDaemonize": widgets["btn_daemonize"],
+        "btnSlideshowStart": widgets["btn_daemonize"],
         "btnCancelDaemonize": widgets["btn_cancel_daemonize"],
-        "lblWatchSourceL": widgets["watch_source_label_l"],
-        "lblWatchSourceR": widgets["watch_source_label_r"],
-        "lblWatchCurrent": widgets["watch_current_label"],
-        "lblWatchOutput": widgets["watch_output_label"],
+        "btnSlideshowStop": widgets["btn_cancel_daemonize"],
+        "lblSlideshowSourceL": widgets["slideshow_source_label_l"],
+        "lblSlideshowSourceR": widgets["slideshow_source_label_r"],
+        "lblSlideshowCurrent": widgets["slideshow_current_label"],
+        "lblSlideshowOutput": widgets["slideshow_output_label"],
     }
 
 
@@ -207,5 +209,5 @@ def _build_footer_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, A
         "statusbar": widgets["footer_col"],
         "lblStatus": widgets["status_label"],
         "lblError": widgets["error_label"],
-        "lblWatchSummary": widgets["watch_summary_label"],
+        "lblSlideshowSummary": widgets["slideshow_summary_label"],
     }

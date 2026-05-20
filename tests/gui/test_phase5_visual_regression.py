@@ -87,7 +87,7 @@ def test_phase5_mainwindow_blueprint_smoke_matches_visual_checklist_scope():
         "compose_input",
         "margins_tab",
         "action_cluster",
-        "watch_tab",
+        "slideshow_tab",
         "status_footer",
     ]
     assert bp["primary_action_flow"] == (
