@@ -7,6 +7,8 @@
 - Harite の command surface を提供する。
 - command ごとの入力検証、config 読み込み、core / plugin 呼び出し、終了コード決定を行う。
 
+CLI は GUI と異なり、1 回の command 実行を明示的に完結させる操作面である。そのため本分冊では、各 command がどの入力を受け、どの層へ委譲し、どの終了コードで返るかを主に扱う。
+
 ## 2. command 一覧
 
 - `optimize`
@@ -14,6 +16,14 @@
 - `apply`
 - `watch`
 - `install-desktop-entry`
+
+位置づけの違い:
+
+- `optimize` は画像生成を担う主 command である。
+- `apply` は既存または生成済み画像の適用を担う。
+- `watch` は単発 command を継続実行へ拡張する。
+- `compute-placement` は command 名としては存在するが、現行 CLI では実用的な command surface にはなっていない。
+- `install-desktop-entry` は Linux/XDG 向け補助 command である。
 
 ## 3. CLI シーケンス図 (CLI sequence)
 
@@ -28,7 +38,7 @@ sequenceDiagram
     User->>CLI: command + options
     CLI->>Config: load_config(path)
     Config-->>CLI: config dict / error
-    CLI->>CLI: validate and resolve effective values
+    CLI->>CLI: 入力値を検証し、最終採用値を解決
 
     alt optimize
         CLI->>Core: optimize_wallpapers(...)
@@ -36,7 +46,7 @@ sequenceDiagram
         CLI-->>User: Saved / Placement messages
     else apply
         CLI->>Core: resolve_apply_settings(...)
-        Core-->>CLI: effective target
+        Core-->>CLI: 最終適用対象
         CLI->>Plugin: apply(target, dry_run)
         Plugin-->>CLI: success / failure
         CLI-->>User: apply result
@@ -58,25 +68,132 @@ sequenceDiagram
 - `--config` が与えられた場合は config を読み、CLI 引数を優先して上書きする。
 - 成功時は `Saved:` と `Placement:` を出力する。
 
+主要な流れ:
+
+1. `--config` があれば JSON を読み込む。
+2. CLI 引数と config 値から、各オプションの最終採用値を解決する。
+3. `--input` を画像ファイル列として正規化する。
+4. display 条件を解決し、最終的な `resolution` を確定する。
+5. `optimize_wallpapers(...)` を呼び、出力ファイル一覧と配置結果一覧を得る。
+6. 結果を stdout に出力する。
+
+入力値の優先順位と最終採用値:
+
+- ここでいう最終採用値とは、CLI 引数、config、option default を優先順位で重ねたあとに、実際に `optimize_wallpapers(...)` へ渡す値を指す。
+- 優先順位は CLI 引数 > config > option default である。
+- `--input` 未指定時は config 側の `input` を使えるが、最終的に入力列が空なら終了コード `2` で止める。
+- `optimize` の `--input` は画像ファイル列のみを受け付け、directory が渡された場合は明示エラーで終了する。
+- `quality`, `embed_info`, `embed_position`, `embed_max_lines`, `background_color` は CLI 側で先に妥当性検証する。
+
+display / two-screen 解決:
+
+- `two_screen` は CLI / config で明示されなければ `auto` 扱いになり、入力画像が 2 枚以上あり、two-screen 用の表示情報を取得できる場合だけ有効化される。
+- `resolution`, `l_display`, `r_display` は CLI 引数 > config > two-screen 用表示情報から導いた自動値 の順で解決する。
+- `two_screen` が自動判定のままで two-screen 用の表示情報を取得できない場合、最終的な two-screen 判定は `False` に戻る。
+- `--l-display` / `--r-display` は個別指定できるが、未指定時は two-screen 用表示情報から導いた display size を使う。
+- `--margins` は `l,r,top,bottom` の 4 要素文字列として解釈し、省略時は `(0, 0, 0, 0)` を使う。
+
+計算規則の補足:
+
+- `resolve_optimize_display_settings(...)` は、まず空文字を除いた入力列 `cleaned_inputs` を作り、`len(cleaned_inputs) >= 2` のときだけ two-screen 用表示情報取得を試みる。
+- `two_screen` が CLI / config で未指定なら `auto` と見なし、最終値は `effective_two_screen = context is not None` で始まる。明示指定がある場合はその bool 値をそのまま使う。
+- `resolution`, `l_display`, `r_display` は、値が `None` または `auto` のときだけ未確定扱いに戻し、context が得られていて `effective_two_screen=True` の場合に限って自動補完する。
+- 自動補完で使う値は `resolution = "{virtual_w}x{virtual_h}"`, `l_display = "{left_w}x{left_h}"`, `r_display = "{right_w}x{right_h}"` である。
+- `two_screen` が自動判定のまま context を得られなかった場合だけ、最後に `effective_two_screen=False` へ戻す。`resolution` が最後まで未確定なら CLI はエラー終了する。
+
+主な失敗条件:
+
+- config 読み込み失敗
+- 画像入力不正
+- resolution / display 条件不正
+- background color や embed 系 option 不正
+
 ## 5. `compute-placement`
 
-- 単一入力に対する placement 計算面を持つ。
-- 現時点では簡易 surface であり、詳細な正本は実装拡張に応じて見直す。
+- command 名としては存在するが、現行 CLI で担っている役割は限定的である。
+- `--input`, `--resolution`, `--layout` を受け付けるが、現状は受理した値を表示するだけで、placement 計算結果は返さない。
+- そのため、CLI の常用 command surface としては未成立である。
+
+補足:
+
+- core 層には `compute_placement(...)` 関数が存在し、unit test でも利用されている。
+- ただし現行の `compute-placement` command はその core 関数を呼んでおらず、CLI から placement 計算機能を正式に提供している状態ではない。
 
 ## 6. `apply`
 
 - plugin を解決し、`single-file` または per-monitor target を適用する。
-- dry-run が既定であり、`--do-it` で実適用に進む。
+- CLI では dry-run を既定とし、実適用したい場合だけ --do-it を指定する。
+- CLI は最終的に plugin へ `dry_run=not --do-it` を渡す。
+
+補足:
+
+- GUI には `--do-it` / `dry-run` という同名オプションは存在しない。そのため GUI の apply / watch は、CLI とは別の操作面として説明する。
+- dry-run 時の「副作用を起こさないこと」は plugin 側の契約でもある。plugin は `dry_run=True` のとき外部コマンドや OS 設定変更を実行しない。
+
+apply mode の決定順:
+
+1. `--auto-split` があれば `per-monitor-auto-split`
+2. `--left-file` または `--right-file` があれば `per-monitor-explicit`
+3. それ以外は `single-file`
+
+補足:
+
+- `--per-monitor` 単独では実行できず、`--left-file` / `--right-file` か `--auto-split` を伴う必要がある。
+- plugin 解決は command 先頭で行い、未知 plugin は終了コード `2` で止める。
+- `resolve_apply_settings(...)` により最終適用対象を構成してから plugin へ渡す。
+- plugin が `False` を返した場合は終了コード `3` で扱う。
+- CLI 実装は `resolve_apply_settings(...)` に `output_dir=Path(".")` を渡しているため、`--auto-split` 時の split 出力先既定値は current working directory である。
 
 ## 7. `watch`
 
 - 入力 directory を監視ではなく周期実行対象として扱う。
 - `mode`, `interval_sec`, `iterations`, `log_level`, `plugin`, `dry_run` を扱う。
 
+watch command の意味:
+
+- filesystem event を待つ監視ではなく、入力 directory から画像一覧を集め、一定間隔で次画像を選んで apply する。
+- `dry_run` では plugin を解決せず、周期 の進行だけを確認できる。
+- `--do-it` 時だけ plugin 解決と実 apply を行う。
+- `iterations` は現行 CLI に残っている回数制限用 option だが、GUI や母体相当の操作面には対応概念がない。
+- changer としての通常利用では、指定回数で停止する挙動は直感的ではない。
+
+`mode` と出力粒度:
+
+- `mode=sequential` は index を進めながら順番に選ぶ。
+- `mode=random` は可能なら直前画像を避けて選ぶ。
+- option 名は `log_level` だが、現行仕様としては stdout への watch 出力粒度を切り替える値として扱う。
+- `normal` は要点のみ出し、`detail` は 周期 ごとの詳細を出す。
+
+watch helper の計算規則:
+
+- `select_next_image(...)` の `sequential` は `selected_index = index % len(images)` で選び、次 state の `index` は `index + 1` になる。
+- `random` では、候補数が 2 件以上かつ `previous_selected` が現在候補に含まれている場合だけ、`candidates = [img for img in images if img != previous_selected]` を作ってその中から 1 件選ぶ。
+- `random` では `index` を進めず、そのまま保持する。したがって現行 random の状態更新で効いているのは `previous_selected` と `completed` である。
+- `run_watch_cycle(...)` は、選ばれた画像を `previous_selected` に入れ、`completed = state.completed + 1` とした新 state を返す。
+- `run_watch_cycles(...)` は各 cycle 後に `on_cycle(selected, state.completed - 1)` を呼ぶため、callback 側へ渡る cycle 番号は 0 始まりである。
+- sleep は毎回ではなく、「まだ次 cycle が残っている場合」にだけ `sleep_fn(interval_sec)` を呼ぶ。`iterations` 到達回では sleep しない。
+- ただし CLI の user-facing `WATCH cycle=` 表示は callback 値をそのまま出さず、`cycle_index + 1` を使う。したがって内部 callback は 0 始まり、stdout 表示は 1 始まりである。
+- dry-run の各 cycle では `dry_run_cycles` を 1 件増やし、`detail` のときだけ `WATCH cycle=... selected=... dry_run=True` を出す。
+- 実 apply では `apply_ok` は成功時だけ、`apply_failed` は plugin が `False` を返したときだけ、`apply_error` は plugin 例外時だけ増える。`apply_failed_total = apply_failed + apply_error` は completed 行でだけ計算する。
+
+出力先:
+
+- `log_level` が切り替えるのは CLI の `typer.echo(...)` による watch message であり、出力先は標準出力 (stdout) である。
+- 現行 CLI watch には専用保存先や履歴ファイル出力はない。
+- plugin 側の logger は別系統であり、`--log-level` では直接制御しない。
+
 ## 8. `install-desktop-entry`
 
 - Linux/XDG 限定 command とする。
 - user-local の `.desktop` launcher を生成する。
+
+launcher 生成の実際:
+
+- 既定の出力先は XDG data home 配下の `applications/harite.desktop` である。
+- `Exec` は実行中 Python を使った `-m harite.gui.app` 形式で書かれる。
+- `Icon` は package resource の product icon から解決し、優先順は `harite_app.svg`、`harite.svg`、最後に icon theme 名 `harite` である。
+
+Windows / macOS ではサポート外であり、終了コード `2` で終了する。Linux でも既存ファイル衝突は `--force` の有無で扱いが変わる。
 
 ## 9. 共通オプションと終了コード
 
@@ -85,13 +202,40 @@ sequenceDiagram
   - `2`: 入力不正、config 不正、plugin 解決失敗、サポート外
   - `3`: apply 失敗
 
+共通的な振る舞い:
+
+- `--version` は callback で処理し、値表示後に正常終了する。
+- subcommand 未指定時は簡易ヘルプ文言を出して正常終了する。
+- Typer / Click の parse error は framework 側の終了に委ねるが、業務上の入力不正は Harite 側で `2` に寄せる。
+
 ## 10. メッセージと重要度
 
 - `info`: 実行開始、完了、dry-run summary
 - `error`: validation error, unknown plugin, apply failed
 - watch では `WATCH start`, `WATCH cycle`, `WATCH completed` を中心に状態を出す
 
+command ごとの代表メッセージ:
+
+- `optimize`: `Saved:` と `Placement:`
+- `apply`: `applied wallpaper` または `failed to apply wallpaper`
+- `watch`: `WATCH start`, `WATCH interrupted by user`, `WATCH completed`
+- `install-desktop-entry`: `Installed desktop entry:`
+
+`watch` の `WATCH completed` では、dry-run 時は `dry_run_cycles`、実 apply 時は `apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` を出して周期ごとの結果を要約する。
+
+重要度の見方:
+
+- 明示的な prefix を持たない message もあるが、終了コードと併せて判断する。
+- watch の詳細行は通常の info 相当、plugin 例外や apply failure は error 相当として読む。
+- plugin logger の出力有無や出力先は Python logging 側の設定に依存するため、CLI watch の stdout summary とは分けて考える。
+
 ## 11. core / GUI / packaging との境界
 
 - core 挙動の正本は [docs/specs/core/harite-core-spec.md](docs/specs/core/harite-core-spec.md)
 - GUI 側の状態や tray は [docs/specs/gui/harite-gui-spec.md](docs/specs/gui/harite-gui-spec.md)
+
+境界整理:
+
+- CLI は option surface と終了コードを決めるが、最適化や apply target 解決の業務規則自体は core に置く。
+- watch command は CLI 面の summary と plugin 呼び出しを持つが、最小ループの挙動は watch helper に委譲する。
+- desktop entry 生成は packaging / launcher 面にまたがるが、CLI からの起動導線としてここに置く。
