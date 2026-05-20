@@ -95,7 +95,7 @@ flowchart TD
 
 ## 7. 設定 (settings) / save / apply の責務分担
 
-- 設定 (settings) は論理設定モデルとして保持され、物理保存は 設定ファイル (harite-preferences.json) を使う。
+- 設定 (settings) は論理設定モデルとして保持され、物理保存は 設定ファイル (harite-settings.json) を使う。
 - save は optimize 結果の出力先決定と書き出しを扱う。
 - apply は最終適用対象を解決したうえで plugin へ委譲する。
 
@@ -137,8 +137,8 @@ README に残すもの:
 ```text
 src/harite/
   cli.py                  CLI entrypoint と command surface
-  config.py               設定ファイル (harite-preferences.json) の path 解決と JSON load/save
-  preferences.py          設定モデルと JSON との相互変換
+  settings_file.py        設定ファイル (harite-settings.json) の path 解決と JSON load/save
+  settings.py             設定モデルと JSON との相互変換
   core.py                 optimize の基底ロジック
   apply_settings.py       apply 対象の解決
   slideshow.py            スライドショー実行の選択ループとサイクル state

@@ -153,9 +153,9 @@ apply mode の user-facing 意味:
 設定 dialog の責務:
 
 - dialog を開く時点で form state を取り込み、必要なら two-screen 状態を同期する。
-- apply では `AppPreferences` を GUI state に展開し、optimize / apply / slideshow の各状態へ反映する。
-- save では現在の GUI state を `AppPreferences` へ戻して JSON payload を作り、指定 path または既定 path へ保存する。
-- load では指定 path の JSON を読み込み、`AppPreferences.from_config_dict(...)` を経由して GUI state に反映する。
+- apply ではアプリ設定モデルを GUI state に展開し、optimize / apply / slideshow の各状態へ反映する。
+- save では現在の GUI state をアプリ設定モデルへ戻して JSON payload を作り、指定 path または既定 path へ保存する。
+- load では指定 path の JSON を読み込み、設定ファイルからアプリ設定モデルへ変換したうえで GUI state に反映する。
 
 ## 6. slideshow との接続
 
@@ -254,7 +254,7 @@ app -> views/main_window -> controllers/services -> adapters(GTK runtime)
 margin text position の visible semantics:
 
 - `Margins` 面は margin text position を 4 つの radio で見せる: `Left Top`, `Left Bottom`, `Right Top`, `Right Bottom`。
-- GUI state / config / CLI / core の内部値は `embed_position=top|left|right|bottom` で統一する。
+- GUI state / Settings / CLI / core の内部値は `embed_position=top|left|right|bottom` で統一する。
 - visible 4 位置との対応は `top=Left Top`, `left=Left Bottom`, `right=Right Top`, `bottom=Right Bottom` である。
 - `auto` が読み込まれた場合、GUI 表示上は `bottom` と同義に正規化して扱う。
 - `auto` だけでなく未知値も、現行 GUI では `_normalize_margin_text_position(...)` により `bottom` へ正規化する。

@@ -16,19 +16,19 @@ class DummyWindow:
         self.settings_opened = True
         return True
 
-    def on_get_settings_config(self) -> dict[str, object]:
+    def on_get_settings(self) -> dict[str, object]:
         return {"plugin": "linux", "apply_mode": "single-file"}
 
-    def on_apply_settings(self, config: dict[str, object]) -> bool:
-        self.applied_settings = dict(config)
+    def on_apply_settings(self, settings: dict[str, object]) -> bool:
+        self.applied_settings = dict(settings)
         return True
 
     def on_load_settings_file(self, path: str) -> bool:
         self.loaded_settings_path = path
         return True
 
-    def on_save_settings_file(self, path: str, config: dict[str, object] | None = None) -> bool:
-        self.saved_settings = (path, config)
+    def on_save_settings_file(self, path: str, settings: dict[str, object] | None = None) -> bool:
+        self.saved_settings = (path, settings)
         return True
 
     def on_optimize(self) -> bool:
@@ -132,7 +132,7 @@ def test_create_mainwindow_signal_dispatch_binds_canonical_traceability_handlers
         (
             "on_save_as",
             "on_open_settings_dialog",
-            "on_get_settings_config",
+            "on_get_settings",
             "on_apply_settings",
             "on_load_settings_file",
             "on_save_settings_file",
@@ -143,7 +143,7 @@ def test_create_mainwindow_signal_dispatch_binds_canonical_traceability_handlers
     assert set(dispatch.keys()) == {
         "on_save_as",
         "on_open_settings_dialog",
-        "on_get_settings_config",
+        "on_get_settings",
         "on_apply_settings",
         "on_load_settings_file",
         "on_save_settings_file",
@@ -153,7 +153,7 @@ def test_create_mainwindow_signal_dispatch_binds_canonical_traceability_handlers
     assert window.save_as_called is True
     assert dispatch["on_open_settings_dialog"]() is True
     assert window.settings_opened is True
-    assert dispatch["on_get_settings_config"]() == {"plugin": "linux", "apply_mode": "single-file"}
+    assert dispatch["on_get_settings"]() == {"plugin": "linux", "apply_mode": "single-file"}
     assert dispatch["on_apply_settings"]({"plugin": "xfce"}) is True
     assert window.applied_settings == {"plugin": "xfce"}
     assert dispatch["on_load_settings_file"]("/tmp/settings.json") is True

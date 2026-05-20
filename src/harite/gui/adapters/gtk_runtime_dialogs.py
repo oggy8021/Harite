@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Callable
 
-from harite.config import resolve_default_settings_path
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color
+from harite.settings_file import resolve_default_settings_path
 
 
 class SavePathDialogProxy:
@@ -183,7 +183,7 @@ class OpenDialogProxy:
             dialog.set_show_hidden(True)
 
         image_filter = gtk.FileFilter()
-        image_filter.set_name("画像")
+        image_filter.set_name("Images")
         for mime_type in ("image/png", "image/jpeg", "image/bmp", "image/gif"):
             image_filter.add_mime_type(mime_type)
         for pattern in ("*.png", "*.jpeg", "*.jpg", "*.bmp", "*.gif"):
@@ -192,7 +192,7 @@ class OpenDialogProxy:
             dialog.add_filter(image_filter)
 
         all_files_filter = gtk.FileFilter()
-        all_files_filter.set_name("全て")
+        all_files_filter.set_name("All files")
         all_files_filter.add_pattern("*")
         if hasattr(dialog, "add_filter"):
             dialog.add_filter(all_files_filter)
@@ -402,7 +402,7 @@ class SettingsDialogProxy:
     def __init__(self, window: Any | None = None) -> None:
         self._visible = False
         self._window = window
-        self._preferences_config: dict[str, object] = {}
+        self._settings: dict[str, object] = {}
         default_path = str(resolve_default_settings_path())
         self._import_path = default_path
         self._export_path = default_path
@@ -425,14 +425,14 @@ class SettingsDialogProxy:
     def is_visible(self) -> bool:
         return self._visible
 
-    def set_preferences_config(self, config: dict[str, object]) -> None:
-        self._preferences_config = dict(config)
+    def set_settings(self, settings: dict[str, object]) -> None:
+        self._settings = dict(settings)
 
-    def get_preferences_config(self) -> dict[str, object]:
-        return dict(self._preferences_config)
+    def get_settings(self) -> dict[str, object]:
+        return dict(self._settings)
 
-    def update_preference(self, key: str, value: object) -> None:
-        self._preferences_config[str(key)] = value
+    def update_setting(self, key: str, value: object) -> None:
+        self._settings[str(key)] = value
 
     def set_import_path(self, path: str) -> None:
         self._import_path = str(path or "")

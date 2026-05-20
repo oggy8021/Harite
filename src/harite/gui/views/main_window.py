@@ -19,7 +19,7 @@ from harite.core import is_background_color_literal
 from harite.core import normalize_background_color
 from harite.core import resolve_embed_margin_region as resolve_margin_text_region
 from harite.apply_settings import resolve_apply_settings
-from harite.config import load_config, resolve_default_settings_path, save_config
+from harite.settings_file import load_settings, resolve_default_settings_path, save_settings
 from harite.display_context import build_two_screen_optimize_context
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
 from harite.gui.views.main_window_preview import build_optimize_cli_preview
@@ -32,7 +32,7 @@ from harite.gui.views.main_window_preview import format_preview_assignment_name
 from harite.gui.views.main_window_preview import ResultPreviewState
 from harite.positioning import reset_position_pair, update_position_pair
 from harite.plugins import registry as plugin_registry
-from harite.preferences import AppPreferences
+from harite.settings import AppSettings
 from harite.slideshow import SlideshowCycleState, collect_slideshow_input_images, run_slideshow_cycle
 
 class MainWindow:
@@ -92,7 +92,7 @@ class MainWindow:
             background_color=DEFAULT_BACKGROUND_COLOR_HEX,
             embed_position="bottom",
         )
-        self.preferences = AppPreferences.defaults(default_plugin=self.plugin_name)
+        self.preferences = AppSettings.defaults(default_plugin=self.plugin_name)
         self.layout_version = "phase6-layout-redefinition"
         self.layout_sections: tuple[tuple[str, tuple[str, ...]], ...] = (
             ("title_menu_flow", ("title", "menu", "flow", "save_as")),
@@ -116,14 +116,14 @@ class MainWindow:
         try:
             if not target_path.exists():
                 return
-            config = load_config(target_path)
+            config = load_settings(target_path)
         except (FileNotFoundError, OSError, ValueError) as exc:
             self._log(f"Startup settings load skipped: {exc}")
             return
 
         previous_status = (self.status_level, self.status_phase, self.status_message, self.last_error)
         try:
-            if self.load_settings_config(config):
+            if self.load_settings(config):
                 self._log(f"Startup settings loaded: {target_path}")
         finally:
             self.status_level, self.status_phase, self.status_message, self.last_error = previous_status
@@ -798,13 +798,13 @@ class MainWindow:
         self._log("Settings dialog opened")
         return True
 
-    def on_get_settings_config(self) -> dict[str, object]:
-        return self._build_settings_dialog_config()
+    def on_get_settings(self) -> dict[str, object]:
+        return self._build_settings_dialog_settings()
 
-    def on_apply_settings(self, settings: AppPreferences | dict[str, object]) -> bool:
+    def on_apply_settings(self, settings: AppSettings | dict[str, object]) -> bool:
         settings_value = settings
         if isinstance(settings, dict):
-            settings_value = AppPreferences.from_config_dict(settings, default_plugin=self.plugin_name)
+            settings_value = AppSettings.from_settings_dict(settings, default_plugin=self.plugin_name)
 
         self.preferences = settings_value
         optimize = settings_value.optimize
@@ -848,7 +848,7 @@ class MainWindow:
         self._log("Settings applied")
         return True
 
-    def export_settings_config(self) -> dict[str, object]:
+    def export_settings(self) -> dict[str, object]:
         self.preferences.optimize.resolution = self.form_state.resolution
         self.preferences.optimize.scaling = self.form_state.scaling
         self.preferences.optimize.margins = self.form_state.margins
@@ -872,7 +872,7 @@ class MainWindow:
             self.preferences.optimize.two_screen_mode = "on" if self.form_state.two_screen else "off"
         self.preferences.optimize.l_display = self.form_state.l_display
         self.preferences.optimize.r_display = self.form_state.r_display
-        return self.preferences.to_config_dict()
+        return self.preferences.to_settings_dict()
 
     def _normalize_settings_display_payload(self, config: dict[str, object]) -> dict[str, object]:
         normalized = dict(config)
@@ -899,11 +899,14 @@ class MainWindow:
             normalized.pop("r_display", None)
         return normalized
 
-    def _build_settings_dialog_config(self) -> dict[str, object]:
-        return self._normalize_settings_display_payload(self.export_settings_config())
+    def _build_settings_dialog_settings(self) -> dict[str, object]:
+        return self._normalize_settings_display_payload(self.export_settings())
 
-    def load_settings_config(self, config: dict[str, object]) -> bool:
-        return self.on_apply_settings(AppPreferences.from_config_dict(config, default_plugin=self.plugin_name))
+    def _build_settings_dialog_config(self) -> dict[str, object]:
+        return self._build_settings_dialog_settings()
+
+    def load_settings(self, config: dict[str, object]) -> bool:
+        return self.on_apply_settings(AppSettings.from_settings_dict(config, default_plugin=self.plugin_name))
 
     def _resolve_settings_file_path(self) -> Path:
         return resolve_default_settings_path()
@@ -917,7 +920,7 @@ class MainWindow:
         target_path = Path(value) if value else self._resolve_settings_file_path()
         payload = self._normalize_settings_display_payload(config) if config is not None else self._build_settings_dialog_config()
         try:
-            save_config(target_path, payload)
+            save_settings(target_path, payload)
         except (OSError, TypeError, ValueError) as exc:
             self._set_status("error", "settings", "settings save failed", error=str(exc))
             self._log(f"Settings save failed: {exc}")
@@ -934,12 +937,12 @@ class MainWindow:
             return False
         target_path = Path(value)
         try:
-            config = load_config(target_path)
+            config = load_settings(target_path)
         except (FileNotFoundError, OSError, ValueError) as exc:
             self._set_status("error", "settings", "settings load failed", error=str(exc))
             self._log(f"Settings load failed: {exc}")
             return False
-        ok = self.load_settings_config(config)
+        ok = self.load_settings(config)
         if ok:
             self._log(f"Settings loaded: {target_path}")
         return ok

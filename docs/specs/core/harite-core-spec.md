@@ -27,7 +27,7 @@ core が直接の主責務としないもの:
 
 - optimize 入力は 1 個以上の画像パスである。
 - 画面条件は `resolution`, `two_screen`, `l_display`, `r_display` などで表現する。
-- 設定は `OptimizePreferences`, `ApplyPreferences`, `SlideshowPreferences`, `AppPreferences` として論理分割される。
+- 設定は最適化設定モデル、適用設定モデル、スライドショー設定モデル、アプリ設定モデルとして論理分割される。
 
 主要モデルの整理:
 
@@ -203,11 +203,11 @@ monitor map 解決:
 
 ## 6. 設定 (settings) の保存と読み出し
 
-### 6.1 設定ファイル (`harite-preferences.json`) の保存場所
+### 6.1 設定ファイル (`harite-settings.json`) の保存場所
 
-- Linux: `XDG_CONFIG_HOME/harite/harite-preferences.json`
-- Linux で `XDG_CONFIG_HOME` 未設定: `~/.config/harite/harite-preferences.json`
-- 非 Linux: `~/harite-preferences.json`
+- Linux: `XDG_CONFIG_HOME/harite/harite-settings.json`
+- Linux で `XDG_CONFIG_HOME` 未設定: `~/.config/harite/harite-settings.json`
+- 非 Linux: `~/harite-settings.json`
 
 ### 6.2 物理形式
 
@@ -242,13 +242,13 @@ monitor map 解決:
 flowchart TD
     A[startup or explicit load] --> B[resolve_default_settings_path]
     B --> C{exists?}
-    C -- no --> D[AppPreferences.defaults]
-    C -- yes --> E[load_config]
+    C -- no --> D[既定のアプリ設定モデル]
+    C -- yes --> E[load_settings]
     E --> F{valid JSON?}
     F -- no --> Z[load error or startup skip]
-    F -- yes --> G[AppPreferences.from_config_dict]
+    F -- yes --> G[設定ファイルをアプリ設定モデルへ変換]
     G --> H[GUI or CLI defaults updated]
-    H --> I[save_config]
+    H --> I[save_settings]
     I --> J[setting file updated]
 ```
 
@@ -261,7 +261,7 @@ flowchart TD
 ## 7. エラーと失敗時の扱い
 
 - 不正入力は基本的に `ValueError` として表現される。
-- config 読み込みでは `FileNotFoundError` と `ValueError` を区別する。
+- 設定ファイル読み込みでは `FileNotFoundError` と `ValueError` を区別する。
 - apply target 解決失敗は plugin 実行前に止める。
 
 代表的な失敗面:

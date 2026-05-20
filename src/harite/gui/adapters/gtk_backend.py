@@ -83,23 +83,23 @@ from harite.gui.adapters.gtk_runtime_settings_dialogs import on_color_dialog_can
 from harite.gui.adapters.gtk_runtime_settings_dialogs import on_color_dialog_cancel_clicked
 from harite.gui.adapters.gtk_runtime_settings_dialogs import on_color_dialog_confirmed
 from harite.gui.adapters.gtk_runtime_settings_dialogs import on_color_window_delete_event
-from harite.gui.adapters.gtk_runtime_settings_dialogs import on_preferences_apply_clicked
-from harite.gui.adapters.gtk_runtime_settings_dialogs import on_preferences_apply_mode_toggled
-from harite.gui.adapters.gtk_runtime_settings_dialogs import on_preferences_close_clicked
-from harite.gui.adapters.gtk_runtime_settings_dialogs import on_preferences_load_clicked
-from harite.gui.adapters.gtk_runtime_settings_dialogs import on_preferences_save_clicked
-from harite.gui.adapters.gtk_runtime_settings_dialogs import on_preferences_window_delete_event
+from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_apply_clicked
+from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_apply_mode_toggled
+from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_close_clicked
+from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_load_clicked
+from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_save_clicked
+from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_window_delete_event
 from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_clicked
-from harite.gui.adapters.gtk_runtime_settings_dialogs import read_preferences_apply_mode
-from harite.gui.adapters.gtk_runtime_settings_dialogs import read_preferences_two_screen_mode
+from harite.gui.adapters.gtk_runtime_settings_dialogs import read_settings_apply_mode
+from harite.gui.adapters.gtk_runtime_settings_dialogs import read_settings_two_screen_mode
 from harite.gui.adapters.gtk_runtime_settings_dialogs import refresh_about_dialog_from_getter
 from harite.gui.adapters.gtk_runtime_settings_dialogs import refresh_color_dialog_from_getter
-from harite.gui.adapters.gtk_runtime_settings_dialogs import refresh_preferences_dialog_config_from_getter
-from harite.gui.adapters.gtk_runtime_settings_dialogs import set_preferences_apply_mode
-from harite.gui.adapters.gtk_runtime_settings_dialogs import set_preferences_two_screen_mode
+from harite.gui.adapters.gtk_runtime_settings_dialogs import refresh_settings_dialog_from_getter
+from harite.gui.adapters.gtk_runtime_settings_dialogs import set_settings_apply_mode
+from harite.gui.adapters.gtk_runtime_settings_dialogs import set_settings_two_screen_mode
 from harite.gui.adapters.gtk_runtime_settings_dialogs import store_background_color_in_settings_dialog
-from harite.gui.adapters.gtk_runtime_settings_dialogs import sync_preferences_dialog_from_widgets
-from harite.gui.adapters.gtk_runtime_settings_dialogs import sync_preferences_widgets_from_dialog
+from harite.gui.adapters.gtk_runtime_settings_dialogs import sync_settings_dialog_from_widgets
+from harite.gui.adapters.gtk_runtime_settings_dialogs import sync_settings_widgets_from_dialog
 from harite.gui.adapters.gtk_runtime_signal_wiring import connect_runtime_widgets
 from harite.gui.adapters.gtk_runtime_state_labels import current_side_state
 from harite.gui.adapters.gtk_runtime_state_labels import opposite_toggle_name
@@ -401,18 +401,18 @@ class GtkRuntimeSignalBackend:
         if hasattr(prefs_window, "connect"):
             prefs_window.connect(
                 "delete-event",
-                lambda *_args: self._on_preferences_window_delete_event(),
+                lambda *_args: self._on_settings_window_delete_event(),
             )
 
         prefs_apply_single = settings_widgets["prefs_apply_single"]
         prefs_apply_per_monitor = settings_widgets["prefs_apply_per_monitor"]
         prefs_apply_single.connect(
             "toggled",
-            lambda widget, *_args: self._on_preferences_apply_mode_toggled(widget, "single-file"),
+            lambda widget, *_args: self._on_settings_apply_mode_toggled(widget, "single-file"),
         )
         prefs_apply_per_monitor.connect(
             "toggled",
-            lambda widget, *_args: self._on_preferences_apply_mode_toggled(widget, "per-monitor-auto-split"),
+            lambda widget, *_args: self._on_settings_apply_mode_toggled(widget, "per-monitor-auto-split"),
         )
 
         color_widgets = build_color_dialog_section(gtk_module, default_color_hex=DEFAULT_BACKGROUND_COLOR_HEX)
@@ -830,29 +830,29 @@ class GtkRuntimeSignalBackend:
     def _set_toggle_active(self, object_name: str, active: bool) -> None:
         set_toggle_active(self, object_name, active)
 
-    def _set_preferences_two_screen_mode(self, value: object) -> None:
-        set_preferences_two_screen_mode(self, value)
+    def _set_settings_two_screen_mode(self, value: object) -> None:
+        set_settings_two_screen_mode(self, value)
 
-    def _read_preferences_two_screen_mode(self) -> str | bool:
-        return read_preferences_two_screen_mode(self)
+    def _read_settings_two_screen_mode(self) -> str | bool:
+        return read_settings_two_screen_mode(self)
 
-    def _set_preferences_apply_mode(self, value: object | None) -> None:
-        set_preferences_apply_mode(self, value)
+    def _set_settings_apply_mode(self, value: object | None) -> None:
+        set_settings_apply_mode(self, value)
 
-    def _read_preferences_apply_mode(self) -> str:
-        return read_preferences_apply_mode(self)
+    def _read_settings_apply_mode(self) -> str:
+        return read_settings_apply_mode(self)
 
-    def _on_preferences_apply_mode_toggled(self, widget: Any, mode: str) -> None:
-        on_preferences_apply_mode_toggled(self, widget, mode)
+    def _on_settings_apply_mode_toggled(self, widget: Any, mode: str) -> None:
+        on_settings_apply_mode_toggled(self, widget, mode)
 
-    def _sync_preferences_widgets_from_dialog(self) -> dict[str, object]:
-        return sync_preferences_widgets_from_dialog(self)
+    def _sync_settings_widgets_from_dialog(self) -> dict[str, object]:
+        return sync_settings_widgets_from_dialog(self)
 
-    def _sync_preferences_dialog_from_widgets(self) -> dict[str, object]:
-        return sync_preferences_dialog_from_widgets(self)
+    def _sync_settings_dialog_from_widgets(self) -> dict[str, object]:
+        return sync_settings_dialog_from_widgets(self)
 
-    def _refresh_preferences_dialog_config_from_getter(self) -> None:
-        refresh_preferences_dialog_config_from_getter(self)
+    def _refresh_settings_dialog_from_getter(self) -> None:
+        refresh_settings_dialog_from_getter(self)
 
     def _refresh_color_dialog_from_getter(self) -> str:
         return refresh_color_dialog_from_getter(self)
@@ -1095,20 +1095,20 @@ class GtkRuntimeSignalBackend:
     def _on_settings_clicked(self, *_args: Any) -> None:
         on_settings_clicked(self, *_args)
 
-    def _on_preferences_apply_clicked(self, *_args: Any) -> None:
-        on_preferences_apply_clicked(self, *_args)
+    def _on_settings_apply_clicked(self, *_args: Any) -> None:
+        on_settings_apply_clicked(self, *_args)
 
-    def _on_preferences_load_clicked(self, *_args: Any) -> None:
-        on_preferences_load_clicked(self, *_args)
+    def _on_settings_load_clicked(self, *_args: Any) -> None:
+        on_settings_load_clicked(self, *_args)
 
-    def _on_preferences_save_clicked(self, *_args: Any) -> None:
-        on_preferences_save_clicked(self, *_args)
+    def _on_settings_save_clicked(self, *_args: Any) -> None:
+        on_settings_save_clicked(self, *_args)
 
-    def _on_preferences_close_clicked(self, *_args: Any) -> None:
-        on_preferences_close_clicked(self, *_args)
+    def _on_settings_close_clicked(self, *_args: Any) -> None:
+        on_settings_close_clicked(self, *_args)
 
-    def _on_preferences_window_delete_event(self) -> bool:
-        return on_preferences_window_delete_event(self)
+    def _on_settings_window_delete_event(self) -> bool:
+        return on_settings_window_delete_event(self)
 
     def _on_color_clicked(self, *_args: Any) -> None:
         on_color_clicked(self, *_args)

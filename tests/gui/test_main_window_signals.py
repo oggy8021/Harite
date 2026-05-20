@@ -4,10 +4,10 @@ from PIL import Image
 import pytest
 
 from harite.apply_settings import EffectiveApplySettings
-from harite.config import load_config
-from harite.config import save_config
+from harite.settings_file import load_settings
+from harite.settings_file import save_settings
 from harite.display_context import TwoScreenOptimizeContext
-from harite.preferences import AppPreferences
+from harite.settings import AppSettings
 from harite.gui.views.main_window import MainWindow
 from harite.workspace import Display
 
@@ -707,7 +707,7 @@ def test_open_settings_dialog_tracks_state(monkeypatch):
 
 def test_apply_settings_updates_runtime_state():
     window = MainWindow()
-    prefs = AppPreferences.from_config_dict(
+    settings = AppSettings.from_settings_dict(
         {
             "resolution": "auto",
             "two_screen": "auto",
@@ -723,7 +723,7 @@ def test_apply_settings_updates_runtime_state():
         default_plugin=window.plugin_name,
     )
 
-    ok = window.on_apply_settings(prefs)
+    ok = window.on_apply_settings(settings)
 
     assert ok is True
     assert window.form_state.resolution == "auto"
@@ -739,7 +739,7 @@ def test_apply_settings_updates_runtime_state():
     assert window.slideshow_source_display == "Slideshow srcdirs: L=/slideshow/left | R=/slideshow/right"
 
 
-def test_export_and_reload_settings_config_round_trips():
+def test_export_and_reload_settings_round_trips():
     window = MainWindow()
     window.form_state.resolution = "auto"
     window.form_state.two_screen = None
@@ -753,7 +753,7 @@ def test_export_and_reload_settings_config_round_trips():
     window.slideshow_srcdir_r = "/slideshow/right"
     window._update_slideshow_source_display()
 
-    exported = window.export_settings_config()
+    exported = window.export_settings()
 
     assert exported["resolution"] == "auto"
     assert exported["two_screen"] == "auto"
@@ -767,7 +767,7 @@ def test_export_and_reload_settings_config_round_trips():
     assert exported["slideshow_srcdir_r"] == "/slideshow/right"
 
     other = MainWindow()
-    assert other.load_settings_config(exported) is True
+    assert other.load_settings(exported) is True
     assert other.form_state.resolution == "auto"
     assert other.form_state.two_screen is None
     assert other.form_state.align == ("center", "center")
@@ -779,7 +779,7 @@ def test_export_and_reload_settings_config_round_trips():
     assert other.slideshow_srcdir_r == "/slideshow/right"
 
 
-def test_on_get_settings_config_expands_current_detected_display_values(monkeypatch):
+def test_get_settings_expands_current_detected_display_values(monkeypatch):
     monkeypatch.setattr(
         "harite.gui.views.main_window.build_two_screen_optimize_context",
         lambda: TwoScreenOptimizeContext(
@@ -795,30 +795,30 @@ def test_on_get_settings_config_expands_current_detected_display_values(monkeypa
 
     window = MainWindow()
 
-    config = window.on_get_settings_config()
+    settings = window.on_get_settings()
 
-    assert config["resolution"] == "3200x1080"
-    assert config["l_display"] == "1920x1080"
-    assert config["r_display"] == "1280x1024"
+    assert settings["resolution"] == "3200x1080"
+    assert settings["l_display"] == "1920x1080"
+    assert settings["r_display"] == "1280x1024"
 
 
-def test_on_get_settings_config_uses_auto_for_fully_unresolved_defaults():
+def test_get_settings_uses_auto_for_fully_unresolved_defaults():
     window = MainWindow()
 
-    config = window.on_get_settings_config()
+    settings = window.on_get_settings()
 
-    assert "resolution" not in config
-    assert "l_display" not in config
-    assert "r_display" not in config
+    assert "resolution" not in settings
+    assert "l_display" not in settings
+    assert "r_display" not in settings
 
 
 def test_settings_file_save_normalizes_fully_unresolved_defaults(tmp_path):
     window = MainWindow()
-    target = tmp_path / "prefs-unresolved.json"
+    target = tmp_path / "settings-unresolved.json"
 
     assert window.on_save_settings_file(str(target)) is True
 
-    saved = load_config(target)
+    saved = load_settings(target)
     assert "resolution" not in saved
     assert "l_display" not in saved
     assert "r_display" not in saved
@@ -838,18 +838,18 @@ def test_settings_file_save_prefers_detected_display_context_without_inputs(monk
         ),
     )
     window = MainWindow()
-    target = tmp_path / "prefs-detected.json"
+    target = tmp_path / "settings-detected.json"
 
     assert window.on_save_settings_file(str(target)) is True
 
-    saved = load_config(target)
+    saved = load_settings(target)
     assert saved["resolution"] == "4096x1280"
     assert saved["l_display"] == "2048x1280"
     assert saved["r_display"] == "2048x1280"
 
 
 def test_settings_file_load_missing_display_settings_keeps_resolution_unresolved(tmp_path):
-    target = tmp_path / "prefs-missing-display.json"
+    target = tmp_path / "settings-missing-display.json"
     target.write_text('{"plugin":"linux","apply_mode":"per-monitor-auto-split"}', encoding="utf-8")
 
     window = MainWindow()
@@ -872,7 +872,7 @@ def test_settings_file_save_and_load_round_trip(tmp_path):
     window.slideshow_srcdir_l = "/slideshow/left"
     window.slideshow_srcdir_r = "/slideshow/right"
 
-    target = tmp_path / "prefs.json"
+    target = tmp_path / "settings.json"
 
     assert window.on_save_settings_file(str(target)) is True
     assert target.exists() is True
@@ -894,7 +894,7 @@ def test_settings_file_save_and_load_round_trip(tmp_path):
 
 def test_settings_file_save_uses_default_fixed_path_when_path_is_empty(monkeypatch, tmp_path):
     window = MainWindow()
-    target = tmp_path / "xdg-config" / "harite" / "harite-preferences.json"
+    target = tmp_path / "xdg-config" / "harite" / "harite-settings.json"
     monkeypatch.setattr("harite.gui.views.main_window.resolve_default_settings_path", lambda: target)
 
     assert window.on_save_settings_file("") is True
@@ -911,11 +911,11 @@ def test_settings_file_load_rejects_empty_path():
 
 def test_settings_file_load_propagates_unexpected_runtime_error(monkeypatch, tmp_path):
     window = MainWindow()
-    target = tmp_path / "prefs.json"
+    target = tmp_path / "settings.json"
     target.write_text("{}", encoding="utf-8")
 
     monkeypatch.setattr(
-        "harite.gui.views.main_window.load_config",
+        "harite.gui.views.main_window.load_settings",
         lambda _path: (_ for _ in ()).throw(RuntimeError("settings load probe failed")),
     )
 
@@ -924,8 +924,8 @@ def test_settings_file_load_propagates_unexpected_runtime_error(monkeypatch, tmp
 
 
 def test_main_window_loads_default_settings_on_startup(monkeypatch, tmp_path):
-    target = tmp_path / "harite-preferences.json"
-    save_config(
+    target = tmp_path / "harite-settings.json"
+    save_settings(
         target,
         {
             "plugin": "linux",
@@ -948,11 +948,11 @@ def test_main_window_loads_default_settings_on_startup(monkeypatch, tmp_path):
 
 
 def test_main_window_startup_settings_load_propagates_unexpected_runtime_error(monkeypatch, tmp_path):
-    target = tmp_path / "harite-preferences.json"
+    target = tmp_path / "harite-settings.json"
     target.write_text("{}", encoding="utf-8")
     monkeypatch.setattr("harite.gui.views.main_window.resolve_default_settings_path", lambda: target)
     monkeypatch.setattr(
-        "harite.gui.views.main_window.load_config",
+        "harite.gui.views.main_window.load_settings",
         lambda _path: (_ for _ in ()).throw(RuntimeError("startup settings probe failed")),
     )
 
@@ -960,9 +960,9 @@ def test_main_window_startup_settings_load_propagates_unexpected_runtime_error(m
         MainWindow()
 
 
-def test_settings_file_save_accepts_explicit_dialog_config(tmp_path):
+def test_settings_file_save_accepts_explicit_dialog_settings(tmp_path):
     window = MainWindow()
-    target = tmp_path / "prefs-dialog.json"
+    target = tmp_path / "settings-dialog.json"
 
     assert window.on_save_settings_file(
         str(target),
@@ -989,7 +989,7 @@ def test_settings_file_save_accepts_explicit_dialog_config(tmp_path):
 
 def test_settings_file_save_propagates_unexpected_payload_build_failure(monkeypatch, tmp_path):
     window = MainWindow()
-    target = tmp_path / "prefs-dialog.json"
+    target = tmp_path / "settings-dialog.json"
 
     monkeypatch.setattr(
         window,
@@ -1003,7 +1003,7 @@ def test_settings_file_save_propagates_unexpected_payload_build_failure(monkeypa
 
 def test_settings_file_round_trips_explicit_apply_mode_without_gui_projection(tmp_path):
     window = MainWindow()
-    target = tmp_path / "prefs-explicit.json"
+    target = tmp_path / "settings-explicit.json"
 
     assert window.on_save_settings_file(
         str(target),

@@ -12,7 +12,7 @@ from . import __version__
 from .apply_settings import resolve_apply_settings
 from .core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color, normalize_optimize_input_paths, optimize_wallpapers
 from .plugins import registry as plugin_registry
-from .config import load_config
+from .settings_file import load_settings
 from .linux_xdg_launcher import install_desktop_entry as install_linux_desktop_entry
 from .optimize_settings import is_auto_value, resolve_optimize_display_settings
 from .positioning import parse_position_pair
@@ -79,7 +79,7 @@ def parse_config_bool(name: str, value: object) -> bool:
     if isinstance(value, int):
         if value in (0, 1):
             return bool(value)
-        raise ValueError(f"invalid config bool for {name}: {value}")
+        raise ValueError(f"invalid settings bool for {name}: {value}")
     if isinstance(value, str):
         raw = value.strip().lower()
         truthy = {"1", "true", "yes", "on"}
@@ -88,8 +88,8 @@ def parse_config_bool(name: str, value: object) -> bool:
             return True
         if raw in falsy:
             return False
-        raise ValueError(f"invalid config bool for {name}: {value}")
-    raise ValueError(f"invalid config bool for {name}: {value}")
+        raise ValueError(f"invalid settings bool for {name}: {value}")
+    raise ValueError(f"invalid settings bool for {name}: {value}")
 
 
 def resolve_bool_option(
@@ -224,11 +224,11 @@ def optimize(
         help="Background color as #RRGGBB",
         rich_help_panel="詳細調整",
     ),
-    config: Optional[Path] = typer.Option(
+    settings_file: Optional[Path] = typer.Option(
         None,
-        "--config",
+        "--settings-file",
         "-c",
-        help="Path to JSON config file to load defaults from",
+        help="Path to JSON settings file to load defaults from",
         rich_help_panel="詳細調整",
     ),
     embed_info: str = typer.Option(
@@ -279,16 +279,16 @@ def optimize(
     - `free` / `combo` では `--embed-text` を併用できます。
     - `--embed-font` は任意指定です。既定では自動的に利用可能なフォントを探索します。
     """
-    # Load config if provided and merge defaults (CLI options override config)
+    # Load settings if provided and merge defaults (CLI options override settings)
     cfg: dict = {}
-    if config is not None:
+    if settings_file is not None:
         try:
-            cfg = load_config(config)
+            cfg = load_settings(settings_file)
         except Exception as exc:
-            typer.echo(f"Failed to load config: {exc}")
+            typer.echo(f"Failed to load settings: {exc}")
             raise typer.Exit(code=2)
 
-    # resolve effective values: CLI > config > required check
+    # resolve effective values: CLI > settings > required check
     eff_resolution = resolve_option_value("resolution", resolution, cfg, ctx)
 
     # validate numeric options
@@ -308,10 +308,10 @@ def optimize(
         typer.echo("--embed-max-lines must be positive")
         raise typer.Exit(code=2)
 
-    # determine inputs (CLI > config)
+    # determine inputs (CLI > settings)
     eff_input = input if input is not None else cfg.get("input")
     if not eff_input:
-        typer.echo("--input is required (or provide in --config)")
+        typer.echo("--input is required (or provide in --settings-file)")
         raise typer.Exit(code=2)
     expanded_inputs: List[str] = []
     for it in eff_input:

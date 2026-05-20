@@ -1,8 +1,8 @@
-from harite.preferences import AppPreferences
+from harite.settings import AppSettings
 
 
-def test_app_preferences_round_trip_config_with_auto_values():
-    prefs = AppPreferences.from_config_dict(
+def test_app_settings_round_trip_settings_with_auto_values():
+    settings = AppSettings.from_settings_dict(
         {
             "resolution": "auto",
             "two_screen": "auto",
@@ -18,7 +18,7 @@ def test_app_preferences_round_trip_config_with_auto_values():
         default_plugin="windows",
     )
 
-    exported = prefs.to_config_dict()
+    exported = settings.to_settings_dict()
 
     assert exported["resolution"] == "auto"
     assert exported["two_screen"] == "auto"
