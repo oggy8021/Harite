@@ -588,6 +588,40 @@ def test_on_change_apply_mode_accepts_per_monitor_auto_split():
     assert window.last_error == ""
 
 
+def test_on_change_slideshow_mode_accepts_random():
+    window = MainWindow()
+
+    ok = window.on_change_slideshow_mode("random")
+
+    assert ok is True
+    assert window.slideshow_mode == "random"
+    assert window._slideshow_active_mode == "random"
+    assert window.last_error == ""
+
+
+def test_running_slideshow_keeps_active_mode_until_stop(monkeypatch, tmp_path):
+    window = MainWindow()
+    window.slideshow_mode = "sequential"
+    window._slideshow_active_mode = "sequential"
+    window.slideshow_running = True
+    observed: dict[str, str] = {}
+
+    left_dir = tmp_path / "slideshow-left"
+    left_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+
+    def fake_run_slideshow_cycle(images, mode, state, rng=None):
+        observed["mode"] = mode
+        return images[0], state
+
+    monkeypatch.setattr("harite.gui.views.main_window.run_slideshow_cycle", fake_run_slideshow_cycle)
+
+    assert window.on_change_slideshow_mode("random") is True
+    assert window._run_slideshow_cycle_for_side("L", left_dir) == str(left_dir / "left-1.jpg")
+    assert window.slideshow_mode == "random"
+    assert observed["mode"] == "sequential"
+
+
 def test_on_apply_per_monitor_auto_split_uses_split_mapping(monkeypatch, tmp_path):
     class DummyPlugin:
         def __init__(self):

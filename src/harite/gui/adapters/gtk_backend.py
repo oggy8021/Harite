@@ -256,6 +256,8 @@ class GtkRuntimeSignalBackend:
         self._prefs_apply_mode_syncing = False
         self._slideshow_srcdir_l = ""
         self._slideshow_srcdir_r = ""
+        self.slideshow_mode = "random"
+        self._slideshow_active_mode = "random"
         self._slideshow_running = False
         self._slideshow_paused = False
         self._slideshow_state_l = SlideshowCycleState()
@@ -1003,6 +1005,33 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="ApplyMode", state="updated")
         except TypeError as exc:
             self._set_feedback(phase="ApplyMode", state="error", error=str(exc))
+
+    def _on_slideshow_mode_toggled(self, widget: Any, mode: str) -> None:
+        if hasattr(widget, "get_active") and not widget.get_active():
+            return
+        callback = self._signal_handlers.get("on_change_slideshow_mode")
+        if callback is None:
+            self.slideshow_mode = mode
+            if not self._slideshow_running:
+                self._slideshow_active_mode = mode
+            self._set_feedback(phase="SlideshowMode", state="updated")
+            return
+        try:
+            ok = callback(mode)
+            if ok is False:
+                self._set_feedback(phase="SlideshowMode", state="rejected", error="slideshow mode update rejected")
+                return
+            owner = self._get_handler_owner("on_change_slideshow_mode")
+            if owner is not None:
+                self._sync_slideshow_state_from_owner(owner)
+                self._set_feedback(phase="SlideshowMode", state="updated")
+                return
+            self.slideshow_mode = mode
+            if not self._slideshow_running:
+                self._slideshow_active_mode = mode
+            self._set_feedback(phase="SlideshowMode", state="updated")
+        except TypeError as exc:
+            self._set_feedback(phase="SlideshowMode", state="error", error=str(exc))
 
     def _on_save_clicked(self, *_args: Any) -> None:
         # P6 direction: Save As keeps chooser semantics, but fallback should not

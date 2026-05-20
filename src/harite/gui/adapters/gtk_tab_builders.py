@@ -449,12 +449,20 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
     interval_spin = gtk_module.SpinButton()
     configure_spin_button(interval_spin, minimum=1, maximum=86400, step=1, page=10, initial=60)
     interval_label = gtk_module.Label(label="Interval")
+    slideshow_mode_label = gtk_module.Label(label="Mode")
+    rad_slideshow_mode_sequential = gtk_module.RadioButton.new_with_label(None, "sequential")
+    rad_slideshow_mode_random = gtk_module.RadioButton.new_with_label_from_widget(rad_slideshow_mode_sequential, "random")
+    if hasattr(rad_slideshow_mode_random, "set_active"):
+        rad_slideshow_mode_random.set_active(True)
     btn_daemonize = gtk_module.Button(label="Slideshow Start")
     btn_cancel_daemonize = gtk_module.Button(label="Slideshow Stop")
     set_button_icon_if_supported(gtk_module, btn_daemonize, "icons", "lucide", "play.svg")
     set_button_icon_if_supported(gtk_module, btn_cancel_daemonize, "icons", "lucide", "pause.svg")
     slideshow_controls_row.pack_start(interval_label, False, False, 0)
     slideshow_controls_row.pack_start(interval_spin, False, False, 0)
+    slideshow_controls_row.pack_start(slideshow_mode_label, False, False, 0)
+    slideshow_controls_row.pack_start(rad_slideshow_mode_sequential, False, False, 0)
+    slideshow_controls_row.pack_start(rad_slideshow_mode_random, False, False, 0)
     slideshow_controls_row.pack_start(btn_daemonize, False, False, 0)
     slideshow_controls_row.pack_start(btn_cancel_daemonize, False, False, 0)
     slideshow_controls_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
@@ -500,6 +508,9 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
         "slideshow_source_label_r": slideshow_source_label_r,
         "interval_spin": interval_spin,
         "interval_label": interval_label,
+        "slideshow_mode_label": slideshow_mode_label,
+        "rad_slideshow_mode_sequential": rad_slideshow_mode_sequential,
+        "rad_slideshow_mode_random": rad_slideshow_mode_random,
         "btn_daemonize": btn_daemonize,
         "btn_cancel_daemonize": btn_cancel_daemonize,
         "slideshow_current_label": slideshow_current_label,

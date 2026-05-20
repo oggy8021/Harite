@@ -553,6 +553,22 @@ def test_runtime_backend_updates_mainwindow_apply_mode_state():
     assert window.apply_mode == "per-monitor-auto-split"
 
 
+def test_runtime_backend_exposes_and_updates_slideshow_mode_state():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+    dispatch = create_mainwindow_signal_dispatch(window, ("on_change_slideshow_mode",))
+    backend.connect_signals(dispatch)
+
+    assert backend.get_object("radSlideshowModeRandom").get_active() is True
+    assert backend.get_object("radSlideshowModeSequential").get_active() is False
+
+    backend.get_object("radSlideshowModeSequential").click()
+
+    assert window.slideshow_mode == "sequential"
+    assert backend.get_object("radSlideshowModeSequential").get_active() is True
+    assert backend.get_object("radSlideshowModeRandom").get_active() is False
+
+
 def test_runtime_backend_input_controls_optimize_button_state():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 

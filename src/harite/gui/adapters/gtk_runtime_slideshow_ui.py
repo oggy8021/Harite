@@ -75,6 +75,7 @@ def on_slideshow_start_clicked(backend: Any, *_args: Any) -> None:
             backend._set_feedback(phase="Slideshow", state="started")
             return
 
+        backend._slideshow_active_mode = str(getattr(backend, "slideshow_mode", "random") or "random")
         selected_left = "-"
         selected_right = "-"
         if backend._slideshow_srcdir_l:
@@ -115,6 +116,7 @@ def on_slideshow_stop_clicked(backend: Any, *_args: Any) -> None:
             return
 
         backend._slideshow_running = False
+        backend._slideshow_active_mode = str(getattr(backend, "slideshow_mode", "random") or "random")
         backend._stop_slideshow_timer()
         refresh_slideshow_summary_label(backend)
         refresh_slideshow_current_label(backend)
