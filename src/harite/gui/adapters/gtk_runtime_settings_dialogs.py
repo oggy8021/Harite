@@ -8,7 +8,7 @@ from harite.optimize_settings import AUTO
 from harite.positioning import format_position_pair, parse_position_pair
 
 
-def set_preferences_two_screen_mode(backend: Any, value: object) -> None:
+def set_settings_two_screen_mode(backend: Any, value: object) -> None:
     raw = str(value).strip().lower() if value is not None else "off"
     is_auto = raw == "auto"
     is_on = raw in {"on", "true", "1"} or value is True
@@ -17,7 +17,7 @@ def set_preferences_two_screen_mode(backend: Any, value: object) -> None:
     backend._set_toggle_active("radSettingsTwoScreenOff", not is_auto and not is_on)
 
 
-def read_preferences_two_screen_mode(backend: Any) -> str | bool:
+def read_settings_two_screen_mode(backend: Any) -> str | bool:
     if backend._is_toggle_active("radSettingsTwoScreenAuto"):
         return "auto"
     if backend._is_toggle_active("radSettingsTwoScreenOn"):
@@ -25,7 +25,7 @@ def read_preferences_two_screen_mode(backend: Any) -> str | bool:
     return False
 
 
-def set_preferences_apply_mode(backend: Any, value: object | None) -> None:
+def set_settings_apply_mode(backend: Any, value: object | None) -> None:
     mode = str(value or "single-file").strip().lower()
     backend._prefs_apply_mode_syncing = True
     try:
@@ -47,7 +47,7 @@ def set_preferences_apply_mode(backend: Any, value: object | None) -> None:
         backend._prefs_apply_mode_syncing = False
 
 
-def read_preferences_apply_mode(backend: Any) -> str:
+def read_settings_apply_mode(backend: Any) -> str:
     if backend._is_toggle_active("radSettingsApplyPerMonitor"):
         return "per-monitor-auto-split"
     if backend._is_toggle_active("radSettingsApplySingle"):
@@ -57,7 +57,7 @@ def read_preferences_apply_mode(backend: Any) -> str:
     return "single-file"
 
 
-def on_preferences_apply_mode_toggled(backend: Any, widget: Any, mode: str) -> None:
+def on_settings_apply_mode_toggled(backend: Any, widget: Any, mode: str) -> None:
     if backend._prefs_apply_mode_syncing:
         return
     is_active = True
@@ -75,45 +75,45 @@ def build_settings_open_notice(backend: Any) -> str:
     return "現在は未保存です"
 
 
-def sync_preferences_widgets_from_dialog(backend: Any) -> dict[str, object]:
+def sync_settings_widgets_from_dialog(backend: Any) -> dict[str, object]:
     dialog = backend._objects.get("SettingsDialog")
-    if dialog is None or not hasattr(dialog, "get_preferences_config"):
+    if dialog is None or not hasattr(dialog, "get_settings_config"):
         return {}
-    config = dict(dialog.get_preferences_config())
-    resolution = config.get("resolution")
+    settings = dict(dialog.get_settings_config())
+    resolution = settings.get("resolution")
     backend._set_entry_text("entSettingsResolution", "" if resolution in {None, AUTO} else resolution)
-    backend._set_entry_text("entSettingsScaling", config.get("scaling", "fit"))
-    set_preferences_two_screen_mode(backend, config.get("two_screen", False))
-    l_display = config.get("l_display")
-    r_display = config.get("r_display")
+    backend._set_entry_text("entSettingsScaling", settings.get("scaling", "fit"))
+    set_settings_two_screen_mode(backend, settings.get("two_screen", False))
+    l_display = settings.get("l_display")
+    r_display = settings.get("r_display")
     backend._set_entry_text("entSettingsLDisplay", "" if l_display in {None, AUTO} else l_display)
     backend._set_entry_text("entSettingsRDisplay", "" if r_display in {None, AUTO} else r_display)
-    backend._set_entry_text("entSettingsMargins", config.get("margins"))
-    backend._set_entry_text("entSettingsAlign", format_position_pair(config.get("align", "center"), axis="align"))
-    backend._set_entry_text("entSettingsValign", format_position_pair(config.get("valign", "center"), axis="valign"))
-    backend._set_spin_value("spnSettingsQuality", int(config.get("quality", 90)))
-    backend._set_entry_text("entSettingsMarginTextMode", config.get("embed_info", "none"))
-    backend._set_entry_text("entSettingsMarginText", config.get("embed_text"))
-    backend._set_entry_text("entSettingsMarginTextPosition", config.get("embed_position", "auto"))
-    backend._set_spin_value("spnSettingsMarginTextMaxLines", int(config.get("embed_max_lines", 3)))
-    backend._set_entry_text("entSettingsPlugin", config.get("plugin", "windows"))
-    set_preferences_apply_mode(backend, config.get("apply_mode", "single-file"))
-    return config
+    backend._set_entry_text("entSettingsMargins", settings.get("margins"))
+    backend._set_entry_text("entSettingsAlign", format_position_pair(settings.get("align", "center"), axis="align"))
+    backend._set_entry_text("entSettingsValign", format_position_pair(settings.get("valign", "center"), axis="valign"))
+    backend._set_spin_value("spnSettingsQuality", int(settings.get("quality", 90)))
+    backend._set_entry_text("entSettingsMarginTextMode", settings.get("embed_info", "none"))
+    backend._set_entry_text("entSettingsMarginText", settings.get("embed_text"))
+    backend._set_entry_text("entSettingsMarginTextPosition", settings.get("embed_position", "auto"))
+    backend._set_spin_value("spnSettingsMarginTextMaxLines", int(settings.get("embed_max_lines", 3)))
+    backend._set_entry_text("entSettingsPlugin", settings.get("plugin", "windows"))
+    set_settings_apply_mode(backend, settings.get("apply_mode", "single-file"))
+    return settings
 
 
-def sync_preferences_dialog_from_widgets(backend: Any) -> dict[str, object]:
+def sync_settings_dialog_from_widgets(backend: Any) -> dict[str, object]:
     dialog = backend._objects.get("SettingsDialog")
-    config: dict[str, object] = {}
-    if dialog is not None and hasattr(dialog, "get_preferences_config"):
-        config = dict(dialog.get_preferences_config())
+    settings: dict[str, object] = {}
+    if dialog is not None and hasattr(dialog, "get_settings_config"):
+        settings = dict(dialog.get_settings_config())
 
     def _empty_to_none(value: str) -> str | None:
         return value if value else None
 
-    config.update(
+    settings.update(
         {
             "scaling": backend._read_entry_text("entSettingsScaling") or "fit",
-            "two_screen": read_preferences_two_screen_mode(backend),
+            "two_screen": read_settings_two_screen_mode(backend),
             "margins": _empty_to_none(backend._read_entry_text("entSettingsMargins")),
             "align": list(parse_position_pair(backend._read_entry_text("entSettingsAlign") or "center", axis="align")),
             "valign": list(parse_position_pair(backend._read_entry_text("entSettingsValign") or "center", axis="valign")),
@@ -123,7 +123,7 @@ def sync_preferences_dialog_from_widgets(backend: Any) -> dict[str, object]:
             "embed_position": backend._read_entry_text("entSettingsMarginTextPosition") or "auto",
             "embed_max_lines": backend._read_spin_int("spnSettingsMarginTextMaxLines"),
             "plugin": backend._read_entry_text("entSettingsPlugin") or "windows",
-            "apply_mode": read_preferences_apply_mode(backend),
+            "apply_mode": read_settings_apply_mode(backend),
         }
     )
 
@@ -131,36 +131,36 @@ def sync_preferences_dialog_from_widgets(backend: Any) -> dict[str, object]:
     l_display = _empty_to_none(backend._read_entry_text("entSettingsLDisplay"))
     r_display = _empty_to_none(backend._read_entry_text("entSettingsRDisplay"))
     if resolution is None:
-        config.pop("resolution", None)
+        settings.pop("resolution", None)
     else:
-        config["resolution"] = resolution
+        settings["resolution"] = resolution
     if l_display is None:
-        config.pop("l_display", None)
+        settings.pop("l_display", None)
     else:
-        config["l_display"] = l_display
+        settings["l_display"] = l_display
     if r_display is None:
-        config.pop("r_display", None)
+        settings.pop("r_display", None)
     else:
-        config["r_display"] = r_display
+        settings["r_display"] = r_display
     if dialog is not None:
-        if hasattr(dialog, "set_preferences_config"):
-            dialog.set_preferences_config(config)
-    return config
+        if hasattr(dialog, "set_settings_config"):
+            dialog.set_settings_config(settings)
+    return settings
 
 
-def refresh_preferences_dialog_config_from_getter(backend: Any) -> None:
+def refresh_settings_dialog_from_getter(backend: Any) -> None:
     dialog = backend._objects.get("SettingsDialog")
     getter = backend._signal_handlers.get("on_get_settings_config")
-    if getter is None or dialog is None or not hasattr(dialog, "set_preferences_config"):
+    if getter is None or dialog is None or not hasattr(dialog, "set_settings_config"):
         return
 
-    current_config: dict[str, object] = {}
-    if hasattr(dialog, "get_preferences_config"):
-        current_config = dict(dialog.get_preferences_config())
+    current_settings: dict[str, object] = {}
+    if hasattr(dialog, "get_settings_config"):
+        current_settings = dict(dialog.get_settings_config())
 
-    refreshed = dict(current_config)
+    refreshed = dict(current_settings)
     refreshed.update(dict(getter()))
-    dialog.set_preferences_config(refreshed)
+    dialog.set_settings_config(refreshed)
 
 
 def refresh_color_dialog_from_getter(backend: Any) -> str:
@@ -168,9 +168,9 @@ def refresh_color_dialog_from_getter(backend: Any) -> str:
     dialog = backend._objects.get("ColorDialog")
     background_color = dialog.get_color() if dialog is not None and hasattr(dialog, "get_color") else DEFAULT_BACKGROUND_COLOR_HEX
     if getter is not None:
-        config = dict(getter())
-        if "background_color" in config:
-            background_color = normalize_background_color(config.get("background_color"))
+        settings = dict(getter())
+        if "background_color" in settings:
+            background_color = normalize_background_color(settings.get("background_color"))
     if dialog is not None and hasattr(dialog, "set_color"):
         dialog.set_color(background_color)
     return background_color
@@ -195,11 +195,11 @@ def refresh_about_dialog_from_getter(backend: Any) -> dict[str, object]:
 
 def store_background_color_in_settings_dialog(backend: Any, color: str) -> None:
     dialog = backend._objects.get("SettingsDialog")
-    if dialog is None or not hasattr(dialog, "get_preferences_config") or not hasattr(dialog, "set_preferences_config"):
+    if dialog is None or not hasattr(dialog, "get_settings_config") or not hasattr(dialog, "set_settings_config"):
         return
-    config = dict(dialog.get_preferences_config())
-    config["background_color"] = normalize_background_color(color)
-    dialog.set_preferences_config(config)
+    settings = dict(dialog.get_settings_config())
+    settings["background_color"] = normalize_background_color(color)
+    dialog.set_settings_config(settings)
 
 
 def on_settings_clicked(backend: Any, *_args: Any) -> None:
@@ -216,8 +216,8 @@ def on_settings_clicked(backend: Any, *_args: Any) -> None:
 
     if ok:
         try:
-            refresh_preferences_dialog_config_from_getter(backend)
-            sync_preferences_widgets_from_dialog(backend)
+            refresh_settings_dialog_from_getter(backend)
+            sync_settings_widgets_from_dialog(backend)
             owner = backend._get_handler_owner("on_open_settings_dialog")
             if owner is not None:
                 backend._sync_slideshow_state_only_from_owner(owner)
@@ -232,16 +232,16 @@ def on_settings_clicked(backend: Any, *_args: Any) -> None:
         backend._set_feedback(phase="Settings", state="deferred")
 
 
-def on_preferences_apply_clicked(backend: Any, *_args: Any) -> None:
+def on_settings_apply_clicked(backend: Any, *_args: Any) -> None:
     handler_name = "on_apply_settings"
     callback = backend._signal_handlers.get(handler_name)
     dialog = backend._objects.get("SettingsDialog")
-    if callback is None or dialog is None or not hasattr(dialog, "get_preferences_config"):
+    if callback is None or dialog is None or not hasattr(dialog, "get_settings_config"):
         backend._set_feedback(phase="SettingsApply", state="handler-missing", error="handler not connected")
         return
     try:
         backend._set_label_text("lblSettingsNotice", "")
-        ok = callback(sync_preferences_dialog_from_widgets(backend))
+        ok = callback(sync_settings_dialog_from_widgets(backend))
         if ok:
             owner = backend._get_handler_owner(handler_name)
             if owner is not None:
@@ -257,11 +257,11 @@ def on_preferences_apply_clicked(backend: Any, *_args: Any) -> None:
         backend._set_feedback(phase="SettingsApply", state="error", error=str(exc))
 
 
-def on_preferences_load_clicked(backend: Any, *_args: Any) -> None:
+def on_settings_load_clicked(backend: Any, *_args: Any) -> None:
     backend._set_feedback(phase="SettingsLoad", state="unavailable")
 
 
-def on_preferences_save_clicked(backend: Any, *_args: Any) -> None:
+def on_settings_save_clicked(backend: Any, *_args: Any) -> None:
     callback = backend._signal_handlers.get("on_save_settings_file")
     dialog = backend._objects.get("SettingsDialog")
     if callback is None or dialog is None or not hasattr(dialog, "get_export_path"):
@@ -269,8 +269,8 @@ def on_preferences_save_clicked(backend: Any, *_args: Any) -> None:
         return
     try:
         backend._set_label_text("lblSettingsNotice", "")
-        config = sync_preferences_dialog_from_widgets(backend)
-        ok = callback(dialog.get_export_path(), config)
+        settings = sync_settings_dialog_from_widgets(backend)
+        ok = callback(dialog.get_export_path(), settings)
         if ok:
             backend._set_label_text("lblSettingsNotice", "Settings: saved")
             backend._set_feedback(phase="SettingsSave", state="saved")
@@ -282,7 +282,7 @@ def on_preferences_save_clicked(backend: Any, *_args: Any) -> None:
         backend._set_feedback(phase="SettingsSave", state="error", error=str(exc))
 
 
-def on_preferences_close_clicked(backend: Any, *_args: Any) -> None:
+def on_settings_close_clicked(backend: Any, *_args: Any) -> None:
     dialog = backend._objects.get("SettingsDialog")
     backend._set_label_text("lblSettingsNotice", "")
     if dialog is not None and hasattr(dialog, "hide"):
@@ -293,8 +293,8 @@ def on_preferences_close_clicked(backend: Any, *_args: Any) -> None:
     backend._set_feedback(phase="Settings", state="closed")
 
 
-def on_preferences_window_delete_event(backend: Any) -> bool:
-    on_preferences_close_clicked(backend)
+def on_settings_window_delete_event(backend: Any) -> bool:
+    on_settings_close_clicked(backend)
     return True
 
 

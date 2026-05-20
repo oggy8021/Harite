@@ -51,9 +51,9 @@ def _connect_action_widgets(backend: Any, widgets: dict[str, Any]) -> None:
     widgets["optimize_modern_btn"].connect("clicked", backend._on_optimize_clicked)
     widgets["apply_btn"].connect("clicked", backend._on_apply_clicked)
     widgets["btn_setting"].connect("clicked", backend._on_settings_clicked)
-    widgets["prefs_apply_btn"].connect("clicked", backend._on_preferences_apply_clicked)
-    widgets["prefs_save_btn"].connect("clicked", backend._on_preferences_save_clicked)
-    widgets["prefs_close_btn"].connect("clicked", backend._on_preferences_close_clicked)
+    widgets["prefs_apply_btn"].connect("clicked", backend._on_settings_apply_clicked)
+    widgets["prefs_save_btn"].connect("clicked", backend._on_settings_save_clicked)
+    widgets["prefs_close_btn"].connect("clicked", backend._on_settings_close_clicked)
     widgets["rad_apply_single"].connect(
         "toggled",
         lambda widget, *_args: backend._on_apply_mode_toggled(widget, "single-file"),

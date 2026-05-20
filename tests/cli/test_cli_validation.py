@@ -160,7 +160,7 @@ def test_optimize_rejects_directory_input(tmp_path):
     assert f"optimize --input does not accept directories: {input_dir}" in _normalize_cli_output(result.output)
 
 
-def test_optimize_uses_config_for_required_values(tmp_path, monkeypatch):
+def test_optimize_uses_settings_for_required_values(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -168,8 +168,8 @@ def test_optimize_uses_config_for_required_values(tmp_path, monkeypatch):
         captured.update(kwargs)
         return [], []
 
-    cfg = tmp_path / "config.json"
-    cfg.write_text(
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(
         json.dumps(
             {
                 "input": ["from_config.jpg"],
@@ -181,14 +181,14 @@ def test_optimize_uses_config_for_required_values(tmp_path, monkeypatch):
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
 
-    result = runner.invoke(cli.app, ["optimize", "--config", str(cfg)])
+    result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
 
     assert result.exit_code == 0
     assert captured["inputs"] == ["from_config.jpg"]
     assert captured["target_resolution"] == (1600, 900)
 
 
-def test_optimize_cli_values_override_config(tmp_path, monkeypatch):
+def test_optimize_cli_values_override_settings(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -196,8 +196,8 @@ def test_optimize_cli_values_override_config(tmp_path, monkeypatch):
         captured.update(kwargs)
         return [], []
 
-    cfg = tmp_path / "config.json"
-    cfg.write_text(
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(
         json.dumps(
             {
                 "input": ["from_config.jpg"],
@@ -213,8 +213,8 @@ def test_optimize_cli_values_override_config(tmp_path, monkeypatch):
         cli.app,
         [
             "optimize",
-            "--config",
-            str(cfg),
+            "--settings-file",
+            str(settings_file),
             "--input",
             "from_cli.jpg",
             "--resolution",
@@ -227,7 +227,7 @@ def test_optimize_cli_values_override_config(tmp_path, monkeypatch):
     assert captured["target_resolution"] == (1920, 1080)
 
 
-def test_optimize_uses_config_for_margins_and_displays(tmp_path, monkeypatch):
+def test_optimize_uses_settings_for_margins_and_displays(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -235,8 +235,8 @@ def test_optimize_uses_config_for_margins_and_displays(tmp_path, monkeypatch):
         captured.update(kwargs)
         return [], []
 
-    cfg = tmp_path / "config.json"
-    cfg.write_text(
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(
         json.dumps(
             {
                 "input": ["from_config.jpg"],
@@ -251,7 +251,7 @@ def test_optimize_uses_config_for_margins_and_displays(tmp_path, monkeypatch):
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
 
-    result = runner.invoke(cli.app, ["optimize", "--config", str(cfg)])
+    result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
 
     assert result.exit_code == 0
     assert captured["margins"] == (1, 2, 3, 4)
@@ -259,7 +259,7 @@ def test_optimize_uses_config_for_margins_and_displays(tmp_path, monkeypatch):
     assert captured["r_display"] == (1280, 1024)
 
 
-def test_optimize_cli_values_override_config_for_margins_and_displays(tmp_path, monkeypatch):
+def test_optimize_cli_values_override_settings_for_margins_and_displays(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -267,8 +267,8 @@ def test_optimize_cli_values_override_config_for_margins_and_displays(tmp_path, 
         captured.update(kwargs)
         return [], []
 
-    cfg = tmp_path / "config.json"
-    cfg.write_text(
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(
         json.dumps(
             {
                 "input": ["from_config.jpg"],
@@ -287,8 +287,8 @@ def test_optimize_cli_values_override_config_for_margins_and_displays(tmp_path, 
         cli.app,
         [
             "optimize",
-            "--config",
-            str(cfg),
+            "--settings-file",
+            str(settings_file),
             "--margins",
             "10,20,30,40",
             "--l-display",
@@ -304,7 +304,7 @@ def test_optimize_cli_values_override_config_for_margins_and_displays(tmp_path, 
     assert captured["r_display"] == (1920, 1200)
 
 
-def test_optimize_reads_two_screen_from_config(tmp_path, monkeypatch):
+def test_optimize_reads_two_screen_from_settings(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -312,8 +312,8 @@ def test_optimize_reads_two_screen_from_config(tmp_path, monkeypatch):
         captured.update(kwargs)
         return [], []
 
-    cfg = tmp_path / "config.json"
-    cfg.write_text(
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(
         json.dumps(
             {
                 "input": ["from_config.jpg"],
@@ -326,13 +326,13 @@ def test_optimize_reads_two_screen_from_config(tmp_path, monkeypatch):
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
 
-    result = runner.invoke(cli.app, ["optimize", "--config", str(cfg)])
+    result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
 
     assert result.exit_code == 0
     assert captured["two_screen"] is True
 
 
-def test_optimize_cli_two_screen_overrides_config_false(tmp_path, monkeypatch):
+def test_optimize_cli_two_screen_overrides_settings_false(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -340,8 +340,8 @@ def test_optimize_cli_two_screen_overrides_config_false(tmp_path, monkeypatch):
         captured.update(kwargs)
         return [], []
 
-    cfg = tmp_path / "config.json"
-    cfg.write_text(
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(
         json.dumps(
             {
                 "input": ["from_config.jpg"],
@@ -358,8 +358,8 @@ def test_optimize_cli_two_screen_overrides_config_false(tmp_path, monkeypatch):
         cli.app,
         [
             "optimize",
-            "--config",
-            str(cfg),
+            "--settings-file",
+            str(settings_file),
             "--two-screen",
         ],
     )
@@ -368,7 +368,7 @@ def test_optimize_cli_two_screen_overrides_config_false(tmp_path, monkeypatch):
     assert captured["two_screen"] is True
 
 
-def test_optimize_cli_no_two_screen_overrides_config_true(tmp_path, monkeypatch):
+def test_optimize_cli_no_two_screen_overrides_settings_true(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -376,8 +376,8 @@ def test_optimize_cli_no_two_screen_overrides_config_true(tmp_path, monkeypatch)
         captured.update(kwargs)
         return [], []
 
-    cfg = tmp_path / "config.json"
-    cfg.write_text(
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(
         json.dumps(
             {
                 "input": ["from_config.jpg"],
@@ -394,8 +394,8 @@ def test_optimize_cli_no_two_screen_overrides_config_true(tmp_path, monkeypatch)
         cli.app,
         [
             "optimize",
-            "--config",
-            str(cfg),
+            "--settings-file",
+            str(settings_file),
             "--no-two-screen",
         ],
     )
@@ -428,14 +428,14 @@ def test_optimize_rejects_removed_fixed_flag(tmp_path):
     assert "--fixed" in output
 
 
-def test_optimize_rejects_invalid_bool_in_config(tmp_path, monkeypatch):
+def test_optimize_rejects_invalid_bool_in_settings(tmp_path, monkeypatch):
     runner = CliRunner()
 
     def fake_optimize_wallpapers(**kwargs):
         return [], []
 
-    cfg = tmp_path / "config.json"
-    cfg.write_text(
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(
         json.dumps(
             {
                 "input": ["from_config.jpg"],
@@ -448,10 +448,10 @@ def test_optimize_rejects_invalid_bool_in_config(tmp_path, monkeypatch):
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
 
-    result = runner.invoke(cli.app, ["optimize", "--config", str(cfg)])
+    result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
 
     assert result.exit_code == 2
-    assert "invalid config bool for two_screen" in result.output
+    assert "invalid settings bool for two_screen" in result.output
 
 
 def test_optimize_combined_two_screen_margins_displays(tmp_path, monkeypatch):
@@ -462,8 +462,8 @@ def test_optimize_combined_two_screen_margins_displays(tmp_path, monkeypatch):
         captured.update(kwargs)
         return [], []
 
-    cfg = tmp_path / "config.json"
-    cfg.write_text(
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(
         json.dumps(
             {
                 "input": ["from_config.jpg"],
@@ -479,8 +479,8 @@ def test_optimize_combined_two_screen_margins_displays(tmp_path, monkeypatch):
         cli.app,
         [
             "optimize",
-            "--config",
-            str(cfg),
+            "--settings-file",
+            str(settings_file),
             "--two-screen",
             "--margins",
             "10,20,30,40",
@@ -536,7 +536,7 @@ def test_optimize_passes_embed_font_to_core(tmp_path, monkeypatch):
     assert captured["embed_font"] == str(font)
 
 
-def test_optimize_uses_config_for_scaling_align_and_valign(tmp_path, monkeypatch):
+def test_optimize_uses_settings_for_scaling_align_and_valign(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -544,8 +544,8 @@ def test_optimize_uses_config_for_scaling_align_and_valign(tmp_path, monkeypatch
         captured.update(kwargs)
         return [], []
 
-    cfg = tmp_path / "config.json"
-    cfg.write_text(
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(
         json.dumps(
             {
                 "input": ["from_config.jpg"],
@@ -560,7 +560,7 @@ def test_optimize_uses_config_for_scaling_align_and_valign(tmp_path, monkeypatch
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
 
-    result = runner.invoke(cli.app, ["optimize", "--config", str(cfg)])
+    result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
 
     assert result.exit_code == 0
     assert captured["scaling"] == "fill"
@@ -568,7 +568,7 @@ def test_optimize_uses_config_for_scaling_align_and_valign(tmp_path, monkeypatch
     assert captured["valign"] == ("bottom", "bottom")
 
 
-def test_optimize_auto_display_values_can_come_from_config(tmp_path, monkeypatch):
+def test_optimize_auto_display_values_can_come_from_settings(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -576,8 +576,8 @@ def test_optimize_auto_display_values_can_come_from_config(tmp_path, monkeypatch
         captured.update(kwargs)
         return [], []
 
-    cfg = tmp_path / "config.json"
-    cfg.write_text(
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(
         json.dumps(
             {
                 "input": ["left.jpg", "right.jpg"],
@@ -604,7 +604,7 @@ def test_optimize_auto_display_values_can_come_from_config(tmp_path, monkeypatch
         ),
     )
 
-    result = runner.invoke(cli.app, ["optimize", "--config", str(cfg)])
+    result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
 
     assert result.exit_code == 0
     assert captured["target_resolution"] == (3200, 1080)

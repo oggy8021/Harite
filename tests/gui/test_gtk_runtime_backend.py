@@ -1041,7 +1041,7 @@ def test_runtime_backend_shows_current_labels_and_controls():
     slideshow_source_r = backend.get_object("lblSlideshowSourceR")
     slideshow_current = backend.get_object("lblSlideshowCurrent")
     slideshow_output = backend.get_object("lblSlideshowOutput")
-    prefs_btn = backend.get_object("btnSetting")
+    settings_btn = backend.get_object("btnSetting")
     about_btn = backend.get_object("btnAbout")
     save_btn = backend.get_object("btnSave")
     optimize_btn = backend.get_object("btnOptimize")
@@ -1075,10 +1075,10 @@ def test_runtime_backend_shows_current_labels_and_controls():
     assert style_legend.text == "Current behavior: margins are global to the composite canvas"
     assert command_section.text == ""
     assert flow_legend.text == "Compose -> Optimize -> Apply"
-    assert prefs_btn.label == "Settings"
+    assert settings_btn.label == "Settings"
     assert about_btn.label == "About"
     assert color_btn.image is not None
-    assert prefs_btn.image is not None
+    assert settings_btn.image is not None
     assert about_btn.image is not None
     assert save_btn.label == "Save As"
     assert optimize_btn.label == "Optimize"
@@ -1842,7 +1842,7 @@ def test_runtime_backend_color_apply_updates_handler_and_feedback():
     backend.connect_signals(
         {
             "on_set_color": on_set_color,
-            "on_get_settings_config": lambda: {"background_color": "#1E1E1E"},
+            "on_get_settings": lambda: {"background_color": "#1E1E1E"},
         }
     )
 
@@ -1864,7 +1864,7 @@ def test_runtime_backend_color_open_reports_settings_getter_failure():
     backend.connect_signals(
         {
             "on_set_color": lambda *_args: True,
-            "on_get_settings_config": lambda: (_ for _ in ()).throw(RuntimeError("color settings getter failed")),
+            "on_get_settings": lambda: (_ for _ in ()).throw(RuntimeError("color settings getter failed")),
         }
     )
 
@@ -1881,7 +1881,7 @@ def test_runtime_backend_color_open_propagates_unexpected_getter_error():
     backend.connect_signals(
         {
             "on_set_color": lambda *_args: True,
-            "on_get_settings_config": lambda: (_ for _ in ()).throw(LookupError("unexpected color getter error")),
+            "on_get_settings": lambda: (_ for _ in ()).throw(LookupError("unexpected color getter error")),
         }
     )
 
@@ -1895,7 +1895,7 @@ def test_runtime_backend_color_open_propagates_unexpected_runtime_error():
     backend.connect_signals(
         {
             "on_set_color": lambda *_args: (_ for _ in ()).throw(RuntimeError("color open exploded")),
-            "on_get_settings_config": lambda: {"background_color": "#1E1E1E"},
+            "on_get_settings": lambda: {"background_color": "#1E1E1E"},
         }
     )
 
@@ -1909,7 +1909,7 @@ def test_runtime_backend_color_apply_propagates_unexpected_runtime_error():
     backend.connect_signals(
         {
             "on_set_color": lambda color=None: (_ for _ in ()).throw(RuntimeError("color apply exploded")) if color is not None else True,
-            "on_get_settings_config": lambda: {"background_color": "#1E1E1E"},
+            "on_get_settings": lambda: {"background_color": "#1E1E1E"},
         }
     )
 
@@ -2658,7 +2658,7 @@ def test_runtime_backend_settings_close_callback_exception_propagates():
     )
 
     with pytest.raises(RuntimeError, match="settings close failed"):
-        backend._on_preferences_close_clicked()
+        backend._on_settings_close_clicked()
 
 
 def test_runtime_backend_about_close_callback_exception_propagates():
@@ -2810,7 +2810,7 @@ def test_runtime_backend_settings_button_dispatches_open_handler(monkeypatch, tm
     backend.connect_signals(
         {
             "on_open_settings_dialog": lambda: observed.__setitem__("opened", observed["opened"] + 1) or True,
-            "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "single-file"},
+            "on_get_settings": lambda: {"plugin": "linux", "apply_mode": "single-file"},
         }
     )
 
@@ -2819,14 +2819,12 @@ def test_runtime_backend_settings_button_dispatches_open_handler(monkeypatch, tm
     assert observed["opened"] == 1
     assert backend.get_object("lblStatus").text == "Settings: opened"
     assert backend.get_object("SettingsDialog").is_visible() is True
-    assert backend.get_object("SettingsDialog").get_preferences_config()["plugin"] == "linux"
+    assert backend.get_object("SettingsDialog").get_settings()["plugin"] == "linux"
     assert backend.get_object("entSettingsPlugin").get_text() == "linux"
     assert backend.get_object("radSettingsApplySingle").label == "Apply Default"
     assert backend.get_object("radSettingsApplyPerMonitor").label == "Apply Auto-split"
     assert backend.get_object("radSettingsApplySingle").get_active() is True
     assert backend.get_object("lblSettingsNotice").text == "現在は未保存です"
-    assert backend.get_object("btnPrefsApply") is None
-    assert backend.get_object("spnPrefsSlideshowInterval") is None
 
 
 def test_runtime_backend_settings_open_reports_notice_build_failure(monkeypatch):
@@ -2844,7 +2842,7 @@ def test_runtime_backend_settings_open_reports_notice_build_failure(monkeypatch)
     backend.connect_signals(
         {
             "on_open_settings_dialog": lambda: True,
-            "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "single-file"},
+            "on_get_settings": lambda: {"plugin": "linux", "apply_mode": "single-file"},
         }
     )
 
@@ -2869,7 +2867,7 @@ def test_runtime_backend_settings_open_propagates_unexpected_notice_build_error(
     backend.connect_signals(
         {
             "on_open_settings_dialog": lambda: True,
-            "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "single-file"},
+            "on_get_settings": lambda: {"plugin": "linux", "apply_mode": "single-file"},
         }
     )
 
@@ -2898,8 +2896,8 @@ def test_runtime_backend_settings_ok_save_and_cancel_dispatch_handlers(tmp_path)
 
     assert save_btn.image is not None
 
-    export_path = tmp_path / "save-prefs.json"
-    dialog.set_preferences_config(
+    export_path = tmp_path / "save-settings.json"
+    dialog.set_settings(
         {
             "resolution": "1920x1080",
             "plugin": "linux",
@@ -2913,9 +2911,9 @@ def test_runtime_backend_settings_ok_save_and_cancel_dispatch_handlers(tmp_path)
 
     backend.connect_signals(
         {
-            "on_apply_settings": lambda config: observed.__setitem__("apply", config) or True,
-            "on_save_settings_file": lambda path, config: observed.__setitem__("save", (path, config)) or True,
-            "on_get_settings_config": lambda: {"plugin": "xfce", "apply_mode": "per-monitor-auto-split"},
+            "on_apply_settings": lambda settings: observed.__setitem__("apply", settings) or True,
+            "on_save_settings_file": lambda path, settings: observed.__setitem__("save", (path, settings)) or True,
+            "on_get_settings": lambda: {"plugin": "xfce", "apply_mode": "per-monitor-auto-split"},
             "on_close_settings_dialog": lambda: observed.__setitem__("close", observed["close"] + 1) or True,
         }
     )
@@ -2964,12 +2962,12 @@ def test_runtime_backend_settings_apply_propagates_unexpected_runtime_error():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     dialog = backend.get_object("SettingsDialog")
 
-    dialog.set_preferences_config({"plugin": "linux", "apply_mode": "single-file"})
+    dialog.set_settings({"plugin": "linux", "apply_mode": "single-file"})
     dialog.show()
 
     backend.connect_signals(
         {
-            "on_apply_settings": lambda _config: (_ for _ in ()).throw(RuntimeError("settings apply exploded")),
+            "on_apply_settings": lambda _settings: (_ for _ in ()).throw(RuntimeError("settings apply exploded")),
         }
     )
 
@@ -2981,8 +2979,8 @@ def test_runtime_backend_settings_save_reports_legacy_handler_signature_error(tm
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     dialog = backend.get_object("SettingsDialog")
 
-    export_path = tmp_path / "save-prefs.json"
-    dialog.set_preferences_config({"plugin": "linux", "apply_mode": "single-file"})
+    export_path = tmp_path / "save-settings.json"
+    dialog.set_settings({"plugin": "linux", "apply_mode": "single-file"})
     dialog.set_export_path(str(export_path))
     dialog.show()
 
@@ -3002,14 +3000,14 @@ def test_runtime_backend_settings_save_propagates_unexpected_runtime_error(tmp_p
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     dialog = backend.get_object("SettingsDialog")
 
-    export_path = tmp_path / "save-prefs.json"
-    dialog.set_preferences_config({"plugin": "linux", "apply_mode": "single-file"})
+    export_path = tmp_path / "save-settings.json"
+    dialog.set_settings({"plugin": "linux", "apply_mode": "single-file"})
     dialog.set_export_path(str(export_path))
     dialog.show()
 
     backend.connect_signals(
         {
-            "on_save_settings_file": lambda _path, _config: (_ for _ in ()).throw(RuntimeError("settings save exploded")),
+            "on_save_settings_file": lambda _path, _settings: (_ for _ in ()).throw(RuntimeError("settings save exploded")),
         }
     )
 
@@ -3023,7 +3021,7 @@ def test_runtime_backend_settings_preserves_explicit_apply_mode_when_unedited(tm
     observed = {"apply": None, "save": None}
 
     export_path = tmp_path / "explicit-save.json"
-    dialog.set_preferences_config(
+    dialog.set_settings(
         {
             "plugin": "linux",
             "apply_mode": "per-monitor-explicit",
@@ -3035,9 +3033,9 @@ def test_runtime_backend_settings_preserves_explicit_apply_mode_when_unedited(tm
     backend.connect_signals(
         {
             "on_open_settings_dialog": lambda: True,
-            "on_apply_settings": lambda config: observed.__setitem__("apply", config) or True,
-            "on_save_settings_file": lambda path, config: observed.__setitem__("save", (path, config)) or True,
-            "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
+            "on_apply_settings": lambda settings: observed.__setitem__("apply", settings) or True,
+            "on_save_settings_file": lambda path, settings: observed.__setitem__("save", (path, settings)) or True,
+            "on_get_settings": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
         }
     )
 
@@ -3060,7 +3058,7 @@ def test_runtime_backend_settings_can_override_preserved_explicit_apply_mode(tmp
     dialog = backend.get_object("SettingsDialog")
     observed = {"apply": None}
 
-    dialog.set_preferences_config(
+    dialog.set_settings(
         {
             "plugin": "linux",
             "apply_mode": "per-monitor-explicit",
@@ -3071,8 +3069,8 @@ def test_runtime_backend_settings_can_override_preserved_explicit_apply_mode(tmp
     backend.connect_signals(
         {
             "on_open_settings_dialog": lambda: True,
-            "on_apply_settings": lambda config: observed.__setitem__("apply", config) or True,
-            "on_get_settings_config": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
+            "on_apply_settings": lambda settings: observed.__setitem__("apply", settings) or True,
+            "on_get_settings": lambda: {"plugin": "linux", "apply_mode": "per-monitor-explicit"},
         }
     )
     backend.get_object("btnSettings").click()
