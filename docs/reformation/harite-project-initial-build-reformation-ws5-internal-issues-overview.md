@@ -83,7 +83,8 @@
 
 - その次に、`設定 / 設定ファイル / config / preferences / harite-preferences.json` の関係をまとめて扱う。
 - 正系語は `設定` を主語に固定し、`config` は設定ファイルや設定入出力の補助語に下げ、`preferences` は rename 対象として扱う。
-- 文書語、媒体名、source 上の module / class / handler 名の 3 層を分けて判断する。
+- 文書語、媒体名、source 上の file / module / class / handler 名の 4 層を分けて判断する。
+- したがってこの段では、関数名や class 名だけでなく、実装モジュール名とファイル名の rename も対象に含める。
 
 ### 5. apply target / monitor map / plugin fallback の整理
 
@@ -120,7 +121,7 @@
 
 3. `ws5-fix-config-preferences-terms`
    - 対象: `設定 / 設定ファイル / config / preferences / harite-preferences.json`
-   - 位置づけ: `設定` を主語に固定しつつ、媒体名と source 上の naming を跨いで `config` と `preferences` の残滓を閉じるため、前段の命名整理後に扱う
+   - 位置づけ: `設定` を主語に固定しつつ、媒体名と source 上の file / module / class / handler naming を跨いで `config` と `preferences` の残滓を閉じるため、前段の命名整理後に扱う
 
 4. `ws5-fix-apply-target-plugin-boundary`
    - 対象: `apply target / monitor map / mapping`、plugin fallback (`xfconf-query`, `gsettings`, `feh`)
@@ -203,6 +204,7 @@
 - ただし媒体上のファイル名としては `preferences` が残っており、`prefs` をやめた後の残滓として不一致感がある。
 - `設定` / `設定ファイル` という現在の呼び方に揃えるため、ファイル名も含めて命名を見直す。
 - したがって `harite-preferences.json` は、`preferences` 残滓を閉じる rename 対象として扱う。
+- 同様に、`config.py`, `preferences.py` のような実装モジュール名も、文書語固定後の naming へ合わせて rename 対象に含める。
 
 ### 10. `config` と `設定` の用語整理方針
 

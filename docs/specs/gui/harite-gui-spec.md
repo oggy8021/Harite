@@ -4,9 +4,9 @@
 
 ## 1. GUI の責務
 
-- GUI は日常操作面として、compose -> optimize -> apply -> watch の導線を提供する。
+- GUI は日常操作面として、compose -> optimize -> apply -> slideshow の導線を提供する。
 - framework-neutral な状態モデルと GTK runtime を分離し、保守可能性を確保する。
-- GUI は `MainWindow` を中心に、設定、watch、status、message history を一貫した状態として保持する。
+- GUI は `MainWindow` を中心に、設定、スライドショー、status、message history を一貫した状態として保持する。
 
 ## 2. GUI 起動導線
 
@@ -44,7 +44,7 @@ sequenceDiagram
 - compose / input / position
 - margins tab
 - action cluster
-- watch tab
+- slideshow tab
 - status footer
 
 ## 4. メイン操作フロー
@@ -54,13 +54,13 @@ flowchart TD
     A[input and 設定] --> B[optimize]
     B --> C[saved files]
     C --> D[apply]
-    C --> E[watch start]
+    C --> E[slideshow start]
     D --> F[status update]
     E --> F
 ```
 
 - GUI には CLI の `--do-it` / `dry-run` に相当する同名オプションは存在しない。
-- GUI は日常操作面として apply や watch を直接起動するが、内部では core / plugin / watch helper の経路を利用する。
+- GUI は日常操作面として apply や slideshow を直接起動するが、内部では core / plugin / slideshow helper の経路を利用する。
 - したがって「dry-run 既定かどうか」は CLI 仕様の論点であり、GUI ではボタン操作と状態表示の挙動として読む。
 
 apply mode の user-facing 意味:
@@ -86,25 +86,25 @@ apply mode の user-facing 意味:
 設定 dialog の責務:
 
 - dialog を開く時点で form state を取り込み、必要なら two-screen 状態を同期する。
-- apply では `AppPreferences` を GUI state に展開し、optimize / apply / watch の各状態へ反映する。
+- apply では `AppPreferences` を GUI state に展開し、optimize / apply / slideshow の各状態へ反映する。
 - save では現在の GUI state を `AppPreferences` へ戻して JSON payload を作り、指定 path または既定 path へ保存する。
 - load では指定 path の JSON を読み込み、`AppPreferences.from_config_dict(...)` を経由して GUI state に反映する。
 
-## 6. watch との接続
+## 6. slideshow との接続
 
-- GUI watch は `MainWindow` 側に運用責務を持つ。
-- watch start 時に srcdir, plugin, apply_mode, dual-source 条件を検証する。
-- watch tick は GTK runtime timer と owner state の同期で動く。
-- GUI watch は CLI watch helper をそのまま露出するのではなく、GUI 状態管理を被せたうえで利用する。
-- このため CLI にある `--do-it` / `--dry-run` の説明は GUI にそのまま持ち込まず、GUI 側では status, watch summary, error 表示を中心に説明する。
+- GUI のスライドショー機能は `MainWindow` 側に運用責務を持つ。
+- slideshow start 時に srcdir, plugin, apply_mode, dual-source 条件を検証する。
+- slideshow tick は GTK runtime timer と owner state の同期で動く。
+- GUI は CLI slideshow helper をそのまま露出するのではなく、GUI 状態管理を被せたうえで利用する。
+- このため CLI にある `--do-it` / `--dry-run` の説明は GUI にそのまま持ち込まず、GUI 側では status, history, error 表示を中心に説明する。
 
-watch start / tick / stop:
+slideshow start / tick / stop:
 
-- start では watch source directory 群を集め、source が空なら開始前に `watch srcdir is required` として止める。
-- start 時点で各 source から初回選択を行い、watch current display を更新してから apply を試みる。
-- tick では次画像を選び直し、watch current display を更新したうえで apply を行う。
-- apply に失敗した場合は watch を停止し、status と message history に failure を残す。
-- monitor 検出欠落のような一部条件では stop ではなく pause として扱い、watch summary を `paused` へ更新する。
+- start では slideshow source directory 群を集め、source が空なら開始前に `slideshow srcdir is required` として止める。
+- start 時点で各 source から初回選択を行い、現在表示を更新してから apply を試みる。
+- tick では次画像を選び直し、現在表示を更新したうえで apply を行う。
+- apply に失敗した場合はスライドショー実行を停止し、status と message history に failure を残す。
+- monitor 検出欠落のような一部条件では stop ではなく pause として扱い、状態表示を `paused` へ更新する。
 
 ## 7. tray / indicator / app icon surface
 
@@ -116,24 +116,24 @@ sequenceDiagram
     participant Window as MainWindow / GTK window
 
     User->>Tray: open indicator menu
-    Tray->>Tray: refresh visible/watch state
+    Tray->>Tray: refresh visible/slideshow state
 
     alt Visible toggle
         User->>Tray: Visible / Invisible
         Tray->>Window: show/hide/present
-    else Start Watch
-        User->>Tray: Start Watch
-        Tray->>Backend: _on_watch_start_clicked()
-        Backend->>Window: on_watch_start()
-    else Stop Watch
-        User->>Tray: Stop Watch
-        Tray->>Backend: _on_watch_stop_clicked()
-        Backend->>Window: on_watch_stop()
+    else Start Slideshow
+      User->>Tray: Start Slideshow
+      Tray->>Backend: _on_slideshow_start_clicked()
+      Backend->>Window: on_slideshow_start()
+    else Stop Slideshow
+      User->>Tray: Stop Slideshow
+      Tray->>Backend: _on_slideshow_stop_clicked()
+      Backend->>Window: on_slideshow_stop()
     end
 ```
 
-- tray は可視状態切り替えと watch 開始停止の補助面である。
-- icon は watch 状態に応じて切り替わる。
+- tray は可視状態切り替えと slideshow 開始停止の補助面である。
+- icon は slideshow 状態に応じて切り替わる。
 
 tray 初期化の前提:
 
@@ -145,10 +145,10 @@ icon / resource surface:
 - main window と about dialog は product icon として `harite_app.svg` を優先利用する。
 - main GTK window では window icon surface に `harite_app.svg` を与え、GTK runtime がそれを採る環境では taskbar / launcher / window surface 側の application identity に使われる。
 - about dialog では window icon に加えて dialog content 内にも `harite_app.svg` を表示する。
-- task tray indicator は watch 実行中に `harite.svg`、停止中に `harite_off.svg` を使い分ける。
-- task tray indicator の icon surface は application icon の再利用ではなく、watch 状態を示す専用の product icon surface として分ける。
+- task tray indicator は slideshow 実行中に `harite.svg`、停止中に `harite_off.svg` を使い分ける。
+- task tray indicator の icon surface は application icon の再利用ではなく、slideshow 状態を示す専用の product icon surface として分ける。
 - product icon resource が見つからない場合、tray は system theme icon へフォールバックする。
-- tray fallback は watch 実行中に `applications-graphics`、停止中に `media-playback-pause` を使う。
+- tray fallback は slideshow 実行中に `applications-graphics`、停止中に `media-playback-pause` を使う。
 - header / tab / dialog の各 button icon は package 内の lucide SVG resource を使う。
 - 現行 runtime で使う icon や button image は package resource として `src/harite/gui/resources/icons/` 配下に置き、legacy glade 資産とは混線させない。
 
@@ -158,15 +158,15 @@ button と icon の対応:
 - flow row の `Save As` には `save.svg` を割り当てる。
 - action cluster の `Optimize` には `image.svg`、`Apply` には `wallpaper.svg` を割り当てる。
 - input 面の direction toggle は `Top-*` に `arrow-up.svg`、`Bottom-*` に `arrow-down.svg`、`Left-*` に `arrow-left.svg`、`Right-*` に `arrow-right.svg` を割り当てる。
-- input 面の `Open-L` / `Open-R` と watch 面の `Srcdir-L` / `Srcdir-R` には `folder-open.svg` を割り当てる。
+- input 面の `Open-L` / `Open-R` と slideshow 面の `Srcdir-L` / `Srcdir-R` には `folder-open.svg` を割り当てる。
 - input 面の `Clear-L` / `Clear-R` には `folder-x.svg` を割り当てる。
-- watch 面の `Watch Start` と `Watch Stop` にはそれぞれ `play.svg` と `pause.svg` を割り当てる。
+- slideshow 面の `Slideshow Start` と `Slideshow Stop` にはそれぞれ `play.svg` と `pause.svg` を割り当てる。
 - settings dialog では header の `Save` に `save.svg` を割り当てる。
 - 一方で settings dialog の `OK` / `Cancel` には現行実装で専用 icon 割当てはない。
 
 tray menu の現行項目:
 
-- tray menu は `Visible/Invisible`, `Start Watch`, `Stop Watch`, `Settings`, `BaseColor`, `About`, `Quit` を持つ。
+- tray menu は `Visible/Invisible`, `Start Slideshow`, `Stop Slideshow`, `Settings`, `BaseColor`, `About`, `Quit` を持つ。
 - `Visible/Invisible` は main window の show/hide を切り替える。
 - `Settings`, `BaseColor`, `About` は dialog open request の補助導線である。
 
@@ -199,7 +199,7 @@ adapters/
   ui_adapter.py           signal dispatch table
   tasktray_adapter.py     tray / indicator
   gtk_layout_builders.py / gtk_tab_builders.py / gtk_dialog_builders.py
-  gtk_runtime_*           signal, sync, dialog, watch, helper 群
+  gtk_runtime_*           signal, sync, dialog, slideshow, helper 群
 ```
 
 preview 補助計算の現行規則:
@@ -224,15 +224,15 @@ margin text preflight の現行規則:
 
 - GUI は `status_level`, `status_phase`, `status_message`, `last_error` を持つ。
 - footer に `Status:` と `Error:` を表示する。
-- watch, apply, 設定, input dialog などの failure は phase 単位で表示する。
+- slideshow, apply, 設定, input dialog などの failure は phase 単位で表示する。
 - GUI の `logs` 相当領域も、利用者向けには message history として扱う。
 - CLI の `--log-level` と同じ概念を GUI に持ち込まず、GUI 側は状態表示と履歴表示の面として説明する。
 
 status 更新の原則:
 
 - `_set_status(...)` は `status_level`, `status_phase`, `status_message`, `last_error` を一括更新する統一入口である。
-- `settings`, `watch`, `apply`, `input` など phase 名を揃えて、どの面の失敗かを footer で読めるようにする。
-- message history は設定 dialog open/apply/save、watch start/tick/pause/resume/stop、startup settings load skip などの運用イベントを残す。
+- `settings`, `slideshow`, `apply`, `input` など phase 名を揃えて、どの面の失敗かを footer で読めるようにする。
+- message history は設定 dialog open/apply/save、slideshow start/tick/pause/resume/stop、startup settings load skip などの運用イベントを残す。
 
 ## 10. メッセージ分類
 
@@ -242,14 +242,14 @@ status 更新の原則:
 - `paused`: 一時停止
 - `error`: 失敗
 
-## 11. CLI / core / watch との境界
+## 11. CLI / core / slideshow との境界
 
 - core 挙動は [docs/specs/core/harite-core-spec.md](docs/specs/core/harite-core-spec.md)
 - CLI command surface は [docs/specs/cli/harite-cli-spec.md](docs/specs/cli/harite-cli-spec.md)
-- watch 詳細は [docs/specs/watch/harite-watch-spec.md](docs/specs/watch/harite-watch-spec.md)
+- slideshow 詳細は [docs/specs/slideshow/harite-slideshow-spec.md](docs/specs/slideshow/harite-slideshow-spec.md)
 
 境界整理:
 
 - GUI は widget と状態表示の面を持つが、設定ファイルの物理仕様や apply target 解決規則そのものは core に依存する。
-- GUI watch は watch helper を利用するが、pause / resume 的な扱い、watch summary、message history は GUI 側の責務である。
+- GUI のスライドショー機能は slideshow helper を利用するが、pause / resume 的な扱い、状態表示、message history は GUI 側の責務である。
 - tray は GUI の補助導線であり、独立した業務規則の一次置き場にはしない。

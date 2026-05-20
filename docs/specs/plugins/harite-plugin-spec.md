@@ -142,5 +142,5 @@ Linux plugin の適用順:
 
 - apply target の解決は [docs/specs/core/harite-core-spec.md](docs/specs/core/harite-core-spec.md) が扱う。
 - CLI の plugin option と終了コードは [docs/specs/cli/harite-cli-spec.md](docs/specs/cli/harite-cli-spec.md) が扱う。
-- GUI からの apply / watch 起動導線は [docs/specs/gui/harite-gui-spec.md](docs/specs/gui/harite-gui-spec.md) が扱う。
-- watch 中の plugin 呼び出しと失敗集計は [docs/specs/watch/harite-watch-spec.md](docs/specs/watch/harite-watch-spec.md) が扱う。
+- GUI からの apply / slideshow 起動導線は [docs/specs/gui/harite-gui-spec.md](docs/specs/gui/harite-gui-spec.md) が扱う。
+- slideshow 中の plugin 呼び出しと失敗集計は [docs/specs/slideshow/harite-slideshow-spec.md](docs/specs/slideshow/harite-slideshow-spec.md) が扱う。

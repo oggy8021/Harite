@@ -1,4 +1,4 @@
-# Harite watch 仕様 (Watch / Slideshow Spec)
+# Harite スライドショー仕様 (Slideshow Spec)
 
 最終更新: 2026-05-20
 
@@ -7,7 +7,7 @@
 - 入力画像列を一定間隔で選択し、apply 面へ接続する。
 - CLI と GUI の両面で、スライドショー機能としての継続実行を説明する。
 
-public surface では、この機能を `watch` ではなく `スライドショー` と呼ぶ。現行の `watch` は実装由来の旧語であり、filesystem event 監視の仕組みではない。Harite におけるこの機能は、画像候補集合を一定間隔で巡回し、次に適用する画像を選ぶ継続実行面を指す。
+public surface では、この機能を `スライドショー` と呼ぶ。これは filesystem event 監視の仕組みではなく、画像候補集合を一定間隔で巡回し、次に適用する画像を選ぶ継続実行面を指す。
 
 ## 2. 起動条件
 
@@ -24,19 +24,19 @@ CLI 側の最低要件:
 
 GUI 側では、これに加えて現在の画面状態、設定、スライドショー source directory の整合が必要になる。
 
-## 3. watch シーケンス図 (watch sequence)
+## 3. スライドショーシーケンス図 (slideshow sequence)
 
 ```mermaid
 sequenceDiagram
     actor User
     participant GUI as MainWindow
-    participant Watch as slideshow.py / GUI slideshow state
+    participant Slideshow as slideshow.py / GUI slideshow state
     participant Core as optimize/apply 設定
     participant Plugin as plugin impl
 
-    User->>GUI: start watch
+    User->>GUI: start slideshow
     GUI->>GUI: validate srcdir / plugin / apply mode
-    GUI->>Watch: collect or select next image(s)
+    GUI->>Slideshow: collect or select next image(s)
     alt single source
         GUI->>Plugin: apply(image)
     else dual source auto-split
@@ -52,7 +52,7 @@ sequenceDiagram
 
 ## 4. 継続実行ループの基本動作
 
-- この機能は filesystem event watch ではなく、サイクルごとの選択ループである。
+- この機能は filesystem event 監視ではなく、サイクルごとの選択ループである。
 - `sequential` と `random` の選択モードを持つ。
 - 選択モードを明示的に持つのは現行では主に CLI / helper 側である。
 - GUI 側のスライドショー実行は現状 `sequential` 前提で動いており、`random` を選ぶ UI は持たない。
@@ -90,16 +90,16 @@ slideshow helper の最小構成:
 GUI pause / resume の現行条件:
 
 - dual-source auto-split の `tick` 中に `per-monitor apply requires at least two detected displays` が返った場合、GUI は stop せず pause へ遷移する。
-- この pause は `watch paused: waiting for two detected displays for auto-split` を status message に入れ、状態表示を `paused` に切り替える。
-- pause 中に次 tick が成功すると GUI は `watch resumed` を出して running へ戻る。
+- この pause は `slideshow paused: waiting for two detected displays for auto-split` を status message に入れ、状態表示を `paused` に切り替える。
+- pause 中に次 tick が成功すると GUI は `slideshow resumed` を出して running へ戻る。
 - 同じ `ValueError` でも `start` 時は transient 扱いせず、start failure として止める。
 
 GUI timer / side state の現行規則:
 
 - GUI runtime timer は `interval_ms = max(1, int(interval_seconds)) * 1000` で作る。したがって現行 GUI は秒未満を扱わず、秒整数へ量子化して GLib timer に渡す。
-- dual-source 実行では L/R で独立した watch state を持ち、それぞれ `run_slideshow_cycle(images, "sequential", backend._watch_state_l|r)` で更新する。
+- dual-source 実行では L/R で独立した slideshow state を持ち、それぞれ `run_slideshow_cycle(images, "sequential", backend._slideshow_state_l|r)` で更新する。
 - したがって GUI dual-source の左右選択は、同じ tick の中でも 1 本の共有 index ではなく、L side state と R side state を別々に進める。
-- signal handler 経由の watch tick が使える場合は owner 側 callback を優先し、callback が `False` を返した時点で timer を止める。signal handler がない fallback 経路のときだけ GUI runtime 自身が L/R 選択を進める。
+- signal handler 経由の slideshow tick が使える場合は owner 側 callback を優先し、callback が `False` を返した時点で timer を止める。signal handler がない fallback 経路のときだけ GUI runtime 自身が L/R 選択を進める。
 
 ## 6. GUI のスライドショー責務
 
@@ -140,7 +140,7 @@ CLI `slideshow` command の特徴:
 - CLI `slideshow` command は stdout に実行メッセージを出す。
 - CLI の `normal` / `detail` は stdout に出す `SLIDESHOW ...` 実行メッセージの粒度を切り替える。
 - GUI は status, history, output display を併用する。
-- 現行 watch には専用保存ファイルへの書き出し機能はない。
+- 現行 slideshow には専用保存ファイルへの書き出し機能はない。
 
 GUI feedback の補足:
 
@@ -164,7 +164,7 @@ CLI の主な観測値:
 
 ## 9. 安定性上の注意点
 
-- dual-source watch は linux plugin と two detected displays を要件に持つ。
+- dual-source slideshow は linux plugin と two detected displays を要件に持つ。
 - plugin exception は apply_error 系として扱う。
 - input directory が空なら起動前に止める。
 
