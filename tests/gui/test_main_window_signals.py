@@ -1003,6 +1003,7 @@ def test_slideshow_handlers_use_srcdirs_and_interval_validation(monkeypatch, tmp
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
 
     window = MainWindow()
+    window.slideshow_mode = "sequential"
 
     assert window.on_slideshow_start() is False
     assert window.status_level == "error"
@@ -1061,6 +1062,7 @@ def test_slideshow_single_source_applies_on_start_and_tick(monkeypatch, tmp_path
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
 
     window = MainWindow()
+    window.slideshow_mode = "sequential"
     left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
@@ -1477,6 +1479,7 @@ def test_slideshow_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch,
 
     window = MainWindow()
     window.plugin_name = "linux"
+    window.slideshow_mode = "sequential"
     observed_inputs = []
     optimize_calls = 0
 

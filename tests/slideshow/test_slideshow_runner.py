@@ -116,27 +116,28 @@ def test_run_slideshow_cycle_rejects_unknown_mode() -> None:
         run_slideshow_cycle(images, "shuffle", SlideshowCycleState())
 
 
-def test_run_slideshow_cycles_respects_iterations() -> None:
+def test_run_slideshow_cycles_runs_until_callback_stops_loop() -> None:
     images = [Path("a.jpg"), Path("b.jpg")]
     selected: list[Path] = []
     slept: list[float] = []
 
     def on_cycle(path: Path, _idx: int) -> None:
         selected.append(path)
+        if len(selected) == 3:
+            raise RuntimeError("stop loop")
 
     def fake_sleep(sec: float) -> None:
         slept.append(sec)
 
-    completed = run_slideshow_cycles(
-        images=images,
-        mode="sequential",
-        interval_sec=3,
-        iterations=3,
-        on_cycle=on_cycle,
-        sleep_fn=fake_sleep,
-    )
+    with pytest.raises(RuntimeError, match="stop loop"):
+        run_slideshow_cycles(
+            images=images,
+            mode="sequential",
+            interval_sec=3,
+            on_cycle=on_cycle,
+            sleep_fn=fake_sleep,
+        )
 
-    assert completed == 3
     assert selected == [Path("a.jpg"), Path("b.jpg"), Path("a.jpg")]
     assert slept == [3, 3]
 
@@ -149,6 +150,5 @@ def test_run_slideshow_cycles_rejects_invalid_interval() -> None:
             images=images,
             mode="sequential",
             interval_sec=0,
-            iterations=1,
             on_cycle=lambda *_: None,
         )

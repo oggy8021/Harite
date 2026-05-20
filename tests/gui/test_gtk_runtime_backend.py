@@ -1113,6 +1113,7 @@ def test_runtime_backend_slideshow_srcdir_selection_and_slideshow_cycle_updates_
         ),
     )
     backend.connect_signals(dispatch)
+    window.slideshow_mode = "sequential"
     window.form_state.output_dir = str(tmp_path / "slideshow-output")
     backend._sync_slideshow_state_from_owner(window)
 
@@ -1351,6 +1352,7 @@ def test_runtime_backend_slideshow_start_registers_timer_and_stop_removes_it(mon
         ),
     )
     backend.connect_signals(dispatch)
+    window.slideshow_mode = "sequential"
 
     srcdir_l.click()
     srcdir_dialog.set_current_folder(str(left_dir))
@@ -1412,6 +1414,7 @@ def test_runtime_backend_shows_owner_slideshow_start_failure_reason(monkeypatch,
         ),
     )
     backend.connect_signals(dispatch)
+    window.slideshow_mode = "sequential"
 
     srcdir_l.click()
     srcdir_dialog.set_current_folder(str(left_dir))
@@ -1466,6 +1469,7 @@ def test_runtime_backend_shows_owner_slideshow_tick_failure_reason(monkeypatch, 
         ),
     )
     backend.connect_signals(dispatch)
+    window.slideshow_mode = "sequential"
 
     srcdir_l.click()
     srcdir_dialog.set_current_folder(str(left_dir))

@@ -461,7 +461,6 @@ def optimize_wallpapers(
     output_dir: Path,
     scaling: str = "fit",
     quality: int = 90,
-    random_seed: int | None = None,
     output_path: Path | None = None,
     **kwargs,
 ) -> Tuple[List[Path], List[PlacementResult]]:
@@ -478,7 +477,6 @@ def optimize_wallpapers(
         output_path: 出力先ファイルパス（指定時は自動命名より優先）。
         scaling: スケーリングモード。
         quality: JPEG 品質。
-        random_seed: 乱数シード（任意）。
         **kwargs: 互換性のための追加オプション（two_screen, margins, 等）。
 
     Returns:
@@ -676,7 +674,7 @@ def compute_placement(
     Args:
         image_path: 画像ファイルのパス。
         target_resolution: (w, h) の目標解像度。
-        scaling: スケーリングモード（現状未使用）。
+        scaling: スケーリングモード。
 
     Returns:
         `PlacementResult`。

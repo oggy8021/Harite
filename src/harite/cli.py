@@ -173,7 +173,7 @@ def optimize(
     scaling: str = typer.Option(
         "fit",
         "--scaling",
-        help="Scaling mode (fit|fill|crop). Current optimize implementation has limited behavior differences.",
+        help="Scaling mode (fit|fill|crop).",
         rich_help_panel="基本オプション",
     ),
     two_screen: bool = typer.Option(
@@ -222,12 +222,6 @@ def optimize(
         DEFAULT_BACKGROUND_COLOR_HEX,
         "--background-color",
         help="Background color as #RRGGBB",
-        rich_help_panel="詳細調整",
-    ),
-    random_seed: Optional[int] = typer.Option(
-        None,
-        "--random-seed",
-        help="Random seed for reproducibility (currently limited impact in optimize placement)",
         rich_help_panel="詳細調整",
     ),
     config: Optional[Path] = typer.Option(
@@ -279,7 +273,6 @@ def optimize(
     パラメータの強弱（現状）:
     - `margins` はまず有効領域を決め、その内側で `align` / `valign` が効きます。
     - `two-screen` は `--l-display` / `--r-display` 併用時に効きが強くなります。
-    - `scaling` / `random-seed` は現状の optimize 実装では効きが限定的です。
 
     余白情報埋め込み:
     - `--embed-info` は `none|params|free|combo` を指定できます。
@@ -358,7 +351,6 @@ def optimize(
         typer.echo("--background-color must be a hex RGB value like #1E1E1E")
         raise typer.Exit(code=2)
     eff_background_color = normalize_background_color(raw_background_color)
-    eff_random_seed = resolve_option_value("random_seed", random_seed, cfg, ctx)
     eff_margins = resolve_option_value("margins", margins, cfg, ctx)
     eff_embed_text = resolve_option_value("embed_text", embed_text, cfg, ctx)
     eff_embed_font = resolve_option_value("embed_font", embed_font, cfg, ctx)
@@ -373,7 +365,6 @@ def optimize(
         output_dir=output,
         scaling=eff_scaling,
         quality=eff_quality,
-        random_seed=eff_random_seed,
         two_screen=resolved_display_settings.two_screen,
         margins=(0, 0, 0, 0) if eff_margins is None else parse_margins(str(eff_margins)),
         l_display=None if resolved_display_settings.l_display is None else parse_display(resolved_display_settings.l_display),
@@ -390,16 +381,6 @@ def optimize(
     typer.echo(f"Saved: {saved_files}")
     for p in placements:
         typer.echo(f"Placement: {p}")
-
-
-@app.command("compute-placement")
-def compute_placement(
-    input: str = typer.Option(..., "--input", "-i", help="Input image file"),
-    resolution: str = typer.Option(..., "--resolution", "-r", help="Target resolution WxH"),
-    layout: str = typer.Option("cover", "--layout", help="Layout mode"),
-) -> None:
-    """Compute placement for a single image."""
-    typer.echo(f"Compute: input={input} resolution={resolution} layout={layout}")
 
 
 @app.command()
@@ -470,10 +451,8 @@ def slideshow(
     input: Path = typer.Option(..., "--input", help="Input directory containing images"),
     interval_sec: int = typer.Option(..., "--interval-sec", help="Cycle interval in seconds (>=1)"),
     mode: str = typer.Option("sequential", "--mode", help="Selection mode: sequential|random"),
-    log_level: str = typer.Option("normal", "--log-level", help="Log level: normal|detail"),
     plugin: str = typer.Option(_default_plugin_name(), "--plugin", "-p", help="Plugin name used when --do-it is enabled"),
     dry_run: bool = typer.Option(True, "--dry-run/--do-it", help="Dry-run by default; pass --do-it to apply"),
-    iterations: Optional[int] = typer.Option(None, "--iterations", help="Maximum cycles; omit for unbounded"),
 ) -> None:
     """Rotate wallpapers from a directory (minimum execution control)."""
     if interval_sec < 1:
@@ -485,15 +464,6 @@ def slideshow(
         typer.echo("--mode must be one of: sequential, random")
         raise typer.Exit(code=2)
 
-    log_level = log_level.lower().strip()
-    if log_level not in ("normal", "detail"):
-        typer.echo("--log-level must be one of: normal, detail")
-        raise typer.Exit(code=2)
-
-    if iterations is not None and iterations < 1:
-        typer.echo("--iterations must be >= 1")
-        raise typer.Exit(code=2)
-
     try:
         images = collect_slideshow_input_images(input)
     except ValueError as exc:
@@ -502,8 +472,7 @@ def slideshow(
 
     typer.echo(
         f"Slideshow start: input={input} images={len(images)} interval_sec={interval_sec} "
-        f"mode={mode} log_level={log_level} "
-        f"plugin={plugin} dry_run={dry_run} iterations={iterations}"
+        f"mode={mode} plugin={plugin} dry_run={dry_run}"
     )
 
     plugin_impl = None
@@ -525,10 +494,6 @@ def slideshow(
     def _on_cycle(selected: Path, cycle_index: int) -> None:
         if dry_run:
             stats["dry_run_cycles"] += 1
-            if log_level == "detail":
-                typer.echo(
-                    f"Slideshow cycle={cycle_index + 1} selected={selected} dry_run=True"
-                )
             return
 
         try:
@@ -543,10 +508,6 @@ def slideshow(
 
         if success:
             stats["apply_ok"] += 1
-            if log_level == "detail":
-                typer.echo(
-                    f"Slideshow cycle={cycle_index + 1} selected={selected} apply=ok dry_run=False"
-                )
         else:
             stats["apply_failed"] += 1
             typer.echo(
@@ -559,7 +520,6 @@ def slideshow(
             images=images,
             mode=mode,
             interval_sec=interval_sec,
-            iterations=iterations,
             on_cycle=_on_cycle,
         )
     except KeyboardInterrupt:

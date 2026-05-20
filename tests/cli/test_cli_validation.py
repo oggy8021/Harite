@@ -136,7 +136,7 @@ def test_optimize_rejects_legacy_random_seed_option(tmp_path):
     output = _normalize_cli_output(result.output)
 
     assert result.exit_code == 2
-    assert "no such option" in output
+    assert "no such option" in output.lower()
     assert "random-seed" in output
 
 

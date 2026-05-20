@@ -89,23 +89,19 @@ def run_slideshow_cycles(
     images: List[Path],
     mode: str,
     interval_sec: int,
-    iterations: int | None,
     on_cycle: Callable[[Path, int], None],
     sleep_fn: Callable[[float], None] = time.sleep,
 ) -> int:
     """Run slideshow cycles and return completed cycle count."""
     if interval_sec < 1:
         raise ValueError("interval_sec must be >= 1")
-    if iterations is not None and iterations < 1:
-        raise ValueError("iterations must be >= 1")
 
     state = SlideshowCycleState()
 
-    while iterations is None or state.completed < iterations:
+    while True:
         selected, state = run_slideshow_cycle(images, mode, state)
         on_cycle(selected, state.completed - 1)
 
-        if iterations is None or state.completed < iterations:
-            sleep_fn(interval_sec)
+        sleep_fn(interval_sec)
 
     return state.completed
