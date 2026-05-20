@@ -458,9 +458,7 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
     slideshow_mode_label = gtk_module.Label(label="Mode")
     rad_slideshow_mode_sequential = gtk_module.RadioButton.new_with_label(None, "sequential")
     rad_slideshow_mode_random = gtk_module.RadioButton.new_with_label_from_widget(rad_slideshow_mode_sequential, "random")
-    slideshow_mode_help_label = gtk_module.Label(
-        label="Random avoids immediate repeats when possible. Changes apply after stop/start."
-    )
+    slideshow_mode_help_label = gtk_module.Label(label="Random rotates images.")
     if hasattr(rad_slideshow_mode_random, "set_active"):
         rad_slideshow_mode_random.set_active(True)
     set_xalign_if_supported(slideshow_mode_help_label)

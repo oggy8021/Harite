@@ -42,10 +42,19 @@ sequenceDiagram
 
 layout 戦略:
 
-- 現行 GUI は top-level window の直下を単一の縦積み root container とし、header、center body、footer の 3 層で構成する。
+- GUI は top-level window の直下を単一の縦積み root container とし、header、center body、footer の 3 層で構成する。
 - center body は notebook を 1 つ持ち、tab 順は `Main`、`Margins (for each display)`、`Slideshow (...)` とする。
 - `Main` は日常操作の主導線、`Margins` は配置と margin text の詳細調整、`Slideshow` は継続実行面という役割分担を持つ。
 - page ごとの内容は page shell や spacer を使って中央寄せしつつ、各 page 内では必要に応じて fill と center を切り替える。
+- GUI の常設補助説明面は以下である。
+  - header の flow legend
+  - footer の status / slideshow summary / error
+  - Main tab の `apply mode help row`
+  - Margins tab の `notes`
+  - Slideshow tab の `mode help row`
+  - settings dialog の state/notice
+  - color dialog の state/notice
+- これらの補助説明面は、操作 widget と同一 row に埋め込まず、対応する操作面の近傍に独立 row または独立 block として置く。
 - したがって GUI layout の基本方針は「window 全体は縦 3 層」「center body は notebook」「各 page は独立した責務を持つ」である。
 
 Main Window:
@@ -53,8 +62,10 @@ Main Window:
 - header は 2 行構成で、1 行目は title を左、command bar を右に置く。
 - command bar には `Color`、`Settings`、`About` を右寄せで並べる。
 - 2 行目の flow row では左に `Compose -> Optimize -> Apply` を置き、右に `Save As` を置く。
+- flow row の左端には導線説明として flow legend を常設する。
 - footer も 2 行構成で、1 行目は左に `Status`、右に `Slideshow summary` を置く。
 - footer 2 行目は separator の下に `Error` を置き、status と error を縦 2 段で分離する。
+- footer の `Status`、`Slideshow summary`、`Error` は実行状態と失敗面を読むための常設説明面である。
 
 Main tab:
 
@@ -96,8 +107,11 @@ Dialogs:
 - settings dialog の header row は左に title、右に `Save` を置く。
 - settings dialog の現行 runtime 実装で常設 row として露出するのは `Resolution`、`Scaling`、`Plugin`、`Apply` である。
 - settings dialog の `Apply` row は radio を横並びに持つが、main tab の apply mode help label に相当する補助説明 row は持たない。
+- settings dialog は下段に `Settings: current values` を起点とする state label と notice label を持つ。
 - color dialog は title、picker host、値 entry、actions row、separator、state/notice の順で縦積みする。
+- color dialog は下段に `Color: ...` を起点とする state label と notice label を持つ。
 - about dialog は content 全体を window 内で上下中央寄せし、icon、title、version、description、credits、license、close button を縦積みする。
+- about dialog の `Version`、`description`、`Credits`、`License` は product 情報を読むための常設情報 label 群である。
 - dialog 群は main window より小さい独立 window として扱い、settings だけ resizable、color/about は fixed-size 寄りの扱いを取る。
 
 ## 4. メイン操作フロー
@@ -154,6 +168,7 @@ apply mode の user-facing 意味:
 - slideshow tab の mode 既定値は `random` とする。
 - mode は slideshow 関連設定値として load / save 対象に含める。
 - mode 選択面は srcdir row の下、interval/start/stop row の上に独立 row として置く。
+- mode help row は選択中 mode の簡潔な補助説明を表示する user-facing surface とし、`sequential` 時は `Sequential rotates images.`、`random` 時は `Random rotates images.` を表示する。
 - このため CLI にある `--do-it` / `--dry-run` の説明は GUI にそのまま持ち込まず、GUI 側では status, history, error 表示を中心に説明する。
 
 slideshow start / tick / stop:
