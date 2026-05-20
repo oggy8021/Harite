@@ -59,8 +59,6 @@ def test_slideshow_rejects_interval_less_than_one(tmp_path) -> None:
             str(img_dir),
             "--interval-sec",
             "0",
-            "--iterations",
-            "1",
         ],
     )
 
@@ -68,7 +66,7 @@ def test_slideshow_rejects_interval_less_than_one(tmp_path) -> None:
     assert "interval" in result.output.lower()
 
 
-def test_slideshow_help_includes_dry_run_and_do_it() -> None:
+def test_slideshow_help_includes_mode_and_excludes_legacy_options() -> None:
     runner = CliRunner()
     _require_slideshow_command(runner)
 
@@ -76,12 +74,14 @@ def test_slideshow_help_includes_dry_run_and_do_it() -> None:
     output = _normalize_cli_output(result.output)
 
     assert result.exit_code == 0
+    assert "mode" in output
     assert "dry-run" in output
     assert "do-it" in output
-    assert "log-level" in output
+    assert "log-level" not in output
+    assert "iterations" not in output
 
 
-def test_slideshow_rejects_unknown_log_level(tmp_path) -> None:
+def test_slideshow_rejects_legacy_log_level_option(tmp_path) -> None:
     runner = CliRunner()
     _require_slideshow_command(runner)
 
@@ -98,44 +98,23 @@ def test_slideshow_rejects_unknown_log_level(tmp_path) -> None:
             "--interval-sec",
             "1",
             "--log-level",
-            "verbose",
-            "--iterations",
-            "1",
+            "detail",
         ],
     )
     output = _normalize_cli_output(result.output)
 
     assert result.exit_code == 2
-    assert "--log-level must be one of: normal, detail" in output
+    assert "no such option" in output
+    assert "log-level" in output
 
 
-def test_slideshow_runs_iterations_and_reports_completion(tmp_path, monkeypatch) -> None:
+def test_slideshow_rejects_legacy_iterations_option(tmp_path) -> None:
     runner = CliRunner()
     _require_slideshow_command(runner)
 
     img_dir = tmp_path / "imgs"
     img_dir.mkdir()
     (img_dir / "a.jpg").write_bytes(b"x")
-
-    captured = {}
-
-    def fake_run_slideshow_cycles(
-        *,
-        images,
-        mode,
-        interval_sec,
-        iterations,
-        on_cycle,
-        sleep_fn=None,
-    ):
-        captured["images"] = images
-        captured["mode"] = mode
-        captured["interval_sec"] = interval_sec
-        captured["iterations"] = iterations
-        on_cycle(images[0], 0)
-        return 1
-
-    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
 
     result = runner.invoke(
         cli.app,
@@ -150,13 +129,57 @@ def test_slideshow_runs_iterations_and_reports_completion(tmp_path, monkeypatch)
         ],
     )
     output = _normalize_cli_output(result.output)
+
+    assert result.exit_code == 2
+    assert "no such option" in output
+    assert "iterations" in output
+
+
+def test_slideshow_runs_and_reports_completion(tmp_path, monkeypatch) -> None:
+    runner = CliRunner()
+    _require_slideshow_command(runner)
+
+    img_dir = tmp_path / "imgs"
+    img_dir.mkdir()
+    (img_dir / "a.jpg").write_bytes(b"x")
+
+    captured = {}
+
+    def fake_run_slideshow_cycles(
+        *,
+        images,
+        mode,
+        interval_sec,
+        on_cycle,
+        sleep_fn=None,
+    ):
+        captured["images"] = images
+        captured["mode"] = mode
+        captured["interval_sec"] = interval_sec
+        on_cycle(images[0], 0)
+        return 1
+
+    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "slideshow",
+            "--input",
+            str(img_dir),
+            "--interval-sec",
+            "1",
+        ],
+    )
+    output = _normalize_cli_output(result.output)
     raw_output = _strip_cli_output(result.output)
 
     assert result.exit_code == 0
     assert captured["mode"] == "sequential"
     assert captured["interval_sec"] == 1
-    assert captured["iterations"] == 1
     assert len(captured["images"]) == 1
+    assert "log_level" not in output
+    assert "iterations" not in output
     assert "Slideshow completed cycles=1" in raw_output
     assert "dry_run_cycles=1" in output
 
@@ -176,7 +199,7 @@ def test_slideshow_handles_keyboard_interrupt_as_normal_exit(tmp_path, monkeypat
 
     result = runner.invoke(
         cli.app,
-        ["slideshow", "--input", str(img_dir), "--interval-sec", "1", "--iterations", "1"],
+        ["slideshow", "--input", str(img_dir), "--interval-sec", "1"],
     )
     raw_output = _strip_cli_output(result.output)
 
@@ -202,7 +225,6 @@ def test_slideshow_dry_run_does_not_resolve_plugin(tmp_path, monkeypatch) -> Non
         images,
         mode,
         interval_sec,
-        iterations,
         on_cycle,
         sleep_fn=None,
     ):
@@ -213,13 +235,17 @@ def test_slideshow_dry_run_does_not_resolve_plugin(tmp_path, monkeypatch) -> Non
 
     result = runner.invoke(
         cli.app,
-        ["slideshow", "--input", str(img_dir), "--interval-sec", "1", "--iterations", "1"],
+        ["slideshow", "--input", str(img_dir), "--interval-sec", "1"],
     )
     output = _normalize_cli_output(result.output)
     raw_output = _strip_cli_output(result.output)
 
     assert result.exit_code == 0
+    assert "log_level" not in output
+    assert "iterations" not in output
     assert "dry_run=true" in output
+    assert "slideshow cycle=" not in output
+    assert "Slideshow cycle=" not in raw_output
 
 
 def test_slideshow_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch) -> None:
@@ -248,7 +274,6 @@ def test_slideshow_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch)
         images,
         mode,
         interval_sec,
-        iterations,
         on_cycle,
         sleep_fn=None,
     ):
@@ -266,10 +291,6 @@ def test_slideshow_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch)
             str(img_dir),
             "--interval-sec",
             "1",
-            "--iterations",
-            "2",
-            "--log-level",
-            "detail",
             "--do-it",
             "--plugin",
             "windows",
@@ -284,7 +305,11 @@ def test_slideshow_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch)
     assert fake_plugin.calls[1][1] is False
     assert "apply=failed" in output
     assert "reason=plugin-returned-false" in output
-    assert "apply=ok" in output
+    assert "apply=ok" not in output
+    assert "Slideshow cycle=1" in raw_output
+    assert "Slideshow cycle=2" not in raw_output
+    assert "log_level" not in output
+    assert "iterations" not in output
     assert "Slideshow completed cycles=2" in raw_output
     assert "apply_ok=1" in output
     assert "apply_failed=1" in output
@@ -292,7 +317,7 @@ def test_slideshow_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch)
     assert "apply_failed_total=1" in output
 
 
-def test_slideshow_normal_log_level_suppresses_success_cycle_line(tmp_path, monkeypatch) -> None:
+def test_slideshow_do_it_success_does_not_emit_success_cycle_line(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
     _require_slideshow_command(runner)
 
@@ -312,7 +337,6 @@ def test_slideshow_normal_log_level_suppresses_success_cycle_line(tmp_path, monk
         images,
         mode,
         interval_sec,
-        iterations,
         on_cycle,
         sleep_fn=None,
     ):
@@ -329,10 +353,6 @@ def test_slideshow_normal_log_level_suppresses_success_cycle_line(tmp_path, monk
             str(img_dir),
             "--interval-sec",
             "1",
-            "--iterations",
-            "1",
-            "--log-level",
-            "normal",
             "--do-it",
             "--plugin",
             "windows",
@@ -343,10 +363,13 @@ def test_slideshow_normal_log_level_suppresses_success_cycle_line(tmp_path, monk
 
     assert result.exit_code == 0
     assert "apply=ok" not in output
+    assert "Slideshow cycle=" not in raw_output
+    assert "log_level" not in output
+    assert "iterations" not in output
     assert "Slideshow completed cycles=1" in raw_output
 
 
-def test_slideshow_detail_log_level_emits_dry_run_cycle_line(tmp_path, monkeypatch) -> None:
+def test_slideshow_dry_run_does_not_emit_cycle_line(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
     _require_slideshow_command(runner)
 
@@ -359,7 +382,6 @@ def test_slideshow_detail_log_level_emits_dry_run_cycle_line(tmp_path, monkeypat
         images,
         mode,
         interval_sec,
-        iterations,
         on_cycle,
         sleep_fn=None,
     ):
@@ -376,55 +398,6 @@ def test_slideshow_detail_log_level_emits_dry_run_cycle_line(tmp_path, monkeypat
             str(img_dir),
             "--interval-sec",
             "1",
-            "--iterations",
-            "1",
-            "--log-level",
-            "detail",
-        ],
-    )
-    output = _normalize_cli_output(result.output)
-    raw_output = _strip_cli_output(result.output)
-
-    assert result.exit_code == 0
-    assert "Slideshow cycle=1" in raw_output
-    assert "slideshow cycle=1" in output
-    assert "dry_run=true" in output
-
-
-def test_slideshow_normal_log_level_suppresses_dry_run_cycle_line(tmp_path, monkeypatch) -> None:
-    runner = CliRunner()
-    _require_slideshow_command(runner)
-
-    img_dir = tmp_path / "imgs"
-    img_dir.mkdir()
-    (img_dir / "a.jpg").write_bytes(b"x")
-
-    def fake_run_slideshow_cycles(
-        *,
-        images,
-        mode,
-        interval_sec,
-        iterations,
-        on_cycle,
-        sleep_fn=None,
-    ):
-        on_cycle(images[0], 0)
-        return 1
-
-    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
-
-    result = runner.invoke(
-        cli.app,
-        [
-            "slideshow",
-            "--input",
-            str(img_dir),
-            "--interval-sec",
-            "1",
-            "--iterations",
-            "1",
-            "--log-level",
-            "normal",
         ],
     )
     output = _normalize_cli_output(result.output)
@@ -435,70 +408,8 @@ def test_slideshow_normal_log_level_suppresses_dry_run_cycle_line(tmp_path, monk
     assert "Slideshow completed cycles=1" in raw_output
     assert "slideshow cycle=" not in output
     assert "slideshow completed cycles=1" in output
-
-
-def test_slideshow_do_it_normal_log_level_continues_on_failure(tmp_path, monkeypatch) -> None:
-    runner = CliRunner()
-    _require_slideshow_command(runner)
-
-    img_dir = tmp_path / "imgs"
-    img_dir.mkdir()
-    (img_dir / "a.jpg").write_bytes(b"x")
-    (img_dir / "b.jpg").write_bytes(b"x")
-
-    class FakePlugin:
-        def __init__(self):
-            self.calls = []
-
-        def apply(self, path_or_map, dry_run=False):
-            self.calls.append((path_or_map, dry_run))
-            return len(self.calls) != 1
-
-    fake_plugin = FakePlugin()
-    monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: fake_plugin)
-
-    def fake_run_slideshow_cycles(
-        *,
-        images,
-        mode,
-        interval_sec,
-        iterations,
-        on_cycle,
-        sleep_fn=None,
-    ):
-        on_cycle(images[0], 0)
-        on_cycle(images[1], 1)
-        return 2
-
-    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
-
-    result = runner.invoke(
-        cli.app,
-        [
-            "slideshow",
-            "--input",
-            str(img_dir),
-            "--interval-sec",
-            "1",
-            "--iterations",
-            "2",
-            "--log-level",
-            "normal",
-            "--do-it",
-            "--plugin",
-            "windows",
-        ],
-    )
-    output = _normalize_cli_output(result.output)
-    raw_output = _strip_cli_output(result.output)
-
-    assert result.exit_code == 0
-    assert len(fake_plugin.calls) == 2
-    assert "apply=failed" in output
-    assert "apply=ok" not in output
-    assert "Slideshow completed cycles=2" in raw_output
-    assert "apply_ok=1" in output
-    assert "apply_failed=1" in output
+    assert "log_level" not in output
+    assert "iterations" not in output
 
 
 def test_slideshow_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch) -> None:
@@ -521,7 +432,6 @@ def test_slideshow_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch
         images,
         mode,
         interval_sec,
-        iterations,
         on_cycle,
         sleep_fn=None,
     ):
@@ -537,8 +447,6 @@ def test_slideshow_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch
             "--input",
             str(img_dir),
             "--interval-sec",
-            "1",
-            "--iterations",
             "1",
             "--do-it",
             "--plugin",
@@ -557,3 +465,5 @@ def test_slideshow_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch
     assert "apply_failed=0" in output
     assert "apply_error=1" in output
     assert "apply_failed_total=1" in output
+    assert "log_level" not in output
+    assert "iterations" not in output

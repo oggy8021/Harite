@@ -682,6 +682,7 @@ def test_apply_settings_updates_runtime_state():
             "plugin": "linux",
             "apply_mode": "per-monitor-auto-split",
             "slideshow_interval_seconds": 120,
+            "slideshow_mode": "random",
             "slideshow_srcdir_l": "/slideshow/left",
             "slideshow_srcdir_r": "/slideshow/right",
         },
@@ -698,6 +699,7 @@ def test_apply_settings_updates_runtime_state():
     assert window.plugin_name == "linux"
     assert window.apply_mode == "per-monitor-auto-split"
     assert window.slideshow_interval_seconds == 120
+    assert window.slideshow_mode == "random"
     assert window.slideshow_srcdir_l == "/slideshow/left"
     assert window.slideshow_srcdir_r == "/slideshow/right"
     assert window.slideshow_source_display == "Slideshow srcdirs: L=/slideshow/left | R=/slideshow/right"
@@ -712,6 +714,7 @@ def test_export_and_reload_settings_config_round_trips():
     window.plugin_name = "linux"
     window.apply_mode = "per-monitor-auto-split"
     window.slideshow_interval_seconds = 90
+    window.slideshow_mode = "random"
     window.slideshow_srcdir_l = "/slideshow/left"
     window.slideshow_srcdir_r = "/slideshow/right"
     window._update_slideshow_source_display()
@@ -725,6 +728,7 @@ def test_export_and_reload_settings_config_round_trips():
     assert exported["plugin"] == "linux"
     assert exported["apply_mode"] == "per-monitor-auto-split"
     assert exported["slideshow_interval_seconds"] == 90
+    assert exported["slideshow_mode"] == "random"
     assert exported["slideshow_srcdir_l"] == "/slideshow/left"
     assert exported["slideshow_srcdir_r"] == "/slideshow/right"
 
@@ -736,6 +740,7 @@ def test_export_and_reload_settings_config_round_trips():
     assert other.form_state.valign == ("center", "center")
     assert other.plugin_name == "linux"
     assert other.slideshow_interval_seconds == 90
+    assert other.slideshow_mode == "random"
     assert other.slideshow_srcdir_l == "/slideshow/left"
     assert other.slideshow_srcdir_r == "/slideshow/right"
 

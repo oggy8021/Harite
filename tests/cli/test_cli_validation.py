@@ -39,6 +39,16 @@ def test_parse_display_valid():
     assert cli.parse_display("1280x720") == (1280, 720)
 
 
+def test_cli_help_excludes_removed_compute_placement_command():
+    runner = CliRunner()
+
+    result = runner.invoke(cli.app, ["--help"])
+    output = _normalize_cli_output(result.output)
+
+    assert result.exit_code == 0
+    assert "compute-placement" not in output
+
+
 def test_optimize_rejects_invalid_embed_info(tmp_path):
     runner = CliRunner()
     img = tmp_path / "a.jpg"
@@ -103,6 +113,31 @@ def test_optimize_rejects_invalid_background_color(tmp_path):
     )
     assert result.exit_code == 2
     assert "--background-color must be a hex RGB value" in result.output
+
+
+def test_optimize_rejects_legacy_random_seed_option(tmp_path):
+    runner = CliRunner()
+    img = tmp_path / "a.jpg"
+    from PIL import Image
+
+    Image.new("RGB", (10, 10), (100, 100, 100)).save(img)
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--input",
+            str(img),
+            "--resolution",
+            "100x100",
+            "--random-seed",
+            "42",
+        ],
+    )
+    output = _normalize_cli_output(result.output)
+
+    assert result.exit_code == 2
+    assert "no such option" in output
+    assert "random-seed" in output
 
 
 def test_optimize_rejects_directory_input(tmp_path):

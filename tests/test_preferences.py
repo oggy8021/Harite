@@ -11,6 +11,7 @@ def test_app_preferences_round_trip_config_with_auto_values():
             "plugin": "linux",
             "apply_mode": "per-monitor-auto-split",
             "slideshow_interval_seconds": 120,
+            "slideshow_mode": "random",
             "slideshow_srcdir_l": "/slideshow/left",
             "slideshow_srcdir_r": "/slideshow/right",
         },
@@ -29,5 +30,6 @@ def test_app_preferences_round_trip_config_with_auto_values():
     assert exported["plugin"] == "linux"
     assert exported["apply_mode"] == "per-monitor-auto-split"
     assert exported["slideshow_interval_seconds"] == 120
+    assert exported["slideshow_mode"] == "random"
     assert exported["slideshow_srcdir_l"] == "/slideshow/left"
     assert exported["slideshow_srcdir_r"] == "/slideshow/right"
