@@ -20,7 +20,6 @@ CLI 側の最低要件:
 - directory 内に画像ファイルが 1 件以上あること
 - `--interval-sec >= 1`
 - `--mode` が `sequential` または `random`
-- `--log-level` が `normal` または `detail`
 
 GUI 側では、これに加えて現在の画面状態、設定、スライドショー source directory の整合が必要になる。
 
@@ -54,17 +53,18 @@ sequenceDiagram
 
 - この機能は filesystem event 監視ではなく、サイクルごとの選択ループである。
 - `sequential` と `random` の選択モードを持つ。
-- 選択モードを明示的に持つのは現行では主に CLI / helper 側である。
-- GUI 側のスライドショー実行は現状 `sequential` 前提で動いており、`random` を選ぶ UI は持たない。
-- 現行 CLI / helper には `iterations` による回数上限指定がある。
-- `iterations` は現行では CLI / helper 側の要素であり、GUI には対応する操作面がない。
+- 選択モードは CLI / helper だけに閉じず、GUI 側にも user-visible な選択面を持つ。
+- GUI 側の mode 表記は `sequential` / `random` とする。
+- GUI 側の mode 既定値は `random` とする。
+- GUI 側でも `random` を選べるようにし、`sequential` は互換的な選択肢として残す。
+- GUI 実行中に mode 選択値を変えても、その run には反映しない。新しい mode は stop 後の次回 start から使う。
 
 slideshow helper の最小構成:
 
 - `collect_slideshow_input_images(...)` は directory 妥当性と画像列収集を受け持つ。
 - `select_next_image(...)` は `sequential` / `random` の選択規則を受け持つ。
 - `run_slideshow_cycle(...)` は 1 サイクル分の選択と state 更新を受け持つ。
-- `run_slideshow_cycles(...)` は interval と iterations を加えた継続ループを受け持つ。
+- `run_slideshow_cycles(...)` は interval を加えた継続ループを受け持つ。
 
 状態モデル:
 
@@ -78,7 +78,7 @@ slideshow helper の最小構成:
 - `random` では候補数が 2 件以上かつ `previous_selected` が候補に含まれる場合だけ、その 1 件を除外した候補集合から選ぶ。候補が 1 件しかない場合や直前画像が候補集合にない場合は、全候補から選ぶ。
 - `random` の next state は `index` を進めず、`previous_selected` と `completed` だけを更新する。
 - `run_slideshow_cycles(...)` の callback へ渡す cycle 番号は `completed - 1` であり、内部 callback 番号は 0 始まりになる。
-- sleep は「次サイクルが残っている場合」にだけ入るため、`iterations` 到達回や stop 直前回の後には待機しない。
+- sleep は継続実行を続ける場合にだけ入る。
 
 ## 5. pause / resume / retry
 
@@ -129,6 +129,9 @@ CLI `slideshow` command の特徴:
 - plugin が例外を投げてもループ全体を即停止せず、そのサイクルの `apply_error` カウンタを 1 件増やす。
 - plugin が `False` を返した場合は、そのサイクルの `apply_failed` カウンタを 1 件増やす。
 - これらのカウンタは各サイクルの途中で保持され、最後に `Slideshow completed` 行の実行メッセージ要約として出力される。
+- `log_level` option は持たず、固定方針は旧 `normal` 相当とする。
+- 失敗がない間は `Slideshow start` と `Slideshow completed` を中心に出し、`Slideshow cycle=...` は失敗サイクルでだけ出す。
+- したがって dry-run や成功のみの実 apply では cycle 行を出さない。
 
 集計規則の補足:
 
@@ -138,7 +141,7 @@ CLI `slideshow` command の特徴:
 ## 8. 出力と観測面
 
 - CLI `slideshow` command は stdout に実行メッセージを出す。
-- CLI の `normal` / `detail` は stdout に出す自然な user-facing 実行メッセージの粒度を切り替える。現行英語表記では `Slideshow ...` を使い、全部大文字の prefix は使わない。
+- CLI は固定の自然な user-facing 実行メッセージ方針を採る。現行英語表記では `Slideshow ...` を使い、全部大文字の prefix は使わない。
 - GUI は status, history, output display を併用する。
 - 現行 slideshow には専用保存ファイルへの書き出し機能はない。
 
@@ -150,7 +153,7 @@ GUI feedback の補足:
 
 CLI の主な観測値:
 
-- 開始時の `input`, `images`, `interval_sec`, `mode`, `log_level`, `plugin`, `dry_run`, `iterations`
+- 開始時の `input`, `images`, `interval_sec`, `mode`, `plugin`, `dry_run`
 - 各サイクルの selected image
 - `apply_ok`, `apply_failed`, `apply_error`
 - 完了時の total サイクル数
@@ -160,7 +163,7 @@ CLI の主な観測値:
 - dry-run では `cycles` と `dry_run_cycles` が出る。
 - 実 apply では `apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` が `Slideshow completed` 行へ出る。
 
-`detail` 出力では各サイクルが見えるが、`normal` では失敗系と最終実行メッセージ要約が中心になる。
+固定方針では start 行と completed 行が基本であり、cycle 行は failure が起きたサイクルでだけ観測される。
 
 ## 9. 安定性上の注意点
 
@@ -170,7 +173,7 @@ CLI の主な観測値:
 
 追加の注意点:
 
-- `interval_sec < 1` や `iterations < 1` は helper 側でも不正として扱う。
+- `interval_sec < 1` は helper 側でも不正として扱う。
 - random 選択では候補が複数ある場合、直前と同じ画像を避ける。
 - `KeyboardInterrupt` は CLI では異常終了ではなく、ユーザー中断として `0` 扱いにする。
 - GUI dual-source auto-split では、display 条件喪失が一時的なら pause で吸収し、raw な `ValueError` をそのまま user-facing failure にしない。

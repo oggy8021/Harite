@@ -96,15 +96,21 @@ apply mode の user-facing 意味:
 - slideshow start 時に srcdir, plugin, apply_mode, dual-source 条件を検証する。
 - slideshow tick は GTK runtime timer と owner state の同期で動く。
 - GUI は CLI slideshow helper をそのまま露出するのではなく、GUI 状態管理を被せたうえで利用する。
+- GUI は slideshow tab に mode 選択面を持つ。
+- mode の user-facing 表記は `sequential` / `random` とする。
+- slideshow tab の mode 既定値は `random` とする。
+- mode は slideshow 関連設定値として load / save 対象に含める。
 - このため CLI にある `--do-it` / `--dry-run` の説明は GUI にそのまま持ち込まず、GUI 側では status, history, error 表示を中心に説明する。
 
 slideshow start / tick / stop:
 
 - start では slideshow source directory 群を集め、source が空なら開始前に `slideshow srcdir is required` として止める。
+- start 時点では slideshow tab 上の mode 選択値を採用する。
 - start 時点で各 source から初回選択を行い、現在表示を更新してから apply を試みる。
 - tick では次画像を選び直し、現在表示を更新したうえで apply を行う。
 - apply に失敗した場合はスライドショー実行を停止し、status と message history に failure を残す。
 - monitor 検出欠落のような一部条件では stop ではなく pause として扱い、状態表示を `paused` へ更新する。
+- 実行中に mode 選択値を変えても進行中の run には反映しない。新しい mode を使うには stop 後に start し直す。
 
 ## 7. tray / indicator / app icon surface
 
@@ -226,7 +232,7 @@ margin text preflight の現行規則:
 - footer に `Status:` と `Error:` を表示する。
 - slideshow, apply, 設定, input dialog などの failure は phase 単位で表示する。
 - GUI の `logs` 相当領域も、利用者向けには message history として扱う。
-- CLI の `--log-level` と同じ概念を GUI に持ち込まず、GUI 側は状態表示と履歴表示の面として説明する。
+- CLI の実行メッセージ粒度 option のような概念を GUI に持ち込まず、GUI 側は状態表示と履歴表示の面として説明する。
 
 status 更新の原則:
 
