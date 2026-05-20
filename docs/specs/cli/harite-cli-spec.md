@@ -38,7 +38,7 @@ sequenceDiagram
     User->>CLI: command + options
     CLI->>Config: load_config(path)
     Config-->>CLI: config dict / error
-    CLI->>CLI: validate and resolve effective values
+    CLI->>CLI: 入力値を検証し、最終採用値を解決
 
     alt optimize
         CLI->>Core: optimize_wallpapers(...)
@@ -46,7 +46,7 @@ sequenceDiagram
         CLI-->>User: Saved / Placement messages
     else apply
         CLI->>Core: resolve_apply_settings(...)
-        Core-->>CLI: effective target
+        Core-->>CLI: 最終適用対象
         CLI->>Plugin: apply(target, dry_run)
         Plugin-->>CLI: success / failure
         CLI-->>User: apply result
@@ -71,26 +71,35 @@ sequenceDiagram
 主要な流れ:
 
 1. `--config` があれば JSON を読み込む。
-2. CLI 引数と config 値から effective value を解決する。
+2. CLI 引数と config 値から、各オプションの最終採用値を解決する。
 3. `--input` を画像ファイル列として正規化する。
 4. display 条件を解決し、最終的な `resolution` を確定する。
-5. `optimize_wallpapers(...)` を呼び、saved files と placements を得る。
+5. `optimize_wallpapers(...)` を呼び、出力ファイル一覧と配置結果一覧を得る。
 6. 結果を stdout に出力する。
 
-入力解決の原則:
+入力値の優先順位と最終採用値:
 
+- ここでいう最終採用値とは、CLI 引数、config、option default を優先順位で重ねたあとに、実際に `optimize_wallpapers(...)` へ渡す値を指す。
 - 優先順位は CLI 引数 > config > option default である。
 - `--input` 未指定時は config 側の `input` を使えるが、最終的に入力列が空なら終了コード `2` で止める。
-- `optimize` の `--input` は画像ファイル列のみを受け付け、directory は受け付けない。
+- `optimize` の `--input` は画像ファイル列のみを受け付け、directory が渡された場合は明示エラーで終了する。
 - `quality`, `embed_info`, `embed_position`, `embed_max_lines`, `background_color` は CLI 側で先に妥当性検証する。
 
 display / two-screen 解決:
 
-- `two_screen` は CLI / config で明示されなければ `auto` 扱いになり、入力画像が 2 枚以上ある場合だけ two-screen context から有効化される。
-- `resolution`, `l_display`, `r_display` は CLI 引数 > config > two-screen context 由来の自動値 の順で解決する。
-- `two_screen` が自動判定のままで two-screen context を作れない場合、effective two-screen は `False` に戻る。
-- `--l-display` / `--r-display` は個別指定できるが、未指定時は two-screen context 由来の display size を使う。
+- `two_screen` は CLI / config で明示されなければ `auto` 扱いになり、入力画像が 2 枚以上あり、two-screen 用の表示情報を取得できる場合だけ有効化される。
+- `resolution`, `l_display`, `r_display` は CLI 引数 > config > two-screen 用表示情報から導いた自動値 の順で解決する。
+- `two_screen` が自動判定のままで two-screen 用の表示情報を取得できない場合、最終的な two-screen 判定は `False` に戻る。
+- `--l-display` / `--r-display` は個別指定できるが、未指定時は two-screen 用表示情報から導いた display size を使う。
 - `--margins` は `l,r,top,bottom` の 4 要素文字列として解釈し、省略時は `(0, 0, 0, 0)` を使う。
+
+計算規則の補足:
+
+- `resolve_optimize_display_settings(...)` は、まず空文字を除いた入力列 `cleaned_inputs` を作り、`len(cleaned_inputs) >= 2` のときだけ two-screen 用表示情報取得を試みる。
+- `two_screen` が CLI / config で未指定なら `auto` と見なし、最終値は `effective_two_screen = context is not None` で始まる。明示指定がある場合はその bool 値をそのまま使う。
+- `resolution`, `l_display`, `r_display` は、値が `None` または `auto` のときだけ未確定扱いに戻し、context が得られていて `effective_two_screen=True` の場合に限って自動補完する。
+- 自動補完で使う値は `resolution = "{virtual_w}x{virtual_h}"`, `l_display = "{left_w}x{left_h}"`, `r_display = "{right_w}x{right_h}"` である。
+- `two_screen` が自動判定のまま context を得られなかった場合だけ、最後に `effective_two_screen=False` へ戻す。`resolution` が最後まで未確定なら CLI はエラー終了する。
 
 主な失敗条件:
 
@@ -113,15 +122,13 @@ display / two-screen 解決:
 ## 6. `apply`
 
 - plugin を解決し、`single-file` または per-monitor target を適用する。
-- dry-run が既定であり、`--do-it` で実適用に進む。
+- CLI では dry-run を既定とし、実適用したい場合だけ --do-it を指定する。
 - CLI は最終的に plugin へ `dry_run=not --do-it` を渡す。
 
 補足:
 
-- `--do-it` は CLI 専用の明示実行オプションである。CLI では dry-run を既定とし、実適用したい場合だけ `--do-it` を要求する。
 - GUI には `--do-it` / `dry-run` という同名オプションは存在しない。そのため GUI の apply / watch は、CLI とは別の操作面として説明する。
 - dry-run 時の「副作用を起こさないこと」は plugin 側の契約でもある。plugin は `dry_run=True` のとき外部コマンドや OS 設定変更を実行しない。
-- Linux plugin では、dry-run 中に `xfconf-query`, `gsettings`, `feh` の候補コマンドを logger 側へ記録する実装がある。ただしこれは CLI の標準出力 summary とは別系統であり、見えるかどうかは logging 設定に依存する。
 
 apply mode の決定順:
 
@@ -133,8 +140,9 @@ apply mode の決定順:
 
 - `--per-monitor` 単独では実行できず、`--left-file` / `--right-file` か `--auto-split` を伴う必要がある。
 - plugin 解決は command 先頭で行い、未知 plugin は終了コード `2` で止める。
-- `resolve_apply_settings(...)` により effective target を構成してから plugin へ渡す。
+- `resolve_apply_settings(...)` により最終適用対象を構成してから plugin へ渡す。
 - plugin が `False` を返した場合は終了コード `3` で扱う。
+- CLI 実装は `resolve_apply_settings(...)` に `output_dir=Path(".")` を渡しているため、`--auto-split` 時の split 出力先既定値は current working directory である。
 
 ## 7. `watch`
 
@@ -144,7 +152,7 @@ apply mode の決定順:
 watch command の意味:
 
 - filesystem event を待つ監視ではなく、入力 directory から画像一覧を集め、一定間隔で次画像を選んで apply する。
-- `dry_run` では plugin を解決せず、cycle の進行だけを確認できる。
+- `dry_run` では plugin を解決せず、周期 の進行だけを確認できる。
 - `--do-it` 時だけ plugin 解決と実 apply を行う。
 - `iterations` は現行 CLI に残っている回数制限用 option だが、GUI や母体相当の操作面には対応概念がない。
 - changer としての通常利用では、指定回数で停止する挙動は直感的ではない。
@@ -154,7 +162,19 @@ watch command の意味:
 - `mode=sequential` は index を進めながら順番に選ぶ。
 - `mode=random` は可能なら直前画像を避けて選ぶ。
 - option 名は `log_level` だが、現行仕様としては stdout への watch 出力粒度を切り替える値として扱う。
-- `normal` は要点のみ出し、`detail` は cycle ごとの詳細を出す。
+- `normal` は要点のみ出し、`detail` は 周期 ごとの詳細を出す。
+
+watch helper の計算規則:
+
+- `select_next_image(...)` の `sequential` は `selected_index = index % len(images)` で選び、次 state の `index` は `index + 1` になる。
+- `random` では、候補数が 2 件以上かつ `previous_selected` が現在候補に含まれている場合だけ、`candidates = [img for img in images if img != previous_selected]` を作ってその中から 1 件選ぶ。
+- `random` では `index` を進めず、そのまま保持する。したがって現行 random の状態更新で効いているのは `previous_selected` と `completed` である。
+- `run_watch_cycle(...)` は、選ばれた画像を `previous_selected` に入れ、`completed = state.completed + 1` とした新 state を返す。
+- `run_watch_cycles(...)` は各 cycle 後に `on_cycle(selected, state.completed - 1)` を呼ぶため、callback 側へ渡る cycle 番号は 0 始まりである。
+- sleep は毎回ではなく、「まだ次 cycle が残っている場合」にだけ `sleep_fn(interval_sec)` を呼ぶ。`iterations` 到達回では sleep しない。
+- ただし CLI の user-facing `WATCH cycle=` 表示は callback 値をそのまま出さず、`cycle_index + 1` を使う。したがって内部 callback は 0 始まり、stdout 表示は 1 始まりである。
+- dry-run の各 cycle では `dry_run_cycles` を 1 件増やし、`detail` のときだけ `WATCH cycle=... selected=... dry_run=True` を出す。
+- 実 apply では `apply_ok` は成功時だけ、`apply_failed` は plugin が `False` を返したときだけ、`apply_error` は plugin 例外時だけ増える。`apply_failed_total = apply_failed + apply_error` は completed 行でだけ計算する。
 
 出力先:
 
@@ -201,7 +221,7 @@ command ごとの代表メッセージ:
 - `watch`: `WATCH start`, `WATCH interrupted by user`, `WATCH completed`
 - `install-desktop-entry`: `Installed desktop entry:`
 
-`watch` の `WATCH completed` では、dry-run 時は `dry_run_cycles`、実 apply 時は `apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` を出して cycle 結果を要約する。
+`watch` の `WATCH completed` では、dry-run 時は `dry_run_cycles`、実 apply 時は `apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` を出して周期ごとの結果を要約する。
 
 重要度の見方:
 

@@ -13,6 +13,7 @@
 - 仕様書正本は「どう決まったか」ではなく「今どうなっているか」を書く。
 - 仕様書は履歴の要約ではなく、現行 Harite の理解導線である。
 - GUI / CLI / watch / settings / tray を、利用者と保守者の両方が読める粒度で整理する。
+- 用語ぶれや責務ずれが見えても、WS4 ではまず抽出と事実記載に留め、直す / 直さないの working は WS5 へ送る。
 
 ## 対象
 
@@ -28,6 +29,7 @@
 - 過去判断の時系列説明
 - packaging 実務
 - post-1.0.0 機能構想
+- 用語統一、rename、cleanup 実働の可否判断
 
 ## 現在の状態
 
@@ -49,6 +51,10 @@
 - tray / app icon surface の現在地
 - 設定 / watch / apply の現在地
 - CLI との関係
+
+補足:
+
+- 正本に書くのは現行挙動と現行 surface の事実であり、そこから先の rename 判断や wording 正規化は WS5 の inventory / planning に委ねる。
 
 ### 3. skeleton をどの順で厚くするか
 

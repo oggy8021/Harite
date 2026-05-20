@@ -56,9 +56,8 @@ sequenceDiagram
 - `sequential` と `random` の選択モードを持つ。
 - 選択モードを明示的に持つのは現行では主に CLI / helper 側である。
 - GUI watch は現状 `sequential` 前提で動いており、`random` を選ぶ UI は持たない。
-- 現行 CLI / helper には `iterations` による回数上限指定が残っている。
-- `iterations` も同様に現行では CLI / helper 側の要素であり、GUI にも母体相当の操作面にも露出していない。
-- changer としての通常利用では、指定回数で停止する挙動は直感的ではない。
+- 現行 CLI / helper には `iterations` による回数上限指定がある。
+- `iterations` は現行では CLI / helper 側の要素であり、GUI には対応する操作面がない。
 
 watch helper の最小構成:
 
@@ -73,6 +72,14 @@ watch helper の最小構成:
 - `previous_selected`: random 時に直前重複を避けるための参照
 - `completed`: 完了 cycle 数
 
+状態遷移の現行規則:
+
+- `sequential` では `selected_index = index % len(images)` で選び、次 state は `index = index + 1`, `previous_selected = selected`, `completed = completed + 1` になる。
+- `random` では候補数が 2 件以上かつ `previous_selected` が候補に含まれる場合だけ、その 1 件を除外した候補集合から選ぶ。候補が 1 件しかない場合や直前画像が候補集合にない場合は、全候補から選ぶ。
+- `random` の next state は `index` を進めず、`previous_selected` と `completed` だけを更新する。
+- `run_watch_cycles(...)` の callback へ渡す cycle 番号は `completed - 1` であり、表示上の cycle 番号は 0 始まりになる。
+- sleep は「次 cycle が残っている場合」にだけ入るため、`iterations` 到達回や stop 直前回の後には待機しない。
+
 ## 5. pause / resume / retry
 
 - GUI watch は display loss や auto-split 条件未成立時に pause 的な扱いを持つ。
@@ -86,6 +93,13 @@ GUI pause / resume の現行条件:
 - この pause は `watch paused: waiting for two detected displays for auto-split` を status message に入れ、watch summary を `Watch: paused` に切り替える。
 - pause 中に次 tick が成功すると GUI watch は `watch resumed` を出して running へ戻る。
 - 同じ `ValueError` でも `start` 時は transient 扱いせず、start failure として止める。
+
+GUI timer / side state の現行規則:
+
+- GUI runtime timer は `interval_ms = max(1, int(interval_seconds)) * 1000` で作る。したがって現行 GUI watch は秒未満を扱わず、秒整数へ量子化して GLib timer に渡す。
+- dual-source watch では L/R で独立した watch state を持ち、それぞれ `run_watch_cycle(images, "sequential", backend._watch_state_l|r)` で更新する。
+- したがって GUI dual-source watch の左右選択は、同じ tick の中でも 1 本の共有 index ではなく、L side state と R side state を別々に進める。
+- signal handler 経由の watch tick が使える場合は owner 側 callback を優先し、callback が `False` を返した時点で timer を止める。signal handler がない fallback 経路のときだけ GUI runtime 自身が L/R 選択を進める。
 
 ## 6. GUI watch の責務
 
@@ -116,14 +130,17 @@ CLI watch の特徴:
 - plugin が `False` を返した場合は、その cycle の `apply_failed` カウンタを 1 件増やす。
 - これらのカウンタは各 cycle の途中で保持され、最後に `WATCH completed` 行の summary として出力される。
 
+集計規則の補足:
+
+- helper が返す `completed` は実行済み cycle 数そのものであり、dry-run 時はこの件数が `cycles` と `dry_run_cycles` に反映される。
+- 実 apply 時の `apply_ok`, `apply_failed`, `apply_error` は cycle ごとの結果分類であり、1 cycle で多重加算しない。
+
 ## 8. 出力と観測面
 
 - CLI watch は stdout に summary を出す。
 - CLI watch の `normal` / `detail` は stdout に出す `WATCH ...` 行の粒度を切り替える。
 - GUI watch は status, watch summary, message history を併用する。
-- plugin logger は外部 command や apply failure の補助観測面になる。
 - 現行 watch には専用保存ファイルへの書き出し機能はない。
-- plugin logger は別系統であり、出力されるかどうかや出力先は Python logging の設定に依存する。
 
 GUI feedback の補足:
 

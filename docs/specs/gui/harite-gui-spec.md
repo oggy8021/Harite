@@ -182,6 +182,7 @@ margin text position の visible semantics:
 - GUI state / config / CLI / core の内部値は `embed_position=top|left|right|bottom` で統一する。
 - visible 4 位置との対応は `top=Left Top`, `left=Left Bottom`, `right=Right Top`, `bottom=Right Bottom` である。
 - `auto` が読み込まれた場合、GUI 表示上は `bottom` と同義に正規化して扱う。
+- `auto` だけでなく未知値も、現行 GUI では `_normalize_margin_text_position(...)` により `bottom` へ正規化する。
 
 ### 詳細分類
 
@@ -200,6 +201,24 @@ adapters/
   gtk_layout_builders.py / gtk_tab_builders.py / gtk_dialog_builders.py
   gtk_runtime_*           signal, sync, dialog, watch, helper 群
 ```
+
+preview 補助計算の現行規則:
+
+- preview widget の目標サイズは container 幅から計算し、`target_width = max(120, min(320, int((allocated_width - 6) * 0.48)))`, `target_height = max(68, round(target_width * 9 / 16))` で決める。container 幅が取れない場合は `160x90` を使う。
+- auto-split preview の crop box は、保存済み合成画像の幅 `comp_width` に対して `split_x = round((left_width / (left_width + right_width)) * comp_width)` で左右分割する。`comp_width > 1` のときは `split_x` を `1..comp_width-1` に clamp する。
+- 左 preview box は `(0, 0, split_x, comp_height)`、右 preview box は `(split_x, 0, comp_width - split_x, comp_height)` であり、現行 GUI preview も y 方向は分割せず full-height の縦スライスを使う。
+- `build_result_preview_state(...)` では、まず form state の `l_display`, `r_display` を読み、その後 `resolve_optimize_display_settings(...)` が成功した場合だけ、そこから得た display size で上書きする。したがって GUI preview の左右 display 情報は core と同じ display 解決結果へ寄せられる。
+- preview assignment 表示のファイル名は、basename が 36 文字を超える場合だけ `head + "..." + tail` へ切り詰める。既定では末尾 12 文字を残し、head 側は `36 - 12 - 3` 文字を使う。
+
+margin text preflight の現行規則:
+
+- GUI は margin text mode が `none` のとき、preflight を `margin text off` として終了する。
+- mode が `none` 以外のときは、まず `embed_position` を `_normalize_margin_text_position(...)` で正規化し、その値を form state へ書き戻す。
+- preflight で使う margin area は `resolve_margin_text_region(...)` を通じて求め、結果が `None` なら `margin area unavailable` で失敗扱いにする。
+- area が取れた場合でも、`area_width < 40` または `area_height < 12` なら `selected margin area is too small for margin text` として失敗扱いにする。
+- area が十分あれば、GUI は `margin text ready in ... position ({area_width}x{area_height})` を status / log へ出す。
+- GUI の実効行数は widget 値をそのままは使わず、`_effective_margin_text_max_lines()` により `free=5`, `combo=8`, それ以外は `3` へ正規化して optimize request へ渡す。
+- free text 入力は GUI 側で先に最大 5 行へ切り詰め、空文字・空行のみなら `None` として保持する。
 
 ## 9. GUI での失敗時挙動
 

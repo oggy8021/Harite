@@ -21,7 +21,7 @@
 - `0.2.0` はここでは採らない。
 - release judgement は、GUI 単体の完成ではなく、製品として閉じる条件で判断する。
 - したがって `1.0.0` の gate は、少なくとも本書の Workstream 1・2・3・4 が揃うことに置く。
-- Workstream 5 は `1.0.0` 条件ではなく、post-1.0.0 の新運用入口として扱う。
+- Workstream 5 と Workstream 6 は `1.0.0` 条件ではなく、post-1.0.0 の新運用入口として扱う。
 
 ## Workstream 構成
 
@@ -125,7 +125,32 @@
 - 必要なら surface ごとの下位仕様
 - README と矛盾しない常設仕様導線
 
-### Workstream 5. post-1.0.0 の新運用と後続機能棚卸し
+### Workstream 5. post-1.0.0 の内部 issue 解決
+
+主題:
+
+- surface の未成立箇所や命名ずれの棚卸し
+- 実装と正本記述のずれの整理
+- 現行機能の内部整合の立て直し
+
+この stream の位置づけ:
+
+- この stream は `1.0.0` gate ではない。
+- `1.0.0` 後に、現行機能を保ったまま内側の不一致や弱い surface を整理する入口として扱う。
+
+この stream で扱うこと:
+
+- watch / CLI / core / plugin / config まわりの内部 issue を inventory 化する。
+- 「現行のまま残す」「rename や整理を行う」「削除候補とする」を粗く切り分ける。
+- 実装・help・正本の用語や責務のずれを、後続 planning に送れる粒度まで固定する。
+
+想定成果物:
+
+- internal issue inventory
+- 現行 surface の整理 overview
+- 次期 cleanup / rename planning の入口メモ
+
+### Workstream 6. post-1.0.0 の新運用と後続機能棚卸し
 
 主題:
 
@@ -155,7 +180,7 @@
 1. Workstream 1・2・3 を初動として始める。
 2. Workstream 4 は Workstream 3 の docs map を受けながら進める。
 3. `1.0.0` judgement は Workstream 1・2・3・4 が揃った時点で行う。
-4. Workstream 5 は `1.0.0` 後の運用に送る。
+4. Workstream 5 と Workstream 6 は `1.0.0` 後の運用に送る。
 
 ## 1.0.0 の暫定 gate
 
@@ -171,7 +196,8 @@
 - `docs/reformation/harite-project-initial-build-reformation-ws2-packaging-release.md`
 - `docs/reformation/harite-project-initial-build-reformation-ws3-docs-reformation.md`
 - `docs/reformation/harite-project-initial-build-reformation-ws4-spec-authoring.md`
-- `docs/reformation/harite-project-initial-build-reformation-ws5-feature-overview.md`
+- `docs/reformation/harite-project-initial-build-reformation-ws5-internal-issues-overview.md`
+- `docs/reformation/harite-project-initial-build-reformation-ws6-feature-overview.md`
 
 ## 非目的
 
@@ -181,7 +207,7 @@
 
 ## 完了条件
 
-- reformation 全体の親文書として、Workstream 1・2・3・4・5 の境界が説明可能になっている。
+- reformation 全体の親文書として、Workstream 1・2・3・4・5・6 の境界が説明可能になっている。
 - `1.0.0` 条件が Workstream 1・2・3・4 にあることが説明可能になっている。
-- Workstream 5 が post-1.0.0 の新運用入口であることが説明可能になっている。
+- Workstream 5 が内部 issue 解決の入口、Workstream 6 が後続機能棚卸しの入口であることが説明可能になっている。
 - Phase9-11 の closing 後に、次段の整理がどこから始まるか説明可能になっている。

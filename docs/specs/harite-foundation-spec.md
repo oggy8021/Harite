@@ -56,15 +56,16 @@
 
 ## 5. 全体アーキテクチャ概要
 
-Harite の主な面は以下の 5 つである。
+Harite の主な面は以下の 6 つである。
 
 1. 基本仕様 (foundation): 全体像と分冊導線
 2. コア仕様 (core): 最適化、設定、適用条件の基底仕様
 3. CLI 仕様 (CLI): command surface
 4. GUI 仕様 (GUI): 画面、操作、状態、tray
 5. watch 仕様 (watch): 継続実行、pause / retry、観測面
+6. plugin 仕様 (plugin): OS / desktop 環境ごとの適用実行
 
-この 5 面は、責務を分離するための文書分冊であって、実装が完全に独立していることを意味しない。実装上は core, plugin, GUI state, watch state が相互に接続しているため、本書は「どこからどこまでをどの分冊で説明するか」の境界線として機能する。
+この 6 面は、責務を分離するための文書分冊であって、実装が完全に独立していることを意味しない。実装上は core, plugin, GUI state, watch state が相互に接続しているため、本書は「どこからどこまでをどの分冊で説明するか」の境界線として機能する。
 
 ## 6. GUI / CLI / watch / tray の関係
 
@@ -96,7 +97,7 @@ flowchart TD
 
 - 設定 (settings) は論理設定モデルとして保持され、物理保存は 設定ファイル (harite-preferences.json) を使う。
 - save は optimize 結果の出力先決定と書き出しを扱う。
-- apply は effective target を解決したうえで plugin へ委譲する。
+- apply は最終適用対象を解決したうえで plugin へ委譲する。
 
 責務を混同しないための整理:
 
@@ -105,6 +106,10 @@ flowchart TD
 - apply は「生成済みまたは既存の画像を、環境へどう反映するか」を扱う。
 
 この 3 面は GUI 上では近く見えるが、仕様上は別責務として扱う。
+
+plugin 分冊:
+
+- plugin 実装の正本は [docs/specs/plugins/harite-plugin-spec.md](docs/specs/plugins/harite-plugin-spec.md)
 
 ## 8. README と仕様書の役割分担
 
