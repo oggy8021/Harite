@@ -7,6 +7,7 @@
 - 入力画像、表示条件、最適化条件、適用条件の基底ルールを扱う。
 - GUI / CLI のどちらから呼ばれても変わらない挙動を受け持つ。
 - plugin 実行そのものではなく、plugin へ渡す target の解決までを含む。
+- plugin 名の選択、plugin registry 解決、plugin ごとの target 受理可否判定は呼び出し側 / plugin 側で扱う。
 
 core が扱うもの:
 
@@ -32,7 +33,8 @@ core が直接の主責務としないもの:
 主要モデルの整理:
 
 - optimize 面は、入力画像、target resolution、margins、align、background_color、embed 系で構成される。
-- apply 面は、`plugin_name`, `apply_mode`, target file または monitor map で構成される。
+- apply 設定面は、`plugin`, `apply_mode` など呼び出し側が保持する適用条件で構成される。
+- apply target 面は、core が解決した単一画像 path または monitor map で構成され、plugin 名そのものは含めない。
 - スライドショー面は、入力 directory 群、interval、mode、サイクル state で構成される。
 - 設定面は、optimize / apply / slideshow の論理グループを 1 つの設定ファイルへ統合して保存する。
 
@@ -160,6 +162,8 @@ flowchart TD
 
 - apply target は `single-file`, `per-monitor-explicit`, `per-monitor-auto-split` の面で解決される。
 - plugin 実行は別面だが、どの target を渡すかは core 側の責務である。
+- core は `apply_mode`, 入力 file 群, display 条件, `output_dir` から target を解決する。
+- 選択済み plugin が monitor map を受け付けるか、どの setter / fallback を使うかは core ではなく呼び出し側 / plugin 側の責務である。
 
 apply mode ごとの意味:
 
@@ -177,13 +181,14 @@ monitor map 解決:
 
 - `resolve_apply_settings(...)` は `apply_mode` を小文字化・trim したうえで判定する。未指定相当は `single-file` として扱う。
 - `single-file` では、そのまま `target = str(file)` を返し、display 検出や monitor map 構成は行わない。
-- `per-monitor-explicit` では、まず ordered display を取得し、plugin が `linux` でなければエラー、ordered display が 2 件未満でもエラーになる。
+- `per-monitor-explicit` では、まず ordered display を取得し、ordered display が 2 件未満ならエラーになる。
 - `per-monitor-explicit` の mapping は空 dict から始め、`left_file` があれば `ordered_displays[0].name` に、`right_file` があれば `ordered_displays[1].name` に対応付ける。
 - `left_file`, `right_file` の両方が欠けて mapping が空のままなら、現行実装は `--per-monitor requires --left-file/--right-file or --auto-split` で止める。
-- `per-monitor-auto-split` でも plugin が `linux` でなければエラー、ordered display が 2 件未満でもエラーになる。
+- `per-monitor-auto-split` でも ordered display が 2 件未満ならエラーになる。
 - `per-monitor-auto-split` では `target = build_auto_split_display_map(file, ordered_displays[:2], output_dir or file.parent)` を呼ぶ。つまり `output_dir` 未指定時の split 出力先既定値は合成画像 `file` の親 directory である。
 - auto-split の結果が空 mapping なら `per-monitor split failed` で止める。
 - `apply_mode` が既知の 3 種 (`single-file`, `per-monitor-explicit`, `per-monitor-auto-split`) 以外なら `unknown apply mode` として止める。
+- monitor map を受け付けない plugin に per-monitor target を渡せるかどうかは、この節ではなく plugin / 呼び出し側で扱う。
 
 ### 5.2 auto-split の現行規則
 
@@ -197,7 +202,6 @@ monitor map 解決:
 
 不正条件の代表:
 
-- Linux 以外の plugin で per-monitor apply を要求した場合
 - 2 画面未検出のまま per-monitor apply を要求した場合
 - auto-split に失敗して monitor map を構成できない場合
 

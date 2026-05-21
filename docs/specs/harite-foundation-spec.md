@@ -93,11 +93,33 @@ flowchart TD
 - スライドショー機能は単発操作を継続運用へ拡張する。
 - tray は GUI 常駐時の補助導線であり、独立した業務面ではない。
 
+### 6.1 横断責務マトリクス
+
+主要な境界を 1 つの表でまとめると次のとおりである。
+
+| 論点 | 主責務 | 補助責務 / 呼び出し側 | 非主責務 |
+| --- | --- | --- | --- |
+| 入力検証 | CLI / GUI | core は受け取った値の基底正規化を行う | plugin |
+| optimize 条件解決 | core | CLI / GUI は入力採用値を決めて渡す | plugin |
+| 設定ファイル path 解決と JSON 入出力 | settings_file | CLI / GUI は load/save の契機を持つ | plugin |
+| apply target 解決 | core | CLI / GUI / slideshow は apply_mode と file 条件を渡す | plugin |
+| plugin 名の選択 | CLI / GUI / 設定 | plugin registry は解決を補助する | core |
+| plugin registry 解決 | plugins registry | CLI / GUI が名前を与える | core |
+| target 種類の受理可否 | plugin 契約 | CLI / GUI は事前判定してよい | core |
+| OS / desktop への実適用 | plugin | CLI / GUI / slideshow は結果を観測する | core |
+| スライドショーの画像選択と cycle state | slideshow helper | GUI / CLI は実行面を被せる | plugin |
+| GUI status / history / tab state 更新 | GUI views + adapters | plugin logger は補助観測面 | core |
+| CLI 終了コードと実行メッセージ | CLI | plugin / core の失敗を分類して表示する | GUI |
+| tray からの start/stop / 可視制御 | tray adapter | GUI state が業務状態を保持する | core / plugin |
+
+この表は「実装がどの module にあるか」の一覧ではなく、「仕様上どの層が主語になるか」の一覧である。実装上は 1 回の操作で複数層が連続して呼ばれるが、どの判断をどこで説明するかはこの表を基準に分冊へ振り分ける。
+
 ## 7. 設定 (settings) / save / apply の責務分担
 
 - 設定 (settings) は論理設定モデルとして保持され、物理保存は 設定ファイル (harite-settings.json) を使う。
 - save は optimize 結果の出力先決定と書き出しを扱う。
 - apply は最終適用対象を解決したうえで plugin へ委譲する。
+- apply では、target 解決を core、plugin 名の選択と実行可否を呼び出し側 / plugin 側へ分けて扱う。
 
 責務を混同しないための整理:
 
@@ -182,6 +204,18 @@ src/harite/gui/
     gtk_runtime_* modules
       signal, sync, dialog, slideshow, helper などの細粒度 runtime 責務を持つ。
 ```
+
+### 9.1 GUI 内部層の配置規則
+
+GUI 配下の file / module を読むときは、次の配置規則を前提にする。
+
+- views は framework-neutral な owner state を持つ。widget instance, GTK 型, tray 実体, signal 名の知識は持ち込まない。
+- controllers は GUI form state を core や helper 呼び出しへ橋渡しする。業務判断の本体を新設せず、views と core の間で値を整える役に留める。
+- services は GUI から見た補助変換や補助計算を置く。runtime 固有物や user interaction の進行管理は持たない。
+- adapters は GTK runtime, dialog, tray, signal wiring など外界との接続面を持つ。widget 構築、signal 接続、runtime fallback、表示同期はここへ置く。
+- app.py は起動順制御の入口であり、継続的な業務状態は持たない。
+- 複数層にまたがる処理は、まず owner state がどこにあるかで置き場所を決める。状態の主語が GUI 業務状態なら views、GTK 実体なら adapters、core 業務規則なら core を優先する。
+- したがって「GUI から呼ばれるから controllers / adapters に置く」とは考えず、状態主語と runtime 依存の有無で切り分ける。
 
 ## 10. 分冊導線
 
