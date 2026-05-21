@@ -21,7 +21,9 @@
 - `0.2.0` はここでは採らない。
 - release judgement は、GUI 単体の完成ではなく、製品として閉じる条件で判断する。
 - したがって `1.0.0` の gate は、少なくとも本書の Workstream 1・2・3・4 が揃うことに置く。
-- Workstream 5 と Workstream 6 は `1.0.0` 条件ではなく、post-1.0.0 の新運用入口として扱う。
+- Workstream 5 は `1.0.0` 条件ではなく、post-1.0.0 の内部 issue 解決入口として扱う。
+- 旧 Workstream 6 として考えていた後続機能棚卸しは Workstream 10 に送る。
+- 現 Workstream 6 は、WS1〜WS5 の中間棚卸と CLI 実機確認で見えた内部 issue を受ける stream として扱う。
 
 ## Workstream 構成
 
@@ -150,7 +152,32 @@
 - 現行 surface の整理 overview
 - 次期 cleanup / rename planning の入口メモ
 
-### Workstream 6. post-1.0.0 の新運用と後続機能棚卸し
+### Workstream 6. CLI 実機確認で見えた内部 issue の整理
+
+主題:
+
+- WS1〜WS5 の中間棚卸
+- CLI 実機確認で見えた疑問点・不具合の整理
+- 原因解析と後続 fix planning の入口作り
+
+この stream の位置づけ:
+
+- 本来はここで後続機能棚卸しへ進む想定だったが、CLI 実機確認で多くの疑問点・問題が見つかったため、その受け皿として差し替えた stream である。
+- 旧 Workstream 6 相当の後続機能棚卸しは Workstream 10 に送る。
+
+この stream で扱うこと:
+
+- CLI surface の未成立箇所、help / 実装 / 正本のずれ、実機で再現した不具合を列挙する。
+- まず正本で原因説明できるかを点検し、必要なら正本記述拡充と source 解析の両面から原因解析する。
+- 以後の SDD/TDD 手順へ入る前段として、どの論点がどの fix branch 候補に相当するかを切り分ける。
+
+想定成果物:
+
+- CLI internal issue inventory
+- 原因解析の入口メモ
+- 次期 fix planning の入口メモ
+
+### Workstream 10. post-1.0.0 の新運用と後続機能棚卸し
 
 主題:
 
@@ -180,7 +207,9 @@
 1. Workstream 1・2・3 を初動として始める。
 2. Workstream 4 は Workstream 3 の docs map を受けながら進める。
 3. `1.0.0` judgement は Workstream 1・2・3・4 が揃った時点で行う。
-4. Workstream 5 と Workstream 6 は `1.0.0` 後の運用に送る。
+4. Workstream 5 は `1.0.0` 後の内部 issue 整理入口として扱う。
+5. Workstream 6 は CLI 実機確認で見えた内部 issue の整理として、必要な範囲で先に扱う。
+6. 旧 Workstream 6 相当の後続機能棚卸しは Workstream 10 として `1.0.0` 後へ送る。
 
 ## 1.0.0 の暫定 gate
 
@@ -197,7 +226,8 @@
 - `docs/reformation/harite-project-initial-build-reformation-ws3-docs-reformation.md`
 - `docs/reformation/harite-project-initial-build-reformation-ws4-spec-authoring.md`
 - `docs/reformation/harite-project-initial-build-reformation-ws5-internal-issues-overview.md`
-- `docs/reformation/harite-project-initial-build-reformation-ws6-feature-overview.md`
+- `docs/reformation/harite-project-initial-build-reformation-ws6-cli-internal-issues.md`
+- `docs/reformation/harite-project-initial-build-reformation-ws10-feature-overview.md`
 
 ## 非目的
 
@@ -207,7 +237,7 @@
 
 ## 完了条件
 
-- reformation 全体の親文書として、Workstream 1・2・3・4・5・6 の境界が説明可能になっている。
+- reformation 全体の親文書として、Workstream 1・2・3・4・5・6・10 の境界が説明可能になっている。
 - `1.0.0` 条件が Workstream 1・2・3・4 にあることが説明可能になっている。
-- Workstream 5 が内部 issue 解決の入口、Workstream 6 が後続機能棚卸しの入口であることが説明可能になっている。
+- Workstream 5 が post-`1.0.0` の内部 issue 解決入口、Workstream 6 が CLI internal issue 整理の入口、Workstream 10 が後続機能棚卸しの入口であることが説明可能になっている。
 - Phase9-11 の closing 後に、次段の整理がどこから始まるか説明可能になっている。

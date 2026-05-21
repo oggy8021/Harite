@@ -1,10 +1,10 @@
-# Harite Project Initial Build Reformation WS6 Feature Overview
+# Harite Project Initial Build Reformation WS10 Feature Overview
 
 最終更新: 2026-05-20
 
 ## 位置づけ
 
-- 本書は [docs/reformation/harite-project-initial-build-reformation.md](docs/reformation/harite-project-initial-build-reformation.md) の Workstream 6 を具体化する子文書である。
+- 本書は [docs/reformation/harite-project-initial-build-reformation.md](docs/reformation/harite-project-initial-build-reformation.md) の Workstream 10 を具体化する子文書である。
 - 主題は、`1.0.0` 後の新運用で扱う後続機能の棚卸しと feature overview の作成である。
 - 本書は `1.0.0` gate ではなく、その後に開く backlog / planning 入口として扱う。
 
