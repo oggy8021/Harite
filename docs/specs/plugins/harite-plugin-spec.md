@@ -7,6 +7,7 @@
 - plugin は、core / CLI / GUI から渡された最終適用対象を、各 OS / desktop 環境の壁紙設定へ反映する。
 - plugin は、target 解決そのものではなく、受け取った target の適用実行を担当する。
 - plugin は dry-run と実適用の両方を扱う。
+- plugin 名の選択と registry 解決は呼び出し側が行い、plugin は選ばれた後の target 実行面を担う。
 
 plugin が直接の主責務としないもの:
 
@@ -39,6 +40,12 @@ target の種類:
 - `single-file` apply では単一画像 path を受け取る。
 - per-monitor apply では `{display.name: output_path}` 形式の monitor map を受け取りうる。
 - monitor map を受け付けるのは現行では Linux plugin のみである。
+
+target 境界の考え方:
+
+- core は `apply_mode` と display 条件から target を解決するが、その target 種類を各 plugin が受け付けるかは plugin 契約側で決まる。
+- したがって `single-file` / `monitor map` のどちらになるかと、Windows / macOS / Linux のどれがその target を実行できるかは別の論点として扱う。
+- 呼び出し側は必要に応じて選択済み plugin の capability を事前に見て止めてよいが、最終的な受理境界は `plugin.apply(...)` の契約にある。
 
 monitor map interface:
 
@@ -75,6 +82,7 @@ dry-run 契約:
 ### 4.3 Linux plugin
 
 - 単一画像 apply と monitor map apply の両方を扱う。
+- monitor map apply を受け付けること自体が Linux plugin の capability であり、core 側の target 解決規則とは別面である。
 - single-file dry-run では、対象ファイルが存在すれば logging 側へ dry-run message を記録して成功を返す。
 - per-monitor apply では、XFCE 系の `xfconf-query` 候補列挙と monitor 名対応付けを使う。
 - single-file 実行前には `Path(path).expanduser().resolve()` で path を正規化してから存在確認する。
@@ -108,6 +116,8 @@ Linux plugin の適用順:
 2. 単一画像 apply では `gsettings` を次候補として試す。
 3. 単一画像 apply では `feh` を次候補として試す。
 4. 既知の setter が見つからなければ失敗する。
+
+- この fallback 順は Linux plugin の実行面に属し、core の apply target 解決規則には含めない。
 
 適用フローの細部:
 

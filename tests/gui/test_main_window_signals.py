@@ -636,7 +636,6 @@ def test_on_apply_per_monitor_auto_split_uses_split_mapping(monkeypatch, tmp_pat
     monkeypatch.setattr(
         "harite.gui.views.main_window.resolve_apply_settings",
         lambda **_kwargs: EffectiveApplySettings(
-            plugin_name="linux",
             apply_mode="per-monitor-auto-split",
             target={
                 "HDMI-1": tmp_path / "wall_HDMI-1.jpg",
@@ -1321,7 +1320,6 @@ def test_slideshow_dual_source_cycle_pauses_when_detected_displays_temporarily_d
     def fake_resolve_apply_settings(**_kwargs):
         if optimize_calls == 1:
             return EffectiveApplySettings(
-                plugin_name="linux",
                 apply_mode="per-monitor-auto-split",
                 target={"HDMI-1": str(tmp_path / "split1.jpg"), "DP-1": str(tmp_path / "split2.jpg")},
             )
@@ -1398,14 +1396,12 @@ def test_slideshow_dual_source_cycle_resumes_after_transient_display_drop(monkey
         resolve_calls += 1
         if resolve_calls == 1:
             return EffectiveApplySettings(
-                plugin_name="linux",
                 apply_mode="per-monitor-auto-split",
                 target={"HDMI-1": str(tmp_path / "split1.jpg"), "DP-1": str(tmp_path / "split2.jpg")},
             )
         if resolve_calls == 2:
             raise ValueError("per-monitor apply requires at least two detected displays")
         return EffectiveApplySettings(
-            plugin_name="linux",
             apply_mode="per-monitor-auto-split",
             target={"HDMI-1": str(tmp_path / "split3.jpg"), "DP-1": str(tmp_path / "split4.jpg")},
         )
@@ -1488,7 +1484,6 @@ def test_slideshow_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch,
     monkeypatch.setattr(
         "harite.gui.views.main_window.resolve_apply_settings",
         lambda **kwargs: EffectiveApplySettings(
-            plugin_name="linux",
             apply_mode="per-monitor-auto-split",
             target=(
                 {"HDMI-1": split1_hdmi, "DP-1": split1_dp}

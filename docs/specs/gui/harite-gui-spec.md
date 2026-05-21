@@ -137,6 +137,7 @@ apply mode の user-facing 意味:
 - `Auto-Split` は内部的に `per-monitor-auto-split` へ対応し、最適化済み画像を display ごとに分割して apply する。
 - apply mode の補助ラベルは `No Split` 時に `Apply the optimized image as a single file.`、`Auto-Split` 時に `Split the optimized image and apply per display.` を表示する。
 - CLI にある `per-monitor-explicit` は expert 向け escape hatch として残るが、GUI 主導線には露出しない。
+- GUI は plugin 名を settings から保持するが、`Auto-Split` target の解決規則そのものは core に従う。選択済み plugin が monitor map を実行できるかは GUI / plugin 側の責務として扱う。
 
 ## 5. 設定 (settings) 保存と再読込
 

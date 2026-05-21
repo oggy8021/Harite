@@ -417,7 +417,6 @@ def apply(
     try:
         effective_apply = resolve_apply_settings(
             file=file,
-            plugin_name=plugin,
             apply_mode=apply_mode,
             left_file=left_file,
             right_file=right_file,

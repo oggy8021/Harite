@@ -1544,7 +1544,6 @@ def test_runtime_backend_slideshow_cycle_pauses_when_detected_displays_temporari
         resolve_calls += 1
         if resolve_calls == 1:
             return EffectiveApplySettings(
-                plugin_name="linux",
                 apply_mode="per-monitor-auto-split",
                 target={"HDMI-1": str(tmp_path / "split1.jpg"), "DP-1": str(tmp_path / "split2.jpg")},
             )

@@ -49,6 +49,26 @@ sequenceDiagram
     GUI->>GUI: update status display, status, message history
 ```
 
+### 3.1 start / tick / apply / pause の責務分離
+
+スライドショー面は 1 本の機能に見えるが、仕様上は少なくとも次の 4 段階へ分かれる。
+
+1. start: 実行開始前の入力条件と owner state を確定する段階
+2. tick: 各サイクルで次画像または次画像群を選ぶ段階
+3. apply: 選ばれた画像または target を plugin 実行面へ渡す段階
+4. pause / stop: 一時条件不成立と恒久 failure を owner state へ反映する段階
+
+各段階の主責務は次のとおりである。
+
+| 段階 | 主責務 | 補助責務 / 呼び出し先 | 持ち込まないもの |
+| --- | --- | --- | --- |
+| start | CLI / GUI owner | slideshow helper, core, plugin registry | plugin 実適用 |
+| tick | slideshow helper または GUI owner state | 画像列収集済み state, mode 規則 | widget 更新詳細 |
+| apply | plugin | core が必要なら target を先に解決する | mode 選択や timer 管理 |
+| pause / stop | GUI owner / CLI command | status, history, completed 集計 | plugin fallback の詳細 |
+
+この整理により、「次画像を選ぶこと」と「選ばれた target を実際に適用すること」と「条件不足時に paused とみなすこと」は別層の責務として読む。
+
 ## 4. 継続実行ループの基本動作
 
 - この機能は filesystem event 監視ではなく、サイクルごとの選択ループである。
@@ -94,6 +114,13 @@ GUI pause / resume の現行条件:
 - この pause は `slideshow paused: waiting for two detected displays for auto-split` を status message に入れ、状態表示を `paused` に切り替える。
 - pause 中に次 tick が成功すると GUI は `slideshow resumed` を出して running へ戻る。
 - 同じ `ValueError` でも `start` 時は transient 扱いせず、start failure として止める。
+
+pause / stop 判定の境界:
+
+- start 前の条件不足は pause ではなく start failure として扱う。
+- tick 中に起きる一時的な display 条件不足だけを GUI は paused として吸収してよい。
+- plugin が `False` を返した場合や plugin exception は、GUI / CLI の owner が failure として分類するが、その失敗理由の生成自体は plugin 側の契約に属する。
+- auto-split target 解決失敗と plugin 実 apply failure は同じ `apply failed` に潰さず、owner 側の status / history では別理由として保持する。
 
 GUI timer / side state の現行規則:
 
@@ -190,3 +217,5 @@ CLI の主な観測値:
 - slideshow helper は画像選択と cycle 制御を持つが、GUI 特有の state 表示や tray 制御は持たない。
 - CLI `slideshow` command は helper の呼び出しと実行メッセージ出力を担う。
 - GUI は helper だけでは表現しきれない dual-source, auto-split, status 表示を追加で担う。
+- apply target の解決は core が担い、選択済み plugin がその target を受け付けるかと実 apply の成否は plugin 契約側で扱う。
+- tray は slideshow owner state を直接持たず、GUI owner が持つ running / paused / stopped を補助操作面として起動・停止する。

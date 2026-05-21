@@ -12,12 +12,12 @@ def test_resolve_apply_settings_single_file_uses_string_target(tmp_path):
 
     resolved = resolve_apply_settings(
         file=wall,
-        plugin_name="linux",
         apply_mode="single-file",
     )
 
     assert resolved.apply_mode == "single-file"
     assert resolved.target == str(wall)
+    assert not hasattr(resolved, "plugin_name")
 
 
 def test_resolve_apply_settings_explicit_mapping_uses_ordered_displays(tmp_path):
@@ -30,7 +30,6 @@ def test_resolve_apply_settings_explicit_mapping_uses_ordered_displays(tmp_path)
 
     resolved = resolve_apply_settings(
         file=wall,
-        plugin_name="linux",
         apply_mode="per-monitor-explicit",
         left_file=left,
         right_file=right,
@@ -43,14 +42,26 @@ def test_resolve_apply_settings_explicit_mapping_uses_ordered_displays(tmp_path)
     assert resolved.target == {"L": str(left), "R": str(right)}
 
 
-def test_resolve_apply_settings_auto_split_requires_linux(tmp_path):
+def test_resolve_apply_settings_auto_split_resolves_target_without_plugin_capability_check(tmp_path, monkeypatch):
     wall = tmp_path / "wall.jpg"
     wall.write_bytes(b"x")
 
-    with pytest.raises(ValueError, match="per-monitor apply requires linux plugin"):
-        resolve_apply_settings(
-            file=wall,
-            plugin_name="windows",
-            apply_mode="per-monitor-auto-split",
-            displays=[Display(name="L", width=1920, height=1080, x_offset=0), Display(name="R", width=1280, height=1024, x_offset=1920)],
-        )
+    def fake_build_auto_split_display_map(file, displays, output_dir):
+        assert file == wall
+        assert [display.name for display in displays] == ["L", "R"]
+        assert output_dir == wall.parent
+        return {"L": str(tmp_path / "split-left.jpg"), "R": str(tmp_path / "split-right.jpg")}
+
+    monkeypatch.setattr("harite.apply_settings.build_auto_split_display_map", fake_build_auto_split_display_map)
+
+    resolved = resolve_apply_settings(
+        file=wall,
+        apply_mode="per-monitor-auto-split",
+        displays=[
+            Display(name="L", width=1920, height=1080, x_offset=0),
+            Display(name="R", width=1280, height=1024, x_offset=1920),
+        ],
+    )
+
+    assert resolved.apply_mode == "per-monitor-auto-split"
+    assert resolved.target == {"L": str(tmp_path / "split-left.jpg"), "R": str(tmp_path / "split-right.jpg")}

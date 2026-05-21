@@ -128,6 +128,7 @@ apply mode の決定順:
 - `--per-monitor` 単独では実行できず、`--left-file` / `--right-file` か `--auto-split` を伴う必要がある。
 - plugin 解決は command 先頭で行い、未知 plugin は終了コード `2` で止める。
 - `resolve_apply_settings(...)` により最終適用対象を構成してから plugin へ渡す。
+- apply target の解決自体は `apply_mode` と file / display 条件に基づく core 規則であり、選択済み plugin がその target を受け付けるかは CLI / plugin 側で扱う。
 - plugin が `False` を返した場合は終了コード `3` で扱う。
 - CLI 実装は `resolve_apply_settings(...)` に `output_dir=Path(".")` を渡しているため、`--auto-split` 時の split 出力先既定値は current working directory である。
 
