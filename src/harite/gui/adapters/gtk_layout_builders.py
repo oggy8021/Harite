@@ -107,10 +107,10 @@ def build_header_section(gtk_module: Any, root: Any) -> dict[str, Any]:
     flow_spacer = gtk_module.Label(label="")
     flow_row.pack_start(flow_spacer, True, True, 0)
 
-    optimize_btn = gtk_module.Button(label="Save As")
+    optimize_btn = gtk_module.Button(label="Export Image")
     if hasattr(optimize_btn, "set_sensitive"):
         optimize_btn.set_sensitive(False)
-    set_button_icon_if_supported(gtk_module, optimize_btn, "icons", "lucide", "save.svg")
+    set_button_icon_if_supported(gtk_module, optimize_btn, "icons", "lucide", "image-down.svg")
     flow_row.pack_start(optimize_btn, False, False, 0)
 
     return {

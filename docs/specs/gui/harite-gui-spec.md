@@ -61,7 +61,8 @@ Main Window:
 
 - header は 2 行構成で、1 行目は title を左、command bar を右に置く。
 - command bar には `Color`、`Settings`、`About` を右寄せで並べる。
-- 2 行目の flow row では左に `Compose -> Optimize -> Apply` を置き、右に `Save As` を置く。
+- 2 行目の flow row では左に `Compose -> Optimize -> Apply` を置き、右に `Export Image` を置く。
+- flow row の `Export Image` は optimize 結果画像の書き出し導線であり、設定ファイル保存とは別面である。
 - flow row の左端には導線説明として flow legend を常設する。
 - footer も 2 行構成で、1 行目は左に `Status`、右に `Slideshow summary` を置く。
 - footer 2 行目は separator の下に `Error` を置き、status と error を縦 2 段で分離する。
@@ -104,10 +105,12 @@ Slideshow tab:
 Dialogs:
 
 - settings dialog は単一の縦積み editor box を持ち、上から `header row`、`settings rows`、`actions row`、`notice separator`、`state/notice` を並べる。
-- settings dialog の header row は左に title、右に `Save` を置く。
+- settings dialog の header row は左に title、右に `Save Settings` を置く。
+- settings dialog の `Save Settings` は設定ファイル保存を指し、main window の `Export Image` や image export dialog とは別の保存面である。
 - settings dialog の現行 runtime 実装で常設 row として露出するのは `Resolution`、`Scaling`、`Plugin`、`Apply` である。
 - settings dialog の `Apply` row は radio を横並びに持つが、main tab の apply mode help label に相当する補助説明 row は持たない。
 - settings dialog は下段に `Settings: current values` を起点とする state label と notice label を持つ。
+- optimize 結果画像の書き出しには別の image export dialog を使い、user-facing surface は dialog title に `Export Image`、状態表示に `Export path`、選択結果表示に `Export target` を使う。
 - color dialog は title、picker host、値 entry、actions row、separator、state/notice の順で縦積みする。
 - color dialog は下段に `Color: ...` を起点とする state label と notice label を持つ。
 - about dialog は content 全体を window 内で上下中央寄せし、icon、title、version、description、credits、license、close button を縦積みする。
@@ -231,13 +234,13 @@ icon / resource surface:
 button と icon の対応:
 
 - header command では `Color` に `palette.svg`、`Settings` に `settings.svg`、`About` に `info.svg` を割り当てる。
-- flow row の `Save As` には `save.svg` を割り当てる。
+- flow row の `Export Image` には `image-down.svg` を割り当てる。
 - action cluster の `Optimize` には `image.svg`、`Apply` には `wallpaper.svg` を割り当てる。
 - input 面の direction toggle は `Top-*` に `arrow-up.svg`、`Bottom-*` に `arrow-down.svg`、`Left-*` に `arrow-left.svg`、`Right-*` に `arrow-right.svg` を割り当てる。
 - input 面の `Open-L` / `Open-R` と slideshow 面の `Srcdir-L` / `Srcdir-R` には `folder-open.svg` を割り当てる。
 - input 面の `Clear-L` / `Clear-R` には `folder-x.svg` を割り当てる。
 - slideshow 面の `Slideshow Start` と `Slideshow Stop` にはそれぞれ `play.svg` と `pause.svg` を割り当てる。
-- settings dialog では header の `Save` に `save.svg` を割り当てる。
+- settings dialog では header の `Save Settings` に `save.svg` を割り当てる。
 - 一方で settings dialog の `OK` / `Cancel` には現行実装で専用 icon 割当てはない。
 
 tray menu の現行項目:

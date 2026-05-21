@@ -120,6 +120,7 @@ flowchart TD
 - save は optimize 結果の出力先決定と書き出しを扱う。
 - apply は最終適用対象を解決したうえで plugin へ委譲する。
 - apply では、target 解決を core、plugin 名の選択と実行可否を呼び出し側 / plugin 側へ分けて扱う。
+- GUI では、設定保存と画像保存を別 surface として扱う。settings dialog の `Save Settings` は設定ファイルを保存し、main window の `Export Image` は今回の optimize 結果画像の書き出し先を扱う。
 
 責務を混同しないための整理:
 

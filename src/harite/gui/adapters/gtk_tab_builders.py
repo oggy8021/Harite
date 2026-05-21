@@ -317,10 +317,10 @@ def build_runtime_state_labels(gtk_module: Any) -> dict[str, Any]:
     do_it_plan_label = gtk_module.Label(label="Apply updates wallpaper immediately")
     set_xalign_if_supported(do_it_plan_label)
 
-    save_path_state_label = gtk_module.Label(label="Save path: idle")
+    save_path_state_label = gtk_module.Label(label="Export path: idle")
     set_xalign_if_supported(save_path_state_label)
 
-    save_target_label = gtk_module.Label(label="Save target: not-selected")
+    save_target_label = gtk_module.Label(label="Export target: not-selected")
     set_xalign_if_supported(save_target_label)
 
     priority_note_label = gtk_module.Label(
