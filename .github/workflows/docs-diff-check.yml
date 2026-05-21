@@ -23,7 +23,7 @@ jobs:
         run: |
           python scripts/apply_docs_replacements.py --dry-run --report docs/replacements-report-ci.md || true
 
-      - name: Count diff lines and fail if too large
+      - name: Count diff lines per file and fail if too large
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -32,15 +32,33 @@ jobs:
               print('No report found; passing')
               raise SystemExit(0)
           s = p.read_text(encoding='utf-8')
-          count = 0
+          per_file = {}
+          current = None
           for line in s.splitlines():
-              if line.startswith('+') and not line.startswith('+++'):
-                  count += 1
-              if line.startswith('-') and not line.startswith('---'):
-                  count += 1
-          print(f'Diff changed lines: {count}')
-          MAX = 300
-          if count > MAX:
-              print(f'Exceeded max allowed diff lines: {count} > {MAX}')
-              raise SystemExit(1)
+            if line.startswith('## '):
+              current = line[3:].strip()
+              per_file[current] = 0
+              continue
+            if current is None:
+              continue
+            if line.startswith('+') and not line.startswith('+++'):
+              per_file[current] += 1
+            if line.startswith('-') and not line.startswith('---'):
+              per_file[current] += 1
+
+          if not per_file:
+            print('No replacement diff entries found; passing')
+            raise SystemExit(0)
+
+          MAX_PER_FILE = 100
+          print('Replacement diff lines per file:')
+          for path, count in sorted(per_file.items(), key=lambda item: item[1], reverse=True):
+            print(f'  {count:>4}  {path}')
+
+          offenders = [(path, count) for path, count in per_file.items() if count > MAX_PER_FILE]
+          if offenders:
+            print(f'Exceeded max allowed diff lines in a single file: > {MAX_PER_FILE}')
+            for path, count in sorted(offenders, key=lambda item: item[1], reverse=True):
+              print(f'  offender: {count:>4}  {path}')
+            raise SystemExit(1)
           PY

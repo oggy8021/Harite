@@ -63,7 +63,7 @@ sequenceDiagram
 ## 4. `optimize`
 
 - 入力画像、表示条件、scaling、margins、align、background_color、embed 系を受け取る。
-- `--settings-file` が与えられた場合は設定ファイルを読み、CLI 引数を優先して上書きする。
+- `--settings-file` は optimize 専用 option であり、与えられた場合は設定ファイルを読み、CLI 引数を優先して上書きする。apply / slideshow は `--settings-file` を受け付けない。
 - 成功時は `Saved:` と `Placement:` を出力する。
 
 主要な流れ:
