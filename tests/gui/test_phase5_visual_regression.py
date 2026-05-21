@@ -30,7 +30,7 @@ def test_phase5_visual_tokens_snapshot_is_stable():
         "apply_section": "Apply",
         "apply_mode": "Apply the optimized image as a single file.",
         "flow": "Compose -> Optimize -> Apply",
-        "save": "Save As",
+        "save": "Export Image",
         "optimize": "Optimize",
         "apply": "Apply",
         "settings": "Settings",

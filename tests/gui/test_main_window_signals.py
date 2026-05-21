@@ -168,7 +168,7 @@ def test_save_path_selected_uses_explicit_existing_path():
     assert ok is True
     assert window.save_path_dialog_open is False
     assert window.form_state.save_path == "/tmp/existing-save.jpg"
-    assert window.save_target_display == "Save target: /tmp/existing-save.jpg"
+    assert window.save_target_display == "Export target: /tmp/existing-save.jpg"
     assert window.status_level == "success"
     assert window.status_phase == "save"
     assert window.status_message == "save completed"
@@ -257,7 +257,7 @@ def test_layout_blueprint_defines_grouping_and_flow():
     assert bp["status"]["level"] == "idle"
     assert bp["status"]["phase"] == "init"
     assert bp["status"]["message"] == "ready"
-    assert bp["status"]["save_target"] == "Save target: not-selected"
+    assert bp["status"]["save_target"] == "Export target: not-selected"
     assert bp["status"]["slideshow_sources"] == "Slideshow srcdirs: L=- | R=-"
     assert bp["status"]["slideshow_current"] == "Slideshow current: idle"
 
@@ -275,13 +275,13 @@ def test_save_path_selected_updates_single_save_target_display():
     window.controller = DummyController()
     window.on_change_input_text("a.jpg")
 
-    assert window.save_target_display == "Save target: not-selected"
+    assert window.save_target_display == "Export target: not-selected"
 
     assert window.on_save_as() is True
-    assert window.save_target_display == "Save target: not-selected"
+    assert window.save_target_display == "Export target: not-selected"
 
     assert window.on_save_path_selected("/tmp/result.jpg") is True
-    assert window.save_target_display == "Save target: /tmp/result.jpg"
+    assert window.save_target_display == "Export target: /tmp/result.jpg"
 
 
 def test_on_optimize_runs_and_logs(tmp_path):

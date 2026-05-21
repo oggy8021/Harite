@@ -1064,7 +1064,7 @@ def test_runtime_backend_shows_current_labels_and_controls():
     assert backend.get_object("btnCancelSave") is None
     assert hasattr(save_path_chooser, "get_filename")
     assert hasattr(save_path_chooser, "set_filename")
-    assert save_path_state.text == "Save path: idle"
+    assert save_path_state.text == "Export path: idle"
     assert slideshow_start.label == "Slideshow Start"
     assert slideshow_stop.label == "Slideshow Stop"
     assert slideshow_source_l.text == "L: -"
@@ -1080,7 +1080,9 @@ def test_runtime_backend_shows_current_labels_and_controls():
     assert color_btn.image is not None
     assert settings_btn.image is not None
     assert about_btn.image is not None
-    assert save_btn.label == "Save As"
+    assert save_btn.label == "Export Image"
+    assert save_btn.image is not None
+    assert save_btn.image.file_path.endswith("image-down.svg")
     assert optimize_btn.label == "Optimize"
     assert apply_btn.label == "Apply"
     assert tgl_upper_l.label == "Top-L"
@@ -2362,8 +2364,8 @@ def test_runtime_backend_save_click_passes_selected_path_to_handler():
 
     assert observed["filename"] == "/tmp/from-runtime-dialog.jpg"
     assert save_path_chooser.is_visible() is False
-    assert save_path_state.text == "Save path: saved"
-    assert save_target.text == "Save target: /tmp/from-runtime-dialog.jpg"
+    assert save_path_state.text == "Export path: saved"
+    assert save_target.text == "Export target: /tmp/from-runtime-dialog.jpg"
     assert status.text == "SavePath: saved"
     assert error.text == "Error: none"
 
@@ -2401,10 +2403,11 @@ def test_runtime_backend_native_save_path_chooser_confirm_runs_modal_flow():
     backend.get_object("btnSave").click()
 
     assert observed == {"save": 1, "confirm": "/tmp/native-save.jpg", "cancel": 0}
-    assert save_path_state.text == "Save path: saved"
+    assert save_path_state.text == "Export path: saved"
     assert status.text == "SavePath: saved"
     assert error.text == "Error: none"
     assert _NativeFileChooserDialog.last_created is not None
+    assert _NativeFileChooserDialog.last_created.title == "Export Image"
     assert _NativeFileChooserDialog.last_created.action == _NativeFakeGtk.FileChooserAction.SAVE
     assert _NativeFileChooserDialog.last_created.overwrite_confirmation is True
     assert _NativeFileChooserDialog.last_created.current_name == "harite-output.jpg"
@@ -2443,7 +2446,7 @@ def test_runtime_backend_native_save_path_chooser_cancel_does_not_continue_save_
     backend.get_object("btnSave").click()
 
     assert observed == {"save": 1, "confirm": 0, "cancel": 1}
-    assert save_path_state.text == "Save path: canceled"
+    assert save_path_state.text == "Export path: canceled"
     assert status.text == "SavePath: canceled"
     assert error.text == "Error: none"
 
@@ -2482,8 +2485,9 @@ def test_runtime_backend_save_click_without_path_uses_default_filename():
 
     assert called["filename"].endswith("harite-output.jpg")
     assert save_path_chooser.is_visible() is False
-    assert save_path_state.text == "Save path: saved"
+    assert save_path_state.text == "Export path: saved"
     assert save_target.text.endswith("harite-output.jpg")
+    assert save_target.text.startswith("Export target: ")
     assert status.text == "SavePath: saved"
     assert error.text == "Error: none"
 
@@ -2540,7 +2544,7 @@ def test_runtime_backend_save_path_chooser_cancel_calls_current_handler_on_nativ
     backend.get_object("btnSave").click()
 
     assert observed["called"] is True
-    assert save_path_state.text == "Save path: canceled"
+    assert save_path_state.text == "Export path: canceled"
     assert status.text == "SavePath: canceled"
     assert error.text == "Error: none"
 
@@ -2583,8 +2587,8 @@ def test_runtime_backend_save_path_chooser_filename_change_updates_target_label(
     save_path_chooser.show()
     save_path_chooser.set_filename("/tmp/selected.jpg")
 
-    assert save_path_state.text == "Save path: ready"
-    assert save_target.text == "Save target: /tmp/selected.jpg"
+    assert save_path_state.text == "Export path: ready"
+    assert save_target.text == "Export target: /tmp/selected.jpg"
 
 
 def test_runtime_backend_prefers_save_path_dialog_close_handler_name():
@@ -2894,6 +2898,8 @@ def test_runtime_backend_settings_ok_save_and_cancel_dispatch_handlers(tmp_path)
     observed = {"apply": None, "save": None, "close": 0}
 
     assert save_btn.image is not None
+    assert save_btn.label == "Save Settings"
+    assert save_btn.image.file_path.endswith("save.svg")
 
     export_path = tmp_path / "save-settings.json"
     dialog.set_settings(
