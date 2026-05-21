@@ -1038,7 +1038,7 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="SlideshowMode", state="error", error=str(exc))
 
     def _on_save_clicked(self, *_args: Any) -> None:
-        # P6 direction: Save As keeps chooser semantics, but fallback should not
+        # P6 direction: Export Image keeps chooser semantics, but fallback should not
         # depend on separate confirm/cancel controls.
         callback = self._signal_handlers.get("on_save_as")
         if callback is not None:

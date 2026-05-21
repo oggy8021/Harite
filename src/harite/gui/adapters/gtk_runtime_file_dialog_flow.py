@@ -21,9 +21,9 @@ def on_save_path_filename_changed(backend: Any, filename: str) -> None:
     if not is_save_path_dialog_open(backend):
         return
     if str(filename or "").strip():
-        backend._set_save_path_state_text("Save path: ready")
+        backend._set_save_path_state_text("Export path: ready")
     else:
-        backend._set_save_path_state_text("Save path: required")
+        backend._set_save_path_state_text("Export path: required")
 
 
 def is_save_path_dialog_open(backend: Any) -> bool:
@@ -53,7 +53,7 @@ def on_input_changed(backend: Any, entry: Any) -> None:
     backend._set_button_enabled("btnOptimize", has_input)
     backend._set_button_enabled("btnSetWall", False)
     if not has_input:
-        set_save_path_dialog_open_state(backend, False, state_text="Save path: reset")
+        set_save_path_dialog_open_state(backend, False, state_text="Export path: reset")
     backend._set_label_text("lblOptimizeResult", "Optimize result: not-run")
     backend._set_label_text("lblApplyTarget", "Apply target: not-ready")
 
@@ -298,13 +298,13 @@ def handle_save_path_confirm(backend: Any, filename: str) -> None:
         return
     try:
         if not filename:
-            backend._set_save_path_state_text("Save path: required")
+            backend._set_save_path_state_text("Export path: required")
             backend._set_feedback(phase="SavePath", state="path-required", error="save path is required")
             return
         backend._refresh_save_target_label(filename)
         ok = callback(filename)
         if ok:
-            set_save_path_dialog_open_state(backend, False, state_text="Save path: saved")
+            set_save_path_dialog_open_state(backend, False, state_text="Export path: saved")
             backend._set_feedback(phase="SavePath", state="saved")
             backend._notify_save_path_dialog_destroy()
         else:
@@ -321,7 +321,7 @@ def handle_save_path_cancel(backend: Any) -> None:
         except TypeError as exc:
             backend._set_feedback(phase="SavePath", state="error", error=str(exc))
             return
-    set_save_path_dialog_open_state(backend, False, state_text="Save path: canceled")
+    set_save_path_dialog_open_state(backend, False, state_text="Export path: canceled")
     backend._set_feedback(phase="SavePath", state="canceled")
     backend._notify_save_path_dialog_destroy()
 

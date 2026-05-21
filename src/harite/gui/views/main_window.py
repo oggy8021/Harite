@@ -53,7 +53,7 @@ class MainWindow:
         self.available_plugins = tuple(plugin_registry.list())
         self.plugin_name = self._default_plugin_name()
         self.last_saved_files: list[Path] = []
-        self.save_target_display = "Save target: not-selected"
+        self.save_target_display = "Export target: not-selected"
         self.apply_mode = self._default_apply_mode()
         self._pre_two_screen_resolution: str | None = None
         self.slideshow_interval_seconds = 60
@@ -457,9 +457,9 @@ class MainWindow:
     def _update_save_target_display(self, save_path: str | None = None) -> None:
         value = (save_path or self.form_state.save_path or "").strip()
         if value:
-            self.save_target_display = f"Save target: {value}"
+            self.save_target_display = f"Export target: {value}"
             return
-        self.save_target_display = "Save target: not-selected"
+        self.save_target_display = "Export target: not-selected"
 
     def _update_slideshow_source_display(self) -> None:
         left = self.slideshow_srcdir_l or "-"
@@ -1011,7 +1011,7 @@ class MainWindow:
             self._log(f"Save path selected: {value}")
             if not self.can_optimize:
                 self._set_status("error", "save", "input is required", error="input is required")
-                self._log("Save As blocked: input is required")
+                self._log("Export Image blocked: input is required")
                 return False
 
             self._set_status("running", "save", "saving composite")
@@ -1019,11 +1019,11 @@ class MainWindow:
                 saved, _placements = self.controller.run_export(self.form_state, value)
             except ValueError as exc:
                 self._set_status("error", "save", "save failed", error=str(exc))
-                self._log(f"Save As failed: {exc}")
+                self._log(f"Export Image failed: {exc}")
                 return False
 
             self._set_status("success", "save", "save completed")
-            self._log(f"Save As completed: {saved[-1]}")
+            self._log(f"Export Image completed: {saved[-1]}")
             return True
         self._set_status("error", "save_path", "save path is required", error="save path is required")
         self._log("Save path selection rejected: save path is required")

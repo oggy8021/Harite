@@ -39,7 +39,7 @@ class SavePathDialogProxy:
         gtk = self._gtk
         assert gtk is not None
         dialog = gtk.FileChooserDialog(
-            title="Save wallpaper",
+            title="Export Image",
             parent=self._parent_window,
             action=gtk.FileChooserAction.SAVE,
         )

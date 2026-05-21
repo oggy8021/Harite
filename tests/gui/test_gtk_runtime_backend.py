@@ -3199,7 +3199,7 @@ def test_runtime_backend_save_button_skips_optimize_handler_and_reports_missing_
 
     assert calls == ["save"]
     assert save_path_chooser.is_visible() is False
-    assert save_path_state.text == "Save path: idle"
+    assert save_path_state.text == "Export path: idle"
     assert status.text == "SavePath: handler-missing"
 
 

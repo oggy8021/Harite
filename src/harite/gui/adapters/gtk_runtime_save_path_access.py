@@ -46,6 +46,6 @@ def refresh_save_target_label(backend: Any, filename: str | None = None) -> None
     if not value:
         value = current_save_path_filename(backend)
     if value:
-        backend._set_label_text("lblSaveTarget", f"Save target: {value}")
+        backend._set_label_text("lblSaveTarget", f"Export target: {value}")
         return
-    backend._set_label_text("lblSaveTarget", "Save target: not-selected")
+    backend._set_label_text("lblSaveTarget", "Export target: not-selected")

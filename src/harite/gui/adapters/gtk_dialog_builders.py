@@ -16,7 +16,7 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
     if hasattr(prefs_window, "set_resizable"):
         prefs_window.set_resizable(True)
 
-    prefs_save_btn = gtk_module.Button(label="Save")
+    prefs_save_btn = gtk_module.Button(label="Save Settings")
     set_button_icon_if_supported(gtk_module, prefs_save_btn, "icons", "lucide", "save.svg")
     prefs_ok_btn = gtk_module.Button(label="OK")
     prefs_cancel_btn = gtk_module.Button(label="Cancel")
