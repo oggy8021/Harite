@@ -740,7 +740,6 @@ class MainWindow:
         try:
             effective_apply = resolve_apply_settings(
                 file=composite_path,
-                plugin_name=self.plugin_name,
                 apply_mode=self.apply_mode,
                 output_dir=composite_path.parent,
             )
@@ -1164,7 +1163,6 @@ class MainWindow:
             composite_path = saved_files[-1]
             effective_apply = resolve_apply_settings(
                 file=composite_path,
-                plugin_name=self.plugin_name,
                 apply_mode="per-monitor-auto-split",
                 output_dir=composite_path.parent,
             )

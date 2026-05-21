@@ -52,10 +52,20 @@ def test_windows_plugin_missing_file():
     assert plugin.apply("nonexistent-file.jpg", dry_run=True) is False
 
 
+def test_windows_plugin_rejects_monitor_map():
+    plugin = plugins.registry.get("windows")
+    assert plugin.apply({"HDMI-1": "tests/data/left.jpg"}, dry_run=True) is False
+
+
 def test_macos_plugin_dry_run():
     plugin = plugins.registry.get("macos")
     p = Path("tests/data/left.jpg")
     assert plugin.apply(str(p), dry_run=True) is True
+
+
+def test_macos_plugin_rejects_monitor_map():
+    plugin = plugins.registry.get("macos")
+    assert plugin.apply({"HDMI-1": "tests/data/left.jpg"}, dry_run=True) is False
 
 
 def test_linux_plugin_dry_run():
