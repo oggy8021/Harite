@@ -147,23 +147,21 @@ GUI は単なるタイマー処理ではなく、状態表示の責務を強く�
 
 - 入力 directory からの画像収集
 - サイクル実行
-- dry-run / do-it 切り替え
-- `Slideshow start` / `Slideshow cycle` / `Slideshow completed` 実行メッセージ出力
+- plugin 解決と各サイクルの実 apply
+- `Slideshow start` / `Slideshow cycle` / `Slideshow interrupted by user` 実行メッセージ出力
 
 CLI `slideshow` command の特徴:
 
-- `dry_run=True` では plugin を使わず、サイクル数のみを進める。
-- `dry_run=False` のときだけ plugin を解決し、各サイクルで `apply(...)` を呼ぶ。
+- user-facing には dedicated dry-run surface を持たず、開始後は各サイクルで `apply(...)` を呼ぶ。
 - plugin が例外を投げてもループ全体を即停止せず、そのサイクルの `apply_error` カウンタを 1 件増やす。
 - plugin が `False` を返した場合は、そのサイクルの `apply_failed` カウンタを 1 件増やす。
-- これらのカウンタは各サイクルの途中で保持され、最後に `Slideshow completed` 行の実行メッセージ要約として出力される。
+- これらのカウンタは各サイクルの途中で保持され、bounded run や将来の明示完了経路がある場合にだけ `Slideshow completed` 行の実行メッセージ要約として出力する。
 - `log_level` option は持たず、固定方針は旧 `normal` 相当とする。
-- 失敗がない間は `Slideshow start` と `Slideshow completed` を中心に出し、`Slideshow cycle=...` は失敗サイクルでだけ出す。
-- したがって dry-run や成功のみの実 apply では cycle 行を出さない。
+- 継続実行の通常停止は `Ctrl+C` による `Slideshow interrupted by user` を中心に扱い、`Slideshow cycle=...` は失敗サイクルでだけ出す。
+- したがって成功のみの実 apply では cycle 行を出さない。
 
 集計規則の補足:
 
-- helper が返す `completed` は実行済みサイクル数そのものであり、dry-run 時はこの件数が `cycles` と `dry_run_cycles` に反映される。
 - 実 apply 時の `apply_ok`, `apply_failed`, `apply_error` はサイクルごとの結果分類であり、1 サイクルで多重加算しない。
 
 ## 8. 出力と観測面

@@ -225,6 +225,7 @@ Try 'harite optimize --help' for help.
 対象:
 
 - A. slideshow dry-run 廃止
+- E. embed-position 配置規則の見直しと GUI / core / CLI 整合
 - H. background-color help 見直し
 - I. settings-file help 見直し
 - J. scaling user-facing 露出停止と `fill` / `crop` 廃止

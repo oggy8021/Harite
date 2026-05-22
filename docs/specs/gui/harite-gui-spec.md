@@ -258,10 +258,9 @@ app -> views/main_window -> controllers/services -> adapters(GTK runtime)
 margin text position の visible semantics:
 
 - `Margins` 面は margin text position を 4 つの radio で見せる: `Left Top`, `Left Bottom`, `Right Top`, `Right Bottom`。
-- GUI state / Settings / CLI / core の内部値は `embed_position=top|left|right|bottom` で統一する。
-- visible 4 位置との対応は `top=Left Top`, `left=Left Bottom`, `right=Right Top`, `bottom=Right Bottom` である。
-- `auto` が読み込まれた場合、GUI 表示上は `bottom` と同義に正規化して扱う。
-- `auto` だけでなく未知値も、現行 GUI では `_normalize_margin_text_position(...)` により `bottom` へ正規化する。
+- GUI state / Settings / CLI / core の `embed_position` は `left-top|left-bottom|right-top|right-bottom` で統一する。
+- radio 表示と内部値は 1 対 1 に対応し、`Left Top=left-top`, `Left Bottom=left-bottom`, `Right Top=right-top`, `Right Bottom=right-bottom` である。
+- `embed_position` が未指定のときの既定値は `right-bottom` である。
 
 ### 詳細分類
 
