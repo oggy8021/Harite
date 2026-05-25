@@ -54,7 +54,7 @@ def start_slideshow_timer(backend: Any, interval_seconds: int) -> bool:
 
 
 def run_slideshow_cycle_for_side(backend: Any, side: str, source_dir: Path) -> str:
-    images = collect_slideshow_input_images(source_dir)
+    images = collect_slideshow_input_images([source_dir])
     mode = str(getattr(backend, "_slideshow_active_mode", getattr(backend, "slideshow_mode", "random")) or "random")
     if side == "L":
         selected, state = run_slideshow_cycle(images, mode, backend._slideshow_state_l)

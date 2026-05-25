@@ -1045,7 +1045,7 @@ class MainWindow:
         return True
 
     def _run_slideshow_cycle_for_side(self, side: str, source_dir: Path) -> str:
-        images = collect_slideshow_input_images(source_dir)
+        images = collect_slideshow_input_images([source_dir])
         mode = self._slideshow_active_mode if self._slideshow_active_mode else self.slideshow_mode
         if side == "L":
             selected, state = run_slideshow_cycle(images, mode, self._slideshow_state_l)

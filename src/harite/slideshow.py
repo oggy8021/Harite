@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import random
 import time
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable, List, Sequence
 
 
 _IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp"}
@@ -18,17 +18,23 @@ class SlideshowCycleState:
     completed: int = 0
 
 
-def collect_slideshow_input_images(input_dir: Path) -> List[Path]:
-    """Collect image files from an input directory.
+def collect_slideshow_input_images(input_dirs: Sequence[Path]) -> List[Path]:
+    """Collect image files from one or more input directories.
 
     This function performs input validation for slideshow execution.
     """
-    if not input_dir.exists() or not input_dir.is_dir():
+    if not input_dirs:
         raise ValueError("--input must be an existing directory")
 
-    images = sorted(
-        p for p in input_dir.iterdir() if p.is_file() and p.suffix.lower() in _IMAGE_EXTS
-    )
+    images: List[Path] = []
+    for input_dir in input_dirs:
+        if not input_dir.exists() or not input_dir.is_dir():
+            raise ValueError("--input must be an existing directory")
+        images.extend(
+            sorted(
+                p for p in input_dir.iterdir() if p.is_file() and p.suffix.lower() in _IMAGE_EXTS
+            )
+        )
     if not images:
         raise ValueError("no image files found in --input directory")
     return images
