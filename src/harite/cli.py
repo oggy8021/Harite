@@ -293,10 +293,7 @@ def optimize(
     if embed_info not in ("none", "params", "free", "combo"):
         typer.echo("--embed-info must be one of: none, params, free, combo")
         raise typer.Exit(code=2)
-    embed_position_source = ctx.get_parameter_source("embed_position")
     embed_position = str(resolve_option_value("embed_position", embed_position, cfg, ctx) or "right-bottom").lower()
-    if embed_position == "auto" and embed_position_source != ParameterSource.COMMANDLINE:
-        embed_position = "right-bottom"
     if embed_position not in ("left-top", "left-bottom", "right-top", "right-bottom"):
         typer.echo("--embed-position must be one of: left-top, left-bottom, right-top, right-bottom")
         raise typer.Exit(code=2)

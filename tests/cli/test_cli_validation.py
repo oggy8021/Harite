@@ -68,7 +68,6 @@ def test_optimize_help_reflects_current_surface() -> None:
     assert "--settings-file" in output
     assert "--embed-position" in output
     assert "--scaling" not in output
-    assert "auto|top|bottom|left|right" not in output
 
 
 def test_optimize_rejects_invalid_embed_info(tmp_path):
@@ -115,25 +114,25 @@ def test_optimize_rejects_invalid_embed_position(tmp_path):
     assert "--embed-position must be one of" in result.output
 
 
-def test_optimize_rejects_legacy_embed_position_value(tmp_path):
+def test_optimize_rejects_invalid_embed_position_value_from_settings(tmp_path):
     runner = CliRunner()
-    img = tmp_path / "a.jpg"
-    from PIL import Image
 
-    Image.new("RGB", (10, 10), (100, 100, 100)).save(img)
-    result = runner.invoke(
-        cli.app,
-        [
-            "optimize",
-            "--input",
-            str(img),
-            "--resolution",
-            "100x100",
-            "--embed-position",
-            "top",
-        ],
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(
+        json.dumps(
+            {
+                "input": ["from_config.jpg"],
+                "resolution": "1600x900",
+                "embed_position": "middle",
+            }
+        ),
+        encoding="utf-8",
     )
+
+    result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
+
     assert result.exit_code == 2
+    assert "--embed-position must be one of" in result.output
     assert "left-top" in result.output
     assert "right-bottom" in result.output
 

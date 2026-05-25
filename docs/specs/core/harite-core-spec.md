@@ -125,6 +125,7 @@ flowchart TD
 
 - GUI / Settings / CLI / core の `embed_position` は `left-top|left-bottom|right-top|right-bottom` で統一する。
 - `embed_position` が未指定のときの既定値は `right-bottom` である。
+- したがって現行の設定値・GUI state・CLI 引数では、`embed_position` はこの 4 値だけを正規入力として保持する。
 - single-screen の embed 領域では、まず `usable_left = max(0, ml)`, `usable_right = max(usable_left, w_target - max(0, mr))`, `usable_width = max(0, usable_right - usable_left)` を作る。
 - そのうえで左右半分は `left_slice_width = usable_width // 2`, `right_slice_width = usable_width - left_slice_width` で分ける。single-screen では `left-top` は左半分上端、`left-bottom` は左半分下端、`right-top` は右半分上端、`right-bottom` は右半分下端に対応する。
 - two-screen で display 情報がある場合も、配置面は left display / right display の上側・下側 4 位置だけを持つ。`left-top` は left display の上端、`left-bottom` は left display の下端、`right-top` は right display の上端、`right-bottom` は right display の下端に対応する。slice 内部の横範囲は `x0 = offset_x + ml`, `x1 = max(x0, offset_x + slice_w - mr)` であり、上端側は `(x0, 0, x1, mt)`、下端側は `(x0, slice_h - mb, x1, slice_h)` を基底にする。

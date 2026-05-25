@@ -87,6 +87,7 @@ sequenceDiagram
 - `background_color` の値規則自体は `#` の有無を許容するが、CLI help と例示は shell 誤解を避けるため `E0E0E0` のような 6 桁 HEX を基準にする。
 - `embed_position` は `left-top|left-bottom|right-top|right-bottom` の 4 値だけを受け付ける。help でも同じ 4 値をそのまま見せる。
 - `embed_position` が未指定のときの既定値は `right-bottom` である。
+- この 4 値制約は CLI 引数だけでなく `--settings-file` から読んだ値にも同じように適用する。4 値以外は不正として扱う。
 
 display / two-screen 解決:
 
