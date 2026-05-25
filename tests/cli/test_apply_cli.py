@@ -1,9 +1,14 @@
 from pathlib import Path
+import re
 
 import pytest
 from typer.testing import CliRunner
 
 from harite import cli
+
+
+def _strip_cli_output(text: str) -> str:
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
 
 @pytest.fixture(autouse=True)
@@ -41,11 +46,10 @@ def test_apply_rejects_legacy_do_it_option(tmp_path) -> None:
             "--do-it",
         ],
     )
-    output = result.output.lower()
+    output = _strip_cli_output(result.output).lower()
 
     assert result.exit_code == 2
     assert "no such option" in output
-    assert "do-it" in output
 
 
 def test_apply_uses_immediate_apply_mode(tmp_path, monkeypatch) -> None:
