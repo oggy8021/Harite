@@ -57,7 +57,7 @@
 - B. optimize の `--input file1,file2` が 2 枚入力として扱われない件
   現行 CLI 側の help / 案内では、optimize の `--input` は「カンマ区切りまたは `--input` の繰り返しで複数パスを指定できる」と読める一方、実機観測では comma 区切り 1 トークンが 2 枚入力として扱われていない。したがってこの論点は public rule の弱さだけでなく、help と実挙動の矛盾を含んでおり、改修対象として扱う。
 - C. 単純 apply で file path を解決できず失敗する件
-  現行 plugin 正本には、Linux single-file apply/dry-run は `Path(...).expanduser().resolve()` 後の存在確認で成否を決めるとある。したがって「存在しないと失敗する」 gate 自体は説明できるが、B の試験で直前に成功した出力ファイルを削除していないにもかかわらず C で not found になっている以上、単なる利用者操作ではなく実装側の不整合を疑うべき段階である。よって C は source 解析と再現時の入出力点検を要する改修対象として扱う。
+  当初は source 解析対象として扱ったが、その後の確認で `harite_output_0044.jpg` に対し `harite_output_044.jpg` を指定しており、Owner のオペミスであったことが判明した。現行 plugin 正本どおり、Linux single-file apply は `Path(...).expanduser().resolve()` 後の存在確認で成否を決める理解でよい。したがって C は実装不整合論点ではなく、今回の WS6 input / apply-path 系の改修対象からは外す。
 
 ### CLI版スライドショーにて、"--input must be an existing directory" と言われてしまう [#307](https://github.com/oggy8021/Harite/issues/307)
 
@@ -104,7 +104,8 @@ Wallpaper file does not exist: /home/katsu/ピクチャ/harite_output_044.jpg
 Plugin 'linux' failed to apply wallpaper: /home/katsu/ピクチャ/harite_output_044.jpg
 ```
 
-- この問題があるため、他 Apply 検証の一切ができなかった。
+- これは `harite_output_0044.jpg` ではなく `harite_output_044.jpg` を指定したことによる Owner のオペミスであった。
+- 現行の apply path 解決不具合ではないため、C 自体は改修対象から外す。
 
 ### D. マージン領域を用意せず、embed-info=params としたときにそのまま実行された
 
@@ -258,7 +259,6 @@ Try 'harite optimize --help' for help.
 
 - #307. slideshow input directory 指定面の整理
 - B. optimize input comma 区切りと help 整合
-- C. apply path not found の原因解析と改修
 
 実施順:
 

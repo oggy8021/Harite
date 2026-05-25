@@ -65,6 +65,7 @@ sequenceDiagram
 - 入力画像、表示条件、margins、align、background_color、embed 系を受け取る。
 - `--settings-file` は optimize 専用 option であり、与えられた場合は設定ファイルを読み、CLI 引数を優先して上書きする。apply / slideshow は `--settings-file` を受け付けない。
 - help では `--settings-file` を optimize 用 defaults を読む option だと分かる文言で説明する。規範文言は `Optional path to optimize settings JSON` を基準にする。
+- help では `--input` を、カンマ区切りまたは `--input` の繰り返しで最大 2 件まで受け付ける画像入力だと分かる文言で説明する。規範文言は `Input file(s). Use comma-separated paths or repeat --input.` を基準にする。
 - `scaling` は public surface から外す。optimize の拡大縮小は内部で fit 系計算を使い、`fill` / `crop` は user-facing option として露出しない。
 - 成功時は `Saved:` と `Placement:` を出力する。
 
@@ -141,6 +142,7 @@ apply mode の決定順:
 - command 名も `slideshow` とし、public surface の機能名と揃える。
 - 入力 directory を 1 件または左右 2 件のスライドショー実行対象として扱う。
 - `mode`, `interval_sec`, `plugin` を扱う。
+- help では `--input` を、カンマ区切りまたは `--input` の繰り返しで source directory を指定できる option だと分かる文言で説明する。規範文言は `Input directories. Use comma-separated paths or repeat --input.` を基準にする。
 
 slideshow command の意味:
 

@@ -271,6 +271,77 @@ def test_optimize_cli_values_override_settings(tmp_path, monkeypatch):
     assert captured["target_resolution"] == (1920, 1080)
 
 
+def test_optimize_uses_only_first_two_cli_inputs(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    first = tmp_path / "first.jpg"
+    second = tmp_path / "second.jpg"
+    third = tmp_path / "third.jpg"
+    for path in (first, second, third):
+        path.write_bytes(b"x")
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    monkeypatch.setattr("harite.optimize_settings.build_two_screen_optimize_context", lambda: None)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--input",
+            f"{first},{second}",
+            "--input",
+            str(third),
+            "--resolution",
+            "1920x1080",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["inputs"] == [str(first), str(second)]
+
+
+def test_optimize_ignores_invalid_third_input_after_first_two(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    first = tmp_path / "first.jpg"
+    second = tmp_path / "second.jpg"
+    invalid_third = tmp_path / "third-dir"
+    first.write_bytes(b"x")
+    second.write_bytes(b"x")
+    invalid_third.mkdir()
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    monkeypatch.setattr("harite.optimize_settings.build_two_screen_optimize_context", lambda: None)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--input",
+            str(first),
+            "--input",
+            str(second),
+            "--input",
+            str(invalid_third),
+            "--resolution",
+            "1920x1080",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["inputs"] == [str(first), str(second)]
+
+
 def test_optimize_uses_settings_for_margins_and_displays(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
