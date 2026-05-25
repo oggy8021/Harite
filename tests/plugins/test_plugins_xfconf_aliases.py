@@ -32,4 +32,4 @@ def test_name_alias_matching(monkeypatch):
     mapping = {"displayport1": "/tmp/wall.jpg"}
 
     # applying should succeed by alias-based matching
-    assert plugin.apply(mapping, dry_run=False) is True
+    assert plugin.apply(mapping) is True

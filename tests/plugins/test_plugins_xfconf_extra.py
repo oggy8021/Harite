@@ -29,12 +29,12 @@ def test_fuzzy_monitor_name_matching(monkeypatch):
     plugin = LinuxPlugin()
     mapping = {"HDMI-1": "/tmp/wall.jpg"}
 
-    assert plugin.apply(mapping, dry_run=False) is True
+    assert plugin.apply(mapping) is True
     # ensure an xfconf set command targeting a property was attempted
     assert any(cmd[0] == "xfconf-query" and "-s" in cmd for cmd in calls)
 
 
-def test_dryrun_prefers_gsettings_when_present(monkeypatch, tmp_path):
+def test_apply_prefers_gsettings_when_present(monkeypatch, tmp_path):
     # no xfconf, but gsettings present
     monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/gsettings" if name == "gsettings" else None)
 
@@ -50,10 +50,10 @@ def test_dryrun_prefers_gsettings_when_present(monkeypatch, tmp_path):
     monkeypatch.setattr(subprocess, "run", fake_run)
 
     plugin = LinuxPlugin()
-    assert plugin.apply(str(f), dry_run=True) is True
+    assert plugin.apply(str(f)) is True
 
 
-def test_dryrun_prefers_feh_when_present(monkeypatch, tmp_path):
+def test_apply_prefers_feh_when_present(monkeypatch, tmp_path):
     # neither xfconf nor gsettings, but feh present
     monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/feh" if name == "feh" else None)
 
@@ -69,7 +69,7 @@ def test_dryrun_prefers_feh_when_present(monkeypatch, tmp_path):
     monkeypatch.setattr(subprocess, "run", fake_run)
 
     plugin = LinuxPlugin()
-    assert plugin.apply(str(f), dry_run=True) is True
+    assert plugin.apply(str(f)) is True
 
 
 def test_xfconf_list_failure_falls_back_and_reports_false(monkeypatch, tmp_path):
@@ -88,4 +88,4 @@ def test_xfconf_list_failure_falls_back_and_reports_false(monkeypatch, tmp_path)
     f.write_text("x")
 
     # with xfconf list failure and no other setters, applying should return False
-    assert plugin.apply(str(f), dry_run=False) is False
+    assert plugin.apply(str(f)) is False

@@ -123,18 +123,14 @@ def test_build_embed_lines_without_datetime():
     assert "datetime" not in joined
 
 
-def test_phase8_embed_position_helpers_map_to_quadrants():
-    from harite.core import describe_embed_position, resolve_embed_margin_region
+def test_embed_position_helpers_use_display_position_values():
+    from harite.core import resolve_embed_margin_region
 
-    assert describe_embed_position("top") == "left top"
-    assert describe_embed_position("left") == "left bottom"
-    assert describe_embed_position("right") == "right top"
-    assert describe_embed_position("bottom") == "right bottom"
-
-    assert resolve_embed_margin_region((1920, 1080), (10, 10, 20, 30), "top") == (10, 0, 960, 20)
-    assert resolve_embed_margin_region((1920, 1080), (10, 10, 20, 30), "left") == (10, 1050, 960, 1080)
-    assert resolve_embed_margin_region((1920, 1080), (10, 10, 20, 30), "right") == (960, 0, 1910, 20)
-    assert resolve_embed_margin_region((1920, 1080), (10, 10, 20, 30), "bottom") == (960, 1050, 1910, 1080)
+    assert resolve_embed_margin_region((1920, 1080), (10, 10, 20, 30), "left-top") == (10, 0, 960, 20)
+    assert resolve_embed_margin_region((1920, 1080), (10, 10, 20, 30), "left-bottom") == (10, 1050, 960, 1080)
+    assert resolve_embed_margin_region((1920, 1080), (10, 10, 20, 30), "right-top") == (960, 0, 1910, 20)
+    assert resolve_embed_margin_region((1920, 1080), (10, 10, 20, 30), "right-bottom") == (960, 1050, 1910, 1080)
+    assert resolve_embed_margin_region((1920, 1080), (10, 10, 20, 30), "top") is None
 
 
 def test_phase8_embed_position_helpers_use_display_slices_for_two_screen():
@@ -143,7 +139,7 @@ def test_phase8_embed_position_helpers_use_display_slices_for_two_screen():
     assert resolve_embed_margin_region(
         (3200, 1080),
         (100, 150, 80, 90),
-        "top",
+        "left-top",
         two_screen=True,
         l_display=(1920, 1080),
         r_display=(1280, 1024),
@@ -151,7 +147,7 @@ def test_phase8_embed_position_helpers_use_display_slices_for_two_screen():
     assert resolve_embed_margin_region(
         (3200, 1080),
         (100, 150, 80, 90),
-        "right",
+        "right-top",
         two_screen=True,
         l_display=(1920, 1080),
         r_display=(1280, 1024),
@@ -159,7 +155,7 @@ def test_phase8_embed_position_helpers_use_display_slices_for_two_screen():
     assert resolve_embed_margin_region(
         (3840, 1080),
         (100, 150, 80, 90),
-        "bottom",
+        "right-bottom",
         two_screen=True,
     ) == (2020, 990, 3690, 1080)
 
@@ -182,7 +178,7 @@ def test_embed_text_drawn_on_top_margin(tmp_path):
         margins=(10, 10, 40, 10),
         embed_info="free",
         embed_text="margin-note",
-        embed_position="top",
+        embed_position="left-top",
     )
 
     out = Image.open(saved[0]).convert("RGB")
@@ -214,7 +210,7 @@ def test_embed_text_drawn_in_right_display_margin_for_two_screen(tmp_path):
         margins=(100, 150, 80, 90),
         embed_info="free",
         embed_text="right-slice",
-        embed_position="right",
+        embed_position="right-top",
     )
 
     out = Image.open(saved[0]).convert("RGB")

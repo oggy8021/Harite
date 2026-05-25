@@ -26,7 +26,7 @@ class OptimizeRequest:
     background_color: str = DEFAULT_BACKGROUND_COLOR_HEX
     embed_info: str = "none"
     embed_text: Optional[str] = None
-    embed_position: str = "auto"
+    embed_position: str = "right-bottom"
     embed_max_lines: int = 3
 
     def __post_init__(self) -> None:
@@ -45,8 +45,6 @@ def to_cli_args(req: OptimizeRequest) -> list[str]:
         req.resolution,
         "--output",
         str(req.output_dir),
-        "--scaling",
-        req.scaling,
         "--align",
         format_position_pair(req.align, axis="align"),
         "--valign",

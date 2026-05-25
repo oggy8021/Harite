@@ -6,7 +6,6 @@
 
 - plugin は、core / CLI / GUI から渡された最終適用対象を、各 OS / desktop 環境の壁紙設定へ反映する。
 - plugin は、target 解決そのものではなく、受け取った target の適用実行を担当する。
-- plugin は dry-run と実適用の両方を扱う。
 - plugin 名の選択と registry 解決は呼び出し側が行い、plugin は選ばれた後の target 実行面を担う。
 
 plugin が直接の主責務としないもの:
@@ -31,7 +30,7 @@ registry の扱い:
 
 ## 3. 共通契約
 
-- plugin は `apply(path, *, dry_run=True) -> bool` の形で呼ばれる。
+- plugin は `apply(path_or_map) -> bool` の形で呼ばれる。
 - 成功時は `True`、失敗時は `False` を返す。
 - plugin 例外は呼び出し側で failure / exception 面として扱われる。
 
@@ -54,20 +53,12 @@ monitor map interface:
 - value の `output_path` は auto-split で生成された各 display 向け画像 path である。
 - plugin 側の per-monitor apply は monitor map の key を基準に候補対応付けを行い、ファイル名文字列そのものを主たる判定根拠にはしない。
 
-dry-run 契約:
-
-- `dry_run=True` のとき、plugin は外部コマンドや OS 設定変更を実行しない。
-- dry-run 時も、入力不正や未対応 target は失敗として返しうる。
-- dry-run 中の補助 message は Python logging 側へ流れ、CLI / GUI の主表示とは別系統である。
-- ただし Linux plugin の per-monitor dry-run は、候補列挙や setter 存在確認の結果によっては失敗しうる。single-file dry-run のような即時成功とは限らない。
-
 ## 4. OS ごとの実装差分
 
 ### 4.1 Windows plugin
 
 - 単一画像 apply のみを扱う。
 - monitor map が渡された場合は失敗する。
-- dry-run では「適用するはずだった path」を logging 側へ記録して成功を返す。
 - 実適用では `SystemParametersInfoW` を使う。
 - 実適用の戻り値は `SystemParametersInfoW(...)` の真偽値をそのまま成功判定に使う。
 
@@ -75,7 +66,6 @@ dry-run 契約:
 
 - 単一画像 apply のみを扱う。
 - monitor map が渡された場合は失敗する。
-- dry-run では「適用するはずだった path」を logging 側へ記録して成功を返す。
 - 実適用では `osascript` による AppleScript 呼び出しを使う。
 - 実適用では `tell application "System Events" to set picture of every desktop to "..."` を組み立てて `osascript -e` へ渡し、終了コード `0` を成功とみなす。
 
@@ -83,7 +73,6 @@ dry-run 契約:
 
 - 単一画像 apply と monitor map apply の両方を扱う。
 - monitor map apply を受け付けること自体が Linux plugin の capability であり、core 側の target 解決規則とは別面である。
-- single-file dry-run では、対象ファイルが存在すれば logging 側へ dry-run message を記録して成功を返す。
 - per-monitor apply では、XFCE 系の `xfconf-query` 候補列挙と monitor 名対応付けを使う。
 - single-file 実行前には `Path(path).expanduser().resolve()` で path を正規化してから存在確認する。
 - per-monitor mapping では、各 value を `Path(mon_path).expanduser().resolve()` で正規化してから使う。
@@ -122,10 +111,6 @@ Linux plugin の適用順:
 適用フローの細部:
 
 - Linux plugin は `xfconf-query` を最初に試し、そこで成功が出た時点で `True` を返す。したがって XFCE 候補で成功した場合、後段の `gsettings` / `feh` へは進まない。
-- single-file dry-run は、対象ファイルが存在すれば setter 列挙へ進まず即 `True` を返す。これは external setter が PATH に無くても dry-run を成功扱いにするためである。
-- 一方 per-monitor dry-run にはこの即時成功分岐がなく、`xfconf-query` による候補列挙と matching に乗れない場合は `No known wallpaper setter found on PATH` で `False` になりうる。
-- `xfconf-query` dry-run では、候補 property が見つかれば command を実行せず logging のみ行う。single-file dry-run ではこの simulated 経路を通らず、前段で即成功する。
-- `gsettings` / `feh` dry-run は command 文字列を logging し、少なくとも 1 つ simulated command があれば最後に success 扱いにする。
 - monitor map apply では `gsettings` と `feh` へは進まず、XFCE 候補が成立しない場合はそのまま失敗する。
 
 補足:

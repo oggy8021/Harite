@@ -560,8 +560,8 @@ def test_on_apply_uses_immediate_apply(monkeypatch, tmp_path):
         def __init__(self):
             self.calls = []
 
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
-            self.calls.append((path, dry_run))
+        def apply(self, path: str) -> bool:
+            self.calls.append(path)
             return True
 
     plugin = DummyPlugin()
@@ -574,7 +574,7 @@ def test_on_apply_uses_immediate_apply(monkeypatch, tmp_path):
 
     ok = window.on_apply()
     assert ok is True
-    assert plugin.calls == [(str(wall), False)]
+    assert plugin.calls == [str(wall)]
     assert any("Applied wallpaper" in line for line in window.logs)
 
 
@@ -627,8 +627,8 @@ def test_on_apply_per_monitor_auto_split_uses_split_mapping(monkeypatch, tmp_pat
         def __init__(self):
             self.calls = []
 
-        def apply(self, path, *, dry_run: bool = True) -> bool:
-            self.calls.append((path, dry_run))
+        def apply(self, path) -> bool:
+            self.calls.append(path)
             return True
 
     plugin = DummyPlugin()
@@ -654,7 +654,7 @@ def test_on_apply_per_monitor_auto_split_uses_split_mapping(monkeypatch, tmp_pat
     ok = window.on_apply()
 
     assert ok is True
-    assert plugin.calls == [({"HDMI-1": tmp_path / "wall_HDMI-1.jpg", "DP-1": tmp_path / "wall_DP-1.jpg"}, False)]
+    assert plugin.calls == [{"HDMI-1": tmp_path / "wall_HDMI-1.jpg", "DP-1": tmp_path / "wall_DP-1.jpg"}]
     assert any("Apply per-monitor auto-split" in line for line in window.logs)
 
 
@@ -1030,7 +1030,7 @@ def test_on_apply_without_optimized_file_fails():
 
 def test_slideshow_handlers_use_srcdirs_and_interval_validation(monkeypatch, tmp_path):
     class DummyPlugin:
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        def apply(self, path: str) -> bool:
             return True
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
@@ -1087,8 +1087,8 @@ def test_slideshow_single_source_applies_on_start_and_tick(monkeypatch, tmp_path
         def __init__(self):
             self.calls = []
 
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
-            self.calls.append((path, dry_run))
+        def apply(self, path: str) -> bool:
+            self.calls.append(path)
             return True
 
     plugin = DummyPlugin()
@@ -1103,17 +1103,17 @@ def test_slideshow_single_source_applies_on_start_and_tick(monkeypatch, tmp_path
 
     assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
     assert window.on_slideshow_start() is True
-    assert plugin.calls == [(str(left_dir / "left-1.jpg"), False)]
+    assert plugin.calls == [str(left_dir / "left-1.jpg")]
 
     assert window.on_slideshow_tick() is True
-    assert plugin.calls[-1] == (str(left_dir / "left-2.jpg"), False)
+    assert plugin.calls[-1] == str(left_dir / "left-2.jpg")
 
     assert window.on_slideshow_stop() is True
 
 
 def test_slideshow_single_source_start_fails_when_plugin_apply_fails(monkeypatch, tmp_path):
     class DummyPlugin:
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        def apply(self, path: str) -> bool:
             return False
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
@@ -1134,7 +1134,7 @@ def test_slideshow_single_source_start_fails_when_plugin_apply_fails(monkeypatch
 
 def test_slideshow_start_normalizes_empty_output_dir(monkeypatch, tmp_path):
     class DummyPlugin:
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        def apply(self, path: str) -> bool:
             return True
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
@@ -1161,7 +1161,7 @@ def test_slideshow_start_normalizes_empty_output_dir(monkeypatch, tmp_path):
 
 def test_slideshow_start_propagates_unexpected_autosplit_prepare_failure(monkeypatch, tmp_path):
     class DummyPlugin:
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        def apply(self, path: str) -> bool:
             return True
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
@@ -1262,7 +1262,7 @@ def test_slideshow_single_source_tick_stops_when_plugin_apply_fails(monkeypatch,
         def __init__(self):
             self.calls = 0
 
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        def apply(self, path: str) -> bool:
             self.calls += 1
             return self.calls == 1
 
@@ -1287,7 +1287,7 @@ def test_slideshow_single_source_tick_stops_when_plugin_apply_fails(monkeypatch,
 
 def test_slideshow_dual_source_cycle_pauses_when_detected_displays_temporarily_drop(monkeypatch, tmp_path):
     class DummyPlugin:
-        def apply(self, _path: object, *, dry_run: bool = True) -> bool:
+        def apply(self, _path: object) -> bool:
             return True
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
@@ -1356,8 +1356,8 @@ def test_slideshow_dual_source_cycle_resumes_after_transient_display_drop(monkey
         def __init__(self):
             self.calls = []
 
-        def apply(self, path: object, *, dry_run: bool = True) -> bool:
-            self.calls.append((path, dry_run))
+        def apply(self, path: object) -> bool:
+            self.calls.append(path)
             return True
 
     plugin = DummyPlugin()
@@ -1379,6 +1379,10 @@ def test_slideshow_dual_source_cycle_resumes_after_transient_display_drop(monkey
     composite.write_bytes(b"composite")
     composite2 = tmp_path / "slideshow-composite-2.jpg"
     composite2.write_bytes(b"composite2")
+    split1_hdmi = str(tmp_path / "split1.jpg")
+    split1_dp = str(tmp_path / "split2.jpg")
+    split2_hdmi = str(tmp_path / "split3.jpg")
+    split2_dp = str(tmp_path / "split4.jpg")
 
     window = MainWindow()
     window.plugin_name = "linux"
@@ -1397,13 +1401,13 @@ def test_slideshow_dual_source_cycle_resumes_after_transient_display_drop(monkey
         if resolve_calls == 1:
             return EffectiveApplySettings(
                 apply_mode="per-monitor-auto-split",
-                target={"HDMI-1": str(tmp_path / "split1.jpg"), "DP-1": str(tmp_path / "split2.jpg")},
+                target={"HDMI-1": split1_hdmi, "DP-1": split1_dp},
             )
         if resolve_calls == 2:
             raise ValueError("per-monitor apply requires at least two detected displays")
         return EffectiveApplySettings(
             apply_mode="per-monitor-auto-split",
-            target={"HDMI-1": str(tmp_path / "split3.jpg"), "DP-1": str(tmp_path / "split4.jpg")},
+            target={"HDMI-1": split2_hdmi, "DP-1": split2_dp},
         )
 
     monkeypatch.setattr(window.controller, "run_optimize", fake_run_optimize)
@@ -1430,12 +1434,12 @@ def test_slideshow_dual_source_cycle_resumes_after_transient_display_drop(monkey
     assert window.slideshow_summary_display == "Slideshow: running"
     assert window.status_message == "slideshow resumed"
     assert window.last_error == ""
-    assert plugin.calls[-1][1] is False
+    assert plugin.calls[-1] == {"HDMI-1": split2_hdmi, "DP-1": split2_dp}
 
 
 def test_slideshow_single_source_success_cleans_previous_generated_files(monkeypatch, tmp_path):
     class DummyPlugin:
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        def apply(self, path: str) -> bool:
             return True
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
@@ -1463,8 +1467,8 @@ def test_slideshow_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch,
         def __init__(self):
             self.calls = []
 
-        def apply(self, path, *, dry_run: bool = True) -> bool:
-            self.calls.append((path, dry_run))
+        def apply(self, path) -> bool:
+            self.calls.append(path)
             return True
 
     plugin = DummyPlugin()
@@ -1534,12 +1538,12 @@ def test_slideshow_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch,
     assert window.on_slideshow_start() is True
 
     assert observed_inputs == [f"{left_dir / 'left-1.jpg'},{right_dir / 'right-1.png'}"]
-    assert plugin.calls == [({"HDMI-1": split1_hdmi, "DP-1": split1_dp}, False)]
+    assert plugin.calls == [{"HDMI-1": split1_hdmi, "DP-1": split1_dp}]
     assert any("Slideshow start per-monitor auto-split" in line for line in window.logs)
 
     assert window.on_slideshow_tick() is True
     assert observed_inputs[-1] == f"{left_dir / 'left-2.jpg'},{right_dir / 'right-2.png'}"
-    assert plugin.calls[-1] == ({"HDMI-1": split2_hdmi, "DP-1": split2_dp}, False)
+    assert plugin.calls[-1] == {"HDMI-1": split2_hdmi, "DP-1": split2_dp}
     assert composite.exists() is False
     assert split1_hdmi.exists() is False
     assert split1_dp.exists() is False
@@ -1598,8 +1602,8 @@ def test_run_primary_flow_step_runs_optimize_then_apply(monkeypatch, tmp_path):
         def __init__(self):
             self.calls = []
 
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
-            self.calls.append((path, dry_run))
+        def apply(self, path: str) -> bool:
+            self.calls.append(path)
             return True
 
     plugin = DummyPlugin()
@@ -1625,7 +1629,7 @@ def test_run_primary_flow_step_runs_optimize_then_apply(monkeypatch, tmp_path):
     assert window.status_phase == "apply"
     assert window.status_message == "apply completed"
     assert plugin.calls
-    assert plugin.calls[-1][1] is False
+    assert plugin.calls[-1] == str(window.last_saved_files[-1])
 
 
 def test_status_unified_for_input_transitions():
@@ -1727,12 +1731,12 @@ def test_margin_text_change_handlers_update_form_state():
 
     assert window.on_change_margin_text_mode("combo") is True
     assert window.on_change_margin_text("hello") is True
-    assert window.on_change_margin_text_position("bottom") is True
+    assert window.on_change_margin_text_position("right-bottom") is True
     assert window.on_change_margin_text_max_lines(4) is True
 
     assert window.form_state.embed_info == "combo"
     assert window.form_state.embed_text == "hello"
-    assert window.form_state.embed_position == "bottom"
+    assert window.form_state.embed_position == "right-bottom"
     assert window.form_state.embed_max_lines == 4
     assert window.status_phase == "margins"
     assert window.status_message == "margin text ready in right bottom position (950x30)"
@@ -1768,7 +1772,7 @@ def test_margin_text_preflight_reports_margin_area_too_small():
     window.form_state.margins = "10,10,20,10"
 
     assert window.on_change_margin_text_mode("params") is True
-    assert window.on_change_margin_text_position("bottom") is True
+    assert window.on_change_margin_text_position("right-bottom") is True
 
     assert window.status_phase == "margins"
     assert window.status_message == "margin text does not fit current margin area"
@@ -1784,7 +1788,7 @@ def test_margin_text_preflight_uses_display_slice_area_for_two_screen():
     window.form_state.margins = "100,150,80,90"
 
     assert window.on_change_margin_text_mode("params") is True
-    assert window.on_change_margin_text_position("right") is True
+    assert window.on_change_margin_text_position("right-top") is True
 
     assert window.status_phase == "margins"
     assert window.status_message == "margin text ready in right top position (1030x80)"
@@ -1860,7 +1864,7 @@ def test_on_apply_unknown_plugin_fails(monkeypatch, tmp_path):
 
 def test_on_apply_when_plugin_returns_false_sets_error(monkeypatch, tmp_path):
     class DummyPlugin:
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        def apply(self, path: str) -> bool:
             return False
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
@@ -1878,7 +1882,7 @@ def test_on_apply_when_plugin_returns_false_sets_error(monkeypatch, tmp_path):
 
 def test_on_apply_when_plugin_raises_sets_error(monkeypatch, tmp_path):
     class DummyPlugin:
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        def apply(self, path: str) -> bool:
             raise RuntimeError("boom")
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())

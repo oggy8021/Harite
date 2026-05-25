@@ -743,7 +743,7 @@ def test_runtime_backend_adds_margins_tab_and_syncs_owner_state():
     window = MainWindow()
     window.form_state.embed_info = "combo"
     window.form_state.embed_text = "margin-note"
-    window.form_state.embed_position = "bottom"
+    window.form_state.embed_position = "right-bottom"
     window.form_state.embed_max_lines = 4
 
     dispatch = create_mainwindow_signal_dispatch(
@@ -797,7 +797,7 @@ def test_runtime_backend_margins_tab_updates_owner_state_and_cli_preview(tmp_pat
     assert window.form_state.margins == "10,10,24,10"
     assert window.form_state.embed_info == "free"
     assert window.form_state.embed_text == "hello\nworld"
-    assert window.form_state.embed_position == "top"
+    assert window.form_state.embed_position == "left-top"
     assert backend.get_object("lblStatus").text.startswith("Margins: margin text ready in left top position")
     assert backend.get_object("lblError").text == "Error: none"
 
@@ -805,7 +805,7 @@ def test_runtime_backend_margins_tab_updates_owner_state_and_cli_preview(tmp_pat
     assert "--margins 10,10,24,10" in preview
     assert "--embed-info free" in preview
     assert "--embed-text hello\nworld" in preview
-    assert "--embed-position top" in preview
+    assert "--embed-position left-top" in preview
     assert "--embed-max-lines" not in preview
 
 
@@ -971,7 +971,7 @@ def test_runtime_backend_margin_text_preflight_uses_two_screen_display_slice_are
     backend.get_object("radMarginTextModeSettings").click()
     backend.get_object("radMarginTextPositionRightTop").click()
 
-    assert window.form_state.embed_position == "right"
+    assert window.form_state.embed_position == "right-top"
     assert backend.get_object("lblStatus").text == "Margins: margin text ready in right top position (1030x80)"
     assert backend.get_object("lblError").text == "Error: none"
 
@@ -1097,7 +1097,7 @@ def test_runtime_backend_shows_current_labels_and_controls():
 
 def test_runtime_backend_slideshow_srcdir_selection_and_slideshow_cycle_updates_labels(monkeypatch, tmp_path):
     class DummyPlugin:
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        def apply(self, path: str) -> bool:
             return True
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
@@ -1167,7 +1167,7 @@ def test_runtime_backend_slideshow_srcdir_selection_and_slideshow_cycle_updates_
 
 def test_runtime_backend_slideshow_start_button_requires_both_srcdirs(monkeypatch, tmp_path):
     class DummyPlugin:
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        def apply(self, path: str) -> bool:
             return True
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
@@ -1338,8 +1338,8 @@ def test_runtime_backend_slideshow_start_registers_timer_and_stop_removes_it(mon
         def __init__(self):
             self.calls = []
 
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
-            self.calls.append((path, dry_run))
+        def apply(self, path: str) -> bool:
+            self.calls.append(path)
             return True
 
     _FakeGLib.reset()
@@ -1385,12 +1385,12 @@ def test_runtime_backend_slideshow_start_registers_timer_and_stop_removes_it(mon
 
     assert backend._slideshow_timer_source_id == 1
     assert _FakeGLib.registered_sources[1]["interval_ms"] == 45000
-    assert plugin.calls == [(str(left_dir / "left-1.jpg"), False)]
+    assert plugin.calls == [str(left_dir / "left-1.jpg")]
 
     timer_callback = _FakeGLib.registered_sources[1]["callback"]
     assert timer_callback() is True
     assert slideshow_current.text == f"Slideshow current: L={left_dir / 'left-2.jpg'} | R=-"
-    assert plugin.calls[-1] == (str(left_dir / "left-2.jpg"), False)
+    assert plugin.calls[-1] == str(left_dir / "left-2.jpg")
 
     slideshow_stop.click()
 
@@ -1455,7 +1455,7 @@ def test_runtime_backend_shows_owner_slideshow_tick_failure_reason(monkeypatch, 
         def __init__(self):
             self.calls = 0
 
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        def apply(self, path: str) -> bool:
             self.calls += 1
             return self.calls == 1
 
@@ -1511,8 +1511,8 @@ def test_runtime_backend_slideshow_cycle_pauses_when_detected_displays_temporari
         def __init__(self):
             self.calls = []
 
-        def apply(self, path: object, *, dry_run: bool = True) -> bool:
-            self.calls.append((path, dry_run))
+        def apply(self, path: object) -> bool:
+            self.calls.append(path)
             return True
 
     plugin = DummyPlugin()

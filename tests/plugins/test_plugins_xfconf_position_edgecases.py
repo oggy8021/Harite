@@ -33,7 +33,7 @@ def test_negative_offset_matching(monkeypatch):
     mapping = {"DP-1": "/tmp/wall.jpg"}
 
     # applying should succeed by position-based matching with negative offset
-    assert plugin.apply(mapping, dry_run=False) is True
+    assert plugin.apply(mapping) is True
 
 
 def test_duplicate_size_position_scoring(monkeypatch):
@@ -59,4 +59,4 @@ def test_duplicate_size_position_scoring(monkeypatch):
     mapping = {"DP-1": "/tmp/wall.jpg"}
 
     # applying should succeed by selecting the candidate with +1920+0 via position matching
-    assert plugin.apply(mapping, dry_run=False) is True
+    assert plugin.apply(mapping) is True

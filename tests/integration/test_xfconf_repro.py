@@ -13,10 +13,10 @@ def _make_list_proc(stdout: str):
     return SimpleNamespace(returncode=0, stdout=stdout)
 
 
-def test_xfconf_sample_dryrun_and_apply(monkeypatch):
+def test_xfconf_sample_apply(monkeypatch):
     """Use representative xfconf-query listings and verify plugin behavior.
 
-    This test ensures the LinuxPlugin detects xfconf candidates during dry-run
+    This test ensures the LinuxPlugin detects xfconf candidates
     and issues set commands during apply.
     """
     # Ensure xfconf-query is reported present
@@ -54,10 +54,7 @@ def test_xfconf_sample_dryrun_and_apply(monkeypatch):
     plugin = LinuxPlugin()
     mapping = {"DP-1": "/tmp/wall_dp.jpg", "eDP-1": "/tmp/wall_edp.jpg"}
 
-    # dry_run should discover candidates and return True
-    assert plugin.apply(mapping, dry_run=True) is True
-
-    # actual apply should attempt set commands and return True
-    assert plugin.apply(mapping, dry_run=False) is True
+    assert plugin.apply(mapping) is True
+    assert plugin.apply(mapping) is True
     assert any(isinstance(c, list) and c[0] == "xfconf-query" and "-s" in c for c in calls)
 

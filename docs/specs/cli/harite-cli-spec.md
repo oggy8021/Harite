@@ -45,7 +45,7 @@ sequenceDiagram
     else apply
         CLI->>Core: resolve_apply_settings(...)
         Core-->>CLI: 最終適用対象
-        CLI->>Plugin: apply(target, dry_run)
+        CLI->>Plugin: apply(target)
         Plugin-->>CLI: success / failure
         CLI-->>User: apply result
     else slideshow
@@ -62,8 +62,10 @@ sequenceDiagram
 
 ## 4. `optimize`
 
-- 入力画像、表示条件、scaling、margins、align、background_color、embed 系を受け取る。
+- 入力画像、表示条件、margins、align、background_color、embed 系を受け取る。
 - `--settings-file` は optimize 専用 option であり、与えられた場合は設定ファイルを読み、CLI 引数を優先して上書きする。apply / slideshow は `--settings-file` を受け付けない。
+- help では `--settings-file` を optimize 用 defaults を読む option だと分かる文言で説明する。規範文言は `Optional path to optimize settings JSON` を基準にする。
+- `scaling` は public surface から外す。optimize の拡大縮小は内部で fit 系計算を使い、`fill` / `crop` は user-facing option として露出しない。
 - 成功時は `Saved:` と `Placement:` を出力する。
 
 主要な流れ:
@@ -82,6 +84,10 @@ sequenceDiagram
 - `--input` 未指定時は設定ファイル側の `input` を使えるが、最終的に入力列が空なら終了コード `2` で止める。
 - `optimize` の `--input` は画像ファイル列のみを受け付け、directory が渡された場合は明示エラーで終了する。
 - `quality`, `embed_info`, `embed_position`, `embed_max_lines`, `background_color` は CLI 側で先に妥当性検証する。
+- `background_color` の値規則自体は `#` の有無を許容するが、CLI help と例示は shell 誤解を避けるため `E0E0E0` のような 6 桁 HEX を基準にする。
+- `embed_position` は `left-top|left-bottom|right-top|right-bottom` の 4 値だけを受け付ける。help でも同じ 4 値をそのまま見せる。
+- `embed_position` が未指定のときの既定値は `right-bottom` である。
+- この 4 値制約は CLI 引数だけでなく `--settings-file` から読んだ値にも同じように適用する。4 値以外は不正として扱う。
 
 display / two-screen 解決:
 
@@ -109,13 +115,7 @@ display / two-screen 解決:
 ## 5. `apply`
 
 - plugin を解決し、`single-file` または per-monitor target を適用する。
-- CLI では dry-run を既定とし、実適用したい場合だけ --do-it を指定する。
-- CLI は最終的に plugin へ `dry_run=not --do-it` を渡す。
-
-補足:
-
-- GUI には `--do-it` / `dry-run` という同名オプションは存在しない。そのため GUI の apply / slideshow は、CLI とは別の操作面として説明する。
-- dry-run 時の「副作用を起こさないこと」は plugin 側の契約でもある。plugin は `dry_run=True` のとき外部コマンドや OS 設定変更を実行しない。
+- CLI `apply` は直接作用 command として扱う。
 
 apply mode の決定順:
 
@@ -136,13 +136,12 @@ apply mode の決定順:
 
 - command 名も `slideshow` とし、public surface の機能名と揃える。
 - 入力 directory を監視ではなくスライドショー実行対象として扱う。
-- `mode`, `interval_sec`, `plugin`, `dry_run` を扱う。
+- `mode`, `interval_sec`, `plugin` を扱う。
 
 slideshow command の意味:
 
 - filesystem event を待つ監視ではなく、入力 directory から画像一覧を集め、一定間隔で次画像を選んで apply する。
-- `dry_run` では plugin を解決せず、サイクルの進行だけを確認できる。
-- `--do-it` 時だけ plugin 解決と実 apply を行う。
+- command 開始時に plugin を解決し、各サイクルで実 apply を行う。
 
 CLI surface の整理方針:
 
@@ -154,9 +153,9 @@ CLI surface の整理方針:
 - `mode=sequential` は index を進めながら順番に選ぶ。
 - `mode=random` は可能なら直前画像を避けて選ぶ。
 - `log_level` option は持たず、CLI は固定の実行メッセージ方針を採る。
-- 固定方針は旧 `normal` 相当とし、失敗がない間は `Slideshow start` と `Slideshow completed` を中心に出す。
+- 固定方針では `Slideshow start` を開始時に出し、継続実行の通常停止は `Ctrl+C` による `Slideshow interrupted by user` を中心に扱う。
 - `Slideshow cycle=...` は常時出さず、実 apply 中に `apply_failed` または `apply_error` が発生したサイクルでだけ出す。
-- したがって dry-run や成功のみの実 apply では cycle 行を出さない。
+- したがって成功サイクルだけが続く通常運用では cycle 行を出さない。
 
 slideshow helper の計算規則:
 
@@ -167,7 +166,6 @@ slideshow helper の計算規則:
 - `run_slideshow_cycles(...)` は各サイクル後に `on_cycle(selected, state.completed - 1)` を呼ぶため、callback 側へ渡る cycle 番号は 0 始まりである。
 - sleep は継続実行を続ける場合にだけ `sleep_fn(interval_sec)` を呼ぶ。
 - ただし CLI の user-facing `Slideshow cycle=` 表示は callback 値をそのまま出さず、`cycle_index + 1` を使う。したがって内部 callback は 0 始まり、stdout 表示は 1 始まりである。
-- dry-run の各サイクルでは `dry_run_cycles` を 1 件増やすが、固定方針では `Slideshow cycle=...` は出さない。
 - 実 apply では `apply_ok` は成功時だけ、`apply_failed` は plugin が `False` を返したときだけ、`apply_error` は plugin 例外時だけ増える。`apply_failed_total = apply_failed + apply_error` は completed 行でだけ計算する。
 
 出力先:
@@ -204,11 +202,11 @@ Windows / macOS ではサポート外であり、終了コード `2` で終了�
 
 ## 9. メッセージと重要度
 
-- `info`: 実行開始、完了、dry-run summary
+- `info`: 実行開始、中断、通常完了要約
 - `error`: validation error, unknown plugin, apply failed
 - Harite 固有の stdout 実行メッセージは、言語に応じた自然な user-facing 表現を使う。
 - 英語表記では通常の文やラベルとして読める形を優先し、全部大文字の強い prefix は使わない。
-- slideshow では `Slideshow start`, `Slideshow cycle`, `Slideshow completed` を中心に実行メッセージを出す
+- slideshow では `Slideshow start`, `Slideshow interrupted by user` を基本線とし、必要時だけ `Slideshow cycle` と `Slideshow completed` を補助的に出す
 
 command ごとの代表メッセージ:
 
@@ -217,7 +215,7 @@ command ごとの代表メッセージ:
 - `slideshow`: `Slideshow start`, `Slideshow interrupted by user`, `Slideshow completed`
 - `install-desktop-entry`: `Installed desktop entry:`
 
-`slideshow` の `Slideshow completed` では、dry-run 時は `dry_run_cycles`、実 apply 時は `apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` を出してサイクルごとの結果を要約する。
+`slideshow` の `Slideshow completed` は bounded run や将来の明示完了経路がある場合の要約行として扱い、継続実行の通常停止は `Slideshow interrupted by user` を優先する。完了要約を出す場合は `apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` を出してサイクルごとの結果を要約する。
 
 重要度の見方:
 

@@ -117,7 +117,7 @@ def sync_settings_widgets_from_dialog(backend: Any) -> dict[str, object]:
     backend._set_spin_value("spnSettingsQuality", int(settings.get("quality", 90)))
     backend._set_entry_text("entSettingsMarginTextMode", settings.get("embed_info", "none"))
     backend._set_entry_text("entSettingsMarginText", settings.get("embed_text"))
-    backend._set_entry_text("entSettingsMarginTextPosition", settings.get("embed_position", "auto"))
+    backend._set_entry_text("entSettingsMarginTextPosition", settings.get("embed_position", "right-bottom"))
     backend._set_spin_value("spnSettingsMarginTextMaxLines", int(settings.get("embed_max_lines", 3)))
     backend._set_entry_text("entSettingsPlugin", settings.get("plugin", "windows"))
     set_settings_apply_mode(backend, settings.get("apply_mode", "single-file"))
@@ -143,7 +143,7 @@ def sync_settings_dialog_from_widgets(backend: Any) -> dict[str, object]:
             "quality": backend._read_spin_int("spnSettingsQuality"),
             "embed_info": backend._read_entry_text("entSettingsMarginTextMode") or "none",
             "embed_text": _empty_to_none(backend._read_entry_text("entSettingsMarginText")),
-            "embed_position": backend._read_entry_text("entSettingsMarginTextPosition") or "auto",
+            "embed_position": backend._read_entry_text("entSettingsMarginTextPosition") or "right-bottom",
             "embed_max_lines": backend._read_spin_int("spnSettingsMarginTextMaxLines"),
             "plugin": backend._read_entry_text("entSettingsPlugin") or "windows",
             "apply_mode": read_settings_apply_mode(backend),

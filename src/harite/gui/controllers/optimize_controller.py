@@ -40,7 +40,7 @@ class OptimizeFormState:
     background_color: str = DEFAULT_BACKGROUND_COLOR_HEX
     embed_info: str = "none"
     embed_text: Optional[str] = None
-    embed_position: str = "auto"
+    embed_position: str = "right-bottom"
     embed_max_lines: int = 3
 
     def __post_init__(self) -> None:

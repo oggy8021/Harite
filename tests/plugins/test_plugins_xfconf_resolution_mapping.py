@@ -30,4 +30,4 @@ def test_resolution_based_mapping(monkeypatch):
     mapping = {"HDMI-1": "/tmp/wall.jpg"}
 
     # applying should succeed by resolution-based matching
-    assert plugin.apply(mapping, dry_run=False) is True
+    assert plugin.apply(mapping) is True

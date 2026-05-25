@@ -20,6 +20,18 @@ def _require_slideshow_command(runner: CliRunner) -> None:
         pytest.skip("slideshow command is not implemented yet")
 
 
+@pytest.fixture(autouse=True)
+def _block_real_slideshow_side_effects(monkeypatch):
+    def fail_run_slideshow_cycles(*_args, **_kwargs):
+        raise AssertionError("test must stub cli.run_slideshow_cycles before reaching real slideshow loop")
+
+    def fail_get_plugin(_name):
+        raise AssertionError("test must stub cli.plugin_registry.get before reaching real slideshow apply")
+
+    monkeypatch.setattr(cli, "run_slideshow_cycles", fail_run_slideshow_cycles)
+    monkeypatch.setattr(cli.plugin_registry, "get", fail_get_plugin)
+
+
 def test_slideshow_requires_input_option() -> None:
     runner = CliRunner()
     _require_slideshow_command(runner)
@@ -75,10 +87,36 @@ def test_slideshow_help_includes_mode_and_excludes_legacy_options() -> None:
 
     assert result.exit_code == 0
     assert "mode" in output
-    assert "dry-run" in output
-    assert "do-it" in output
+    assert "dry-run" not in output
+    assert "do-it" not in output
     assert "log-level" not in output
     assert "iterations" not in output
+
+
+def test_slideshow_rejects_legacy_do_it_option(tmp_path) -> None:
+    runner = CliRunner()
+    _require_slideshow_command(runner)
+
+    img_dir = tmp_path / "imgs"
+    img_dir.mkdir()
+    (img_dir / "a.jpg").write_bytes(b"x")
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "slideshow",
+            "--input",
+            str(img_dir),
+            "--interval-sec",
+            "1",
+            "--do-it",
+        ],
+    )
+    output = _normalize_cli_output(result.output)
+
+    assert result.exit_code == 2
+    assert "no such option" in output
+    assert "do-it" in output
 
 
 def test_slideshow_rejects_legacy_log_level_option(tmp_path) -> None:
@@ -143,6 +181,17 @@ def test_slideshow_runs_and_reports_completion(tmp_path, monkeypatch) -> None:
     img_dir.mkdir()
     (img_dir / "a.jpg").write_bytes(b"x")
 
+    class FakePlugin:
+        def __init__(self):
+            self.calls = []
+
+        def apply(self, path_or_map):
+            self.calls.append(path_or_map)
+            return True
+
+    fake_plugin = FakePlugin()
+    monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: fake_plugin)
+
     captured = {}
 
     def fake_run_slideshow_cycles(
@@ -178,10 +227,12 @@ def test_slideshow_runs_and_reports_completion(tmp_path, monkeypatch) -> None:
     assert captured["mode"] == "sequential"
     assert captured["interval_sec"] == 1
     assert len(captured["images"]) == 1
+    assert fake_plugin.calls == [str(img_dir / "a.jpg")]
     assert "log_level" not in output
     assert "iterations" not in output
     assert "Slideshow completed cycles=1" in raw_output
-    assert "dry_run_cycles=1" in output
+    assert "apply_ok=1" in output
+    assert "dry_run" not in output
 
 
 def test_slideshow_handles_keyboard_interrupt_as_normal_exit(tmp_path, monkeypatch) -> None:
@@ -195,6 +246,11 @@ def test_slideshow_handles_keyboard_interrupt_as_normal_exit(tmp_path, monkeypat
     def fake_run_slideshow_cycles(*args, **kwargs):
         raise KeyboardInterrupt()
 
+    class FakePlugin:
+        def apply(self, _path_or_map):
+            return True
+
+    monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
     monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
 
     result = runner.invoke(
@@ -207,7 +263,7 @@ def test_slideshow_handles_keyboard_interrupt_as_normal_exit(tmp_path, monkeypat
     assert "Slideshow interrupted by user" in raw_output
 
 
-def test_slideshow_dry_run_does_not_resolve_plugin(tmp_path, monkeypatch) -> None:
+def test_slideshow_resolves_plugin_and_applies_without_do_it_option(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
     _require_slideshow_command(runner)
 
@@ -215,8 +271,21 @@ def test_slideshow_dry_run_does_not_resolve_plugin(tmp_path, monkeypatch) -> Non
     img_dir.mkdir()
     (img_dir / "a.jpg").write_bytes(b"x")
 
-    def fake_get_plugin(_name):
-        raise AssertionError("plugin lookup should not happen in dry-run")
+    plugin_requested = []
+
+    class FakePlugin:
+        def __init__(self):
+            self.calls = []
+
+        def apply(self, path_or_map):
+            self.calls.append(path_or_map)
+            return True
+
+    fake_plugin = FakePlugin()
+
+    def fake_get_plugin(name):
+        plugin_requested.append(name)
+        return fake_plugin
 
     monkeypatch.setattr(cli.plugin_registry, "get", fake_get_plugin)
 
@@ -241,14 +310,16 @@ def test_slideshow_dry_run_does_not_resolve_plugin(tmp_path, monkeypatch) -> Non
     raw_output = _strip_cli_output(result.output)
 
     assert result.exit_code == 0
+    assert plugin_requested
+    assert fake_plugin.calls == [str(img_dir / "a.jpg")]
     assert "log_level" not in output
     assert "iterations" not in output
-    assert "dry_run=true" in output
+    assert "dry_run" not in output
     assert "slideshow cycle=" not in output
     assert "Slideshow cycle=" not in raw_output
 
 
-def test_slideshow_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch) -> None:
+def test_slideshow_applies_and_continues_on_failure(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
     _require_slideshow_command(runner)
 
@@ -261,8 +332,8 @@ def test_slideshow_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch)
         def __init__(self):
             self.calls = []
 
-        def apply(self, path_or_map, dry_run=False):
-            self.calls.append((path_or_map, dry_run))
+        def apply(self, path_or_map):
+            self.calls.append(path_or_map)
             return len(self.calls) != 1
 
     fake_plugin = FakePlugin()
@@ -291,7 +362,6 @@ def test_slideshow_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch)
             str(img_dir),
             "--interval-sec",
             "1",
-            "--do-it",
             "--plugin",
             "windows",
         ],
@@ -300,9 +370,7 @@ def test_slideshow_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch)
     raw_output = _strip_cli_output(result.output)
 
     assert result.exit_code == 0
-    assert len(fake_plugin.calls) == 2
-    assert fake_plugin.calls[0][1] is False
-    assert fake_plugin.calls[1][1] is False
+    assert fake_plugin.calls == [str(img_dir / "a.jpg"), str(img_dir / "b.jpg")]
     assert "apply=failed" in output
     assert "reason=plugin-returned-false" in output
     assert "apply=ok" not in output
@@ -317,7 +385,7 @@ def test_slideshow_do_it_applies_and_continues_on_failure(tmp_path, monkeypatch)
     assert "apply_failed_total=1" in output
 
 
-def test_slideshow_do_it_success_does_not_emit_success_cycle_line(tmp_path, monkeypatch) -> None:
+def test_slideshow_success_does_not_emit_success_cycle_line(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
     _require_slideshow_command(runner)
 
@@ -326,8 +394,7 @@ def test_slideshow_do_it_success_does_not_emit_success_cycle_line(tmp_path, monk
     (img_dir / "a.jpg").write_bytes(b"x")
 
     class FakePlugin:
-        def apply(self, _path_or_map, dry_run=False):
-            assert dry_run is False
+        def apply(self, _path_or_map):
             return True
 
     monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
@@ -353,7 +420,6 @@ def test_slideshow_do_it_success_does_not_emit_success_cycle_line(tmp_path, monk
             str(img_dir),
             "--interval-sec",
             "1",
-            "--do-it",
             "--plugin",
             "windows",
         ],
@@ -369,13 +435,19 @@ def test_slideshow_do_it_success_does_not_emit_success_cycle_line(tmp_path, monk
     assert "Slideshow completed cycles=1" in raw_output
 
 
-def test_slideshow_dry_run_does_not_emit_cycle_line(tmp_path, monkeypatch) -> None:
+def test_slideshow_default_run_does_not_emit_dry_run_markers(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
     _require_slideshow_command(runner)
 
     img_dir = tmp_path / "imgs"
     img_dir.mkdir()
     (img_dir / "a.jpg").write_bytes(b"x")
+
+    class FakePlugin:
+        def apply(self, _path_or_map):
+            return True
+
+    monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
 
     def fake_run_slideshow_cycles(
         *,
@@ -408,11 +480,12 @@ def test_slideshow_dry_run_does_not_emit_cycle_line(tmp_path, monkeypatch) -> No
     assert "Slideshow completed cycles=1" in raw_output
     assert "slideshow cycle=" not in output
     assert "slideshow completed cycles=1" in output
+    assert "dry_run" not in output
     assert "log_level" not in output
     assert "iterations" not in output
 
 
-def test_slideshow_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch) -> None:
+def test_slideshow_exception_is_reported_and_counted(tmp_path, monkeypatch) -> None:
     runner = CliRunner()
     _require_slideshow_command(runner)
 
@@ -421,8 +494,7 @@ def test_slideshow_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch
     (img_dir / "a.jpg").write_bytes(b"x")
 
     class FakePlugin:
-        def apply(self, _path_or_map, dry_run=False):
-            assert dry_run is False
+        def apply(self, _path_or_map):
             raise RuntimeError("boom")
 
     monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
@@ -448,7 +520,6 @@ def test_slideshow_do_it_exception_is_reported_and_counted(tmp_path, monkeypatch
             str(img_dir),
             "--interval-sec",
             "1",
-            "--do-it",
             "--plugin",
             "windows",
         ],

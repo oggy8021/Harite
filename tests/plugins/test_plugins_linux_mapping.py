@@ -5,7 +5,7 @@ from pathlib import Path
 from harite.plugins import LinuxPlugin
 
 
-def test_linux_plugin_mapping_dry_run(monkeypatch, caplog):
+def test_linux_plugin_mapping_apply(monkeypatch, caplog):
     sample_props = "/backdrop/screen0/monitorDP-1/workspace0/last-image\n/backdrop/screen0/monitorHDMI-1/last-image\n"
 
     class FakeRun:
@@ -28,8 +28,8 @@ def test_linux_plugin_mapping_dry_run(monkeypatch, caplog):
     caplog.set_level("INFO")
     plugin = LinuxPlugin()
     mapping = {"DP-1": "/tmp/left.jpg", "HDMI-1": "/tmp/right.jpg"}
-    ok = plugin.apply(mapping, dry_run=True)
+    ok = plugin.apply(mapping)
     assert ok
-    assert "XFCE: would run" in caplog.text
+    assert "XFCE: run" in caplog.text
     assert str(Path("/tmp/left.jpg").resolve()) in caplog.text
     assert str(Path("/tmp/right.jpg").resolve()) in caplog.text

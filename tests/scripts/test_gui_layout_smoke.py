@@ -364,7 +364,7 @@ def test_gui_layout_smoke_auto_artifacts_uses_scope_fallback_name(tmp_path: Path
     assert (artifact_dir / "pr-142-xfce.json").exists()
 
 
-def test_gui_layout_smoke_normalizes_legacy_manual_result_aliases(tmp_path: Path):
+def test_gui_layout_smoke_normalizes_manual_result_aliases(tmp_path: Path):
     out_json = tmp_path / "layout-legacy-alias.json"
     out_pr = tmp_path / "pr-comment-legacy.md"
     proc = subprocess.run(
@@ -375,10 +375,8 @@ def test_gui_layout_smoke_normalizes_legacy_manual_result_aliases(tmp_path: Path
             "--validate",
             "--optimize-result",
             "n/a (manual)",
-            "--apply-dry-run-result",
+            "--apply-result",
             "n/a",
-            "--apply-do-it-result",
-            "na",
             "--out-file",
             str(out_json),
             "--pr-comment-out",
