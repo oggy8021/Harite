@@ -53,7 +53,7 @@ def test_run_binds_signal_backend_when_enabled(monkeypatch):
     monkeypatch.setattr(app, "MainWindow", DummyWindow)
     monkeypatch.setattr(app, "_load_ui_signal_backend", fake_backend_loader)
 
-    app.run(bind_ui_backend=True)
+    app.run(bind_ui_backend=True, present_ui_window=False)
 
     assert called["connect_signals"] == 1
     assert called["show"] == 1
@@ -176,7 +176,7 @@ def test_run_propagates_unexpected_signal_backend_load_error(monkeypatch):
     monkeypatch.setattr(app, "_load_ui_signal_backend", fake_backend_loader)
 
     with pytest.raises(ValueError, match="unexpected backend load error"):
-        app.run(bind_ui_backend=True)
+        app.run(bind_ui_backend=True, present_ui_window=False)
 
 
 def test_run_presents_real_window_when_enabled(monkeypatch):
