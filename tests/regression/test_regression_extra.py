@@ -49,6 +49,17 @@ def test_output_filename_contains_prefix(tmp_path):
     assert "harite_output_" in saved[0].name
 
 
+def test_output_filename_uses_four_digit_zero_padding(tmp_path):
+    p = Path("tests/data/left.jpg")
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+
+    saved, _ = optimize_wallpapers(inputs=[str(p)], target_resolution=(800, 600), output_dir=out_dir)
+
+    assert len(saved) == 1
+    assert saved[0].name == "harite_output_0001.jpg"
+
+
 def test_output_path_overrides_default_filename(tmp_path):
     p = Path("tests/data/left.jpg")
     out_dir = tmp_path / "out"

@@ -26,7 +26,7 @@ core が直接の主責務としないもの:
 
 ## 2. データモデル
 
-- optimize 入力は 1 個以上の画像パスである。
+- optimize 入力は 1 件または 2 件の画像パスである。
 - 画面条件は `resolution`, `two_screen`, `l_display`, `r_display` などで表現する。
 - 設定は最適化設定モデル、適用設定モデル、スライドショー設定モデル、アプリ設定モデルとして論理分割される。
 
@@ -35,13 +35,13 @@ core が直接の主責務としないもの:
 - optimize 面は、入力画像、target resolution、margins、align、background_color、embed 系で構成される。
 - apply 設定面は、`plugin`, `apply_mode` など呼び出し側が保持する適用条件で構成される。
 - apply target 面は、core が解決した単一画像 path または monitor map で構成され、plugin 名そのものは含めない。
-- スライドショー面は、入力 directory 群、interval、mode、サイクル state で構成される。
+- スライドショー面は、入力 directory 1 件または最大 2 件、interval、mode、サイクル state で構成される。
 - 設定面は、optimize / apply / slideshow の論理グループを 1 つの設定ファイルへ統合して保存する。
 
 mode 値の扱い:
 
 - スライドショー mode の内部値と設定値は `sequential` / `random` で統一する。
-- mode の既定値は `random` とする。
+- helper / core は mode を呼び出し側から明示的に受け取る。既定値の決定は CLI / GUI / settings 側の責務である。
 
 補足:
 
@@ -53,13 +53,14 @@ mode 値の扱い:
 
 - optimize 入力は画像ファイルのみを受け付け、directory は受け付けない。
 - two-screen 文脈では、resolution と左右 display 情報の整合が必要である。
-- スライドショー入力は directory 単位で扱い、画像列を cycle の対象とする。
+- スライドショー入力は 1 件または最大 2 件の directory として扱う。
 
 入力解決の基本原則:
 
-- optimize は「何を出力したいか」を先に確定させるため、入力画像と表示条件の両方を要件とする。
+- optimize は「何を出力したいか」を先に確定させるため、入力画像と表示条件の両方を要件とする。public surface では入力画像は最大 2 件まで採用する。
 - single-screen と two-screen では、必要なパラメータの意味が一部変わる。
-- slideshow は optimize と異なり、単発の画像ではなく候補集合を扱う。
+- slideshow は optimize と異なり、単発の画像ではなく、1 件または最大 2 件の input directory を source として扱う。
+- スライドショー helper は、採用済み source directory 群を順に検証し、各 directory から集めた画像列をその順のまま連結した 1 本の候補列へ正規化する。
 
 two-screen 文脈で重要な点:
 
@@ -73,6 +74,7 @@ two-screen 文脈で重要な点:
 - virtual desktop 解像度は、検出 display 群に対して `min_x = min(x_offset)`, `max_x = max(x_offset + width)`, `min_y = min(y_offset)`, `max_y = max(y_offset + height)` を求め、`resolution = (max_x - min_x, max_y - min_y)` で作る。
 - `build_two_screen_optimize_context(...)` は display が 2 件未満なら `None` を返す。2 件以上ある場合だけ、ordered 先頭 2 件から `l_display = (left.width, left.height)`, `r_display = (right.width, right.height)` を作る。
 - `resolve_optimize_display_settings(...)` は、空文字を除いた入力列の件数が 2 件以上のときだけ two-screen context 取得を試みる。入力が 1 件しかない場合、display 自動解決は行わない。
+- CLI / GUI の public surface では、optimize 入力が 3 件以上与えられても先頭 2 件だけを採用する。two-screen 文脈の left / right 割当は、この採用済み先頭 2 件の順序で決まる。
 - `two_screen` が未指定なら自動判定であり、初期値は `effective_two_screen = context is not None` である。明示指定がある場合はその bool 値を優先する。
 - `resolution`, `l_display`, `r_display` は、値が `None` または `auto` のときだけ未確定扱いとなる。context が得られていて `effective_two_screen=True` の場合に限って、`resolution = "{virtual_w}x{virtual_h}"`, `l_display = "{left_w}x{left_h}"`, `r_display = "{right_w}x{right_h}"` を自動補完する。
 - 自動判定で context が得られなかった場合だけ、最後に `effective_two_screen=False` へ戻る。`resolution` が最後まで確定しなければ入力不正として止める。

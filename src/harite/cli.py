@@ -311,6 +311,7 @@ def optimize(
     for it in eff_input:
         parts = [p.strip() for p in it.split(",") if p.strip()]
         expanded_inputs.extend(parts)
+    expanded_inputs = expanded_inputs[:2]
     try:
         expanded_inputs = [str(path) for path in normalize_optimize_input_paths(expanded_inputs)]
     except ValueError as exc:
@@ -435,14 +436,14 @@ def apply(
         raise typer.Exit(code=3)
 
 
-@app.command(help="Rotate wallpapers from a directory using the existing apply path.")
+@app.command(help="Rotate wallpapers from directories using the existing apply path.")
 def slideshow(
-    input: Path = typer.Option(..., "--input", help="Input directory containing images"),
+    input: List[str] = typer.Option(..., "--input", help="Input directories. Use comma-separated paths or repeat --input."),
     interval_sec: int = typer.Option(..., "--interval-sec", help="Cycle interval in seconds (>=1)"),
     mode: str = typer.Option("sequential", "--mode", help="Selection mode: sequential|random"),
     plugin: str = typer.Option(_default_plugin_name(), "--plugin", "-p", help="Plugin name used to apply each selected image"),
 ) -> None:
-    """Rotate wallpapers from a directory (minimum execution control)."""
+    """Rotate wallpapers from directories (minimum execution control)."""
     if interval_sec < 1:
         typer.echo("--interval-sec must be >= 1")
         raise typer.Exit(code=2)
@@ -452,14 +453,22 @@ def slideshow(
         typer.echo("--mode must be one of: sequential, random")
         raise typer.Exit(code=2)
 
+    input_dirs: List[Path] = []
+    for it in input:
+        parts = [p.strip() for p in it.split(",") if p.strip()]
+        input_dirs.extend(Path(part) for part in parts)
+    input_dirs = input_dirs[:2]
+
     try:
-        images = collect_slideshow_input_images(input)
+        images = collect_slideshow_input_images(input_dirs)
     except ValueError as exc:
         typer.echo(str(exc))
         raise typer.Exit(code=2)
 
+    input_summary = ",".join(str(path) for path in input_dirs)
+
     typer.echo(
-        f"Slideshow start: input={input} images={len(images)} interval_sec={interval_sec} "
+        f"Slideshow start: input={input_summary} images={len(images)} interval_sec={interval_sec} "
         f"mode={mode} plugin={plugin}"
     )
 

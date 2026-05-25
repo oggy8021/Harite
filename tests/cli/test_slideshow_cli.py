@@ -56,6 +56,170 @@ def test_slideshow_requires_interval_option() -> None:
     assert "interval" in output
 
 
+def test_slideshow_uses_only_first_two_input_directories(tmp_path, monkeypatch) -> None:
+    runner = CliRunner()
+    _require_slideshow_command(runner)
+
+    left_dir = tmp_path / "left"
+    right_dir = tmp_path / "right"
+    extra_dir = tmp_path / "extra"
+    for directory in (left_dir, right_dir, extra_dir):
+        directory.mkdir()
+
+    captured = {}
+
+    def fake_collect_slideshow_input_images(input_dirs):
+        captured["input_dirs"] = input_dirs
+        return [left_dir / "l.jpg", right_dir / "r.jpg"]
+
+    class FakePlugin:
+        def apply(self, _path_or_map):
+            return True
+
+    def fake_run_slideshow_cycles(
+        *,
+        images,
+        mode,
+        interval_sec,
+        on_cycle,
+        sleep_fn=None,
+    ):
+        captured["images"] = images
+        on_cycle(images[0], 0)
+        return 1
+
+    monkeypatch.setattr(cli, "collect_slideshow_input_images", fake_collect_slideshow_input_images)
+    monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
+    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "slideshow",
+            "--input",
+            str(left_dir),
+            "--input",
+            str(right_dir),
+            "--input",
+            str(extra_dir),
+            "--interval-sec",
+            "1",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["input_dirs"] == [left_dir, right_dir]
+    assert captured["images"] == [left_dir / "l.jpg", right_dir / "r.jpg"]
+
+
+def test_slideshow_ignores_invalid_third_directory_after_first_two(tmp_path, monkeypatch) -> None:
+    runner = CliRunner()
+    _require_slideshow_command(runner)
+
+    left_dir = tmp_path / "left"
+    right_dir = tmp_path / "right"
+    invalid_third = tmp_path / "missing"
+    for directory in (left_dir, right_dir):
+        directory.mkdir()
+
+    captured = {}
+
+    def fake_collect_slideshow_input_images(input_dirs):
+        captured["input_dirs"] = input_dirs
+        return [left_dir / "l.jpg", right_dir / "r.jpg"]
+
+    class FakePlugin:
+        def apply(self, _path_or_map):
+            return True
+
+    def fake_run_slideshow_cycles(
+        *,
+        images,
+        mode,
+        interval_sec,
+        on_cycle,
+        sleep_fn=None,
+    ):
+        captured["images"] = images
+        on_cycle(images[0], 0)
+        return 1
+
+    monkeypatch.setattr(cli, "collect_slideshow_input_images", fake_collect_slideshow_input_images)
+    monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
+    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "slideshow",
+            "--input",
+            str(left_dir),
+            "--input",
+            str(right_dir),
+            "--input",
+            str(invalid_third),
+            "--interval-sec",
+            "1",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["input_dirs"] == [left_dir, right_dir]
+    assert captured["images"] == [left_dir / "l.jpg", right_dir / "r.jpg"]
+
+
+def test_slideshow_uses_only_first_two_directories_from_comma_separated_input(tmp_path, monkeypatch) -> None:
+    runner = CliRunner()
+    _require_slideshow_command(runner)
+
+    left_dir = tmp_path / "left"
+    right_dir = tmp_path / "right"
+    extra_dir = tmp_path / "extra"
+    for directory in (left_dir, right_dir, extra_dir):
+        directory.mkdir()
+
+    captured = {}
+
+    def fake_collect_slideshow_input_images(input_dirs):
+        captured["input_dirs"] = input_dirs
+        return [left_dir / "l.jpg", right_dir / "r.jpg"]
+
+    class FakePlugin:
+        def apply(self, _path_or_map):
+            return True
+
+    def fake_run_slideshow_cycles(
+        *,
+        images,
+        mode,
+        interval_sec,
+        on_cycle,
+        sleep_fn=None,
+    ):
+        captured["images"] = images
+        on_cycle(images[0], 0)
+        return 1
+
+    monkeypatch.setattr(cli, "collect_slideshow_input_images", fake_collect_slideshow_input_images)
+    monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
+    monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "slideshow",
+            "--input",
+            f"{left_dir},{right_dir},{extra_dir}",
+            "--interval-sec",
+            "1",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["input_dirs"] == [left_dir, right_dir]
+    assert captured["images"] == [left_dir / "l.jpg", right_dir / "r.jpg"]
+
+
 def test_slideshow_rejects_interval_less_than_one(tmp_path) -> None:
     runner = CliRunner()
     _require_slideshow_command(runner)
@@ -91,6 +255,18 @@ def test_slideshow_help_includes_mode_and_excludes_legacy_options() -> None:
     assert "do-it" not in output
     assert "log-level" not in output
     assert "iterations" not in output
+
+
+def test_slideshow_help_describes_comma_separated_or_repeated_input() -> None:
+    runner = CliRunner()
+    _require_slideshow_command(runner)
+
+    result = runner.invoke(cli.app, ["slideshow", "--help"])
+    output = _normalize_cli_output(result.output)
+
+    assert result.exit_code == 0
+    assert "comma-separated" in output
+    assert "repeat --input" in output
 
 
 def test_slideshow_rejects_legacy_do_it_option(tmp_path) -> None:
