@@ -52,7 +52,7 @@ def test_phase4_b_status_running_success_on_optimize(tmp_path):
 
 def test_phase4_b_status_error_on_apply_failure(monkeypatch, tmp_path):
     class DummyPlugin:
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
+        def apply(self, path: str) -> bool:
             return False
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
@@ -73,8 +73,8 @@ def test_phase4_c_primary_flow_reaches_apply_in_two_steps(monkeypatch, tmp_path)
         def __init__(self):
             self.calls = []
 
-        def apply(self, path: str, *, dry_run: bool = True) -> bool:
-            self.calls.append((path, dry_run))
+        def apply(self, path: str) -> bool:
+            self.calls.append(path)
             return True
 
     plugin = DummyPlugin()
@@ -87,7 +87,7 @@ def test_phase4_c_primary_flow_reaches_apply_in_two_steps(monkeypatch, tmp_path)
     assert win.suggest_next_action() == "apply"
     assert win.run_primary_flow_step() is True  # apply
     assert plugin.calls
-    assert plugin.calls[-1][1] is False
+    assert plugin.calls[-1] == str(win.last_saved_files[-1])
 
 
 def test_phase4_d_input_reset_clears_apply_readiness(tmp_path):

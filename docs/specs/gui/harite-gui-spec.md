@@ -129,9 +129,7 @@ flowchart TD
     E --> F
 ```
 
-- GUI には CLI の `--do-it` / `dry-run` に相当する同名オプションは存在しない。
 - GUI は日常操作面として apply や slideshow を直接起動するが、内部では core / plugin / slideshow helper の経路を利用する。
-- したがって「dry-run 既定かどうか」は CLI 仕様の論点であり、GUI ではボタン操作と状態表示の挙動として読む。
 
 apply mode の user-facing 意味:
 
@@ -173,7 +171,6 @@ apply mode の user-facing 意味:
 - mode は slideshow 関連設定値として load / save 対象に含める。
 - mode 選択面は srcdir row の下、interval/start/stop row の上に独立 row として置く。
 - mode help row は選択中 mode の簡潔な補助説明を表示する user-facing surface とし、`sequential` 時は `Sequential rotates images.`、`random` 時は `Random rotates images.` を表示する。
-- このため CLI にある `--do-it` / `--dry-run` の説明は GUI にそのまま持ち込まず、GUI 側では status, history, error 表示を中心に説明する。
 
 slideshow start / tick / stop:
 

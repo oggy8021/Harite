@@ -29,7 +29,7 @@ def test_linux_plugin_resolves_relative_path_before_xfconf_set(tmp_path, monkeyp
     monkeypatch.setattr(subprocess, "run", fake_run)
 
     lp = LinuxPlugin()
-    assert lp.apply("wall.png", dry_run=False) is True
+    assert lp.apply("wall.png") is True
 
     set_calls = [c for c in calls if c[:4] != ["xfconf-query", "-c", "xfce4-desktop", "-l"]]
     assert set_calls

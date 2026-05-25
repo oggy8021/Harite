@@ -1,7 +1,7 @@
 """Plugin registry and wallpaper application plugins.
 
 This module provides a minimal plugin registry and a Windows plugin stub that
-applies wallpapers. Plugins must implement `apply(path: str, *, dry_run: bool)`.
+applies wallpapers. Plugins must implement `apply(path_or_map)`.
 """
 from __future__ import annotations
 
@@ -345,30 +345,24 @@ def _match_candidates_for_mapping(mapping: dict, candidates: list) -> dict:
     return result
 
 
-def _apply_xfconf_candidates(is_map: bool, mapping: dict | None, candidates: list, p: Path | None, dry_run: bool) -> tuple[bool, bool]:
-    """XFCE 候補に対して `xfconf-query` を実行またはシミュレートする。
+def _apply_xfconf_candidates(is_map: bool, mapping: dict | None, candidates: list, p: Path | None) -> bool:
+    """XFCE 候補に対して `xfconf-query` を実行する。
 
     Args:
         is_map: path 引数がマッピング(dict)か。
         mapping: マッピング（is_map=True のとき）。
         candidates: 候補パスリスト。
         p: 単一パス（is_map=False のとき）。
-        dry_run: 実行の代わりにログ出力するか。
-
     Returns:
-        (success_any, simulated)
+        適用成功時は True。
     """
     import subprocess
 
-    simulated = False
     success_any = False
-
-    if dry_run and candidates:
-        simulated = True
 
     if is_map:
         if mapping is None:
-            return False, simulated
+            return False
         try:
             matched = _match_candidates_for_mapping(mapping, candidates)
         except Exception:
@@ -381,39 +375,33 @@ def _apply_xfconf_candidates(is_map: bool, mapping: dict | None, candidates: lis
             filtered = matched.get(mon_name, [])
             for prop in filtered:
                 cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(mon_path)]
-                logger.info("XFCE: would run: %s", " ".join(cmd))
-                if dry_run:
+                logger.info("XFCE: run: %s", " ".join(cmd))
+                res = subprocess.run(cmd, check=False)
+                if res.returncode == 0:
                     applied_any = True
                 else:
-                    res = subprocess.run(cmd, check=False)
-                    if res.returncode == 0:
-                        applied_any = True
-                    else:
-                        logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
-            if applied_any:
-                success_any = True
-            else:
+                    logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
+            if not applied_any:
                 success_all = False
                 logger.warning("XFCE: no matching per-monitor apply candidate succeeded for %s", mon_name)
-        return success_all, simulated
+        return success_all
     else:
         for prop in candidates:
             cmd = ["xfconf-query", "-c", "xfce4-desktop", "-p", prop, "-s", str(p)]
-            logger.info("XFCE: would run: %s", " ".join(cmd))
-            if not dry_run:
-                res = subprocess.run(cmd, check=False)
-                if res.returncode == 0:
-                    success_any = True
-                else:
-                    logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
+            logger.info("XFCE: run: %s", " ".join(cmd))
+            res = subprocess.run(cmd, check=False)
+            if res.returncode == 0:
+                success_any = True
+            else:
+                logger.debug("XFCE: command failed (%s): %s", res.returncode, " ".join(cmd))
 
-    return success_any, simulated
+    return success_any
 
 
 class PluginProtocol(Protocol):
     name: str
 
-    def apply(self, path: str, *, dry_run: bool = True) -> bool:
+    def apply(self, path: str) -> bool:
         """Apply the wallpaper located at `path`.
 
         Return True on success, False on failure.
@@ -454,7 +442,7 @@ registry = PluginRegistry()
 class WindowsPlugin:
     name = "windows"
 
-    def apply(self, path: str, *, dry_run: bool = True) -> bool:
+    def apply(self, path: str) -> bool:
         if isinstance(path, dict):
             logger.error("Per-monitor mapping is not supported by the windows plugin")
             return False
@@ -462,12 +450,7 @@ class WindowsPlugin:
         if not p.exists():
             logger.error("Wallpaper file does not exist: %s", path)
             return False
-        if dry_run:
-            logger.info("Dry-run: would apply wallpaper: %s", path)
-            return True
 
-        # Attempt to set Windows wallpaper. This code is intentionally guarded
-        # and should only run when the caller explicitly sets `dry_run=False`.
         try:
             import ctypes
 
@@ -491,7 +474,7 @@ def make_windows_plugin() -> WindowsPlugin:
 class MacOSPlugin:
     name = "macos"
 
-    def apply(self, path: str, *, dry_run: bool = True) -> bool:
+    def apply(self, path: str) -> bool:
         if isinstance(path, dict):
             logger.error("Per-monitor mapping is not supported by the macos plugin")
             return False
@@ -499,11 +482,7 @@ class MacOSPlugin:
         if not p.exists():
             logger.error("Wallpaper file does not exist: %s", path)
             return False
-        if dry_run:
-            logger.info("Dry-run: would apply wallpaper (macOS): %s", path)
-            return True
 
-        # Attempt to set macOS wallpaper using AppleScript via osascript.
         try:
             import subprocess
 
@@ -523,7 +502,7 @@ def make_macos_plugin() -> MacOSPlugin:
 class LinuxPlugin:
     name = "linux"
 
-    def apply(self, path: str, *, dry_run: bool = True) -> bool:
+    def apply(self, path: str) -> bool:
         # Support per-monitor mapping dicts: {monitor_name: path}
         is_map = isinstance(path, dict)
         if is_map:
@@ -536,58 +515,31 @@ class LinuxPlugin:
             if not p.exists():
                 logger.error("Wallpaper file does not exist: %s", path)
                 return False
-            if dry_run:
-                logger.info("Dry-run: would apply wallpaper (linux): %s", p)
-                # When running a dry-run and the file exists, report success immediately.
-                # Older behavior attempted to enumerate xfconf candidates for logging,
-                # but tests and CI expect dry-run to be considered successful even when
-                # no external wallpaper setters are present on PATH.
-                return True
 
         # Try common desktop environment commands (gsettings, feh). This is a best-effort
         # and intentionally not guaranteed to work on all distributions / DEs.
-        simulated = False
         try:
             import shutil
             import subprocess
 
-            # Prefer enumerating XFCE properties first so dry-run can log candidates.
             if shutil.which("xfconf-query"):
                 try:
                     candidates = _enumerate_xfconf_candidates()
-                    success_any, simulated_xfce = _apply_xfconf_candidates(is_map, mapping if is_map else None, candidates, p if not is_map else None, dry_run)
-                    if success_any:
+                    if _apply_xfconf_candidates(is_map, mapping if is_map else None, candidates, p if not is_map else None):
                         return True
-                    if simulated_xfce:
-                        simulated = True
                 except Exception:
                     logger.exception("xfconf-query attempt failed")
 
-            # Next try GNOME gsettings (if present). For dry-run, log the command instead
-            # of executing so we don't prematurely short-circuit logging.
             if shutil.which("gsettings") and not is_map:
                 cmd = ["gsettings", "set", "org.gnome.desktop.background", "picture-uri", f"file://{str(p)}"]
-                if dry_run:
-                    logger.info("Dry-run: would run gsettings: %s", " ".join(cmd))
-                    simulated = True
-                else:
-                    res = subprocess.run(cmd, check=False)
-                    if res.returncode == 0:
-                        return True
+                res = subprocess.run(cmd, check=False)
+                if res.returncode == 0:
+                    return True
             if shutil.which("feh") and not is_map:
-                # Lightweight viewers
                 cmd = ["feh", "--bg-scale", str(p)]
-                if dry_run:
-                    logger.info("Dry-run: would run feh: %s", " ".join(cmd))
-                    simulated = True
-                else:
-                    res = subprocess.run(cmd, check=False)
-                    if res.returncode == 0:
-                        return True
-            # If dry-run and we simulated any candidate/command, treat as success
-            if dry_run and simulated:
-                logger.info("Dry-run: simulated commands present, reporting success")
-                return True
+                res = subprocess.run(cmd, check=False)
+                if res.returncode == 0:
+                    return True
             logger.error("No known wallpaper setter found on PATH")
             return False
         except Exception:  # pragma: no cover - platform specific

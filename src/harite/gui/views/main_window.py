@@ -770,7 +770,7 @@ class MainWindow:
             return False
 
         try:
-            ok = bool(plugin.apply(target, dry_run=False))
+            ok = bool(plugin.apply(target))
         except Exception as exc:
             self._set_status("error", "apply", "apply failed", error=f"failed to apply wallpaper: {exc}")
             self._log(f"Apply failed via plugin={self.plugin_name}: {exc}")
@@ -1130,7 +1130,7 @@ class MainWindow:
             return False
 
         try:
-            ok = bool(self._slideshow_plugin_impl.apply(target, dry_run=False))
+            ok = bool(self._slideshow_plugin_impl.apply(target))
         except Exception as exc:
             self._log(f"Slideshow {cycle_phase} {apply_mode} apply error: {exc}")
             return False

@@ -26,4 +26,4 @@ def test_gnome_apply_non_dry_run(tmp_path, monkeypatch):
     monkeypatch.setattr(subprocess, "run", fake_run)
 
     lp = LinuxPlugin()
-    assert lp.apply(str(p), dry_run=False) is True
+    assert lp.apply(str(p)) is True

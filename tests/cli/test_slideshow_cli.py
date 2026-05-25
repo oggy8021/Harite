@@ -185,8 +185,8 @@ def test_slideshow_runs_and_reports_completion(tmp_path, monkeypatch) -> None:
         def __init__(self):
             self.calls = []
 
-        def apply(self, path_or_map, dry_run=False):
-            self.calls.append((path_or_map, dry_run))
+        def apply(self, path_or_map):
+            self.calls.append(path_or_map)
             return True
 
     fake_plugin = FakePlugin()
@@ -227,8 +227,7 @@ def test_slideshow_runs_and_reports_completion(tmp_path, monkeypatch) -> None:
     assert captured["mode"] == "sequential"
     assert captured["interval_sec"] == 1
     assert len(captured["images"]) == 1
-    assert len(fake_plugin.calls) == 1
-    assert fake_plugin.calls[0][1] is False
+    assert fake_plugin.calls == [str(img_dir / "a.jpg")]
     assert "log_level" not in output
     assert "iterations" not in output
     assert "Slideshow completed cycles=1" in raw_output
@@ -248,7 +247,7 @@ def test_slideshow_handles_keyboard_interrupt_as_normal_exit(tmp_path, monkeypat
         raise KeyboardInterrupt()
 
     class FakePlugin:
-        def apply(self, _path_or_map, dry_run=False):
+        def apply(self, _path_or_map):
             return True
 
     monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
@@ -278,8 +277,8 @@ def test_slideshow_resolves_plugin_and_applies_without_do_it_option(tmp_path, mo
         def __init__(self):
             self.calls = []
 
-        def apply(self, path_or_map, dry_run=False):
-            self.calls.append((path_or_map, dry_run))
+        def apply(self, path_or_map):
+            self.calls.append(path_or_map)
             return True
 
     fake_plugin = FakePlugin()
@@ -312,8 +311,7 @@ def test_slideshow_resolves_plugin_and_applies_without_do_it_option(tmp_path, mo
 
     assert result.exit_code == 0
     assert plugin_requested
-    assert len(fake_plugin.calls) == 1
-    assert fake_plugin.calls[0][1] is False
+    assert fake_plugin.calls == [str(img_dir / "a.jpg")]
     assert "log_level" not in output
     assert "iterations" not in output
     assert "dry_run" not in output
@@ -334,8 +332,8 @@ def test_slideshow_applies_and_continues_on_failure(tmp_path, monkeypatch) -> No
         def __init__(self):
             self.calls = []
 
-        def apply(self, path_or_map, dry_run=False):
-            self.calls.append((path_or_map, dry_run))
+        def apply(self, path_or_map):
+            self.calls.append(path_or_map)
             return len(self.calls) != 1
 
     fake_plugin = FakePlugin()
@@ -372,9 +370,7 @@ def test_slideshow_applies_and_continues_on_failure(tmp_path, monkeypatch) -> No
     raw_output = _strip_cli_output(result.output)
 
     assert result.exit_code == 0
-    assert len(fake_plugin.calls) == 2
-    assert fake_plugin.calls[0][1] is False
-    assert fake_plugin.calls[1][1] is False
+    assert fake_plugin.calls == [str(img_dir / "a.jpg"), str(img_dir / "b.jpg")]
     assert "apply=failed" in output
     assert "reason=plugin-returned-false" in output
     assert "apply=ok" not in output
@@ -398,8 +394,7 @@ def test_slideshow_success_does_not_emit_success_cycle_line(tmp_path, monkeypatc
     (img_dir / "a.jpg").write_bytes(b"x")
 
     class FakePlugin:
-        def apply(self, _path_or_map, dry_run=False):
-            assert dry_run is False
+        def apply(self, _path_or_map):
             return True
 
     monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
@@ -449,8 +444,7 @@ def test_slideshow_default_run_does_not_emit_dry_run_markers(tmp_path, monkeypat
     (img_dir / "a.jpg").write_bytes(b"x")
 
     class FakePlugin:
-        def apply(self, _path_or_map, dry_run=False):
-            assert dry_run is False
+        def apply(self, _path_or_map):
             return True
 
     monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
@@ -500,8 +494,7 @@ def test_slideshow_exception_is_reported_and_counted(tmp_path, monkeypatch) -> N
     (img_dir / "a.jpg").write_bytes(b"x")
 
     class FakePlugin:
-        def apply(self, _path_or_map, dry_run=False):
-            assert dry_run is False
+        def apply(self, _path_or_map):
             raise RuntimeError("boom")
 
     monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())

@@ -45,7 +45,7 @@ sequenceDiagram
     else apply
         CLI->>Core: resolve_apply_settings(...)
         Core-->>CLI: 最終適用対象
-        CLI->>Plugin: apply(target, dry_run)
+        CLI->>Plugin: apply(target)
         Plugin-->>CLI: success / failure
         CLI-->>User: apply result
     else slideshow
@@ -115,13 +115,7 @@ display / two-screen 解決:
 ## 5. `apply`
 
 - plugin を解決し、`single-file` または per-monitor target を適用する。
-- CLI では dry-run を既定とし、実適用したい場合だけ --do-it を指定する。
-- CLI は最終的に plugin へ `dry_run=not --do-it` を渡す。
-
-補足:
-
-- GUI には `--do-it` / `dry-run` という同名オプションは存在しない。そのため GUI の apply / slideshow は、CLI とは別の操作面として説明する。
-- dry-run 時の「副作用を起こさないこと」は plugin 側の契約でもある。plugin は `dry_run=True` のとき外部コマンドや OS 設定変更を実行しない。
+- CLI `apply` は直接作用 command として扱う。
 
 apply mode の決定順:
 
@@ -147,7 +141,6 @@ apply mode の決定順:
 slideshow command の意味:
 
 - filesystem event を待つ監視ではなく、入力 directory から画像一覧を集め、一定間隔で次画像を選んで apply する。
-- `slideshow` は user-facing には直接作用 command として扱い、専用 dry-run surface は持たない。
 - command 開始時に plugin を解決し、各サイクルで実 apply を行う。
 
 CLI surface の整理方針:
@@ -209,7 +202,6 @@ Windows / macOS ではサポート外であり、終了コード `2` で終了�
 
 ## 9. メッセージと重要度
 
-- `info`: 実行開始、完了、dry-run summary
 - `info`: 実行開始、中断、通常完了要約
 - `error`: validation error, unknown plugin, apply failed
 - Harite 固有の stdout 実行メッセージは、言語に応じた自然な user-facing 表現を使う。

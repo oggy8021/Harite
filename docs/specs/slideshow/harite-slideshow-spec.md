@@ -152,7 +152,7 @@ GUI は単なるタイマー処理ではなく、状態表示の責務を強く�
 
 CLI `slideshow` command の特徴:
 
-- user-facing には dedicated dry-run surface を持たず、開始後は各サイクルで `apply(...)` を呼ぶ。
+- 開始後は各サイクルで `apply(...)` を呼ぶ。
 - plugin が例外を投げてもループ全体を即停止せず、そのサイクルの `apply_error` カウンタを 1 件増やす。
 - plugin が `False` を返した場合は、そのサイクルの `apply_failed` カウンタを 1 件増やす。
 - これらのカウンタは各サイクルの途中で保持され、bounded run や将来の明示完了経路がある場合にだけ `Slideshow completed` 行の実行メッセージ要約として出力する。
@@ -179,14 +179,13 @@ GUI feedback の補足:
 
 CLI の主な観測値:
 
-- 開始時の `input`, `images`, `interval_sec`, `mode`, `plugin`, `dry_run`
+- 開始時の `input`, `images`, `interval_sec`, `mode`, `plugin`
 - 各サイクルの selected image
 - `apply_ok`, `apply_failed`, `apply_error`
 - 完了時の total サイクル数
 
 完了時 summary の見方:
 
-- dry-run では `cycles` と `dry_run_cycles` が出る。
 - 実 apply では `apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` が `Slideshow completed` 行へ出る。
 
 固定方針では start 行と completed 行が基本であり、cycle 行は failure が起きたサイクルでだけ観測される。

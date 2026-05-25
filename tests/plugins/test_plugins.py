@@ -1,5 +1,6 @@
 import shutil
 import subprocess
+import ctypes
 from types import SimpleNamespace
 from harite.plugins import LinuxPlugin
 
@@ -25,8 +26,8 @@ def test_linuxplugin_candidate_matching(monkeypatch):
     monkeypatch.setattr(subprocess, "run", fake_run)
 
     plugin = LinuxPlugin()
-    # Provide a mapping for DP-1 – dry_run should detect candidates and report success
-    res = plugin.apply({"DP-1": "/tmp/fake.jpg"}, dry_run=True)
+    # Provide a mapping for DP-1 and ensure candidate application succeeds.
+    res = plugin.apply({"DP-1": "/tmp/fake.jpg"})
     assert res is True
 from harite import plugins
 from pathlib import Path
@@ -39,46 +40,55 @@ def test_registry_contains_windows():
     assert "linux" in names
 
 
-def test_windows_plugin_dry_run_success():
+def test_windows_plugin_apply_success(monkeypatch):
     plugin = plugins.registry.get("windows")
     # use existing test asset
     p = Path("tests/data/left.jpg")
     assert p.exists()
-    assert plugin.apply(str(p), dry_run=True) is True
+    monkeypatch.setattr(
+        ctypes,
+        "windll",
+        SimpleNamespace(user32=SimpleNamespace(SystemParametersInfoW=lambda *_args: 1)),
+        raising=False,
+    )
+    assert plugin.apply(str(p)) is True
 
 
 def test_windows_plugin_missing_file():
     plugin = plugins.registry.get("windows")
-    assert plugin.apply("nonexistent-file.jpg", dry_run=True) is False
+    assert plugin.apply("nonexistent-file.jpg") is False
 
 
 def test_windows_plugin_rejects_monitor_map():
     plugin = plugins.registry.get("windows")
-    assert plugin.apply({"HDMI-1": "tests/data/left.jpg"}, dry_run=True) is False
+    assert plugin.apply({"HDMI-1": "tests/data/left.jpg"}) is False
 
 
-def test_macos_plugin_dry_run():
+def test_macos_plugin_apply(monkeypatch):
     plugin = plugins.registry.get("macos")
     p = Path("tests/data/left.jpg")
-    assert plugin.apply(str(p), dry_run=True) is True
+    monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout=""))
+    assert plugin.apply(str(p)) is True
 
 
 def test_macos_plugin_rejects_monitor_map():
     plugin = plugins.registry.get("macos")
-    assert plugin.apply({"HDMI-1": "tests/data/left.jpg"}, dry_run=True) is False
+    assert plugin.apply({"HDMI-1": "tests/data/left.jpg"}) is False
 
 
-def test_linux_plugin_dry_run():
+def test_linux_plugin_apply(monkeypatch):
     plugin = plugins.registry.get("linux")
     p = Path("tests/data/left.jpg")
-    assert plugin.apply(str(p), dry_run=True) is True
+    monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/gsettings" if name == "gsettings" else None)
+    monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout=""))
+    assert plugin.apply(str(p)) is True
 
 
 def test_macos_plugin_missing_file():
     plugin = plugins.registry.get("macos")
-    assert plugin.apply("nonexistent-file.jpg", dry_run=True) is False
+    assert plugin.apply("nonexistent-file.jpg") is False
 
 
 def test_linux_plugin_missing_file():
     plugin = plugins.registry.get("linux")
-    assert plugin.apply("nonexistent-file.jpg", dry_run=True) is False
+    assert plugin.apply("nonexistent-file.jpg") is False

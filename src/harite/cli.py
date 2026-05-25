@@ -381,16 +381,12 @@ def optimize(
 def apply(
     plugin: str = typer.Option(_default_plugin_name(), "--plugin", "-p", help="Plugin name to apply wallpaper with"),
     file: Path = typer.Option(..., "--file", "-f", help="Path to wallpaper image file"),
-    do_it: bool = typer.Option(False, "--do-it", help="Actually change the system wallpaper (dry-run by default)"),
     per_monitor: bool = typer.Option(False, "--per-monitor", "-m", help="Apply per-monitor files (requires --left-file/--right-file or --auto-split)"),
     left_file: Optional[Path] = typer.Option(None, "--left-file", help="File to apply to left monitor"),
     right_file: Optional[Path] = typer.Option(None, "--right-file", help="File to apply to right monitor"),
     auto_split: bool = typer.Option(False, "--auto-split", help="Auto-split the composite file per detected displays"),
 ) -> None:
     """Apply a wallpaper using a registered plugin.
-
-    By default this performs a dry-run; pass `--do-it` to actually attempt
-    changing the system wallpaper.
     """
     try:
         plugin_impl = plugin_registry.get(plugin)
@@ -422,7 +418,7 @@ def apply(
 
     path_or_map = effective_apply.target
 
-    success = plugin_impl.apply(path_or_map, dry_run=not do_it)
+    success = plugin_impl.apply(path_or_map)
     # Prepare a human-friendly path string for logging (handle per-monitor mapping)
     if isinstance(path_or_map, dict):
         try:
@@ -433,7 +429,7 @@ def apply(
         path_str = str(path_or_map)
 
     if success:
-        typer.echo(f"Plugin '{plugin}' applied wallpaper: {path_str} (dry_run={not do_it})")
+        typer.echo(f"Plugin '{plugin}' applied wallpaper: {path_str}")
     else:
         typer.echo(f"Plugin '{plugin}' failed to apply wallpaper: {path_str}")
         raise typer.Exit(code=3)
@@ -482,7 +478,7 @@ def slideshow(
 
     def _on_cycle(selected: Path, cycle_index: int) -> None:
         try:
-            success = bool(plugin_impl.apply(str(selected), dry_run=False))
+            success = bool(plugin_impl.apply(str(selected)))
         except Exception as exc:
             stats["apply_error"] += 1
             typer.echo(

@@ -33,4 +33,4 @@ def test_index_based_mapping(monkeypatch):
     mapping = {"DP-1": "/tmp/w1.jpg", "HDMI-1": "/tmp/w2.jpg"}
 
     # applying should succeed by index-based matching
-    assert plugin.apply(mapping, dry_run=False) is True
+    assert plugin.apply(mapping) is True

@@ -307,8 +307,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--notes", default="", help="notes text used in PR comment template")
     parser.add_argument("--optimize-result", default="not-available", help="manual result: pass/fail/not-available")
     parser.add_argument("--apply-result", default=None, help="manual result: pass/fail/not-available")
-    parser.add_argument("--apply-dry-run-result", default=None, help=argparse.SUPPRESS)
-    parser.add_argument("--apply-do-it-result", default=None, help=argparse.SUPPRESS)
     parser.add_argument("--screenshot-mainwindow", default="", help="path for MainWindow screenshot used in report")
     parser.add_argument("--screenshot-optimize", default="", help="path for Optimize screenshot used in report")
     parser.add_argument("--screenshot-apply", default="", help="path for Apply screenshot used in report")
@@ -322,18 +320,12 @@ def main(argv: list[str] | None = None) -> int:
         args.require_screenshots = True
         args.verify_screenshot_files = True
 
-    if args.apply_result is None and args.apply_dry_run_result is not None:
-        args.apply_result = args.apply_dry_run_result
     if args.apply_result is None:
         args.apply_result = "not-available"
 
     try:
         args.optimize_result = _normalize_manual_result(args.optimize_result)
         args.apply_result = _normalize_manual_result(args.apply_result)
-        if args.apply_dry_run_result is not None:
-            args.apply_dry_run_result = _normalize_manual_result(args.apply_dry_run_result)
-        if args.apply_do_it_result is not None:
-            args.apply_do_it_result = _normalize_manual_result(args.apply_do_it_result)
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 2

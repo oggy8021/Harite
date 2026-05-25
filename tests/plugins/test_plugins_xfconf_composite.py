@@ -33,4 +33,4 @@ def test_composite_token_matching(monkeypatch):
     mapping = {"DP-1": "/tmp/wall.jpg"}
 
     # applying should succeed by composite token matching (index + resolution)
-    assert plugin.apply(mapping, dry_run=False) is True
+    assert plugin.apply(mapping) is True

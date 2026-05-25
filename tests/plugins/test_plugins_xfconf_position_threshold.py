@@ -33,4 +33,4 @@ def test_position_threshold(monkeypatch):
     mapping = {"DP-1": "/tmp/wall.jpg"}
 
     # applying should fail because position is outside threshold for any display
-    assert plugin.apply(mapping, dry_run=False) is False
+    assert plugin.apply(mapping) is False

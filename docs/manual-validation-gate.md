@@ -147,7 +147,6 @@ python scripts/gui_layout_smoke.py --simulate --validate --strict-manual --artif
 3. 実行ログに `Traceback` や `Exception` が残らないことを確認し、スクリーンショットを PR コメントに添付する。
 
 - `--optimize-result` / `--apply-result` は `pass|fail|not-available` を使う。
-- `--apply-dry-run-result` / `--apply-do-it-result` は legacy alias として受理されるが、current 記録では `--apply-result` を使う。
 - `--strict-manual` は `--auto-artifacts` + `--require-screenshots` + `--verify-screenshot-files` をまとめて有効化する。
 
 スクリーンショット添付フォーマット（PR コメント貼り付け用）:
