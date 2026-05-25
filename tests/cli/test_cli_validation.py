@@ -342,6 +342,39 @@ def test_optimize_ignores_invalid_third_input_after_first_two(tmp_path, monkeypa
     assert captured["inputs"] == [str(first), str(second)]
 
 
+def test_optimize_expands_tilde_for_each_comma_separated_input(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    left = tmp_path / "left.jpg"
+    right = tmp_path / "right.jpg"
+    left.write_bytes(b"x")
+    right.write_bytes(b"x")
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    monkeypatch.setattr("harite.optimize_settings.build_two_screen_optimize_context", lambda: None)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--input",
+            f"~/{left.name},~/{right.name}",
+            "--resolution",
+            "1920x1080",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["inputs"] == [str(left), str(right)]
+
+
 def test_optimize_uses_settings_for_margins_and_displays(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
