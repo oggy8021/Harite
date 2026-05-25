@@ -4,12 +4,26 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 from typing import Any
 
 from .views.main_window import MainWindow
 
 
 _TRUTHY_ENV_VALUES = ("1", "true", "yes", "on")
+
+
+def _exit_missing_gui_runtime(exc: RuntimeError) -> None:
+    message = (
+        "Harite GUI runtime is unavailable. "
+        "Install GTK 3 / PyGObject on the host environment. "
+        "If Harite was installed with pipx, note that the pipx venv may not see distro-provided python3-gi unless system site packages are exposed. "
+        "Alternatively, use a non-isolated install path for GUI validation. "
+        "Or run with "
+        "--no-bind-ui-backend --no-present-ui-window for fallback-only troubleshooting. "
+        f"Details: {exc}"
+    )
+    raise SystemExit(message)
 
 
 def _should_bind_ui_backend(bind_ui_backend: bool | None) -> bool:
@@ -61,15 +75,18 @@ def run(
 ) -> None:
     """Run the standalone GUI entrypoint."""
     window = MainWindow()
+    should_bind_ui_backend = _should_bind_ui_backend(bind_ui_backend)
+    should_present_ui_window = _should_present_ui_window(present_ui_window)
 
     signal_backend = None
     presented = False
 
-    if _should_bind_ui_backend(bind_ui_backend):
+    if should_bind_ui_backend:
         try:
             signal_backend = _load_ui_signal_backend()
-        except RuntimeError:
-            # Keep entrypoint safe when GTK/PyGObject is unavailable.
+        except RuntimeError as exc:
+            if should_present_ui_window:
+                _exit_missing_gui_runtime(exc)
             pass
 
     if signal_backend is not None:
@@ -102,14 +119,13 @@ def run(
         except RuntimeError:
             pass
 
-    if signal_backend is not None and _should_present_ui_window(present_ui_window):
+    if signal_backend is not None and should_present_ui_window:
         try:
             presented = _present_ui_window(signal_backend)
             if presented:
                 return
-        except RuntimeError:
-            # Non-fatal in headless CI or partial GTK environments.
-            pass
+        except RuntimeError as exc:
+            _exit_missing_gui_runtime(exc)
 
     window.show()
 
