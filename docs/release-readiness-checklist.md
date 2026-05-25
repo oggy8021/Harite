@@ -61,10 +61,11 @@
 
 証跡: `docs/release-delivery.md`
 
-- [ ] XFCE 実機のクリーン環境で `pip install dist/*.whl` または `pipx install dist/*.whl` が成功することを確認した。
-- [ ] XFCE 実機で `.venv` を有効化しない状態の `harite optimize --help` / `harite apply --help` / `harite slideshow --help` / `harite-gui` の入口確認を行った。
-- [ ] 配布対象（`sdist` / `wheel`）と配布経路（GitHub Releases など）を current release として確定した。
-- [ ] インストール手順とアンインストール手順（ロールバック手順を含む）を current release 前提で記録した。
+- [x] XFCE 実機のクリーン環境で `pipx install --system-site-packages dist/*.whl` が成功することを確認した。
+- [x] XFCE 実機で `.venv` を有効化しない状態の `harite optimize --help` / `harite apply --help` / `harite slideshow --help` / `harite-gui` の入口確認を行った。
+- [x] 配布対象（`sdist` / `wheel`）と配布経路（GitHub Releases）を current release として確定した。
+- [x] インストール手順とアンインストール手順を current release 前提で記録した。
+- [ ] ロールバック手順を current release 前提で記録した。（今回の release では省略）
 
 ## 7. リリース実施（最終）
 
