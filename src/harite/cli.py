@@ -456,7 +456,7 @@ def slideshow(
     input_dirs: List[Path] = []
     for it in input:
         parts = [p.strip() for p in it.split(",") if p.strip()]
-        input_dirs.extend(Path(part) for part in parts)
+        input_dirs.extend(Path(part).expanduser() for part in parts)
     input_dirs = input_dirs[:2]
 
     try:

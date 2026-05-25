@@ -119,7 +119,7 @@ def normalize_optimize_input_paths(inputs: Sequence[Path | str]) -> List[Path]:
     """
     paths: List[Path] = []
     for p in inputs:
-        pp = Path(p)
+        pp = Path(p).expanduser()
         if pp.is_dir():
             raise ValueError(f"optimize --input does not accept directories: {pp}")
         paths.append(pp)
