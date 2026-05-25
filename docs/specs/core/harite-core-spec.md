@@ -35,13 +35,13 @@ core が直接の主責務としないもの:
 - optimize 面は、入力画像、target resolution、margins、align、background_color、embed 系で構成される。
 - apply 設定面は、`plugin`, `apply_mode` など呼び出し側が保持する適用条件で構成される。
 - apply target 面は、core が解決した単一画像 path または monitor map で構成され、plugin 名そのものは含めない。
-- スライドショー面は、入力 directory 1 件または左右 2 件、interval、mode、サイクル state で構成される。
+- スライドショー面は、入力 directory 1 件または最大 2 件、interval、mode、サイクル state で構成される。
 - 設定面は、optimize / apply / slideshow の論理グループを 1 つの設定ファイルへ統合して保存する。
 
 mode 値の扱い:
 
 - スライドショー mode の内部値と設定値は `sequential` / `random` で統一する。
-- mode の既定値は `random` とする。
+- helper / core は mode を呼び出し側から明示的に受け取る。既定値の決定は CLI / GUI / settings 側の責務である。
 
 補足:
 
@@ -53,13 +53,14 @@ mode 値の扱い:
 
 - optimize 入力は画像ファイルのみを受け付け、directory は受け付けない。
 - two-screen 文脈では、resolution と左右 display 情報の整合が必要である。
-- スライドショー入力は 1 件または 2 件の directory として扱う。
+- スライドショー入力は 1 件または最大 2 件の directory として扱う。
 
 入力解決の基本原則:
 
 - optimize は「何を出力したいか」を先に確定させるため、入力画像と表示条件の両方を要件とする。public surface では入力画像は最大 2 件まで採用する。
 - single-screen と two-screen では、必要なパラメータの意味が一部変わる。
-- slideshow は optimize と異なり、単発の画像ではなく、1 件または左右 2 件の input directory を source として扱う。
+- slideshow は optimize と異なり、単発の画像ではなく、1 件または最大 2 件の input directory を source として扱う。
+- スライドショー helper は、採用済み source directory 群を順に検証し、各 directory から集めた画像列をその順のまま連結した 1 本の候補列へ正規化する。
 
 two-screen 文脈で重要な点:
 

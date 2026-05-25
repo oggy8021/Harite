@@ -140,8 +140,9 @@ apply mode の決定順:
 ## 6. `slideshow`
 
 - command 名も `slideshow` とし、public surface の機能名と揃える。
-- 入力 directory を 1 件または左右 2 件のスライドショー実行対象として扱う。
+- 入力 directory を 1 件または最大 2 件の source directory として扱う。
 - `mode`, `interval_sec`, `plugin` を扱う。
+- CLI `slideshow` の `--mode` 既定値は `sequential` である。
 - help では `--input` を、カンマ区切りまたは `--input` の繰り返しで source directory を指定できる option だと分かる文言で説明する。規範文言は `Input directories. Use comma-separated paths or repeat --input.` を基準にする。
 
 slideshow command の意味:
@@ -155,10 +156,9 @@ slideshow command の意味:
 - 各 option 値はカンマで分割し、空要素を落として順序付き directory 列へ正規化する。
 - したがって `--input dir1,dir2` と `--input dir1 --input dir2` は同じ 2 directory 入力として扱う。
 - `slideshow` の public surface で使う source directory 数は最大 2 件である。3 件以上が与えられた場合は先頭 2 件だけを採用し、3 件目以降は使わない。
-- 2 件入力を採用した場合、先頭を left source、2 件目を right source として順番に割り当てる。
-- CLI `slideshow` には left source / right source を名前付きで指定する専用 option は持たず、左右は入力順で決まる。
+- 採用済み directory の順序は保持され、画像列収集時もその順で連結する。
 - 正規化後の各 directory は既存 directory でなければならない。
-- CLI は 1 件入力時はその directory の画像列を cycle 対象とし、2 件入力時は left source / right source の 2 面として扱う。
+- CLI は採用済み source directory 群から画像列を収集し、1 本の cycle 候補列として扱う。GUI の `Srcdir-L` / `Srcdir-R` のような左右別面の owner state は CLI current command には持たない。
 
 CLI surface の整理方針:
 

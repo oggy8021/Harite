@@ -254,6 +254,9 @@ Try 'harite optimize --help' for help.
 
 - 現在の作業ブランチは `ws6-fix-cli-input-apply-paths`
 - ここでは `input` 受理面と `apply` の path 受理境界を正本から詰める
+- stage 7 の 3層比較では、`optimize` の先頭 2 件採用規則は正本 / テスト / 実装で揃った
+- `slideshow` は 2 source を受け付ける点は揃ったが、CLI current command は GUI のような左右別 owner state までは持たず、採用済み directory 群の画像列を順に連結した 1 本の候補列として扱う規則へ正本を補正した
+- あわせて、slideshow mode の既定値は GUI / settings では `random`、CLI command では `sequential` という scope 差を正本に明記した
 
 対象:
 

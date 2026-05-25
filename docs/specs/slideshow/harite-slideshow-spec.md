@@ -11,7 +11,7 @@ public surface では、この機能を `スライドショー` と呼ぶ。画�
 
 ## 2. 起動条件
 
-- CLI 側のスライドショー実行は入力 directory 1 件または左右 2 件, interval, mode, plugin 条件を満たす必要がある。
+- CLI 側のスライドショー実行は入力 directory 1 件または最大 2 件, interval, mode, plugin 条件を満たす必要がある。
 - GUI 側のスライドショー実行は srcdir, plugin, dual-source 時の display 条件を満たす必要がある。
 
 CLI 側の最低要件:
@@ -28,8 +28,8 @@ CLI 側の入力正規化:
 - CLI は各値をカンマ分割し、空要素を落とし、順序を保った directory 列へ正規化する。
 - public surface で採用する source directory 数は最大 2 件であり、3 件以上与えられた場合は先頭 2 件だけを使う。
 - 1 件入力時は single-source slideshow として扱う。
-- 2 件入力時は先頭を left source、2 件目を right source として扱う。
-- CLI には left source / right source を名前付きで指定する専用 option は持たず、左右は入力順で決まる。
+- 採用済み source directory の順序は保持され、画像列収集時もその順に連結する。
+- CLI current command は left source / right source の別 apply target を直接は持たず、GUI の `Srcdir-L` / `Srcdir-R` のような左右別 owner state は持たない。
 
 GUI 側では、これに加えて現在の画面状態、設定、スライドショー source directory の整合が必要になる。
 
@@ -92,7 +92,8 @@ sequenceDiagram
 
 slideshow helper の最小構成:
 
-- `collect_slideshow_input_images(...)` は採用済み source directory の妥当性と画像列収集を受け持つ。
+- source directory 正規化 helper は、採用済み source directory の妥当性確認と画像列収集を受け持つ。
+- source directory 正規化 helper は、採用済み source directory を順にたどり、各 directory の画像列をその順のまま連結した 1 本の候補列へ正規化する。
 - `select_next_image(...)` は `sequential` / `random` の選択規則を受け持つ。
 - `run_slideshow_cycle(...)` は 1 サイクル分の選択と state 更新を受け持つ。
 - `run_slideshow_cycles(...)` は interval を加えた継続ループを受け持つ。
@@ -155,7 +156,7 @@ GUI は単なるタイマー処理ではなく、状態表示の責務を強く�
 
 ## 7. CLI `slideshow` command の責務
 
-- 入力 directory 1 件または左右 2 件からの画像収集
+- 入力 directory 1 件または最大 2 件からの画像収集
 - サイクル実行
 - plugin 解決と各サイクルの実 apply
 - `Slideshow start` / `Slideshow cycle` / `Slideshow interrupted by user` 実行メッセージ出力
@@ -163,6 +164,7 @@ GUI は単なるタイマー処理ではなく、状態表示の責務を強く�
 CLI `slideshow` command の特徴:
 
 - 開始後は各サイクルで `apply(...)` を呼ぶ。
+- CLI `slideshow` の `--mode` 既定値は `sequential` である。
 - plugin が例外を投げてもループ全体を即停止せず、そのサイクルの `apply_error` カウンタを 1 件増やす。
 - plugin が `False` を返した場合は、そのサイクルの `apply_failed` カウンタを 1 件増やす。
 - これらのカウンタは各サイクルの途中で保持され、bounded run や将来の明示完了経路がある場合にだけ `Slideshow completed` 行の実行メッセージ要約として出力する。
