@@ -75,6 +75,7 @@ monitor map interface:
 - monitor map apply を受け付けること自体が Linux plugin の capability であり、core 側の target 解決規則とは別面である。
 - per-monitor apply では、XFCE 系の `xfconf-query` 候補列挙と monitor 名対応付けを使う。
 - single-file 実行前には `Path(path).expanduser().resolve()` で path を正規化してから存在確認する。
+- この正規化は `~` 展開と絶対 path 化までであり、誤った file 名の補完や推測は行わない。正規化後 path が存在しなければ失敗を返す。
 - per-monitor mapping では、各 value を `Path(mon_path).expanduser().resolve()` で正規化してから使う。
 - 現行 Linux plugin は per-monitor mapping value の存在確認を事前には行わず、setter 実行系にそのまま渡す。
 

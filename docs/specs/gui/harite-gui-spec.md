@@ -174,7 +174,8 @@ apply mode の user-facing 意味:
 
 slideshow start / tick / stop:
 
-- start では slideshow source directory 群を集め、source が空なら開始前に `slideshow srcdir is required` として止める。
+- start では slideshow source directory を 1 件または左右 2 件集め、source が空なら開始前に `slideshow srcdir is required` として止める。
+- GUI の slideshow source は `Srcdir-L`, `Srcdir-R` の 2 面で固定し、順序は left source, right source である。
 - start 時点では slideshow tab 上の mode 選択値を採用する。
 - start 時点で各 source から初回選択を行い、現在表示を更新してから apply を試みる。
 - tick では次画像を選び直し、現在表示を更新したうえで apply を行う。

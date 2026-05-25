@@ -215,12 +215,16 @@ Try 'harite optimize --help' for help.
 
 ## 改修ブランチ 候補案
 
-- `ws6-fix-cli-help-surface`
-- `ws6-fix-cli-input-apply-paths`
+- `ws6-fix-cli-help-surface` は merge 済み
+- `ws6-fix-cli-input-apply-paths` を開始
 
 ## ミニ実施順メモ
 
 ### 1. help / surface 系
+
+状況:
+
+- `ws6-fix-cli-help-surface` にて実施し、merge 済み
 
 対象:
 
@@ -244,6 +248,11 @@ Try 'harite optimize --help' for help.
 9. merge
 
 ### 2. input / apply-path 系
+
+状況:
+
+- 現在の作業ブランチは `ws6-fix-cli-input-apply-paths`
+- ここでは `input` 受理面と `apply` の path 受理境界を正本から詰める
 
 対象:
 

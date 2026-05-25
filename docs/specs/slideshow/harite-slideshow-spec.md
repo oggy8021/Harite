@@ -7,19 +7,29 @@
 - 入力画像列を一定間隔で選択し、apply 面へ接続する。
 - CLI と GUI の両面で、スライドショー機能としての継続実行を説明する。
 
-public surface では、この機能を `スライドショー` と呼ぶ。これは filesystem event 監視の仕組みではなく、画像候補集合を一定間隔で巡回し、次に適用する画像を選ぶ継続実行面を指す。
+public surface では、この機能を `スライドショー` と呼ぶ。画像候補集合を一定間隔で巡回し、次に適用する画像を選ぶ継続実行面を指す。
 
 ## 2. 起動条件
 
-- CLI 側のスライドショー実行は入力 directory, interval, mode, plugin 条件を満たす必要がある。
+- CLI 側のスライドショー実行は入力 directory 1 件または左右 2 件, interval, mode, plugin 条件を満たす必要がある。
 - GUI 側のスライドショー実行は srcdir, plugin, dual-source 時の display 条件を満たす必要がある。
 
 CLI 側の最低要件:
 
-- `--input` が既存 directory であること
+- `--input` 正規化後に採用された 1 件または 2 件の各要素が既存 directory であること
 - directory 内に画像ファイルが 1 件以上あること
 - `--interval-sec >= 1`
 - `--mode` が `sequential` または `random`
+
+CLI 側の入力正規化:
+
+- `--input` は複数回指定できる。
+- 1 回の `--input` 値内ではカンマ区切りで複数 directory を指定できる。
+- CLI は各値をカンマ分割し、空要素を落とし、順序を保った directory 列へ正規化する。
+- public surface で採用する source directory 数は最大 2 件であり、3 件以上与えられた場合は先頭 2 件だけを使う。
+- 1 件入力時は single-source slideshow として扱う。
+- 2 件入力時は先頭を left source、2 件目を right source として扱う。
+- CLI には left source / right source を名前付きで指定する専用 option は持たず、左右は入力順で決まる。
 
 GUI 側では、これに加えて現在の画面状態、設定、スライドショー source directory の整合が必要になる。
 
@@ -71,7 +81,7 @@ sequenceDiagram
 
 ## 4. 継続実行ループの基本動作
 
-- この機能は filesystem event 監視ではなく、サイクルごとの選択ループである。
+- この機能はサイクルごとの選択ループである。
 - `sequential` と `random` の選択モードを持つ。
 - 選択モードは CLI / helper だけに閉じず、GUI 側にも user-visible な選択面を持つ。
 - GUI 側の mode 表記は `sequential` / `random` とする。
@@ -82,7 +92,7 @@ sequenceDiagram
 
 slideshow helper の最小構成:
 
-- `collect_slideshow_input_images(...)` は directory 妥当性と画像列収集を受け持つ。
+- `collect_slideshow_input_images(...)` は採用済み source directory の妥当性と画像列収集を受け持つ。
 - `select_next_image(...)` は `sequential` / `random` の選択規則を受け持つ。
 - `run_slideshow_cycle(...)` は 1 サイクル分の選択と state 更新を受け持つ。
 - `run_slideshow_cycles(...)` は interval を加えた継続ループを受け持つ。
@@ -145,7 +155,7 @@ GUI は単なるタイマー処理ではなく、状態表示の責務を強く�
 
 ## 7. CLI `slideshow` command の責務
 
-- 入力 directory からの画像収集
+- 入力 directory 1 件または左右 2 件からの画像収集
 - サイクル実行
 - plugin 解決と各サイクルの実 apply
 - `Slideshow start` / `Slideshow cycle` / `Slideshow interrupted by user` 実行メッセージ出力

@@ -82,6 +82,9 @@ sequenceDiagram
 - ここでいう最終採用値とは、CLI 引数、設定ファイル値、option default を優先順位で重ねたあとに、実際に `optimize_wallpapers(...)` へ渡す値を指す。
 - 優先順位は CLI 引数 > 設定ファイル値 > option default である。
 - `--input` 未指定時は設定ファイル側の `input` を使えるが、最終的に入力列が空なら終了コード `2` で止める。
+- `optimize` の `--input` は、各 option 値をカンマで分割し、空要素を落とした順序付き画像ファイル列として正規化する。したがって `--input a.jpg,b.jpg` と `--input a.jpg --input b.jpg` は同じ 2 件入力として扱う。
+- `optimize` の public surface で使う入力画像数は最大 2 件である。3 件以上が与えられた場合は先頭 2 件だけを採用し、3 件目以降は使わない。
+- 2 件入力を採用した場合、先頭を left、2 件目を right として順番に割り当てる。CLI には optimize 入力の左右を明示的に入れ替える別 option は持たない。
 - `optimize` の `--input` は画像ファイル列のみを受け付け、directory が渡された場合は明示エラーで終了する。
 - `quality`, `embed_info`, `embed_position`, `embed_max_lines`, `background_color` は CLI 側で先に妥当性検証する。
 - `background_color` の値規則自体は `#` の有無を許容するが、CLI help と例示は shell 誤解を避けるため `E0E0E0` のような 6 桁 HEX を基準にする。
@@ -129,19 +132,31 @@ apply mode の決定順:
 - plugin 解決は command 先頭で行い、未知 plugin は終了コード `2` で止める。
 - `resolve_apply_settings(...)` により最終適用対象を構成してから plugin へ渡す。
 - apply target の解決自体は `apply_mode` と file / display 条件に基づく core 規則であり、選択済み plugin がその target を受け付けるかは CLI / plugin 側で扱う。
+- `--file`, `--left-file`, `--right-file` は画像 file path を受け取る。CLI は file 名の推測補完を行わず、最終的な存在確認と `~` 展開・絶対 path 化は plugin 側の正規化に委ねる。
 - plugin が `False` を返した場合は終了コード `3` で扱う。
 - CLI 実装は `resolve_apply_settings(...)` に `output_dir=Path(".")` を渡しているため、`--auto-split` 時の split 出力先既定値は current working directory である。
 
 ## 6. `slideshow`
 
 - command 名も `slideshow` とし、public surface の機能名と揃える。
-- 入力 directory を監視ではなくスライドショー実行対象として扱う。
+- 入力 directory を 1 件または左右 2 件のスライドショー実行対象として扱う。
 - `mode`, `interval_sec`, `plugin` を扱う。
 
 slideshow command の意味:
 
-- filesystem event を待つ監視ではなく、入力 directory から画像一覧を集め、一定間隔で次画像を選んで apply する。
+- 入力 directory から画像一覧を集め、一定間隔で次画像を選んで apply する。
 - command 開始時に plugin を解決し、各サイクルで実 apply を行う。
+
+入力 directory の受理規則:
+
+- `slideshow` の `--input` は 1 件または 2 件の directory を受け付ける。
+- 各 option 値はカンマで分割し、空要素を落として順序付き directory 列へ正規化する。
+- したがって `--input dir1,dir2` と `--input dir1 --input dir2` は同じ 2 directory 入力として扱う。
+- `slideshow` の public surface で使う source directory 数は最大 2 件である。3 件以上が与えられた場合は先頭 2 件だけを採用し、3 件目以降は使わない。
+- 2 件入力を採用した場合、先頭を left source、2 件目を right source として順番に割り当てる。
+- CLI `slideshow` には left source / right source を名前付きで指定する専用 option は持たず、左右は入力順で決まる。
+- 正規化後の各 directory は既存 directory でなければならない。
+- CLI は 1 件入力時はその directory の画像列を cycle 対象とし、2 件入力時は left source / right source の 2 面として扱う。
 
 CLI surface の整理方針:
 
