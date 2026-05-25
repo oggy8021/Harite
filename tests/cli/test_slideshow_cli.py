@@ -247,6 +247,11 @@ def test_slideshow_handles_keyboard_interrupt_as_normal_exit(tmp_path, monkeypat
     def fake_run_slideshow_cycles(*args, **kwargs):
         raise KeyboardInterrupt()
 
+    class FakePlugin:
+        def apply(self, _path_or_map, dry_run=False):
+            return True
+
+    monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FakePlugin())
     monkeypatch.setattr(cli, "run_slideshow_cycles", fake_run_slideshow_cycles)
 
     result = runner.invoke(

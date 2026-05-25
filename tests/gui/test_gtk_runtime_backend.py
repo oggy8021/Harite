@@ -743,7 +743,7 @@ def test_runtime_backend_adds_margins_tab_and_syncs_owner_state():
     window = MainWindow()
     window.form_state.embed_info = "combo"
     window.form_state.embed_text = "margin-note"
-    window.form_state.embed_position = "bottom"
+    window.form_state.embed_position = "right-bottom"
     window.form_state.embed_max_lines = 4
 
     dispatch = create_mainwindow_signal_dispatch(
@@ -797,7 +797,7 @@ def test_runtime_backend_margins_tab_updates_owner_state_and_cli_preview(tmp_pat
     assert window.form_state.margins == "10,10,24,10"
     assert window.form_state.embed_info == "free"
     assert window.form_state.embed_text == "hello\nworld"
-    assert window.form_state.embed_position == "top"
+    assert window.form_state.embed_position == "left-top"
     assert backend.get_object("lblStatus").text.startswith("Margins: margin text ready in left top position")
     assert backend.get_object("lblError").text == "Error: none"
 
@@ -805,7 +805,7 @@ def test_runtime_backend_margins_tab_updates_owner_state_and_cli_preview(tmp_pat
     assert "--margins 10,10,24,10" in preview
     assert "--embed-info free" in preview
     assert "--embed-text hello\nworld" in preview
-    assert "--embed-position top" in preview
+    assert "--embed-position left-top" in preview
     assert "--embed-max-lines" not in preview
 
 
@@ -971,7 +971,7 @@ def test_runtime_backend_margin_text_preflight_uses_two_screen_display_slice_are
     backend.get_object("radMarginTextModeSettings").click()
     backend.get_object("radMarginTextPositionRightTop").click()
 
-    assert window.form_state.embed_position == "right"
+    assert window.form_state.embed_position == "right-top"
     assert backend.get_object("lblStatus").text == "Margins: margin text ready in right top position (1030x80)"
     assert backend.get_object("lblError").text == "Error: none"
 

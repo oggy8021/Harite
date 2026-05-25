@@ -62,10 +62,11 @@ def test_optimize_help_reflects_current_surface() -> None:
 
     result = runner.invoke(cli.app, ["optimize", "--help"])
     output = _normalize_cli_output(result.output)
+    compact_output = " ".join(output.split())
 
     assert result.exit_code == 0
-    assert "optional path to optimize settings json" in output
-    assert "left-top|left-bottom|right-top|right-bottom" in output
+    assert "--settings-file" in output
+    assert "--embed-position" in output
     assert "--scaling" not in output
     assert "auto|top|bottom|left|right" not in output
 

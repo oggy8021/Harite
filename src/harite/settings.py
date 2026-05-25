@@ -49,7 +49,7 @@ class OptimizeSettings:
     background_color: str = DEFAULT_BACKGROUND_COLOR_HEX
     embed_info: str = "none"
     embed_text: str | None = None
-    embed_position: str = AUTO
+    embed_position: str = "right-bottom"
     embed_max_lines: int = 3
 
     @classmethod
@@ -67,7 +67,7 @@ class OptimizeSettings:
             background_color=normalize_background_color(settings.get("background_color", DEFAULT_BACKGROUND_COLOR_HEX)),
             embed_info=str(settings.get("embed_info", "none")),
             embed_text=None if settings.get("embed_text") is None else str(settings.get("embed_text")),
-            embed_position=str(settings.get("embed_position", AUTO)),
+            embed_position=str(settings.get("embed_position", "right-bottom")),
             embed_max_lines=int(settings.get("embed_max_lines", 3)),
         )
 

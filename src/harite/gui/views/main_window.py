@@ -13,6 +13,7 @@ from pathlib import Path
 import sys
 
 from harite import __version__
+from harite.core import EMBED_POSITION_VALUES
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX
 from harite.core import describe_embed_position as describe_margin_text_position
 from harite.core import is_background_color_literal
@@ -90,7 +91,7 @@ class MainWindow:
             resolution="1920x1080",
             output_dir=default_output_dir,
             background_color=DEFAULT_BACKGROUND_COLOR_HEX,
-            embed_position="bottom",
+            embed_position="right-bottom",
         )
         self.preferences = AppSettings.defaults(default_plugin=self.plugin_name)
         self.layout_version = "phase6-layout-redefinition"
@@ -177,11 +178,9 @@ class MainWindow:
 
     def _normalize_margin_text_position(self, value: object | None) -> str:
         normalized = str(value or "").strip().lower()
-        if normalized == "auto":
-            return "bottom"
-        if normalized in {"top", "bottom", "left", "right"}:
+        if normalized in EMBED_POSITION_VALUES:
             return normalized
-        return "bottom"
+        return "right-bottom"
 
     def _resolve_default_output_dir(self) -> Path:
         if sys.platform == "win32":
@@ -309,7 +308,7 @@ class MainWindow:
 
     def _margin_text_area(self, position: str) -> tuple[int, int] | None:
         normalized = (position or "").strip().lower()
-        if normalized not in {"top", "bottom", "left", "right"}:
+        if normalized not in {"left-top", "left-bottom", "right-top", "right-bottom"}:
             return None
 
         resolution = self._current_resolution_value()
@@ -638,8 +637,14 @@ class MainWindow:
         return True
 
     def on_change_margin_text_position(self, value: str) -> bool:
-        normalized = (value or "").strip().lower()
-        if normalized not in {"top", "bottom", "left", "right"}:
+        raw_value = (value or "").strip().lower()
+        if raw_value not in EMBED_POSITION_VALUES:
+            self.last_error = f"unknown margin_text_position: {value}"
+            self._log(f"Margin area update failed: unknown value {value}")
+            return False
+
+        normalized = self._normalize_margin_text_position(raw_value)
+        if normalized not in EMBED_POSITION_VALUES:
             self.last_error = f"unknown margin_text_position: {value}"
             self._log(f"Margin area update failed: unknown value {value}")
             return False

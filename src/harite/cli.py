@@ -170,12 +170,6 @@ def optimize(
         help="Output directory",
         rich_help_panel="基本オプション",
     ),
-    scaling: str = typer.Option(
-        "fit",
-        "--scaling",
-        help="Scaling mode (fit|fill|crop).",
-        rich_help_panel="基本オプション",
-    ),
     two_screen: bool = typer.Option(
         False,
         "--two-screen/--no-two-screen",
@@ -221,14 +215,14 @@ def optimize(
     background_color: str = typer.Option(
         DEFAULT_BACKGROUND_COLOR_HEX,
         "--background-color",
-        help="Background color as #RRGGBB",
+        help="Background color as hex RGB (e.g. E0E0E0)",
         rich_help_panel="詳細調整",
     ),
     settings_file: Optional[Path] = typer.Option(
         None,
         "--settings-file",
         "-c",
-        help="Path to JSON settings file to load defaults from",
+        help="Optional path to optimize settings JSON",
         rich_help_panel="詳細調整",
     ),
     embed_info: str = typer.Option(
@@ -244,9 +238,9 @@ def optimize(
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     embed_position: str = typer.Option(
-        "auto",
+        "right-bottom",
         "--embed-position",
-        help="Margin side for info text: auto|top|bottom|left|right",
+        help="Margin text position: left-top|left-bottom|right-top|right-bottom",
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     embed_max_lines: int = typer.Option(
@@ -299,9 +293,12 @@ def optimize(
     if embed_info not in ("none", "params", "free", "combo"):
         typer.echo("--embed-info must be one of: none, params, free, combo")
         raise typer.Exit(code=2)
-    embed_position = str(resolve_option_value("embed_position", embed_position, cfg, ctx) or "auto").lower()
-    if embed_position not in ("auto", "top", "bottom", "left", "right"):
-        typer.echo("--embed-position must be one of: auto, top, bottom, left, right")
+    embed_position_source = ctx.get_parameter_source("embed_position")
+    embed_position = str(resolve_option_value("embed_position", embed_position, cfg, ctx) or "right-bottom").lower()
+    if embed_position == "auto" and embed_position_source != ParameterSource.COMMANDLINE:
+        embed_position = "right-bottom"
+    if embed_position not in ("left-top", "left-bottom", "right-top", "right-bottom"):
+        typer.echo("--embed-position must be one of: left-top, left-bottom, right-top, right-bottom")
         raise typer.Exit(code=2)
     eff_embed_max_lines = int(resolve_option_value("embed_max_lines", embed_max_lines, cfg, ctx))
     if eff_embed_max_lines <= 0:
@@ -342,13 +339,13 @@ def optimize(
         typer.echo(str(exc))
         raise typer.Exit(code=2)
 
-    eff_scaling = str(resolve_option_value("scaling", scaling, cfg, ctx) or "fit")
+    eff_scaling = "fit"
     eff_align = parse_position_pair(resolve_option_value("align", align, cfg, ctx) or "center", axis="align")
     eff_valign = parse_position_pair(resolve_option_value("valign", valign, cfg, ctx) or "center", axis="valign")
     eff_quality = int(resolve_option_value("quality", quality, cfg, ctx))
     raw_background_color = resolve_option_value("background_color", background_color, cfg, ctx)
     if not is_background_color_literal(raw_background_color):
-        typer.echo("--background-color must be a hex RGB value like #1E1E1E")
+        typer.echo("--background-color must be a hex RGB value like 1E1E1E")
         raise typer.Exit(code=2)
     eff_background_color = normalize_background_color(raw_background_color)
     eff_margins = resolve_option_value("margins", margins, cfg, ctx)
@@ -450,8 +447,7 @@ def slideshow(
     input: Path = typer.Option(..., "--input", help="Input directory containing images"),
     interval_sec: int = typer.Option(..., "--interval-sec", help="Cycle interval in seconds (>=1)"),
     mode: str = typer.Option("sequential", "--mode", help="Selection mode: sequential|random"),
-    plugin: str = typer.Option(_default_plugin_name(), "--plugin", "-p", help="Plugin name used when --do-it is enabled"),
-    dry_run: bool = typer.Option(True, "--dry-run/--do-it", help="Dry-run by default; pass --do-it to apply"),
+    plugin: str = typer.Option(_default_plugin_name(), "--plugin", "-p", help="Plugin name used to apply each selected image"),
 ) -> None:
     """Rotate wallpapers from a directory (minimum execution control)."""
     if interval_sec < 1:
@@ -471,30 +467,23 @@ def slideshow(
 
     typer.echo(
         f"Slideshow start: input={input} images={len(images)} interval_sec={interval_sec} "
-        f"mode={mode} plugin={plugin} dry_run={dry_run}"
+        f"mode={mode} plugin={plugin}"
     )
 
-    plugin_impl = None
-    if not dry_run:
-        try:
-            plugin_impl = plugin_registry.get(plugin)
-        except KeyError:
-            typer.echo(f"Unknown plugin: {plugin}")
-            typer.echo(f"Available plugins: {', '.join(plugin_registry.list())}")
-            raise typer.Exit(code=2)
+    try:
+        plugin_impl = plugin_registry.get(plugin)
+    except KeyError:
+        typer.echo(f"Unknown plugin: {plugin}")
+        typer.echo(f"Available plugins: {', '.join(plugin_registry.list())}")
+        raise typer.Exit(code=2)
 
     stats = {
-        "dry_run_cycles": 0,
         "apply_ok": 0,
         "apply_failed": 0,
         "apply_error": 0,
     }
 
     def _on_cycle(selected: Path, cycle_index: int) -> None:
-        if dry_run:
-            stats["dry_run_cycles"] += 1
-            return
-
         try:
             success = bool(plugin_impl.apply(str(selected), dry_run=False))
         except Exception as exc:
@@ -511,7 +500,7 @@ def slideshow(
             stats["apply_failed"] += 1
             typer.echo(
                 f"Slideshow cycle={cycle_index + 1} selected={selected} "
-                "apply=failed reason=plugin-returned-false dry_run=False"
+                "apply=failed reason=plugin-returned-false"
             )
 
     try:
@@ -528,17 +517,12 @@ def slideshow(
         typer.echo(str(exc))
         raise typer.Exit(code=2)
 
-    if dry_run:
-        typer.echo(
-            f"Slideshow completed cycles={completed} dry_run_cycles={stats['dry_run_cycles']}"
-        )
-    else:
-        apply_failed_total = stats["apply_failed"] + stats["apply_error"]
-        typer.echo(
-            f"Slideshow completed cycles={completed} apply_ok={stats['apply_ok']} "
-            f"apply_failed={stats['apply_failed']} apply_error={stats['apply_error']} "
-            f"apply_failed_total={apply_failed_total}"
-        )
+    apply_failed_total = stats["apply_failed"] + stats["apply_error"]
+    typer.echo(
+        f"Slideshow completed cycles={completed} apply_ok={stats['apply_ok']} "
+        f"apply_failed={stats['apply_failed']} apply_error={stats['apply_error']} "
+        f"apply_failed_total={apply_failed_total}"
+    )
 
 
 @app.command("install-desktop-entry", help="Install a user-local XDG desktop launcher for Harite GUI.")

@@ -115,19 +115,19 @@ def _connect_margin_text_widgets(backend: Any, widgets: dict[str, Any]) -> None:
 
     widgets["margin_position_left_top"].connect(
         "toggled",
-        lambda widget, *_args: backend._on_margin_position_toggled(widget, "top"),
+        lambda widget, *_args: backend._on_margin_position_toggled(widget, "left-top"),
     )
     widgets["margin_position_right_bottom"].connect(
         "toggled",
-        lambda widget, *_args: backend._on_margin_position_toggled(widget, "bottom"),
+        lambda widget, *_args: backend._on_margin_position_toggled(widget, "right-bottom"),
     )
     widgets["margin_position_left_bottom"].connect(
         "toggled",
-        lambda widget, *_args: backend._on_margin_position_toggled(widget, "left"),
+        lambda widget, *_args: backend._on_margin_position_toggled(widget, "left-bottom"),
     )
     widgets["margin_position_right_top"].connect(
         "toggled",
-        lambda widget, *_args: backend._on_margin_position_toggled(widget, "right"),
+        lambda widget, *_args: backend._on_margin_position_toggled(widget, "right-top"),
     )
     widgets["margin_text_max_lines_spin"].connect(
         "value-changed",

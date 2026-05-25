@@ -1727,12 +1727,12 @@ def test_margin_text_change_handlers_update_form_state():
 
     assert window.on_change_margin_text_mode("combo") is True
     assert window.on_change_margin_text("hello") is True
-    assert window.on_change_margin_text_position("bottom") is True
+    assert window.on_change_margin_text_position("right-bottom") is True
     assert window.on_change_margin_text_max_lines(4) is True
 
     assert window.form_state.embed_info == "combo"
     assert window.form_state.embed_text == "hello"
-    assert window.form_state.embed_position == "bottom"
+    assert window.form_state.embed_position == "right-bottom"
     assert window.form_state.embed_max_lines == 4
     assert window.status_phase == "margins"
     assert window.status_message == "margin text ready in right bottom position (950x30)"
@@ -1768,7 +1768,7 @@ def test_margin_text_preflight_reports_margin_area_too_small():
     window.form_state.margins = "10,10,20,10"
 
     assert window.on_change_margin_text_mode("params") is True
-    assert window.on_change_margin_text_position("bottom") is True
+    assert window.on_change_margin_text_position("right-bottom") is True
 
     assert window.status_phase == "margins"
     assert window.status_message == "margin text does not fit current margin area"
@@ -1784,7 +1784,7 @@ def test_margin_text_preflight_uses_display_slice_area_for_two_screen():
     window.form_state.margins = "100,150,80,90"
 
     assert window.on_change_margin_text_mode("params") is True
-    assert window.on_change_margin_text_position("right") is True
+    assert window.on_change_margin_text_position("right-top") is True
 
     assert window.status_phase == "margins"
     assert window.status_message == "margin text ready in right top position (1030x80)"

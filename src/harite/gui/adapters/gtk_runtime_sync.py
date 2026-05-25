@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from harite.core import EMBED_POSITION_VALUES
 from harite.positioning import parse_position_pair
 
 
@@ -158,18 +159,18 @@ def sync_margins_state_from_owner(backend: Any, owner: Any) -> None:
         return
 
     margin_text_mode = str(getattr(form_state, "embed_info", "none") or "none").lower()
-    margin_text_position = str(getattr(form_state, "embed_position", "bottom") or "bottom").lower()
-    if margin_text_position == "auto":
-        margin_text_position = "bottom"
+    margin_text_position = str(getattr(form_state, "embed_position", "right-bottom") or "right-bottom").lower()
+    if margin_text_position not in EMBED_POSITION_VALUES:
+        margin_text_position = "right-bottom"
     backend._set_toggle_active("radMarginTextModeOff", margin_text_mode == "none")
     backend._set_toggle_active("radMarginTextModeSettings", margin_text_mode == "params")
     backend._set_toggle_active("radMarginTextModeText", margin_text_mode == "free")
     backend._set_toggle_active("radMarginTextModeBoth", margin_text_mode == "combo")
     backend._set_entry_text("txtMarginText", getattr(form_state, "embed_text", None))
-    backend._set_toggle_active("radMarginTextPositionLeftTop", margin_text_position == "top")
-    backend._set_toggle_active("radMarginTextPositionRightBottom", margin_text_position == "bottom")
-    backend._set_toggle_active("radMarginTextPositionLeftBottom", margin_text_position == "left")
-    backend._set_toggle_active("radMarginTextPositionRightTop", margin_text_position == "right")
+    backend._set_toggle_active("radMarginTextPositionLeftTop", margin_text_position == "left-top")
+    backend._set_toggle_active("radMarginTextPositionRightBottom", margin_text_position == "right-bottom")
+    backend._set_toggle_active("radMarginTextPositionLeftBottom", margin_text_position == "left-bottom")
+    backend._set_toggle_active("radMarginTextPositionRightTop", margin_text_position == "right-top")
     backend._set_spin_value("spnMarginTextMaxLines", int(getattr(form_state, "embed_max_lines", 3) or 3))
     refresh_margins_controls(backend, owner)
 

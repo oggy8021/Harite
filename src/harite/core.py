@@ -10,12 +10,12 @@ from .positioning import format_position_pair, parse_position_pair
 from .workspace import Display
 
 
-EMBED_POSITION_SLOT_LABELS: dict[str, str] = {
-    "top": "left top",
-    "left": "left bottom",
-    "right": "right top",
-    "bottom": "right bottom",
-}
+EMBED_POSITION_VALUES: tuple[str, str, str, str] = (
+    "left-top",
+    "left-bottom",
+    "right-top",
+    "right-bottom",
+)
 
 DEFAULT_BACKGROUND_COLOR_HEX = "#1E1E1E"
 
@@ -213,9 +213,11 @@ def _build_embed_lines(
 
 
 def describe_embed_position(position: str) -> str:
-    """Map legacy embed_position values to the phase8 visible slot labels."""
+    """Return the canonical embed_position label."""
     normalized = str(position or "").strip().lower()
-    return EMBED_POSITION_SLOT_LABELS.get(normalized, normalized or "right bottom")
+    if normalized in EMBED_POSITION_VALUES:
+        return normalized.replace("-", " ")
+    return "right bottom"
 
 
 def resolve_embed_margin_region(
@@ -227,37 +229,49 @@ def resolve_embed_margin_region(
     l_display: Tuple[int, int] | None = None,
     r_display: Tuple[int, int] | None = None,
 ) -> Tuple[int, int, int, int] | None:
-    """Resolve explicit margin-text placement to one of four top/bottom corner slots."""
+    """Resolve canonical margin-text placement to a concrete display-aware region."""
     normalized = str(position or "").strip().lower()
-    if normalized not in EMBED_POSITION_SLOT_LABELS:
+    if normalized not in EMBED_POSITION_VALUES:
         return None
 
     w_target, h_target = target_size
     ml, mr, mt, mb = margins
 
-    def _slice_region(offset_x: int, slice_w: int, slice_h: int) -> Tuple[int, int, int, int]:
-        inner_x0 = offset_x + max(0, ml)
-        inner_x1 = max(inner_x0, offset_x + max(0, slice_w) - max(0, mr))
+    def _vertical_region(x0: int, x1: int, slice_h: int, *, top_side: bool) -> Tuple[int, int, int, int]:
+        inner_x0 = max(0, x0)
+        inner_x1 = max(inner_x0, x1)
         inner_y1 = max(0, min(h_target, max(0, slice_h)))
-        if normalized == "top":
-            return (inner_x0, 0, inner_x1, max(0, mt))
-        if normalized == "left":
-            return (inner_x0, max(0, inner_y1 - max(0, mb)), inner_x1, inner_y1)
-        if normalized == "right":
+        if top_side:
             return (inner_x0, 0, inner_x1, max(0, mt))
         return (inner_x0, max(0, inner_y1 - max(0, mb)), inner_x1, inner_y1)
 
     if two_screen and l_display and r_display:
-        if normalized in {"top", "left"}:
-            return _slice_region(0, int(l_display[0]), int(l_display[1]))
-        return _slice_region(int(l_display[0]), int(r_display[0]), int(r_display[1]))
+        left_x0 = max(0, ml)
+        left_x1 = max(left_x0, int(l_display[0]) - max(0, mr))
+        right_offset = int(l_display[0])
+        right_x0 = right_offset + max(0, ml)
+        right_x1 = max(right_x0, right_offset + int(r_display[0]) - max(0, mr))
+        if normalized == "left-top":
+            return _vertical_region(left_x0, left_x1, int(l_display[1]), top_side=True)
+        if normalized == "left-bottom":
+            return _vertical_region(left_x0, left_x1, int(l_display[1]), top_side=False)
+        if normalized == "right-top":
+            return _vertical_region(right_x0, right_x1, int(r_display[1]), top_side=True)
+        return _vertical_region(right_x0, right_x1, int(r_display[1]), top_side=False)
 
     if two_screen:
         left_slice_w = max(1, w_target // 2)
-        right_slice_w = max(1, w_target - left_slice_w)
-        if normalized in {"top", "left"}:
-            return _slice_region(0, left_slice_w, h_target)
-        return _slice_region(left_slice_w, right_slice_w, h_target)
+        left_x0 = max(0, ml)
+        left_x1 = max(left_x0, left_slice_w - max(0, mr))
+        right_x0 = left_slice_w + max(0, ml)
+        right_x1 = max(right_x0, w_target - max(0, mr))
+        if normalized == "left-top":
+            return _vertical_region(left_x0, left_x1, h_target, top_side=True)
+        if normalized == "left-bottom":
+            return _vertical_region(left_x0, left_x1, h_target, top_side=False)
+        if normalized == "right-top":
+            return _vertical_region(right_x0, right_x1, h_target, top_side=True)
+        return _vertical_region(right_x0, right_x1, h_target, top_side=False)
 
     usable_left = max(0, ml)
     usable_right = max(usable_left, w_target - max(0, mr))
@@ -265,11 +279,11 @@ def resolve_embed_margin_region(
     left_slice_width = usable_width // 2
     right_slice_width = usable_width - left_slice_width
 
-    if normalized == "top":
+    if normalized == "left-top":
         return (usable_left, 0, usable_left + left_slice_width, max(0, mt))
-    if normalized == "left":
+    if normalized == "left-bottom":
         return (usable_left, max(0, h_target - mb), usable_left + left_slice_width, h_target)
-    if normalized == "right":
+    if normalized == "right-top":
         return (usable_right - right_slice_width, 0, usable_right, max(0, mt))
     return (usable_right - right_slice_width, max(0, h_target - mb), usable_right, h_target)
 
@@ -401,10 +415,7 @@ def _draw_embed_text_in_margin(
 
     ml, mr, mt, mb = margins
     w_target, h_target = bg.size
-    pos = str(position or "auto").lower()
-    if pos == "auto":
-        candidates = [("top", mt), ("bottom", mb), ("left", ml), ("right", mr)]
-        pos = max(candidates, key=lambda x: x[1])[0]
+    pos = str(position or "right-bottom").lower()
 
     area = resolve_embed_margin_region(
         (w_target, h_target),
@@ -500,7 +511,7 @@ def optimize_wallpapers(
     embed_info = str(kwargs.get("embed_info", "none")).lower()
     background_color = normalize_background_color(kwargs.get("background_color", DEFAULT_BACKGROUND_COLOR_HEX))
     embed_text = kwargs.get("embed_text")
-    embed_position = str(kwargs.get("embed_position", "auto")).lower()
+    embed_position = str(kwargs.get("embed_position", "right-bottom")).lower()
     try:
         embed_max_lines = int(kwargs.get("embed_max_lines", 3))
     except Exception:
