@@ -12,6 +12,14 @@ def _normalize_cli_output(text: str) -> str:
     return re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text)
 
 
+@pytest.fixture(autouse=True)
+def _block_real_optimize_side_effects(monkeypatch):
+    def fail_optimize_wallpapers(**_kwargs):
+        raise AssertionError("test must stub cli.optimize_wallpapers before reaching real optimize execution")
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fail_optimize_wallpapers)
+
+
 def test_parse_resolution_valid():
     assert cli.parse_resolution("1920x1080") == (1920, 1080)
     assert cli.parse_resolution("3840X2160") == (3840, 2160)
@@ -47,6 +55,19 @@ def test_cli_help_excludes_removed_compute_placement_command():
 
     assert result.exit_code == 0
     assert "compute-placement" not in output
+
+
+def test_optimize_help_reflects_current_surface() -> None:
+    runner = CliRunner()
+
+    result = runner.invoke(cli.app, ["optimize", "--help"])
+    output = _normalize_cli_output(result.output)
+
+    assert result.exit_code == 0
+    assert "optional path to optimize settings json" in output
+    assert "left-top|left-bottom|right-top|right-bottom" in output
+    assert "--scaling" not in output
+    assert "auto|top|bottom|left|right" not in output
 
 
 def test_optimize_rejects_invalid_embed_info(tmp_path):
@@ -91,6 +112,29 @@ def test_optimize_rejects_invalid_embed_position(tmp_path):
     )
     assert result.exit_code == 2
     assert "--embed-position must be one of" in result.output
+
+
+def test_optimize_rejects_legacy_embed_position_value(tmp_path):
+    runner = CliRunner()
+    img = tmp_path / "a.jpg"
+    from PIL import Image
+
+    Image.new("RGB", (10, 10), (100, 100, 100)).save(img)
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--input",
+            str(img),
+            "--resolution",
+            "100x100",
+            "--embed-position",
+            "top",
+        ],
+    )
+    assert result.exit_code == 2
+    assert "left-top" in result.output
+    assert "right-bottom" in result.output
 
 
 def test_optimize_rejects_invalid_background_color(tmp_path):
@@ -536,7 +580,7 @@ def test_optimize_passes_embed_font_to_core(tmp_path, monkeypatch):
     assert captured["embed_font"] == str(font)
 
 
-def test_optimize_uses_settings_for_scaling_align_and_valign(tmp_path, monkeypatch):
+def test_optimize_uses_settings_for_align_and_valign_and_ignores_scaling(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -563,9 +607,39 @@ def test_optimize_uses_settings_for_scaling_align_and_valign(tmp_path, monkeypat
     result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
 
     assert result.exit_code == 0
-    assert captured["scaling"] == "fill"
+    assert captured["scaling"] == "fit"
     assert captured["align"] == ("right", "right")
     assert captured["valign"] == ("bottom", "bottom")
+
+
+def test_optimize_defaults_embed_position_to_right_bottom(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    img = tmp_path / "a.jpg"
+    from PIL import Image
+
+    Image.new("RGB", (10, 10), (100, 100, 100)).save(img)
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--input",
+            str(img),
+            "--resolution",
+            "100x100",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["embed_position"] == "right-bottom"
 
 
 def test_optimize_auto_display_values_can_come_from_settings(tmp_path, monkeypatch):
