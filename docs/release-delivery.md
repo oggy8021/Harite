@@ -1,18 +1,26 @@
 # Harite 配布と .venv 非依存実行手順
 
-最終更新: 2026-03-20
+最終更新: 2026-05-25
 
 ## 目的
 
 - 開発用 `.venv` を使わずに Harite を実行できる状態を再現可能にする。
 - リリース時の配布物（`sdist` / `wheel`）と配布経路を固定化する。
 
+## 現在の状態
+
+- 対象リリースは `v1.0.0` 想定。
+- [pyproject.toml](pyproject.toml) の version は `1.0.0` へ更新済み。
+- current release 候補に対する `python -m build --sdist --wheel` は実施済み。
+- clean install、uninstall、rollback の再確認は XFCE 実機で取得予定。
+- 本書は current release 用の実施手順と証跡置き場を兼ねる。
+
 ## 配布物（Deliverables）
 
 - `dist/harite-<version>-py3-none-any.whl`
 - `dist/harite-<version>.tar.gz`
 
-上記 2 つを GitHub Releases に添付して配布する。
+上記 2 つを GitHub Releases に添付して配布する想定とする。
 
 ## ビルド手順（作成側）
 
@@ -20,9 +28,14 @@
 python -m build --sdist --wheel
 ```
 
-成功時に `dist/` 配下へ `whl` と `tar.gz` が生成される。
+成功時に `dist/` 配下へ `whl` と `tar.gz` が生成される。current release では実行日時と対象コミットも併記する。
 
 ## .venv 非依存のインストール手順（利用側）
+
+推奨取得環境
+
+- release 向けの clean install / uninstall / rollback 証跡は、可能であれば XFCE 実機で取得する。
+- その際は `.venv` を有効化しない状態で CLI help と `harite-gui` 起動導線も併せて確認する。
 
 ### A。pipx 推奨（CLI ツール用途）
 
@@ -30,6 +43,7 @@ python -m build --sdist --wheel
 pipx install /abs/path/to/dist/harite-<version>-py3-none-any.whl
 harite optimize --help
 harite apply --help
+harite slideshow --help
 ```
 
 ### B。pip --user（pipx がない場合）
@@ -38,6 +52,7 @@ harite apply --help
 python -m pip install --user /abs/path/to/dist/harite-<version>-py3-none-any.whl
 harite optimize --help
 harite apply --help
+harite slideshow --help
 ```
 
 ## アンインストール手順
@@ -58,15 +73,31 @@ python -m pip uninstall -y harite
 
 1. 現行版をアンインストールする。
 2. 直前安定版の wheel を指定して再インストールする。
-3. `harite optimize --help` が表示できることを確認する。
+3. `harite optimize --help` と `harite apply --help` が表示できることを確認する。
 
 ```bash
 pipx install --force /abs/path/to/harite-<previous-version>-py3-none-any.whl
 ```
 
-## 実測ログ（2026-03-20, Windows）
+## current release 証跡
 
-- `python -m build --sdist --wheel`: 成功
-- クリーン venv で `pip install dist/*.whl`: 成功
-- `.venv` 非依存で `harite optimize --help` / `harite apply --help`: 成功
-- `pip uninstall -y harite`: 成功
+- [x] `python -m build --sdist --wheel` 実行結果を記録した。
+- [ ] XFCE 実機で `pipx install` または `pip install --user` による clean install 結果を記録した。
+- [ ] XFCE 実機で `.venv` 非依存の `harite optimize --help` / `harite apply --help` / `harite slideshow --help` / `harite-gui` 起動導線を確認した。
+- [ ] XFCE 実機で uninstall / rollback の結果を記録した。
+
+実施メモ
+
+- 日時: 2026-05-25
+- 対象コミット: current working tree on `chore/release-v1.0.0`
+- 実施環境: Windows / Python 3.12.10 virtual environment
+- build:
+  - コマンド: `c:/Users/oggy_/Develop/Repos/Harite/.venv/Scripts/python.exe -m build --sdist --wheel`
+  - 結果: 成功
+  - 生成物: `dist/harite-1.0.0-py3-none-any.whl`, `dist/harite-1.0.0.tar.gz`
+  - 補足: setuptools から `project.license` と `tool.setuptools.license-files` に関する deprecation warning が出るが、build 自体は成功した。
+- clean install:
+  - 状態: XFCE 実機で取得予定
+  - 推奨確認項目: wheel install、`harite optimize --help`、`harite apply --help`、`harite slideshow --help`、`harite-gui` 起動導線、uninstall、rollback
+  - 補足: この Windows 作業環境では `pipx` は利用不可だった。release 証跡は XFCE 実機の取得結果を優先する。
+- 補足: 旧 2026-03-20 の実測ログは current release の証跡としては扱わない。
