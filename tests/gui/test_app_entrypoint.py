@@ -144,9 +144,24 @@ def test_run_continues_when_signal_backend_load_fails(monkeypatch):
     monkeypatch.setattr(app, "MainWindow", DummyWindow)
     monkeypatch.setattr(app, "_load_ui_signal_backend", fake_backend_loader)
 
-    app.run(bind_ui_backend=True)
+    app.run(bind_ui_backend=True, present_ui_window=False)
 
     assert called["show"] == 1
+
+
+def test_run_exits_with_message_when_gui_runtime_is_missing(monkeypatch):
+    class DummyWindow:
+        def show(self) -> None:
+            raise AssertionError("show should not be used when GUI runtime is required")
+
+    def fake_backend_loader():
+        raise RuntimeError("backend missing")
+
+    monkeypatch.setattr(app, "MainWindow", DummyWindow)
+    monkeypatch.setattr(app, "_load_ui_signal_backend", fake_backend_loader)
+
+    with pytest.raises(SystemExit, match="Harite GUI runtime is unavailable"):
+        app.run(bind_ui_backend=True, present_ui_window=True)
 
 
 def test_run_propagates_unexpected_signal_backend_load_error(monkeypatch):
@@ -214,10 +229,11 @@ def test_run_falls_back_when_window_presentation_fails(monkeypatch):
     monkeypatch.setattr(app, "_load_ui_signal_backend", fake_backend_loader)
     monkeypatch.setattr(app, "_present_ui_window", fake_present)
 
-    app.run(bind_ui_backend=True, present_ui_window=True)
+    with pytest.raises(SystemExit, match="Harite GUI runtime is unavailable"):
+        app.run(bind_ui_backend=True, present_ui_window=True)
 
     assert called["present"] == 1
-    assert called["show"] == 1
+    assert called["show"] == 0
 
 
 def test_run_propagates_unexpected_window_presentation_error(monkeypatch):

@@ -36,6 +36,7 @@ python -m build --sdist --wheel
 
 - release 向けの clean install / uninstall / rollback 証跡は、可能であれば XFCE 実機で取得する。
 - その際は `.venv` を有効化しない状態で CLI help と `harite-gui` 起動導線も併せて確認する。
+- `harite-gui` は host 環境側の GTK 3 / PyGObject runtime を前提にするため、XFCE 実機では `python3-gi` と GTK 3 系ライブラリの利用可否も併せて確認する。
 
 ### A。pipx 推奨（CLI ツール用途）
 

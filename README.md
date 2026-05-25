@@ -24,6 +24,8 @@ harite optimize --input left.jpg,right.jpg --resolution 3840x1080 \
 harite-gui
 ```
 
+`harite-gui` は host 環境側の GTK 3 / PyGObject runtime を前提にします。Linux / XFCE では少なくとも `python3-gi` と GTK 3 系ライブラリが利用可能であることを確認してください。
+
 Linux / XFCE でアプリケーションメニューから起動したい場合は、user-local の launcher を生成できます。
 
 ```bash
@@ -41,8 +43,9 @@ Harite 本体は Python パッケージですが、XFCE での壁紙設定やデ
 - XFCE 利用時:
   - `xrandr` — ディスプレイ情報の取得に使うことがあります。
   - `xfconf-query` — 壁紙設定に使うことがあります。
+  - `python3-gi` と GTK 3 runtime — `harite-gui` の起動に必要です。
 
-XFCE では、これら 2 つが利用可能であることを前提に考えてください。
+XFCE では、これらが利用可能であることを前提に考えてください。
 
 ## License
 
