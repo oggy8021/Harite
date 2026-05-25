@@ -47,6 +47,11 @@ harite apply --help
 harite slideshow --help
 ```
 
+補足:
+
+- `pipx` の既定は分離 venv のため、distro 提供の `python3-gi` をそのままは見られない。
+- `harite-gui` の起動確認まで取りたい場合は、`pipx` 側で system site packages を見せるか、次の `pip --user` 手順を使う。
+
 ### B。pip --user（pipx がない場合）
 
 ```bash
@@ -100,5 +105,6 @@ pipx install --force /abs/path/to/harite-<previous-version>-py3-none-any.whl
 - clean install:
   - 状態: XFCE 実機で取得予定
   - 推奨確認項目: wheel install、`harite optimize --help`、`harite apply --help`、`harite slideshow --help`、`harite-gui` 起動導線、uninstall、rollback
+  - 補足: `pipx` の既定インストールでは分離 venv から `python3-gi` を見られず、`harite-gui` が `No module named 'gi'` で失敗しうる。GUI 起動確認は `pipx` 側で system site packages を見せるか、`pip install --user` のような non-isolated install を優先する。
   - 補足: この Windows 作業環境では `pipx` は利用不可だった。release 証跡は XFCE 実機の取得結果を優先する。
 - 補足: 旧 2026-03-20 の実測ログは current release の証跡としては扱わない。

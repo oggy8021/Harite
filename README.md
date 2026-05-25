@@ -26,6 +26,8 @@ harite-gui
 
 `harite-gui` は host 環境側の GTK 3 / PyGObject runtime を前提にします。Linux / XFCE では少なくとも `python3-gi` と GTK 3 系ライブラリが利用可能であることを確認してください。
 
+`pipx install` の既定は分離 venv なので、distro 提供の `python3-gi` を見られず `harite-gui` が起動しないことがあります。GUI 起動確認を行う場合は、`pipx` 側で system site packages を見せるか、`python3 -m pip install --user` のような non-isolated install を使ってください。
+
 Linux / XFCE でアプリケーションメニューから起動したい場合は、user-local の launcher を生成できます。
 
 ```bash

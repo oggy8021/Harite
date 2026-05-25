@@ -16,7 +16,10 @@ _TRUTHY_ENV_VALUES = ("1", "true", "yes", "on")
 def _exit_missing_gui_runtime(exc: RuntimeError) -> None:
     message = (
         "Harite GUI runtime is unavailable. "
-        "Install GTK 3 / PyGObject on the host environment, or run with "
+        "Install GTK 3 / PyGObject on the host environment. "
+        "If Harite was installed with pipx, note that the pipx venv may not see distro-provided python3-gi unless system site packages are exposed. "
+        "Alternatively, use a non-isolated install path for GUI validation. "
+        "Or run with "
         "--no-bind-ui-backend --no-present-ui-window for fallback-only troubleshooting. "
         f"Details: {exc}"
     )
