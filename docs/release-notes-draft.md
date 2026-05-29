@@ -1,13 +1,13 @@
 # Harite リリースノート草案
 
-最終更新: 2026-05-25
-対象バージョン: v1.0.0 draft
+最終更新: 2026-05-26
+対象バージョン: v1.0.0
 
 ## 概要
 
 Harite は、マルチディスプレイ環境で壁紙画像を生成・配置・適用するためのツールです。複数の入力画像から壁紙を作成し、画面ごとの配置、余白、固定配置、単画面利用を扱えます。
 
-この草案は `1.0.0` リリース本文の叩き台です。[pyproject.toml](pyproject.toml) の version は `1.0.0` へ更新済みですが、build、tag、publish はまだ未実施です。ここでは、今回の版で外向けに何を出すか、利用者にとって何が変わるか、既知の制約は何かを整理します。
+この文書は `1.0.0` リリース本文の記録です。`v1.0.0` の version 反映、build、tag、publish は完了しており、ここでは今回の版で外向けに何を出したか、利用者にとって何が変わるか、既知の制約は何かを整理します。
 
 ## 今回の要点
 
@@ -42,8 +42,7 @@ Harite は、マルチディスプレイ環境で壁紙画像を生成・配置�
 ## 既知の制約
 
 - Linux の壁紙設定はデスクトップ環境依存です。XFCE 以外では環境差分により挙動が異なる場合があります。
-- packaging / clean install / 実機適用の最終証跡は継続中であり、本文は確定前の draft です。
-- release tag と publish はまだ未実施です。
+- `harite-gui` の起動確認では、`pipx install --system-site-packages` のように host 側の `python3-gi` を参照できる install 導線が必要です。
 
 ## 検証サマリー
 
@@ -51,8 +50,9 @@ Harite は、マルチディスプレイ環境で壁紙画像を生成・配置�
   - `python -m pytest -q tests` 成功
 - owner 実機確認:
   - XFCE 環境で CLI apply 系の確認を実施済み
-- 継続中:
-  - packaging / build / clean install / GUI 起動導線の最終確認
+  - XFCE 環境で `pipx install --system-site-packages` による clean install、CLI help、`harite-gui` 起動、uninstall を確認済み
+- 公開:
+  - `v1.0.0` タグ作成と GitHub Release 公開を実施済み
 
 ## 配布物
 
@@ -61,7 +61,6 @@ Harite は、マルチディスプレイ環境で壁紙画像を生成・配置�
 
 ## 未確定事項
 
-- 最終 version を `1.0.0` に上げるタイミング
 - release 本文で GUI 中心に寄せる範囲と、CLI 継続面をどこまで併記するか
 - build / install / 実機確認の最終証跡をどこまで release 本文へ反映するか
 - GitHub Release 本文へ checklist ベースの要約をどこまで転記するか
