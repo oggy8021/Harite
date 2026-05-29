@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-05-29
+最終更新: 2026-05-30
 
 ## 1. GUI の責務
 
@@ -182,7 +182,19 @@ slideshow start / tick / stop:
 - apply に失敗した場合はスライドショー実行を停止し、status と message history に failure を残す。
 - monitor 検出欠落のような一部条件では stop ではなく pause として扱い、状態表示を `paused` へ更新する。
 - 実行中に mode 選択値を変えても進行中の run には反映しない。新しい mode を使うには stop 後に start し直す。
-- dual-source auto-split 実行中は、optimize 出力（composite と per-monitor 分割ファイル）をサイクルごとに差し替え、直前サイクル分を削除したうえで `harite_output_{NNNN}.jpg` などのファイル名を再利用する。詳細は [docs/specs/slideshow/harite-slideshow-spec.md §6.1](docs/specs/slideshow/harite-slideshow-spec.md) を参照する。
+- dual-source auto-split 実行中の optimize 出力管理（差し替え・純増ギャップ）は [docs/specs/slideshow/harite-slideshow-spec.md §6.2–6.3](docs/specs/slideshow/harite-slideshow-spec.md) を参照する。
+
+#### 出力ディレクトリ（手動 Optimize と slideshow）
+
+| 用途 | ディレクトリ | Linux 既定の解決 |
+| --- | --- | --- |
+| 手動 Optimize / Export Image | `form_state.output_dir` | ピクチャ根: `XDG_PICTURES_DIR` → `user-dirs.dirs` → `~/Pictures` |
+| slideshow 作業（dual-source の composite / 分割） | `{ピクチャ根}/Harite/slideshow/` | 上記ピクチャ根の製品サブディレクトリ（§6.1） |
+
+- slideshow 作業ディレクトリは **ピクチャ配下** とし、`XDG_CACHE_HOME` は使わない。XFCE 系 plugin が `xfconf-query` で参照する壁紙 path の実体が、キャッシュ削除等で消えないようにするため。
+- slideshow tab の `Slideshow output` は作業ディレクトリを示す。Main 導線の出力先表示とは別である。
+- issue #317 の要件 R1–R5 は **いずれも対応する**（[slideshow spec §6.3](docs/specs/slideshow/harite-slideshow-spec.md)）。現行実装は過渡状態。
+- R4 確定: `on_slideshow_stop` 時は作業ディレクトリのスロットファイルを削除せず、追跡 state のみクリア（xfconf path 維持）。
 
 ## 7. tray / indicator / app icon surface
 
