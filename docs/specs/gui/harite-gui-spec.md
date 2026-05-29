@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-05-20
+最終更新: 2026-05-29
 
 ## 1. GUI の責務
 
@@ -182,6 +182,7 @@ slideshow start / tick / stop:
 - apply に失敗した場合はスライドショー実行を停止し、status と message history に failure を残す。
 - monitor 検出欠落のような一部条件では stop ではなく pause として扱い、状態表示を `paused` へ更新する。
 - 実行中に mode 選択値を変えても進行中の run には反映しない。新しい mode を使うには stop 後に start し直す。
+- dual-source auto-split 実行中は、optimize 出力（composite と per-monitor 分割ファイル）をサイクルごとに差し替え、直前サイクル分を削除したうえで `harite_output_{NNNN}.jpg` などのファイル名を再利用する。詳細は [docs/specs/slideshow/harite-slideshow-spec.md §6.1](docs/specs/slideshow/harite-slideshow-spec.md) を参照する。
 
 ## 7. tray / indicator / app icon surface
 

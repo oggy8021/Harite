@@ -1,6 +1,6 @@
 # Harite スライドショー仕様 (Slideshow Spec)
 
-最終更新: 2026-05-20
+最終更新: 2026-05-29
 
 ## 1. スライドショー機能の責務
 
@@ -153,6 +153,40 @@ GUI は単なるタイマー処理ではなく、状態表示の責務を強く�
 - スライドショー実行が進行中か停止中か
 - 直近 apply の成否
 - display 条件不足や plugin 失敗の理由
+
+### 6.1 GUI dual-source auto-split 時の optimize 出力ファイル管理
+
+GUI が dual-source slideshow を `per-monitor-auto-split` で実行するとき、各サイクルで `optimize` と auto-split により一時的な出力ファイル群が生成される。継続実行中に `output_dir` へ optimize 成果物が無制限に蓄積しないよう、GUI owner は次の 2 段階で出力を管理する。
+
+1. **直前サイクル分の削除**: owner は `_slideshow_active_generated_files` に、直近で apply に成功した composite と per-monitor 分割ファイルの path 群を保持する。次のサイクルで apply に成功し、新しい path 群が確定したとき、保持していた直前 path 群をディスクから削除する。
+2. **ファイル名の再利用**: 新しいサイクルの optimize は `OptimizeController.run_optimize()` を経由し、`output_dir` 内で未使用の最小番号 `harite_output_{NNNN}.jpg` を選ぶ。直前サイクル分を削除したあとでは、しばしば同じ `NNNN`（典型例: `0001`）が再度選ばれる。per-monitor 分割出力は `{composite_stem}_{display_name}.jpg` 形式のため、composite の stem が再利用されると分割ファイル名も同じパターンで上書き生成される。
+
+対象範囲:
+
+- この管理は **GUI の dual-source auto-split 経路** に限る。
+- **single-source** slideshow は入力画像をそのまま apply し、サイクルごとに optimize 出力を生成しない。ただし apply 成功時は `_slideshow_active_generated_files` を空に更新し、過去の dual-source 実行で残っていた追跡 path があれば削除する。
+- **CLI `slideshow` command** は optimize 出力を生成しないため、この節の対象外である（§8 のとおり専用保存ファイルも持たない）。
+
+ライフサイクル:
+
+| タイミング | 挙動 |
+| --- | --- |
+| dual-source で apply 成功 | composite + per-monitor 分割 path を `_slideshow_active_generated_files` へ記録 |
+| 次の dual-source サイクルで apply 成功 | 記録済み path と新 path が異なれば、記録済み path を削除してから新 path を記録 |
+| single-source で apply 成功 | 追跡を空にし、記録済み path があれば削除 |
+| apply 失敗 | 追跡 path は更新しない（直前サイクル分のファイルは残る） |
+| `on_slideshow_stop` | 追跡 state とディスク上のファイルはそのまま残す。次回 start で成功したサイクルが新 path を確定したとき、または single-source 成功で追跡を空にしたときに、不要になった path が削除される |
+
+命名規則（GUI optimize 経路）:
+
+- composite: `harite_output_{NNNN}.jpg`（`output_dir` 内の未使用最小番号）
+- per-monitor 分割: `{composite_stem}_{display_name}.jpg`（`split_composite_for_displays` の出力）
+
+実装参照:
+
+- owner state / cleanup: `MainWindow._slideshow_active_generated_files`, `_set_slideshow_active_generated_files`, `_cleanup_slideshow_generated_files`
+- dual-source サイクル: `MainWindow._apply_slideshow_selection` の `per-monitor-auto-split` 分岐
+- 出力 path 採番: `OptimizeController._build_gui_output_path`
 
 ## 7. CLI `slideshow` command の責務
 
