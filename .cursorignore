@@ -1,0 +1,46 @@
+.specify
+.vscode
+.venv/
+/out/
+/dist/
+/build/
+
+logs
+
+src/harite/__pycache__
+src/harite.egg-info
+
+# Python bytecode / cache
+__pycache__/
+*.pyc
+
+# CI log files
+ci-*.log
+
+tests/*.pyc
+tests/__pycache__
+tests/out/*
+# Generated docs reports
+docs/*-report*.md
+
+# Collected XFCE logs (local archives)
+harite-xfce-logs/*
+
+# Ignore archives and local test artifacts
+*.tar.gz
+.pr-flow-test
+.pr-flow-test/*
+
+# phase10-mock
+docs/specs/gui/mock-assets/*
+
+# Welcome Cursor
+docs/_initial-build-history
+docs/git-operation-help
+docs/reformation
+docs/specs/docsting-plan.md
+docs/specs/harite-foundation-spec.md
+docs/specs/upstream-core-mapping.md
+docs/specs/upstream-full-analysis.md
+docs/templates
+docs/tests
