@@ -83,3 +83,24 @@ def test_apply_uses_immediate_apply_mode(tmp_path, monkeypatch) -> None:
     assert fake_plugin.calls == [str(Path(image_path))]
     assert "applied wallpaper" in result.output.lower()
     assert "dry_run" not in result.output.lower()
+
+
+def test_apply_plugin_returns_false_exits_code_3(tmp_path, monkeypatch) -> None:
+    """plugin が False を返した場合は終了コード 3（CLI11）。"""
+    runner = CliRunner()
+    image_path = tmp_path / "wall.jpg"
+    image_path.write_bytes(b"x")
+
+    class FailingPlugin:
+        def apply(self, path_or_map):
+            return False
+
+    monkeypatch.setattr(cli.plugin_registry, "get", lambda _name: FailingPlugin())
+
+    result = runner.invoke(
+        cli.app,
+        ["apply", "--plugin", "windows", "--file", str(image_path)],
+    )
+
+    assert result.exit_code == 3
+    assert "failed to apply wallpaper" in result.output.lower()
