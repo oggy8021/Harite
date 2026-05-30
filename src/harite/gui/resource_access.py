@@ -5,7 +5,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from importlib.resources import as_file, files
 from pathlib import Path
-from typing import Iterator
+from typing import Any, Iterator
 
 
 def gui_resource(*path_parts: str):
@@ -22,3 +22,18 @@ def gui_resource_path(*path_parts: str) -> Iterator[Path]:
     """Yield a filesystem path for a packaged GUI resource."""
     with as_file(gui_resource(*path_parts)) as resource_path:
         yield resource_path
+
+
+def set_qt_button_icon(widget: Any, *resource_parts: str) -> None:
+    """Attach an SVG icon from the package resources to a Qt widget.
+
+    Uses ``QIcon`` loaded from the SVG file path.  Silently skips if PyQt6 is
+    not importable or the resource file is not found.
+    """
+    try:
+        from PyQt6.QtGui import QIcon
+
+        with gui_resource_path(*resource_parts) as icon_path:
+            widget.setIcon(QIcon(str(icon_path)))
+    except Exception:
+        pass

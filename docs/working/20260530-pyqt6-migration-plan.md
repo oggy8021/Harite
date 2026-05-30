@@ -274,19 +274,21 @@ GUI spec §7 tray / indicator / app icon surface に対応。
 
 ---
 
-### Phase 10: 旧 GTK 除去・クリーンアップ
+### Phase 10: 旧 GTK 除去・クリーンアップ *(永続ペンディング – 実施しない)*
 
-**目標**: GTK 依存を完全に除去し、`pyproject.toml` からも削除。
+> **2026-05-31 決定**: デュアルバックエンド戦略（`harite-gtk` を XFCE 向けにメンテナンス継続、`harite-qt` を Windows 向け新規開発）を採択したため、GTK の完全除去は行わない。本 Phase の内容は対象外とする。
 
-| 作業 | 詳細 |
-|---|---|
-| `adapters/gtk_*.py` 一式を削除 | 計 21 ファイル |
-| `adapters/tasktray_adapter.py`（旧 GTK 版）を削除 | `adapters_qt/qt_tray_adapter.py` に置き換え済み |
-| `app.py` の GTK ローダー分岐を削除（Qt 版のみに） | |
-| `pyproject.toml` の GTK 系 extras / PyGObject 記述を削除または optional 化 | |
-| CI workflow の PyGObject セットアップを削除 | |
-| README の「GTK 3 / PyGObject が必要」記述を更新 | |
-| 全テストが Qt backend で通ることを確認 | |
+~~**目標**: GTK 依存を完全に除去し、`pyproject.toml` からも削除。~~
+
+| 作業 | 詳細 | 状態 |
+|---|---|---|
+| `adapters/gtk_*.py` 一式を削除 | 計 21 ファイル | 実施しない |
+| `adapters/tasktray_adapter.py`（旧 GTK 版）を削除 | `adapters_qt/qt_tray_adapter.py` に置き換え済み | 実施しない |
+| `app.py` の GTK ローダー分岐を削除（Qt 版のみに） | | 実施しない |
+| `pyproject.toml` の GTK 系 extras / PyGObject 記述を削除または optional 化 | | 実施しない |
+| CI workflow の PyGObject セットアップを削除 | | 実施しない |
+| README の「GTK 3 / PyGObject が必要」記述を更新 | | 実施しない |
+| 全テストが Qt backend で通ることを確認 | | 実施しない |
 
 ---
 
