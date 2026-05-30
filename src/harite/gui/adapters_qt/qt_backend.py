@@ -1,4 +1,4 @@
-"""Qt runtime backend for Harite GUI (Phase 1: empty window skeleton)."""
+"""Qt runtime backend for Harite GUI (Phase 2: layout skeleton)."""
 
 from __future__ import annotations
 
@@ -13,11 +13,12 @@ _WINDOW_HEIGHT = 640
 
 
 class QtSignalBackend:
-    """Thin wrapper around QApplication + QMainWindow.
+    """Qt runtime backend wrapping QApplication + QMainWindow.
 
-    Responsibilities (Phase 1):
-    - Hold the QApplication instance.
-    - Build and own the top-level QMainWindow.
+    Responsibilities (Phase 2):
+    - Hold the QApplication instance and QMainWindow.
+    - Build the 3-layer layout (header / center body / footer) via
+      qt_layout_builders, and keep a widget registry for signal wiring.
     - Apply window title, icon, and initial size.
 
     Signal wiring (Phase 3+) will be added to connect_signals().
@@ -26,6 +27,7 @@ class QtSignalBackend:
     def __init__(self, qapp: Any, qwindow: Any) -> None:
         self._qapp = qapp
         self._qwindow = qwindow
+        self._objects: dict[str, Any] = {"main_window": qwindow}
 
     @property
     def qapp(self) -> Any:
@@ -34,6 +36,17 @@ class QtSignalBackend:
     @property
     def qwindow(self) -> Any:
         return self._qwindow
+
+    @property
+    def objects(self) -> dict[str, Any]:
+        """Widget registry keyed by logical name (GTK adapter naming convention)."""
+        return self._objects
+
+    def build_layout(self) -> None:
+        """Populate QMainWindow with the 3-layer layout skeleton."""
+        from harite.gui.adapters_qt.qt_layout_builders import build_main_layout
+
+        self._objects = build_main_layout(self._qwindow)
 
     def connect_signals(self, dispatch: dict[str, Any]) -> None:
         """Bind handler names to QWidget signals.  Implemented in Phase 3+."""
@@ -59,7 +72,7 @@ def _make_window_icon(qwindow: Any) -> None:
 
 
 def load_qt_runtime_signal_backend() -> QtSignalBackend:
-    """Create QApplication + QMainWindow and return a QtSignalBackend.
+    """Create QApplication + QMainWindow, build layout, and return a QtSignalBackend.
 
     Raises RuntimeError if PyQt6 is not installed.
     """
@@ -79,4 +92,6 @@ def load_qt_runtime_signal_backend() -> QtSignalBackend:
     qwindow.resize(_WINDOW_WIDTH, _WINDOW_HEIGHT)
     _make_window_icon(qwindow)
 
-    return QtSignalBackend(qapp, qwindow)
+    backend = QtSignalBackend(qapp, qwindow)
+    backend.build_layout()
+    return backend

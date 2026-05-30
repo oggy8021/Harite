@@ -1,0 +1,265 @@
+"""Qt layout builders for the Harite GUI skeleton (Phase 2).
+
+Builds the 3-layer window structure (header / center body / footer) and the
+QTabWidget with three empty tabs (Main / Margins / Slideshow).
+
+Widget naming follows the GTK adapter convention so that signal wiring in
+later phases can reference the same logical names.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+
+# ---------------------------------------------------------------------------
+# Icon helpers
+# ---------------------------------------------------------------------------
+
+
+def _set_button_icon(btn: Any, *resource_parts: str) -> None:
+    """Attach an SVG icon to a QPushButton, silently skipping on failure."""
+    try:
+        from PyQt6.QtGui import QIcon
+
+        from harite.gui.resource_access import gui_resource_path
+
+        with gui_resource_path(*resource_parts) as icon_path:
+            btn.setIcon(QIcon(str(icon_path)))
+    except Exception:
+        pass
+
+
+# ---------------------------------------------------------------------------
+# Header section
+# ---------------------------------------------------------------------------
+
+
+def build_header_section() -> dict[str, Any]:
+    """Build the header: title row (title + command bar) + flow row.
+
+    Returns a dict of named widgets matching the GTK adapter naming convention.
+    """
+    from PyQt6.QtWidgets import (
+        QHBoxLayout,
+        QLabel,
+        QPushButton,
+        QSizePolicy,
+        QVBoxLayout,
+        QWidget,
+    )
+
+    header = QWidget()
+    header_layout = QVBoxLayout(header)
+    header_layout.setContentsMargins(0, 0, 0, 4)
+    header_layout.setSpacing(4)
+
+    # --- title row: [title label] [spacer] [Color] [Settings] [About] ---
+    title_row = QWidget()
+    title_row_layout = QHBoxLayout(title_row)
+    title_row_layout.setContentsMargins(0, 0, 0, 0)
+    title_row_layout.setSpacing(8)
+
+    title = QLabel("")
+    title_row_layout.addWidget(title)
+
+    title_spacer = QWidget()
+    title_spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+    title_row_layout.addWidget(title_spacer)
+
+    btn_set_color = QPushButton("Color")
+    btn_setting = QPushButton("Settings")
+    btn_about = QPushButton("About")
+    _set_button_icon(btn_set_color, "icons", "lucide", "palette.svg")
+    _set_button_icon(btn_setting, "icons", "lucide", "settings.svg")
+    _set_button_icon(btn_about, "icons", "lucide", "info.svg")
+    title_row_layout.addWidget(btn_set_color)
+    title_row_layout.addWidget(btn_setting)
+    title_row_layout.addWidget(btn_about)
+
+    header_layout.addWidget(title_row)
+
+    # --- flow row: [legend] [spacer] [Export Image] ---
+    flow_row = QWidget()
+    flow_row_layout = QHBoxLayout(flow_row)
+    flow_row_layout.setContentsMargins(0, 0, 0, 0)
+    flow_row_layout.setSpacing(8)
+
+    flow_legend_label = QLabel("Compose -> Optimize -> Apply")
+    flow_row_layout.addWidget(flow_legend_label)
+
+    flow_spacer = QWidget()
+    flow_spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+    flow_row_layout.addWidget(flow_spacer)
+
+    optimize_btn = QPushButton("Export Image")
+    optimize_btn.setEnabled(False)
+    _set_button_icon(optimize_btn, "icons", "lucide", "image-down.svg")
+    flow_row_layout.addWidget(optimize_btn)
+
+    header_layout.addWidget(flow_row)
+
+    return {
+        "header_widget": header,
+        "title": title,
+        "btn_set_color": btn_set_color,
+        "btn_setting": btn_setting,
+        "btn_about": btn_about,
+        "flow_legend_label": flow_legend_label,
+        "optimize_btn": optimize_btn,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Center body section (QTabWidget + 3 stub tabs)
+# ---------------------------------------------------------------------------
+
+_TAB_MAIN = "Main"
+_TAB_MARGINS = "Margins (for each display)"
+_TAB_SLIDESHOW = "Slideshow (stopped)"
+
+
+def build_center_body_section() -> dict[str, Any]:
+    """Build the center body: QTabWidget with 3 empty stub tabs.
+
+    Tab content will be replaced in Phase 3 (Main), Phase 4 (Margins), and
+    Phase 5 (Slideshow).
+
+    Returns a dict containing ``command_tabs`` and the three stub widgets.
+    """
+    from PyQt6.QtWidgets import QTabWidget, QWidget
+
+    command_tabs = QTabWidget()
+
+    main_tab_stub = QWidget()
+    margins_tab_stub = QWidget()
+    slideshow_tab_stub = QWidget()
+
+    command_tabs.addTab(main_tab_stub, _TAB_MAIN)
+    command_tabs.addTab(margins_tab_stub, _TAB_MARGINS)
+    command_tabs.addTab(slideshow_tab_stub, _TAB_SLIDESHOW)
+
+    return {
+        "command_tabs": command_tabs,
+        "main_tab_stub": main_tab_stub,
+        "margins_tab_stub": margins_tab_stub,
+        "slideshow_tab_stub": slideshow_tab_stub,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Footer section
+# ---------------------------------------------------------------------------
+
+
+def build_footer_section() -> dict[str, Any]:
+    """Build the footer: [Status | Slideshow summary] / separator / [Error].
+
+    Returns a dict of named widgets.
+    """
+    from PyQt6.QtWidgets import (
+        QFrame,
+        QHBoxLayout,
+        QLabel,
+        QSizePolicy,
+        QVBoxLayout,
+        QWidget,
+    )
+
+    footer = QWidget()
+    footer_layout = QVBoxLayout(footer)
+    footer_layout.setContentsMargins(0, 4, 0, 0)
+    footer_layout.setSpacing(4)
+
+    # --- status row: [Status: ready] [spacer] [Slideshow: stopped] ---
+    status_row = QWidget()
+    status_row_layout = QHBoxLayout(status_row)
+    status_row_layout.setContentsMargins(0, 0, 0, 0)
+    status_row_layout.setSpacing(8)
+
+    status_label = QLabel("Status: ready")
+    status_row_layout.addWidget(status_label)
+
+    status_spacer = QWidget()
+    status_spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+    status_row_layout.addWidget(status_spacer)
+
+    slideshow_summary_label = QLabel("Slideshow: stopped")
+    status_row_layout.addWidget(slideshow_summary_label)
+
+    footer_layout.addWidget(status_row)
+
+    # --- separator ---
+    message_separator = QFrame()
+    message_separator.setFrameShape(QFrame.Shape.HLine)
+    message_separator.setFrameShadow(QFrame.Shadow.Sunken)
+    footer_layout.addWidget(message_separator)
+
+    # --- error row ---
+    message_row = QWidget()
+    message_row_layout = QHBoxLayout(message_row)
+    message_row_layout.setContentsMargins(0, 0, 0, 0)
+    message_row_layout.setSpacing(8)
+
+    error_label = QLabel("Error: none")
+    message_row_layout.addWidget(error_label)
+
+    footer_layout.addWidget(message_row)
+
+    return {
+        "footer_widget": footer,
+        "status_label": status_label,
+        "slideshow_summary_label": slideshow_summary_label,
+        "message_separator": message_separator,
+        "error_label": error_label,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Full window layout assembly
+# ---------------------------------------------------------------------------
+
+
+def build_main_layout(qwindow: Any) -> dict[str, Any]:
+    """Populate *qwindow* with the 3-layer layout and return the widget registry.
+
+    Layers (top to bottom):
+        header  – title row + flow row
+        center  – QTabWidget with 3 tabs
+        footer  – status / error rows
+
+    The returned dict uses the same logical names as the GTK adapter so that
+    signal wiring can reference widgets by name regardless of backend.
+    """
+    from PyQt6.QtWidgets import (
+        QSizePolicy,
+        QVBoxLayout,
+        QWidget,
+    )
+
+    central = QWidget()
+    root_layout = QVBoxLayout(central)
+    root_layout.setContentsMargins(10, 10, 10, 10)
+    root_layout.setSpacing(10)
+
+    header_widgets = build_header_section()
+    center_widgets = build_center_body_section()
+    footer_widgets = build_footer_section()
+
+    root_layout.addWidget(header_widgets["header_widget"])
+
+    command_tabs = center_widgets["command_tabs"]
+    command_tabs.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+    root_layout.addWidget(command_tabs, stretch=1)
+
+    root_layout.addWidget(footer_widgets["footer_widget"])
+
+    qwindow.setCentralWidget(central)
+
+    return {
+        "main_window": qwindow,
+        "root": central,
+        **header_widgets,
+        **center_widgets,
+        **footer_widgets,
+    }
