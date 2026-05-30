@@ -80,21 +80,28 @@ src/harite/gui/
 | Incremental（サブシステム単位） | タブ 1 枚ずつ差し替える | 2 フレームワーク混在が複雑 |
 | **New adapter directory（採用）** | `adapters_qt/` を新設し段階的に実装、最後に seam を切り替える | 最も安全。旧 GTK は削除前まで動き続ける |
 
-### 2.2 採用方針の概要
+### 2.2 採用方針の概要（確定: デュアルバックエンド非対称運用）
+
+オーナーの常用環境（Windows 11 + Linux Mint XFCE）を踏まえた結論として、**デュアルバックエンドの非対称運用**を採用する。
 
 ```text
-[現在]                         [移行中]                        [完了後]
-app.py                         app.py                          app.py
-  └─ _load_ui_signal_backend     ├─ _load_gtk_signal_backend      └─ _load_qt_signal_backend
-       └─ adapters/gtk_backend        └─ adapters/gtk_backend            └─ adapters_qt/qt_backend
-                                  └─ _load_qt_signal_backend
-                                       └─ adapters_qt/qt_backend  ← 段階実装
+harite-gtk  ← 現行 harite-gui をリネーム。XFCE ネイティブ。maintenance mode（バグ修正のみ）
+harite-qt   ← 新規開発。Windows 日常使用が主目的。XFCE でも動作する
 ```
 
+エントリーポイントの変遷:
+
+```text
+[現在]          [移行中]                        [完了後]
+harite-gui      harite-gtk  ← 現行のリネーム    harite-gtk  （maintenance mode）
+                harite-qt   ← 段階的に実装      harite-qt   （development focus）
+```
+
+実装の進め方:
 - `adapters_qt/` を新ディレクトリとして作成し、Qt 版のファイルを順次実装する。
 - `app.py` に環境変数 `HARITE_GUI_BACKEND=qt` のフラグを追加し、早期から切り替えテストできるようにする。
 - 各 Phase が完了したら GTK 版との動作を比較し、`MainWindow` の振る舞いが一致することを確認する。
-- 全 Phase 完了後、`adapters/gtk_*.py` 一式と GTK 依存を `pyproject.toml` から除去する。
+- Qt 版が安定したら GTK 版を deprecated とし、将来的に除去する。除去タイミングは別途判断。
 
 ---
 
@@ -300,22 +307,26 @@ GUI spec §7 tray / indicator / app icon surface に対応。
 
 ## 5. C-04（GUI 利用導線の再設計）との関係
 
-feature-overview の C-04 は「optimize / apply / slideshow を利用目的ベースで再構成する」提案である。
+feature-overview の C-04 は「optimize / apply / slideshow を利用目的ベースで再構成する」提案だが、**現時点では構想保持**に分類されている。
 
-**方針**: Qt 移植フェーズ（Phase 0–10）は**現行仕様書どおりの構成を再現することを目標**とし、C-04 の UX 変更は移植完了後の Phase 11 以降として分離する。
+**Qt 移植フェーズ（Phase 0–10）の目標は現行仕様書どおりの構成を再現すること**とし、C-04 の UX 変更は扱わない。
 
 理由:
+- 「利用目的ベース」の具体的な画面遷移案がまだ存在しない。
 - 移植と UX 変更を同時に進めると検証の基準が定まらない。
 - 現行 GUI spec（2026-05-30 正本）が「移植後の正解」として機能する。
-- C-04 の方向性（task ベース / scenario ベース / progressive disclosure）は Qt での実装を前提にするほうが自然。
 
-**移植完了後の C-04 入口**:
+**C-04 の採用条件**（feature-overview より）:
+- 既存レイアウトの骨格を維持しつつ、世の標準傾向や UX トレンドを引用した「主要導線がより良くなる」ストーリーが組めたとき。
+- この条件が整った場合のみ、Qt 版で Phase 11 以降として着手する。
 
-| C-04 rough idea | Qt 移植後の展開可能性 |
+**参考**: C-04 rough ideas（Qt との親和性）
+
+| C-04 rough idea | Qt での展開可能性（参考） |
 |---|---|
 | task ベース（「作る」「適用する」「回す」） | QStackedWidget でタスクビューを差し込みやすい |
-| progressive disclosure | Qt の `QGroupBox` collapsible / `QSplitter` で段階的開示が実装しやすい |
-| scenario ベース入口 | welcome wizard として `QWizard` が使える |
+| progressive disclosure | `QGroupBox` collapsible / `QSplitter` で段階的開示が実装しやすい |
+| scenario ベース入口 | `QWizard` で welcome wizard として実装できる |
 
 ---
 
@@ -342,14 +353,27 @@ feature-overview の C-04 は「optimize / apply / slideshow を利用目的ベ�
 
 ## 7. 残課題・判断待ち
 
+### 確定済み
+
+| ID | 課題 | 決定内容 |
+|---|---|---|
+| J-05 | C-04 の優先度 | Qt 移植を先行。C-04 は構想保持（採用条件付き） |
+
+### 判断待ち
+
 | ID | 課題 | 判断内容 |
 |---|---|---|
 | J-01 | PyQt6 の依存関係扱い | `[project.dependencies]` に必須で追加するか、`[project.optional-dependencies]` の `gui-qt` extra にするか |
-| J-02 | PyGObject の扱い | 移植完了後に `pyproject.toml` から完全除去か、`gui-gtk` extra として残すか |
+| J-02 | PyGObject / GTK backend の長期扱い | `harite-gtk` が maintenance mode に移行後、いつ deprecated → 除去するか。`gui-gtk` extra として残すか |
 | J-03 | `fake_adapter.py` の扱い | テスト用 fake adapter を Qt 版でも維持するか（現行 `fake_adapter.py` は GTK import なしの可能性が高い） |
 | J-04 | `--system-site-packages` 不要化 | PyQt6 は `pip install PyQt6` で動作するため、`pipx install` 時の `--system-site-packages` が不要になる可能性。install 手順の変更範囲を確認 |
-| J-05 | C-04 の優先度 | Qt 移植を先行させるか、C-04 の UX 設計を先に固めてから移植するか（本書は移植先行を推奨） |
-| J-06 | Windows / macOS での tray 動作確認 | `QSystemTrayIcon` は Linux XFCE 以外でも動くが、GTK 版が Linux 専用だったため、macOS / Windows でのトレイ表示が副産物として得られる |
+| J-06 | Windows / macOS での tray 動作確認 | `QSystemTrayIcon` は XFCE 以外でも動く。Windows での tray 表示が副産物として得られる |
+
+### Mac サポート方針（確定）
+
+- Mac コードはリポジトリに残す。
+- `README` および `docs/` に「community-maintained、オーナー未検証」として明記する。
+- 不具合報告は受け付けるが、オーナー側で再現・修正する義務は持たない。
 
 ---
 

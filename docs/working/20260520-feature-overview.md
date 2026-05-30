@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-05-20
+最終更新: 2026-05-30
 
 ## 位置づけ
 
@@ -40,34 +40,36 @@
 
 ここでの並び順は、現時点の product 価値の大きさそのものではなく、先に入れやすい順・前提を作りやすい順を優先する。
 
+**前提**: Qt 移行（`harite-gtk` / `harite-qt` 二本立て化）を先行させ、完了後に以下を順次着手する。
+
 | ID | 項目 | 概要 | planning で最初に詰めること |
 | --- | --- | --- | --- |
-| C-03 | plugin capability 可視化 | plugin ごとに受理 target や OS 制約を可視化し、apply / slideshow / GUI での分岐を分かりやすくする。 | capability model、CLI/GUI 表示面、fallback 方針 |
 | C-02 | source registry / source profiles | watch directory や外部 source を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | source モデル、GUI/CLI surface、設定保存形式 |
 | C-05 | slideshow source 強化 | slideshow の source を単発 directory から、複数 source・source profile・将来の外部 source へ広げる。初期スコープは local directory、同期済み cloud folder、ローカル mount 済み NAS/SMB/WebDAV directory までとし、それ以上の直接連携は将来余裕がある場合に限る。 | source 正規化、順序規則、GUI owner state との整合 |
-| C-01 | 外部壁紙サイト連携 | 外部サイトや API から壁紙候補を取得し、Harite の source として扱えるようにする。C-05 の local/mounted source 扱いを一種の先行試行とみなせる。 | 対象サイト、取得方法、利用規約、キャッシュ方針 |
-| C-04 | GUI 利用導線の再設計 | optimize / apply / slideshow を単なる tab 群ではなく、利用目的ベースで再構成する。 | 主ユースケース、画面遷移、既存 UI 互換境界 |
-
-#### C-04 rough ideas
-
-- task ベース: 「作る」「適用する」「回す」の 3 系統から入る。
-- scenario ベース: 「単画面で 1 枚作る」「2 画面向けに合成する」「すぐ適用する」「slideshow を始める」のような利用目的から入る。
-- progressive disclosure: 最初から全 widget を見せず、基本面と詳細面を分ける。
-- Wallpaperoptimizer 的な強みは残しつつ、最初の入口は「やりたいこと」から入り、細かい調整は後で開く。
+| C-01 | 外部壁紙サイト連携 | 外部サイトや API から壁紙候補を取得し、Harite の source として扱えるようにする。C-05 の local/mounted source 扱いを一種の先行試行とみなせる。オーナー発案の本丸 feature。 | 対象サイト、取得方法、利用規約、キャッシュ方針 |
 
 ### 2. 構想保持
 
-ここは、方向性自体は有力だが、着手候補より先に掘ると設計順が逆転しやすい項目を置く棚である。
+ここは、方向性自体は有力だが、着手候補より先に掘ると設計順が逆転しやすい項目、または採用条件が未整理の項目を置く棚である。
 永久保留ではなく、着手候補側の planning 結果で前提が揃えば、次の段階で着手候補へ再分類しうる。
 
-| ID | 項目 | 概要 | 保持理由 |
+| ID | 項目 | 概要 | 保持理由 / 採用条件 |
 | --- | --- | --- | --- |
-| K-01 | watch 機能の再構成 | 現行 slideshow / source / monitor 変化監視を含め、watch を独立機能として設計し直す。 | 現時点では source / slideshow / plugin の基礎設計が先 |
+| C-03 | plugin capability 可視化 | plugin ごとに受理 target や OS 制約を可視化し、apply / slideshow / GUI での分岐を分かりやすくする。 | **採用条件**: 仕様書に根拠を持ち、UIUX として明確に改善される論拠（spec 改訂案 + 表示面のストーリー）が示せたとき |
+| C-04 | GUI 利用導線の再設計 | optimize / apply / slideshow を単なる tab 群ではなく、利用目的ベースで再構成する。 | **採用条件**: 既存レイアウトの骨格を維持しつつ、世の標準傾向や UX トレンドを引用した「主要導線がより良くなる」ストーリーが組めたとき。「利用目的ベース」の具体が未整理のため現時点では積極採用しない |
+| K-01 | watch 機能の再構成 | 現行 slideshow / source / monitor 変化監視を含め、watch を独立機能として設計し直す。 | 現時点では source / slideshow / plugin の基礎設計が先。現行 GUI に Watch tab が存在するが実装は未完であり、Qt 移行後に方向性を整理する |
 | K-02 | source metadata / cache | 画像 source ごとにタグ、取得元、評価、最終利用履歴などを持てるようにする。 | 外部 source 連携や history 導線と一緒に詰めたほうがよい |
 | K-03 | favorites / history | 過去に生成・適用した壁紙や source を振り返り、再利用できるようにする。 | 保存スコープと UX を先に整理したい |
 | K-04 | plugin 拡張パック | Linux 以外や追加 desktop 向け plugin を外付け拡張として扱えるようにする。 | capability model と packaging 方針が先に必要 |
 | K-05 | scheduler / timed automation | 時刻・曜日・条件に応じて optimize / apply / slideshow を起動する。 | watch / source / profile 面が固まってからのほうが設計しやすい |
 | K-06 | import / export profiles | optimize / apply / slideshow の運用設定を profile 単位で持ち運べるようにする。 | source / settings / GUI 導線との責務分担を整理してからでよい |
+
+#### C-04 rough ideas（参考保持）
+
+- task ベース: 「作る」「適用する」「回す」の 3 系統から入る。
+- scenario ベース: 「単画面で 1 枚作る」「2 画面向けに合成する」「すぐ適用する」「slideshow を始める」のような利用目的から入る。
+- progressive disclosure: 最初から全 widget を見せず、基本面と詳細面を分ける。
+- Wallpaperoptimizer 的な強みは残しつつ、最初の入口は「やりたいこと」から入り、細かい調整は後で開く。
 
 ### 3. 破棄候補 / 保留延長
 
@@ -139,6 +141,20 @@
 - GUI / CLI の新しい利用導線
 - product improvement と UX 強化
 
+## 近中期の優先順序（2026-05-30 確定）
+
+```
+[先行] Qt 移行（harite-gtk / harite-qt 二本立て化）
+         ↓ 完了後
+[次段] C-02 source registry  ←── C-01 の器を作る
+       C-05 slideshow source 強化  ←── local/mounted まで
+         ↓ 揃ったら
+[本丸] C-01 外部壁紙サイト連携  ←── オーナー発案
+```
+
+- Qt 移行の詳細は [docs/working/20260530-pyqt6-migration-plan.md](20260530-pyqt6-migration-plan.md) を参照する。
+- C-03 / C-04 は採用条件が揃った時点で着手候補へ再分類する。条件が揃わなければ構想保持のまま維持する。
+
 ## 初動タスク
 
 1. 現在頭にある後続機能案を列挙する。
@@ -149,7 +165,8 @@
 進捗メモ:
 
 - 一次 inventory を本書へ反映した。
-- 次段では、着手候補から最初に掘る 1 件または 2 件を選び、個別 planning 文書へ分離する。
+- 2026-05-30: オーナーとの議論を経て、C-03/C-04 を構想保持へ移動（採用条件付き）。Qt 移行を全 feature に先行させる方針を確定した。
+- 次段では Qt 移行計画を進め、完了後に C-02/C-05/C-01 の順で個別 planning 文書へ分離する。
 
 ## 完了条件
 
