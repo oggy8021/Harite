@@ -789,3 +789,70 @@ def test_optimize_auto_display_values_can_come_from_settings(tmp_path, monkeypat
     assert captured["two_screen"] is True
     assert captured["l_display"] == (1920, 1080)
     assert captured["r_display"] == (1280, 1024)
+
+
+def test_optimize_two_screen_defaults_to_auto_when_unspecified_with_context(tmp_path, monkeypatch):
+    """--two-screen 未指定時に2入力＋display context があれば自動で two-screen が有効になる (CLI1)。"""
+    runner = CliRunner()
+    captured = {}
+    left = tmp_path / "left.jpg"
+    right = tmp_path / "right.jpg"
+    left.write_bytes(b"x")
+    right.write_bytes(b"x")
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    monkeypatch.setattr(
+        "harite.optimize_settings.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="L", width=1920, height=1080, x_offset=0),
+                Display(name="R", width=1280, height=1024, x_offset=1920),
+            ),
+            resolution=(3200, 1080),
+            l_display=(1920, 1080),
+            r_display=(1280, 1024),
+        ),
+    )
+
+    result = runner.invoke(
+        cli.app,
+        ["optimize", "--input", str(left), "--input", str(right)],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["two_screen"] is True
+    assert captured["target_resolution"] == (3200, 1080)
+    assert captured["l_display"] == (1920, 1080)
+    assert captured["r_display"] == (1280, 1024)
+
+
+def test_optimize_two_screen_defaults_to_false_when_unspecified_without_context(tmp_path, monkeypatch):
+    """--two-screen 未指定かつ display context なし → two_screen=False (CLI1)。"""
+    runner = CliRunner()
+    captured = {}
+    left = tmp_path / "left.jpg"
+    right = tmp_path / "right.jpg"
+    left.write_bytes(b"x")
+    right.write_bytes(b"x")
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    monkeypatch.setattr(
+        "harite.optimize_settings.build_two_screen_optimize_context",
+        lambda: None,
+    )
+
+    result = runner.invoke(
+        cli.app,
+        ["optimize", "--input", str(left), "--input", str(right), "--resolution", "1920x1080"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["two_screen"] is False

@@ -188,7 +188,7 @@ GUI が dual-source slideshow を `per-monitor-auto-split` で実行するとき
 
 | 種別 | ファイル名 |
 | --- | --- |
-| composite | `harite_slideshow_composite.jpg` |
+| composite | `harite_slideshow.jpg` |
 | per-monitor 分割 | `harite_slideshow_{display_name_safe}.jpg`（`display.name` を file-safe 化した suffix。例: `HDMI-1` → `harite_slideshow_HDMI-1.jpg`） |
 
 - dual-source の optimize / split は、上記 path を `output_path` / `output_dir` として明示指定し、毎 tick 上書きする。

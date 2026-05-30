@@ -145,7 +145,7 @@ def resolve_bool_or_auto_option(
         if is_auto_value(raw):
             return None
         return parse_config_bool(name, raw)
-    return bool(cli_value)
+    return None  # neither CLI nor config specifies → treat as "auto"
 
 
 @app.callback(invoke_without_command=True)

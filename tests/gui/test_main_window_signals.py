@@ -1497,7 +1497,7 @@ def test_slideshow_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch,
     monkeypatch.setattr("harite.gui.views.main_window.sys.platform", "linux")
 
     work_dir = home / "Pictures" / "Harite" / "slideshow"
-    composite_slot = work_dir / "harite_slideshow_composite.jpg"
+    composite_slot = work_dir / "harite_slideshow.jpg"
     split_hdmi = work_dir / "harite_slideshow_HDMI-1.jpg"
     split_dp = work_dir / "harite_slideshow_DP-1.jpg"
 
@@ -1526,7 +1526,7 @@ def test_slideshow_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch,
         optimize_calls += 1
         observed_inputs.append(state.input_value)
         Path(state.output_dir).mkdir(parents=True, exist_ok=True)
-        composite = Path(state.output_dir) / "harite_slideshow_composite.jpg"
+        composite = Path(state.output_dir) / "harite_slideshow.jpg"
         composite.write_bytes(f"composite-{optimize_calls}".encode())
         return ([composite], [])
 
