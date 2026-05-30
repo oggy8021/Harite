@@ -116,6 +116,24 @@ display / two-screen 解決:
 - resolution / display 条件不正
 - background color や embed 系 option 不正
 
+短縮形オプション（CLI2）:
+
+- `optimize` で使える短縮形: `--input` / `-i`、`--output` / `-o`、`--settings-file` / `-c`、`--resolution` / `-r`
+
+主な option の既定値（CLI3）:
+
+| option | 既定値 |
+|---|---|
+| `--output` | `.`（カレントディレクトリ） |
+| `--background-color` | `1E1E1E` |
+| `--quality` | `90` |
+| `--embed-info` | `none` |
+| `--embed-position` | `right-bottom` |
+
+設定ファイル内 bool 値の解釈規則（CLI4）:
+
+- 設定ファイル内の bool 値は `true/false/1/0/yes/no/on/off`（大文字小文字不問）を受理する。Python の bool/int 型 `True`/`False`/`1`/`0` も受理する。これ以外の値は不正として終了コード `2` で止める。
+
 ## 5. `apply`
 
 - plugin を解決し、`single-file` または per-monitor target を適用する。
@@ -136,6 +154,11 @@ apply mode の決定順:
 - `--file`, `--left-file`, `--right-file` は画像 file path を受け取る。CLI は file 名の推測補完を行わず、最終的な存在確認と `~` 展開・絶対 path 化は plugin 側の正規化に委ねる。
 - plugin が `False` を返した場合は終了コード `3` で扱う。
 - CLI 実装は `resolve_apply_settings(...)` に `output_dir=Path(".")` を渡しているため、`--auto-split` 時の split 出力先既定値は current working directory である。
+
+未知 plugin 時の動作（CLI10）:
+
+- 未知 plugin が指定された場合は `Unknown plugin: {name}` を出力し、続けて `Available plugins: {カンマ区切りの一覧}` を出力して終了コード `2` で終了する。
+- `apply` の短縮形: `--plugin` / `-p`、`--file` / `-f`、`--per-monitor` / `-m`
 
 ## 6. `slideshow`
 
@@ -191,6 +214,35 @@ slideshow helper の計算規則:
 - 現行 CLI `slideshow` command には専用保存先や履歴ファイル出力はない。
 - plugin 側の logger は別系統であり、CLI の固定実行メッセージ方針とは分けて考える。
 
+`Slideshow start` メッセージのフィールド（CLI13）:
+
+- 開始時に出力するメッセージの正確な形式は次のとおり:
+
+  ```
+  Slideshow start: input={input_summary} images={count} interval_sec={interval_sec} mode={mode} plugin={plugin}
+  ```
+
+- `input` は採用済み source directory をカンマ区切りで結合した文字列、`images` は収集済み画像ファイル数。このメッセージは plugin 解決の**前**に出力される。
+
+slideshow apply 失敗時の exit code（CLI15）:
+
+- 各サイクルでの apply 失敗（plugin が `False` を返す、または plugin 例外）は slideshow ループを中断せず、exit code にも反映しない。
+- `Ctrl+C` による正常停止は終了コード `0` で終了する。
+
+画像収集規則（CLI16）:
+
+- 各 source directory の**直接の子ファイル**のみを対象とする（再帰なし）。
+- 収集対象の拡張子は `.jpg`, `.jpeg`, `.png`, `.bmp`（大文字小文字不問）のみ。
+- 各 directory 内でのファイル順はファイル名の**ソート順**（`sorted()`）で確定し、複数 directory の場合は directory の採用順に連結する。
+
+`--mode` 不正時のエラーメッセージ（CLI17）:
+
+- `sequential`/`random` 以外の値が指定された場合は `--mode must be one of: sequential, random` を出力して終了コード `2` で終了する。
+
+空ディレクトリ時のエラーメッセージ（CLI18）:
+
+- 指定 directory に対象拡張子の画像ファイルが 1 件もない場合は `no image files found in --input directory` を出力して終了コード `2` で終了する。
+
 ## 7. `install-desktop-entry`
 
 - Linux/XDG 限定 command とする。
@@ -204,6 +256,10 @@ launcher 生成の実際:
 
 Windows / macOS ではサポート外であり、終了コード `2` で終了する。Linux でも既存ファイル衝突は `--force` の有無で扱いが変わる。
 
+`--output` オプション（CLI19）:
+
+- `--output` で任意の出力先ファイルパスを指定できる。未指定時は XDG data home 配下の `applications/harite.desktop` を既定パスとして使用する。
+
 ## 8. 共通オプションと終了コード
 
 - 主な終了コード:
@@ -216,6 +272,14 @@ Windows / macOS ではサポート外であり、終了コード `2` で終了�
 - `--version` は callback で処理し、値表示後に正常終了する。
 - subcommand 未指定時は簡易ヘルプ文言を出して正常終了する。
 - Typer / Click の parse error は framework 側の終了に委ねるが、業務上の入力不正は Harite 側で `2` に寄せる。
+
+`--plugin` 未指定時のデフォルト決定規則（CLI20）:
+
+- `apply` / `slideshow` の `--plugin` 未指定時は以下の順序でデフォルト plugin 名を決定する:
+  1. `sys.platform` が `win32` → `windows`、`darwin` → `macos`、それ以外 → `linux` を preferred とする。
+  2. preferred が plugin registry に登録されていれば、それをデフォルトとして使う。
+  3. registry が空でなければ registry の先頭エントリ (`available[0]`) を使う。
+  4. registry が空の場合は `windows` にフォールバックする。
 
 ## 9. メッセージと重要度
 
