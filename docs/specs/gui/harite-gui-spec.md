@@ -162,7 +162,8 @@ apply mode の user-facing 意味:
 ## 6. slideshow との接続
 
 - GUI のスライドショー機能は `MainWindow` 側に運用責務を持つ。
-- slideshow start 時に srcdir, plugin, apply_mode, dual-source 条件を検証する。
+- slideshow start 時に srcdir（空不可）と plugin（解決可否）を検証する。apply_mode は start 時に検証しない。
+- dual-source（Srcdir-L と Srcdir-R の両方に画像が存在する）実行では、GUI の apply_mode 設定値にかかわらず常に `per-monitor-auto-split` を使用する。single-source 実行では常に `single-file` を使用する。
 - slideshow tick は GTK runtime timer と owner state の同期で動く。
 - GUI は CLI slideshow helper をそのまま露出するのではなく、GUI 状態管理を被せたうえで利用する。
 - GUI は slideshow tab に mode 選択面を持つ。

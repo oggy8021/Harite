@@ -99,7 +99,7 @@ flowchart TD
 
 | 論点 | 主責務 | 補助責務 / 呼び出し側 | 非主責務 |
 | --- | --- | --- | --- |
-| 入力検証 | CLI / GUI | core は受け取った値の基底正規化を行う | plugin |
+| 入力検証 | CLI / GUI | core は受け取った値の基底正規化を行う（不正値に対して例外ではなくフォールバック値を返す場合がある。例: `background_color` 不正 → `#1E1E1E`、margins 変換失敗 → `(0,0,0,0)`） | plugin |
 | optimize 条件解決 | core | CLI / GUI は入力採用値を決めて渡す | plugin |
 | 設定ファイル path 解決と JSON 入出力 | settings_file | CLI / GUI は load/save の契機を持つ | plugin |
 | apply target 解決 | core | CLI / GUI / slideshow は apply_mode と file 条件を渡す | plugin |
@@ -162,7 +162,9 @@ src/harite/
   cli.py                  CLI entrypoint と command surface
   settings_file.py        設定ファイル (harite-settings.json) の path 解決と JSON load/save
   settings.py             設定モデルと JSON との相互変換
-  core.py                 optimize の基底ロジック
+  core.py                 optimize の基底ロジック（配置計算・embed・auto-split）
+  optimize_settings.py    display 設定の解決（入力値と two-screen context から optimize パラメータを確定）
+  display_context.py      接続中 display 群の検出と two-screen context の生成
   apply_settings.py       apply 対象の解決
   slideshow.py            スライドショー実行の選択ループとサイクル state
   plugins.py              OS / desktop plugin registry と apply 実装

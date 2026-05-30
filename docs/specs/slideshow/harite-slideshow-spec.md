@@ -224,10 +224,10 @@ single-source:
 実装参照（目標）:
 
 - 作業ディレクトリ: `MainWindow._resolve_slideshow_work_dir`
-- tick 生成追跡: `_slideshow_tick_generated_files`（新設予定）
+- tick 生成追跡: `_slideshow_tick_generated_files`
 - スロット apply 成功追跡: `_slideshow_active_generated_files`
 - dual-source サイクル: `MainWindow._apply_slideshow_selection`
-- optimize 呼び出し: `OptimizeController.run_slideshow_optimize`（スロット path 固定、新設予定）
+- optimize 呼び出し: `OptimizeController.run_slideshow_optimize`（スロット path 固定）
 
 ### 6.3 要件 R1–R5（issue #317 — 対応方針: すべて実装）
 
@@ -241,14 +241,14 @@ product 方針として **R1–R5 をすべて満たす**。以下は実装仕�
 | R1 | dual-source 継続実行中、各 tick 終了時に作業ディレクトリへスロット外ファイルを残さない（§6.2 の掃除）。 | **対応する** |
 | R4 | `on_slideshow_stop` 時の作業ディレクトリと追跡 state の扱い（下記確定）。 | **対応する** |
 
-#### 現行実装との差分（issue #317 で観測された純増）
+#### issue #317 での観測と対応（完了）
 
-現行コードが R1–R5 未達のとき、次により `harite_output_{NNNN}.jpg` が純増しうる。上表の対応完了後は解消される。
+issue #317 では次の純増パターンを観測した。R1–R5 の実装完了（[issue #317](../../online-issues/issue-317.md) 参照）により解消済みである。
 
-1. pause tick で optimize のみ成功し rollback しない（R3 未達）
-2. apply 失敗で生成ファイルを残す（R3 未達）
-3. ピクチャ根と作業ディレクトリ未分離で手動 Optimize と採番競合（R5 未達）
-4. 存在ベース採番で orphan が次 tick の番号を押し上げる（R2 未達）
+1. pause tick で optimize のみ成功し rollback しない（R3 対応済み）
+2. apply 失敗で生成ファイルを残す（R3 対応済み）
+3. ピクチャ根と作業ディレクトリ未分離で手動 Optimize と採番競合（R5 対応済み）
+4. 存在ベース採番で orphan が次 tick の番号を押し上げる（R2 対応済み）
 
 #### R4（`on_slideshow_stop`）— 確定
 
