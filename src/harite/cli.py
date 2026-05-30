@@ -6,7 +6,6 @@ import typer
 from pathlib import Path
 from typing import Optional, List, Tuple
 import json
-from click.core import ParameterSource
 
 from . import __version__
 from .apply_settings import resolve_apply_settings
@@ -92,6 +91,22 @@ def parse_config_bool(name: str, value: object) -> bool:
     raise ValueError(f"invalid settings bool for {name}: {value}")
 
 
+def _parameter_source_is_commandline(ctx: typer.Context, name: str) -> bool:
+    """Return True when the option was explicitly provided on the CLI.
+
+    Typer/Click may expose ``ParameterSource`` members whose numeric values differ
+    across Click releases (e.g. COMMANDLINE was renumbered in Click 8.4). Compare
+    by stable member name instead of enum identity/value.
+    """
+    try:
+        source = ctx.get_parameter_source(name)
+    except (AttributeError, LookupError):
+        return False
+    if source is None:
+        return False
+    return getattr(source, "name", None) == "COMMANDLINE"
+
+
 def resolve_bool_option(
     name: str,
     cli_value: bool,
@@ -99,7 +114,7 @@ def resolve_bool_option(
     ctx: typer.Context,
 ) -> bool:
     """Resolve a bool option with priority CLI > config > default."""
-    if ctx.get_parameter_source(name) == ParameterSource.COMMANDLINE:
+    if _parameter_source_is_commandline(ctx, name):
         return bool(cli_value)
     if name in cfg:
         return parse_config_bool(name, cfg[name])
@@ -112,7 +127,7 @@ def resolve_option_value(
     cfg: dict,
     ctx: typer.Context,
 ) -> object:
-    if ctx.get_parameter_source(name) == ParameterSource.COMMANDLINE:
+    if _parameter_source_is_commandline(ctx, name):
         return cli_value
     return cfg.get(name, cli_value)
 
@@ -123,7 +138,7 @@ def resolve_bool_or_auto_option(
     cfg: dict,
     ctx: typer.Context,
 ) -> bool | None:
-    if ctx.get_parameter_source(name) == ParameterSource.COMMANDLINE:
+    if _parameter_source_is_commandline(ctx, name):
         return bool(cli_value)
     if name in cfg:
         raw = cfg[name]
