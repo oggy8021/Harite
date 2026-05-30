@@ -55,7 +55,7 @@ class OptimizeFormState:
         return position_value_for_side(self.valign, side, axis="valign")
 
 
-SLIDESHOW_COMPOSITE_FILENAME = "harite_slideshow_composite.jpg"
+SLIDESHOW_COMPOSITE_FILENAME = "harite_slideshow.jpg"
 
 
 class OptimizeController:

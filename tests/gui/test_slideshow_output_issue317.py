@@ -14,7 +14,7 @@ from harite.gui.controllers.optimize_controller import OptimizeController, Optim
 from harite.gui.views.main_window import MainWindow
 from harite.workspace import Display
 
-SLIDESHOW_COMPOSITE_FILENAME = "harite_slideshow_composite.jpg"
+SLIDESHOW_COMPOSITE_FILENAME = "harite_slideshow.jpg"
 SLIDESHOW_WORK_SUBDIR = Path("Harite") / "slideshow"
 
 
