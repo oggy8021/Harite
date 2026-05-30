@@ -129,7 +129,7 @@ Linux plugin の適用順:
 - per-monitor apply で空の dict `{}` が渡された場合、`success_all = bool({})` が `False` となり、即座に `False` を返す。
 - xfconf prop 列挙が失敗（returncode≠0）した場合、候補は空リストになる。単一 apply では後段フォールバックへ進み、map apply では即 `False` を返す。
 - 単一 apply では、フィルタ済み prop 全体に対して `-s` を実行する。いずれか 1 件でも returncode 0 なら `True` を返すが、ループは継続するため複数 prop が更新されうる。
-- per-monitor apply では、各 monitor に対して複数の filtered prop を順に試し、最初の成功でその monitor を成功扱いにする。
+- per-monitor apply では、各 monitor に対して複数の filtered prop を順に試し、最初の成功でその monitor を成功扱いにする。mapping の **全 key（全 monitor）** の apply が成功した場合のみ `True` を返す。1 台でも失敗した場合は `False` を返す。
 - GNOME 経路の具体コマンド: `gsettings set org.gnome.desktop.background picture-uri file://{path}`
 - feh 経路の具体コマンド: `feh --bg-scale {path}`
 - `xfconf-query`、`gsettings`、`feh` のいずれも PATH 上にない場合、`"No known wallpaper setter found on PATH"` をログに記録して `False` を返す。

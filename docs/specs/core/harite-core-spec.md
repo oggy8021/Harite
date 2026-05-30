@@ -117,7 +117,7 @@ flowchart TD
 - 単一画像の `compute_placement(...)` は、この `nw`, `nh` を使って `x = max(0, (target_w - nw) // 2)`, `y = max(0, (target_h - nh) // 2)` を返す。現行の単独 placement は常に中央寄せである。
 - `optimize_wallpapers(...)` の現行幾何計算では、`scaling` も fit 相当の `_scale_to_fit(...)` 以外へ分岐しない。
 - `optimize_wallpapers(...)` では、まず target 全体に対して `inner_w = max(1, w_target - (ml + mr))`, `inner_h = max(1, h_target - (mt + mb))` を作り、ここから各画像の cell を決める。
-- single-screen では `count = len(items)` とし、各 cell 幅は `cell_w = max(1, inner_w // count)`、cell 高さは `cell_h = inner_h` である。
+- single-screen では `count = len(items)` とし、各 cell 幅は `cell_w = max(1, inner_w // count)`、cell 高さは `cell_h = inner_h` である。`optimize_wallpapers` は入力画像を 3 件以上受け取った場合でも等幅横分割で処理する（N 枚対応）。ただし CLI・GUI の public surface は先頭 2 件に制限しているため、3 件以上は内部テスト・直呼び経路でのみ使用される。
 - single-screen の各画像 `i` の基準位置は `x_base = ml + i * cell_w`, `y_base = mt` である。cell 内の余りは `space_x = max(0, cell_w - nw)`, `space_y = max(0, cell_h - nh)` とし、`align` が `left|center|right` なら `inner_x = 0|space_x // 2|space_x`、`valign` が `top|center|bottom` なら `inner_y = 0|space_y // 2|space_y` になる。最終位置は `x = x_base + inner_x`, `y = y_base + inner_y` である。
 - two-screen で `l_display`, `r_display` が与えられた場合、画像数は 2 件へ固定され、左右分割位置は `split_x = round((left_w / (left_w + right_w)) * w_target)` で求める。現行実装では `w_target > 1` のとき `split_x` を `1..w_target-1` に clamp する。
 - explicit two-screen の左右 cell 幅は `left_region_w = max(1, split_x - (ml + mr))`, `right_region_w = max(1, (w_target - split_x) - (ml + mr))` である。cell 高さは各 display 高さをそのまま使わず、`max(1, min(h_target, display_h) - (mt + mb))` に切り詰める。

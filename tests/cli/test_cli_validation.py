@@ -856,3 +856,18 @@ def test_optimize_two_screen_defaults_to_false_when_unspecified_without_context(
 
     assert result.exit_code == 0, result.output
     assert captured["two_screen"] is False
+
+
+def test_version_flag_exits_zero() -> None:
+    """--version は exit 0 でバージョン文字列を出力する（CLI21）。"""
+    runner = CliRunner()
+    result = runner.invoke(cli.app, ["--version"])
+    assert result.exit_code == 0
+    assert result.output.strip() != ""
+
+
+def test_no_subcommand_exits_zero() -> None:
+    """subcommand 未指定は help を表示して exit 0（CLI21）。"""
+    runner = CliRunner()
+    result = runner.invoke(cli.app, [])
+    assert result.exit_code == 0
