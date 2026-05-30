@@ -134,10 +134,8 @@ def test_main_parses_no_present_flag(monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_load_qt_signal_backend_returns_backend():
+def test_load_qt_signal_backend_returns_backend(qapp):
     """load_qt_runtime_signal_backend() returns a QtSignalBackend instance."""
-    pytest.importorskip("PyQt6.QtWidgets")
-
     from harite.gui.adapters_qt.qt_backend import (
         QtSignalBackend,
         load_qt_runtime_signal_backend,
@@ -149,10 +147,8 @@ def test_load_qt_signal_backend_returns_backend():
     assert backend.qwindow is not None
 
 
-def test_qt_window_title():
+def test_qt_window_title(qapp):
     """QMainWindow title is 'Harite'."""
-    pytest.importorskip("PyQt6.QtWidgets")
-
     from harite.gui.adapters_qt.qt_backend import (
         _WINDOW_TITLE,
         load_qt_runtime_signal_backend,
@@ -162,10 +158,8 @@ def test_qt_window_title():
     assert backend.qwindow.windowTitle() == _WINDOW_TITLE
 
 
-def test_qt_window_initial_size():
+def test_qt_window_initial_size(qapp):
     """QMainWindow initial size matches spec (900×640)."""
-    pytest.importorskip("PyQt6.QtWidgets")
-
     from harite.gui.adapters_qt.qt_backend import (
         _WINDOW_HEIGHT,
         _WINDOW_WIDTH,
