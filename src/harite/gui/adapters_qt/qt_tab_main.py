@@ -443,7 +443,7 @@ def build_action_cluster_section(default_apply_mode: str) -> dict[str, Any]:
 
 
 def build_runtime_state_labels() -> dict[str, Any]:
-    """Build auxiliary state labels that live outside the visible tab hierarchy."""
+    """Build auxiliary state labels shared across tabs."""
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import QLabel
 
@@ -456,6 +456,13 @@ def build_runtime_state_labels() -> dict[str, Any]:
         "do_it_plan_label": _lbl("Apply updates wallpaper immediately"),
         "save_path_state_label": _lbl("Export path: idle"),
         "save_target_label": _lbl("Export target: not-selected"),
+        # Shared with Margins tab
+        "priority_note_label": _lbl("Rule: margins define area; align/valign act inside it"),
+        "style_legend_label": _lbl("Current behavior: margins are global to the composite canvas"),
+        "current_state_section_label": _lbl("Main Window Current alignment:"),
+        "current_margins_label": _lbl("margins=0,0,0,0"),
+        "current_left_label": _lbl("L: align=center valign=center"),
+        "current_right_label": _lbl("R: align=center valign=center"),
     }
 
 

@@ -130,22 +130,32 @@ def build_center_body_section() -> dict[str, Any]:
     from PyQt6.QtWidgets import QTabWidget, QWidget
 
     from harite.gui.adapters_qt.qt_tab_main import build_main_tab
+    from harite.gui.adapters_qt.qt_tab_margins import build_margins_tab
 
     command_tabs = QTabWidget()
 
     main_tab_widgets = build_main_tab()
-    margins_tab_stub = QWidget()
+
+    margins_tab_widgets = build_margins_tab(
+        priority_note_label=main_tab_widgets["priority_note_label"],
+        style_legend_label=main_tab_widgets["style_legend_label"],
+        current_state_section_label=main_tab_widgets["current_state_section_label"],
+        current_margins_label=main_tab_widgets["current_margins_label"],
+        current_left_label=main_tab_widgets["current_left_label"],
+        current_right_label=main_tab_widgets["current_right_label"],
+    )
+
     slideshow_tab_stub = QWidget()
 
     command_tabs.addTab(main_tab_widgets["main_col"], _TAB_MAIN)
-    command_tabs.addTab(margins_tab_stub, _TAB_MARGINS)
+    command_tabs.addTab(margins_tab_widgets["margins_tab_box"], _TAB_MARGINS)
     command_tabs.addTab(slideshow_tab_stub, _TAB_SLIDESHOW)
 
     return {
         "command_tabs": command_tabs,
-        "margins_tab_stub": margins_tab_stub,
         "slideshow_tab_stub": slideshow_tab_stub,
         **main_tab_widgets,
+        **margins_tab_widgets,
     }
 
 
