@@ -19,11 +19,14 @@ plugin が直接の主責務としないもの:
 
 - plugin は `plugins.py` 内の registry に登録される。
 - 現行の登録名は `windows`, `macos`, `linux` である。
+- 登録順は `windows` → `macos` → `linux` である。
+- 各 plugin クラスは `name` クラス属性（`"windows"` / `"macos"` / `"linux"`）を持つ。
 - CLI / GUI は plugin 名から registry を引き、plugin instance を得て `apply(...)` を呼ぶ。
 
 registry の扱い:
 
 - 未知 plugin 名は registry 解決失敗として扱う。
+- 未知名の `get(name)` は `KeyError("No such plugin: {name}")` を送出する。
 - registry は factory を保持し、`get(name)` のたびに plugin instance を生成する。
 - registry の列挙結果は CLI の plugin 候補表示にも使われる。
 - registry は plugin instance を共有せず、毎回新しい instance を返す。
@@ -62,6 +65,7 @@ monitor map interface:
 - monitor map が渡された場合は失敗する。
 - 実適用では `SystemParametersInfoW` を使う。
 - 実適用の戻り値は `SystemParametersInfoW(...)` の真偽値をそのまま成功判定に使う。
+- `SystemParametersInfoW(20, 0, str(p), 3)` の第4引数 `3` は `SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE` を意味し、設定を永続化して他アプリへ変更を通知する。
 
 ### 4.2 macOS plugin
 
@@ -69,6 +73,7 @@ monitor map interface:
 - monitor map が渡された場合は失敗する。
 - 実適用では `osascript` による AppleScript 呼び出しを使う。
 - 実適用では `tell application "System Events" to set picture of every desktop to "..."` を組み立てて `osascript -e` へ渡し、終了コード `0` を成功とみなす。
+- `osascript` が非ゼロで終了した場合、ログ出力なしで `False` を返す。
 
 ### 4.3 Linux plugin
 
@@ -100,6 +105,7 @@ display 自動検出と候補対応付け:
 - この距離が `POS_MATCH_THRESHOLD = 200` 以下の display だけを位置一致候補とみなし、その中で最も近い display を使う。
 - `_match_candidates_for_mapping(...)` の探索順は、名前一致、複合 token 一致、index 一致、解像度一致、位置一致、単一 mapping 用 fallback の順である。workspace-level 候補への後退は行わない。
 - 単一 mapping fallback では、monitor index を持つ候補を優先し、それも決まらない場合だけ monitor property を 1 件拾う。ただし位置が取れるときは距離が 200px 以下の候補だけを残す。
+- prop マッチングは `_name_variants` によるバリアント比較に加えて、`mon_name in prop` の部分一致も使用する。
 
 Linux plugin の適用順:
 
@@ -114,6 +120,12 @@ Linux plugin の適用順:
 
 - Linux plugin は `xfconf-query` を最初に試し、そこで成功が出た時点で `True` を返す。したがって XFCE 候補で成功した場合、後段の `gsettings` / `feh` へは進まない。
 - monitor map apply では `gsettings` と `feh` へは進まず、XFCE 候補が成立しない場合はそのまま失敗する。
+- xfconf prop 列挙が失敗（returncode≠0）した場合、候補は空リストになる。単一 apply では後段フォールバックへ進み、map apply では即 `False` を返す。
+- 単一 apply では、フィルタ済み prop 全体に対して `-s` を実行する。いずれか 1 件でも returncode 0 なら `True` を返すが、ループは継続するため複数 prop が更新されうる。
+- per-monitor apply では、各 monitor に対して複数の filtered prop を順に試し、最初の成功でその monitor を成功扱いにする。
+- GNOME 経路の具体コマンド: `gsettings set org.gnome.desktop.background picture-uri file://{path}`
+- feh 経路の具体コマンド: `feh --bg-scale {path}`
+- `xfconf-query`、`gsettings`、`feh` のいずれも PATH 上にない場合、`"No known wallpaper setter found on PATH"` をログに記録して `False` を返す。
 
 補足:
 

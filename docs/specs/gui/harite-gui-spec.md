@@ -139,6 +139,8 @@ apply mode の user-facing 意味:
 - apply mode の補助ラベルは `No Split` 時に `Apply the optimized image as a single file.`、`Auto-Split` 時に `Split the optimized image and apply per display.` を表示する。
 - CLI にある `per-monitor-explicit` は expert 向け escape hatch として残るが、GUI 主導線には露出しない。
 - GUI は plugin 名を settings から保持するが、`Auto-Split` target の解決規則そのものは core に従う。選択済み plugin が monitor map を実行できるかは GUI / plugin 側の責務として扱う。
+- `_default_apply_mode` はセッション種別を検出し、XFCE セッション時は `per-monitor-auto-split`、それ以外は `single-file` を初期値とする。セッション検出は `XDG_CURRENT_DESKTOP`、`XDG_SESSION_DESKTOP`、`DESKTOP_SESSION`、`GDMSESSION` の環境変数いずれかに `xfce` が含まれるかで判定する。
+- `_default_plugin_name` はプラットフォームマップ（`linux`→`linux`、`win32`→`windows`、`darwin`→`macos`）から初期値を決定する。マップに該当しないプラットフォームでは `linux` を既定とし、その値が `available_plugins` に存在しない場合は先頭の利用可能 plugin を使う。
 
 ## 5. 設定 (settings) 保存と再読込
 
@@ -169,6 +171,7 @@ apply mode の user-facing 意味:
 - GUI は slideshow tab に mode 選択面を持つ。
 - mode の user-facing 表記は `sequential` / `random` とする。
 - slideshow tab の mode 既定値は `random` とする。
+- `slideshow_interval_seconds` の既定値は `60`（秒）である。
 - mode は slideshow 関連設定値として load / save 対象に含める。
 - mode 選択面は srcdir row の下、interval/start/stop row の上に独立 row として置く。
 - mode help row は選択中 mode の簡潔な補助説明を表示する user-facing surface とし、`sequential` 時は `Sequential rotates images.`、`random` 時は `Random rotates images.` を表示する。
@@ -307,9 +310,11 @@ margin text preflight の現行規則:
 - mode が `none` 以外のときは、まず `embed_position` を `_normalize_margin_text_position(...)` で正規化し、その値を form state へ書き戻す。
 - preflight で使う margin area は `resolve_margin_text_region(...)` を通じて求め、結果が `None` なら `margin area unavailable` で失敗扱いにする。
 - area が取れた場合でも、`area_width < 40` または `area_height < 12` なら `selected margin area is too small for margin text` として失敗扱いにする。
+- `area_width < 40` または `area_height < 12` の条件で失敗する場合、`status_message` には `margin text does not fit current margin area` を設定する。
 - area が十分あれば、GUI は `margin text ready in ... position ({area_width}x{area_height})` を status / log へ出す。
 - GUI の実効行数は widget 値をそのままは使わず、`_effective_margin_text_max_lines()` により `free=5`, `combo=8`, それ以外は `3` へ正規化して optimize request へ渡す。
 - free text 入力は GUI 側で先に最大 5 行へ切り詰め、空文字・空行のみなら `None` として保持する。
+- `embed_info` の内部値と UI ラベルのマッピングは `none`↔"Off"、`params`↔"Settings"、`free`↔"Text only"、`combo`↔"Both" である。
 
 ## 9. GUI での失敗時挙動
 

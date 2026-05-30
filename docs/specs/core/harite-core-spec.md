@@ -78,6 +78,14 @@ two-screen 文脈で重要な点:
 - `two_screen` が未指定なら自動判定であり、初期値は `effective_two_screen = context is not None` である。明示指定がある場合はその bool 値を優先する。
 - `resolution`, `l_display`, `r_display` は、値が `None` または `auto` のときだけ未確定扱いとなる。context が得られていて `effective_two_screen=True` の場合に限って、`resolution = "{virtual_w}x{virtual_h}"`, `l_display = "{left_w}x{left_h}"`, `r_display = "{right_w}x{right_h}"` を自動補完する。
 - 自動判定で context が得られなかった場合だけ、最後に `effective_two_screen=False` へ戻る。`resolution` が最後まで確定しなければ入力不正として止める。
+- `resolve_optimize_display_settings` は解像度文字列の `WxH` フォーマット自体を検証しない。`WxH` 形式の検証は CLI の `parse_resolution`、GUI の独自解析など呼び出し側レイヤーの責務である。
+
+### 3.2 `display_context.py` ヘルパー関数
+
+- `order_displays(displays, *, limit)`: display 群を `(x_offset, y_offset, name)` の昇順にソートして返す。`limit` を指定すると先頭 `limit` 件に絞る。
+- `get_display_at_index(index, displays)`: ordered 後の display リストから指定インデックスの display を返す。範囲外なら `None`。
+- `closest_display_for_offset(x_offset, y_offset, displays)`: 指定 offset に最も近い display をマンハッタン距離で探す。`(display, distance)` を返す。display が存在しない場合は `(None, None)`。
+- `build_two_screen_optimize_context(displays)`: ordered 先頭 2 件から `TwoScreenOptimizeContext`（`resolution`, `l_display`, `r_display` を持つ）を構築して返す。display が 2 件未満の場合は `None`。
 
 ## 4. 最適化ロジック
 
@@ -114,6 +122,8 @@ flowchart TD
 - explicit two-screen の左右 cell 幅は `left_region_w = max(1, split_x - (ml + mr))`, `right_region_w = max(1, (w_target - split_x) - (ml + mr))` である。cell 高さは各 display 高さをそのまま使わず、`max(1, min(h_target, display_h) - (mt + mb))` に切り詰める。
 - explicit two-screen の最終 x 座標は、左が `x = ml + inner_x`、右が `x = split_x + ml + inner_x` である。y 座標は左右とも `y = mt + inner_y` である。
 - two-screen だが display 情報が未指定のときは、左右幅を `left_slice_w = max(1, w_target // 2)`, `right_slice_w = max(1, w_target - left_slice_w)` で二分し、それぞれから `ml + mr` を引いた値を cell 幅に使う。
+- リサイズは `Image.LANCZOS`（`Image.Resampling.LANCZOS` と同値）を使用する。`optimize_wallpapers`、`split_composite_for_displays`、`compute_placement` のすべてでこのフィルタを適用する。
+- 入力画像は `Image.open(...).convert("RGB")` で読み込むため、RGBA 画像はアルファチャンネルを廃棄して RGB に変換してから処理される。
 
 ### 4.2 background color 正規化の現行規則
 
@@ -137,6 +147,8 @@ flowchart TD
 - 実際の描画開始 x 座標は左端ぴったりではなく、`quartile_offset = max(4, min(max(1, area_w // 4), max(1, longest_px // 4 or 1)))` を使って `text_x = x0 + quartile_offset` に置く。y 座標は `text_y = y0 + 2` から始める。
 - 各行の最大描画幅は `max_text_w = max(0, area_w - quartile_offset - 4)` であり、`_truncate_to_width(...)` によってこの幅に収まるよう末尾 ` ...`（スペース+三点リーダー）付きで再切り詰めする。
 - 行ごとの描画は `text_y + line_h > y1` になった時点で打ち切る。したがって line_limit に達していなくても、縦方向に収まらなければそれ以上は描かない。
+- 描画色は `(235, 235, 235)`（ほぼ白の薄いグレー）で固定。
+- `_load_preferred_font` のフォント探索順: まず CLI/GUI から渡された `embed_font` パスを試し、次に OS 別 CJK 対応フォント候補（Windows: `meiryo.ttc` → `msgothic.ttc` → `YuGothM.ttc`、Linux: Noto Sans CJK 各パス、macOS: ヒラギノ各パス）を存在確認して順に試す。すべて失敗した場合は `ImageFont.load_default()` にフォールバックする。
 
 ### 4.4 embed 情報行の構成規則
 
@@ -151,6 +163,12 @@ embed 情報:
 - optimize は `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`, `embed_font` を受け取れる。
 - 情報行の構成規則は 4.4 を参照する。
 - 位置解決、描画領域、行数制約は 4.3 を参照する。
+
+### 4.5 出力形式とファイル名の規則
+
+- 出力形式は常に JPEG である。入力画像の形式に関わらず、`optimize_wallpapers` の出力は JPEG として保存される。
+- `output_path` が指定されている場合、拡張子がなければ `.jpg` を付加する。
+- `output_path` が未指定の場合、`output_dir` に `harite_output_{NNNN}.jpg`（NNNN は 4 桁ゼロ埋め、1 始まり）という名前で保存する。番号は存在しないファイル名が見つかるまで 1 から順に増やす（存在ベースの連番）。
 
 ## 5. 適用ロジック
 
@@ -231,12 +249,13 @@ monitor map 解決:
 
 ### 6.3 論理グループ
 
-- optimize 面: `resolution`, `two_screen`, `l_display`, `r_display`, `margins`, `align`, `valign`, `quality`, `background_color`, `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`
+- optimize 面: `resolution`, `two_screen`, `l_display`, `r_display`, `margins`, `align`, `valign`, `scaling`, `quality`, `background_color`, `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`
 - apply 面: `plugin`, `apply_mode`
 - スライドショー面: `slideshow_interval_seconds`, `slideshow_mode`, `slideshow_srcdir_l`, `slideshow_srcdir_r`
 
 主要 key の意味:
 
+- `scaling` キーは設定ファイルに保存・復元されるが、optimize 計算に影響しない。optimize の拡大縮小は内部で常に fit 相当（`_scale_to_fit`）を使用する。
 - `two_screen` は単なる bool ではなく `auto` を取りうる。
 - `align` と `valign` は論理上 pair だが、保存時には list 表現になる。
 - `plugin` は platform 既定値を持つが、設定ファイルで上書きできる。
