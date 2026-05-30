@@ -948,7 +948,11 @@ def load_qt_runtime_signal_backend() -> QtSignalBackend:
             "Install it with: pip install 'harite[gui-qt]'"
         ) from exc
 
+    from harite.gui.adapters_qt.qt_stylesheet import apply_qt_stylesheet
+
     qapp = QApplication.instance() or QApplication(sys.argv)
+    apply_qt_stylesheet(qapp)
+
     qwindow = QMainWindow()
     qwindow.setWindowTitle(_WINDOW_TITLE)
     qwindow.resize(_WINDOW_WIDTH, _WINDOW_HEIGHT)

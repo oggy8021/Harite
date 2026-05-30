@@ -14,22 +14,12 @@ import os
 from typing import Any
 
 
+from harite.gui.resource_access import set_qt_button_icon as _set_button_icon
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-
-def _set_button_icon(btn: Any, *resource_parts: str) -> None:
-    """Attach an SVG icon to a QPushButton/QToolButton, silently on failure."""
-    try:
-        from PyQt6.QtGui import QIcon
-
-        from harite.gui.resource_access import gui_resource_path
-
-        with gui_resource_path(*resource_parts) as icon_path:
-            btn.setIcon(QIcon(str(icon_path)))
-    except Exception:
-        pass
 
 
 def _default_apply_mode() -> str:
