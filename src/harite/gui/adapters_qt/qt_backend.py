@@ -1,4 +1,4 @@
-"""Qt runtime backend for Harite GUI (Phase 2: layout skeleton)."""
+"""Qt runtime backend for Harite GUI (Phase 6: dialogs integrated)."""
 
 from __future__ import annotations
 
@@ -43,10 +43,12 @@ class QtSignalBackend:
         return self._objects
 
     def build_layout(self) -> None:
-        """Populate QMainWindow with the 3-layer layout skeleton."""
+        """Populate QMainWindow with the 3-layer layout skeleton and dialogs."""
+        from harite.gui.adapters_qt.qt_dialogs import build_dialogs
         from harite.gui.adapters_qt.qt_layout_builders import build_main_layout
 
         self._objects = build_main_layout(self._qwindow)
+        self._objects.update(build_dialogs(self._qwindow))
 
     def connect_signals(self, dispatch: dict[str, Any]) -> None:
         """Bind handler names to QWidget signals.  Implemented in Phase 3+."""
