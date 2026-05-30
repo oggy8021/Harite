@@ -1156,7 +1156,7 @@ def test_slideshow_start_normalizes_empty_output_dir(monkeypatch, tmp_path):
     assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
     assert window.on_slideshow_start() is True
     assert window.form_state.output_dir == str(home / "Pictures")
-    assert window.slideshow_output_display == f"Slideshow output: {home / 'Pictures'}"
+    assert window.slideshow_output_display == f"Slideshow output: {home / 'Pictures' / 'Harite' / 'slideshow'}"
 
 
 def test_slideshow_start_propagates_unexpected_autosplit_prepare_failure(monkeypatch, tmp_path):
@@ -1182,7 +1182,7 @@ def test_slideshow_start_propagates_unexpected_autosplit_prepare_failure(monkeyp
     window.plugin_name = "linux"
     monkeypatch.setattr(
         window.controller,
-        "run_optimize",
+        "run_slideshow_optimize",
         lambda _state: (_ for _ in ()).throw(RuntimeError("slideshow autosplit prepare exploded")),
     )
 
@@ -1213,7 +1213,7 @@ def test_main_window_defaults_output_dir_to_xdg_pictures(monkeypatch, tmp_path):
     window = MainWindow()
 
     assert window.form_state.output_dir == str(home / "MyPictures")
-    assert window.slideshow_output_display == f"Slideshow output: {home / 'MyPictures'}"
+    assert window.slideshow_output_display == f"Slideshow output: {home / 'MyPictures' / 'Harite' / 'slideshow'}"
 
 
 def test_main_window_defaults_output_dir_to_home_pictures_when_xdg_config_missing(monkeypatch, tmp_path):
@@ -1227,7 +1227,7 @@ def test_main_window_defaults_output_dir_to_home_pictures_when_xdg_config_missin
     window = MainWindow()
 
     assert window.form_state.output_dir == str(home / "Pictures")
-    assert window.slideshow_output_display == f"Slideshow output: {home / 'Pictures'}"
+    assert window.slideshow_output_display == f"Slideshow output: {home / 'Pictures' / 'Harite' / 'slideshow'}"
 
 
 def test_main_window_defaults_output_dir_to_home_pictures_when_windows_known_folder_unavailable(monkeypatch, tmp_path):
@@ -1243,7 +1243,7 @@ def test_main_window_defaults_output_dir_to_home_pictures_when_windows_known_fol
     window = MainWindow()
 
     assert window.form_state.output_dir == str(home / "Pictures")
-    assert window.slideshow_output_display == f"Slideshow output: {home / 'Pictures'}"
+    assert window.slideshow_output_display == f"Slideshow output: {home / 'Pictures' / 'Harite' / 'slideshow'}"
 
 
 def test_main_window_windows_pictures_probe_propagates_unexpected_runtime_error(monkeypatch):
@@ -1312,7 +1312,7 @@ def test_slideshow_dual_source_cycle_pauses_when_detected_displays_temporarily_d
 
     optimize_calls = 0
 
-    def fake_run_optimize(state):
+    def fake_run_slideshow_optimize(state):
         nonlocal optimize_calls
         optimize_calls += 1
         return ([composite], [])
@@ -1325,7 +1325,7 @@ def test_slideshow_dual_source_cycle_pauses_when_detected_displays_temporarily_d
             )
         raise ValueError("per-monitor apply requires at least two detected displays")
 
-    monkeypatch.setattr(window.controller, "run_optimize", fake_run_optimize)
+    monkeypatch.setattr(window.controller, "run_slideshow_optimize", fake_run_slideshow_optimize)
     monkeypatch.setattr("harite.gui.views.main_window.resolve_apply_settings", fake_resolve_apply_settings)
 
     left_dir = tmp_path / "slideshow-left"
@@ -1390,7 +1390,7 @@ def test_slideshow_dual_source_cycle_resumes_after_transient_display_drop(monkey
     optimize_calls = 0
     resolve_calls = 0
 
-    def fake_run_optimize(state):
+    def fake_run_slideshow_optimize(state):
         nonlocal optimize_calls
         optimize_calls += 1
         return ([composite], []) if optimize_calls < 3 else ([composite2], [])
@@ -1410,7 +1410,7 @@ def test_slideshow_dual_source_cycle_resumes_after_transient_display_drop(monkey
             target={"HDMI-1": split2_hdmi, "DP-1": split2_dp},
         )
 
-    monkeypatch.setattr(window.controller, "run_optimize", fake_run_optimize)
+    monkeypatch.setattr(window.controller, "run_slideshow_optimize", fake_run_slideshow_optimize)
     monkeypatch.setattr("harite.gui.views.main_window.resolve_apply_settings", fake_resolve_apply_settings)
 
     left_dir = tmp_path / "slideshow-left"
@@ -1485,44 +1485,52 @@ def test_slideshow_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch,
             r_display=(1920, 1080),
         ),
     )
-    monkeypatch.setattr(
-        "harite.gui.views.main_window.resolve_apply_settings",
-        lambda **kwargs: EffectiveApplySettings(
-            apply_mode="per-monitor-auto-split",
-            target=(
-                {"HDMI-1": split1_hdmi, "DP-1": split1_dp}
-                if kwargs["file"] == composite
-                else {"HDMI-1": split2_hdmi, "DP-1": split2_dp}
-            ),
-        ),
-    )
 
-    composite = tmp_path / "slideshow-composite.jpg"
-    composite.write_bytes(b"composite")
-    composite2 = tmp_path / "slideshow-composite-2.jpg"
-    composite2.write_bytes(b"composite-2")
-    split1_hdmi = tmp_path / "slideshow_HDMI-1.jpg"
-    split1_dp = tmp_path / "slideshow_DP-1.jpg"
-    split2_hdmi = tmp_path / "slideshow2_HDMI-1.jpg"
-    split2_dp = tmp_path / "slideshow2_DP-1.jpg"
-    split1_hdmi.write_bytes(b"split1-hdmi")
-    split1_dp.write_bytes(b"split1-dp")
-    split2_hdmi.write_bytes(b"split2-hdmi")
-    split2_dp.write_bytes(b"split2-dp")
+    # Use a deterministic XDG pictures root so work_dir is predictable
+    home = tmp_path / "home"
+    home.mkdir()
+    xdg_config = tmp_path / "xdg-config"
+    xdg_config.mkdir()
+    (xdg_config / "user-dirs.dirs").write_text('XDG_PICTURES_DIR="$HOME/Pictures"\n', encoding="utf-8")
+    monkeypatch.setattr("harite.gui.views.main_window.Path.home", lambda: home)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config))
+    monkeypatch.setattr("harite.gui.views.main_window.sys.platform", "linux")
+
+    work_dir = home / "Pictures" / "Harite" / "slideshow"
+    composite_slot = work_dir / "harite_slideshow_composite.jpg"
+    split_hdmi = work_dir / "harite_slideshow_HDMI-1.jpg"
+    split_dp = work_dir / "harite_slideshow_DP-1.jpg"
+
+    optimize_calls = 0
+    resolve_calls = 0
+
+    def fake_resolve_apply_settings(**kwargs):
+        nonlocal resolve_calls
+        resolve_calls += 1
+        split_hdmi.write_bytes(f"split-hdmi-{resolve_calls}".encode())
+        split_dp.write_bytes(f"split-dp-{resolve_calls}".encode())
+        return EffectiveApplySettings(
+            apply_mode="per-monitor-auto-split",
+            target={"HDMI-1": str(split_hdmi), "DP-1": str(split_dp)},
+        )
+
+    monkeypatch.setattr("harite.gui.views.main_window.resolve_apply_settings", fake_resolve_apply_settings)
 
     window = MainWindow()
     window.plugin_name = "linux"
     window.slideshow_mode = "sequential"
     observed_inputs = []
-    optimize_calls = 0
 
-    def fake_run_optimize(state):
+    def fake_run_slideshow_optimize(state):
         nonlocal optimize_calls
         optimize_calls += 1
         observed_inputs.append(state.input_value)
-        return ([composite], []) if optimize_calls == 1 else ([composite2], [])
+        Path(state.output_dir).mkdir(parents=True, exist_ok=True)
+        composite = Path(state.output_dir) / "harite_slideshow_composite.jpg"
+        composite.write_bytes(f"composite-{optimize_calls}".encode())
+        return ([composite], [])
 
-    monkeypatch.setattr(window.controller, "run_optimize", fake_run_optimize)
+    monkeypatch.setattr(window.controller, "run_slideshow_optimize", fake_run_slideshow_optimize)
 
     left_dir = tmp_path / "slideshow-left"
     right_dir = tmp_path / "slideshow-right"
@@ -1538,18 +1546,18 @@ def test_slideshow_dual_source_falls_back_to_per_monitor_auto_split(monkeypatch,
     assert window.on_slideshow_start() is True
 
     assert observed_inputs == [f"{left_dir / 'left-1.jpg'},{right_dir / 'right-1.png'}"]
-    assert plugin.calls == [{"HDMI-1": split1_hdmi, "DP-1": split1_dp}]
+    assert plugin.calls == [{"HDMI-1": str(split_hdmi), "DP-1": str(split_dp)}]
     assert any("Slideshow start per-monitor auto-split" in line for line in window.logs)
+    assert composite_slot.exists() is True
+    assert composite_slot.read_bytes() == b"composite-1"
 
     assert window.on_slideshow_tick() is True
     assert observed_inputs[-1] == f"{left_dir / 'left-2.jpg'},{right_dir / 'right-2.png'}"
-    assert plugin.calls[-1] == {"HDMI-1": split2_hdmi, "DP-1": split2_dp}
-    assert composite.exists() is False
-    assert split1_hdmi.exists() is False
-    assert split1_dp.exists() is False
-    assert composite2.exists() is True
-    assert split2_hdmi.exists() is True
-    assert split2_dp.exists() is True
+    assert plugin.calls[-1] == {"HDMI-1": str(split_hdmi), "DP-1": str(split_dp)}
+    assert composite_slot.exists() is True
+    assert composite_slot.read_bytes() == b"composite-2"
+    assert split_hdmi.read_bytes() == b"split-hdmi-2"
+    assert split_dp.read_bytes() == b"split-dp-2"
 
 
 def test_slideshow_dual_source_start_fails_without_two_detected_displays(monkeypatch, tmp_path):
