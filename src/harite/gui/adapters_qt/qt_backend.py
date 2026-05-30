@@ -140,6 +140,15 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             return None
         return getattr(callback, "__self__", None)
 
+    def _notify_close_handler(self, handler_name: str) -> None:
+        """Silently invoke a no-arg close handler, ignoring errors."""
+        cb = self._signal_handlers.get(handler_name)
+        if cb is not None:
+            try:
+                cb()
+            except Exception:
+                pass
+
     def _get_connected_owner(self) -> Any | None:
         for callback in self._signal_handlers.values():
             owner = getattr(callback, "__self__", None)
@@ -536,18 +545,16 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             self._set_feedback(phase="Input", state="planned")
             return
 
+        confirmed_called = [False]
+
         def _confirmed(path: str) -> None:
+            confirmed_called[0] = True
             try:
-                ok = callback(path, side)  # MainWindow.on_pick_input(path, side)
+                callback(path, side)  # MainWindow.on_pick_input(path, side)
                 owner = self._get_handler_owner("on_pick_input")
                 if owner is not None:
                     self._sync_input_preview_state_from_owner(owner)
                     self._sync_feedback_from_owner(owner)
-                    return
-                if ok is False:
-                    self._set_feedback(phase="Input", state="rejected")
-                else:
-                    self._set_feedback(phase="Input", state="updated")
             except Exception as exc:
                 self._set_feedback(phase="Input", state="error", error=str(exc))
 
@@ -555,6 +562,9 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             proxy.open(callback=_confirmed)
         except Exception as exc:
             self._set_feedback(phase="Input", state="error", error=str(exc))
+
+        # Notify MainWindow that the dialog has closed (confirm or cancel).
+        self._notify_close_handler("on_close_open_image_dialog")
 
     def _on_clear_input_clicked(self, side: str) -> None:
         callback = self._signal_handlers.get("on_clear_input")
@@ -580,27 +590,46 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
     # ------------------------------------------------------------------
 
     def _on_save_clicked(self, *_args: Any) -> None:
-        """Export image: open save-path dialog then call on_save_as."""
+        """Export image: call on_save_as() (no-arg) to open dialog state, then open
+        the Qt file chooser.  On confirm call on_save_path_selected(path); on cancel
+        call on_save_path_selection_canceled().  Always end with on_close_save_path_dialog().
+        """
         proxy = self._objects.get("SavePathDialog")
-        if proxy is None:
-            self._set_feedback(phase="Export", state="dialog-unavailable")
-            return
-        callback = self._signal_handlers.get("on_save_as")
-        if callback is None:
-            self._set_feedback(phase="Export", state="planned")
-            return
 
-        def _confirmed(path: str) -> None:
+        # Step 1: notify MainWindow that the save-path dialog is opening.
+        save_as_cb = self._signal_handlers.get("on_save_as")
+        if save_as_cb is not None:
             try:
-                ok = callback(path)
+                save_as_cb()  # MainWindow.on_save_as() — no arguments
                 owner = self._get_handler_owner("on_save_as")
                 if owner is not None:
-                    self._sync_feedback_from_owner(owner)
-                    return
-                if ok is False:
-                    self._set_feedback(phase="Export", state="failed")
-                else:
-                    self._set_feedback(phase="Export", state="saved")
+                    self._refresh_save_target_label()
+            except Exception as exc:
+                self._set_feedback(phase="Export", state="error", error=str(exc))
+                return
+
+        if proxy is None:
+            self._set_feedback(phase="Export", state="dialog-unavailable")
+            self._notify_close_handler("on_close_save_path_dialog")
+            return
+
+        selected_cb = self._signal_handlers.get("on_save_path_selected")
+        canceled_cb = self._signal_handlers.get("on_save_path_selection_canceled")
+        path_chosen = [False]
+
+        def _confirmed(path: str) -> None:
+            path_chosen[0] = True
+            try:
+                if selected_cb is not None:
+                    ok = selected_cb(path)
+                    owner = self._get_handler_owner("on_save_path_selected")
+                    if owner is not None:
+                        self._sync_feedback_from_owner(owner)
+                        return
+                    if ok is False:
+                        self._set_feedback(phase="Export", state="failed")
+                    else:
+                        self._set_feedback(phase="Export", state="saved")
             except Exception as exc:
                 self._set_feedback(phase="Export", state="error", error=str(exc))
 
@@ -608,6 +637,16 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             proxy.open(callback=_confirmed)
         except Exception as exc:
             self._set_feedback(phase="Export", state="error", error=str(exc))
+
+        # Step 3: handle cancel path.
+        if not path_chosen[0] and canceled_cb is not None:
+            try:
+                canceled_cb()
+            except Exception:
+                pass
+
+        # Step 4: always close the dialog state in MainWindow.
+        self._notify_close_handler("on_close_save_path_dialog")
 
     def _on_optimize_clicked(self, *_args: Any) -> None:
         callback = self._signal_handlers.get("on_optimize")
@@ -646,6 +685,14 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             self._set_feedback(phase="Apply", state="error", error=str(exc))
 
     def _on_apply_mode_toggled(self, widget: Any, mode: str) -> None:
+        # Mirror GTK: update help label before calling the handler.
+        label = (
+            "Split the optimized image and apply per display."
+            if mode == "per-monitor-auto-split"
+            else "Apply the optimized image as a single file."
+        )
+        self._set_label_text("lblApplyMode", label)
+
         from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_apply_mode_toggled
         on_settings_apply_mode_toggled(self, widget, mode)
         callback = self._signal_handlers.get("on_change_apply_mode")
@@ -655,7 +702,9 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             ok = callback(mode)
             owner = self._get_handler_owner("on_change_apply_mode")
             if owner is not None:
-                self._sync_non_preview_state_from_owner(owner)
+                # Match GTK: sync preview state (not full non-preview) after mode change.
+                self._sync_preview_state_from_owner(owner)
+                self._set_feedback(phase="ApplyMode", state="updated")
                 return
             if ok is False:
                 self._set_feedback(phase="Apply", state="mode-rejected")
@@ -741,15 +790,10 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
 
         def _confirmed(path: str) -> None:
             try:
-                ok = callback(path, side)  # MainWindow.on_pick_slideshow_srcdir(path, side)
+                callback(path, side)  # MainWindow.on_pick_slideshow_srcdir(path, side)
                 owner = self._get_handler_owner("on_pick_slideshow_srcdir")
                 if owner is not None:
                     self._sync_slideshow_state_with_feedback_from_owner(owner)
-                    return
-                if ok is False:
-                    self._set_feedback(phase="Slideshow", state="srcdir-rejected")
-                else:
-                    self._set_feedback(phase="Slideshow", state="srcdir-updated")
             except Exception as exc:
                 self._set_feedback(phase="Slideshow", state="error", error=str(exc))
 
@@ -757,6 +801,8 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             proxy.open(callback=_confirmed)
         except Exception as exc:
             self._set_feedback(phase="Slideshow", state="error", error=str(exc))
+
+        self._notify_close_handler("on_close_srcdir_dialog")
 
     def _on_slideshow_interval_changed(self, _widget: Any) -> None:
         callback = self._signal_handlers.get("on_slideshow_interval_change")
@@ -811,6 +857,14 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             self._set_feedback(phase="Slideshow", state="error", error=str(exc))
 
     def _on_slideshow_mode_toggled(self, widget: Any, mode: str) -> None:
+        # Mirror GTK: update help label before calling the handler.
+        help_text = (
+            "Sequential rotates images."
+            if mode == "sequential"
+            else "Random rotates images."
+        )
+        self._set_label_text("lblSlideshowModeHelp", help_text)
+
         callback = self._signal_handlers.get("on_change_slideshow_mode")
         if callback is None:
             return
@@ -819,6 +873,7 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             owner = self._get_handler_owner("on_change_slideshow_mode")
             if owner is not None:
                 self._sync_slideshow_state_only_from_owner(owner)
+                self._set_feedback(phase="SlideshowMode", state="updated")
         except Exception as exc:
             self._set_feedback(phase="Slideshow", state="mode-error", error=str(exc))
 
