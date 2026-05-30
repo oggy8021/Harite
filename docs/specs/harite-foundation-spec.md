@@ -1,6 +1,6 @@
 # Harite 基本仕様 (Foundation Spec)
 
-最終更新: 2026-05-30
+最終更新: 2026-05-30 (Qt backend Phase 0 spec 追加)
 
 ## 1. 文書の目的と適用範囲
 
@@ -44,7 +44,7 @@
 
 - Python ベースのアプリケーションとして動作する。
 - CLI は cross-platform を志向するが、plugin 実装により適用面は OS ごとに差分を持つ。
-- GUI は GTK / PyGObject が利用可能な環境を前提とする。
+- GUI は GTK backend（`harite-gtk`）と Qt backend（`harite-qt`）の 2 系統を持つデュアルバックエンド構成を採る。
 - Linux / XFCE では per-monitor apply, スライドショー, tray, desktop entry まわりの説明比重が高い。
 
 環境前提の整理:
@@ -52,7 +52,9 @@
 - 画像の最適化自体は OS 依存を最小化するが、実適用は plugin 実装に依存する。
 - Windows plugin と macOS plugin は単一画像適用を基本とする。
 - Linux plugin は desktop 環境ごとの差分を吸収しつつ、per-monitor apply と XFCE 系の説明比重が高い。
-- GUI の常用面は GTK runtime の有無に強く依存するため、headless 環境では CLI が主操作面になる。
+- GUI は GTK backend と Qt backend の 2 系統を持つ。GTK backend（`harite-gtk`）は Linux / XFCE 向けにネイティブ感を重視し、Qt backend（`harite-qt`）は Windows / クロスプラットフォーム向けの開発フォーカスとする。
+- GTK backend は maintenance mode（バグ修正のみ）、Qt backend は development focus として扱う。
+- headless 環境では CLI が主操作面になる。
 
 ## 5. 全体アーキテクチャ概要
 
@@ -170,10 +172,12 @@ src/harite/
   plugins.py              OS / desktop plugin registry と apply 実装
   linux_xdg_launcher.py   Linux/XDG launcher 生成
   gui/
-    app.py                GUI entrypoint
+    app.py                GTK backend entrypoint（harite-gtk）
+    app_qt.py             Qt backend entrypoint（harite-qt）
     views/                framework-neutral な状態モデル
     controllers/          GUI から core への接続制御
-    adapters/             GTK runtime, dialog, tray, signal wiring
+    adapters/             GTK runtime, dialog, tray, signal wiring（maintenance mode）
+    adapters_qt/          Qt runtime, dialog, tray, signal wiring（development focus）
     services/             GUI 補助サービス
     resources/            icon などの同梱リソース
 ```
@@ -183,10 +187,12 @@ src/harite/
 ```text
 src/harite/gui/
   app.py
-    起動入口。MainWindow 生成、GTK backend load、tasktray 初期化、window present を束ねる。
+    GTK backend 起動入口（harite-gtk）。MainWindow 生成、GTK backend load、tasktray 初期化、window present を束ねる。
+  app_qt.py
+    Qt backend 起動入口（harite-qt）。MainWindow 生成、Qt backend load、window present を束ねる。
   views/
     main_window.py
-      主状態モデル。status, history, 設定, optimize/apply/slideshow の業務状態を持つ。
+      主状態モデル。framework-neutral。status, history, 設定, optimize/apply/slideshow の業務状態を持つ。
     main_window_preview.py
       preview 表示専用の補助計算を持つ。
   controllers/
@@ -195,32 +201,51 @@ src/harite/gui/
   services/
     cli_mapper.py
       GUI state を CLI 相当の引数列へ写像する。
-  adapters/
+  adapters/                         ← GTK backend（maintenance mode）
     gtk_backend.py
       GTK runtime 統合窓口。
     ui_adapter.py
-      runtime signal と MainWindow method の対応表を持つ。
+      runtime signal と MainWindow method の対応表を持つ（両 backend 共用）。
     tasktray_adapter.py
-      tray / indicator の生成と menu action を持つ。
+      GTK tray / indicator の生成と menu action を持つ。
     gtk_layout_builders.py / gtk_tab_builders.py / gtk_dialog_builders.py
       widget 構築責務を分割する。
     gtk_runtime_* modules
       signal, sync, dialog, slideshow, helper などの細粒度 runtime 責務を持つ。
+  adapters_qt/                      ← Qt backend（development focus）
+    qt_backend.py
+      Qt runtime 統合窓口。QApplication と QMainWindow の管理を担う。
+    qt_layout_builders.py
+      Qt レイアウト骨格（3 層 + タブ）の構築を担う。
+    （以降のモジュールは Phase 3–9 で順次追加する）
 ```
 
 ### 9.1 GUI 内部層の配置規則
 
 GUI 配下の file / module を読むときは、次の配置規則を前提にする。
 
-- views は framework-neutral な owner state を持つ。widget instance, GTK 型, tray 実体, signal 名の知識は持ち込まない。
+- views は framework-neutral な owner state を持つ。widget instance, GTK 型, Qt 型, tray 実体, signal 名の知識は持ち込まない。
 - controllers は GUI form state を core や helper 呼び出しへ橋渡しする。業務判断の本体を新設せず、views と core の間で値を整える役に留める。
 - services は GUI から見た補助変換や補助計算を置く。runtime 固有物や user interaction の進行管理は持たない。
-- adapters は GTK runtime, dialog, tray, signal wiring など外界との接続面を持つ。widget 構築、signal 接続、runtime fallback、表示同期はここへ置く。
-- app.py は起動順制御の入口であり、継続的な業務状態は持たない。
-- 複数層にまたがる処理は、まず owner state がどこにあるかで置き場所を決める。状態の主語が GUI 業務状態なら views、GTK 実体なら adapters、core 業務規則なら core を優先する。
+- `adapters/` は GTK runtime, dialog, tray, signal wiring など外界との接続面を持つ（GTK backend 専用）。
+- `adapters_qt/` は Qt runtime, dialog, tray, signal wiring など外界との接続面を持つ（Qt backend 専用）。
+- `adapters/ui_adapter.py` の `RUNTIME_HANDLER_MAP` は両 backend が共用する。handler 名と `MainWindow` メソッド名の対応表として機能し、runtime 固有の接続実装はそれぞれの adapters 側で行う。
+- `app.py` / `app_qt.py` は起動順制御の入口であり、継続的な業務状態は持たない。
+- 複数層にまたがる処理は、まず owner state がどこにあるかで置き場所を決める。状態の主語が GUI 業務状態なら views、GTK 実体なら `adapters/`、Qt 実体なら `adapters_qt/`、core 業務規則なら core を優先する。
 - したがって「GUI から呼ばれるから controllers / adapters に置く」とは考えず、状態主語と runtime 依存の有無で切り分ける。
 
-## 10. 分冊導線
+## 10. エントリーポイント一覧
+
+| コマンド | モジュール | 役割 |
+|---|---|---|
+| `harite` | `harite.cli` | CLI entrypoint（optimize / apply / slideshow） |
+| `harite-gtk` | `harite.gui.app` | GTK backend GUI（maintenance mode） |
+| `harite-qt` | `harite.gui.app_qt` | Qt backend GUI（development focus） |
+
+- `harite-gtk` は旧 `harite-gui` エントリーポイントの後継であり、GTK backend に対応する。
+- `harite-qt` は Qt backend の新エントリーポイントであり、Qt migration の実装が完了した段階で `pyproject.toml` に追加する。
+
+## 11. 分冊導線
 
 - core 詳細は [docs/specs/core/harite-core-spec.md](docs/specs/core/harite-core-spec.md)
 - CLI 詳細は [docs/specs/cli/harite-cli-spec.md](docs/specs/cli/harite-cli-spec.md)

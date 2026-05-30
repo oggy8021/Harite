@@ -1,14 +1,17 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-05-30
+最終更新: 2026-05-30 (Qt backend Phase 0 spec 追加)
 
 ## 1. GUI の責務
 
 - GUI は日常操作面として、compose -> optimize -> apply -> slideshow の導線を提供する。
-- framework-neutral な状態モデルと GTK runtime を分離し、保守可能性を確保する。
+- framework-neutral な状態モデル（`views/`）と runtime（`adapters/` または `adapters_qt/`）を分離し、保守可能性を確保する。
 - GUI は `MainWindow` を中心に、設定、スライドショー、status、message history を一貫した状態として保持する。
+- エントリーポイントは GTK backend（`harite-gtk` / `app.py`）と Qt backend（`harite-qt` / `app_qt.py`）の 2 系統を持つ。いずれも同じ `MainWindow` を生成し、framework 固有の処理は各 adapters 側が担う。
 
 ## 2. GUI 起動導線
+
+### GTK backend（harite-gtk）
 
 ```mermaid
 sequenceDiagram
@@ -19,7 +22,7 @@ sequenceDiagram
     participant Tray as adapters/tasktray_adapter.py
     participant GTK as Gtk runtime
 
-    User->>App: harite-gui / python -m harite.gui.app
+    User->>App: harite-gtk / python -m harite.gui.app
     App->>Window: MainWindow()
     Window->>Window: load default 設定
     App->>Backend: load_gtk_runtime_signal_backend()
@@ -31,12 +34,48 @@ sequenceDiagram
     GTK-->>User: window shown
 ```
 
-起動時の実際の流れ:
+GTK 起動時の実際の流れ:
 
 - entrypoint は最初に `MainWindow()` を生成し、ここで既定の設定ファイル読み込みまで完了する。
 - その後に GTK signal backend の読み込み、signal dispatch 接続、tray 初期化、実 window 表示を順に試みる。
 - GTK / PyGObject が利用できない場合や tray 初期化が失敗した場合でも、entrypoint 全体は即失敗せず、可能な範囲で `window.show()` へフォールバックする。
-- したがって GUI 起動は、GTK runtime の完全初期化に成功する経路と、部分機能で継続する経路の 2 面を持つ。
+- したがって GTK 起動は、GTK runtime の完全初期化に成功する経路と、部分機能で継続する経路の 2 面を持つ。
+
+### Qt backend（harite-qt）
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant App as gui/app_qt.py
+    participant Window as views/main_window.py
+    participant Backend as adapters_qt/qt_backend.py
+    participant Qt as Qt runtime (QApplication)
+
+    User->>App: harite-qt / python -m harite.gui.app_qt
+    App->>Qt: QApplication()
+    App->>Window: MainWindow()
+    Window->>Window: load default 設定
+    App->>Backend: load_qt_runtime_signal_backend()
+    Backend-->>App: QtSignalBackend
+    App->>Backend: connect_signals(dispatch)
+    App->>Backend: present_qt_window(...)
+    Backend->>Qt: build QMainWindow and show
+    Qt-->>User: window shown
+    App->>Qt: app.exec()
+```
+
+Qt 起動時の実際の流れ:
+
+- `QApplication` を生成してから `MainWindow()` を生成する。
+- `load_qt_runtime_signal_backend()` で `QtSignalBackend` を得て、`RUNTIME_HANDLER_MAP` から生成した dispatch を `connect_signals()` で渡す。
+- `present_qt_window()` が `QMainWindow` を構築して表示し、`app.exec()` でイベントループに入る。
+- PyQt6 が利用できない場合は即座に `SystemExit` で終了し、GTK backend と異なりフォールバック経路は持たない。
+
+### 共通事項
+
+- 両 backend とも `MainWindow` owner state を共有する。`ui_adapter.py` の `RUNTIME_HANDLER_MAP` は両 backend が共用する handler 名 / method 名の対応表である。
+- ウィンドウタイトルは `Harite`、ウィンドウアイコンは `harite_app.svg` を使う（両 backend 共通）。
+- ウィンドウの初期サイズは 900×640 を基準とする。
 
 ## 3. 画面全体構成
 
@@ -276,8 +315,13 @@ tray menu の現行項目:
 ## 8. GUI の層構造
 
 ```text
-app -> views/main_window -> controllers/services -> adapters(GTK runtime)
+GTK backend:  app.py    -> views/main_window -> controllers/services -> adapters/    (GTK runtime)
+Qt backend:   app_qt.py -> views/main_window -> controllers/services -> adapters_qt/ (Qt runtime)
 ```
+
+- `views/` と `controllers/` と `services/` は両 backend が共用する（framework-neutral）。
+- `adapters/` は GTK backend 専用（maintenance mode）。
+- `adapters_qt/` は Qt backend 専用（development focus）。
 
 margin text position の visible semantics:
 
@@ -290,19 +334,23 @@ margin text position の visible semantics:
 ### 詳細分類
 
 ```text
-views/
+views/                                       ← 両 backend 共用
   main_window.py          主状態モデル
   main_window_preview.py  preview 補助計算
-controllers/
+controllers/                                 ← 両 backend 共用
   optimize_controller.py  optimize bridge
-services/
+services/                                    ← 両 backend 共用
   cli_mapper.py           GUI state to CLI args
-adapters/
+adapters/                                    ← GTK backend 専用（maintenance mode）
   gtk_backend.py          GTK runtime 統合窓口
-  ui_adapter.py           signal dispatch table
-  tasktray_adapter.py     tray / indicator
+  ui_adapter.py           signal dispatch table（両 backend 共用）
+  tasktray_adapter.py     GTK tray / indicator
   gtk_layout_builders.py / gtk_tab_builders.py / gtk_dialog_builders.py
   gtk_runtime_*           signal, sync, dialog, slideshow, helper 群
+adapters_qt/                                 ← Qt backend 専用（development focus）
+  qt_backend.py           Qt runtime 統合窓口（QApplication / QMainWindow）
+  qt_layout_builders.py   Qt レイアウト骨格の構築
+  （以降のモジュールは Phase 3–9 で順次追加する）
 ```
 
 preview 補助計算の現行規則:
