@@ -66,6 +66,7 @@ monitor map interface:
 - 実適用では `SystemParametersInfoW` を使う。
 - 実適用の戻り値は `SystemParametersInfoW(...)` の真偽値をそのまま成功判定に使う。
 - `SystemParametersInfoW(20, 0, str(p), 3)` の第4引数 `3` は `SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE` を意味し、設定を永続化して他アプリへ変更を通知する。
+- `path` は `Path(path)` のみで処理し、`expanduser()` / `resolve()` による正規化は行わない。`~` や相対パスはそのまま OS API（`SystemParametersInfoW`）に渡される。
 
 ### 4.2 macOS plugin
 
@@ -74,6 +75,8 @@ monitor map interface:
 - 実適用では `osascript` による AppleScript 呼び出しを使う。
 - 実適用では `tell application "System Events" to set picture of every desktop to "..."` を組み立てて `osascript -e` へ渡し、終了コード `0` を成功とみなす。
 - `osascript` が非ゼロで終了した場合、ログ出力なしで `False` を返す。
+- `path` は `Path(path)` のみで処理し、`expanduser()` / `resolve()` による正規化は行わない。`~` や相対パスはそのまま AppleScript に渡される。
+- AppleScript の文字列リテラルにパスを直接埋め込む。パス中の `"` や `\` はエスケープされないため、これらを含むパスでは AppleScript エラーが発生する。
 
 ### 4.3 Linux plugin
 
@@ -104,6 +107,8 @@ display 自動検出と候補対応付け:
 - 位置対応付けの距離は `dx = display.x_offset - x`, `dy = display.y_offset - y` に対するマンハッタン距離 `abs(dx) + abs(dy)` である。
 - この距離が `POS_MATCH_THRESHOLD = 200` 以下の display だけを位置一致候補とみなし、その中で最も近い display を使う。
 - `_match_candidates_for_mapping(...)` の探索順は、名前一致、複合 token 一致、index 一致、解像度一致、位置一致、単一 mapping 用 fallback の順である。workspace-level 候補への後退は行わない。
+- `size_map` は解像度タプル（例: `(1920, 1080)`）をキーとする。同一解像度の display が複数ある場合、後に処理されたものが前のものを上書きする（後勝ち）。
+- `_extract_position` は負のオフセット値（例: `-512+0`）を受理する。これは primary monitor 原点より左に位置する display に対応する。
 - 単一 mapping fallback では、monitor index を持つ候補を優先し、それも決まらない場合だけ monitor property を 1 件拾う。ただし位置が取れるときは距離が 200px 以下の候補だけを残す。
 - prop マッチングは `_name_variants` によるバリアント比較に加えて、`mon_name in prop` の部分一致も使用する。
 
@@ -119,7 +124,9 @@ Linux plugin の適用順:
 適用フローの細部:
 
 - Linux plugin は `xfconf-query` を最初に試し、そこで成功が出た時点で `True` を返す。したがって XFCE 候補で成功した場合、後段の `gsettings` / `feh` へは進まない。
+- XFCE 経路の判定は `shutil.which("xfconf-query")` が真（PATH 上に存在）であることで行う。xfconf の動作可否は確認せず、PATH 上の存在をもって「利用可能」と扱う。
 - monitor map apply では `gsettings` と `feh` へは進まず、XFCE 候補が成立しない場合はそのまま失敗する。
+- per-monitor apply で空の dict `{}` が渡された場合、`success_all = bool({})` が `False` となり、即座に `False` を返す。
 - xfconf prop 列挙が失敗（returncode≠0）した場合、候補は空リストになる。単一 apply では後段フォールバックへ進み、map apply では即 `False` を返す。
 - 単一 apply では、フィルタ済み prop 全体に対して `-s` を実行する。いずれか 1 件でも returncode 0 なら `True` を返すが、ループは継続するため複数 prop が更新されうる。
 - per-monitor apply では、各 monitor に対して複数の filtered prop を順に試し、最初の成功でその monitor を成功扱いにする。

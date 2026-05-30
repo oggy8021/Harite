@@ -79,13 +79,14 @@ two-screen 文脈で重要な点:
 - `resolution`, `l_display`, `r_display` は、値が `None` または `auto` のときだけ未確定扱いとなる。context が得られていて `effective_two_screen=True` の場合に限って、`resolution = "{virtual_w}x{virtual_h}"`, `l_display = "{left_w}x{left_h}"`, `r_display = "{right_w}x{right_h}"` を自動補完する。
 - 自動判定で context が得られなかった場合だけ、最後に `effective_two_screen=False` へ戻る。`resolution` が最後まで確定しなければ入力不正として止める。
 - `resolve_optimize_display_settings` は解像度文字列の `WxH` フォーマット自体を検証しない。`WxH` 形式の検証は CLI の `parse_resolution`、GUI の独自解析など呼び出し側レイヤーの責務である。
+- `normalize_optimize_input_paths` はディレクトリパスを `ValueError` で拒否するが、存在しないファイルや非画像ファイルは検証しない。これらは `optimize_wallpapers` 処理中に黙ってスキップされる。
 
 ### 3.2 `display_context.py` ヘルパー関数
 
 - `order_displays(displays, *, limit)`: display 群を `(x_offset, y_offset, name)` の昇順にソートして返す。`limit` を指定すると先頭 `limit` 件に絞る。
 - `get_display_at_index(index, displays)`: ordered 後の display リストから指定インデックスの display を返す。範囲外なら `None`。
 - `closest_display_for_offset(x_offset, y_offset, displays)`: 指定 offset に最も近い display をマンハッタン距離で探す。`(display, distance)` を返す。display が存在しない場合は `(None, None)`。
-- `build_two_screen_optimize_context(displays)`: ordered 先頭 2 件から `TwoScreenOptimizeContext`（`resolution`, `l_display`, `r_display` を持つ）を構築して返す。display が 2 件未満の場合は `None`。
+- `build_two_screen_optimize_context(displays)`: ordered 先頭 2 件から `TwoScreenOptimizeContext`（`resolution`, `l_display`, `r_display` を持つ）を構築して返す。display が 2 件未満の場合は `None`。3 画面以上の環境では先頭 2 台の display のみから virtual resolution を算出し、3 台目以降は無視する。
 
 ## 4. 最適化ロジック
 
@@ -124,6 +125,8 @@ flowchart TD
 - two-screen だが display 情報が未指定のときは、左右幅を `left_slice_w = max(1, w_target // 2)`, `right_slice_w = max(1, w_target - left_slice_w)` で二分し、それぞれから `ml + mr` を引いた値を cell 幅に使う。
 - リサイズは `Image.LANCZOS`（`Image.Resampling.LANCZOS` と同値）を使用する。`optimize_wallpapers`、`split_composite_for_displays`、`compute_placement` のすべてでこのフィルタを適用する。
 - 入力画像は `Image.open(...).convert("RGB")` で読み込むため、RGBA 画像はアルファチャンネルを廃棄して RGB に変換してから処理される。
+- 読み込みに失敗した画像は黙ってスキップする。全画像の読み込みが失敗した場合でも、背景色のみの JPEG が出力される（空のキャンバスが保存される）。
+- 0×0 サイズの画像に対して `_scale_to_fit` は `(1, 1, 1.0)` を返し、ゼロ除算を回避する。
 
 ### 4.2 background color 正規化の現行規則
 
@@ -138,6 +141,7 @@ flowchart TD
 - GUI / Settings / CLI / core の `embed_position` は `left-top|left-bottom|right-top|right-bottom` で統一する。
 - `embed_position` が未指定のときの既定値は `right-bottom` である。
 - したがって現行の設定値・GUI state・CLI 引数では、`embed_position` はこの 4 値だけを正規入力として保持する。
+- `embed_position` に 4 値以外が渡された場合、`resolve_embed_margin_region` は `None` を返し、embed 描画は行われない。
 - single-screen の embed 領域では、まず `usable_left = max(0, ml)`, `usable_right = max(usable_left, w_target - max(0, mr))`, `usable_width = max(0, usable_right - usable_left)` を作る。
 - そのうえで左右半分は `left_slice_width = usable_width // 2`, `right_slice_width = usable_width - left_slice_width` で分ける。single-screen では `left-top` は左半分上端、`left-bottom` は左半分下端、`right-top` は右半分上端、`right-bottom` は右半分下端に対応する。
 - two-screen で display 情報がある場合も、配置面は left display / right display の上側・下側 4 位置だけを持つ。`left-top` は left display の上端、`left-bottom` は left display の下端、`right-top` は right display の上端、`right-bottom` は right display の下端に対応する。slice 内部の横範囲は `x0 = offset_x + ml`, `x1 = max(x0, offset_x + slice_w - mr)` であり、上端側は `(x0, 0, x1, mt)`、下端側は `(x0, slice_h - mb, x1, slice_h)` を基底にする。
@@ -222,6 +226,8 @@ monitor map 解決:
 - display 向け最終画像は `target_w x target_h` の背景キャンバスを作り、中央寄せオフセット `ox = (target_w - new_w) // 2`, `oy = (target_h - new_h) // 2` で貼り付ける。
 - 出力ファイル名は原則 `composite_path.stem + "_" + display.name + ".jpg"` であり、display 名が空のときだけ `display_{x_offset}` を代替名に使う。
 - 各 display 向け画像の JPEG 出力品質は **90 固定**であり、`optimize_wallpapers(...)` の `quality` 引数とは独立する。
+- `build_auto_split_display_map` は `background_color` を `split_composite_for_displays` へ渡さない。そのため letterbox 領域の背景色は内部デフォルト（`#1E1E1E` 系）で固定され、`optimize_wallpapers` の `background_color` 引数とは独立する。
+- `display.name` が空文字のとき、出力ファイル名は `display_{x_offset}.jpg` にフォールバックするが、返却される monitor map の dict キーは空文字 `""` のままである（ファイル名と dict キーが一致しない）。これは per-monitor plugin のマッチングに影響する可能性がある。
 
 不正条件の代表:
 
