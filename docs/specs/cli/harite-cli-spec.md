@@ -148,7 +148,7 @@ apply mode の決定順:
 slideshow command の意味:
 
 - 入力 directory から画像一覧を集め、一定間隔で次画像を選んで apply する。
-- command 開始時に plugin を解決し、各サイクルで実 apply を行う。
+- plugin はスタートアップフェーズ（`Slideshow start` メッセージ出力の直後）で解決し、未知 plugin は終了コード `2` で止める。各サイクルで実 apply を行う。
 
 入力 directory の受理規則:
 
@@ -228,11 +228,11 @@ Windows / macOS ではサポート外であり、終了コード `2` で終了�
 command ごとの代表メッセージ:
 
 - `optimize`: `Saved:` と `Placement:`
-- `apply`: `applied wallpaper` または `failed to apply wallpaper`
+- `apply`: 成功時 `Plugin '{plugin}' applied wallpaper: {path}`、失敗時 `Plugin '{plugin}' failed to apply wallpaper: {path}`
 - `slideshow`: `Slideshow start`, `Slideshow interrupted by user`, `Slideshow completed`
 - `install-desktop-entry`: `Installed desktop entry:`
 
-`slideshow` の `Slideshow completed` は bounded run や将来の明示完了経路がある場合の要約行として扱い、継続実行の通常停止は `Slideshow interrupted by user` を優先する。完了要約を出す場合は `apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` を出してサイクルごとの結果を要約する。
+`slideshow` の `Slideshow completed` は bounded run や将来の明示完了経路がある場合の要約行として扱う。**現行実装は無限ループのため `Slideshow completed` には到達しない**（`Ctrl+C` による `Slideshow interrupted by user` が通常停止の唯一の出口である）。将来、回数/時間 bounded 実行が実装された場合に `Slideshow completed` を使用し、`apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` でサイクルごとの結果を要約する。
 
 重要度の見方:
 

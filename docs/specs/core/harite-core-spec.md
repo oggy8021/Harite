@@ -133,9 +133,9 @@ flowchart TD
 - two-screen で display 情報がある場合も、配置面は left display / right display の上側・下側 4 位置だけを持つ。`left-top` は left display の上端、`left-bottom` は left display の下端、`right-top` は right display の上端、`right-bottom` は right display の下端に対応する。slice 内部の横範囲は `x0 = offset_x + ml`, `x1 = max(x0, offset_x + slice_w - mr)` であり、上端側は `(x0, 0, x1, mt)`、下端側は `(x0, slice_h - mb, x1, slice_h)` を基底にする。
 - 描画前には `area_w = x1 - x0`, `area_h = y1 - y0` を求め、`area_w < 40` または `area_h < 12` なら何も描かない。
 - フォントサイズ候補は `preferred_size = max(12, min(24, area_h // (max_lines + 1)))` で決め、1 行高さは `line_h = max(10, bbox("Ag").height + 2)` 相当で求める。
-- 実際に描く行数は `fit_lines = area_h // line_h`, `line_limit = min(max(1, embed_max_lines), fit_lines)` で決め、超過した行は末尾に `...` を付けて切り詰める。
+- 実際に描く行数は `fit_lines = area_h // line_h`, `line_limit = min(max(1, embed_max_lines), fit_lines)` で決め、超過した行は末尾に ` ...`（スペース+三点リーダー）を付けて切り詰める。
 - 実際の描画開始 x 座標は左端ぴったりではなく、`quartile_offset = max(4, min(max(1, area_w // 4), max(1, longest_px // 4 or 1)))` を使って `text_x = x0 + quartile_offset` に置く。y 座標は `text_y = y0 + 2` から始める。
-- 各行の最大描画幅は `max_text_w = max(0, area_w - quartile_offset - 4)` であり、`_truncate_to_width(...)` によってこの幅に収まるよう末尾 `...` 付きで再切り詰めする。
+- 各行の最大描画幅は `max_text_w = max(0, area_w - quartile_offset - 4)` であり、`_truncate_to_width(...)` によってこの幅に収まるよう末尾 ` ...`（スペース+三点リーダー）付きで再切り詰めする。
 - 行ごとの描画は `text_y + line_h > y1` になった時点で打ち切る。したがって line_limit に達していなくても、縦方向に収まらなければそれ以上は描かない。
 
 ### 4.4 embed 情報行の構成規則
@@ -203,6 +203,7 @@ monitor map 解決:
 - 各 display 向け出力画像は fit で再配置され、scale は `min(target_w / region_w, target_h / region_h)`、リサイズ後は `new_w = max(1, int(region_w * scale))`, `new_h = max(1, int(region_h * scale))` である。
 - display 向け最終画像は `target_w x target_h` の背景キャンバスを作り、中央寄せオフセット `ox = (target_w - new_w) // 2`, `oy = (target_h - new_h) // 2` で貼り付ける。
 - 出力ファイル名は原則 `composite_path.stem + "_" + display.name + ".jpg"` であり、display 名が空のときだけ `display_{x_offset}` を代替名に使う。
+- 各 display 向け画像の JPEG 出力品質は **90 固定**であり、`optimize_wallpapers(...)` の `quality` 引数とは独立する。
 
 不正条件の代表:
 

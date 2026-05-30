@@ -33,6 +33,7 @@ registry の扱い:
 - plugin は `apply(path_or_map) -> bool` の形で呼ばれる。
 - 成功時は `True`、失敗時は `False` を返す。
 - plugin 例外は呼び出し側で failure / exception 面として扱われる。
+- `PluginProtocol` の Python 静的型注釈では `apply(path: str) -> bool` としているが、実行時に Linux plugin は `dict[str, Path]`（monitor map）も受け付ける。この型注釈と実行時契約の乖離は既知であり、注釈の改善は今後の課題とする。
 
 target の種類:
 
