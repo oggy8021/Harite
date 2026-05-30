@@ -78,6 +78,7 @@ class MainWindow:
         self._slideshow_plugin_impl: object | None = None
         self._slideshow_dual_auto_split_enabled = False
         self._slideshow_active_generated_files: tuple[Path, ...] = ()
+        self._slideshow_tick_generated_files: tuple[Path, ...] = ()
         self.open_image_dialog_open = False
         self.open_image_dialog_side: str | None = None
         self._save_path_dialog_open = False
@@ -193,6 +194,9 @@ class MainWindow:
             return pictures_dir
 
         return Path.home() / "Pictures"
+
+    def _resolve_slideshow_work_dir(self) -> Path:
+        return self._resolve_default_output_dir() / "Harite" / "slideshow"
 
     def _resolve_windows_pictures_dir(self) -> Path | None:
         try:
@@ -481,8 +485,8 @@ class MainWindow:
         self.can_start_slideshow = self._can_start_slideshow_now()
 
     def _update_slideshow_output_display(self) -> None:
-        output_dir = str(Path(self.form_state.output_dir)) if self.form_state.output_dir else self._default_output_dir()
-        self.slideshow_output_display = f"Slideshow output: {output_dir}"
+        work_dir = self._resolve_slideshow_work_dir()
+        self.slideshow_output_display = f"Slideshow output: {work_dir}"
 
     def _update_slideshow_summary_display(self) -> None:
         if self.slideshow_running and self.slideshow_paused:
@@ -1119,6 +1123,19 @@ class MainWindow:
             except OSError as exc:
                 self._log(f"Slideshow cleanup failed: {path} ({exc})")
 
+    def _cleanup_work_dir_orphans(self, work_dir: Path, keep: frozenset[Path]) -> None:
+        """R1: remove legacy harite_output_* files from work dir, keeping slot files."""
+        try:
+            for path in work_dir.glob("harite_output_*.jpg"):
+                if path not in keep:
+                    try:
+                        path.unlink()
+                        self._log(f"Slideshow R1 cleanup removed orphan: {path}")
+                    except OSError as exc:
+                        self._log(f"Slideshow R1 cleanup failed: {path} ({exc})")
+        except OSError:
+            pass
+
     def _set_slideshow_active_generated_files(self, paths: tuple[Path, ...]) -> None:
         previous_paths = self._slideshow_active_generated_files
         self._slideshow_active_generated_files = paths
@@ -1162,17 +1179,24 @@ class MainWindow:
         if not self._slideshow_dual_auto_split_enabled:
             return False, "dual-source slideshow auto-split is not enabled"
 
+        work_dir = self._resolve_slideshow_work_dir()
+        tick_files: list[Path] = []
+
         try:
             slideshow_state = self._build_slideshow_two_screen_state(selected_paths[0], selected_paths[1])
-            saved_files, _placements = self.controller.run_optimize(slideshow_state)
+            slideshow_state_for_work = replace(slideshow_state, output_dir=str(work_dir))
+            saved_files, _placements = self.controller.run_slideshow_optimize(slideshow_state_for_work)
             composite_path = saved_files[-1]
+            tick_files.append(composite_path)
             effective_apply = resolve_apply_settings(
                 file=composite_path,
                 apply_mode="per-monitor-auto-split",
-                output_dir=composite_path.parent,
+                output_dir=work_dir,
             )
         except ValueError as exc:
             self._log(f"Slideshow {cycle_phase} auto-split prepare failed: {exc}")
+            self._cleanup_slideshow_generated_files(tuple(tick_files))
+            self._slideshow_tick_generated_files = ()
             if self._is_transient_slideshow_cycle_error(exc, cycle_phase=cycle_phase):
                 self._pause_slideshow_for_display_loss("slideshow paused: waiting for two detected displays for auto-split")
                 return True, None
@@ -1183,14 +1207,21 @@ class MainWindow:
         if isinstance(effective_apply.target, dict):
             generated_files.extend(Path(str(path)) for path in effective_apply.target.values())
 
+        self._slideshow_tick_generated_files = tuple(generated_files)
+
         if self._apply_slideshow_target(
             effective_apply.target,
             cycle_phase=cycle_phase,
             apply_mode="per-monitor-auto-split",
         ):
+            self._cleanup_work_dir_orphans(work_dir, frozenset(generated_files))
             deduped = tuple(dict.fromkeys(generated_files))
             self._set_slideshow_active_generated_files(deduped)
+            self._slideshow_tick_generated_files = ()
             return True, None
+
+        self._cleanup_slideshow_generated_files(tuple(generated_files))
+        self._slideshow_tick_generated_files = ()
         return False, f"slideshow {user_cycle_phase} per-monitor auto-split apply failed"
 
     def on_slideshow_start(self) -> bool:
@@ -1305,6 +1336,9 @@ class MainWindow:
         self._slideshow_active_mode = self.slideshow_mode
         self._clear_slideshow_pause()
         self._slideshow_plugin_impl = None
+        # R4: clear tracking state; slot files are intentionally kept on disk
+        self._slideshow_active_generated_files = ()
+        self._slideshow_tick_generated_files = ()
         self._refresh_action_availability()
         self._update_slideshow_summary_display()
         self._update_slideshow_current_display()

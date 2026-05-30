@@ -55,6 +55,9 @@ class OptimizeFormState:
         return position_value_for_side(self.valign, side, axis="valign")
 
 
+SLIDESHOW_COMPOSITE_FILENAME = "harite_slideshow_composite.jpg"
+
+
 class OptimizeController:
     """Thin adapter from GUI form values to core.optimize_wallpapers."""
 
@@ -153,3 +156,10 @@ class OptimizeController:
         if not value:
             raise ValueError("save path is required")
         return self._run_with_output_path(state, Path(value))
+
+    def run_slideshow_optimize(self, state: OptimizeFormState) -> tuple[list[Path], list]:
+        """Run optimize for slideshow using a fixed composite slot file in state.output_dir."""
+        work_dir = Path(state.output_dir)
+        work_dir.mkdir(parents=True, exist_ok=True)
+        output_path = work_dir / SLIDESHOW_COMPOSITE_FILENAME
+        return self._run_with_output_path(state, output_path)

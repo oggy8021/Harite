@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -30,13 +30,13 @@ jobs:
           coverage html -d coverage_html
 
       - name: Upload coverage xml
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage-xml
           path: coverage.xml
 
       - name: Upload coverage html
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage-html
           path: coverage_html

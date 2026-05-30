@@ -1,6 +1,6 @@
 # Harite スライドショー仕様 (Slideshow Spec)
 
-最終更新: 2026-05-20
+最終更新: 2026-05-30
 
 ## 1. スライドショー機能の責務
 
@@ -154,6 +154,110 @@ GUI は単なるタイマー処理ではなく、状態表示の責務を強く�
 - 直近 apply の成否
 - display 条件不足や plugin 失敗の理由
 
+### 6.1 slideshow 作業ディレクトリ（案 A: ピクチャ配下）
+
+GUI slideshow が生成する optimize 成果物（composite と per-monitor 分割画像）は、手動 Optimize / Export の出力先とは **別の slideshow 作業ディレクトリ** に書く。
+
+#### 解決規則（Linux / XDG）
+
+1. **ピクチャ根**（手動 Optimize / Export の既定 `output_dir` と同型）  
+   - `XDG_PICTURES_DIR` 環境変数  
+   - 未設定時は `$XDG_CONFIG_HOME/user-dirs.dirs` の `XDG_PICTURES_DIR=`  
+   - さらに未解決時は `~/Pictures`
+2. **slideshow 作業ディレクトリ**  
+   - `{ピクチャ根}/Harite/slideshow/`（製品固定のサブディレクトリ名。未存在なら作成する）
+
+`XDG_CACHE_HOME` 等のキャッシュ領域は **採用しない**。Linux / XFCE 系 plugin は `xfconf-query` 等で壁紙 path を永続設定に書き込むため、apply 対象の画像実体は **ユーザーが通常アクセスできる非揮発のディレクトリ**（ピクチャ配下）に置く。キャッシュ削除で壁紙 path が無効化されるリスクを避ける。
+
+#### GUI surface
+
+- slideshow tab の `Slideshow output` は **slideshow 作業ディレクトリ** の path を示す。
+- Main 導線の手動 Optimize / Export の出力先（`form_state.output_dir`、既定はピクチャ根）とは別 surface とする。
+
+#### 実装方針
+
+- §6.3 の要件 **R1–R5 はいずれも対応する**（issue #317 の解消条件）。現行コードは R1–R5 未達の過渡状態である。
+
+### 6.2 GUI dual-source auto-split 時の optimize 出力ファイル管理（目標挙動）
+
+GUI が dual-source slideshow を `per-monitor-auto-split` で実行するとき、各 tick で `optimize` と auto-split により §6.1 の作業ディレクトリへ出力する。R1–R3 により、継続実行中に作業ディレクトリへ **追跡スロット以外のファイルが残らない** ことを保証する。
+
+#### 固定スロット（R2）
+
+作業ディレクトリ内のファイル名は tick ごとに増えない **固定スロット** とする。存在ベース採番（`harite_output_{NNNN}.jpg`）は slideshow 経路では使わない。
+
+| 種別 | ファイル名 |
+| --- | --- |
+| composite | `harite_slideshow_composite.jpg` |
+| per-monitor 分割 | `harite_slideshow_{display_name_safe}.jpg`（`display.name` を file-safe 化した suffix。例: `HDMI-1` → `harite_slideshow_HDMI-1.jpg`） |
+
+- dual-source の optimize / split は、上記 path を `output_path` / `output_dir` として明示指定し、毎 tick 上書きする。
+- 手動 Optimize（ピクチャ根）は従来どおり `harite_output_{NNNN}.jpg` 採番でよい（R5 により作業ディレクトリと分離）。
+
+#### tick 終了時の整理（R1, R3）
+
+各 dual-source tick の終了時（成功・pause・失敗を問わない）に、当該 tick で生成した path 集合 `_slideshow_tick_generated_files` を確定し、次を行う。
+
+1. **R3 rollback** — apply 未完了（pause、prepare 失敗、apply 失敗）のとき、当該 tick 生成分を作業ディレクトリから削除する。追跡スロット（`_slideshow_active_generated_files`）は更新しない。
+2. **R1 作業ディレクトリのスロット外掃除** — 作業ディレクトリ直下で、現行スロット集合および `_slideshow_active_generated_files` に含まれる path 以外の `harite_slideshow_*.jpg` / レガシー `harite_output_*.jpg` を削除する（移行期の掃除を含む）。
+3. **apply 成功時** — 当該 tick のスロット集合を `_slideshow_active_generated_files` に記録する（path は tick ごと固定のため、実体は上書き済み）。
+
+single-source:
+
+- optimize 出力は生成しない。apply 成功時は `_slideshow_active_generated_files` を空にし、作業ディレクトリのスロットファイル（R1 掃除対象）を削除する。
+
+対象範囲:
+
+- R1–R3 は **GUI dual-source auto-split** が optimize を呼ぶ経路に適用する。
+- **CLI `slideshow` command** は optimize 出力を生成しないため対象外（§8）。
+
+ライフサイクル（目標・R1–R5 適用後）:
+
+| タイミング | 挙動 |
+| --- | --- |
+| dual-source tick / apply 成功 | スロットへ上書き → `_slideshow_active_generated_files` 更新 → R1 掃除 |
+| dual-source tick / pause | R3 で当該 tick 生成分 rollback → R1 掃除。timer は継続可 |
+| dual-source tick / apply 失敗 | R3 rollback → slideshow 停止 → R1 掃除 |
+| single-source / apply 成功 | 作業ディレクトリのスロットファイル削除、追跡を空に |
+| `on_slideshow_stop` | スロットファイルは残す。追跡 state のみクリア（§6.3 R4） |
+
+実装参照（目標）:
+
+- 作業ディレクトリ: `MainWindow._resolve_slideshow_work_dir`
+- tick 生成追跡: `_slideshow_tick_generated_files`（新設予定）
+- スロット apply 成功追跡: `_slideshow_active_generated_files`
+- dual-source サイクル: `MainWindow._apply_slideshow_selection`
+- optimize 呼び出し: `OptimizeController.run_slideshow_optimize`（スロット path 固定、新設予定）
+
+### 6.3 要件 R1–R5（issue #317 — 対応方針: すべて実装）
+
+product 方針として **R1–R5 をすべて満たす**。以下は実装仕様である。
+
+| ID | 要件 | 状態 |
+| --- | --- | --- |
+| R5 | 手動 Optimize はピクチャ根（`form_state.output_dir`）。slideshow 作業は `{ピクチャ根}/Harite/slideshow/`。`XDG_CACHE_HOME` は使わない（xfconf 壁紙実体の非揮発性）。 | **対応する**（§6.1） |
+| R2 | 作業ディレクトリ内は §6.2 の固定スロットのみ。`harite_output_{NNNN}.jpg` 採番は slideshow 経路で使わない。 | **対応する** |
+| R3 | pause / apply 失敗 / prepare 失敗 tick で、当該 tick の `_slideshow_tick_generated_files` を rollback 削除する。 | **対応する** |
+| R1 | dual-source 継続実行中、各 tick 終了時に作業ディレクトリへスロット外ファイルを残さない（§6.2 の掃除）。 | **対応する** |
+| R4 | `on_slideshow_stop` 時の作業ディレクトリと追跡 state の扱い（下記確定）。 | **対応する** |
+
+#### 現行実装との差分（issue #317 で観測された純増）
+
+現行コードが R1–R5 未達のとき、次により `harite_output_{NNNN}.jpg` が純増しうる。上表の対応完了後は解消される。
+
+1. pause tick で optimize のみ成功し rollback しない（R3 未達）
+2. apply 失敗で生成ファイルを残す（R3 未達）
+3. ピクチャ根と作業ディレクトリ未分離で手動 Optimize と採番競合（R5 未達）
+4. 存在ベース採番で orphan が次 tick の番号を押し上げる（R2 未達）
+
+#### R4（`on_slideshow_stop`）— 確定
+
+stop 時は作業ディレクトリ内のスロットファイル **を削除しない**。
+
+- XFCE 系は最終 tick で apply 済みの path を `xfconf-query` が参照しうる。stop 直後に削除すると、設定上の壁紙 path が無効になる。
+- stop 時に `_slideshow_active_generated_files` と `_slideshow_tick_generated_files` は **クリア**する（次回 start で古い追跡を引き継がない）。
+- 次回 `on_slideshow_start` では、R2 スロット path へ上書きする前提で作業ディレクトリを用意する（必要なら `mkdir -p`）。R1 掃除は各 tick 終了時に継続する。
+
 ## 7. CLI `slideshow` command の責務
 
 - 入力 directory 1 件または最大 2 件からの画像収集
@@ -181,7 +285,7 @@ CLI `slideshow` command の特徴:
 - CLI `slideshow` command は stdout に実行メッセージを出す。
 - CLI は固定の自然な user-facing 実行メッセージ方針を採る。現行英語表記では `Slideshow ...` を使い、全部大文字の prefix は使わない。
 - GUI は status, history, output display を併用する。
-- 現行 slideshow には専用保存ファイルへの書き出し機能はない。
+- CLI には slideshow 専用の画像保存先はない。GUI dual-source では §6.1 の作業ディレクトリへ一時的な optimize 出力を書く（ユーザーが Export した成果物とは別）。
 
 GUI feedback の補足:
 
