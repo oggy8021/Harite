@@ -1,6 +1,6 @@
 # Harite CLI 仕様 (CLI Spec)
 
-最終更新: 2026-05-20
+最終更新: 2026-05-30
 
 ## 1. CLI の責務
 
@@ -117,11 +117,11 @@ display / two-screen 解決:
 - resolution / display 条件不正
 - background color や embed 系 option 不正
 
-短縮形オプション（CLI2）:
+### 短縮形オプション
 
 - `optimize` で使える短縮形: `--input` / `-i`、`--output` / `-o`、`--settings-file` / `-c`、`--resolution` / `-r`
 
-主な option の既定値（CLI3）:
+### 主な option の既定値
 
 | option | 既定値 |
 |---|---|
@@ -131,7 +131,7 @@ display / two-screen 解決:
 | `--embed-info` | `none` |
 | `--embed-position` | `right-bottom` |
 
-設定ファイル内 bool 値の解釈規則（CLI4）:
+### 設定ファイル内 bool 値の解釈規則
 
 - 設定ファイル内の bool 値は `true/false/1/0/yes/no/on/off`（大文字小文字不問）を受理する。Python の bool/int 型 `True`/`False`/`1`/`0` も受理する。これ以外の値は不正として終了コード `2` で止める。
 
@@ -157,10 +157,13 @@ apply mode の決定順:
 - CLI 実装は `resolve_apply_settings(...)` に `output_dir=Path(".")` を渡しているため、`--auto-split` 時の split 出力先既定値は current working directory である。
 - `--auto-split` と `--left-file` / `--right-file` を同時に指定した場合、`--auto-split` が優先され、明示ファイルは無視される。
 
-未知 plugin 時の動作（CLI10）:
+### 未知 plugin 時の動作
 
 - 未知 plugin が指定された場合は `Unknown plugin: {name}` を出力し、続けて `Available plugins: {カンマ区切りの一覧}` を出力して終了コード `2` で終了する。
-- `apply` の短縮形: `--plugin` / `-p`、`--file` / `-f`、`--per-monitor` / `-m`
+
+### 短縮形オプション
+
+- `apply` で使える短縮形: `--plugin` / `-p`、`--file` / `-f`、`--per-monitor` / `-m`
 
 ## 6. `slideshow`
 
@@ -216,7 +219,7 @@ slideshow helper の計算規則:
 - 現行 CLI `slideshow` command には専用保存先や履歴ファイル出力はない。
 - plugin 側の logger は別系統であり、CLI の固定実行メッセージ方針とは分けて考える。
 
-`Slideshow start` メッセージのフィールド（CLI13）:
+### `Slideshow start` メッセージのフィールド
 
 - 開始時に出力するメッセージの正確な形式は次のとおり:
 
@@ -226,23 +229,20 @@ slideshow helper の計算規則:
 
 - `input` は採用済み source directory をカンマ区切りで結合した文字列、`images` は収集済み画像ファイル数。このメッセージは plugin 解決の**前**に出力される。
 
-slideshow apply 失敗時の exit code（CLI15）:
+### サイクル失敗時の exit code
 
 - 各サイクルでの apply 失敗（plugin が `False` を返す、または plugin 例外）は slideshow ループを中断せず、exit code にも反映しない。
 - `Ctrl+C` による正常停止は終了コード `0` で終了する。
 
-画像収集規則（CLI16）:
+### 画像収集規則
 
 - 各 source directory の**直接の子ファイル**のみを対象とする（再帰なし）。
 - 収集対象の拡張子は `.jpg`, `.jpeg`, `.png`, `.bmp`（大文字小文字不問）のみ。
 - 各 directory 内でのファイル順はファイル名の**ソート順**（`sorted()`）で確定し、複数 directory の場合は directory の採用順に連結する。
 
-`--mode` 不正時のエラーメッセージ（CLI17）:
+### エラーメッセージ
 
-- `sequential`/`random` 以外の値が指定された場合は `--mode must be one of: sequential, random` を出力して終了コード `2` で終了する。
-
-空ディレクトリ時のエラーメッセージ（CLI18）:
-
+- `--mode` に `sequential`/`random` 以外の値が指定された場合は `--mode must be one of: sequential, random` を出力して終了コード `2` で終了する。
 - 指定 directory に対象拡張子の画像ファイルが 1 件もない場合は `no image files found in --input directory` を出力して終了コード `2` で終了する。
 
 ## 7. `install-desktop-entry`
@@ -258,7 +258,7 @@ launcher 生成の実際:
 
 Windows / macOS ではサポート外であり、終了コード `2` で終了する。Linux でも既存ファイル衝突は `--force` の有無で扱いが変わる。
 
-`--output` オプション（CLI19）:
+### `--output` オプション
 
 - `--output` で任意の出力先ファイルパスを指定できる。未指定時は XDG data home 配下の `applications/harite.desktop` を既定パスとして使用する。
 
@@ -266,7 +266,7 @@ Windows / macOS ではサポート外であり、終了コード `2` で終了�
 
 - 主な終了コード:
   - `0`: 正常終了
-    - `2`: 入力不正、設定ファイル不正、plugin 解決失敗、サポート外
+  - `2`: 入力不正、設定ファイル不正、plugin 解決失敗、サポート外
   - `3`: apply 失敗
 
 共通的な振る舞い:
@@ -275,7 +275,7 @@ Windows / macOS ではサポート外であり、終了コード `2` で終了�
 - subcommand 未指定時は簡易ヘルプ文言を出して正常終了する。
 - Typer / Click の parse error は framework 側の終了に委ねるが、業務上の入力不正は Harite 側で `2` に寄せる。
 
-`--plugin` 未指定時のデフォルト決定規則（CLI20）:
+### `--plugin` 未指定時のデフォルト決定規則
 
 - `apply` / `slideshow` の `--plugin` 未指定時は以下の順序でデフォルト plugin 名を決定する:
   1. `sys.platform` が `win32` → `windows`、`darwin` → `macos`、それ以外 → `linux` を preferred とする。
@@ -283,22 +283,20 @@ Windows / macOS ではサポート外であり、終了コード `2` で終了�
   3. registry が空でなければ registry の先頭エントリ (`available[0]`) を使う。
   4. registry が空の場合は `windows` にフォールバックする。
 
-## 9. メッセージと重要度
+## 9. メッセージ方針
 
-- `info`: 実行開始、中断、通常完了要約
-- `error`: validation error, unknown plugin, apply failed
-- Harite 固有の stdout 実行メッセージは、言語に応じた自然な user-facing 表現を使う。
-- 英語表記では通常の文やラベルとして読める形を優先し、全部大文字の強い prefix は使わない。
-- slideshow では `Slideshow start`, `Slideshow interrupted by user` を基本線とし、必要時だけ `Slideshow cycle` と `Slideshow completed` を補助的に出す
+Harite 固有の stdout 実行メッセージは、言語に応じた自然な user-facing 表現を使う。英語表記では通常の文やラベルとして読める形を優先し、全部大文字の強い prefix は使わない。
 
-command ごとの代表メッセージ:
+各 command の代表メッセージは以下のとおり（詳細は各 command 節を参照）:
 
-- `optimize`: `Saved:` と `Placement:`
-- `apply`: 成功時 `Plugin '{plugin}' applied wallpaper: {path}`、失敗時 `Plugin '{plugin}' failed to apply wallpaper: {path}`
-- `slideshow`: `Slideshow start`, `Slideshow interrupted by user`, `Slideshow completed`
-- `install-desktop-entry`: `Installed desktop entry:`
+| command | 代表メッセージ |
+|---|---|
+| `optimize` | `Saved: {path}`、`Placement: ...` |
+| `apply` | `Plugin '{plugin}' applied wallpaper: {path}` / `failed to apply wallpaper: {path}` |
+| `slideshow` | `Slideshow start`、`Slideshow interrupted by user`、`Slideshow completed`（将来） |
+| `install-desktop-entry` | `Installed desktop entry: {path}` |
 
-`slideshow` の `Slideshow completed` は bounded run や将来の明示完了経路がある場合の要約行として扱う。**現行実装は無限ループのため `Slideshow completed` には到達しない**（`Ctrl+C` による `Slideshow interrupted by user` が通常停止の唯一の出口である）。将来、回数/時間 bounded 実行が実装された場合に `Slideshow completed` を使用し、`apply_ok`, `apply_failed`, `apply_error`, `apply_failed_total` でサイクルごとの結果を要約する。
+`Slideshow completed` は bounded run など将来の明示完了経路向けである。**現行実装は無限ループのため到達しない**（`Ctrl+C` が唯一の通常停止出口）。
 
 重要度の見方:
 

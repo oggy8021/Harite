@@ -1,6 +1,6 @@
 # Harite コア仕様 (Core Spec)
 
-最終更新: 2026-05-19
+最終更新: 2026-05-30
 
 ## 1. コア (core) の責務
 
@@ -123,6 +123,8 @@ flowchart TD
 - explicit two-screen の左右 cell 幅は `left_region_w = max(1, split_x - (ml + mr))`, `right_region_w = max(1, (w_target - split_x) - (ml + mr))` である。cell 高さは各 display 高さをそのまま使わず、`max(1, min(h_target, display_h) - (mt + mb))` に切り詰める。
 - explicit two-screen の最終 x 座標は、左が `x = ml + inner_x`、右が `x = split_x + ml + inner_x` である。y 座標は左右とも `y = mt + inner_y` である。
 - two-screen だが display 情報が未指定のときは、左右幅を `left_slice_w = max(1, w_target // 2)`, `right_slice_w = max(1, w_target - left_slice_w)` で二分し、それぞれから `ml + mr` を引いた値を cell 幅に使う。
+**画像読み込みとリサイズ:**
+
 - リサイズは `Image.LANCZOS`（`Image.Resampling.LANCZOS` と同値）を使用する。`optimize_wallpapers`、`split_composite_for_displays`、`compute_placement` のすべてでこのフィルタを適用する。
 - 入力画像は `Image.open(...).convert("RGB")` で読み込むため、RGBA 画像はアルファチャンネルを廃棄して RGB に変換してから処理される。
 - 読み込みに失敗した画像は黙ってスキップする。全画像の読み込みが失敗した場合でも、背景色のみの JPEG が出力される（空のキャンバスが保存される）。
@@ -156,17 +158,13 @@ flowchart TD
 
 ### 4.4 embed 情報行の構成規則
 
+`optimize_wallpapers` は `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`, `embed_font` を受け取り、以下の規則で情報行を構成する。
+
 - `embed_info=none` では情報行は空である。
 - `embed_info=params|combo` では、1 行目に `res={w_target}x{h_target} margins={ml},{mr},{mt},{mb}`、2 行目に `align={align}/{valign} inputs={input_count}` を入れる。
 - `two_screen=True` かつ `l_display`, `r_display` がある場合は、追加行として `two_screen=1 l={left_w}x{left_h} r={right_w}x{right_h}` を入れる。display 情報が欠ける場合は `two_screen=1` だけを入れる。
 - `embed_info=free|combo` では `embed_text` を改行単位で split し、各行を trim したうえで空行を捨てる。
 - 最終的な embed 行列は、params 系行の後ろに free text 行を連結した順序で構成する。
-
-embed 情報:
-
-- optimize は `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`, `embed_font` を受け取れる。
-- 情報行の構成規則は 4.4 を参照する。
-- 位置解決、描画領域、行数制約は 4.3 を参照する。
 
 ### 4.5 出力形式とファイル名の規則
 

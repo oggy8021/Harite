@@ -1,6 +1,6 @@
 # Harite Plugin 仕様 (Plugin Spec)
 
-最終更新: 2026-05-20
+最終更新: 2026-05-30
 
 ## 1. plugin の責務
 
@@ -88,7 +88,7 @@ monitor map interface:
 - per-monitor mapping では、各 value を `Path(mon_path).expanduser().resolve()` で正規化してから使う。
 - 現行 Linux plugin は per-monitor mapping value の存在確認を事前には行わず、setter 実行系にそのまま渡す。
 
-display 自動検出と候補対応付け:
+#### display 自動検出と候補対応付け
 
 - Linux の display 検出は `xrandr --query` を解析して行い、`Display(name, width, height, x_offset, y_offset, primary)` の列へ正規化する。
 - per-monitor apply では、検出した display 列を `x_offset`, `y_offset`, `name` の順で安定化して扱う。
@@ -99,7 +99,7 @@ display 自動検出と候補対応付け:
 - 位置対応付けでは、候補 property に含まれる geometry / offset と、検出 display の `x_offset`, `y_offset` の距離を比較して最も近い display を使う。
 - 単一の monitor map しかない場合は、上記で決まらないときに monitor property を 1 件だけ拾う pragmatic fallback を持つ。
 
-候補対応付けの計算規則:
+#### 候補対応付けの計算規則
 
 - monitor 名の正規化は `_normalize_identifier(...)` で行い、`lower()` したうえで英数字以外を除去する。したがって `HDMI-1` と `hdmi1` は同一視される。
 - `_name_variants(...)` はこの正規化名に加え、`displayport -> dp`, `display -> dp`, `edp -> edp` の略称・展開形を足した集合を作る。
@@ -112,7 +112,7 @@ display 自動検出と候補対応付け:
 - 単一 mapping fallback では、monitor index を持つ候補を優先し、それも決まらない場合だけ monitor property を 1 件拾う。ただし位置が取れるときは距離が 200px 以下の候補だけを残す。
 - prop マッチングは `_name_variants` によるバリアント比較に加えて、`mon_name in prop` の部分一致も使用する。
 
-Linux plugin の適用順:
+#### Linux plugin の適用順
 
 1. `xfconf-query` が利用可能なら XFCE 候補を試す。
 2. 単一画像 apply では `gsettings` を次候補として試す。
@@ -121,7 +121,7 @@ Linux plugin の適用順:
 
 - この fallback 順は Linux plugin の実行面に属し、core の apply target 解決規則には含めない。
 
-適用フローの細部:
+#### 適用フローの細部
 
 - Linux plugin は `xfconf-query` を最初に試し、そこで成功が出た時点で `True` を返す。したがって XFCE 候補で成功した場合、後段の `gsettings` / `feh` へは進まない。
 - XFCE 経路の判定は `shutil.which("xfconf-query")` が真（PATH 上に存在）であることで行う。xfconf の動作可否は確認せず、PATH 上の存在をもって「利用可能」と扱う。
@@ -134,7 +134,7 @@ Linux plugin の適用順:
 - feh 経路の具体コマンド: `feh --bg-scale {path}`
 - `xfconf-query`、`gsettings`、`feh` のいずれも PATH 上にない場合、`"No known wallpaper setter found on PATH"` をログに記録して `False` を返す。
 
-補足:
+#### 補足
 
 - `gsettings` と `feh` は単一画像 apply の fallback 候補であり、monitor map apply には使わない。
 - `xfconf-query` の候補対応付けは monitor 名、index、resolution、position のヒューリスティックを使う。
