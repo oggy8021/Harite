@@ -14,9 +14,14 @@ dependencies = [
     "Pillow>=10.0",
 ]
 
+[project.optional-dependencies]
+gui-qt = ["PyQt6>=6.4"]
+
 [project.scripts]
 harite = "harite.cli:run"
 harite-gui = "harite.gui.app:run"
+harite-gtk = "harite.gui.app:run"
+harite-qt = "harite.gui.app_qt:run"
 
 [tool.setuptools]
 license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
