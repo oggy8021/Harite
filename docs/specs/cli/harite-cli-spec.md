@@ -85,6 +85,7 @@ sequenceDiagram
 - `--input` 未指定時は設定ファイル側の `input` を使えるが、最終的に入力列が空なら終了コード `2` で止める。
 - `optimize` の `--input` は、各 option 値をカンマで分割し、空要素を落とした順序付き画像ファイル列として正規化する。したがって `--input a.jpg,b.jpg` と `--input a.jpg --input b.jpg` は同じ 2 件入力として扱う。
 - `optimize` の public surface で使う入力画像数は最大 2 件である。3 件以上が与えられた場合は先頭 2 件だけを採用し、3 件目以降は使わない。
+- 採用されない 3 件目以降の入力は存在・正当性の検証を行わず、静かに無視する。
 - 2 件入力を採用した場合、先頭を left、2 件目を right として順番に割り当てる。CLI には optimize 入力の左右を明示的に入れ替える別 option は持たない。
 - `optimize` の `--input` は画像ファイル列のみを受け付け、directory が渡された場合は明示エラーで終了する。
 - `quality`, `embed_info`, `embed_position`, `embed_max_lines`, `background_color` は CLI 側で先に妥当性検証する。
@@ -154,6 +155,7 @@ apply mode の決定順:
 - `--file`, `--left-file`, `--right-file` は画像 file path を受け取る。CLI は file 名の推測補完を行わず、最終的な存在確認と `~` 展開・絶対 path 化は plugin 側の正規化に委ねる。
 - plugin が `False` を返した場合は終了コード `3` で扱う。
 - CLI 実装は `resolve_apply_settings(...)` に `output_dir=Path(".")` を渡しているため、`--auto-split` 時の split 出力先既定値は current working directory である。
+- `--auto-split` と `--left-file` / `--right-file` を同時に指定した場合、`--auto-split` が優先され、明示ファイルは無視される。
 
 未知 plugin 時の動作（CLI10）:
 
