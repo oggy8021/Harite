@@ -120,30 +120,32 @@ _TAB_SLIDESHOW = "Slideshow (stopped)"
 
 
 def build_center_body_section() -> dict[str, Any]:
-    """Build the center body: QTabWidget with 3 empty stub tabs.
+    """Build the center body: QTabWidget with Main tab + 2 stub tabs.
 
-    Tab content will be replaced in Phase 3 (Main), Phase 4 (Margins), and
-    Phase 5 (Slideshow).
+    Main tab is fully built (Phase 3).
+    Margins and Slideshow stubs will be replaced in Phase 4 and Phase 5.
 
-    Returns a dict containing ``command_tabs`` and the three stub widgets.
+    Returns a dict containing ``command_tabs`` and all tab-level widget dicts.
     """
     from PyQt6.QtWidgets import QTabWidget, QWidget
 
+    from harite.gui.adapters_qt.qt_tab_main import build_main_tab
+
     command_tabs = QTabWidget()
 
-    main_tab_stub = QWidget()
+    main_tab_widgets = build_main_tab()
     margins_tab_stub = QWidget()
     slideshow_tab_stub = QWidget()
 
-    command_tabs.addTab(main_tab_stub, _TAB_MAIN)
+    command_tabs.addTab(main_tab_widgets["main_col"], _TAB_MAIN)
     command_tabs.addTab(margins_tab_stub, _TAB_MARGINS)
     command_tabs.addTab(slideshow_tab_stub, _TAB_SLIDESHOW)
 
     return {
         "command_tabs": command_tabs,
-        "main_tab_stub": main_tab_stub,
         "margins_tab_stub": margins_tab_stub,
         "slideshow_tab_stub": slideshow_tab_stub,
+        **main_tab_widgets,
     }
 
 
