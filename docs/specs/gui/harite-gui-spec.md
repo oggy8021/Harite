@@ -176,7 +176,7 @@ apply mode の user-facing 意味:
 - mode 選択面は srcdir row の下、interval/start/stop row の上に独立 row として置く。
 - mode help row は選択中 mode の簡潔な補助説明を表示する user-facing surface とし、`sequential` 時は `Sequential rotates images.`、`random` 時は `Random rotates images.` を表示する。
 
-slideshow start / tick / stop:
+### slideshow start / tick / stop
 
 - GUI の slideshow source は `Srcdir-L` と `Srcdir-R` の 2 面で固定する。Start ボタンは **両方が非空のときのみ有効**になる。どちらか一方だけ設定された状態では slideshow を開始できない（`can_start_slideshow = False`）。
 - start では Srcdir-L と Srcdir-R の両 source から画像を収集する。どちらかが空なら開始前に `slideshow srcdir is required` として止める。
@@ -188,7 +188,7 @@ slideshow start / tick / stop:
 - 実行中に mode 選択値を変えても進行中の run には反映しない。新しい mode を使うには stop 後に start し直す。
 - dual-source auto-split 実行中の optimize 出力管理（差し替え・純増ギャップ）は [docs/specs/slideshow/harite-slideshow-spec.md §6.2–6.3](docs/specs/slideshow/harite-slideshow-spec.md) を参照する。
 
-#### 出力ディレクトリ（手動 Optimize と slideshow）
+### 出力ディレクトリ（手動 Optimize と slideshow）
 
 | 用途 | ディレクトリ | Linux 既定の解決 |
 | --- | --- | --- |
@@ -200,7 +200,7 @@ slideshow start / tick / stop:
 - issue #317 の要件 R1–R5 は **いずれも対応する**（[slideshow spec §6.3](docs/specs/slideshow/harite-slideshow-spec.md)）。現行実装は過渡状態。
 - R4 確定: `on_slideshow_stop` 時は作業ディレクトリのスロットファイルを削除せず、追跡 state のみクリア（xfconf path 維持）。
 
-エッジケース（GUI4 / GUI7 / GUI17 / GUI18 / GUI19 / GUI22）:
+### エッジケース
 
 - `SlideshowCycleState`（L・R）は `on_slideshow_stop` / `on_slideshow_start` でリセットされない。`mode=sequential` の場合、再起動後も前回の画像インデックスから継続する。
 - `slideshow_output_display` の初期値は `"Slideshow output: ."` であり、`_update_slideshow_output_display()` 呼び出し前は一時的にドット表示になりうる。
