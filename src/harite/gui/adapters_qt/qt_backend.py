@@ -538,7 +538,7 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
 
         def _confirmed(path: str) -> None:
             try:
-                ok = callback(side, path)
+                ok = callback(path, side)  # MainWindow.on_pick_input(path, side)
                 owner = self._get_handler_owner("on_pick_input")
                 if owner is not None:
                     self._sync_input_preview_state_from_owner(owner)
@@ -741,7 +741,7 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
 
         def _confirmed(path: str) -> None:
             try:
-                ok = callback(side, path)
+                ok = callback(path, side)  # MainWindow.on_pick_slideshow_srcdir(path, side)
                 owner = self._get_handler_owner("on_pick_slideshow_srcdir")
                 if owner is not None:
                     self._sync_slideshow_state_with_feedback_from_owner(owner)
