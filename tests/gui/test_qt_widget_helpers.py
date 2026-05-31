@@ -274,3 +274,36 @@ def test_refresh_slideshow_source_labels(qapp, backend):
     refresh_slideshow_source_labels(backend)
     assert "/tmp/left" in lbl_l.text()
     assert "-" in lbl_r.text()
+
+
+# ---------------------------------------------------------------------------
+# Programmatic widget updates must not emit change signals
+# ---------------------------------------------------------------------------
+
+
+def test_set_entry_text_blocks_text_changed(qapp, backend):
+    from PyQt6.QtWidgets import QPlainTextEdit
+
+    from harite.gui.adapters_qt.qt_widget_helpers import set_entry_text
+
+    entry = QPlainTextEdit()
+    backend._objects["txtMarginText"] = entry
+    fired: list[int] = []
+    entry.textChanged.connect(lambda: fired.append(1))
+    set_entry_text(backend, "txtMarginText", "line one")
+    assert entry.toPlainText() == "line one"
+    assert fired == []
+
+
+def test_on_margin_text_sync_does_not_recurse(qapp):
+    """sync_margins after margin-text handler must not re-enter the handler."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+
+    backend = load_qt_runtime_signal_backend()
+    window = MainWindow()
+    backend._signal_handlers["on_change_margin_text"] = window.on_change_margin_text
+
+    entry = backend._objects["txtMarginText"]
+    assert entry is not None
+    backend._on_margin_text_changed(entry)

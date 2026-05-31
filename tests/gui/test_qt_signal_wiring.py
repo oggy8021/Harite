@@ -363,6 +363,26 @@ def test_start_stop_slideshow_timer(qapp):
 # ---------------------------------------------------------------------------
 
 
+def test_on_optimize_clicked_does_not_recurse_on_margin_sync(qapp):
+    """Optimize sync must not loop through margin text change handlers."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+
+    backend = load_qt_runtime_signal_backend()
+    window = MainWindow()
+    window.on_change_input_text("C:/test/image.jpg")
+    backend._signal_handlers["on_optimize"] = window.on_optimize
+    backend._signal_handlers["on_change_margin_text"] = window.on_change_margin_text
+
+    try:
+        backend._on_optimize_clicked()
+    except RecursionError as exc:
+        raise AssertionError("Optimize handler recursed through margin text sync") from exc
+    except (ValueError, OSError):
+        # Optimize may fail without real image files; recursion is the only failure here.
+        pass
+
+
 def test_on_pick_input_enables_optimize_button(qapp):
     """After valid input pick, btnOptimize must reflect MainWindow.can_optimize."""
     from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
