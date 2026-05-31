@@ -64,15 +64,15 @@ flowchart LR
 
 ### 強化の当たり所（コード）
 
-- **主:** `src/harite/workspace.py` の `_detect_windows()` — `EnumDisplayMonitors` 等で複数 `Display` を返す（Qt 非依存を維持可能）。
+- **主:** `src/harite/workspace.py` の `_detect_windows()` — `EnumDisplayMonitors` + `MONITORINFOEX` で `DeviceName`（`\\.\DISPLAYn`）、bounds（width/height/x/y）、primary を返す（`Screen.AllScreens` 相当。PowerShell は使わない）。
 - **再利用:** `display_context.order_displays` / `derive_virtual_resolution` / `build_two_screen_optimize_context` — Linux と同じ経路。
 - **既存:** `optimize_settings.resolve_optimize_display_settings` — primary 1 枚 fallback は Phase 8 で追加済み。C 完了で dual-input + two-screen も Windows 上で解決可能に。
 
 ### 正本ライティングで相談すること
 
-- Windows の `Display.name` に何を載せるか（`\\.\DISPLAY1` / デバイス ID / 空許容）。
-- **plugin 層**でディスプレイ名補完をどこまで約束するか（Linux xfconf 対応付けとの非対称、Windows plugin は現行 monitor map 非対応）。
-- GUI two-screen / Auto-Split を Windows で **どこまで有効化**するか（optimize のみ vs apply まで）。
+- ~~Windows の `Display.name` に何を載せるか~~ → **オーナー判断: `\\.\DISPLAYn`（Screen.DeviceName 相当）をベース**（2026-05-31 実機確認）。
+- **plugin 層**でディスプレイ名補完をどこまで約束するか — WMI 製品名は **空間順序には使わない**。Auto-Split ファイル名の部分文字列候補としての利用は **予備検討**（Linux xfconf 的用途）。解像度検知とは独立。
+- GUI two-screen / Auto-Split を Windows で **どこまで有効化**するか（optimize のみ vs apply まで）。two-screen / auto-split 自体は **難しければ廃案も残す**。
 
 ## spec 改訂が必要になるタイミング
 

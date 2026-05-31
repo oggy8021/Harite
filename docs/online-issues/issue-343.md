@@ -146,6 +146,34 @@ Get-CimInstance -Namespace root\wmi -Class WmiMonitorID
 
 → per-monitor apply や Span 自動判定の材料になりうる。Harite への取り込みは W-03 方針確定後。
 
+### 5. オーナー実機確認（2026-05-31）
+
+**`Screen.AllScreens`（2 枚構成）:**
+
+```text
+DeviceName   Width Height Primary
+\\.\DISPLAY1  2560   1440    True
+\\.\DISPLAY2  2560   1440   False
+```
+
+**WMI 製品名（参考）:**
+
+```text
+DELL S2721QS
+DELL U2720QM
+```
+
+**判断（W-03-C ベースロジック）:**
+
+| 方式 | 採用 | 理由 |
+| --- | --- | --- |
+| `DeviceName`（`\\.\DISPLAY1` 等）+ bounds + Primary | **ベース** | Linux の `HDMI-1` / `DP-1` と同様、論理デバイス名として汎用。`display_context.order_displays` は **x_offset / y_offset**（`Bounds.X` / `Bounds.Y`）で左右順を決められる |
+| WMI `UserFriendlyName`（製品名） | **予備・別レイヤ** | Auto-Split 出力ファイル名の部分文字列候補（Linux xfconf 対応付けに近い用途）としては検討余地があるが、**左右・DISPLAY 対応は取れない**（類似製品名では特に不可） |
+| two-screen / auto-split 全体 | **条件付き** | 検出強化後も apply 面（Windows plugin 単一画像）と切り離して判断。難しければ廃案も残す |
+
+- **解像度検知（W-03-C）** と **製品名 WMI** は独立して設計する（同一 PowerShell スタックから得られても、Harite では別 concern）。
+- 実装時は PowerShell ではなく **`workspace._detect_windows()` 内の Win32 API**（`EnumDisplayMonitors` / `MONITORINFOEX` 等、`Screen.AllScreens` と同等）を想定。core は Qt / PowerShell 非依存を維持。
+
 ### 4. Harite 実装との差分メモ
 
 | 領域 | 現行 Harite | 調査で見える OS 能力 |
