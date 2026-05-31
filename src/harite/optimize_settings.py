@@ -40,6 +40,8 @@ def resolve_optimize_display_settings(
     effective_two_screen = bool(two_screen) if two_screen is not None else context is not None
 
     effective_resolution = None if resolution is None or is_auto_value(resolution) else str(resolution).strip()
+    if not effective_resolution:
+        effective_resolution = None
     effective_l_display = None if l_display is None or is_auto_value(l_display) else str(l_display).strip()
     effective_r_display = None if r_display is None or is_auto_value(r_display) else str(r_display).strip()
 
@@ -53,6 +55,15 @@ def resolve_optimize_display_settings(
 
     if auto_two_screen and context is None:
         effective_two_screen = False
+
+    if effective_resolution is None and cleaned_inputs:
+        from .display_context import order_displays
+        from .workspace import detect_displays
+
+        detected = order_displays(detect_displays(), limit=1)
+        if detected:
+            primary = detected[0]
+            effective_resolution = _stringify_resolution((int(primary.width), int(primary.height)))
 
     if effective_resolution is None:
         raise ValueError("resolution is required")

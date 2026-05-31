@@ -13,6 +13,7 @@ and delegate silently if the named widget is not found.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from typing import Any
 
 
@@ -23,6 +24,19 @@ from typing import Any
 
 def _get(backend: Any, name: str) -> Any:
     return backend._objects.get(name)
+
+
+@contextmanager
+def _with_blocked_signals(widget: Any):
+    """Block Qt signals while mutating widget state programmatically."""
+    if widget is None or not hasattr(widget, "blockSignals"):
+        yield
+        return
+    previous = widget.blockSignals(True)
+    try:
+        yield
+    finally:
+        widget.blockSignals(previous)
 
 
 # ---------------------------------------------------------------------------
@@ -62,10 +76,11 @@ def set_entry_text(backend: Any, name: str, value: object | None) -> None:
     if w is None:
         return
     text = str(value or "")
-    if hasattr(w, "setPlainText"):
-        w.setPlainText(text)
-    elif hasattr(w, "setText"):
-        w.setText(text)
+    with _with_blocked_signals(w):
+        if hasattr(w, "setPlainText"):
+            w.setPlainText(text)
+        elif hasattr(w, "setText"):
+            w.setText(text)
 
 
 def read_entry_text(backend: Any, name: str) -> str:
@@ -89,10 +104,11 @@ def set_spin_value(backend: Any, name: str, value: int) -> None:
     if w is None:
         return
     if hasattr(w, "setValue"):
-        try:
-            w.setValue(int(value))
-        except Exception:
-            pass
+        with _with_blocked_signals(w):
+            try:
+                w.setValue(int(value))
+            except Exception:
+                pass
 
 
 def read_spin_int(backend: Any, name: str) -> int:
@@ -130,7 +146,8 @@ def set_toggle_active(backend: Any, name: str, active: bool) -> None:
     if w is None:
         return
     if hasattr(w, "setChecked"):
-        w.setChecked(bool(active))
+        with _with_blocked_signals(w):
+            w.setChecked(bool(active))
 
 
 def is_toggle_active(backend: Any, name: str) -> bool:

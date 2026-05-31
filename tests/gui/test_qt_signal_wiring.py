@@ -171,7 +171,7 @@ def test_connect_qt_widgets_does_not_raise_with_empty_registry(qapp):
         def _on_direction_released(self, key):
             pass
 
-        def _on_margin_changed(self, widget):
+        def _on_margin_changed(self, widget_name, value):
             pass
 
         def _on_apply_mode_toggled(self, widget, mode):
@@ -229,7 +229,7 @@ def test_connect_qt_widgets_wires_optimize_btn(qapp):
         def _on_direction_pressed(self, k): pass
         def _on_direction_toggled(self, k): pass
         def _on_direction_released(self, k): pass
-        def _on_margin_changed(self, w): pass
+        def _on_margin_changed(self, widget_name, value): pass
         def _on_apply_mode_toggled(self, w, m): pass
         def _on_slideshow_mode_toggled(self, w, m): pass
         def _on_margin_text_mode_toggled(self, w, v): pass
@@ -356,3 +356,398 @@ def test_start_stop_slideshow_timer(qapp):
     assert backend._slideshow_timer is not None
     backend._stop_slideshow_timer()
     assert backend._slideshow_timer is None
+
+
+# ---------------------------------------------------------------------------
+# 3-layer audit: on_pick_input argument order (path, side)
+# ---------------------------------------------------------------------------
+
+
+def test_on_margin_text_mode_settings_no_recursion(qapp):
+    """Selecting embed pattern 'Settings' must not recurse via margin text sync."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+    from harite.gui.adapters.ui_adapter import (
+        RUNTIME_HANDLER_MAP,
+        connect_signal_dispatch,
+        create_mainwindow_signal_dispatch,
+    )
+
+    window = MainWindow()
+    backend = load_qt_runtime_signal_backend()
+    dispatch = create_mainwindow_signal_dispatch(
+        window, tuple(RUNTIME_HANDLER_MAP.keys()), handler_map=RUNTIME_HANDLER_MAP
+    )
+    connect_signal_dispatch(backend, dispatch)
+
+    settings_btn = backend._objects["margin_text_mode_settings"]
+    try:
+        settings_btn.click()
+    except RecursionError as exc:
+        raise AssertionError("Settings embed pattern toggled into recursion") from exc
+
+    assert window.form_state.embed_info == "params"
+    assert settings_btn.isChecked()
+
+
+def test_margin_spin_change_updates_form_state(qapp):
+    """Margin spins at 0 must remain editable and update MainWindow.margins."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+    from harite.gui.adapters.ui_adapter import (
+        RUNTIME_HANDLER_MAP,
+        connect_signal_dispatch,
+        create_mainwindow_signal_dispatch,
+    )
+
+    window = MainWindow()
+    backend = load_qt_runtime_signal_backend()
+    dispatch = create_mainwindow_signal_dispatch(
+        window, tuple(RUNTIME_HANDLER_MAP.keys()), handler_map=RUNTIME_HANDLER_MAP
+    )
+    connect_signal_dispatch(backend, dispatch)
+
+    left_spin = backend._objects["left_margin_spin"]
+    assert left_spin.value() == 0
+    assert left_spin.isEnabled()
+
+    left_spin.setValue(12)
+
+    assert window.form_state.margins == "12,0,0,0"
+
+
+def test_margin_text_entry_editable_for_text_only(qapp):
+    """Text only embed pattern must unlock the margin text entry for editing."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+    from harite.gui.adapters.ui_adapter import (
+        RUNTIME_HANDLER_MAP,
+        connect_signal_dispatch,
+        create_mainwindow_signal_dispatch,
+    )
+
+    window = MainWindow()
+    backend = load_qt_runtime_signal_backend()
+    dispatch = create_mainwindow_signal_dispatch(
+        window, tuple(RUNTIME_HANDLER_MAP.keys()), handler_map=RUNTIME_HANDLER_MAP
+    )
+    connect_signal_dispatch(backend, dispatch)
+
+    entry = backend._objects["txtMarginText"]
+    tabs = backend._objects["marginTextTabs"]
+    assert entry.isReadOnly()
+
+    backend._objects["margin_text_mode_text"].click()
+
+    assert window.form_state.embed_info == "free"
+    assert tabs.currentIndex() == 1
+    assert entry.isReadOnly() is False
+
+
+def test_margin_text_entry_editable_for_both(qapp):
+    """Both embed pattern must unlock the margin text entry for editing."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+    from harite.gui.adapters.ui_adapter import (
+        RUNTIME_HANDLER_MAP,
+        connect_signal_dispatch,
+        create_mainwindow_signal_dispatch,
+    )
+
+    window = MainWindow()
+    backend = load_qt_runtime_signal_backend()
+    dispatch = create_mainwindow_signal_dispatch(
+        window, tuple(RUNTIME_HANDLER_MAP.keys()), handler_map=RUNTIME_HANDLER_MAP
+    )
+    connect_signal_dispatch(backend, dispatch)
+
+    entry = backend._objects["txtMarginText"]
+    backend._objects["margin_text_mode_both"].click()
+
+    assert window.form_state.embed_info == "combo"
+    assert entry.isReadOnly() is False
+
+
+def test_on_optimize_clicked_does_not_recurse_on_margin_sync(qapp):
+    """Optimize sync must not loop through margin text change handlers."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+
+    backend = load_qt_runtime_signal_backend()
+    window = MainWindow()
+    window.on_change_input_text("C:/test/image.jpg")
+    backend._signal_handlers["on_optimize"] = window.on_optimize
+    backend._signal_handlers["on_change_margin_text"] = window.on_change_margin_text
+
+    try:
+        backend._on_optimize_clicked()
+    except RecursionError as exc:
+        raise AssertionError("Optimize handler recursed through margin text sync") from exc
+    except (ValueError, OSError):
+        # Optimize may fail without real image files; recursion is the only failure here.
+        pass
+
+
+def test_on_pick_input_enables_optimize_button(qapp):
+    """After valid input pick, btnOptimize must reflect MainWindow.can_optimize."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+
+    backend = load_qt_runtime_signal_backend()
+    window = MainWindow()
+
+    class _FakeProxy:
+        def open(self, *, title="Open Image", callback=None):
+            if callback:
+                callback("/tmp/image.jpg")
+
+    backend._objects["ImgOpenDialog"] = _FakeProxy()
+    backend._signal_handlers["on_pick_input"] = window.on_pick_input
+    backend._signal_handlers["on_close_open_image_dialog"] = window.on_close_open_image_dialog
+
+    btn = backend._objects["btnOptimize"]
+    assert btn.isEnabled() is False
+    backend._on_pick_input_clicked("L")
+    assert window.can_optimize is True
+    assert btn.isEnabled() is True
+
+
+def test_on_pick_input_passes_path_then_side(qapp):
+    """on_pick_input callback must receive (path, side) — not (side, path)."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    received: list = []
+
+    class _FakeProxy:
+        def open(self, *, title="Open Image", callback=None):
+            if callback:
+                callback("/tmp/image.jpg")
+            return "/tmp/image.jpg"
+
+    backend._objects["ImgOpenDialog"] = _FakeProxy()
+    backend._signal_handlers["on_pick_input"] = lambda path, side: received.append((path, side))
+    backend._signal_handlers["on_close_open_image_dialog"] = lambda: None
+    backend._on_pick_input_clicked("L")
+    assert received == [("/tmp/image.jpg", "L")]
+
+
+def test_on_pick_input_calls_close_handler_on_confirm(qapp):
+    """on_close_open_image_dialog must be called after dialog confirms."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    closed: list = []
+
+    class _FakeProxy:
+        def open(self, *, title="Open Image", callback=None):
+            if callback:
+                callback("/tmp/img.jpg")
+
+    backend._objects["ImgOpenDialog"] = _FakeProxy()
+    backend._signal_handlers["on_pick_input"] = lambda p, s: None
+    backend._signal_handlers["on_close_open_image_dialog"] = lambda: closed.append(1)
+    backend._on_pick_input_clicked("R")
+    assert closed == [1]
+
+
+def test_on_pick_input_calls_close_handler_on_cancel(qapp):
+    """on_close_open_image_dialog must be called even when user cancels."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    closed: list = []
+
+    class _FakeProxy:
+        def open(self, *, title="Open Image", callback=None):
+            pass  # no callback → user canceled
+
+    backend._objects["ImgOpenDialog"] = _FakeProxy()
+    # on_pick_input must be registered so the dialog is actually opened.
+    backend._signal_handlers["on_pick_input"] = lambda p, s: None
+    backend._signal_handlers["on_close_open_image_dialog"] = lambda: closed.append(1)
+    backend._on_pick_input_clicked("L")
+    assert closed == [1]
+
+
+# ---------------------------------------------------------------------------
+# 3-layer audit: on_pick_srcdir argument order + close handler
+# ---------------------------------------------------------------------------
+
+
+def test_on_pick_srcdir_passes_path_then_side(qapp):
+    """on_pick_slideshow_srcdir callback must receive (path, side)."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    received: list = []
+
+    class _FakeProxy:
+        def open(self, *, title="Select Source Directory", callback=None):
+            if callback:
+                callback("/home/user/pics")
+            return "/home/user/pics"
+
+    backend._objects["SrcdirDialog"] = _FakeProxy()
+    backend._signal_handlers["on_pick_slideshow_srcdir"] = lambda path, side: received.append((path, side))
+    backend._signal_handlers["on_close_srcdir_dialog"] = lambda: None
+    backend._on_pick_srcdir_clicked("L")
+    assert received == [("/home/user/pics", "L")]
+
+
+def test_on_pick_srcdir_calls_close_handler(qapp):
+    """on_close_srcdir_dialog must be called after the dialog interaction."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    closed: list = []
+
+    class _FakeProxy:
+        def open(self, *, title="", callback=None):
+            pass  # cancel
+
+    backend._objects["SrcdirDialog"] = _FakeProxy()
+    # on_pick_slideshow_srcdir must be registered so the dialog is opened.
+    backend._signal_handlers["on_pick_slideshow_srcdir"] = lambda p, s: None
+    backend._signal_handlers["on_close_srcdir_dialog"] = lambda: closed.append(1)
+    backend._on_pick_srcdir_clicked("R")
+    assert closed == [1]
+
+
+# ---------------------------------------------------------------------------
+# 3-layer audit: Export Image (save) flow
+# ---------------------------------------------------------------------------
+
+
+def test_on_save_clicked_calls_on_save_as_without_args(qapp):
+    """on_save_as() must be called with NO arguments."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    calls: list = []
+
+    class _FakeProxy:
+        def open(self, *, title="", callback=None):
+            pass  # cancel
+
+    backend._objects["SavePathDialog"] = _FakeProxy()
+    backend._signal_handlers["on_save_as"] = lambda: calls.append("save_as")
+    backend._signal_handlers["on_close_save_path_dialog"] = lambda: None
+    backend._on_save_clicked()
+    assert calls == ["save_as"]
+
+
+def test_on_save_clicked_calls_on_save_path_selected_with_path(qapp):
+    """After file selection, on_save_path_selected(path) must be called."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    selected: list = []
+
+    class _FakeProxy:
+        def open(self, *, title="", callback=None):
+            if callback:
+                callback("/tmp/output.jpg")
+            return "/tmp/output.jpg"
+
+    backend._objects["SavePathDialog"] = _FakeProxy()
+    backend._signal_handlers["on_save_as"] = lambda: None
+    backend._signal_handlers["on_save_path_selected"] = lambda p: selected.append(p)
+    backend._signal_handlers["on_close_save_path_dialog"] = lambda: None
+    backend._on_save_clicked()
+    assert selected == ["/tmp/output.jpg"]
+
+
+def test_on_save_clicked_calls_on_save_path_selection_canceled(qapp):
+    """When user cancels, on_save_path_selection_canceled() must be called."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    canceled: list = []
+
+    class _FakeProxy:
+        def open(self, *, title="", callback=None):
+            pass  # cancel — no callback
+
+    backend._objects["SavePathDialog"] = _FakeProxy()
+    backend._signal_handlers["on_save_as"] = lambda: None
+    backend._signal_handlers["on_save_path_selection_canceled"] = lambda: canceled.append(1)
+    backend._signal_handlers["on_close_save_path_dialog"] = lambda: None
+    backend._on_save_clicked()
+    assert canceled == [1]
+
+
+def test_on_save_clicked_always_calls_close_dialog(qapp):
+    """on_close_save_path_dialog must be called regardless of outcome."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    closed: list = []
+
+    class _FakeProxy:
+        def open(self, *, title="", callback=None):
+            if callback:
+                callback("/tmp/out.jpg")
+
+    backend._objects["SavePathDialog"] = _FakeProxy()
+    backend._signal_handlers["on_save_as"] = lambda: None
+    backend._signal_handlers["on_close_save_path_dialog"] = lambda: closed.append(1)
+    backend._on_save_clicked()
+    assert closed == [1]
+
+
+# ---------------------------------------------------------------------------
+# 3-layer audit: help label text on mode toggle
+# ---------------------------------------------------------------------------
+
+
+def test_apply_mode_toggled_updates_lblApplyMode_single_file(qapp):
+    """Toggling to single-file mode must update lblApplyMode with spec text."""
+    from PyQt6.QtWidgets import QLabel
+
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    lbl = QLabel()
+    backend._objects["lblApplyMode"] = lbl
+    backend._on_apply_mode_toggled(None, "single-file")
+    assert lbl.text() == "Apply the optimized image as a single file."
+
+
+def test_apply_mode_toggled_updates_lblApplyMode_auto_split(qapp):
+    """Toggling to per-monitor-auto-split mode must update lblApplyMode with spec text."""
+    from PyQt6.QtWidgets import QLabel
+
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    lbl = QLabel()
+    backend._objects["lblApplyMode"] = lbl
+    backend._on_apply_mode_toggled(None, "per-monitor-auto-split")
+    assert lbl.text() == "Split the optimized image and apply per display."
+
+
+def test_slideshow_mode_toggled_updates_lblSlideshowModeHelp_sequential(qapp):
+    """Toggling to sequential must update lblSlideshowModeHelp."""
+    from PyQt6.QtWidgets import QLabel
+
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    lbl = QLabel()
+    backend._objects["lblSlideshowModeHelp"] = lbl
+    backend._on_slideshow_mode_toggled(None, "sequential")
+    assert lbl.text() == "Sequential rotates images."
+
+
+def test_slideshow_mode_toggled_updates_lblSlideshowModeHelp_random(qapp):
+    """Toggling to random must update lblSlideshowModeHelp."""
+    from PyQt6.QtWidgets import QLabel
+
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    lbl = QLabel()
+    backend._objects["lblSlideshowModeHelp"] = lbl
+    backend._on_slideshow_mode_toggled(None, "random")
+    assert lbl.text() == "Random rotates images."

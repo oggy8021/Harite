@@ -24,9 +24,24 @@ def test_on_change_input_text_updates_state():
     assert window.last_error == ""
 
 
-def test_on_change_input_text_disables_optimize_when_resolution_unresolved():
+def test_can_optimize_with_auto_resolution_and_detected_display(monkeypatch):
+    window = MainWindow()
+    window.form_state.resolution = "auto"
+    monkeypatch.setattr(
+        "harite.workspace.detect_displays",
+        lambda: [Display(name="", width=1920, height=1080, x_offset=0)],
+    )
+
+    window.on_change_input_text("a.jpg")
+
+    assert window.can_optimize is True
+    assert window.status_message == "input ready"
+
+
+def test_on_change_input_text_disables_optimize_when_resolution_unresolved(monkeypatch):
     window = MainWindow()
     window.form_state.resolution = ""
+    monkeypatch.setattr("harite.workspace.detect_displays", lambda: [])
 
     window.on_change_input_text("a.jpg")
 

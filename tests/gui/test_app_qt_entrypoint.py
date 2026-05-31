@@ -58,7 +58,7 @@ def test_run_exits_with_message_when_qt_missing_and_present_requested(monkeypatc
 
 
 def test_run_calls_present_when_backend_available(monkeypatch):
-    called = {"present": 0, "show": 0}
+    called = {"present": 0, "show": 0, "install_tray": 0}
 
     class DummyWindow:
         def show(self) -> None:
@@ -67,6 +67,10 @@ def test_run_calls_present_when_backend_available(monkeypatch):
     class DummyBackend:
         def connect_signals(self, dispatch) -> None:
             pass
+
+        def install_tray(self) -> bool:
+            called["install_tray"] += 1
+            return False
 
         def present(self) -> None:
             called["present"] += 1
@@ -76,12 +80,13 @@ def test_run_calls_present_when_backend_available(monkeypatch):
 
     app_qt.run(present_ui_window=True)
 
+    assert called["install_tray"] == 1
     assert called["present"] == 1
     assert called["show"] == 0
 
 
 def test_run_skips_present_when_disabled(monkeypatch):
-    called = {"present": 0, "show": 0}
+    called = {"present": 0, "show": 0, "install_tray": 0}
 
     class DummyWindow:
         def show(self) -> None:
@@ -91,6 +96,10 @@ def test_run_skips_present_when_disabled(monkeypatch):
         def connect_signals(self, dispatch) -> None:
             pass
 
+        def install_tray(self) -> bool:
+            called["install_tray"] += 1
+            return False
+
         def present(self) -> None:
             called["present"] += 1
 
@@ -99,8 +108,44 @@ def test_run_skips_present_when_disabled(monkeypatch):
 
     app_qt.run(present_ui_window=False)
 
+    assert called["install_tray"] == 1
     assert called["present"] == 0
     assert called["show"] == 1
+
+
+def test_run_attaches_tasktray_adapter_when_installed(monkeypatch):
+    class DummyTray:
+        pass
+
+    class DummyWindow:
+        def show(self) -> None:
+            pass
+
+    class DummyBackend:
+        _tray = DummyTray()
+
+        def connect_signals(self, dispatch) -> None:
+            pass
+
+        @property
+        def tray_adapter(self):
+            return self._tray
+
+        def install_tray(self) -> bool:
+            return True
+
+        def present(self) -> None:
+            pass
+
+    window = DummyWindow()
+    backend = DummyBackend()
+    monkeypatch.setattr(app_qt, "MainWindow", lambda: window)
+    monkeypatch.setattr(app_qt, "_load_qt_signal_backend", lambda: backend)
+
+    app_qt.run(present_ui_window=False)
+
+    assert getattr(window, "_tasktray_adapter", None) is backend._tray
+    assert getattr(backend, "_tasktray_adapter", None) is backend._tray
 
 
 def test_main_parses_no_flags(monkeypatch):

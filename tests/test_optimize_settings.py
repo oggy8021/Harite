@@ -31,6 +31,25 @@ def test_resolve_optimize_display_settings_auto_two_screen(monkeypatch):
     assert resolved.r_display == "1280x1024"
 
 
+def test_resolve_optimize_display_settings_single_display_auto(monkeypatch):
+    monkeypatch.setattr("harite.optimize_settings.build_two_screen_optimize_context", lambda: None)
+    monkeypatch.setattr(
+        "harite.workspace.detect_displays",
+        lambda: [Display(name="", width=2560, height=1440, x_offset=0)],
+    )
+
+    resolved = resolve_optimize_display_settings(
+        input_values=["left.jpg"],
+        resolution="auto",
+        two_screen=None,
+        l_display="auto",
+        r_display="auto",
+    )
+
+    assert resolved.two_screen is False
+    assert resolved.resolution == "2560x1440"
+
+
 def test_resolve_optimize_display_settings_preserves_explicit_values_without_context(monkeypatch):
     monkeypatch.setattr("harite.optimize_settings.build_two_screen_optimize_context", lambda: None)
 

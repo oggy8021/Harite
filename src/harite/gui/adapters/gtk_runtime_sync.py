@@ -82,6 +82,14 @@ def sync_main_state_from_owner(backend: Any, owner: Any) -> None:
     backend._refresh_current_state_labels()
 
 
+def sync_action_availability_from_owner(backend: Any, owner: Any) -> None:
+    """Mirror MainWindow action flags onto header / action-cluster buttons."""
+    backend._set_button_enabled("btnSave", bool(getattr(owner, "can_optimize", False)))
+    backend._set_button_enabled("btnOptimize", bool(getattr(owner, "can_optimize", False)))
+    backend._set_button_enabled("btnSetWall", bool(getattr(owner, "can_apply", False)))
+    backend._set_button_enabled("btnDaemonize", bool(getattr(owner, "can_start_slideshow", False)))
+
+
 def sync_input_state_from_owner(backend: Any, owner: Any) -> None:
     form_state = getattr(owner, "form_state", None)
     if form_state is None:
@@ -92,9 +100,7 @@ def sync_input_state_from_owner(backend: Any, owner: Any) -> None:
     backend._set_entry_text("entPathL", backend._format_input_display(backend._input_path_l))
     backend._set_entry_text("entPathR", backend._format_input_display(backend._input_path_r))
 
-    backend._set_button_enabled("btnSave", bool(getattr(owner, "can_optimize", False)))
-    backend._set_button_enabled("btnOptimize", bool(getattr(owner, "can_optimize", False)))
-    backend._set_button_enabled("btnSetWall", bool(getattr(owner, "can_apply", False)))
+    sync_action_availability_from_owner(backend, owner)
     backend._set_save_path_dialog_open_state(bool(getattr(owner, "save_path_dialog_open", False)))
     backend._set_label_text("lblOptimizeResult", "Optimize result: not-run")
     backend._set_label_text("lblApplyTarget", "Apply target: not-ready")
@@ -140,8 +146,11 @@ def refresh_margins_controls(backend: Any, owner: Any | None = None) -> None:
     backend._set_widget_enabled("marginTextPage", text_enabled)
     backend._set_widget_enabled("txtMarginText", text_enabled)
     entry = backend._objects.get("txtMarginText")
-    if entry is not None and hasattr(entry, "set_editable"):
-        entry.set_editable(bool(text_enabled))
+    if entry is not None:
+        if hasattr(entry, "set_editable"):
+            entry.set_editable(bool(text_enabled))
+        elif hasattr(entry, "setReadOnly"):
+            entry.setReadOnly(not bool(text_enabled))
 
     if margin_text_mode == "params":
         backend._set_notebook_page("marginTextTabs", 0)

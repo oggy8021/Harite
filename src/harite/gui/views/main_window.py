@@ -470,7 +470,24 @@ class MainWindow:
         self.slideshow_source_display = f"Slideshow srcdirs: L={left} | R={right}"
 
     def _can_optimize_now(self) -> bool:
-        return bool(self.form_state.input_value) and self._current_resolution_value() is not None
+        if not self.form_state.input_value:
+            return False
+        if self._current_resolution_value() is not None:
+            return True
+        try:
+            from harite.optimize_settings import resolve_optimize_display_settings
+
+            parts = [part.strip() for part in self.form_state.input_value.split(",") if part.strip()]
+            resolve_optimize_display_settings(
+                input_values=parts,
+                resolution=self.form_state.resolution,
+                two_screen=self.form_state.two_screen,
+                l_display=self.form_state.l_display,
+                r_display=self.form_state.r_display,
+            )
+            return True
+        except ValueError:
+            return False
 
     def _can_start_slideshow_now(self) -> bool:
         return (

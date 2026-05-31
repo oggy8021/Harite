@@ -5,7 +5,7 @@
 ## 位置づけ
 
 - 本書は v1.0.0 後の次期 planning 入口として、GTK 3 / PyGObject から PyQt6 への移植を具体化した計画文書である。
-- [docs/working/20260520-feature-overview.md](20260520-feature-overview.md) の C-04（GUI 利用導線の再設計）と密接に関連する。
+- [docs/working/20260518-2047-feature-overview.md](20260518-2047-feature-overview.md) の C-04（GUI 利用導線の再設計）と密接に関連する。
 - 仕様書は 2026-05-30 時点のリファクタ後正本（`docs/specs/`）を参照基準とする。
 
 ---
@@ -383,5 +383,5 @@ feature-overview の C-04 は「optimize / apply / slideshow を利用目的ベ�
 
 - GUI 仕様: [docs/specs/gui/harite-gui-spec.md](../specs/gui/harite-gui-spec.md)
 - Foundation 仕様: [docs/specs/harite-foundation-spec.md](../specs/harite-foundation-spec.md)
-- Feature overview: [docs/working/20260520-feature-overview.md](20260520-feature-overview.md)
+- Feature overview: [docs/working/20260518-2047-feature-overview.md](20260518-2047-feature-overview.md)
 - Release readiness: [docs/release-readiness-checklist.md](../release-readiness-checklist.md)

@@ -90,11 +90,20 @@ def _connect_direction_widgets(backend: Any, widgets: dict[str, Any]) -> None:
             lambda _key=key: backend._on_direction_released(_key),
         )
 
-    for spin_name in ("top_margin_spin", "left_margin_spin", "right_margin_spin", "bottom_margin_spin"):
+    spin_aliases = (
+        ("top_margin_spin", "spnTopMargin"),
+        ("left_margin_spin", "spnLeftMargin"),
+        ("right_margin_spin", "spnRightMargin"),
+        ("bottom_margin_spin", "spnBottomMargin"),
+    )
+    for spin_key, alias in spin_aliases:
+        spin = widgets.get(spin_key)
+        if spin is None:
+            continue
         _safe_connect(
-            widgets.get(spin_name),
+            spin,
             "valueChanged",
-            lambda _val, _b=backend: _b._on_margin_changed(None),
+            lambda value, _alias=alias: backend._on_margin_changed(_alias, value),
         )
 
 
