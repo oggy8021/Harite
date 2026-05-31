@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-05-31 (Main tab action cluster Qt layout)
+最終更新: 2026-05-31 (slideshow Interval commit / current path 省略表示)
 
 ## 1. GUI の責務
 
@@ -112,6 +112,7 @@ Main tab:
 - `Main` tab は縦積みの `main_col` を持ち、その上段に compose grid、下段に action cluster を置く。
 - compose grid は左・中央・右の 3 列構成で、左 panel と右 panel は display ごとの入力・方向操作面、中央 panel は pick state の表示面とする。
 - 左右 panel は同型で、上段に十字配置の direction toggle と `Open-L/R`、下段に選択 path 表示と `Clear-L/R` を置く。
+- Main tab の選択 path 表示（`entPathL` / `entPathR`）は full path をそのまま出さず、共通 helper `format_input_display(...)` で **basename の省略表示** にする（§6.1 参照）。
 - direction toggle 群は `Top/Bottom/Left/Right` を display ごとに十字状へ配置し、画像 picker button を中央に置く。
 - action cluster は横 3 群構成で、左から `Preview`、`Optimize`、`Apply` を置く。
 - action cluster の 3 群は **上端揃え** とする。群の高さ差（Apply 群の mode row 等）によって section label や button 行が縦方向にずれないこと。
@@ -142,6 +143,7 @@ Slideshow tab:
 - `mode help row` は mode の選択規則と runtime 反映条件を補足する説明 label を置く。
 - `interval/start/stop row` は `Interval`、spin、`Slideshow Start`、`Slideshow Stop` を 1 行にまとめる。
 - detail shell は `current` と `output` を縦積みした detail row を中央に置く。
+- `Slideshow current` は tick / start で選ばれた L/R 画像 path を示す。**表示は Main tab の path 省略と同型**（§6.1）とし、full path を label にそのまま出さない。
 - したがって slideshow mode は controls row の 1 要素ではなく、`apply mode row` と同様に独立 row と補助説明 row を持つ面として扱う。
 
 Dialogs:
@@ -220,7 +222,7 @@ apply mode の user-facing 意味:
 - GUI のスライドショー機能は `MainWindow` 側に運用責務を持つ。
 - slideshow start 時に srcdir（空不可）と plugin（解決可否）を検証する。apply_mode は start 時に検証しない。
 - dual-source（Srcdir-L と Srcdir-R の両方に画像が存在する）実行では、GUI の apply_mode 設定値にかかわらず常に `per-monitor-auto-split` を使用する。single-source 実行では常に `single-file` を使用する。
-- slideshow tick は GTK runtime timer と owner state の同期で動く。
+- slideshow tick は runtime timer（GTK: GLib timeout / Qt: `QTimer`）と owner state の同期で動く。
 - GUI は CLI slideshow helper をそのまま露出するのではなく、GUI 状態管理を被せたうえで利用する。
 - GUI は slideshow tab に mode 選択面を持つ。
 - mode の user-facing 表記は `sequential` / `random` とする。
@@ -229,6 +231,38 @@ apply mode の user-facing 意味:
 - mode は slideshow 関連設定値として load / save 対象に含める。
 - mode 選択面は srcdir row の下、interval/start/stop row の上に独立 row として置く。
 - mode help row は選択中 mode の簡潔な補助説明を表示する user-facing surface とし、`sequential` 時は `Sequential rotates images.`、`random` 時は `Random rotates images.` を表示する。
+
+### 6.1 path 省略表示（Main input / Slideshow current）
+
+GTK / Qt 両 backend で、次の user-facing surface は **同じ省略規則** を使う。
+
+| surface | 表示内容 | helper |
+| --- | --- | --- |
+| Main tab `entPathL` / `entPathR` | 選択画像 path | `format_input_display(...)` |
+| Slideshow tab `Slideshow current` | 現在 tick の L/R 選択画像 path | `format_slideshow_path_display(...)` → 内部で `format_input_display(...)` |
+
+省略規則:
+
+- 表示対象は path の **basename** とする（directory 部分は出さない）。
+- basename が 36 文字以下ならそのまま表示する。
+- 36 文字を超える場合は `head + "..." + tail` へ切り詰める。既定では末尾 12 文字を残し、head 側は `36 - 12 - 3` 文字を使う（preview assignment 表示と同型）。
+- owner 側の `slideshow_current_display` 文字列も、上記規則で整形した L/R を含める。
+
+### 6.2 Interval spin と settings の優先順位
+
+`slideshow_interval_seconds` は settings JSON の load / save 対象であるが、**実行時の有効値は slideshow tab の Interval spin が起点** となる。
+
+| タイミング | 挙動 |
+| --- | --- |
+| 起動時 settings load / Settings Apply | settings 値を owner `slideshow_interval_seconds` へ反映し、spin も同期する |
+| spin 変更（`value-changed`） | `on_slideshow_interval_change` で owner を即更新する（Save 前でもセッション中有効） |
+| **Start 直前** | spin の現値を owner へ **必ず commit** する（`value-changed` 未発火でも可）。GTK / Qt 共通 |
+| Start 成功後 | runtime timer は commit 後の `slideshow_interval_seconds` で起動する |
+| 実行中の spin 変更 | owner のみ更新。timer は再起動せず、新 interval は **次回 Start 以降** で有効 |
+
+したがって、ユーザーが spin を 3 秒に変えて Start した場合、保存済み settings が 60 秒でも **3 秒がその Start の timer に使われる**。tray の Start も同じ backend 経路のため同規則が適用される。
+
+実装参照: `commit_slideshow_interval_from_spin(...)`（`gtk_runtime_slideshow_ui.py`）、各 backend の `_on_slideshow_start_clicked(...)`。
 
 ### slideshow start / tick / stop
 
@@ -266,7 +300,7 @@ apply mode の user-facing 意味:
 
 - `SlideshowCycleState`（L・R）は `on_slideshow_stop` / `on_slideshow_start` でリセットされない。`mode=sequential` の場合、再起動後も前回の画像インデックスから継続する。
 - `slideshow_output_display` の初期値は `"Slideshow output: ."` であり、`_update_slideshow_output_display()` 呼び出し前は一時的にドット表示になりうる。
-- `slideshow_interval_seconds` をスライドショー実行中に変更した場合、モデル値のみが更新される。GTK タイマーは再起動されず、新しいインターバルは次回の start 以降で有効になる。
+- `slideshow_interval_seconds` をスライドショー実行中に変更した場合、モデル値のみが更新される。runtime timer（GTK / Qt）は再起動されず、新しいインターバルは次回の start 以降で有効になる（§6.2）。
 - `_apply_slideshow_selection` で L・R 両方の選択画像が `"-"`（選択なしセンチネル）の場合、apply を行わず `(True, None)` を返す（成功扱いだが壁紙は変更されない）。
 - `on_slideshow_tick()` を `slideshow_running=False` の状態で呼んだ場合、`False` を返してログのみ出力する。スライドショーの進行は行わない。
 - `on_settings_dialog_open` は L・R 両方の input path が設定されている場合のみ two-screen 設定を同期する。片側のみの場合は two-screen 同期をスキップする。
