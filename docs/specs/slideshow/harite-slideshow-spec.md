@@ -1,6 +1,6 @@
 # Harite スライドショー仕様 (Slideshow Spec)
 
-最終更新: 2026-05-30
+最終更新: 2026-05-31
 
 ## 1. スライドショー機能の責務
 
@@ -48,12 +48,21 @@ sequenceDiagram
     GUI->>Slideshow: collect or select next image(s)
     alt single source
         GUI->>Plugin: apply(image)
-    else dual source auto-split
+    else dual source (Linux per-monitor)
         GUI->>Core: run_optimize(two-screen state)
         Core-->>GUI: composite file
         GUI->>Core: resolve_apply_settings(...)
-        Core-->>GUI: per-monitor target
+        Core-->>GUI: per-monitor target map
         GUI->>Plugin: apply(target map)
+    else dual source (Windows Span)
+        GUI->>Core: run_optimize(two-screen state)
+        Core-->>GUI: composite file
+        GUI->>Core: resolve_apply_settings(...)
+        Core-->>GUI: single-file target (windows_span)
+        opt windows_apply_span
+            GUI->>Core: ensure_span_style (best-effort)
+        end
+        GUI->>Plugin: apply(single wide image)
     end
     Plugin-->>GUI: ok / failed / exception
     GUI->>GUI: update status display, status, message history
@@ -158,6 +167,11 @@ GUI は単なるタイマー処理ではなく、状態表示の責務を強く�
 
 GUI slideshow が生成する optimize 成果物（composite と per-monitor 分割画像）は、手動 Optimize / Export の出力先とは **別の slideshow 作業ディレクトリ** に書く。
 
+#### 解決規則（Windows）
+
+1. **ピクチャ根** — `SHGetFolderPathW`（Pictures、CSIDL 0x27）。未解決時は `~/Pictures`。
+2. **slideshow 作業ディレクトリ** — `{ピクチャ根}/Harite/slideshow/`（Linux と同型）。
+
 #### 解決規則（Linux / XDG）
 
 1. **ピクチャ根**（手動 Optimize / Export の既定 `output_dir` と同型）  
@@ -189,7 +203,9 @@ GUI が dual-source slideshow を `per-monitor-auto-split` で実行するとき
 | 種別 | ファイル名 |
 | --- | --- |
 | composite | `harite_slideshow.jpg` |
-| per-monitor 分割 | `harite_slideshow_{display_name_safe}.jpg`（`display.name` を file-safe 化した suffix。例: `HDMI-1` → `harite_slideshow_HDMI-1.jpg`） |
+| per-monitor 分割（Linux plugin のみ） | `harite_slideshow_{display_name_safe}.jpg`（`display.name` を file-safe 化した suffix。例: `HDMI-1` → `harite_slideshow_HDMI-1.jpg`） |
+
+Windows **Span** 経路（`windows_span`）では **composite スロットのみ** を生成・apply する。per-monitor 分割ファイルは作らない（B-lite / [gui-spec § Main Apply](../gui/harite-gui-spec.md) と同型）。
 
 - dual-source の optimize / split は、上記 path を `output_path` / `output_dir` として明示指定し、毎 tick 上書きする。
 - 手動 Optimize（ピクチャ根）は従来どおり `harite_output_{NNNN}.jpg` 採番でよい（R5 により作業ディレクトリと分離）。
@@ -308,7 +324,16 @@ CLI の主な観測値:
 
 ## 9. 安定性上の注意点
 
-- dual-source slideshow は linux plugin と two detected displays を要件に持つ。
+### dual-source 起動要件（GUI）
+
+| plugin | display 条件 | apply 経路 |
+| --- | --- | --- |
+| `linux` | 2 枚以上検出 | per-monitor map（§6.2 分割スロット） |
+| `windows` | 2 枚以上検出 | wide composite + OS **Span**（single-file apply、`windows_span`） |
+| その他 | — | dual-source **非対応**（start 前に拒否） |
+
+- Windows では linux plugin を要求しない（W-02）。`resolve_apply_settings` が `per-monitor-auto-split` を single-file に解決する（[plugin-spec §4.1](../plugins/harite-plugin-spec.md)）。
+- Settings **`windows_apply_span`** が有効なとき、各 tick の apply 前に HKCU Span を best-effort 設定する（Main Apply B-lite と同型）。registry **自動復元は行わない**（[#343](../../online-issues/issue-343.md)）。
 - plugin exception は apply_error 系として扱う。
 - input directory が空なら起動前に止める。
 

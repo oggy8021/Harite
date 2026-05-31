@@ -207,4 +207,12 @@ DELL U2720QM
 | プレビュー | **B'** — 疑似クロップ + 「monitor region」文言（Linux 用語を出さない） |
 | slideshow | wide composite + Span（opt-in 時は registry 維持）。W-02 で spec 化 |
 
-**未着手（次 PR）:** plugin-spec §4.1、README Windows 節、実装（`apply_surface` / B-lite Apply 経路）。
+**未着手（W-02）:** slideshow-spec / gui-spec §6 の Windows dual-source 追記、`_prepare_slideshow_apply` の linux ゲート解除（impl PR）。
+
+### W-03-B-lite（完了 — PR #352）
+
+**目標:** Linux Auto-Split と **見え方は同じ**（左右意図どおり）。Windows 実現は **仮想解像度 1 枚 + OS Span**（per-monitor map は約束しない）。
+
+**実装:** `apply_surface`, `windows_wallpaper`, `resolve_apply_settings` Windows 分岐, GUI Span ラベル, Settings `windows_apply_span`, slideshow tick 内 Span 分岐（start ゲートは W-02）。
+
+**追補（#352 マージ後）:** Qt preview pixmap 接続、Settings Save の `Path` 受け付け。
