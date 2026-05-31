@@ -74,6 +74,6 @@ online-issues に resolution 節を追記（issue-318 型）
 | --- | --- | --- | --- |
 | [#317](issue-317.md) | slideshow 出力純増 | 解決済み → spec 反映 | — |
 | [#318](issue-318.md) | ファイル名再利用の spec 欠落 | 解決済み → spec 反映 | — |
-| [#341](issue-341.md) | Windows slideshow / Linux plugin | planning | [working](../working/20260531-1200-windows-qt-validation-backlog.md) |
+| [#341](issue-341.md) | Windows slideshow / dual-source | **解決済** → spec + #356 | [working](../working/20260531-1200-windows-qt-validation-backlog.md) |
 | [#342](issue-342.md) | Qt Main action cluster レイアウト | polish | 同上 |
 | [#343](issue-343.md) | Windows Apply / 壁紙 / 解像度 | investigation | 同上 |
