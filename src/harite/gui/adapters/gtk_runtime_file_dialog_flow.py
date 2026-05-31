@@ -185,6 +185,14 @@ def format_input_display(path: str) -> str:
     return f"{name[:head_length]}...{name[-tail_length:]}"
 
 
+def format_slideshow_path_display(path: str) -> str:
+    """Abbreviate a slideshow current path for on-screen display (GTK/Qt shared)."""
+    value = str(path or "").strip()
+    if not value or value == "-":
+        return value or "-"
+    return format_input_display(value)
+
+
 def on_clear_input_clicked(backend: Any, side: str) -> None:
     callback = backend._signal_handlers.get("on_clear_input")
     if callback is None:

@@ -505,12 +505,17 @@ class MainWindow:
         self.slideshow_summary_display = "Slideshow: running" if self.slideshow_running else "Slideshow: stopped"
 
     def _update_slideshow_current_display(self, left: str | None = None, right: str | None = None) -> None:
+        from harite.gui.adapters.gtk_runtime_file_dialog_flow import format_slideshow_path_display
+
         current_left = left if left is not None else (str(self._slideshow_previous_l) if self._slideshow_previous_l else "-")
         current_right = right if right is not None else (str(self._slideshow_previous_r) if self._slideshow_previous_r else "-")
         if not self.slideshow_running and current_left == "-" and current_right == "-":
             self.slideshow_current_display = "Slideshow current: idle"
             return
-        self.slideshow_current_display = f"Slideshow current: L={current_left} | R={current_right}"
+        self.slideshow_current_display = (
+            f"Slideshow current: L={format_slideshow_path_display(current_left)}"
+            f" | R={format_slideshow_path_display(current_right)}"
+        )
 
     def _set_status(self, level: str, phase: str, message: str, *, error: str = "") -> None:
         """Set unified UI status fields and keep last_error in sync."""

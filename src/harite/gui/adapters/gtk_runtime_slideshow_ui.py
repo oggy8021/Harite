@@ -3,6 +3,32 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from harite.gui.adapters.gtk_runtime_file_dialog_flow import format_slideshow_path_display
+
+
+def commit_slideshow_interval_from_spin(backend: Any) -> int:
+    """Apply the Interval spin value to owner state (may not have fired value-changed yet)."""
+    interval_seconds = 0
+    reader = getattr(backend, "_read_spin_int", None)
+    if callable(reader):
+        try:
+            interval_seconds = int(reader("spnInterval"))
+        except (TypeError, ValueError):
+            interval_seconds = 0
+    else:
+        interval_widget = backend._objects.get("spnInterval")
+        if interval_widget is not None and hasattr(interval_widget, "get_value_as_int"):
+            interval_seconds = int(interval_widget.get_value_as_int())
+
+    if interval_seconds > 0:
+        callback = backend._signal_handlers.get("on_slideshow_interval_change")
+        if callback is not None:
+            try:
+                callback(interval_seconds)
+            except (TypeError, ValueError):
+                pass
+    return interval_seconds
+
 
 def refresh_slideshow_source_labels(backend: Any) -> None:
     left = backend._slideshow_srcdir_l or "-"
@@ -23,7 +49,10 @@ def refresh_slideshow_current_label(backend: Any, left: str | None = None, right
     if not backend._slideshow_running and current_left == "-" and current_right == "-":
         backend._set_label_text("lblSlideshowCurrent", "Slideshow current: idle")
         return
-    backend._set_label_text("lblSlideshowCurrent", f"Slideshow current: L={current_left} | R={current_right}")
+    backend._set_label_text(
+        "lblSlideshowCurrent",
+        f"Slideshow current: L={format_slideshow_path_display(current_left)} | R={format_slideshow_path_display(current_right)}",
+    )
 
 
 def refresh_slideshow_output_label(backend: Any, output_dir: str | None = None) -> None:
@@ -59,6 +88,7 @@ def on_slideshow_start_clicked(backend: Any, *_args: Any) -> None:
         backend._set_feedback(phase="Slideshow", state="handler-missing", error="handler not connected")
         return
     try:
+        commit_slideshow_interval_from_spin(backend)
         owner = backend._get_handler_owner("on_slideshow_start")
         ok = callback()
         if not ok:
