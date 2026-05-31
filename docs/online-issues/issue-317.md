@@ -1,4 +1,4 @@
-# Issue #318
+# Issue #317
 
 - URL
   <https://github.com/oggy8021/Harite/issues/317>

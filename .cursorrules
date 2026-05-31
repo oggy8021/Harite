@@ -13,3 +13,4 @@
 5. コード変更を含む PR は、対応する仕様 PR が先にマージされていることを前提とする
 6. gap analysis など作業メモ（docs/working/）は正本修正 PR より先にマージする
 7. docs/working/ のファイル名は `YYYYMMDD-HHMM-説明.md` 形式とする（HHMM は生成時刻。git 初回追加時刻など）
+8. GitHub Issue の観測・調査は docs/online-issues/issue-{番号}.md に残す。複数 Issue の横断テーマは docs/working/ に backlog 化してから specs 正本へ昇格する（docs/online-issues/README.md 参照）
