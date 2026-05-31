@@ -155,6 +155,19 @@
 - Qt 移行の詳細は [docs/working/20260530-2201-pyqt6-migration-plan.md](20260530-2201-pyqt6-migration-plan.md) を参照する。
 - C-03 / C-04 は採用条件が揃った時点で着手候補へ再分類する。条件が揃わなければ構想保持のまま維持する。
 
+## Qt 移行後 Windows 検証 backlog（W-xx）
+
+C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化した polish / プラットフォームギャップ。
+
+| ID | 項目 | Issue | 詳細 |
+| --- | --- | --- | --- |
+| W-01 | action cluster レイアウト | #342 | UI polish。着手可 |
+| W-02 | Windows slideshow 方針 | #341 | spec-as-designed → planning |
+| W-03 | Apply / 壁紙 / 解像度 | #343 | 調査・方針判断 |
+
+統合文書: [docs/working/20260531-1200-windows-qt-validation-backlog.md](20260531-1200-windows-qt-validation-backlog.md)  
+観測ログ: [docs/online-issues/README.md](../online-issues/README.md)
+
 ## 初動タスク
 
 1. 現在頭にある後続機能案を列挙する。
@@ -167,6 +180,7 @@
 - 一次 inventory を本書へ反映した。
 - 2026-05-30: オーナーとの議論を経て、C-03/C-04 を構想保持へ移動（採用条件付き）。Qt 移行を全 feature に先行させる方針を確定した。
 - 次段では Qt 移行計画を進め、完了後に C-02/C-05/C-01 の順で個別 planning 文書へ分離する。
+- 2026-05-31: Windows 実機検証由来の W-01〜W-03 を [20260531-1200-windows-qt-validation-backlog.md](20260531-1200-windows-qt-validation-backlog.md) に集約。
 
 ## 完了条件
 
