@@ -183,13 +183,17 @@ Optimize / Apply クリック後の action cluster ラベル（GTK / Qt 共通�
 
 apply mode の user-facing 意味:
 
-- action cluster の apply mode は現行 UI では `No Split` と `Auto-Split` の 2 択である。
+- action cluster の apply mode は GUI 上 `No Split` と第 2 択（Linux: `Auto-Split`、Windows: **`Span`**）である。
 - `No Split` は内部的に `single-file` へ対応し、最適化済み画像を 1 ファイルのまま plugin apply する。
-- `Auto-Split` は内部的に `per-monitor-auto-split` へ対応し、最適化済み画像を display ごとに分割して apply する。
-- apply mode の補助ラベルは `No Split` 時に `Apply the optimized image as a single file.`、`Auto-Split` 時に `Split the optimized image and apply per display.` を表示する。
+- Linux の `Auto-Split` は内部的に `per-monitor-auto-split` へ対応し、最適化済み画像を display ごとに分割して apply する。
+- Windows の **`Span`** も内部値は `per-monitor-auto-split` だが、Apply target は **合成 1 ファイル**（Windows plugin）。OS **Span 表示** と組み合わせて左右見え方を揃える。per-monitor map は約束しない。
+- Windows で display が 2 枚以上検出された場合、Main タブの既定選択は **Span** とする。No Split も選択可能。
+- Settings の **`windows_apply_span`**（bool、既定 `false`）が有効なときだけ、Span モード Apply 前に HKCU `WallpaperStyle=22` を best-effort 設定する（B-lite）。Span 選択は Apply 時 Span 切替への同意とみなす。
+- 補助ラベルとプレビュー文言は `apply_surface.py` が platform 別に生成する（Windows では auto-split / crop 等の Linux 用語を出さない）。
+- apply mode の補助ラベル（Linux 従来）: `No Split` → single file、`Auto-Split` → per display split。
 - CLI にある `per-monitor-explicit` は expert 向け escape hatch として残るが、GUI 主導線には露出しない。
-- GUI は plugin 名を settings から保持するが、`Auto-Split` target の解決規則そのものは core に従う。選択済み plugin が monitor map を実行できるかは GUI / plugin 側の責務として扱う。
-- `_default_apply_mode` はセッション種別を検出し、XFCE セッション時は `per-monitor-auto-split`、それ以外は `single-file` を初期値とする。セッション検出は `XDG_CURRENT_DESKTOP`、`XDG_SESSION_DESKTOP`、`DESKTOP_SESSION`、`GDMSESSION` の環境変数いずれかに `xfce` が含まれるかで判定する。
+- GUI は plugin 名を settings から保持するが、target 解決規則は core に従う。
+- `_default_apply_mode` は XFCE セッション時 `per-monitor-auto-split`、Windows plugin かつ display 2 枚以上時も `per-monitor-auto-split`（UI 上 Span）、それ以外は `single-file`。
 - `_default_plugin_name` はプラットフォームマップ（`linux`→`linux`、`win32`→`windows`、`darwin`→`macos`）から初期値を決定する。マップに該当しないプラットフォームでは `linux` を既定とし、その値が `available_plugins` に存在しない場合は先頭の利用可能 plugin を使う。
 
 ## 5. 設定 (settings) 保存と再読込
