@@ -146,8 +146,11 @@ def refresh_margins_controls(backend: Any, owner: Any | None = None) -> None:
     backend._set_widget_enabled("marginTextPage", text_enabled)
     backend._set_widget_enabled("txtMarginText", text_enabled)
     entry = backend._objects.get("txtMarginText")
-    if entry is not None and hasattr(entry, "set_editable"):
-        entry.set_editable(bool(text_enabled))
+    if entry is not None:
+        if hasattr(entry, "set_editable"):
+            entry.set_editable(bool(text_enabled))
+        elif hasattr(entry, "setReadOnly"):
+            entry.setReadOnly(not bool(text_enabled))
 
     if margin_text_mode == "params":
         backend._set_notebook_page("marginTextTabs", 0)

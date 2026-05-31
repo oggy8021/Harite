@@ -390,6 +390,58 @@ def test_on_margin_text_mode_settings_no_recursion(qapp):
     assert settings_btn.isChecked()
 
 
+def test_margin_text_entry_editable_for_text_only(qapp):
+    """Text only embed pattern must unlock the margin text entry for editing."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+    from harite.gui.adapters.ui_adapter import (
+        RUNTIME_HANDLER_MAP,
+        connect_signal_dispatch,
+        create_mainwindow_signal_dispatch,
+    )
+
+    window = MainWindow()
+    backend = load_qt_runtime_signal_backend()
+    dispatch = create_mainwindow_signal_dispatch(
+        window, tuple(RUNTIME_HANDLER_MAP.keys()), handler_map=RUNTIME_HANDLER_MAP
+    )
+    connect_signal_dispatch(backend, dispatch)
+
+    entry = backend._objects["txtMarginText"]
+    tabs = backend._objects["marginTextTabs"]
+    assert entry.isReadOnly()
+
+    backend._objects["margin_text_mode_text"].click()
+
+    assert window.form_state.embed_info == "free"
+    assert tabs.currentIndex() == 1
+    assert entry.isReadOnly() is False
+
+
+def test_margin_text_entry_editable_for_both(qapp):
+    """Both embed pattern must unlock the margin text entry for editing."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+    from harite.gui.adapters.ui_adapter import (
+        RUNTIME_HANDLER_MAP,
+        connect_signal_dispatch,
+        create_mainwindow_signal_dispatch,
+    )
+
+    window = MainWindow()
+    backend = load_qt_runtime_signal_backend()
+    dispatch = create_mainwindow_signal_dispatch(
+        window, tuple(RUNTIME_HANDLER_MAP.keys()), handler_map=RUNTIME_HANDLER_MAP
+    )
+    connect_signal_dispatch(backend, dispatch)
+
+    entry = backend._objects["txtMarginText"]
+    backend._objects["margin_text_mode_both"].click()
+
+    assert window.form_state.embed_info == "combo"
+    assert entry.isReadOnly() is False
+
+
 def test_on_optimize_clicked_does_not_recurse_on_margin_sync(qapp):
     """Optimize sync must not loop through margin text change handlers."""
     from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
