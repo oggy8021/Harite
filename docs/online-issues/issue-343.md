@@ -4,6 +4,7 @@
 
 - URL: <https://github.com/oggy8021/Harite/issues/343>
 - opened: 2026-05-31
+- **closed: 2026-05-31**（W-03 完了 — 背景色は Harite 管轄外として不問）
 - title: `Windows) Apply周辺にて、以下のOS機能群との関係精査が必要`
 
 ## 背景・論点
@@ -43,7 +44,7 @@
 
 ## 分類
 
-- **investigation** / **planning**（spec 改訂前）
+- ~~investigation / planning~~ → **resolved**（W-03 完了, 2026-05-31）
 
 ## 関連
 
@@ -55,9 +56,10 @@
 
 | 項目 | 判断 |
 | --- | --- |
-| 実施順 | **C → A/B**。C（解像度検出）を GTK 実装参考で可能なら先行。A/B（Apply / 壁紙 Fit/Fill 等）は C 後 |
-| spec | 正本ライティング時に **plugin 層のディスプレイ名補完** の表現範囲を相談 |
-| 次アクション | W-03-C: core-spec / workspace 契約のドラフト → テスト → `_detect_windows` 強化 PR |
+| 実施順 | **C → B-lite 完了**。B-full（Fit/Fill 全面制御）は **不採用** |
+| 背景色 | **Harite 管轄外（不問）** — OS 設定のまま。plugin は壁紙 file path のみ |
+| spec | W-03-C / B-lite / W-02 は正本反映済 |
+| 次アクション | **なし**（本 Issue クローズ） |
 
 ---
 
@@ -216,3 +218,26 @@ DELL U2720QM
 **実装:** `apply_surface`, `windows_wallpaper`, `resolve_apply_settings` Windows 分岐, GUI Span ラベル, Settings `windows_apply_span`, slideshow tick 内 Span 分岐。**slideshow start ゲート解除は W-02 #356。**
 
 **追補（#352 マージ後）:** Qt preview pixmap 接続、Settings Save の `Path` 受け付け。
+
+### 背景色（不問 — 2026-05-31 確定）
+
+- Windows のデスクトップ **背景色**（「背景」設定）は OS が管理する。Harite の壁紙画像と視覚的に重畳しうるが、**Harite は制御しない**。
+- plugin 契約は従来どおり **壁紙 file path の差し替え**（`SPI_SETDESKWALLPAPER`）まで。背景色 API / registry は対象外。
+- 正本: [plugin-spec §4.1](../specs/plugins/harite-plugin-spec.md)。
+
+### B-full（Fit/Fill / Stretch / Tile / Center 全面制御）— 不採用
+
+- registry で `WallpaperStyle` / `TileWallpaper` を Harite が全面管理する案は **見送り**（B-lite の Span opt-in のみ採用）。
+- ユーザーは OS の「背景」設定で Fit/Fill 等を選ぶ従来モデルを維持。
+
+### Issue クローズ（2026-05-31）
+
+| 論点 | 結果 |
+| --- | --- |
+| W-03-C 解像度検出 | **完了** #349 |
+| W-03-B-lite Span Apply | **完了** #350 + #352 |
+| W-02 slideshow Windows | **完了** #355 + #356（[#341](issue-341.md) 参照） |
+| 背景色 | **不問**（上記） |
+| B-full Fit/Fill 制御 | **不採用** |
+
+**GitHub:** Issue #343 クローズ。Windows Qt 検証 backlog（W-03）完了。
