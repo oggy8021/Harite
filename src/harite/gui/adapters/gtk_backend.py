@@ -65,9 +65,11 @@ from harite.gui.adapters.gtk_runtime_owner_sync import sync_slideshow_state_only
 from harite.gui.adapters.gtk_runtime_owner_sync import sync_slideshow_state_with_feedback_from_owner
 from harite.gui.adapters.gtk_runtime_preview import build_preview_crop_boxes
 from harite.gui.adapters.gtk_runtime_preview import clear_preview_widget
+from harite.gui.adapters.gtk_runtime_preview import clear_preview_widget_gtk
 from harite.gui.adapters.gtk_runtime_preview import get_gdkpixbuf_module
 from harite.gui.adapters.gtk_runtime_preview import preview_target_size
 from harite.gui.adapters.gtk_runtime_preview import set_preview_widget
+from harite.gui.adapters.gtk_runtime_preview import set_preview_widget_gtk
 from harite.gui.adapters.gtk_runtime_save_path_access import current_save_path_filename
 from harite.gui.adapters.gtk_runtime_save_path_access import get_save_path_destroy_callback
 from harite.gui.adapters.gtk_runtime_save_path_access import get_save_path_dialog
@@ -645,13 +647,13 @@ class GtkRuntimeSignalBackend:
         return get_gdkpixbuf_module(self)
 
     def _clear_preview_widget(self, object_name: str, message: str) -> None:
-        clear_preview_widget(self, object_name, message)
+        clear_preview_widget_gtk(self, object_name, message)
 
     def _preview_target_size(self) -> tuple[int, int]:
         return preview_target_size(self)
 
     def _set_preview_widget(self, object_name: str, source_path: Path | None, *, crop_box: tuple[int, int, int, int] | None = None) -> None:
-        set_preview_widget(self, object_name, source_path, crop_box=crop_box)
+        set_preview_widget_gtk(self, object_name, source_path, crop_box=crop_box)
 
     def _build_preview_crop_boxes(
         self,

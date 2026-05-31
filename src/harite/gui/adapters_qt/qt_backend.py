@@ -266,7 +266,9 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         crop_box: tuple[int, int, int, int] | None = None,
     ) -> None:
         from harite.gui.adapters_qt.qt_widget_helpers import set_preview_pixmap
-        set_preview_pixmap(self, name, source_path)
+
+        target_size = self._preview_target_size()
+        set_preview_pixmap(self, name, source_path, target_size=target_size, crop_box=crop_box)
 
     def _clear_preview_widget(self, name: str, message: str = "") -> None:
         from harite.gui.adapters_qt.qt_widget_helpers import clear_preview
@@ -276,11 +278,9 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         return (160, 90)
 
     def _sync_result_preview_from_owner(self, owner: Any) -> None:
-        try:
-            from harite.gui.adapters.gtk_runtime_preview import sync_result_preview_from_owner
-            sync_result_preview_from_owner(self, owner)
-        except Exception:
-            pass
+        from harite.gui.adapters.gtk_runtime_preview import sync_result_preview_from_owner
+
+        sync_result_preview_from_owner(self, owner)
 
     def _sync_action_availability_from_owner(self, owner: Any) -> None:
         from harite.gui.adapters.gtk_runtime_sync import sync_action_availability_from_owner
