@@ -1,6 +1,6 @@
 # Windows Qt 検証 backlog（post Phase 8）
 
-最終更新: 2026-05-31（W-03-B-lite #352 マージ後）
+最終更新: 2026-05-31（W-02 #356 マージ・#341 クローズ）
 
 ## 位置づけ
 
@@ -13,7 +13,7 @@
 | ID | 項目 | 分類 | Issue | 優先感 | 現判断 |
 | --- | --- | --- | --- | --- | --- |
 | W-01 | Main タブ action cluster レイアウト | UI polish | [#342](../online-issues/issue-342.md) | 高（見た目・可読性） | **完了**（#346, 2026-05-31） |
-| W-02 | Windows スライドショー方針 | planning | [#341](../online-issues/issue-341.md) | **高** | **W-02-A spec 反映中**（正本 PR + impl 続） |
+| W-02 | Windows スライドショー方針 | planning | [#341](../online-issues/issue-341.md) | **高** | **完了**（#355 spec + #356 impl, 2026-05-31） |
 | W-03 | Windows Apply / 壁紙表示 / 解像度検出 | investigation | [#343](../online-issues/issue-343.md) | — | **完了**（C #349 + B-lite #352） |
 
 ## 依存関係
@@ -21,23 +21,30 @@
 ```mermaid
 flowchart LR
   W03[W-03 完了]
-  W02[W-02 Windows slideshow]
-  W01[W-01 action cluster UI]
+  W02[W-02 完了]
+  W01[W-01 完了]
 
   W03 --> W02
   W01 --> SpecGUI[gui-spec レイアウト節]
 ```
 
-- **W-01** は W-02 / W-03 と独立。Qt layout builder のみで完結可能。
-- **W-02** は W-03 完了後、**dual-source start ゲート解除 + spec 追記** が主題（tick 内 Span 経路は #352 で既存）。
-- 現行正本: Windows plugin は **単一画像 apply のみ**。Span 表示は B-lite（gui-spec / core 解決）。
+- **W-01 / W-02 / W-03** はいずれも完了（2026-05-31）。本 backlog の active 項目はなし。
+- **W-02-A:** dual-source start ゲート解除 + 正本追記 + Interval commit / current path 省略（#355 + #356）。
+- 現行正本: Windows plugin は **単一画像 apply**。Span 表示は B-lite。slideshow dual-source は **wide composite + Span**（linux per-monitor map は不要）。
 
 ## 推奨着手順（2026-05-31 更新）
 
 1. ~~**W-01（#342）**~~ — 完了（PR #346）。
 2. ~~**W-03-C（#343 解像度検出）**~~ — 完了（PR #349）。
 3. ~~**W-03-B-lite（#343 Apply / Span）**~~ — 完了（docs #350 + impl #352）。
-4. **W-02（#341）** — [精査メモ](20260531-1530-windows-post-w03-status-and-w02-slideshow.md) → spec PR → test → impl（start ゲート）。
+4. ~~**W-02（#341）**~~ — 完了（#355 + #356、手元確認済み）。
+
+## W-02 完了メモ（#356）
+
+- `_prepare_slideshow_apply`: Windows + display 2+ で dual-source start を許可。
+- tick: B-lite 同型（composite → Span apply）。tray Start も同一経路。
+- 副次: Start 直前 Interval spin commit（GTK/Qt）、`Slideshow current` path 省略（gui-spec §6.1–6.2）。
+- **未採用（W-02-B）:** GUI single-srcdir Start（CLI は従来どおり可）。必要なら別 Issue。
 
 ## W-03 方針候補と実施順
 
@@ -69,14 +76,14 @@ flowchart LR
 
 - ~~Windows の `Display.name` に何を載せるか~~ → **オーナー判断: `\\.\DISPLAYn`（Screen.DeviceName 相当）をベース**（2026-05-31 実機確認）。
 - **plugin 層**でディスプレイ名補完をどこまで約束するか — WMI 製品名は **空間順序には使わない**。Auto-Split ファイル名の部分文字列候補としての利用は **予備検討**（Linux xfconf 的用途）。解像度検知とは独立。
-- GUI two-screen / Span を Windows で **Apply まで有効化** — **B-lite 完了**（#352）。slideshow は W-02 で start ゲート解除。
+- GUI two-screen / Span を Windows で **Apply まで有効化** — **B-lite 完了**（#352）。slideshow dual-source — **W-02 完了**（#356）。
 
 ## spec 改訂が必要になるタイミング
 
 | トリガ | 想定正本 |
 | --- | --- |
 | action cluster の補助ラベル配置（Qt 下段） | ~~`harite-gui-spec.md` § Main tab~~ **反映済**（#346） |
-| Windows で slideshow を新たに約束する | `harite-slideshow-spec.md`, `harite-gui-spec.md` §6 — **W-02 次** |
+| Windows で slideshow を新たに約束する | ~~`harite-slideshow-spec.md`, `harite-gui-spec.md` §6~~ **反映済**（#355 + #356） |
 | Windows Apply で Fit/Fill 等を Harite が制御する | **不採用**（B-full 見送り） |
 | 解像度 auto 検出の Windows 経路 | **完了**（#349） |
 | Windows Span Apply（B-lite） | **完了**（gui-spec #350, plugin-spec + impl #352） |
@@ -87,7 +94,7 @@ flowchart LR
 - [x] W-03-C（解像度検出）が spec + 実装 PR に分解された（#349）
 - [x] W-03-B-lite（Span UI / Apply / opt-in）が spec + 実装 PR に分解された（#350 + #352, 2026-05-31）
 - [x] W-03-A / 旧 B-full は **不採用**（Fit/Fill 全面制御は見送り）として resolution 記録
-- [ ] W-02 の Windows slideshow 方針が spec または Issue resolution に記録された
+- [x] W-02 の Windows slideshow 方針が spec または Issue resolution に記録された（#355 + #356, #341 クローズ, 2026-05-31）
 - [x] W-03 確定事項は online-issues / specs 正本へ反映された
 
 ## 関連

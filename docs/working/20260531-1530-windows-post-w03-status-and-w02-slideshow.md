@@ -1,7 +1,8 @@
 # Windows 到達状況精査 — post W-03（B-lite マージ後）と W-02 スライドショー
 
 作成: 2026-05-31  
-起点: PR #352（W-03-B-lite）マージ後。W-02（#341）spec 化の前段整理。
+起点: PR #352（W-03-B-lite）マージ後。W-02（#341）spec 化の前段整理。  
+**追記 2026-05-31:** W-02 完了（#355 + #356、#341 クローズ）。本メモは planning 時点の記録として残す。
 
 ## 1. サマリ
 
@@ -10,9 +11,9 @@
 | W-01 | #342 | **完了** | #346 — Qt action cluster レイアウト |
 | W-03-C | #343 | **完了** | #349 — EnumDisplayMonitors、two-screen 解像度 |
 | W-03-B-lite | #343 | **完了** | #350（docs）+ **#352**（impl）— Span UI / Apply / `windows_apply_span` |
-| W-02 | #341 | **spec 着手可能** | B-lite により Apply 経路が確定。残りは **start ゲート解除 + 正本追記** |
+| W-02 | #341 | **完了** | #355（spec）+ **#356**（impl）— dual-source start、Interval / current UX |
 
-**結論:** Windows で「左右別 srcdir → 合成 wide 画像 → OS Span で表示」は **手動 Apply と slideshow tick の core 経路の両方に既に実装の芽がある**。W-02 は **linux plugin 前提の start ブロックを外すかどうか** と **GUI / spec の Windows 向け文言** が主題になる。
+**結論（更新）:** W-02-A 採用により Windows dual-source slideshow は **start から tick まで B-lite Span 経路で動作**。旧事象 `dual-source slideshow requires linux plugin` は解消。
 
 ---
 

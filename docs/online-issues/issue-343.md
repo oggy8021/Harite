@@ -205,14 +205,14 @@ DELL U2720QM
 | Span 選択の意味 | Apply 時 Span 切替への **同意**（opt-in 時） |
 | 復元 | **自動復元は見送り**（slideshow 中の復元で表示崩れ。異常終了も不可） |
 | プレビュー | **B'** — 疑似クロップ + 「monitor region」文言（Linux 用語を出さない） |
-| slideshow | wide composite + Span（opt-in 時は registry 維持）。W-02 で spec 化 |
+| slideshow | wide composite + Span（opt-in 時は registry 維持）。**W-02 完了**（#355 + #356） |
 
-**未着手（W-02）:** slideshow-spec / gui-spec §6 の Windows dual-source 追記、`_prepare_slideshow_apply` の linux ゲート解除（impl PR）。
+**~~未着手（W-02）~~:** slideshow-spec / gui-spec §6 Windows dual-source 追記、`_prepare_slideshow_apply` ゲート解除 — **完了**（#355 + #356）。
 
 ### W-03-B-lite（完了 — PR #352）
 
 **目標:** Linux Auto-Split と **見え方は同じ**（左右意図どおり）。Windows 実現は **仮想解像度 1 枚 + OS Span**（per-monitor map は約束しない）。
 
-**実装:** `apply_surface`, `windows_wallpaper`, `resolve_apply_settings` Windows 分岐, GUI Span ラベル, Settings `windows_apply_span`, slideshow tick 内 Span 分岐（start ゲートは W-02）。
+**実装:** `apply_surface`, `windows_wallpaper`, `resolve_apply_settings` Windows 分岐, GUI Span ラベル, Settings `windows_apply_span`, slideshow tick 内 Span 分岐。**slideshow start ゲート解除は W-02 #356。**
 
 **追補（#352 マージ後）:** Qt preview pixmap 接続、Settings Save の `Path` 受け付け。
