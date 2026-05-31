@@ -189,6 +189,43 @@ def test_preview_default_labels(qapp):
     assert w["preview_state_label"].text() == "Preview: not-ready"
 
 
+def test_action_cluster_groups_top_aligned(qapp):
+    """Action cluster columns align at top so Optimize/Apply section labels line up."""
+    from PyQt6.QtCore import Qt
+    from harite.gui.adapters_qt.qt_tab_main import build_action_cluster_section
+
+    w = build_action_cluster_section("single-file")
+    layout = w["action_cluster_row"].layout()
+    for key in ("preview_group", "optimize_group", "apply_group"):
+        item = layout.itemAt(layout.indexOf(w[key]))
+        assert item.alignment() & Qt.AlignmentFlag.AlignTop
+
+
+def test_optimize_result_below_button(qapp):
+    """Optimize result label sits below the button, not beside it (Qt / issue-342)."""
+    from harite.gui.adapters_qt.qt_tab_main import build_action_cluster_section
+
+    w = build_action_cluster_section("single-file")
+    group_layout = w["optimize_group"].layout()
+    btn_row_index = group_layout.indexOf(w["optimize_modern_btn"].parentWidget())
+    result_index = group_layout.indexOf(w["optimize_result"])
+    assert btn_row_index >= 0 and result_index > btn_row_index
+    assert w["optimize_result"].parentWidget() is w["optimize_group"]
+
+
+def test_apply_target_below_button(qapp):
+    """Apply target label sits below the button; mode rows follow (Qt / issue-342)."""
+    from harite.gui.adapters_qt.qt_tab_main import build_action_cluster_section
+
+    w = build_action_cluster_section("single-file")
+    group_layout = w["apply_group"].layout()
+    btn_row_index = group_layout.indexOf(w["apply_btn"].parentWidget())
+    target_index = group_layout.indexOf(w["apply_target"])
+    mode_row_index = group_layout.indexOf(w["rad_apply_single"].parentWidget())
+    assert btn_row_index >= 0 and target_index > btn_row_index and mode_row_index > target_index
+    assert w["apply_target"].parentWidget() is w["apply_group"]
+
+
 # ---------------------------------------------------------------------------
 # Full Main tab assembly
 # ---------------------------------------------------------------------------

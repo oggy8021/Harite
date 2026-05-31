@@ -285,26 +285,26 @@ def _build_optimize_group() -> dict[str, Any]:
     group = QWidget()
     group_layout = QVBoxLayout(group)
     group_layout.setContentsMargins(0, 0, 0, 0)
-    group_layout.setSpacing(4)
+    group_layout.setSpacing(6)
 
     optimize_section_label = QLabel("Optimize")
     group_layout.addWidget(optimize_section_label)
-
-    row = QWidget()
-    row_layout = QHBoxLayout(row)
-    row_layout.setContentsMargins(0, 0, 0, 0)
-    row_layout.setSpacing(6)
 
     optimize_modern_btn = QPushButton("Optimize")
     optimize_modern_btn.setEnabled(False)
     _set_button_icon(optimize_modern_btn, "icons", "lucide", "image.svg")
 
+    btn_row = QWidget()
+    btn_row_layout = QHBoxLayout(btn_row)
+    btn_row_layout.setContentsMargins(0, 0, 0, 0)
+    btn_row_layout.addWidget(optimize_modern_btn)
+    btn_row_layout.addStretch()
+    group_layout.addWidget(btn_row)
+
     optimize_result = QLabel("Optimize result: not-run")
     optimize_result.setAlignment(Qt.AlignmentFlag.AlignLeft)
-
-    row_layout.addWidget(optimize_modern_btn)
-    row_layout.addWidget(optimize_result, stretch=1)
-    group_layout.addWidget(row)
+    optimize_result.setWordWrap(True)
+    group_layout.addWidget(optimize_result)
 
     return {
         "optimize_group": group,
@@ -330,27 +330,26 @@ def _build_apply_group(default_apply_mode: str) -> dict[str, Any]:
     group = QWidget()
     group_layout = QVBoxLayout(group)
     group_layout.setContentsMargins(0, 0, 0, 0)
-    group_layout.setSpacing(4)
+    group_layout.setSpacing(6)
 
     apply_section_label = QLabel("Apply")
     group_layout.addWidget(apply_section_label)
-
-    # Apply button + target label row
-    apply_row_widget = QWidget()
-    apply_row_layout = QHBoxLayout(apply_row_widget)
-    apply_row_layout.setContentsMargins(0, 0, 0, 0)
-    apply_row_layout.setSpacing(6)
 
     apply_btn = QPushButton("Apply")
     apply_btn.setEnabled(False)
     _set_button_icon(apply_btn, "icons", "lucide", "wallpaper.svg")
 
+    apply_btn_row = QWidget()
+    apply_btn_row_layout = QHBoxLayout(apply_btn_row)
+    apply_btn_row_layout.setContentsMargins(0, 0, 0, 0)
+    apply_btn_row_layout.addWidget(apply_btn)
+    apply_btn_row_layout.addStretch()
+    group_layout.addWidget(apply_btn_row)
+
     apply_target = QLabel("Apply target: not-ready")
     apply_target.setAlignment(Qt.AlignmentFlag.AlignLeft)
-
-    apply_row_layout.addWidget(apply_btn)
-    apply_row_layout.addWidget(apply_target, stretch=1)
-    group_layout.addWidget(apply_row_widget)
+    apply_target.setWordWrap(True)
+    group_layout.addWidget(apply_target)
 
     # Apply mode radio row
     apply_mode_row_widget = QWidget()
@@ -415,9 +414,10 @@ def build_action_cluster_section(default_apply_mode: str) -> dict[str, Any]:
     optimize_widgets = _build_optimize_group()
     apply_widgets = _build_apply_group(default_apply_mode)
 
-    cluster_layout.addWidget(preview_widgets["preview_group"])
-    cluster_layout.addWidget(optimize_widgets["optimize_group"])
-    cluster_layout.addWidget(apply_widgets["apply_group"])
+    top_align = Qt.AlignmentFlag.AlignTop
+    cluster_layout.addWidget(preview_widgets["preview_group"], alignment=top_align)
+    cluster_layout.addWidget(optimize_widgets["optimize_group"], alignment=top_align)
+    cluster_layout.addWidget(apply_widgets["apply_group"], alignment=top_align)
 
     return {
         "action_cluster_row": cluster,
