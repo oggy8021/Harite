@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import importlib
 import os
+import sys
 from pathlib import Path
 from typing import Any, Callable
 
@@ -64,9 +65,11 @@ from harite.gui.adapters.gtk_runtime_owner_sync import sync_slideshow_state_only
 from harite.gui.adapters.gtk_runtime_owner_sync import sync_slideshow_state_with_feedback_from_owner
 from harite.gui.adapters.gtk_runtime_preview import build_preview_crop_boxes
 from harite.gui.adapters.gtk_runtime_preview import clear_preview_widget
+from harite.gui.adapters.gtk_runtime_preview import clear_preview_widget_gtk
 from harite.gui.adapters.gtk_runtime_preview import get_gdkpixbuf_module
 from harite.gui.adapters.gtk_runtime_preview import preview_target_size
 from harite.gui.adapters.gtk_runtime_preview import set_preview_widget
+from harite.gui.adapters.gtk_runtime_preview import set_preview_widget_gtk
 from harite.gui.adapters.gtk_runtime_save_path_access import current_save_path_filename
 from harite.gui.adapters.gtk_runtime_save_path_access import get_save_path_destroy_callback
 from harite.gui.adapters.gtk_runtime_save_path_access import get_save_path_dialog
@@ -151,14 +154,14 @@ MARGIN_TEXT_MODE_VISIBLE_LABELS: dict[str, str] = {
 
 
 def _default_apply_mode() -> str:
-    session_markers = (
-        os.environ.get("XDG_CURRENT_DESKTOP", ""),
-        os.environ.get("XDG_SESSION_DESKTOP", ""),
-        os.environ.get("DESKTOP_SESSION", ""),
-        os.environ.get("GDMSESSION", ""),
-    )
-    is_xfce_session = any("xfce" in marker.strip().lower() for marker in session_markers if marker)
-    return "per-monitor-auto-split" if is_xfce_session else "single-file"
+    from harite.settings import AppSettings
+
+    platform_map = {
+        "win32": "windows",
+        "darwin": "macos",
+    }
+    default_plugin = platform_map.get(sys.platform, "linux")
+    return AppSettings._default_apply_mode(default_plugin)
 
 
 class GtkRuntimeSignalBackend:
@@ -644,13 +647,13 @@ class GtkRuntimeSignalBackend:
         return get_gdkpixbuf_module(self)
 
     def _clear_preview_widget(self, object_name: str, message: str) -> None:
-        clear_preview_widget(self, object_name, message)
+        clear_preview_widget_gtk(self, object_name, message)
 
     def _preview_target_size(self) -> tuple[int, int]:
         return preview_target_size(self)
 
     def _set_preview_widget(self, object_name: str, source_path: Path | None, *, crop_box: tuple[int, int, int, int] | None = None) -> None:
-        set_preview_widget(self, object_name, source_path, crop_box=crop_box)
+        set_preview_widget_gtk(self, object_name, source_path, crop_box=crop_box)
 
     def _build_preview_crop_boxes(
         self,
@@ -958,9 +961,19 @@ class GtkRuntimeSignalBackend:
         is_active = True
         if hasattr(widget, "get_active"):
             is_active = bool(widget.get_active())
-        label = "Apply the optimized image as a single file."
-        if mode == "per-monitor-auto-split" and is_active:
-            label = "Split the optimized image and apply per display."
+
+        owner = self._get_handler_owner("on_change_apply_mode")
+        span_opt_in = False
+        if owner is not None:
+            prefs = getattr(owner, "preferences", None)
+            apply_prefs = getattr(prefs, "apply", None) if prefs is not None else None
+            span_opt_in = bool(getattr(apply_prefs, "windows_apply_span", False))
+        from harite.apply_surface import apply_mode_help_text as build_apply_mode_help
+
+        label = build_apply_mode_help(
+            mode if is_active else "single-file",
+            windows_apply_span=span_opt_in,
+        )
         self._set_label_text("lblApplyMode", label)
 
         if not is_active:

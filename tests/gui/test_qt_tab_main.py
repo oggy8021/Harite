@@ -262,3 +262,12 @@ def test_full_layout_main_tab_integrated(qapp):
 
     # First tab should be the Main tab
     assert backend.objects["command_tabs"].tabText(0) == "Main"
+
+
+def test_apply_mode_span_label_on_windows(qapp, monkeypatch):
+    monkeypatch.setattr("harite.apply_surface.platform.system", lambda: "Windows")
+    from harite.gui.adapters_qt.qt_tab_main import build_action_cluster_section
+
+    w = build_action_cluster_section("per-monitor-auto-split")
+    assert w["rad_apply_per_monitor"].text() == "Span"
+    assert w["rad_apply_single"].text() == "No Split"

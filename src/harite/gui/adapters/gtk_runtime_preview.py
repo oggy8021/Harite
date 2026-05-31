@@ -4,6 +4,8 @@ import importlib
 from pathlib import Path
 from typing import Any
 
+from harite.apply_surface import preview_state_label
+
 
 def get_gdkpixbuf_module(backend: Any) -> Any | None:
     try:
@@ -14,7 +16,7 @@ def get_gdkpixbuf_module(backend: Any) -> Any | None:
         return None
 
 
-def clear_preview_widget(backend: Any, object_name: str, message: str) -> None:
+def clear_preview_widget_gtk(backend: Any, object_name: str, message: str) -> None:
     widget = backend._objects.get(object_name)
     if widget is None:
         return
@@ -23,6 +25,14 @@ def clear_preview_widget(backend: Any, object_name: str, message: str) -> None:
         return
     if hasattr(widget, "set_from_pixbuf"):
         widget.set_from_pixbuf(None)
+
+
+def clear_preview_widget(backend: Any, object_name: str, message: str) -> None:
+    clearer = getattr(backend, "_clear_preview_widget", None)
+    if callable(clearer):
+        clearer(object_name, message)
+        return
+    clear_preview_widget_gtk(backend, object_name, message)
 
 
 def preview_target_size(backend: Any) -> tuple[int, int]:
@@ -51,7 +61,7 @@ def preview_target_size(backend: Any) -> tuple[int, int]:
     return target_width, target_height
 
 
-def set_preview_widget(
+def set_preview_widget_gtk(
     backend: Any,
     object_name: str,
     source_path: Path | None,
@@ -62,7 +72,7 @@ def set_preview_widget(
     if widget is None:
         return
     if source_path is None:
-        clear_preview_widget(backend, object_name, f"{object_name}: not-ready")
+        clear_preview_widget_gtk(backend, object_name, f"{object_name}: not-ready")
         return
 
     if hasattr(widget, "set_text"):
@@ -94,6 +104,20 @@ def set_preview_widget(
             widget.set_from_file(str(source_path))
         except (FileNotFoundError, OSError, TypeError, ValueError):
             pass
+
+
+def set_preview_widget(
+    backend: Any,
+    object_name: str,
+    source_path: Path | None,
+    *,
+    crop_box: tuple[int, int, int, int] | None = None,
+) -> None:
+    setter = getattr(backend, "_set_preview_widget", None)
+    if callable(setter):
+        setter(object_name, source_path, crop_box=crop_box)
+        return
+    set_preview_widget_gtk(backend, object_name, source_path, crop_box=crop_box)
 
 
 def build_preview_crop_boxes(
@@ -162,12 +186,12 @@ def sync_result_preview_from_owner(backend: Any, owner: Any) -> None:
             l_display=getattr(state, "l_display", None),
             r_display=getattr(state, "r_display", None),
         )
-        backend._set_label_text("lblPreviewState", "Preview: pseudo auto-split by display widths")
+        backend._set_label_text("lblPreviewState", preview_state_label(mode))
         if boxes is not None:
             set_preview_widget(backend, "imgPreviewL", Path(source_path), crop_box=boxes[0])
             set_preview_widget(backend, "imgPreviewR", Path(source_path), crop_box=boxes[1])
             return
 
-    backend._set_label_text("lblPreviewState", "Preview: same image on both displays")
+    backend._set_label_text("lblPreviewState", preview_state_label(mode))
     set_preview_widget(backend, "imgPreviewL", Path(source_path))
     set_preview_widget(backend, "imgPreviewR", Path(source_path))

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import sys
 from pathlib import Path
 from typing import Sequence
 
@@ -12,6 +13,7 @@ from .workspace import Display
 class EffectiveApplySettings:
     apply_mode: str
     target: str | dict
+    windows_span: bool = False
 
 
 def resolve_apply_settings(
@@ -42,6 +44,12 @@ def resolve_apply_settings(
         return EffectiveApplySettings(apply_mode=mode, target=mapping)
 
     if mode == "per-monitor-auto-split":
+        if sys.platform == "win32":
+            return EffectiveApplySettings(
+                apply_mode="single-file",
+                target=str(file),
+                windows_span=True,
+            )
         if len(ordered_displays) < 2:
             raise ValueError("per-monitor apply requires at least two detected displays")
         target = build_auto_split_display_map(file, ordered_displays[:2], output_dir or file.parent)

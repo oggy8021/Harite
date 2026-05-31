@@ -180,7 +180,14 @@ def set_notebook_page(backend: Any, name: str, page_index: int) -> None:
 # ---------------------------------------------------------------------------
 
 
-def set_preview_pixmap(backend: Any, name: str, source_path: Any, *, target_size: tuple[int, int] = (160, 90)) -> None:
+def set_preview_pixmap(
+    backend: Any,
+    name: str,
+    source_path: Any,
+    *,
+    target_size: tuple[int, int] = (160, 90),
+    crop_box: tuple[int, int, int, int] | None = None,
+) -> None:
     """Load an image file and display it in a QLabel.
 
     Falls back silently if PyQt6 or the image file is not available.
@@ -198,6 +205,9 @@ def set_preview_pixmap(backend: Any, name: str, source_path: Any, *, target_size
         pm = QPixmap(str(source_path))
         if pm.isNull():
             return
+        if crop_box is not None:
+            x, y, width, height = (int(value) for value in crop_box)
+            pm = pm.copy(x, y, width, height)
         scaled = pm.scaled(
             target_size[0],
             target_size[1],

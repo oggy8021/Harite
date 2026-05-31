@@ -522,6 +522,37 @@ def test_qt_optimize_result_controls_apply_button_state(qapp, tmp_path):
     assert "not-run" not in optimize_result.text()
 
 
+def test_qt_runtime_syncs_result_preview_image(qapp, tmp_path):
+    """After optimize, Qt preview QLabel must show pixmap, not placeholder text."""
+    from PIL import Image
+
+    from harite.gui.adapters.ui_adapter import connect_signal_dispatch, create_mainwindow_signal_dispatch
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+
+    backend = load_qt_runtime_signal_backend()
+    window = MainWindow()
+    source = tmp_path / "preview.jpg"
+    Image.new("RGB", (320, 180), color=(20, 30, 40)).save(source)
+
+    def run_optimize(_form_state):
+        return [source], []
+
+    window.controller.run_optimize = run_optimize
+    window.can_optimize = True
+
+    dispatch = create_mainwindow_signal_dispatch(window, ("on_optimize",))
+    connect_signal_dispatch(backend, dispatch)
+
+    backend._on_optimize_clicked()
+
+    preview_l = backend._objects["imgPreviewL"]
+    preview_r = backend._objects["imgPreviewR"]
+    assert not preview_l.pixmap().isNull()
+    assert not preview_r.pixmap().isNull()
+    assert backend._objects["lblPreviewSource"].text() == "Preview source: preview.jpg"
+
+
 def test_on_pick_input_enables_optimize_button(qapp):
     """After valid input pick, btnOptimize must reflect MainWindow.can_optimize."""
     from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend

@@ -266,7 +266,9 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         crop_box: tuple[int, int, int, int] | None = None,
     ) -> None:
         from harite.gui.adapters_qt.qt_widget_helpers import set_preview_pixmap
-        set_preview_pixmap(self, name, source_path)
+
+        target_size = self._preview_target_size()
+        set_preview_pixmap(self, name, source_path, target_size=target_size, crop_box=crop_box)
 
     def _clear_preview_widget(self, name: str, message: str = "") -> None:
         from harite.gui.adapters_qt.qt_widget_helpers import clear_preview
@@ -276,11 +278,9 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         return (160, 90)
 
     def _sync_result_preview_from_owner(self, owner: Any) -> None:
-        try:
-            from harite.gui.adapters.gtk_runtime_preview import sync_result_preview_from_owner
-            sync_result_preview_from_owner(self, owner)
-        except Exception:
-            pass
+        from harite.gui.adapters.gtk_runtime_preview import sync_result_preview_from_owner
+
+        sync_result_preview_from_owner(self, owner)
 
     def _sync_action_availability_from_owner(self, owner: Any) -> None:
         from harite.gui.adapters.gtk_runtime_sync import sync_action_availability_from_owner
@@ -671,12 +671,15 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         run_apply_clicked(self, callback)
 
     def _on_apply_mode_toggled(self, widget: Any, mode: str) -> None:
-        # Mirror GTK: update help label before calling the handler.
-        label = (
-            "Split the optimized image and apply per display."
-            if mode == "per-monitor-auto-split"
-            else "Apply the optimized image as a single file."
-        )
+        from harite.apply_surface import apply_mode_help_text as build_apply_mode_help
+
+        owner = self._get_handler_owner("on_change_apply_mode")
+        span_opt_in = False
+        if owner is not None:
+            prefs = getattr(owner, "preferences", None)
+            apply_prefs = getattr(prefs, "apply", None) if prefs is not None else None
+            span_opt_in = bool(getattr(apply_prefs, "windows_apply_span", False))
+        label = build_apply_mode_help(mode, windows_apply_span=span_opt_in)
         self._set_label_text("lblApplyMode", label)
 
         from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_apply_mode_toggled

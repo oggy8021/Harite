@@ -84,18 +84,29 @@ class OptimizeSettings:
 class ApplySettings:
     plugin_name: str = "windows"
     apply_mode: str = "per-monitor-auto-split"
+    windows_apply_span: bool = False
 
     @classmethod
     def from_settings_dict(cls, settings: dict[str, Any], *, default_plugin: str) -> "ApplySettings":
+        raw_apply_mode = settings.get("apply_mode")
+        apply_mode = (
+            str(raw_apply_mode)
+            if raw_apply_mode is not None
+            else AppSettings._default_apply_mode(default_plugin)
+        )
+        raw_span = settings.get("windows_apply_span", False)
+        windows_apply_span = raw_span is True or str(raw_span).strip().lower() in {"1", "true", "yes", "on"}
         return cls(
             plugin_name=str(settings.get("plugin", default_plugin)),
-            apply_mode=str(settings.get("apply_mode", "per-monitor-auto-split")),
+            apply_mode=apply_mode,
+            windows_apply_span=windows_apply_span,
         )
 
     def to_settings_dict(self) -> dict[str, Any]:
         return {
             "plugin": self.plugin_name,
             "apply_mode": self.apply_mode,
+            "windows_apply_span": bool(self.windows_apply_span),
         }
 
 
@@ -132,6 +143,14 @@ class AppSettings:
 
     @staticmethod
     def _default_apply_mode(default_plugin: str) -> str:
+        if default_plugin == "windows":
+            try:
+                from harite.workspace import detect_displays
+
+                if len(detect_displays()) >= 2:
+                    return "per-monitor-auto-split"
+            except Exception:
+                pass
         session_markers = (
             os.environ.get("XDG_CURRENT_DESKTOP", ""),
             os.environ.get("XDG_SESSION_DESKTOP", ""),
@@ -152,14 +171,9 @@ class AppSettings:
 
     @classmethod
     def from_settings_dict(cls, settings: dict[str, Any], *, default_plugin: str) -> "AppSettings":
-        raw_apply_mode = settings.get("apply_mode")
-        apply_mode = str(raw_apply_mode) if raw_apply_mode is not None else cls._default_apply_mode(default_plugin)
         return cls(
             optimize=OptimizeSettings.from_settings_dict(settings),
-            apply=ApplySettings(
-                plugin_name=str(settings.get("plugin", default_plugin)),
-                apply_mode=apply_mode,
-            ),
+            apply=ApplySettings.from_settings_dict(settings, default_plugin=default_plugin),
             slideshow=SlideshowSettings.from_settings_dict(settings),
         )
 

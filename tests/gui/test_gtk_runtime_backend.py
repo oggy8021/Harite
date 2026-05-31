@@ -266,6 +266,11 @@ class _SpinButton(_WidgetBase):
         return int(self._value)
 
 
+class _CheckButton(_ToggleButton):
+    def set_no_show_all(self, _hidden):
+        return None
+
+
 class _RadioButton(_ToggleButton):
     def __init__(self, label="", group=None):
         super().__init__(label=label)
@@ -319,6 +324,7 @@ class _FakeGtk:
     TextView = _TextView
     Button = _Button
     ToggleButton = _ToggleButton
+    CheckButton = _CheckButton
     SpinButton = _SpinButton
     RadioButton = _RadioButton
     Image = _Image
@@ -976,7 +982,10 @@ def test_runtime_backend_margin_text_preflight_uses_two_screen_display_slice_are
     assert backend.get_object("lblError").text == "Error: none"
 
 
-def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path):
+def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path, monkeypatch):
+    import harite.apply_surface as apply_surface_mod
+
+    monkeypatch.setattr(apply_surface_mod.platform, "system", lambda: "Linux")
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
 
@@ -2710,7 +2719,13 @@ def test_runtime_backend_apply_success_updates_apply_target():
     assert apply_target.text == "Apply target: last applied"
 
 
-def test_runtime_backend_apply_mode_defaults_to_single_file():
+def test_runtime_backend_apply_mode_defaults_to_single_file(monkeypatch):
+    monkeypatch.setattr("harite.gui.adapters.gtk_backend.sys.platform", "linux")
+    monkeypatch.setattr("harite.apply_surface.platform.system", lambda: "Linux")
+    monkeypatch.setattr(
+        "harite.workspace.detect_displays",
+        lambda: [Display(name="L", width=1920, height=1080, x_offset=0)],
+    )
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     assert backend.get_object("radApplySingle").label == "No Split"
@@ -2720,7 +2735,8 @@ def test_runtime_backend_apply_mode_defaults_to_single_file():
     assert backend.get_object("lblApplyMode").text == "Apply the optimized image as a single file."
 
 
-def test_runtime_backend_apply_mode_toggle_dispatches_and_updates_label():
+def test_runtime_backend_apply_mode_toggle_dispatches_and_updates_label(monkeypatch):
+    monkeypatch.setattr("harite.apply_surface.platform.system", lambda: "Linux")
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     observed = {}
 
@@ -2757,7 +2773,8 @@ def test_runtime_backend_apply_mode_propagates_unexpected_runtime_error():
         backend.get_object("radApplyPerMonitor").click()
 
 
-def test_runtime_backend_apply_mode_can_return_to_default_from_per_monitor():
+def test_runtime_backend_apply_mode_can_return_to_default_from_per_monitor(monkeypatch):
+    monkeypatch.setattr("harite.apply_surface.platform.system", lambda: "Linux")
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     observed = []
 

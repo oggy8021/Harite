@@ -1,6 +1,6 @@
 # Harite Plugin 仕様 (Plugin Spec)
 
-最終更新: 2026-05-30
+最終更新: 2026-05-31
 
 ## 1. plugin の責務
 
@@ -63,6 +63,8 @@ monitor map interface:
 
 - 単一画像 apply のみを扱う。
 - monitor map が渡された場合は失敗する。
+- GUI の Windows **Span**（内部値 `per-monitor-auto-split`）は、core の `resolve_apply_settings` が **合成 1 ファイル**（`single-file` target）へ解決してから Windows plugin に渡す（B-lite）。plugin は monitor map を受け取らない。
+- OS 背景の **Span 表示**（HKCU `WallpaperStyle=22`）は plugin 責務外。Settings の `windows_apply_span` が有効なとき、GUI / core が Apply 前に best-effort で設定する（[gui-spec](../gui/harite-gui-spec.md) 参照）。
 - 実適用では `SystemParametersInfoW` を使う。
 - 実適用の戻り値は `SystemParametersInfoW(...)` の真偽値をそのまま成功判定に使う。
 - `SystemParametersInfoW(20, 0, str(p), 3)` の第4引数 `3` は `SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE` を意味し、設定を永続化して他アプリへ変更を通知する。

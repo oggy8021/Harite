@@ -121,7 +121,29 @@ def sync_settings_widgets_from_dialog(backend: Any) -> dict[str, object]:
     backend._set_spin_value("spnSettingsMarginTextMaxLines", int(settings.get("embed_max_lines", 3)))
     backend._set_entry_text("entSettingsPlugin", settings.get("plugin", "windows"))
     set_settings_apply_mode(backend, settings.get("apply_mode", "single-file"))
+    _set_checkbox_checked(backend, "chkWindowsApplySpan", settings.get("windows_apply_span", False))
     return settings
+
+
+def _set_checkbox_checked(backend: Any, object_name: str, value: object) -> None:
+    widget = backend._objects.get(object_name)
+    if widget is None:
+        return
+    if hasattr(widget, "setChecked"):
+        widget.setChecked(bool(value))
+    elif hasattr(widget, "set_active"):
+        widget.set_active(bool(value))
+
+
+def _read_checkbox_checked(backend: Any, object_name: str) -> bool:
+    widget = backend._objects.get(object_name)
+    if widget is None:
+        return False
+    if hasattr(widget, "isChecked"):
+        return bool(widget.isChecked())
+    if hasattr(widget, "get_active"):
+        return bool(widget.get_active())
+    return False
 
 
 def sync_settings_dialog_from_widgets(backend: Any) -> dict[str, object]:
@@ -147,6 +169,7 @@ def sync_settings_dialog_from_widgets(backend: Any) -> dict[str, object]:
             "embed_max_lines": backend._read_spin_int("spnSettingsMarginTextMaxLines"),
             "plugin": backend._read_entry_text("entSettingsPlugin") or "windows",
             "apply_mode": read_settings_apply_mode(backend),
+            "windows_apply_span": _read_checkbox_checked(backend, "chkWindowsApplySpan"),
         }
     )
 

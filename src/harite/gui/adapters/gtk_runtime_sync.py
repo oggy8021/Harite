@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Any
 
 from harite.core import EMBED_POSITION_VALUES
+from harite.apply_surface import apply_mode_help_text
+from harite.apply_surface import margin_settings_split_label
 from harite.positioning import parse_position_pair
 
 
@@ -80,6 +82,21 @@ def sync_main_state_from_owner(backend: Any, owner: Any) -> None:
     backend._set_toggle_active("tglLowerR", valign_right == "bottom")
 
     backend._refresh_current_state_labels()
+    sync_apply_mode_from_owner(backend, owner)
+
+
+def sync_apply_mode_from_owner(backend: Any, owner: Any) -> None:
+    mode = str(getattr(owner, "apply_mode", "single-file") or "single-file").strip().lower()
+    is_span = mode == "per-monitor-auto-split"
+    backend._set_toggle_active("radApplyPerMonitor", is_span)
+    backend._set_toggle_active("radApplySingle", not is_span)
+
+    span_opt_in = False
+    prefs = getattr(owner, "preferences", None)
+    apply_prefs = getattr(prefs, "apply", None) if prefs is not None else None
+    if apply_prefs is not None:
+        span_opt_in = bool(getattr(apply_prefs, "windows_apply_span", False))
+    backend._set_label_text("lblApplyMode", apply_mode_help_text(mode, windows_apply_span=span_opt_in))
 
 
 def sync_action_availability_from_owner(backend: Any, owner: Any) -> None:
@@ -124,7 +141,7 @@ def build_margin_settings_preview(backend: Any, owner: Any | None = None) -> str
         align_left, valign_left = backend._current_side_state("L")
         align_right, valign_right = backend._current_side_state("R")
         two_screen = False
-    split_text = "Auto-Split" if two_screen else "No Split"
+    split_text = margin_settings_split_label(two_screen)
     return "\n".join(
         (
             f"resolution={resolution}",

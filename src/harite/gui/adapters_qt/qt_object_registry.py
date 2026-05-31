@@ -144,6 +144,7 @@ def _dialog_aliases(w: dict[str, Any]) -> dict[str, Any]:
         "entSettingsPlugin": _get("prefs_plugin_entry"),
         "radSettingsApplySingle": _get("prefs_apply_single"),
         "radSettingsApplyPerMonitor": _get("prefs_apply_per_monitor"),
+        "chkWindowsApplySpan": _get("prefs_windows_apply_span"),
         "ColorDialog": _get("ColorDialog"),
         "colorWindow": _get("color_window"),
         "entColorValue": _get("color_value_entry"),

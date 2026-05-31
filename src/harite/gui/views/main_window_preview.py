@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from harite.apply_surface import preview_assist_summary, preview_result_notes
 from harite.gui.services.cli_mapper import OptimizeRequest, to_cli_args
 from harite.optimize_settings import resolve_optimize_display_settings
 
@@ -32,13 +33,7 @@ def build_preview_assist_summary(
     l_display: tuple[int, int] | None,
     r_display: tuple[int, int] | None,
 ) -> str:
-    if apply_mode == "per-monitor-auto-split":
-        left = format_display_summary(l_display)
-        right = format_display_summary(r_display)
-        if left and right:
-            return f"Assist: auto-split as L {left} | R {right}"
-        return "Assist: auto-split by current left/right display widths"
-    return "Assist: same optimized image will be applied to both displays"
+    return preview_assist_summary(apply_mode, l_display, r_display)
 
 
 def format_preview_assignment_name(value: str, max_length: int = 36) -> str:
@@ -64,15 +59,7 @@ def build_preview_assignments(input_values: list[str]) -> tuple[str, str]:
 
 
 def build_preview_result_notes(apply_mode: str) -> tuple[str, str]:
-    if apply_mode == "per-monitor-auto-split":
-        return (
-            "Result: auto-split left crop",
-            "Result: auto-split right crop",
-        )
-    return (
-        "Result: full optimized image",
-        "Result: full optimized image",
-    )
+    return preview_result_notes(apply_mode)
 
 
 def build_result_preview_state(owner: Any) -> ResultPreviewState:

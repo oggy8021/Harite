@@ -10,7 +10,6 @@ Phase 8 can reference the same logical names.
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
 
@@ -23,18 +22,17 @@ from harite.gui.resource_access import set_qt_button_icon as _set_button_icon
 
 
 def _default_apply_mode() -> str:
-    """Mirror GTK backend: XFCE session defaults to per-monitor-auto-split."""
-    markers = (
-        os.environ.get("XDG_CURRENT_DESKTOP", ""),
-        os.environ.get("XDG_SESSION_DESKTOP", ""),
-        os.environ.get("DESKTOP_SESSION", ""),
-        os.environ.get("GDMSESSION", ""),
-    )
-    return (
-        "per-monitor-auto-split"
-        if any("xfce" in m.strip().lower() for m in markers if m)
-        else "single-file"
-    )
+    """Default apply mode for action cluster (plugin-aware)."""
+    import sys
+
+    from harite.settings import AppSettings
+
+    platform_map = {
+        "win32": "windows",
+        "darwin": "macos",
+    }
+    default_plugin = platform_map.get(sys.platform, "linux")
+    return AppSettings._default_apply_mode(default_plugin)
 
 
 # ---------------------------------------------------------------------------
@@ -357,8 +355,14 @@ def _build_apply_group(default_apply_mode: str) -> dict[str, Any]:
     apply_mode_row_layout.setContentsMargins(0, 0, 0, 0)
     apply_mode_row_layout.setSpacing(6)
 
-    rad_apply_per_monitor = QRadioButton("Auto-Split")
-    rad_apply_single = QRadioButton("No Split")
+    from harite.apply_surface import (
+        apply_mode_help_text as build_apply_mode_help,
+        per_monitor_mode_radio_label,
+        single_file_mode_radio_label,
+    )
+
+    rad_apply_per_monitor = QRadioButton(per_monitor_mode_radio_label())
+    rad_apply_single = QRadioButton(single_file_mode_radio_label())
 
     apply_mode_group = QButtonGroup(group)
     apply_mode_group.addButton(rad_apply_per_monitor)
@@ -366,10 +370,10 @@ def _build_apply_group(default_apply_mode: str) -> dict[str, Any]:
 
     if default_apply_mode == "per-monitor-auto-split":
         rad_apply_per_monitor.setChecked(True)
-        apply_mode_help_text = "Split the optimized image and apply per display."
+        apply_mode_help_text = build_apply_mode_help("per-monitor-auto-split")
     else:
         rad_apply_single.setChecked(True)
-        apply_mode_help_text = "Apply the optimized image as a single file."
+        apply_mode_help_text = build_apply_mode_help("single-file")
 
     apply_mode_row_layout.addWidget(rad_apply_per_monitor)
     apply_mode_row_layout.addWidget(rad_apply_single)

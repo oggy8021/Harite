@@ -915,6 +915,14 @@ def test_settings_file_save_uses_default_fixed_path_when_path_is_empty(monkeypat
     assert target.exists() is True
 
 
+def test_settings_file_save_accepts_path_object(tmp_path):
+    window = MainWindow()
+    target = tmp_path / "harite-settings.json"
+
+    assert window.on_save_settings_file(target) is True
+    assert target.exists() is True
+
+
 def test_settings_file_load_rejects_empty_path():
     window = MainWindow()
 
