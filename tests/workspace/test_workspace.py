@@ -1,4 +1,7 @@
+import platform
 import subprocess
+import types
+
 from harite import workspace
 
 
@@ -15,17 +18,10 @@ DP-1 connected 2048x1280+2048+0 (normal)
     names = [d.name for d in displays]
     assert "HDMI-1" in names
     assert "DP-1" in names
-    # check geometry for HDMI-1
     hdmi = next(d for d in displays if d.name == "HDMI-1")
     assert hdmi.width == 2048
     assert hdmi.height == 1280
     assert hdmi.x_offset == 0
-import sys
-import types
-import subprocess
-import platform
-
-from harite import workspace
 
 
 def test_detect_linux_parses_xrandr(monkeypatch):
@@ -72,20 +68,22 @@ Graphics/Displays:
 
 
 def test_detect_windows_uses_ctypes(monkeypatch):
-    monkeypatch.setattr(platform, "system", lambda: "Windows")
+    import ctypes
 
-    # create fake ctypes module
-    fake = types.SimpleNamespace()
     class User32:
         def SetProcessDPIAware(self):
             return 1
 
+        def EnumDisplayMonitors(self, *_args):
+            return 0
+
         def GetSystemMetrics(self, idx):
             return 800 if idx == 0 else 600
 
-    fake.windll = types.SimpleNamespace(user32=User32())
-    sys.modules["ctypes"] = fake
+    monkeypatch.setattr(platform, "system", lambda: "Windows")
+    monkeypatch.setattr(ctypes, "windll", types.SimpleNamespace(user32=User32()))
 
     displays = workspace.detect_displays()
     assert len(displays) == 1
     assert displays[0].width == 800 and displays[0].height == 600
+    assert displays[0].primary is True
