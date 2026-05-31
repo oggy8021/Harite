@@ -13,7 +13,7 @@
 
 | ID | 項目 | 分類 | Issue | 優先感 | 現判断 |
 | --- | --- | --- | --- | --- | --- |
-| W-01 | Main タブ action cluster レイアウト | UI polish | [#342](../online-issues/issue-342.md) | 高（見た目・可読性） | **着手可**。spec 改訂は最小（レイアウト方針のみ） |
+| W-01 | Main タブ action cluster レイアウト | UI polish | [#342](../online-issues/issue-342.md) | 高（見た目・可読性） | **実装 PR 進行中** |
 | W-02 | Windows スライドショー方針 | planning | [#341](../online-issues/issue-341.md) | 中（設計判断） | **保留**。W-03 / two-screen / auto-split とセットで決める |
 | W-03 | Windows Apply / 壁紙表示 / 解像度検出 | investigation | [#343](../online-issues/issue-343.md) | 中（Apply 品質） | **調査継続**。レジストリ触るかは未決 |
 

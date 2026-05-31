@@ -28,7 +28,7 @@
 
 | 項目 | 判断 |
 | --- | --- |
-| 着手 | **可**（W-03 / W-02 と独立） |
+| 着手 | **実施中** — [gui-spec](../../specs/gui/harite-gui-spec.md) § Main tab action cluster 改訂済 |
 | spec 改訂 | 最小。補助ラベルの配置（横 / 下）を gui-spec に 1 段落追記すれば足りる |
 | 実装 | Qt layout builder のみ。GTK 版は現状維持でよい |
 | 次アクション | gui-spec ドラフト → テスト（レイアウト smoke）→ Qt layout 修正 PR |

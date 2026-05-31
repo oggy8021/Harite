@@ -207,10 +207,9 @@ def test_optimize_result_below_button(qapp):
 
     w = build_action_cluster_section("single-file")
     group_layout = w["optimize_group"].layout()
-    btn_index = group_layout.indexOf(w["optimize_modern_btn"])
+    btn_row_index = group_layout.indexOf(w["optimize_modern_btn"].parentWidget())
     result_index = group_layout.indexOf(w["optimize_result"])
-    assert btn_index >= 0 and result_index > btn_index
-    assert w["optimize_modern_btn"].parentWidget() is w["optimize_group"]
+    assert btn_row_index >= 0 and result_index > btn_row_index
     assert w["optimize_result"].parentWidget() is w["optimize_group"]
 
 
@@ -220,11 +219,10 @@ def test_apply_target_below_button(qapp):
 
     w = build_action_cluster_section("single-file")
     group_layout = w["apply_group"].layout()
-    btn_index = group_layout.indexOf(w["apply_btn"])
+    btn_row_index = group_layout.indexOf(w["apply_btn"].parentWidget())
     target_index = group_layout.indexOf(w["apply_target"])
     mode_row_index = group_layout.indexOf(w["rad_apply_single"].parentWidget())
-    assert btn_index >= 0 and target_index > btn_index and mode_row_index > target_index
-    assert w["apply_btn"].parentWidget() is w["apply_group"]
+    assert btn_row_index >= 0 and target_index > btn_row_index and mode_row_index > target_index
     assert w["apply_target"].parentWidget() is w["apply_group"]
 
 
