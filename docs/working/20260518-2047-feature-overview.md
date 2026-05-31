@@ -152,7 +152,7 @@
 [本丸] C-01 外部壁紙サイト連携  ←── オーナー発案
 ```
 
-- Qt 移行の詳細は [docs/working/20260530-pyqt6-migration-plan.md](20260530-pyqt6-migration-plan.md) を参照する。
+- Qt 移行の詳細は [docs/working/20260530-2201-pyqt6-migration-plan.md](20260530-2201-pyqt6-migration-plan.md) を参照する。
 - C-03 / C-04 は採用条件が揃った時点で着手候補へ再分類する。条件が揃わなければ構想保持のまま維持する。
 
 ## 初動タスク
