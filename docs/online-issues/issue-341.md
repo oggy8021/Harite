@@ -43,7 +43,7 @@
 | 即時 bugfix | **完了**（#356） |
 | 設計判断 | **W-02-A 採択・実装済** — dual-source on Windows = wide composite + Span |
 | 次アクション | **なし**（本 Issue クローズ） |
-| オプション | W-02-B: GUI で single-srcdir Start 許可（CLI は既に可）— 未着手、別 Issue 化可 |
+| オプション | W-02-B: GUI single-srcdir Start — **見送り**（2026-05-31）。CLI single-source は [cli-spec §6](../specs/cli/harite-cli-spec.md) どおり可 |
 
 ## 論点メモ
 
@@ -57,5 +57,7 @@
 **旧事象（#352 以前）:** `dual-source slideshow requires linux plugin` — start ゲートによる拒否。**#356 で解消。**
 
 **副次（#356）:** Start 直前 Interval spin commit（settings より spin 優先）、`Slideshow current` basename 省略（GTK/Qt）。正本: gui-spec §6.1–6.2。
+
+**W-02-B（見送り 2026-05-31）:** GUI で Srcdir 片方のみ Start — **不採用**。source 1 件は display 1 枚が通例とし、single-source は CLI `slideshow --input` で足りる。GUI の L/R 2 面必須は [gui-spec §6](../specs/gui/harite-gui-spec.md) どおり維持。single display × single source の横断整理は別機会。
 
 **GitHub:** Issue #341 クローズ。正本・backlog・online-issues へ反映済。

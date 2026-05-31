@@ -116,11 +116,11 @@ if self.plugin_name != "linux":
 
 **実装規模（見込）:** `_prepare_slideshow_apply` の条件分岐 + テスト数本 + spec PR。新 plugin 契約は不要。
 
-### 4.2 オプション: W-02-B（single-srcdir on Windows GUI）
+### 4.2 ~~オプション~~ W-02-B（single-srcdir on Windows GUI）— **見送り**
 
-- CLI は single-source 可。GUI のみ L/R 両方必須。
-- Windows ユーザー向けに **Srcdir-L のみ** または **どちらか一方** で Start 可能にする案。
-- B-lite とは独立。**UX 判断** — W-02-A 後でも可。
+- CLI は single-source 可（[cli-spec §6](../specs/cli/harite-cli-spec.md)）。GUI のみ L/R 両方必須（[gui-spec §6](../specs/gui/harite-gui-spec.md)）。
+- **2026-05-31 不採用:** source 1 件は display 1 枚が通例。GUI 片方 Start は Not-Split 等の決めごとが増える。single display / single source は **別整理機会**。
+- 代替: `harite slideshow --input <dir> ...`（single-file apply、CLI と同型）。
 
 ### 4.3 非推奨: 現状維持 + メッセージのみ
 

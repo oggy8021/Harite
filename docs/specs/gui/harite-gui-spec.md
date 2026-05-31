@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-05-31 (slideshow Interval commit / current path 省略表示)
+最終更新: 2026-05-31 (Main tab action cluster Qt layout; W-02-B 見送り)
 
 ## 1. GUI の責務
 
@@ -283,6 +283,12 @@ GTK / Qt 両 backend で、次の user-facing surface は **同じ省略規則**
 - per-monitor 分割ファイルは slideshow 作業ディレクトリに **生成しない**（composite スロット `harite_slideshow.jpg` のみ）。
 - `windows_apply_span`（Settings）が有効なとき、tick apply 前に `ensure_span_style()` を best-effort 呼び出す（Main タブ Apply B-lite と同型）。
 - registry 自動復元は **実装しない**（slideshow 中の書き戻しは表示崩れリスク — [#343](../online-issues/issue-343.md)）。
+
+### GUI single-srcdir slideshow（W-02-B — 見送り）
+
+- Start は **Srcdir-L と Srcdir-R の両方非空** のときのみ有効（現行どおり）。片方のみの Start は **採用しない**（2026-05-31）。
+- 理由: source 1 件は display 1 枚が通例。GUI で single-source を許すと apply モード（No Split 等）との整理が別途必要。single display × single source は **将来の横断整理** とする。
+- 代替: CLI `harite slideshow --input <directory>`（1 件入力 = single-source、選んだ画像を `plugin.apply` — [cli-spec §6](../cli/harite-cli-spec.md)）。
 
 ### 出力ディレクトリ（手動 Optimize と slideshow）
 

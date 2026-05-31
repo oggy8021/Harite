@@ -44,7 +44,7 @@ flowchart LR
 - `_prepare_slideshow_apply`: Windows + display 2+ で dual-source start を許可。
 - tick: B-lite 同型（composite → Span apply）。tray Start も同一経路。
 - 副次: Start 直前 Interval spin commit（GTK/Qt）、`Slideshow current` path 省略（gui-spec §6.1–6.2）。
-- **未採用（W-02-B）:** GUI single-srcdir Start（CLI は従来どおり可）。必要なら別 Issue。
+- **見送り（W-02-B）:** GUI single-srcdir Start は **不採用**（2026-05-31 オーナー判断）。source 1 件は display 1 枚が通例とし、single-source slideshow は CLI（`harite slideshow --input` 1 件）で足りる。GUI で L/R 片方のみ Start を許す整理は **別機会**（single display / single source 横断テーマ）。
 
 ## W-03 方針候補と実施順
 
