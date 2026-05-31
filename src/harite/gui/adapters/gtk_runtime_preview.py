@@ -4,6 +4,8 @@ import importlib
 from pathlib import Path
 from typing import Any
 
+from harite.apply_surface import preview_state_label
+
 
 def get_gdkpixbuf_module(backend: Any) -> Any | None:
     try:
@@ -162,7 +164,7 @@ def sync_result_preview_from_owner(backend: Any, owner: Any) -> None:
             l_display=getattr(state, "l_display", None),
             r_display=getattr(state, "r_display", None),
         )
-        backend._set_label_text("lblPreviewState", "Preview: pseudo auto-split by display widths")
+        backend._set_label_text("lblPreviewState", preview_state_label(mode))
         if boxes is not None:
             set_preview_widget(backend, "imgPreviewL", Path(source_path), crop_box=boxes[0])
             set_preview_widget(backend, "imgPreviewR", Path(source_path), crop_box=boxes[1])

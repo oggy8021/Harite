@@ -63,6 +63,7 @@ def build_settings_dialog(parent: Any = None) -> dict[str, Any]:
     """Build the Settings QDialog and return the widget registry."""
     from PyQt6.QtWidgets import (
         QButtonGroup,
+        QCheckBox,
         QDialog,
         QDialogButtonBox,
         QFrame,
@@ -134,6 +135,13 @@ def build_settings_dialog(parent: Any = None) -> dict[str, Any]:
     _add_row("Scaling", prefs_scaling_entry)
     _add_row("Plugin", prefs_plugin_entry)
     _add_row("Apply", apply_mode_shell)
+
+    from harite.apply_surface import is_windows_host
+
+    prefs_windows_apply_span = QCheckBox("Apply with Span when using Span mode")
+    if not is_windows_host():
+        prefs_windows_apply_span.setVisible(False)
+    _add_row("Windows", prefs_windows_apply_span)
 
     # -- action buttons --
     prefs_ok_btn = QPushButton("OK")
@@ -237,6 +245,7 @@ def build_settings_dialog(parent: Any = None) -> dict[str, Any]:
         "prefs_plugin_entry": prefs_plugin_entry,
         "prefs_apply_single": prefs_apply_single,
         "prefs_apply_per_monitor": prefs_apply_per_monitor,
+        "prefs_windows_apply_span": prefs_windows_apply_span,
         "prefs_import_path_entry": None,
         "prefs_export_path_entry": None,
         "settings_dialog_proxy": proxy,

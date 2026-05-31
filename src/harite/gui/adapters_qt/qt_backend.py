@@ -671,12 +671,15 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         run_apply_clicked(self, callback)
 
     def _on_apply_mode_toggled(self, widget: Any, mode: str) -> None:
-        # Mirror GTK: update help label before calling the handler.
-        label = (
-            "Split the optimized image and apply per display."
-            if mode == "per-monitor-auto-split"
-            else "Apply the optimized image as a single file."
-        )
+        from harite.apply_surface import apply_mode_help_text as build_apply_mode_help
+
+        owner = self._get_handler_owner("on_change_apply_mode")
+        span_opt_in = False
+        if owner is not None:
+            prefs = getattr(owner, "preferences", None)
+            apply_prefs = getattr(prefs, "apply", None) if prefs is not None else None
+            span_opt_in = bool(getattr(apply_prefs, "windows_apply_span", False))
+        label = build_apply_mode_help(mode, windows_apply_span=span_opt_in)
         self._set_label_text("lblApplyMode", label)
 
         from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_apply_mode_toggled

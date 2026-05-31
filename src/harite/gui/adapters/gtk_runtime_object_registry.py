@@ -139,6 +139,7 @@ def _build_dialog_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, A
         "entSettingsPlugin": widgets["prefs_plugin_entry"],
         "radSettingsApplySingle": widgets["prefs_apply_single"],
         "radSettingsApplyPerMonitor": widgets["prefs_apply_per_monitor"],
+        "chkWindowsApplySpan": widgets["prefs_windows_apply_span"],
         "ColorDialog": widgets["color_dialog_proxy"],
         "colorWindow": widgets["color_window"],
         "entColorValue": widgets["color_value_entry"],

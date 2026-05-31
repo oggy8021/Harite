@@ -55,7 +55,8 @@ class MainWindow:
         self.plugin_name = self._default_plugin_name()
         self.last_saved_files: list[Path] = []
         self.save_target_display = "Export target: not-selected"
-        self.apply_mode = self._default_apply_mode()
+        self.preferences = AppSettings.defaults(default_plugin=self.plugin_name)
+        self.apply_mode = self.preferences.apply.apply_mode
         self._pre_two_screen_resolution: str | None = None
         self.slideshow_interval_seconds = 60
         self.slideshow_mode = "random"
@@ -94,7 +95,6 @@ class MainWindow:
             background_color=DEFAULT_BACKGROUND_COLOR_HEX,
             embed_position="right-bottom",
         )
-        self.preferences = AppSettings.defaults(default_plugin=self.plugin_name)
         self.layout_version = "phase6-layout-redefinition"
         self.layout_sections: tuple[tuple[str, tuple[str, ...]], ...] = (
             ("title_menu_flow", ("title", "menu", "flow", "save_as")),
@@ -151,14 +151,7 @@ class MainWindow:
         return "windows"
 
     def _default_apply_mode(self) -> str:
-        session_markers = (
-            os.environ.get("XDG_CURRENT_DESKTOP", ""),
-            os.environ.get("XDG_SESSION_DESKTOP", ""),
-            os.environ.get("DESKTOP_SESSION", ""),
-            os.environ.get("GDMSESSION", ""),
-        )
-        is_xfce_session = any("xfce" in marker.strip().lower() for marker in session_markers if marker)
-        return "per-monitor-auto-split" if is_xfce_session else "single-file"
+        return AppSettings._default_apply_mode(self.plugin_name)
 
     def _default_output_dir(self) -> str:
         return str(self._resolve_default_output_dir())
@@ -764,10 +757,13 @@ class MainWindow:
 
         composite_path = self.last_saved_files[-1]
         try:
+            from harite.workspace import detect_displays
+
             effective_apply = resolve_apply_settings(
                 file=composite_path,
                 apply_mode=self.apply_mode,
                 output_dir=composite_path.parent,
+                displays=detect_displays(),
             )
         except ValueError as exc:
             self._set_status("error", "apply", str(exc), error=str(exc))
@@ -775,8 +771,18 @@ class MainWindow:
             return False
 
         target = effective_apply.target
-        if self.apply_mode == "per-monitor-auto-split":
+        if effective_apply.windows_span:
+            self._log("Apply Windows Span: single wide image")
+        elif self.apply_mode == "per-monitor-auto-split":
             self._log(f"Apply per-monitor auto-split: {target}")
+
+        if effective_apply.windows_span and self.preferences.apply.windows_apply_span:
+            from harite.windows_wallpaper import ensure_span_style
+
+            if ensure_span_style():
+                self._log("Windows background style set to Span")
+            else:
+                self._log("Windows Span style update skipped or failed")
 
         try:
             plugin = plugin_registry.get(self.plugin_name)
@@ -1200,6 +1206,8 @@ class MainWindow:
         tick_files: list[Path] = []
 
         try:
+            from harite.workspace import detect_displays
+
             slideshow_state = self._build_slideshow_two_screen_state(selected_paths[0], selected_paths[1])
             slideshow_state_for_work = replace(slideshow_state, output_dir=str(work_dir))
             saved_files, _placements = self.controller.run_slideshow_optimize(slideshow_state_for_work)
@@ -1209,6 +1217,7 @@ class MainWindow:
                 file=composite_path,
                 apply_mode="per-monitor-auto-split",
                 output_dir=work_dir,
+                displays=detect_displays(),
             )
         except ValueError as exc:
             self._log(f"Slideshow {cycle_phase} auto-split prepare failed: {exc}")
@@ -1219,10 +1228,18 @@ class MainWindow:
                 return True, None
             return False, f"slideshow {user_cycle_phase} auto-split prepare failed: {exc}"
 
-        self._log(f"Slideshow {cycle_phase} per-monitor auto-split: {effective_apply.target}")
-        generated_files = [composite_path]
-        if isinstance(effective_apply.target, dict):
-            generated_files.extend(Path(str(path)) for path in effective_apply.target.values())
+        if effective_apply.windows_span:
+            self._log(f"Slideshow {cycle_phase} Windows Span: {effective_apply.target}")
+            if self.preferences.apply.windows_apply_span:
+                from harite.windows_wallpaper import ensure_span_style
+
+                ensure_span_style()
+            generated_files = [composite_path]
+        else:
+            self._log(f"Slideshow {cycle_phase} per-monitor auto-split: {effective_apply.target}")
+            generated_files = [composite_path]
+            if isinstance(effective_apply.target, dict):
+                generated_files.extend(Path(str(path)) for path in effective_apply.target.values())
 
         self._slideshow_tick_generated_files = tuple(generated_files)
 

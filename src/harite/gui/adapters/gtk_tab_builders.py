@@ -49,16 +49,25 @@ def build_action_cluster_section(gtk_module: Any, main_col: Any, *, default_appl
     apply_group.pack_start(apply_mode_row, False, False, 0)
     apply_mode_help_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
     apply_group.pack_start(apply_mode_help_row, False, False, 0)
-    rad_apply_single = gtk_module.RadioButton.new_with_label(None, "No Split")
-    rad_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(rad_apply_single, "Auto-Split")
+    from harite.apply_surface import (
+        apply_mode_help_text as build_apply_mode_help,
+        per_monitor_mode_radio_label,
+        single_file_mode_radio_label,
+    )
+
+    rad_apply_single = gtk_module.RadioButton.new_with_label(None, single_file_mode_radio_label())
+    rad_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(
+        rad_apply_single,
+        per_monitor_mode_radio_label(),
+    )
     if default_apply_mode == "per-monitor-auto-split":
         if hasattr(rad_apply_per_monitor, "set_active"):
             rad_apply_per_monitor.set_active(True)
-        apply_mode_help_text = "Split the optimized image and apply per display."
+        apply_mode_help_text = build_apply_mode_help("per-monitor-auto-split")
     else:
         if hasattr(rad_apply_single, "set_active"):
             rad_apply_single.set_active(True)
-        apply_mode_help_text = "Apply the optimized image as a single file."
+        apply_mode_help_text = build_apply_mode_help("single-file")
     apply_mode_label = gtk_module.Label(label=apply_mode_help_text)
     set_xalign_if_supported(apply_mode_label)
     apply_mode_row.pack_start(rad_apply_per_monitor, False, False, 0)
