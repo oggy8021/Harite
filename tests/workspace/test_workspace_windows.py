@@ -12,6 +12,12 @@ from harite import workspace
 from harite.display_context import build_two_screen_optimize_context
 
 
+def test_scale_percent_from_effective_dpi():
+    assert workspace._scale_percent_from_effective_dpi(96) == 100
+    assert workspace._scale_percent_from_effective_dpi(144) == 150
+    assert workspace._scale_percent_from_effective_dpi(120) == 125
+
+
 def test_display_from_win32_monitor_builds_display():
     display = workspace._display_from_win32_monitor(
         name=r"\\.\DISPLAY1",
@@ -20,6 +26,7 @@ def test_display_from_win32_monitor_builds_display():
         right=2560,
         bottom=1440,
         primary=True,
+        scale_percent=150,
     )
 
     assert display.name == r"\\.\DISPLAY1"
@@ -28,6 +35,7 @@ def test_display_from_win32_monitor_builds_display():
     assert display.x_offset == 0
     assert display.y_offset == 0
     assert display.primary is True
+    assert display.scale_percent == 150
 
 
 def test_detect_windows_uses_enumerator(monkeypatch):
@@ -39,6 +47,7 @@ def test_detect_windows_uses_enumerator(monkeypatch):
             x_offset=0,
             y_offset=0,
             primary=True,
+            scale_percent=150,
         ),
         workspace.Display(
             name=r"\\.\DISPLAY2",
@@ -47,6 +56,7 @@ def test_detect_windows_uses_enumerator(monkeypatch):
             x_offset=2560,
             y_offset=0,
             primary=False,
+            scale_percent=150,
         ),
     ]
 
@@ -60,11 +70,17 @@ def test_detect_windows_falls_back_to_system_metrics(monkeypatch):
     import ctypes as ctypes_mod
 
     class User32:
+        def SetProcessDpiAwarenessContext(self, _ctx):
+            return 1
+
         def SetProcessDPIAware(self):
             return 1
 
         def GetSystemMetrics(self, idx):
             return 1920 if idx == 0 else 1080
+
+        def GetDpiForSystem(self):
+            return 144
 
     monkeypatch.setattr(platform, "system", lambda: "Windows")
     monkeypatch.setattr(workspace, "_enumerate_windows_displays", lambda _user32: [])
@@ -81,6 +97,7 @@ def test_detect_windows_falls_back_to_system_metrics(monkeypatch):
     assert displays[0].width == 1920
     assert displays[0].height == 1080
     assert displays[0].primary is True
+    assert displays[0].scale_percent == 150
 
 
 def test_two_screen_context_from_windows_like_displays():
@@ -117,6 +134,10 @@ def test_detect_displays_on_real_windows_host():
 
     assert len(displays) >= 1
     assert all(display.width > 0 and display.height > 0 for display in displays)
+    assert all(
+        display.scale_percent is None or 100 <= display.scale_percent <= 500
+        for display in displays
+    )
     if len(displays) >= 2:
         names = {display.name for display in displays}
         assert any("DISPLAY" in name.upper() for name in names)

@@ -71,6 +71,9 @@ def test_detect_windows_uses_ctypes(monkeypatch):
     import ctypes
 
     class User32:
+        def SetProcessDpiAwarenessContext(self, _ctx):
+            return 1
+
         def SetProcessDPIAware(self):
             return 1
 
@@ -80,6 +83,9 @@ def test_detect_windows_uses_ctypes(monkeypatch):
         def GetSystemMetrics(self, idx):
             return 800 if idx == 0 else 600
 
+        def GetDpiForSystem(self):
+            return 96
+
     monkeypatch.setattr(platform, "system", lambda: "Windows")
     monkeypatch.setattr(ctypes, "windll", types.SimpleNamespace(user32=User32()))
 
@@ -87,3 +93,4 @@ def test_detect_windows_uses_ctypes(monkeypatch):
     assert len(displays) == 1
     assert displays[0].width == 800 and displays[0].height == 600
     assert displays[0].primary is True
+    assert displays[0].scale_percent == 100
