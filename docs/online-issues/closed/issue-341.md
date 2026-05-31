@@ -27,13 +27,13 @@
 | 正本 | slideshow-spec §9 / gui-spec §6 Windows dual-source 反映（#355） |
 | 手元確認 | dual srcdir → Start（ウィンドウ / tray）→ Interval / Span / current 表示 — **OK** |
 
-精査: [working/20260531-1530-windows-post-w03-status-and-w02-slideshow.md](../working/20260531-1530-windows-post-w03-status-and-w02-slideshow.md)
+精査: [../../working/finished/20260531-1530-windows-post-w03-status-and-w02-slideshow.md](../../working/finished/20260531-1530-windows-post-w03-status-and-w02-slideshow.md)
 
 ## 関連
 
-- backlog: [docs/working/20260531-1200-windows-qt-validation-backlog.md](../working/20260531-1200-windows-qt-validation-backlog.md)（W-02 **完了**）
+- backlog: [docs/working/finished/20260531-1200-windows-qt-validation-backlog.md](../../working/finished/20260531-1200-windows-qt-validation-backlog.md)（W-02 **完了**）
 - 横断: [#343](issue-343.md)（Apply / 壁紙 / 解像度）、two-screen、auto-split
-- 正本: [harite-slideshow-spec.md](../specs/slideshow/harite-slideshow-spec.md)、[harite-gui-spec.md](../specs/gui/harite-gui-spec.md) §6、[harite-plugin-spec.md](../specs/plugins/harite-plugin-spec.md) §4.1
+- 正本: [harite-slideshow-spec.md](../../specs/slideshow/harite-slideshow-spec.md)、[harite-gui-spec.md](../../specs/gui/harite-gui-spec.md) §6、[harite-plugin-spec.md](../../specs/plugins/harite-plugin-spec.md) §4.1
 - PR: #355（spec / status docs）、#356（impl + Interval / current path UX + spec 追記）
 
 ## 取り込み方針
@@ -43,7 +43,7 @@
 | 即時 bugfix | **完了**（#356） |
 | 設計判断 | **W-02-A 採択・実装済** — dual-source on Windows = wide composite + Span |
 | 次アクション | **なし**（本 Issue クローズ） |
-| オプション | W-02-B: GUI single-srcdir Start — **見送り**（2026-05-31）。CLI single-source は [cli-spec §6](../specs/cli/harite-cli-spec.md) どおり可 |
+| オプション | W-02-B: GUI single-srcdir Start — **見送り**（2026-05-31）。CLI single-source は [cli-spec §6](../../specs/cli/harite-cli-spec.md) どおり可 |
 
 ## 論点メモ
 
@@ -58,6 +58,6 @@
 
 **副次（#356）:** Start 直前 Interval spin commit（settings より spin 優先）、`Slideshow current` basename 省略（GTK/Qt）。正本: gui-spec §6.1–6.2。
 
-**W-02-B（見送り 2026-05-31）:** GUI で Srcdir 片方のみ Start — **不採用**。source 1 件は display 1 枚が通例とし、single-source は CLI `slideshow --input` で足りる。GUI の L/R 2 面必須は [gui-spec §6](../specs/gui/harite-gui-spec.md) どおり維持。single display × single source の横断整理は別機会。
+**W-02-B（見送り 2026-05-31）:** GUI で Srcdir 片方のみ Start — **不採用**。source 1 件は display 1 枚が通例とし、single-source は CLI `slideshow --input` で足りる。GUI の L/R 2 面必須は [gui-spec §6](../../specs/gui/harite-gui-spec.md) どおり維持。single display × single source の横断整理は別機会。
 
 **GitHub:** Issue #341 クローズ。正本・backlog・online-issues へ反映済。

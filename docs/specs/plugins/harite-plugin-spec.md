@@ -65,7 +65,7 @@ monitor map interface:
 - monitor map が渡された場合は失敗する。
 - GUI の Windows **Span**（内部値 `per-monitor-auto-split`）は、core の `resolve_apply_settings` が **合成 1 ファイル**（`single-file` target）へ解決してから Windows plugin に渡す（B-lite）。plugin は monitor map を受け取らない。
 - OS 背景の **Span 表示**（HKCU `WallpaperStyle=22`）は plugin 責務外。Settings の `windows_apply_span` が有効なとき、GUI / core が Apply 前に best-effort で設定する（[gui-spec](../gui/harite-gui-spec.md) 参照）。
-- OS デスクトップ **背景色**（Windows「背景」設定等）は Harite **管轄外**。壁紙 file path の差し替えのみ行い、背景色との重畳はユーザー / OS 設定に委ねる（[#343](../../online-issues/issue-343.md) resolution）。
+- OS デスクトップ **背景色**（Windows「背景」設定等）は Harite **管轄外**。壁紙 file path の差し替えのみ行い、背景色との重畳はユーザー / OS 設定に委ねる（[#343](../../online-issues/closed/issue-343.md) resolution）。
 - Fit / Fill / Stretch / Tile / Center を Harite が全面制御する案（B-full）は **不採用**。Span opt-in（B-lite）のみ。
 - 実適用では `SystemParametersInfoW` を使う。
 - 実適用の戻り値は `SystemParametersInfoW(...)` の真偽値をそのまま成功判定に使う。

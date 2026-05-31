@@ -28,7 +28,7 @@
 
 ### Harite 現状
 
-- 過去から **OS 側の Fit/Fill 等はユーザー任せ**。Harite は Apply → plugin で画像 path を渡すまで（[plugin-spec §4.1](../specs/plugins/harite-plugin-spec.md)）。
+- 過去から **OS 側の Fit/Fill 等はユーザー任せ**。Harite は Apply → plugin で画像 path を渡すまで（[plugin-spec §4.1](../../specs/plugins/harite-plugin-spec.md)）。
 - Windows plugin は `SystemParametersInfoW(SPI_SETDESKWALLPAPER, ...)` で **ファイル差し替えのみ**。
 - OS が設定する **背景色** は Harite の壁紙と重畳しうる。
 
@@ -40,7 +40,7 @@
 | Fit/Fill 等 | レジストリ変更まで手を伸ばすか **要判断**（工数・テスト・ユーザー期待） |
 | 解像度検出 | **W-03-C 先行** — GTK/Linux の `detect_displays` 経路を参考に Windows 強化。完了後に A/B を判断 |
 
-方針候補の整理は [working backlog W-03](../working/20260531-1200-windows-qt-validation-backlog.md) を参照。
+方針候補の整理は [working backlog W-03](../../working/finished/20260531-1200-windows-qt-validation-backlog.md) を参照。
 
 ## 分類
 
@@ -48,9 +48,9 @@
 
 ## 関連
 
-- backlog: [docs/working/20260531-1200-windows-qt-validation-backlog.md](../working/20260531-1200-windows-qt-validation-backlog.md)（W-03）
+- backlog: [docs/working/finished/20260531-1200-windows-qt-validation-backlog.md](../../working/finished/20260531-1200-windows-qt-validation-backlog.md)（W-03）
 - [#341](issue-341.md) Windows slideshow
-- 正本: [harite-plugin-spec.md](../specs/plugins/harite-plugin-spec.md) §4.1
+- 正本: [harite-plugin-spec.md](../../specs/plugins/harite-plugin-spec.md) §4.1
 
 ## 取り込み方針
 
@@ -223,7 +223,7 @@ DELL U2720QM
 
 - Windows のデスクトップ **背景色**（「背景」設定）は OS が管理する。Harite の壁紙画像と視覚的に重畳しうるが、**Harite は制御しない**。
 - plugin 契約は従来どおり **壁紙 file path の差し替え**（`SPI_SETDESKWALLPAPER`）まで。背景色 API / registry は対象外。
-- 正本: [plugin-spec §4.1](../specs/plugins/harite-plugin-spec.md)。
+- 正本: [plugin-spec §4.1](../../specs/plugins/harite-plugin-spec.md)。
 
 ### B-full（Fit/Fill / Stretch / Tile / Center 全面制御）— 不採用
 

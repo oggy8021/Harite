@@ -4,17 +4,17 @@
 
 ## 位置づけ
 
-- [docs/working/20260518-2047-feature-overview.md](20260518-2047-feature-overview.md) の C-xx（post-1.0.0 機能 inventory）とは **別軸**。
+- [docs/working/20260518-2047-feature-overview.md](../20260518-2047-feature-overview.md) の C-xx（post-1.0.0 機能 inventory）とは **別軸**。
 - Qt 移行完了直後に表面化した **現行 surface の polish / プラットフォームギャップ** を束ねる。
-- 仕様正本（`docs/specs/`）へ昇格する前の planning 入口。詳細観測は [docs/online-issues/](../online-issues/README.md) へ。
+- 仕様正本（`docs/specs/`）へ昇格する前の planning 入口。詳細観測は [docs/online-issues/](../../online-issues/README.md) へ。
 
 ## 一覧
 
 | ID | 項目 | 分類 | Issue | 優先感 | 現判断 |
 | --- | --- | --- | --- | --- | --- |
-| W-01 | Main タブ action cluster レイアウト | UI polish | [#342](../online-issues/issue-342.md) | 高（見た目・可読性） | **完了**（#346, 2026-05-31） |
-| W-02 | Windows スライドショー方針 | planning | [#341](../online-issues/issue-341.md) | **高** | **完了**（#355 spec + #356 impl, 2026-05-31） |
-| W-03 | Windows Apply / 壁紙表示 / 解像度検出 | investigation | [#343](../online-issues/issue-343.md) | — | **完了**（C #349 + B-lite #352、#343 クローズ） |
+| W-01 | Main タブ action cluster レイアウト | UI polish | [#342](../../online-issues/closed/issue-342.md) | 高（見た目・可読性） | **完了**（#346, 2026-05-31） |
+| W-02 | Windows スライドショー方針 | planning | [#341](../../online-issues/closed/issue-341.md) | **高** | **完了**（#355 spec + #356 impl, 2026-05-31） |
+| W-03 | Windows Apply / 壁紙表示 / 解像度検出 | investigation | [#343](../../online-issues/closed/issue-343.md) | — | **完了**（C #349 + B-lite #352、#343 クローズ） |
 
 ## 依存関係
 
@@ -53,7 +53,7 @@ flowchart LR
 | 1 | **C. 解像度検出強化** | マルチモニタ bounds / 仮想解像度 / two-screen context / `scale_percent` | **完了**（#349） |
 | 2 | **B-lite. Span 後押し（opt-in）** | Settings `windows_apply_span` 有効時、Span モード Apply で HKCU `WallpaperStyle=22` | **完了**（#352） |
 
-背景色の重畳は **Harite 管轄外（不問）** — OS 背景色設定のまま。壁紙 file は plugin が差し替え（[#343](../online-issues/issue-343.md) resolution）。
+背景色の重畳は **Harite 管轄外（不問）** — OS 背景色設定のまま。壁紙 file は plugin が差し替え（[#343](../../online-issues/closed/issue-343.md) resolution）。
 
 ## W-03-C 実装メモ（spec ドラフト用）
 
@@ -103,4 +103,4 @@ flowchart LR
 - Qt 移行計画: [20260530-2201-pyqt6-migration-plan.md](20260530-2201-pyqt6-migration-plan.md)
 - Phase 8 監査: [20260531-0843-qt-phase8-3layer-audit.md](20260531-0843-qt-phase8-3layer-audit.md)
 - 精査（post W-03）: [20260531-1530-windows-post-w03-status-and-w02-slideshow.md](20260531-1530-windows-post-w03-status-and-w02-slideshow.md)
-- Feature inventory（C-xx）: [20260518-2047-feature-overview.md](20260518-2047-feature-overview.md)
+- Feature inventory（C-xx）: [20260518-2047-feature-overview.md](../20260518-2047-feature-overview.md)

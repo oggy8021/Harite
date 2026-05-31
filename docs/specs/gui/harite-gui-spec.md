@@ -282,7 +282,7 @@ GTK / Qt 両 backend で、次の user-facing surface は **同じ省略規則**
 - 各 start / tick では GUI apply mode 設定にかかわらず `per-monitor-auto-split` 相当の optimize → composite を行い、core が **single-file + `windows_span`** に解決してから windows plugin へ apply する（Span 表示は OS 設定 + opt-in registry）。
 - per-monitor 分割ファイルは slideshow 作業ディレクトリに **生成しない**（composite スロット `harite_slideshow.jpg` のみ）。
 - `windows_apply_span`（Settings）が有効なとき、tick apply 前に `ensure_span_style()` を best-effort 呼び出す（Main タブ Apply B-lite と同型）。
-- registry 自動復元は **実装しない**（slideshow 中の書き戻しは表示崩れリスク — [#343](../online-issues/issue-343.md)）。
+- registry 自動復元は **実装しない**（slideshow 中の書き戻しは表示崩れリスク — [#343](../online-issues/closed/issue-343.md)）。
 
 ### GUI single-srcdir slideshow（W-02-B — 見送り）
 
