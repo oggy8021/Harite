@@ -15,7 +15,7 @@
 | --- | --- | --- | --- | --- | --- |
 | W-01 | Main タブ action cluster レイアウト | UI polish | [#342](../online-issues/issue-342.md) | 高（見た目・可読性） | **完了**（#346, 2026-05-31） |
 | W-02 | Windows スライドショー方針 | planning | [#341](../online-issues/issue-341.md) | 中（設計判断） | **保留**。W-03 / two-screen / auto-split とセットで決める |
-| W-03 | Windows Apply / 壁紙表示 / 解像度検出 | investigation | [#343](../online-issues/issue-343.md) | 中（Apply 品質） | **C 先行着手** → 完了後に A/B を判断 |
+| W-03 | Windows Apply / 壁紙表示 / 解像度検出 | investigation | [#343](../online-issues/issue-343.md) | 中（Apply 品質） | **C 完了**（#349）。**A/B → B-lite 採択**（下記） |
 
 ## 依存関係
 
@@ -37,17 +37,17 @@ flowchart LR
 ## 推奨着手順（2026-05-31 更新）
 
 1. ~~**W-01（#342）**~~ — 完了（PR #346）。
-2. **W-03-C（#343 解像度検出）** — GTK/Linux 実装（`detect_displays` / `display_context`）を参考に Windows 強化。**可能なら先行実施**。正本ライティング時に plugin 層のディスプレイ名補完の表現範囲を相談。
-3. **W-03-A / W-03-B（#343 Apply / 壁紙）** — C 実施後に判断（レジストリ Fit/Fill、背景色など）。
-4. **W-02（#341）** — W-03 全体の方針確定後、slideshow を spec 化。
+2. ~~**W-03-C（#343 解像度検出）**~~ — 完了（PR #349）。
+3. **W-03-B-lite（#343 Apply / Span）** — オーナー採択（2026-05-31）。GUI Span ラベル、Windows Apply 経路、Settings opt-in `windows_apply_span`。
+4. **W-02（#341）** — B-lite + slideshow Span 方針確定後、spec 化。
 
 ## W-03 方針候補と実施順
 
 | 順 | 案 | 内容 | 状態 |
 | --- | --- | --- | --- |
-| 1 | **C. 解像度検出強化** | マルチモニタ bounds / 仮想解像度 / two-screen context を Windows でも `detect_displays` 経由で供給 | **着手予定** |
-| 2 | A. 最小（現行維持） | `SystemParametersInfoW` のみ。OS Fit/Fill・背景色はユーザー任せ | C 後に判断 |
-| 2 | B. 表示方式同期 | レジストリ `WallpaperStyle` / `TileWallpaper` | C 後に判断 |
+| 1 | **C. 解像度検出強化** | マルチモニタ bounds / 仮想解像度 / two-screen context / `scale_percent` | **完了**（#349） |
+| 2 | A. 最小 | `SPI_SETDESKWALLPAPER` のみ。OS Span はユーザー任せ | **ベース**（registry 非触） |
+| 2 | **B-lite. Span 後押し（opt-in）** | Settings `windows_apply_span` 有効時、Span モード Apply で HKCU `WallpaperStyle=22` | **採択** |
 
 背景色の重畳問題は **案 A ならノータッチ** で整理可能（#343 本文参照）。
 
@@ -86,8 +86,9 @@ flowchart LR
 ## 完了条件（この backlog 文書として）
 
 - [x] W-01 が Issue クローズまたは spec + 実装 PR に分解された（#346, 2026-05-31）
-- [ ] W-03-C（解像度検出）が spec + 実装 PR に分解された
-- [ ] W-03-A / W-03-B が C 完了後にオーナー判断で固定された
+- [x] W-03-C（解像度検出）が spec + 実装 PR に分解された（#349）
+- [ ] W-03-B-lite（Span UI / Apply / opt-in）が spec + 実装 PR に分解された
+- [ ] W-03-A / 旧 B-full は **不採用**（Fit/Fill 全面制御は見送り）として resolution 記録
 - [ ] W-02 の Windows slideshow 方針が spec または Issue resolution に記録された
 - [ ] 確定事項は online-issues の `resolution` 節と specs 正本へ反映された
 

@@ -187,4 +187,24 @@ DELL U2720QM
 
 ## resolution
 
-（未解決。方針確定後に追記）
+### W-03-C（完了）
+
+- PR #349: `EnumDisplayMonitors`、物理解像度、`scale_percent`、Qt Optimize 結果ラベル修正。
+
+### W-03-B-lite（オーナー採択 2026-05-31）
+
+**目標:** Linux Auto-Split と **見え方は同じ**（左右意図どおり）。Windows 実現は **仮想解像度 1 枚 + OS Span**（per-monitor map は約束しない）。
+
+**実機:** 7680×1280 合成 + OS **スパン** で意図どおり。**並べて表示（Tile）は非推奨**（片側だけ・無駄メモリ）。
+
+| 項目 | 方針 |
+| --- | --- |
+| ベース | **A** — 既定は registry 非触 |
+| opt-in | Settings **`windows_apply_span`** — 有効時のみ Apply で Span（22）設定 |
+| Span 選択 | Main タブ **Span** ラベル（旧 Auto-Split）。2 枚以上で **Span 既定**。No Split も選択可 |
+| Span 選択の意味 | Apply 時 Span 切替への **同意**（opt-in 時） |
+| 復元 | **自動復元は見送り**（slideshow 中の復元で表示崩れ。異常終了も不可） |
+| プレビュー | **B'** — 疑似クロップ + 「monitor region」文言（Linux 用語を出さない） |
+| slideshow | wide composite + Span（opt-in 時は registry 維持）。W-02 で spec 化 |
+
+**未着手（次 PR）:** plugin-spec §4.1、README Windows 節、実装（`apply_surface` / B-lite Apply 経路）。
