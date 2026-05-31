@@ -659,40 +659,16 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         self._notify_close_handler("on_close_save_path_dialog")
 
     def _on_optimize_clicked(self, *_args: Any) -> None:
+        from harite.gui.adapters.gtk_runtime_action_handlers import run_optimize_clicked
+
         callback = self._signal_handlers.get("on_optimize")
-        if callback is None:
-            self._set_feedback(phase="Optimize", state="planned")
-            return
-        try:
-            ok = callback()
-            owner = self._get_handler_owner("on_optimize")
-            if owner is not None:
-                self._sync_non_preview_state_from_owner(owner)
-                return
-            if ok is False:
-                self._set_feedback(phase="Optimize", state="failed")
-            else:
-                self._set_feedback(phase="Optimize", state="done")
-        except Exception as exc:
-            self._set_feedback(phase="Optimize", state="error", error=str(exc))
+        run_optimize_clicked(self, callback)
 
     def _on_apply_clicked(self, *_args: Any) -> None:
+        from harite.gui.adapters.gtk_runtime_action_handlers import run_apply_clicked
+
         callback = self._signal_handlers.get("on_apply")
-        if callback is None:
-            self._set_feedback(phase="Apply", state="planned")
-            return
-        try:
-            ok = callback()
-            owner = self._get_handler_owner("on_apply")
-            if owner is not None:
-                self._sync_non_preview_state_from_owner(owner)
-                return
-            if ok is False:
-                self._set_feedback(phase="Apply", state="failed")
-            else:
-                self._set_feedback(phase="Apply", state="done")
-        except Exception as exc:
-            self._set_feedback(phase="Apply", state="error", error=str(exc))
+        run_apply_clicked(self, callback)
 
     def _on_apply_mode_toggled(self, widget: Any, mode: str) -> None:
         # Mirror GTK: update help label before calling the handler.
