@@ -266,7 +266,7 @@ product 方針として **R1–R5 をすべて満たす**。以下は実装仕�
 
 #### issue #317 での観測と対応（完了）
 
-issue #317 では次の純増パターンを観測した。R1–R5 の実装完了（[issue #317](../../online-issues/issue-317.md) 参照）により解消済みである。
+issue #317 では次の純増パターンを観測した。R1–R5 の実装完了（[issue #317](../../online-issues/closed/issue-317.md) 参照）により解消済みである。
 
 1. pause tick で optimize のみ成功し rollback しない（R3 対応済み）
 2. apply 失敗で生成ファイルを残す（R3 対応済み）
@@ -341,7 +341,7 @@ CLI の主な観測値:
 | その他 | — | dual-source **非対応**（start 前に拒否） |
 
 - Windows では linux plugin を要求しない（W-02）。`resolve_apply_settings` が `per-monitor-auto-split` を single-file に解決する（[plugin-spec §4.1](../plugins/harite-plugin-spec.md)）。
-- Settings **`windows_apply_span`** が有効なとき、各 tick の apply 前に HKCU Span を best-effort 設定する（Main Apply B-lite と同型）。registry **自動復元は行わない**（[#343](../../online-issues/issue-343.md)）。
+- Settings **`windows_apply_span`** が有効なとき、各 tick の apply 前に HKCU Span を best-effort 設定する（Main Apply B-lite と同型）。registry **自動復元は行わない**（[#343](../../online-issues/closed/issue-343.md)）。
 - plugin exception は apply_error 系として扱う。
 - input directory が空なら起動前に止める。
 

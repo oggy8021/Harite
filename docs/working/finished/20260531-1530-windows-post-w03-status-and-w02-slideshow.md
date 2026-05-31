@@ -118,7 +118,7 @@ if self.plugin_name != "linux":
 
 ### 4.2 ~~オプション~~ W-02-B（single-srcdir on Windows GUI）— **見送り**
 
-- CLI は single-source 可（[cli-spec §6](../specs/cli/harite-cli-spec.md)）。GUI のみ L/R 両方必須（[gui-spec §6](../specs/gui/harite-gui-spec.md)）。
+- CLI は single-source 可（[cli-spec §6](../../specs/cli/harite-cli-spec.md)）。GUI のみ L/R 両方必須（[gui-spec §6](../../specs/gui/harite-gui-spec.md)）。
 - **2026-05-31 不採用:** source 1 件は display 1 枚が通例。GUI 片方 Start は Not-Split 等の決めごとが増える。single display / single source は **別整理機会**。
 - 代替: `harite slideshow --input <dir> ...`（single-file apply、CLI と同型）。
 
@@ -182,4 +182,4 @@ if self.plugin_name != "linux":
 
 - [20260531-1200-windows-qt-validation-backlog.md](20260531-1200-windows-qt-validation-backlog.md)
 - [20260531-w-03-b-lite-3layer-audit.md](20260531-w-03-b-lite-3layer-audit.md)
-- [#341](../online-issues/issue-341.md) / [#343](../online-issues/issue-343.md)
+- [#341](../../online-issues/closed/issue-341.md) / [#343](../../online-issues/closed/issue-343.md)

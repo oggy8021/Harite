@@ -152,7 +152,7 @@
 [本丸] C-01 外部壁紙サイト連携  ←── オーナー発案
 ```
 
-- Qt 移行の詳細は [docs/working/20260530-2201-pyqt6-migration-plan.md](20260530-2201-pyqt6-migration-plan.md) を参照する。
+- Qt 移行の詳細は [docs/working/finished/20260530-2201-pyqt6-migration-plan.md](finished/20260530-2201-pyqt6-migration-plan.md) を参照する。
 - C-03 / C-04 は採用条件が揃った時点で着手候補へ再分類する。条件が揃わなければ構想保持のまま維持する。
 
 ## Qt 移行後 Windows 検証 backlog（W-xx）
@@ -165,7 +165,7 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 | W-02 | Windows slideshow 方針 | #341 | **完了**（W-02-A #355 + #356, 2026-05-31） |
 | W-03 | Apply / 壁紙 / 解像度 | #343 | **完了**（#349 + #352、背景色不問で #343 クローズ, 2026-05-31） |
 
-統合文書: [docs/working/20260531-1200-windows-qt-validation-backlog.md](20260531-1200-windows-qt-validation-backlog.md)  
+統合文書: [docs/working/finished/20260531-1200-windows-qt-validation-backlog.md](finished/20260531-1200-windows-qt-validation-backlog.md)  
 観測ログ: [docs/online-issues/README.md](../online-issues/README.md)
 
 ## 初動タスク

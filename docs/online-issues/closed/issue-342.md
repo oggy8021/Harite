@@ -8,7 +8,7 @@
 
 ## 事象
 
-- Web UI に貼り付けのスナップショットを `out/online-issues/issue-342補足画像.png` として保存した（リポジトリ追跡は不要）
+- Web UI に貼り付けのスナップショットを `out/online-issues/closed/issue-342補足画像.png` として保存した（リポジトリ追跡は不要）
 - Optimize ラベルと Apply ラベルの高さが揃っていない
 - ボタンフェイスとして **アイコン + 文字列** は守る（icon-only 化は revert 済み）
 - Optimize / Apply のユーザー補助メッセージ（例: `Optimize result: not-run`, `Apply target: not-ready`）は GTK 版ではボタン右横。Qt 版では **下段配置でも可**
@@ -20,23 +20,23 @@
 
 ## 関連
 
-- backlog: [docs/working/20260531-1200-windows-qt-validation-backlog.md](../working/20260531-1200-windows-qt-validation-backlog.md)（W-01）
+- backlog: [docs/working/finished/20260531-1200-windows-qt-validation-backlog.md](../../working/finished/20260531-1200-windows-qt-validation-backlog.md)（W-01）
 - 実装: `src/harite/gui/adapters_qt/qt_tab_main.py`（action cluster）
-- 正本: [docs/specs/gui/harite-gui-spec.md](../specs/gui/harite-gui-spec.md) § Main tab action cluster
+- 正本: [docs/specs/gui/harite-gui-spec.md](../../specs/gui/harite-gui-spec.md) § Main tab action cluster
 
 ## 取り込み方針
 
 | 項目 | 判断 |
 | --- | --- |
 | 着手 | **完了** — PR #346 マージ・Windows 実機確認済 |
-| spec 改訂 | [gui-spec](../specs/gui/harite-gui-spec.md) § Main tab action cluster（2026-05-31） |
+| spec 改訂 | [gui-spec](../../specs/gui/harite-gui-spec.md) § Main tab action cluster（2026-05-31） |
 | 実装 | `qt_tab_main.py` — 上端揃え、補助ラベルをボタン直下 |
 | 次アクション | GitHub Issue #342 を close |
 
 ## resolution
 
 - **2026-05-31**: PR [#346](https://github.com/oggy8021/Harite/pull/346) マージ。Windows `harite-qt` 実機で Optimize / Apply 見出しおよび補助ラベル配置を確認。
-- 正本: [harite-gui-spec.md](../specs/gui/harite-gui-spec.md) § Main tab（action cluster 上端揃え、Qt 補助ラベル直下配置）。
+- 正本: [harite-gui-spec.md](../../specs/gui/harite-gui-spec.md) § Main tab（action cluster 上端揃え、Qt 補助ラベル直下配置）。
 
 ## 補足
 

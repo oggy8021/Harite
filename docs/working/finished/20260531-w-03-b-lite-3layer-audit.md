@@ -9,7 +9,7 @@
 |------|------|
 | `docs/specs/gui/harite-gui-spec.md` | Windows ラベル **Span**、2+ display 既定 Span、`windows_apply_span` opt-in、プレビュー B' |
 | `docs/specs/plugins/harite-plugin-spec.md` §4.1 | Windows plugin は single-file のみ；Span は core が single-file に解決 |
-| `docs/online-issues/issue-343.md` | B-lite 方針、Tile 非推奨、style restore 非実装 |
+| `docs/online-issues/closed/issue-343.md` | B-lite 方針、Tile 非推奨、style restore 非実装 |
 
 ## 比較マトリクス
 
