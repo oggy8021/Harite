@@ -1078,12 +1078,12 @@ def test_slideshow_handlers_use_srcdirs_and_interval_validation(monkeypatch, tmp
     assert window.status_level == "success"
     assert window.status_phase == "slideshow"
     assert window.status_message == "slideshow started"
-    assert window.slideshow_current_display == f"Slideshow current: L={left_dir / 'left-1.jpg'} | R=-"
+    assert window.slideshow_current_display == "Slideshow current: L=left-1.jpg | R=-"
 
     (left_dir / "left-2.jpg").write_bytes(b"left-2")
 
     assert window.on_slideshow_tick() is True
-    assert window.slideshow_current_display == f"Slideshow current: L={left_dir / 'left-2.jpg'} | R=-"
+    assert window.slideshow_current_display == "Slideshow current: L=left-2.jpg | R=-"
 
     assert window.on_slideshow_stop() is True
     assert window.slideshow_running is False
@@ -1103,6 +1103,15 @@ def test_slideshow_handlers_use_srcdirs_and_interval_validation(monkeypatch, tmp
     assert window.status_level == "error"
     assert window.status_phase == "slideshow"
     assert window.last_error == "slideshow interval must be positive"
+
+
+def test_slideshow_current_display_abbreviates_long_paths():
+    window = MainWindow()
+    long_path = "G:/My Drive/very/long/nested/folder/structure/wallpaper.jpg"
+    window.slideshow_running = True
+    window._update_slideshow_current_display(long_path, "-")
+    assert long_path not in window.slideshow_current_display
+    assert "wallpaper.jpg" in window.slideshow_current_display
 
 
 def test_slideshow_single_source_applies_on_start_and_tick(monkeypatch, tmp_path):
@@ -1608,6 +1617,111 @@ def test_slideshow_dual_source_start_fails_without_two_detected_displays(monkeyp
     assert window.status_message == "dual-source slideshow requires two detected displays"
     assert window.last_error == "dual-source slideshow requires two detected displays"
     assert any("Slideshow start blocked: dual-source slideshow requires two detected displays" in line for line in window.logs)
+
+
+def test_prepare_slideshow_apply_allows_windows_dual_source(monkeypatch):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="\\\\.\\DISPLAY1", width=3840, height=2160, x_offset=0, y_offset=0),
+                Display(name="\\\\.\\DISPLAY2", width=3840, height=2160, x_offset=3840, y_offset=0),
+            ),
+            resolution=(7680, 2160),
+            l_display=(3840, 2160),
+            r_display=(3840, 2160),
+        ),
+    )
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: object())
+
+    window = MainWindow()
+    window.plugin_name = "windows"
+
+    assert window._prepare_slideshow_apply(2) is True
+    assert window._slideshow_dual_auto_split_enabled is True
+
+
+def test_slideshow_windows_dual_source_start_applies_single_file(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def __init__(self):
+            self.calls: list[object] = []
+
+        def apply(self, path: object) -> bool:
+            self.calls.append(path)
+            return True
+
+    plugin = DummyPlugin()
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
+    monkeypatch.setattr("harite.apply_settings.sys.platform", "win32")
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="\\\\.\\DISPLAY1", width=3840, height=2160, x_offset=0, y_offset=0),
+                Display(name="\\\\.\\DISPLAY2", width=3840, height=2160, x_offset=3840, y_offset=0),
+            ),
+            resolution=(7680, 2160),
+            l_display=(3840, 2160),
+            r_display=(3840, 2160),
+        ),
+    )
+
+    window = MainWindow()
+    window.plugin_name = "windows"
+    window.form_state.output_dir = str(tmp_path / "Pictures")
+
+    def fake_run_slideshow_optimize(state):
+        out = Path(state.output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        composite = out / "harite_slideshow.jpg"
+        composite.write_bytes(b"composite-1")
+        return ([composite], [])
+
+    monkeypatch.setattr(window.controller, "run_slideshow_optimize", fake_run_slideshow_optimize)
+
+    left_dir = tmp_path / "slideshow-left"
+    right_dir = tmp_path / "slideshow-right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (right_dir / "right-1.png").write_bytes(b"right")
+
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.on_pick_slideshow_srcdir(str(right_dir), "R") is True
+    assert window.on_slideshow_start() is True
+    assert len(plugin.calls) == 1
+    assert Path(str(plugin.calls[0])).name == "harite_slideshow.jpg"
+    assert any("Windows Span" in line for line in window.logs)
+
+
+def test_slideshow_dual_source_start_rejects_unsupported_plugin(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="HDMI-1", width=1920, height=1080, x_offset=0, y_offset=0),
+                Display(name="DP-1", width=1920, height=1080, x_offset=1920, y_offset=0),
+            ),
+            resolution=(3840, 1080),
+            l_display=(1920, 1080),
+            r_display=(1920, 1080),
+        ),
+    )
+
+    window = MainWindow()
+    window.plugin_name = "macos"
+
+    left_dir = tmp_path / "slideshow-left"
+    right_dir = tmp_path / "slideshow-right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (right_dir / "right-1.png").write_bytes(b"right")
+
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.on_pick_slideshow_srcdir(str(right_dir), "R") is True
+    assert window.on_slideshow_start() is False
+    assert "not supported for plugin macos" in window.last_error
 
 
 def test_suggest_next_action_transitions(tmp_path):

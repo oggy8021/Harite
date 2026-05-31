@@ -1,6 +1,6 @@
 # Harite スライドショー仕様 (Slideshow Spec)
 
-最終更新: 2026-05-31
+最終更新: 2026-05-31 (W-02-A Windows dual-source / Interval commit / current path 省略表示)
 
 ## 1. スライドショー機能の責務
 
@@ -144,7 +144,8 @@ pause / stop 判定の境界:
 
 GUI timer / side state の現行規則:
 
-- GUI runtime timer は `interval_ms = max(1, int(interval_seconds)) * 1000` で作る。したがって現行 GUI は秒未満を扱わず、秒整数へ量子化して GLib timer に渡す。
+- GUI runtime timer は `interval_ms = max(1, int(interval_seconds)) * 1000` で作る。したがって現行 GUI は秒未満を扱わず、秒整数へ量子化して GLib / Qt timer に渡す。
+- **Start 直前**に Interval spin の現値を owner `slideshow_interval_seconds` へ commit する。timer は commit 後の owner 値で起動する。settings ファイルに保存された値より、Start 時点の spin 表示が優先される（詳細は [GUI spec §6.2](docs/specs/gui/harite-gui-spec.md)）。
 - dual-source 実行では L/R で独立した slideshow state を持ち、それぞれ `run_slideshow_cycle(images, backend.slideshow_mode, backend._slideshow_state_l|r)` で更新する。
 - したがって GUI dual-source の左右選択は、同じ tick の中でも 1 本の共有 index ではなく、L side state と R side state を別々に進める。
 - signal handler 経由の slideshow tick が使える場合は owner 側 callback を優先し、callback が `False` を返した時点で timer を止める。signal handler がない fallback 経路のときだけ GUI runtime 自身が L/R 選択を進める。
@@ -162,6 +163,12 @@ GUI は単なるタイマー処理ではなく、状態表示の責務を強く�
 - スライドショー実行が進行中か停止中か
 - 直近 apply の成否
 - display 条件不足や plugin 失敗の理由
+
+### 6.0 GUI 表示面（current / output）
+
+- **`Slideshow current`**: 現在 tick（または start 直後）で選ばれた L/R 画像 path を示す。user-facing label では full path をそのまま出さず、[GUI spec §6.1](docs/specs/gui/harite-gui-spec.md) の basename 省略規則（`format_slideshow_path_display`）を使う。長いマウント path（例: クラウド同期 drive 配下）でもファイル名中心で読めること。
+- **`Slideshow output`**: §6.1（slideshow 作業ディレクトリ）の path を示す（省略規則の対象外。directory path をそのまま表示してよい）。
+- owner の `slideshow_current_display` も、上記と同じ整形済み L/R を含める。
 
 ### 6.1 slideshow 作業ディレクトリ（案 A: ピクチャ配下）
 
@@ -308,6 +315,7 @@ GUI feedback の補足:
 - GUI runtime は `status_message` を 1 行目、`last_error` を 2 行目へ同期する。
 - ただし `last_error == status_message` のときは 2 行目を抑止し、同一内容を二重表示しない。
 - 状態表示 / tab title は `running|paused|stopped` の 3 状態を共有する。
+- `Slideshow current`（label / owner `slideshow_current_display`）は §6.0 および [GUI spec §6.1](docs/specs/gui/harite-gui-spec.md) の path 省略規則に従う。full path の生表示は観測面として採用しない。
 
 CLI の主な観測値:
 

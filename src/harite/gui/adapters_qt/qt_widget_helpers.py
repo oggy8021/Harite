@@ -16,6 +16,8 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Any
 
+from harite.gui.adapters.gtk_runtime_file_dialog_flow import format_slideshow_path_display
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -289,9 +291,15 @@ def refresh_slideshow_current_label(
     left: str | None = None,
     right: str | None = None,
 ) -> None:
-    state_l = left or str(getattr(backend, "_slideshow_state_l", None) or "idle")
-    state_r = right or str(getattr(backend, "_slideshow_state_r", None) or "idle")
-    text = f"Slideshow current: L={state_l}  R={state_r}"
+    state_l = left or str(getattr(backend, "_slideshow_previous_l", None) or "-")
+    state_r = right or str(getattr(backend, "_slideshow_previous_r", None) or "-")
+    if not getattr(backend, "_slideshow_running", False) and state_l == "-" and state_r == "-":
+        set_label_text(backend, "lblSlideshowCurrent", "Slideshow current: idle")
+        return
+    text = (
+        f"Slideshow current: L={format_slideshow_path_display(state_l)}"
+        f" | R={format_slideshow_path_display(state_r)}"
+    )
     set_label_text(backend, "lblSlideshowCurrent", text)
 
 

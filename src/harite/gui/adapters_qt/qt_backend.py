@@ -812,11 +812,16 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             self._set_feedback(phase="Slideshow", state="planned")
             return
         try:
-            interval = self._read_spin_int("spnInterval")
+            from harite.gui.adapters.gtk_runtime_slideshow_ui import commit_slideshow_interval_from_spin
+
+            interval = commit_slideshow_interval_from_spin(self)
             ok = callback()
             owner = self._get_handler_owner("on_slideshow_start")
             if owner is not None:
                 self._sync_slideshow_state_with_feedback_from_owner(owner)
+                if ok is not False and bool(getattr(owner, "slideshow_running", False)):
+                    timer_interval = int(getattr(owner, "slideshow_interval_seconds", 0) or interval or 60)
+                    self._start_slideshow_timer(timer_interval)
                 return
             if ok is not False:
                 self._slideshow_running = True

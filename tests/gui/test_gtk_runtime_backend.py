@@ -1162,11 +1162,11 @@ def test_runtime_backend_slideshow_srcdir_selection_and_slideshow_cycle_updates_
     slideshow_start.click()
     assert status.text == "Slideshow: started"
     assert slideshow_tab_title.text == "Slideshow (running)"
-    assert slideshow_current.text == f"Slideshow current: L={left_dir / 'left-1.jpg'} | R=-"
+    assert slideshow_current.text == "Slideshow current: L=left-1.jpg | R=-"
 
     assert backend.run_slideshow_cycle_once() is True
     assert slideshow_tab_title.text == "Slideshow (running)"
-    assert slideshow_current.text == f"Slideshow current: L={left_dir / 'left-2.jpg'} | R=-"
+    assert slideshow_current.text == "Slideshow current: L=left-2.jpg | R=-"
 
     slideshow_stop.click()
     assert status.text == "Slideshow: stopped"
@@ -1398,13 +1398,100 @@ def test_runtime_backend_slideshow_start_registers_timer_and_stop_removes_it(mon
 
     timer_callback = _FakeGLib.registered_sources[1]["callback"]
     assert timer_callback() is True
-    assert slideshow_current.text == f"Slideshow current: L={left_dir / 'left-2.jpg'} | R=-"
+    assert slideshow_current.text == "Slideshow current: L=left-2.jpg | R=-"
     assert plugin.calls[-1] == str(left_dir / "left-2.jpg")
 
     slideshow_stop.click()
 
     assert backend._slideshow_timer_source_id is None
     assert _FakeGLib.removed_sources == [1]
+
+
+def test_runtime_backend_slideshow_start_uses_spin_interval_without_value_changed(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def apply(self, path: str) -> bool:
+            return True
+
+    _FakeGLib.reset()
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+
+    backend = GtkRuntimeSignalBackend(_TimerFakeGtk)
+    window = MainWindow()
+
+    srcdir_dialog = backend.get_object("SrcdirDialog")
+    srcdir_l = backend.get_object("btnOpenSrcdirL")
+    interval = backend.get_object("spnInterval")
+    slideshow_start = backend.get_object("btnSlideshowStart")
+
+    left_dir = tmp_path / "slideshow-left"
+    left_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_pick_slideshow_srcdir",
+            "on_slideshow_start",
+            "on_slideshow_tick",
+            "on_slideshow_stop",
+            "on_slideshow_interval_change",
+        ),
+    )
+    backend.connect_signals(dispatch)
+    window.slideshow_interval_seconds = 60
+
+    srcdir_l.click()
+    srcdir_dialog.set_current_folder(str(left_dir))
+    srcdir_dialog.confirm()
+
+    interval.set_value(3)
+
+    slideshow_start.click()
+
+    assert window.slideshow_interval_seconds == 3
+    assert backend._slideshow_timer_source_id == 1
+    assert _FakeGLib.registered_sources[1]["interval_ms"] == 3000
+
+
+def test_runtime_backend_slideshow_current_abbreviates_long_paths(monkeypatch, tmp_path):
+    class DummyPlugin:
+        def apply(self, path: str) -> bool:
+            return True
+
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    window = MainWindow()
+
+    srcdir_dialog = backend.get_object("SrcdirDialog")
+    srcdir_l = backend.get_object("btnOpenSrcdirL")
+    slideshow_start = backend.get_object("btnSlideshowStart")
+    slideshow_current = backend.get_object("lblSlideshowCurrent")
+
+    left_dir = tmp_path / "google-drive-root" / "My Drive" / "photos"
+    left_dir.mkdir(parents=True)
+    image_path = left_dir / "wallpaper.jpg"
+    image_path.write_bytes(b"left")
+
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        (
+            "on_pick_slideshow_srcdir",
+            "on_slideshow_start",
+            "on_slideshow_tick",
+            "on_slideshow_stop",
+        ),
+    )
+    backend.connect_signals(dispatch)
+
+    srcdir_l.click()
+    srcdir_dialog.set_current_folder(str(left_dir))
+    srcdir_dialog.confirm()
+
+    slideshow_start.click()
+
+    assert str(image_path) not in slideshow_current.text
+    assert "wallpaper.jpg" in slideshow_current.text
 
 
 def test_runtime_backend_shows_owner_slideshow_start_failure_reason(monkeypatch, tmp_path):
@@ -1512,7 +1599,7 @@ def test_runtime_backend_shows_owner_slideshow_tick_failure_reason(monkeypatch, 
     assert status.text == "Slideshow: slideshow cycle single-file apply failed"
     assert error.text == "Error: none"
     assert slideshow_tab_title.text == "Slideshow (stopped)"
-    assert slideshow_current.text == f"Slideshow current: L={left_dir / 'left-2.jpg'} | R=-"
+    assert slideshow_current.text == "Slideshow current: L=left-2.jpg | R=-"
 
 
 def test_runtime_backend_slideshow_cycle_pauses_when_detected_displays_temporarily_drop(monkeypatch, tmp_path):
