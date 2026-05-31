@@ -36,6 +36,19 @@ def _load_qt_signal_backend() -> Any:
     return load_qt_runtime_signal_backend()
 
 
+def _initialize_tasktray(signal_backend: Any) -> Any | None:
+    """Install QSystemTrayIcon when available; non-fatal if unavailable."""
+    install = getattr(signal_backend, "install_tray", None)
+    if install is None:
+        return None
+    try:
+        if not install():
+            return None
+    except RuntimeError:
+        return None
+    return getattr(signal_backend, "tray_adapter", None)
+
+
 def run(
     *,
     present_ui_window: bool | None = None,
@@ -70,6 +83,14 @@ def run(
             connect_signal_dispatch(signal_backend, dispatch)
             setattr(window, "_adapter_signal_dispatch", dispatch)
     except (ImportError, TypeError):
+        pass
+
+    try:
+        tasktray_adapter = _initialize_tasktray(signal_backend)
+        if tasktray_adapter is not None:
+            setattr(signal_backend, "_tasktray_adapter", tasktray_adapter)
+            setattr(window, "_tasktray_adapter", tasktray_adapter)
+    except RuntimeError:
         pass
 
     if should_present:
