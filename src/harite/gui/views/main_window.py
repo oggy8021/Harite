@@ -1100,8 +1100,8 @@ class MainWindow:
             return True
 
         if source_count > 1:
-            if self.plugin_name != "linux":
-                message = "dual-source slideshow requires linux plugin"
+            if self.plugin_name not in ("linux", "windows"):
+                message = f"dual-source slideshow is not supported for plugin {self.plugin_name}"
                 self._slideshow_plugin_impl = None
                 self._set_status("error", "slideshow", message, error=message)
                 self._log(f"Slideshow start blocked: {message}")
