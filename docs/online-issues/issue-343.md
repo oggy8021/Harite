@@ -37,7 +37,7 @@
 | --- | --- |
 | 背景色 | **ノータッチ**（最小案）。Harite 壁紙と独立 |
 | Fit/Fill 等 | レジストリ変更まで手を伸ばすか **要判断**（工数・テスト・ユーザー期待） |
-| 解像度検出 | GUI optimize の `resolution=auto` 強化と連動（[#341](issue-341.md) / two-screen とセット） |
+| 解像度検出 | **W-03-C 先行** — GTK/Linux の `detect_displays` 経路を参考に Windows 強化。完了後に A/B を判断 |
 
 方針候補の整理は [working backlog W-03](../working/20260531-1200-windows-qt-validation-backlog.md) を参照。
 
@@ -55,9 +55,9 @@
 
 | 項目 | 判断 |
 | --- | --- |
-| 即時実装 | **しない**（方針未決） |
-| 次アクション | 案 A（現行維持）/ B（レジストリ）/ C（解像度検出）のオーナー選択 → 選ばれた案のみ spec PR |
-| 調査メモ | 下記「外部調査メモ」。**未検証**。実装根拠にする前に実機確認 |
+| 実施順 | **C → A/B**。C（解像度検出）を GTK 実装参考で可能なら先行。A/B（Apply / 壁紙 Fit/Fill 等）は C 後 |
+| spec | 正本ライティング時に **plugin 層のディスプレイ名補完** の表現範囲を相談 |
+| 次アクション | W-03-C: core-spec / workspace 契約のドラフト → テスト → `_detect_windows` 強化 PR |
 
 ---
 
