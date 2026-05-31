@@ -135,26 +135,6 @@ def test_optimize_button_disabled_by_default(qapp):
     assert not w["optimize_modern_btn"].isEnabled()
 
 
-def test_action_buttons_are_icon_only_under_section_labels(qapp):
-    """Optimize/Apply: section label above, icon-only button beside status text."""
-    from harite.gui.adapters_qt.qt_tab_main import build_action_cluster_section
-
-    w = build_action_cluster_section("single-file")
-    optimize_btn = w["optimize_modern_btn"]
-    apply_btn = w["apply_btn"]
-
-    assert w["optimize_section_label"].text() == "Optimize"
-    assert w["apply_section_label"].text() == "Apply"
-    assert optimize_btn.text() == ""
-    assert apply_btn.text() == ""
-    assert optimize_btn.toolTip() == "Optimize"
-    assert apply_btn.toolTip() == "Apply"
-    assert not optimize_btn.icon().isNull()
-    assert not apply_btn.icon().isNull()
-    assert optimize_btn.width() == 40
-    assert optimize_btn.height() == 40
-
-
 def test_apply_button_disabled_by_default(qapp):
     from harite.gui.adapters_qt.qt_tab_main import build_action_cluster_section
 

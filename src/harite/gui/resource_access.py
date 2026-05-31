@@ -24,23 +24,16 @@ def gui_resource_path(*path_parts: str) -> Iterator[Path]:
         yield resource_path
 
 
-def set_qt_button_icon(
-    widget: Any,
-    *resource_parts: str,
-    icon_size: int = 20,
-) -> None:
+def set_qt_button_icon(widget: Any, *resource_parts: str) -> None:
     """Attach an SVG icon from the package resources to a Qt widget.
 
     Uses ``QIcon`` loaded from the SVG file path.  Silently skips if PyQt6 is
     not importable or the resource file is not found.
     """
     try:
-        from PyQt6.QtCore import QSize
         from PyQt6.QtGui import QIcon
 
         with gui_resource_path(*resource_parts) as icon_path:
             widget.setIcon(QIcon(str(icon_path)))
-        if hasattr(widget, "setIconSize"):
-            widget.setIconSize(QSize(icon_size, icon_size))
     except Exception:
         pass
