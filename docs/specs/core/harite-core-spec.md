@@ -90,19 +90,21 @@ two-screen 文脈で重要な点:
 
 ### 3.3 `workspace.py` — display 検出
 
-`detect_displays()` は OS ごとに `Display(name, width, height, x_offset, y_offset, primary)` の列を返す。下流の `order_displays` / `build_two_screen_optimize_context` / `resolve_optimize_display_settings` は **Linux / Windows で同一経路** を使う。
+`detect_displays()` は OS ごとに `Display(name, width, height, x_offset, y_offset, primary, scale_percent)` の列を返す。下流の `order_displays` / `build_two_screen_optimize_context` / `resolve_optimize_display_settings` は **Linux / Windows で同一経路** を使う（`scale_percent` は参照しない付加情報）。
 
-| OS | 入口 | 名前 (`Display.name`) | ジオメトリ |
-| --- | --- | --- | --- |
-| Linux | `xrandr --query` 解析 | コネクタ名（例: `HDMI-1`, `DP-1`） | width / height / x_offset / y_offset / primary |
-| Windows | Win32 `EnumDisplayMonitors` + `GetMonitorInfoW` | デバイス名（例: `\\.\DISPLAY1`） | `MONITORINFOEX.rcMonitor` から同上 |
-| macOS | `system_profiler SPDisplaysDataType` | 空文字（現行） | width / height のみ |
+| OS | 入口 | 名前 (`Display.name`) | ジオメトリ | `scale_percent` |
+| --- | --- | --- | --- | --- |
+| Linux | `xrandr --query` 解析 | コネクタ名（例: `HDMI-1`, `DP-1`） | width / height / x_offset / y_offset / primary | `None` |
+| Windows | Win32 `EnumDisplayMonitors` + `GetMonitorInfoW` | デバイス名（例: `\\.\DISPLAY1`） | `MONITORINFOEX.rcMonitor` から physical pixel | `GetDpiForMonitor` の effective DPI から算出（例: 150） |
+| macOS | `system_profiler SPDisplaysDataType` | 空文字（現行） | width / height のみ | `None` |
 
 Windows の追加規則（W-03-C）:
 
 - PowerShell / Qt / WMI 製品名は **使わない**。core は Win32 API のみで検出する。
-- `SetProcessDPIAware()` を best-effort で呼び、取得矩形は physical pixel ベースとする。
-- `EnumDisplayMonitors` が 0 件または失敗した場合のみ、`GetSystemMetrics` による **primary 1 枚 fallback**（name 空・offset 0）を返してよい。
+- プロセスを Per-Monitor DPI aware（`SetProcessDpiAwarenessContext(PMv2)`）に best-effort で昇格し、失敗時のみ `SetProcessDPIAware()` に fallback する。取得矩形は **physical pixel** ベースとする（Windows 設定の「拡大/縮小」150% 環境でも、壁紙 optimize は物理解像度を使う）。
+- 各モニターについて `GetDpiForMonitor(..., MDT_EFFECTIVE_DPI, ...)` で effective DPI を取得し、`scale_percent = round(dpi_x * 100 / 96)` を `Display.scale_percent` に格納する（Windows 設定 UI の「150%（推奨）」と同系統）。取得失敗時は `None`。
+- 論理解像度との関係: `logical ≈ physical * 100 / scale_percent`（参考。下流は physical のみ使用）。
+- `EnumDisplayMonitors` が 0 件または失敗した場合のみ、`GetSystemMetrics` による **primary 1 枚 fallback**（name 空・offset 0）を返してよい。fallback 時は `GetDpiForSystem()` で primary の `scale_percent` を best-effort 取得してよい。
 - WMI `UserFriendlyName`（製品名）や Auto-Split ファイル名補完は **本節の対象外**（plugin / 将来検討）。
 
 ## 4. 最適化ロジック
