@@ -272,12 +272,13 @@ def _build_preview_group() -> dict[str, Any]:
 
 
 def _build_optimize_group() -> dict[str, Any]:
-    """Build the Optimize group (button + result label)."""
+    """Build the Optimize group (section label + icon button + result label)."""
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (
         QHBoxLayout,
         QLabel,
         QPushButton,
+        QSizePolicy,
         QVBoxLayout,
         QWidget,
     )
@@ -285,9 +286,11 @@ def _build_optimize_group() -> dict[str, Any]:
     group = QWidget()
     group_layout = QVBoxLayout(group)
     group_layout.setContentsMargins(0, 0, 0, 0)
-    group_layout.setSpacing(4)
+    group_layout.setSpacing(6)
+    group_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
     optimize_section_label = QLabel("Optimize")
+    optimize_section_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
     group_layout.addWidget(optimize_section_label)
 
     row = QWidget()
@@ -295,15 +298,21 @@ def _build_optimize_group() -> dict[str, Any]:
     row_layout.setContentsMargins(0, 0, 0, 0)
     row_layout.setSpacing(6)
 
-    optimize_modern_btn = QPushButton("Optimize")
+    optimize_modern_btn = QPushButton()
+    optimize_modern_btn.setToolTip("Optimize")
+    optimize_modern_btn.setAccessibleName("Optimize")
     optimize_modern_btn.setEnabled(False)
+    optimize_modern_btn.setFixedSize(40, 40)
+    optimize_modern_btn.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
     _set_button_icon(optimize_modern_btn, "icons", "lucide", "image.svg")
 
     optimize_result = QLabel("Optimize result: not-run")
-    optimize_result.setAlignment(Qt.AlignmentFlag.AlignLeft)
+    optimize_result.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+    optimize_result.setWordWrap(True)
+    optimize_result.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
 
-    row_layout.addWidget(optimize_modern_btn)
-    row_layout.addWidget(optimize_result, stretch=1)
+    row_layout.addWidget(optimize_modern_btn, 0, Qt.AlignmentFlag.AlignTop)
+    row_layout.addWidget(optimize_result, 1)
     group_layout.addWidget(row)
 
     return {
@@ -315,7 +324,7 @@ def _build_optimize_group() -> dict[str, Any]:
 
 
 def _build_apply_group(default_apply_mode: str) -> dict[str, Any]:
-    """Build the Apply group (button + target + apply mode radio + help text)."""
+    """Build the Apply group (section label + icon button + target + mode rows)."""
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (
         QButtonGroup,
@@ -323,6 +332,7 @@ def _build_apply_group(default_apply_mode: str) -> dict[str, Any]:
         QLabel,
         QPushButton,
         QRadioButton,
+        QSizePolicy,
         QVBoxLayout,
         QWidget,
     )
@@ -330,9 +340,11 @@ def _build_apply_group(default_apply_mode: str) -> dict[str, Any]:
     group = QWidget()
     group_layout = QVBoxLayout(group)
     group_layout.setContentsMargins(0, 0, 0, 0)
-    group_layout.setSpacing(4)
+    group_layout.setSpacing(6)
+    group_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
     apply_section_label = QLabel("Apply")
+    apply_section_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
     group_layout.addWidget(apply_section_label)
 
     # Apply button + target label row
@@ -341,15 +353,21 @@ def _build_apply_group(default_apply_mode: str) -> dict[str, Any]:
     apply_row_layout.setContentsMargins(0, 0, 0, 0)
     apply_row_layout.setSpacing(6)
 
-    apply_btn = QPushButton("Apply")
+    apply_btn = QPushButton()
+    apply_btn.setToolTip("Apply")
+    apply_btn.setAccessibleName("Apply")
     apply_btn.setEnabled(False)
+    apply_btn.setFixedSize(40, 40)
+    apply_btn.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
     _set_button_icon(apply_btn, "icons", "lucide", "wallpaper.svg")
 
     apply_target = QLabel("Apply target: not-ready")
-    apply_target.setAlignment(Qt.AlignmentFlag.AlignLeft)
+    apply_target.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+    apply_target.setWordWrap(True)
+    apply_target.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
 
-    apply_row_layout.addWidget(apply_btn)
-    apply_row_layout.addWidget(apply_target, stretch=1)
+    apply_row_layout.addWidget(apply_btn, 0, Qt.AlignmentFlag.AlignTop)
+    apply_row_layout.addWidget(apply_target, 1)
     group_layout.addWidget(apply_row_widget)
 
     # Apply mode radio row
