@@ -173,6 +173,14 @@ flowchart TD
 
 - GUI は日常操作面として apply や slideshow を直接起動するが、内部では core / plugin / slideshow helper の経路を利用する。
 
+Optimize / Apply クリック後の action cluster ラベル（GTK / Qt 共通）:
+
+- `Optimize` クリック成功時: `lblOptimizeResult` = `Optimize result: success`、`lblApplyTarget` = `Apply target: ready`、`btnSetWall` を有効化する。
+- `Optimize` クリック失敗時: `lblOptimizeResult` = `Optimize result: failed`、`lblApplyTarget` = `Apply target: not-ready`、`btnSetWall` を無効化する。
+- handler 未接続時: `Optimize result: handler-missing`。
+- 成功 / 失敗後の owner 同期は **`_sync_preview_state_from_owner` と `_sync_action_availability_from_owner` のみ** とし、`sync_input_state_from_owner`（`Optimize result: not-run` へ戻す）を走らせてはならない。
+- `Apply` クリック成功時: `lblApplyTarget` = `Apply target: last applied`。
+
 apply mode の user-facing 意味:
 
 - action cluster の apply mode は現行 UI では `No Split` と `Auto-Split` の 2 択である。

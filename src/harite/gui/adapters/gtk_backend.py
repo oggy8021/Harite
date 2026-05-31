@@ -617,6 +617,11 @@ class GtkRuntimeSignalBackend:
     def _sync_feedback_from_owner(self, owner: Any) -> None:
         sync_feedback_from_owner(self, owner)
 
+    def _sync_action_availability_from_owner(self, owner: Any) -> None:
+        from harite.gui.adapters.gtk_runtime_sync import sync_action_availability_from_owner
+
+        sync_action_availability_from_owner(self, owner)
+
     def _sync_non_preview_state_from_owner(self, owner: Any) -> None:
         sync_non_preview_state_from_owner(self, owner)
 
@@ -945,42 +950,9 @@ class GtkRuntimeSignalBackend:
             self._set_feedback(phase="Margins", state="error", error=str(exc))
 
     def _run_optimize_path(self, callback: Callable[..., Any] | None) -> None:
-        if callback is None:
-            self._set_feedback(
-                phase="Optimize",
-                state="handler-missing",
-                error="handler not connected",
-            )
-            self._set_button_enabled("btnSetWall", False)
-            self._set_label_text("lblOptimizeResult", "Optimize result: handler-missing")
-            self._set_label_text("lblApplyTarget", "Apply target: not-ready")
-            return
-        try:
-            self._set_feedback(phase="Optimize", state="running")
-            ok = callback()
-            self._set_button_enabled("btnSetWall", bool(ok))
-            owner = self._get_handler_owner("on_optimize")
-            if ok:
-                if owner is not None:
-                    self._sync_preview_state_from_owner(owner)
-                self._set_feedback(phase="Optimize", state="ok")
-                self._set_label_text("lblOptimizeResult", "Optimize result: success")
-                self._set_label_text("lblApplyTarget", "Apply target: ready")
-            else:
-                if owner is not None:
-                    self._sync_preview_state_from_owner(owner)
-                self._set_feedback(
-                    phase="Optimize",
-                    state="failed",
-                    error="optimize returned false",
-                )
-                self._set_label_text("lblOptimizeResult", "Optimize result: failed")
-                self._set_label_text("lblApplyTarget", "Apply target: not-ready")
-        except TypeError as exc:
-            self._set_button_enabled("btnSetWall", False)
-            self._set_feedback(phase="Optimize", state="error", error=str(exc))
-            self._set_label_text("lblOptimizeResult", "Optimize result: error")
-            self._set_label_text("lblApplyTarget", "Apply target: not-ready")
+        from harite.gui.adapters.gtk_runtime_action_handlers import run_optimize_clicked
+
+        run_optimize_clicked(self, callback)
 
     def _on_apply_mode_toggled(self, widget: Any, mode: str) -> None:
         is_active = True
@@ -1068,29 +1040,10 @@ class GtkRuntimeSignalBackend:
         self._run_optimize_path(callback)
 
     def _on_apply_clicked(self, *_args: Any) -> None:
+        from harite.gui.adapters.gtk_runtime_action_handlers import run_apply_clicked
+
         callback = self._signal_handlers.get("on_apply")
-        if callback is None:
-            self._set_feedback(
-                phase="Apply",
-                state="handler-missing",
-                error="handler not connected",
-            )
-            self._set_label_text("lblApplyTarget", "Apply target: handler-missing")
-            return
-        try:
-            self._set_feedback(phase="Apply", state="running")
-            ok = callback()
-            if ok:
-                self._set_feedback(phase="Apply", state="ok")
-                self._set_label_text("lblApplyTarget", "Apply target: last applied")
-            else:
-                self._set_feedback(
-                    phase="Apply",
-                    state="failed",
-                    error="apply returned false",
-                )
-        except TypeError as exc:
-            self._set_feedback(phase="Apply", state="error", error=str(exc))
+        run_apply_clicked(self, callback)
 
     def _on_settings_clicked(self, *_args: Any) -> None:
         on_settings_clicked(self, *_args)
