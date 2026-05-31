@@ -1,6 +1,6 @@
 # Harite コア仕様 (Core Spec)
 
-最終更新: 2026-05-30
+最終更新: 2026-05-31 (Windows display detection / W-03-C)
 
 ## 1. コア (core) の責務
 
@@ -87,6 +87,23 @@ two-screen 文脈で重要な点:
 - `get_display_at_index(index, displays)`: ordered 後の display リストから指定インデックスの display を返す。範囲外なら `None`。
 - `closest_display_for_offset(x_offset, y_offset, displays)`: 指定 offset に最も近い display をマンハッタン距離で探す。`(display, distance)` を返す。display が存在しない場合は `(None, None)`。
 - `build_two_screen_optimize_context(displays)`: ordered 先頭 2 件から `TwoScreenOptimizeContext`（`resolution`, `l_display`, `r_display` を持つ）を構築して返す。display が 2 件未満の場合は `None`。3 画面以上の環境では先頭 2 台の display のみから virtual resolution を算出し、3 台目以降は無視する。
+
+### 3.3 `workspace.py` — display 検出
+
+`detect_displays()` は OS ごとに `Display(name, width, height, x_offset, y_offset, primary)` の列を返す。下流の `order_displays` / `build_two_screen_optimize_context` / `resolve_optimize_display_settings` は **Linux / Windows で同一経路** を使う。
+
+| OS | 入口 | 名前 (`Display.name`) | ジオメトリ |
+| --- | --- | --- | --- |
+| Linux | `xrandr --query` 解析 | コネクタ名（例: `HDMI-1`, `DP-1`） | width / height / x_offset / y_offset / primary |
+| Windows | Win32 `EnumDisplayMonitors` + `GetMonitorInfoW` | デバイス名（例: `\\.\DISPLAY1`） | `MONITORINFOEX.rcMonitor` から同上 |
+| macOS | `system_profiler SPDisplaysDataType` | 空文字（現行） | width / height のみ |
+
+Windows の追加規則（W-03-C）:
+
+- PowerShell / Qt / WMI 製品名は **使わない**。core は Win32 API のみで検出する。
+- `SetProcessDPIAware()` を best-effort で呼び、取得矩形は physical pixel ベースとする。
+- `EnumDisplayMonitors` が 0 件または失敗した場合のみ、`GetSystemMetrics` による **primary 1 枚 fallback**（name 空・offset 0）を返してよい。
+- WMI `UserFriendlyName`（製品名）や Auto-Split ファイル名補完は **本節の対象外**（plugin / 将来検討）。
 
 ## 4. 最適化ロジック
 
