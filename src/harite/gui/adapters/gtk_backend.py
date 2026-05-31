@@ -617,6 +617,11 @@ class GtkRuntimeSignalBackend:
     def _sync_feedback_from_owner(self, owner: Any) -> None:
         sync_feedback_from_owner(self, owner)
 
+    def _sync_action_availability_from_owner(self, owner: Any) -> None:
+        from harite.gui.adapters.gtk_runtime_sync import sync_action_availability_from_owner
+
+        sync_action_availability_from_owner(self, owner)
+
     def _sync_non_preview_state_from_owner(self, owner: Any) -> None:
         sync_non_preview_state_from_owner(self, owner)
 

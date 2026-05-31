@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import ctypes
 import platform
-import types
 
 import pytest
 
@@ -39,6 +37,13 @@ def test_display_from_win32_monitor_builds_display():
 
 
 def test_detect_windows_uses_enumerator(monkeypatch):
+    class User32:
+        def SetProcessDpiAwarenessContext(self, _ctx):
+            return 1
+
+        def SetProcessDPIAware(self):
+            return 1
+
     expected = [
         workspace.Display(
             name=r"\\.\DISPLAY1",
@@ -61,14 +66,13 @@ def test_detect_windows_uses_enumerator(monkeypatch):
     ]
 
     monkeypatch.setattr(platform, "system", lambda: "Windows")
+    monkeypatch.setattr(workspace, "_win32_user32", lambda: User32())
     monkeypatch.setattr(workspace, "_enumerate_windows_displays", lambda _user32: expected)
 
     assert workspace.detect_displays() == expected
 
 
 def test_detect_windows_falls_back_to_system_metrics(monkeypatch):
-    import ctypes as ctypes_mod
-
     class User32:
         def SetProcessDpiAwarenessContext(self, _ctx):
             return 1
@@ -84,11 +88,7 @@ def test_detect_windows_falls_back_to_system_metrics(monkeypatch):
 
     monkeypatch.setattr(platform, "system", lambda: "Windows")
     monkeypatch.setattr(workspace, "_enumerate_windows_displays", lambda _user32: [])
-    monkeypatch.setattr(
-        ctypes_mod,
-        "windll",
-        types.SimpleNamespace(user32=User32()),
-    )
+    monkeypatch.setattr(workspace, "_win32_user32", lambda: User32())
 
     displays = workspace.detect_displays()
 

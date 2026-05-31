@@ -68,8 +68,6 @@ Graphics/Displays:
 
 
 def test_detect_windows_uses_ctypes(monkeypatch):
-    import ctypes
-
     class User32:
         def SetProcessDpiAwarenessContext(self, _ctx):
             return 1
@@ -87,7 +85,8 @@ def test_detect_windows_uses_ctypes(monkeypatch):
             return 96
 
     monkeypatch.setattr(platform, "system", lambda: "Windows")
-    monkeypatch.setattr(ctypes, "windll", types.SimpleNamespace(user32=User32()))
+    monkeypatch.setattr(workspace, "_enumerate_windows_displays", lambda _user32: [])
+    monkeypatch.setattr(workspace, "_win32_user32", lambda: User32())
 
     displays = workspace.detect_displays()
     assert len(displays) == 1

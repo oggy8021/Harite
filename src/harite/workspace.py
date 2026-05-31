@@ -252,6 +252,13 @@ def _enumerate_windows_displays(user32: object) -> List[Display]:
     return collected
 
 
+def _win32_user32() -> object:
+    """Return Win32 ``user32`` bindings (overridable in unit tests on non-Windows hosts)."""
+    import ctypes
+
+    return ctypes.windll.user32
+
+
 def _windows_fallback_scale_percent(user32: object) -> int | None:
     """Best-effort scale percent when monitor enumeration is unavailable."""
     try:
@@ -270,9 +277,7 @@ def _detect_windows() -> List[Display]:
     ``Display`` を構築する。列挙失敗時のみ primary 1 枚 fallback する。
     """
     try:
-        import ctypes
-
-        user32 = ctypes.windll.user32
+        user32 = _win32_user32()
         _ensure_windows_dpi_aware(user32)
 
         collected = _enumerate_windows_displays(user32)
