@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-05-30 (Qt backend Phase 0 spec 追加)
+最終更新: 2026-05-31 (Main tab action cluster Qt layout)
 
 ## 1. GUI の責務
 
@@ -114,8 +114,11 @@ Main tab:
 - 左右 panel は同型で、上段に十字配置の direction toggle と `Open-L/R`、下段に選択 path 表示と `Clear-L/R` を置く。
 - direction toggle 群は `Top/Bottom/Left/Right` を display ごとに十字状へ配置し、画像 picker button を中央に置く。
 - action cluster は横 3 群構成で、左から `Preview`、`Optimize`、`Apply` を置く。
-- `Optimize` 群は button と result label を 1 行にまとめる。
-- `Apply` 群は button と target label の行に加え、`apply mode row` と `apply mode help row` を別行で持つ。
+- action cluster の 3 群は **上端揃え** とする。群の高さ差（Apply 群の mode row 等）によって section label や button 行が縦方向にずれないこと。
+- `Optimize` 群は button と result label を 1 行にまとめる（GTK backend の現行レイアウト）。
+- Qt backend では、`Optimize` 群の result label（`Optimize result: ...`）を button の **直下** に置いてもよい。button は icon + 文字列を維持する。
+- `Apply` 群は button と target label の行に加え、`apply mode row` と `apply mode help row` を別行で持つ（GTK backend の現行レイアウト）。
+- Qt backend では、`Apply` 群の target label（`Apply target: ...`）を button の **直下** に置き、mode row 以降は現行どおり残り領域へ並べてよい。
 - `apply mode row` は `No Split` / `Auto-Split` の radio を置き、`apply mode help row` は選択意味の説明 label を置く。
 - `Preview` 群は左右 preview box を横並びに置き、その上下に assignment、画像 preview、result、state/source/assist を縦積みする。
 
