@@ -242,12 +242,20 @@ apply mode の user-facing 意味:
 - 実行中に mode 選択値を変えても進行中の run には反映しない。新しい mode を使うには stop 後に start し直す。
 - dual-source auto-split 実行中の optimize 出力管理（差し替え・純増ギャップ）は [docs/specs/slideshow/harite-slideshow-spec.md §6.2–6.3](docs/specs/slideshow/harite-slideshow-spec.md) を参照する。
 
+### Windows dual-source slideshow（W-02）
+
+- plugin が `windows` かつ **display 2 枚以上** 検出時、Srcdir-L / Srcdir-R の dual-source slideshow を **開始できる**。
+- 各 start / tick では GUI apply mode 設定にかかわらず `per-monitor-auto-split` 相当の optimize → composite を行い、core が **single-file + `windows_span`** に解決してから windows plugin へ apply する（Span 表示は OS 設定 + opt-in registry）。
+- per-monitor 分割ファイルは slideshow 作業ディレクトリに **生成しない**（composite スロット `harite_slideshow.jpg` のみ）。
+- `windows_apply_span`（Settings）が有効なとき、tick apply 前に `ensure_span_style()` を best-effort 呼び出す（Main タブ Apply B-lite と同型）。
+- registry 自動復元は **実装しない**（slideshow 中の書き戻しは表示崩れリスク — [#343](../online-issues/issue-343.md)）。
+
 ### 出力ディレクトリ（手動 Optimize と slideshow）
 
-| 用途 | ディレクトリ | Linux 既定の解決 |
+| 用途 | ディレクトリ | 既定の解決 |
 | --- | --- | --- |
-| 手動 Optimize / Export Image | `form_state.output_dir` | ピクチャ根: `XDG_PICTURES_DIR` → `user-dirs.dirs` → `~/Pictures` |
-| slideshow 作業（dual-source の composite / 分割） | `{ピクチャ根}/Harite/slideshow/` | 上記ピクチャ根の製品サブディレクトリ（§6.1） |
+| 手動 Optimize / Export Image | `form_state.output_dir` | Linux: ピクチャ根（XDG）。Windows: `SHGetFolderPathW` Pictures → `~/Pictures` |
+| slideshow 作業（dual-source composite 等） | `{ピクチャ根}/Harite/slideshow/` | 上記ピクチャ根の製品サブディレクトリ（§6.1 / slideshow-spec） |
 
 - slideshow 作業ディレクトリは **ピクチャ配下** とし、`XDG_CACHE_HOME` は使わない。XFCE 系 plugin が `xfconf-query` で参照する壁紙 path の実体が、キャッシュ削除等で消えないようにするため。
 - slideshow tab の `Slideshow output` は作業ディレクトリを示す。Main 導線の出力先表示とは別である。

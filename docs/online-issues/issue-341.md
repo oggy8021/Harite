@@ -38,8 +38,8 @@
 | 項目 | 判断 |
 | --- | --- |
 | 即時 bugfix | **不要**（2026-05-31 時点の start 拒否は旧 spec 通り） |
-| 設計判断 | **W-02-A 推奨** — dual-source on Windows = wide composite + Span（#343 resolution 整合） |
-| 次アクション | spec PR（slideshow-spec §9, gui-spec §6）→ test → `_prepare_slideshow_apply` 解除 |
+| 設計判断 | **W-02-A 採択** — dual-source on Windows = wide composite + Span（#343 resolution 整合） |
+| 次アクション | ~~spec PR~~ → test → impl（`_prepare_slideshow_apply` 解除） |
 | オプション | W-02-B: GUI で single-srcdir Start 許可（CLI は既に可） |
 
 ## 論点メモ
@@ -48,6 +48,8 @@
 - Qt 移行の副産物として「できない」が目に付く — W-02 spec で **許可する範囲** を明文化する。
 - registry 自動復元は引き続き **非実装**（#343）。slideshow 中は opt-in Span 維持。
 
-## resolution（draft — spec PR 待ち）
+## resolution
 
-**W-02-A（採択案）:** Windows + display 2+ で dual-source slideshow を許可。各 tick は B-lite と同型（two-screen optimize → composite → `resolve_apply_settings` → single-file apply + optional `ensure_span_style`）。per-monitor map / linux plugin は不要。
+**W-02-A（採択 2026-05-31）:** Windows + display 2+ で dual-source slideshow を許可。各 tick は B-lite と同型（two-screen optimize → composite → `resolve_apply_settings` → single-file apply + optional `ensure_span_style`）。per-monitor map / linux plugin は不要。
+
+**旧事象（#352 以前）:** `dual-source slideshow requires linux plugin` — start ゲートによる拒否。spec / impl PR（W-02）で解消予定。

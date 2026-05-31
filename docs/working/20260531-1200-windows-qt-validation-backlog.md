@@ -13,7 +13,7 @@
 | ID | 項目 | 分類 | Issue | 優先感 | 現判断 |
 | --- | --- | --- | --- | --- | --- |
 | W-01 | Main タブ action cluster レイアウト | UI polish | [#342](../online-issues/issue-342.md) | 高（見た目・可読性） | **完了**（#346, 2026-05-31） |
-| W-02 | Windows スライドショー方針 | planning | [#341](../online-issues/issue-341.md) | **高**（B-lite 後） | **spec 着手可能** — [精査メモ](20260531-1530-windows-post-w03-status-and-w02-slideshow.md) |
+| W-02 | Windows スライドショー方針 | planning | [#341](../online-issues/issue-341.md) | **高** | **W-02-A spec 反映中**（正本 PR + impl 続） |
 | W-03 | Windows Apply / 壁紙表示 / 解像度検出 | investigation | [#343](../online-issues/issue-343.md) | — | **完了**（C #349 + B-lite #352） |
 
 ## 依存関係
