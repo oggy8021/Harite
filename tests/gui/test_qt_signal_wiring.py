@@ -171,7 +171,7 @@ def test_connect_qt_widgets_does_not_raise_with_empty_registry(qapp):
         def _on_direction_released(self, key):
             pass
 
-        def _on_margin_changed(self, widget):
+        def _on_margin_changed(self, widget_name, value):
             pass
 
         def _on_apply_mode_toggled(self, widget, mode):
@@ -229,7 +229,7 @@ def test_connect_qt_widgets_wires_optimize_btn(qapp):
         def _on_direction_pressed(self, k): pass
         def _on_direction_toggled(self, k): pass
         def _on_direction_released(self, k): pass
-        def _on_margin_changed(self, w): pass
+        def _on_margin_changed(self, widget_name, value): pass
         def _on_apply_mode_toggled(self, w, m): pass
         def _on_slideshow_mode_toggled(self, w, m): pass
         def _on_margin_text_mode_toggled(self, w, v): pass
@@ -388,6 +388,32 @@ def test_on_margin_text_mode_settings_no_recursion(qapp):
 
     assert window.form_state.embed_info == "params"
     assert settings_btn.isChecked()
+
+
+def test_margin_spin_change_updates_form_state(qapp):
+    """Margin spins at 0 must remain editable and update MainWindow.margins."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+    from harite.gui.adapters.ui_adapter import (
+        RUNTIME_HANDLER_MAP,
+        connect_signal_dispatch,
+        create_mainwindow_signal_dispatch,
+    )
+
+    window = MainWindow()
+    backend = load_qt_runtime_signal_backend()
+    dispatch = create_mainwindow_signal_dispatch(
+        window, tuple(RUNTIME_HANDLER_MAP.keys()), handler_map=RUNTIME_HANDLER_MAP
+    )
+    connect_signal_dispatch(backend, dispatch)
+
+    left_spin = backend._objects["left_margin_spin"]
+    assert left_spin.value() == 0
+    assert left_spin.isEnabled()
+
+    left_spin.setValue(12)
+
+    assert window.form_state.margins == "12,0,0,0"
 
 
 def test_margin_text_entry_editable_for_text_only(qapp):

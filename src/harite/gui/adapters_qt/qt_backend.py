@@ -520,25 +520,22 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
     # Event handlers: margin spin
     # ------------------------------------------------------------------
 
-    def _on_margin_changed(self, _widget: Any) -> None:
+    def _on_margin_changed(self, widget_name: str, value: int | float) -> None:
+        """Mirror GTK: forward one margin spin change as (widget_name, value)."""
+        self._refresh_current_state_labels()
         callback = self._signal_handlers.get("on_change_margins")
         if callback is None:
-            self._refresh_current_state_labels()
+            self._set_feedback(phase="Margins", state="planned")
             return
         try:
-            left = self._read_spin_int("spnLeftMargin")
-            right = self._read_spin_int("spnRightMargin")
-            top = self._read_spin_int("spnTopMargin")
-            bottom = self._read_spin_int("spnBottomMargin")
-            ok = callback(f"{left},{right},{top},{bottom}")
+            callback(widget_name, value)
             owner = self._get_handler_owner("on_change_margins")
             if owner is not None:
                 self._sync_main_state_from_owner(owner)
                 self._sync_feedback_from_owner(owner)
                 return
-            if ok is False:
-                self._set_feedback(phase="Margins", state="rejected")
-        except Exception as exc:
+            self._set_feedback(phase="Margins", state="updated")
+        except TypeError as exc:
             self._set_feedback(phase="Margins", state="error", error=str(exc))
         self._refresh_current_state_labels()
 
