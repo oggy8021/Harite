@@ -14,7 +14,18 @@
 
 ## 分類
 
-- **spec-as-designed** → **planning**（Qt 化により Windows ユーザーにも UI が見えるようになり、方針再検討が必要）
+- **spec-as-designed**（2026-05-31 時点）→ **planning**（W-03 B-lite 完了後、spec 化可能）
+
+## 現状到達点（2026-05-31 post #352）
+
+| 層 | 状態 |
+| --- | --- |
+| 手動 Apply Span | **動作**（B-lite #352） |
+| slideshow tick 内 Span 経路 | **コードあり**（`_apply_slideshow_selection`） |
+| dual-source **start** | **拒否** — `_prepare_slideshow_apply` が `linux plugin` 必須 |
+| 正本 | slideshow-spec §9 は linux 必須のまま |
+
+精査: [working/20260531-1530-windows-post-w03-status-and-w02-slideshow.md](../working/20260531-1530-windows-post-w03-status-and-w02-slideshow.md)
 
 ## 関連
 
@@ -26,12 +37,19 @@
 
 | 項目 | 判断 |
 | --- | --- |
-| 即時 bugfix | **不要**（現行 spec 通り） |
-| 設計判断 | **保留**。W-03 とセットで決める |
-| 選択肢（たたき台） | (1) Windows では slideshow 非提供を GUI で明示 (2) 単一 srcdir + 単一画像 apply のみ許可 (3) 将来 Windows per-monitor 対応 |
-| 次アクション | W-03 方針確定後、slideshow-spec / gui-spec に Windows 向け注記を追記する spec PR |
+| 即時 bugfix | **不要**（2026-05-31 時点の start 拒否は旧 spec 通り） |
+| 設計判断 | **W-02-A 採択** — dual-source on Windows = wide composite + Span（#343 resolution 整合） |
+| 次アクション | ~~spec PR~~ → test → impl（`_prepare_slideshow_apply` 解除） |
+| オプション | W-02-B: GUI で single-srcdir Start 許可（CLI は既に可） |
 
 ## 論点メモ
 
-- Linux 向けに設計された dual-source / per-monitor 経路を Windows にそのまま持ち込むかは未決
-- Qt 移行の副産物として「できない」が目に付くようになった。UX 上の説明（disabled 理由・ヘルプ）も W-02 スコープに含めうる
+- Linux 向け dual-source / per-monitor 経路を Windows に **Span 経路として** 持ち込む案が B-lite 後に具体化（tick 実装済み、start のみ未接続）。
+- Qt 移行の副産物として「できない」が目に付く — W-02 spec で **許可する範囲** を明文化する。
+- registry 自動復元は引き続き **非実装**（#343）。slideshow 中は opt-in Span 維持。
+
+## resolution
+
+**W-02-A（採択 2026-05-31）:** Windows + display 2+ で dual-source slideshow を許可。各 tick は B-lite と同型（two-screen optimize → composite → `resolve_apply_settings` → single-file apply + optional `ensure_span_style`）。per-monitor map / linux plugin は不要。
+
+**旧事象（#352 以前）:** `dual-source slideshow requires linux plugin` — start ゲートによる拒否。spec / impl PR（W-02）で解消予定。
