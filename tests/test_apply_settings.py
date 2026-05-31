@@ -43,6 +43,7 @@ def test_resolve_apply_settings_explicit_mapping_uses_ordered_displays(tmp_path)
 
 
 def test_resolve_apply_settings_auto_split_resolves_target_without_plugin_capability_check(tmp_path, monkeypatch):
+    monkeypatch.setattr("harite.apply_settings.sys.platform", "linux")
     wall = tmp_path / "wall.jpg"
     wall.write_bytes(b"x")
 
@@ -65,3 +66,19 @@ def test_resolve_apply_settings_auto_split_resolves_target_without_plugin_capabi
 
     assert resolved.apply_mode == "per-monitor-auto-split"
     assert resolved.target == {"L": str(tmp_path / "split-left.jpg"), "R": str(tmp_path / "split-right.jpg")}
+
+
+def test_resolve_apply_settings_windows_span_mode_uses_single_file(tmp_path, monkeypatch):
+    monkeypatch.setattr("harite.apply_settings.sys.platform", "win32")
+    wall = tmp_path / "wall.jpg"
+    wall.write_bytes(b"x")
+
+    resolved = resolve_apply_settings(
+        file=wall,
+        apply_mode="per-monitor-auto-split",
+        displays=[],
+    )
+
+    assert resolved.windows_span is True
+    assert resolved.apply_mode == "single-file"
+    assert resolved.target == str(wall)
