@@ -26,8 +26,9 @@ class Display:
 def detect_displays() -> List[Display]:
     """Detect displays for the current host and return `Display` list.
 
-    On Linux this parses `xrandr --query`. On macOS/Windows returns basic
-    size-only `Display` entries (name may be empty).
+    On Linux this parses `xrandr --query`. On Windows this uses
+    ``EnumDisplayMonitors`` / ``GetMonitorInfoW``. On macOS returns basic
+    size-only ``Display`` entries (name may be empty).
     """
     system = platform.system()
     if system == "Linux":
@@ -135,21 +136,104 @@ def _detect_macos() -> List[Display]:
     return displays
 
 
-def _detect_windows() -> List[Display]:
-    """Windows で画面解像度を取得する（Win32 API 呼び出し）。
+def _display_from_win32_monitor(
+    *,
+    name: str,
+    left: int,
+    top: int,
+    right: int,
+    bottom: int,
+    primary: bool,
+) -> Display:
+    """Build ``Display`` from Win32 monitor rectangle and device name."""
+    return Display(
+        name=str(name).strip(),
+        width=max(0, int(right - left)),
+        height=max(0, int(bottom - top)),
+        x_offset=int(left),
+        y_offset=int(top),
+        primary=bool(primary),
+    )
 
-    失敗時は空リストを返す。
+
+def _enumerate_windows_displays(user32: object) -> List[Display]:
+    """Enumerate monitors using Win32 ``user32`` bindings."""
+    import ctypes
+    from ctypes import wintypes
+
+    class _RECT(ctypes.Structure):
+        _fields_ = [
+            ("left", ctypes.c_long),
+            ("top", ctypes.c_long),
+            ("right", ctypes.c_long),
+            ("bottom", ctypes.c_long),
+        ]
+
+    class _MONITORINFOEXW(ctypes.Structure):
+        _fields_ = [
+            ("cbSize", wintypes.DWORD),
+            ("rcMonitor", _RECT),
+            ("rcWork", _RECT),
+            ("dwFlags", wintypes.DWORD),
+            ("szDevice", wintypes.WCHAR * 32),
+        ]
+
+    MONITORINFOF_PRIMARY = 1
+    collected: List[Display] = []
+
+    def _callback(hmonitor, _hdc, _prect, _lparam):
+        info = _MONITORINFOEXW()
+        info.cbSize = ctypes.sizeof(_MONITORINFOEXW)
+        if not user32.GetMonitorInfoW(hmonitor, ctypes.byref(info)):
+            return 1
+        rect = info.rcMonitor
+        collected.append(
+            _display_from_win32_monitor(
+                name=str(info.szDevice),
+                left=int(rect.left),
+                top=int(rect.top),
+                right=int(rect.right),
+                bottom=int(rect.bottom),
+                primary=bool(info.dwFlags & MONITORINFOF_PRIMARY),
+            )
+        )
+        return 1
+
+    MONITORENUMPROC = ctypes.WINFUNCTYPE(
+        ctypes.c_int,
+        wintypes.HMONITOR,
+        wintypes.HDC,
+        ctypes.POINTER(_RECT),
+        wintypes.LPARAM,
+    )
+    enum_proc = MONITORENUMPROC(_callback)
+    user32.EnumDisplayMonitors(None, None, enum_proc, 0)
+    return collected
+
+
+def _detect_windows() -> List[Display]:
+    """Windows で接続モニタを列挙する（EnumDisplayMonitors / GetMonitorInfoW）。
+
+    ``DeviceName``（例: ``\\\\.\\DISPLAY1``）と monitor 矩形から
+    ``Display`` を構築する。列挙失敗時のみ primary 1 枚 fallback する。
     """
     try:
-        import ctypes as _ctypes
+        import ctypes
 
-        user32 = _ctypes.windll.user32
+        user32 = ctypes.windll.user32
         try:
             user32.SetProcessDPIAware()
         except Exception:
             pass
-        width = user32.GetSystemMetrics(0)
-        height = user32.GetSystemMetrics(1)
-        return [Display(name="", width=int(width), height=int(height))]
+
+        collected = _enumerate_windows_displays(user32)
+        if collected:
+            return collected
+
+        width = int(user32.GetSystemMetrics(0))
+        height = int(user32.GetSystemMetrics(1))
+        if width > 0 and height > 0:
+            return [Display(name="", width=width, height=height, primary=True)]
+        return []
     except Exception:
         return []
