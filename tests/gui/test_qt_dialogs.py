@@ -134,11 +134,9 @@ def test_settings_dialog_proxy_get_export_path(qapp):
     w = build_settings_dialog()
     proxy = w["SettingsDialog"]
 
-    # Should return a path (or None on import failure); must not raise
+    # Should return a default settings path string (GTK proxy contract)
     path = proxy.get_export_path()
-    # If it returns something, it should be path-like
-    if path is not None:
-        assert hasattr(path, "__fspath__") or isinstance(path, str)
+    assert isinstance(path, str)
 
 
 # ===========================================================================

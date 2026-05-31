@@ -942,13 +942,18 @@ class MainWindow:
     def _resolve_settings_file_path(self) -> Path:
         return resolve_default_settings_path()
 
+    def _resolve_settings_save_path(self, path: str | Path | None) -> Path:
+        if isinstance(path, Path):
+            return path
+        value = str(path or "").strip()
+        return Path(value) if value else self._resolve_settings_file_path()
+
     def on_save_settings_file(
         self,
-        path: str | None = None,
+        path: str | Path | None = None,
         config: dict[str, object] | None = None,
     ) -> bool:
-        value = (path or "").strip()
-        target_path = Path(value) if value else self._resolve_settings_file_path()
+        target_path = self._resolve_settings_save_path(path)
         payload = self._normalize_settings_display_payload(config) if config is not None else self._build_settings_dialog_config()
         try:
             save_settings(target_path, payload)
@@ -960,13 +965,16 @@ class MainWindow:
         self._log(f"Settings saved: {target_path}")
         return True
 
-    def on_load_settings_file(self, path: str) -> bool:
-        value = path.strip()
-        if not value:
-            self._set_status("error", "settings", "settings load failed", error="settings path is required")
-            self._log("Settings load failed: settings path is required")
-            return False
-        target_path = Path(value)
+    def on_load_settings_file(self, path: str | Path) -> bool:
+        if isinstance(path, Path):
+            target_path = path
+        else:
+            value = str(path).strip()
+            if not value:
+                self._set_status("error", "settings", "settings load failed", error="settings path is required")
+                self._log("Settings load failed: settings path is required")
+                return False
+            target_path = Path(value)
         try:
             config = load_settings(target_path)
         except (FileNotFoundError, OSError, ValueError) as exc:

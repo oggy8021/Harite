@@ -42,13 +42,13 @@ class QtSettingsDialogProxy:
     def set_settings(self, settings: dict[str, object]) -> None:
         self._settings = dict(settings)
 
-    def get_export_path(self) -> Any:
+    def get_export_path(self) -> str:
         try:
             from harite.settings_file import resolve_default_settings_path
 
-            return resolve_default_settings_path()
+            return str(resolve_default_settings_path())
         except Exception:
-            return None
+            return ""
 
     # --- Visibility helpers ---
 
