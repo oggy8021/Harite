@@ -363,6 +363,33 @@ def test_start_stop_slideshow_timer(qapp):
 # ---------------------------------------------------------------------------
 
 
+def test_on_margin_text_mode_settings_no_recursion(qapp):
+    """Selecting embed pattern 'Settings' must not recurse via margin text sync."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+    from harite.gui.adapters.ui_adapter import (
+        RUNTIME_HANDLER_MAP,
+        connect_signal_dispatch,
+        create_mainwindow_signal_dispatch,
+    )
+
+    window = MainWindow()
+    backend = load_qt_runtime_signal_backend()
+    dispatch = create_mainwindow_signal_dispatch(
+        window, tuple(RUNTIME_HANDLER_MAP.keys()), handler_map=RUNTIME_HANDLER_MAP
+    )
+    connect_signal_dispatch(backend, dispatch)
+
+    settings_btn = backend._objects["margin_text_mode_settings"]
+    try:
+        settings_btn.click()
+    except RecursionError as exc:
+        raise AssertionError("Settings embed pattern toggled into recursion") from exc
+
+    assert window.form_state.embed_info == "params"
+    assert settings_btn.isChecked()
+
+
 def test_on_optimize_clicked_does_not_recurse_on_margin_sync(qapp):
     """Optimize sync must not loop through margin text change handlers."""
     from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend

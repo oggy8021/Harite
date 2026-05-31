@@ -895,10 +895,13 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
     # ------------------------------------------------------------------
 
     def _on_margin_text_mode_toggled(self, widget: Any, value: str) -> None:
+        if getattr(self, "_margin_text_mode_handler_running", False):
+            return
         callback = self._signal_handlers.get("on_change_margin_text_mode")
         if callback is None:
             self._set_feedback(phase="Margins", state="planned")
             return
+        self._margin_text_mode_handler_running = True
         try:
             ok = callback(value)
             if ok is False:
@@ -911,6 +914,8 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             self._set_feedback(phase="Margins", state="info-updated")
         except Exception as exc:
             self._set_feedback(phase="Margins", state="info-error", error=str(exc))
+        finally:
+            self._margin_text_mode_handler_running = False
 
     def _on_margin_text_changed(self, entry: Any) -> None:
         if getattr(self, "_margin_text_handler_running", False):
