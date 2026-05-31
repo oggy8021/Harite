@@ -1,6 +1,6 @@
 # Windows Qt 検証 backlog（post Phase 8）
 
-最終更新: 2026-05-31（W-02 #356 マージ・#341 クローズ）
+最終更新: 2026-05-31（W-02 #356・#341 / W-03 #343 クローズ）
 
 ## 位置づけ
 
@@ -14,7 +14,7 @@
 | --- | --- | --- | --- | --- | --- |
 | W-01 | Main タブ action cluster レイアウト | UI polish | [#342](../online-issues/issue-342.md) | 高（見た目・可読性） | **完了**（#346, 2026-05-31） |
 | W-02 | Windows スライドショー方針 | planning | [#341](../online-issues/issue-341.md) | **高** | **完了**（#355 spec + #356 impl, 2026-05-31） |
-| W-03 | Windows Apply / 壁紙表示 / 解像度検出 | investigation | [#343](../online-issues/issue-343.md) | — | **完了**（C #349 + B-lite #352） |
+| W-03 | Windows Apply / 壁紙表示 / 解像度検出 | investigation | [#343](../online-issues/issue-343.md) | — | **完了**（C #349 + B-lite #352、#343 クローズ） |
 
 ## 依存関係
 
@@ -53,7 +53,7 @@ flowchart LR
 | 1 | **C. 解像度検出強化** | マルチモニタ bounds / 仮想解像度 / two-screen context / `scale_percent` | **完了**（#349） |
 | 2 | **B-lite. Span 後押し（opt-in）** | Settings `windows_apply_span` 有効時、Span モード Apply で HKCU `WallpaperStyle=22` | **完了**（#352） |
 
-背景色の重畳問題は **案 A ならノータッチ** で整理可能（#343 本文参照）。
+背景色の重畳は **Harite 管轄外（不問）** — OS 背景色設定のまま。壁紙 file は plugin が差し替え（[#343](../online-issues/issue-343.md) resolution）。
 
 ## W-03-C 実装メモ（spec ドラフト用）
 
@@ -95,6 +95,7 @@ flowchart LR
 - [x] W-03-B-lite（Span UI / Apply / opt-in）が spec + 実装 PR に分解された（#350 + #352, 2026-05-31）
 - [x] W-03-A / 旧 B-full は **不採用**（Fit/Fill 全面制御は見送り）として resolution 記録
 - [x] W-02 の Windows slideshow 方針が spec または Issue resolution に記録された（#355 + #356, #341 クローズ, 2026-05-31）
+- [x] W-03 Issue #343 クローズ（背景色不問・B-full 不採用を resolution 記録, 2026-05-31）
 - [x] W-03 確定事項は online-issues / specs 正本へ反映された
 
 ## 関連

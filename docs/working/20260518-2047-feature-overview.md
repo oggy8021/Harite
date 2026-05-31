@@ -163,7 +163,7 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 | --- | --- | --- | --- |
 | W-01 | action cluster レイアウト | #342 | **完了**（#346, 2026-05-31） |
 | W-02 | Windows slideshow 方針 | #341 | **完了**（W-02-A #355 + #356, 2026-05-31） |
-| W-03 | Apply / 壁紙 / 解像度 | #343 | **C 先行** → A/B は C 後 |
+| W-03 | Apply / 壁紙 / 解像度 | #343 | **完了**（#349 + #352、背景色不問で #343 クローズ, 2026-05-31） |
 
 統合文書: [docs/working/20260531-1200-windows-qt-validation-backlog.md](20260531-1200-windows-qt-validation-backlog.md)  
 観測ログ: [docs/online-issues/README.md](../online-issues/README.md)
