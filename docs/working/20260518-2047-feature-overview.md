@@ -161,7 +161,7 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 
 | ID | 項目 | Issue | 詳細 |
 | --- | --- | --- | --- |
-| W-01 | action cluster レイアウト | #342 | UI polish。着手可 |
+| W-01 | action cluster レイアウト | #342 | **完了**（#346, 2026-05-31） |
 | W-02 | Windows slideshow 方針 | #341 | spec-as-designed → planning |
 | W-03 | Apply / 壁紙 / 解像度 | #343 | 調査・方針判断 |
 

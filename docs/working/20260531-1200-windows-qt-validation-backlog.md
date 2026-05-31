@@ -13,7 +13,7 @@
 
 | ID | 項目 | 分類 | Issue | 優先感 | 現判断 |
 | --- | --- | --- | --- | --- | --- |
-| W-01 | Main タブ action cluster レイアウト | UI polish | [#342](../online-issues/issue-342.md) | 高（見た目・可読性） | **実装 PR 進行中** |
+| W-01 | Main タブ action cluster レイアウト | UI polish | [#342](../online-issues/issue-342.md) | 高（見た目・可読性） | **完了**（#346, 2026-05-31） |
 | W-02 | Windows スライドショー方針 | planning | [#341](../online-issues/issue-341.md) | 中（設計判断） | **保留**。W-03 / two-screen / auto-split とセットで決める |
 | W-03 | Windows Apply / 壁紙表示 / 解像度検出 | investigation | [#343](../online-issues/issue-343.md) | 中（Apply 品質） | **調査継続**。レジストリ触るかは未決 |
 
@@ -36,7 +36,7 @@ flowchart LR
 
 ## 推奨着手順
 
-1. **W-01（#342）** — レイアウト polish。ユーザー影響が直接で、plugin 非依存。
+1. ~~**W-01（#342）**~~ — 完了（PR #346）。
 2. **W-03（#343）** — 調査結果を整理し、方針を 3 択程度に落とす（下記）。
 3. **W-02（#341）** — W-03 の方針とセットで「Windows slideshow を提供する / しない / 限定提供」を決め、必要なら spec PR。
 
@@ -54,14 +54,14 @@ flowchart LR
 
 | トリガ | 想定正本 |
 | --- | --- |
-| action cluster の補助ラベル配置を GTK と揃える / 下段に移す | `harite-gui-spec.md` § Main tab |
+| action cluster の補助ラベル配置（Qt 下段） | ~~`harite-gui-spec.md` § Main tab~~ **反映済**（#346） |
 | Windows で slideshow を新たに約束する | `harite-slideshow-spec.md`, `harite-plugin-spec.md` |
 | Windows Apply で Fit/Fill 等を Harite が制御する | `harite-plugin-spec.md` §4.1 |
 | 解像度 auto 検出の Windows 経路を追加 | `harite-core-spec.md`, `optimize_settings` 関連 |
 
 ## 完了条件（この backlog 文書として）
 
-- [ ] W-01 が Issue クローズまたは spec + 実装 PR に分解された
+- [x] W-01 が Issue クローズまたは spec + 実装 PR に分解された（#346, 2026-05-31）
 - [ ] W-03 で A/B/C のいずれか（または組合せ）がオーナー判断で固定された
 - [ ] W-02 の Windows slideshow 方針が spec または Issue resolution に記録された
 - [ ] 確定事項は online-issues の `resolution` 節と specs 正本へ反映された
