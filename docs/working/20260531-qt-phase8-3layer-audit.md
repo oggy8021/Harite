@@ -158,6 +158,20 @@
 |---|---|---|
 | 高 | §2 Export Image フロー (`on_save_as` 引数・`on_save_path_selected` 未呼び出し) | TypeError / 保存不可 |
 | 高 | §3 ダイアログ close ハンドラ未呼び出し (3 件) | MainWindow state 齟齬 |
+| 高 | **§7 Optimize ボタン UI 同期** | Status=`input ready` でも btnOptimize 無効のまま |
 | 中 | §4 Apply mode ヘルプラベル | 視覚フィードバック欠如 |
 | 中 | §5 Slideshow mode ヘルプラベル | 視覚フィードバック欠如 |
+| 中 | **初回起動 (settings 無し / resolution=auto)** | ディスプレイ検出による resolution 自動解決 |
 | 低 | §6 Apply mode 同期スコープ | 機能的問題なし |
+
+---
+
+## §7 追記 (2026-05-31): Optimize ボタン UI 同期
+
+| 層 | 内容 |
+|---|---|
+| 症状 | Status=`input ready`（= `MainWindow.can_optimize=True`）なのに Main タブの Optimize ボタンが無効 |
+| 原因 | `sync_input_state_from_owner` は btnOptimize を更新するが、preview sync 失敗・connect 直後未 sync 等で UI が追随しないケース |
+| 修正 | `sync_action_availability_from_owner` を抽出し、pick input / clear / connect_signals / present でも明示 sync |
+| 付随 | `sync_result_preview_from_owner` の import 先誤り (`gtk_runtime_sync` → `gtk_runtime_preview`) を修正 |
+| 初回起動 | `resolution=auto` 時に単一ディスプレイ検出で resolution を自動解決 (`optimize_settings` + `_can_optimize_now`) |

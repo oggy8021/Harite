@@ -98,6 +98,10 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
 
         self._signal_handlers = dict(dispatch)
         connect_qt_widgets(self, self._objects)
+        owner = self._get_connected_owner()
+        if owner is not None:
+            self._sync_action_availability_from_owner(owner)
+            self._sync_feedback_from_owner(owner)
 
     # ------------------------------------------------------------------
     # Tray
@@ -117,6 +121,10 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
 
     def present(self) -> None:
         """Show the window and start the Qt event loop."""
+        owner = self._get_connected_owner()
+        if owner is not None:
+            self._sync_action_availability_from_owner(owner)
+            self._sync_feedback_from_owner(owner)
         self._qwindow.show()
         self._qapp.exec()
 
@@ -268,12 +276,15 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         return (160, 90)
 
     def _sync_result_preview_from_owner(self, owner: Any) -> None:
-        # Best-effort: delegate to GTK free function which calls _set_preview_widget
         try:
-            from harite.gui.adapters.gtk_runtime_sync import sync_result_preview_from_owner
+            from harite.gui.adapters.gtk_runtime_preview import sync_result_preview_from_owner
             sync_result_preview_from_owner(self, owner)
         except Exception:
             pass
+
+    def _sync_action_availability_from_owner(self, owner: Any) -> None:
+        from harite.gui.adapters.gtk_runtime_sync import sync_action_availability_from_owner
+        sync_action_availability_from_owner(self, owner)
 
     # ------------------------------------------------------------------
     # State sync methods (delegate to framework-neutral free functions)
@@ -554,6 +565,7 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
                 owner = self._get_handler_owner("on_pick_input")
                 if owner is not None:
                     self._sync_input_preview_state_from_owner(owner)
+                    self._sync_action_availability_from_owner(owner)
                     self._sync_feedback_from_owner(owner)
             except Exception as exc:
                 self._set_feedback(phase="Input", state="error", error=str(exc))
@@ -576,6 +588,7 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             owner = self._get_handler_owner("on_clear_input")
             if owner is not None:
                 self._sync_input_state_from_owner(owner)
+                self._sync_action_availability_from_owner(owner)
                 self._sync_feedback_from_owner(owner)
                 return
             if ok is False:

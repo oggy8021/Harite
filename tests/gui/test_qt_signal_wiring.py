@@ -363,6 +363,30 @@ def test_start_stop_slideshow_timer(qapp):
 # ---------------------------------------------------------------------------
 
 
+def test_on_pick_input_enables_optimize_button(qapp):
+    """After valid input pick, btnOptimize must reflect MainWindow.can_optimize."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+
+    backend = load_qt_runtime_signal_backend()
+    window = MainWindow()
+
+    class _FakeProxy:
+        def open(self, *, title="Open Image", callback=None):
+            if callback:
+                callback("/tmp/image.jpg")
+
+    backend._objects["ImgOpenDialog"] = _FakeProxy()
+    backend._signal_handlers["on_pick_input"] = window.on_pick_input
+    backend._signal_handlers["on_close_open_image_dialog"] = window.on_close_open_image_dialog
+
+    btn = backend._objects["btnOptimize"]
+    assert btn.isEnabled() is False
+    backend._on_pick_input_clicked("L")
+    assert window.can_optimize is True
+    assert btn.isEnabled() is True
+
+
 def test_on_pick_input_passes_path_then_side(qapp):
     """on_pick_input callback must receive (path, side) — not (side, path)."""
     from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
