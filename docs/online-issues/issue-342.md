@@ -21,17 +21,22 @@
 ## 関連
 
 - backlog: [docs/working/20260531-1200-windows-qt-validation-backlog.md](../working/20260531-1200-windows-qt-validation-backlog.md)（W-01）
-- 実装: `src/harite/gui/adapters_qt/qt_layout_builders.py`（action cluster）
-- 正本（将来）: [docs/specs/gui/harite-gui-spec.md](../specs/gui/harite-gui-spec.md) Main tab レイアウト節
+- 実装: `src/harite/gui/adapters_qt/qt_tab_main.py`（action cluster）
+- 正本: [docs/specs/gui/harite-gui-spec.md](../specs/gui/harite-gui-spec.md) § Main tab action cluster
 
 ## 取り込み方針
 
 | 項目 | 判断 |
 | --- | --- |
-| 着手 | **実施中** — [gui-spec](../../specs/gui/harite-gui-spec.md) § Main tab action cluster 改訂済 |
-| spec 改訂 | 最小。補助ラベルの配置（横 / 下）を gui-spec に 1 段落追記すれば足りる |
-| 実装 | Qt layout builder のみ。GTK 版は現状維持でよい |
-| 次アクション | gui-spec ドラフト → テスト（レイアウト smoke）→ Qt layout 修正 PR |
+| 着手 | **完了** — PR #346 マージ・Windows 実機確認済 |
+| spec 改訂 | [gui-spec](../specs/gui/harite-gui-spec.md) § Main tab action cluster（2026-05-31） |
+| 実装 | `qt_tab_main.py` — 上端揃え、補助ラベルをボタン直下 |
+| 次アクション | GitHub Issue #342 を close |
+
+## resolution
+
+- **2026-05-31**: PR [#346](https://github.com/oggy8021/Harite/pull/346) マージ。Windows `harite-qt` 実機で Optimize / Apply 見出しおよび補助ラベル配置を確認。
+- 正本: [harite-gui-spec.md](../specs/gui/harite-gui-spec.md) § Main tab（action cluster 上端揃え、Qt 補助ラベル直下配置）。
 
 ## 補足
 
