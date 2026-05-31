@@ -1078,12 +1078,12 @@ def test_slideshow_handlers_use_srcdirs_and_interval_validation(monkeypatch, tmp
     assert window.status_level == "success"
     assert window.status_phase == "slideshow"
     assert window.status_message == "slideshow started"
-    assert window.slideshow_current_display == f"Slideshow current: L={left_dir / 'left-1.jpg'} | R=-"
+    assert window.slideshow_current_display == "Slideshow current: L=left-1.jpg | R=-"
 
     (left_dir / "left-2.jpg").write_bytes(b"left-2")
 
     assert window.on_slideshow_tick() is True
-    assert window.slideshow_current_display == f"Slideshow current: L={left_dir / 'left-2.jpg'} | R=-"
+    assert window.slideshow_current_display == "Slideshow current: L=left-2.jpg | R=-"
 
     assert window.on_slideshow_stop() is True
     assert window.slideshow_running is False
@@ -1103,6 +1103,15 @@ def test_slideshow_handlers_use_srcdirs_and_interval_validation(monkeypatch, tmp
     assert window.status_level == "error"
     assert window.status_phase == "slideshow"
     assert window.last_error == "slideshow interval must be positive"
+
+
+def test_slideshow_current_display_abbreviates_long_paths():
+    window = MainWindow()
+    long_path = "G:/My Drive/very/long/nested/folder/structure/wallpaper.jpg"
+    window.slideshow_running = True
+    window._update_slideshow_current_display(long_path, "-")
+    assert long_path not in window.slideshow_current_display
+    assert "wallpaper.jpg" in window.slideshow_current_display
 
 
 def test_slideshow_single_source_applies_on_start_and_tick(monkeypatch, tmp_path):
