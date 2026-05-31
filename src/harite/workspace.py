@@ -21,6 +21,7 @@ class Display:
     x_offset: int = 0
     y_offset: int = 0
     primary: bool = False
+    scale_percent: int | None = None
 
 
 def detect_displays() -> List[Display]:
@@ -136,6 +137,28 @@ def _detect_macos() -> List[Display]:
     return displays
 
 
+def _scale_percent_from_effective_dpi(dpi_x: int, dpi_y: int = 0) -> int:
+    """Map Win32 effective DPI to Windows Settings scale percent (96 -> 100)."""
+    _ = dpi_y
+    return int(round(int(dpi_x) * 100 / 96))
+
+
+def _ensure_windows_dpi_aware(user32: object) -> None:
+    """Best-effort Per-Monitor v2 DPI awareness with legacy fallback."""
+    import ctypes
+
+    try:
+        pmv2 = ctypes.c_void_p(-4)
+        if user32.SetProcessDpiAwarenessContext(pmv2):
+            return
+    except Exception:
+        pass
+    try:
+        user32.SetProcessDPIAware()
+    except Exception:
+        pass
+
+
 def _display_from_win32_monitor(
     *,
     name: str,
@@ -144,6 +167,7 @@ def _display_from_win32_monitor(
     right: int,
     bottom: int,
     primary: bool,
+    scale_percent: int | None = None,
 ) -> Display:
     """Build ``Display`` from Win32 monitor rectangle and device name."""
     return Display(
@@ -153,6 +177,7 @@ def _display_from_win32_monitor(
         x_offset=int(left),
         y_offset=int(top),
         primary=bool(primary),
+        scale_percent=scale_percent,
     )
 
 
@@ -179,7 +204,13 @@ def _enumerate_windows_displays(user32: object) -> List[Display]:
         ]
 
     MONITORINFOF_PRIMARY = 1
+    MDT_EFFECTIVE_DPI = 0
     collected: List[Display] = []
+
+    try:
+        shcore = ctypes.windll.shcore
+    except Exception:
+        shcore = None
 
     def _callback(hmonitor, _hdc, _prect, _lparam):
         info = _MONITORINFOEXW()
@@ -187,6 +218,15 @@ def _enumerate_windows_displays(user32: object) -> List[Display]:
         if not user32.GetMonitorInfoW(hmonitor, ctypes.byref(info)):
             return 1
         rect = info.rcMonitor
+        scale_percent: int | None = None
+        if shcore is not None:
+            dpi_x = wintypes.UINT()
+            dpi_y = wintypes.UINT()
+            try:
+                if shcore.GetDpiForMonitor(hmonitor, MDT_EFFECTIVE_DPI, ctypes.byref(dpi_x), ctypes.byref(dpi_y)) == 0:
+                    scale_percent = _scale_percent_from_effective_dpi(dpi_x.value, dpi_y.value)
+            except Exception:
+                pass
         collected.append(
             _display_from_win32_monitor(
                 name=str(info.szDevice),
@@ -195,6 +235,7 @@ def _enumerate_windows_displays(user32: object) -> List[Display]:
                 right=int(rect.right),
                 bottom=int(rect.bottom),
                 primary=bool(info.dwFlags & MONITORINFOF_PRIMARY),
+                scale_percent=scale_percent,
             )
         )
         return 1
@@ -211,6 +252,17 @@ def _enumerate_windows_displays(user32: object) -> List[Display]:
     return collected
 
 
+def _windows_fallback_scale_percent(user32: object) -> int | None:
+    """Best-effort scale percent when monitor enumeration is unavailable."""
+    try:
+        dpi = int(user32.GetDpiForSystem())
+        if dpi > 0:
+            return _scale_percent_from_effective_dpi(dpi)
+    except Exception:
+        pass
+    return None
+
+
 def _detect_windows() -> List[Display]:
     """Windows で接続モニタを列挙する（EnumDisplayMonitors / GetMonitorInfoW）。
 
@@ -221,10 +273,7 @@ def _detect_windows() -> List[Display]:
         import ctypes
 
         user32 = ctypes.windll.user32
-        try:
-            user32.SetProcessDPIAware()
-        except Exception:
-            pass
+        _ensure_windows_dpi_aware(user32)
 
         collected = _enumerate_windows_displays(user32)
         if collected:
@@ -233,7 +282,15 @@ def _detect_windows() -> List[Display]:
         width = int(user32.GetSystemMetrics(0))
         height = int(user32.GetSystemMetrics(1))
         if width > 0 and height > 0:
-            return [Display(name="", width=width, height=height, primary=True)]
+            return [
+                Display(
+                    name="",
+                    width=width,
+                    height=height,
+                    primary=True,
+                    scale_percent=_windows_fallback_scale_percent(user32),
+                )
+            ]
         return []
     except Exception:
         return []
