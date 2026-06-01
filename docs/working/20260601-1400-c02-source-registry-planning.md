@@ -1,6 +1,6 @@
 # C-02 — source registry / source profiles  planning
 
-最終更新: 2026-06-01（open questions 全決定・spec PR 待ち）
+最終更新: 2026-06-01（open questions 全決定・ordered list 非採用）
 
 ## 位置づけ
 
@@ -56,13 +56,15 @@ slideshow 用 directory や将来の外部 source を **単発 path 入力**で�
 ## C-02 と隣接 feature の境界
 
 ```text
-C-02  registry + profiles     … 名前付き source の CRUD・永続化・参照 API
-C-05  slideshow 強化          … 複数 source 順序・profile を slideshow 実行に載せる
+C-02  registry + profiles     … 名前付き source の CRUD・永続化・参照 API（L/R profile のみ）
+C-05  slideshow 強化          … source type 拡張・実行面強化（**ordered list profile は持たない**）
 C-01  外部サイト              … source type = remote / API（C-02 type 拡張）
 （旧 K-01）                   … Watch=slideshow 旧語のため inventory 再整理待ち
 ```
 
 **原則:** C-02 は「**箱と索引**」まで。slideshow の tick ロジック変更は **C-05** へ送る。
+
+**スコープ外（オーナー 2026-06-01）:** profile 内の **ordered list**（入れ子のお気に入りを差し替え・ローテするプレイリスト型）は **採用しない・データモデルにも持たない**。壁紙収集向けの過剰ストーリーであり、現時点でユーザー訴求もない。registry は **フラットな名前付き source** + **L/R 2 スロット profile** に限定する。
 
 ## planning で詰める論点（feature-overview より）
 
@@ -83,9 +85,11 @@ C-01  外部サイト              … source type = remote / API（C-02 type �
 | フィールド | 説明 |
 | --- | --- |
 | `id` / `name` | profile 識別 |
-| `members` | `{ "L": "<source_id>", "R": "<source_id>" }` — **L/R 固定**（ordered list は C-05 以降） |
+| `members` | `{ "L": "<source_id>", "R": "<source_id>" }` — **L/R 固定のみ**（list 型なし） |
 
-**オーナー決定（2026-06-01）:** L/R 固定。変更管理・変更機能の提供が単純になる。C-05 で list 拡張は別 planning。
+**オーナー決定（2026-06-01）:** L/R 固定。変更管理・変更機能の提供が単純になる。
+
+**オーナー決定（2026-06-01）:** **ordered list は採用しない。** profile は L/R 2 スロット以外の形状を持たない。入れ子お気に入りの差し替え・ローテは想定外。
 
 ### 2. 永続化（確定: 案 B）
 
@@ -153,13 +157,13 @@ slideshow-spec に **registry エントリ削除**の直接先例はない。参
 | **4** | GUI 最小（Slideshow から registry 選択） | gui-spec + design slice | 第2波と同型の段階停止 |
 | ~~**5**~~ | ~~CLI サブコマンド~~ | — | **C-02 外**（オーナー: CLI 打ち止め） |
 
-C-05 は **段 3 完了後**に別 planning を切る（slideshow が複数 source をどう回すか）。
+C-05 は **段 3 完了後**に別 planning を切る（source type 拡張・slideshow 実行面。profile 形状の list 化は対象外）。
 
 ## Open questions — 全決定済み（2026-06-01）
 
 | # | 論点 | 決定 |
 | --- | --- | --- |
-| **1** | profile 形状 | **L/R 2 スロット固定** — 変更管理・UI が単純。ordered list は C-05 |
+| **1** | profile 形状 | **L/R 2 スロット固定のみ** — ordered list **非採用**（持たない） |
 | **2** | 永続化 | **案 B** — `sources.json` に catalog。settings は実行 path + 必要なら選択 ID field |
 | **3** | 第1 GUI | **Slideshow のみ** — Main はファイラーお気に入り。Slideshow 主体運用 |
 | **4** | CLI | **打ち止め** — 現行 4 command 維持 |
