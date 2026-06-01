@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-01 (P-01/P-02 close — Main Swap 中段配置)
+最終更新: 2026-06-01 (C-02 Slideshow source registry — design #376)
 
 ## 1. GUI の責務
 
@@ -137,8 +137,10 @@ Margins tab:
 
 Slideshow tab:
 
-- `Slideshow` tab は外周を縦積みで組み、top spacer、srcdir row、controls shell、detail shell、bottom spacer の順に置く。
-- srcdir row は **Main tab compose grid と同型**の左・中央・右 3 列とする。左右 panel は `Srcdir-L/R` button、`L:` / `R:` path label、右下に `Clear-L/R` を持つ（Main の path 行 + Clear と同配置）。中央 panel には **`Swap L/R`** button のみを置く（§4.1）。
+- `Slideshow` tab は外周を縦積みで組み、top spacer、**profile row**、srcdir row、**manage registry row**、spacer、controls shell、spacer、detail shell、bottom spacer の順に置く（C-02 — [design slice](../../working/design/20260601-c02-slideshow-source-registry-slice.html)）。
+- **profile row** は tab 幅中央に `combo_slideshow_profile`（`— none —` + profile 名一覧）を 1 本置く。補助説明 label で「選択で L/R を一括反映」を示してよい。
+- srcdir row は **Main tab compose grid と同型**の左・中央・右 3 列とする。左右 panel は上から **`combo_slideshow_source_l/r`（Saved source）**、`Srcdir-L/R` button、`L:` / `R:` path label、右下に `Clear-L/R` を持つ。中央 panel には **`Swap L/R`** button のみを置く（§4.1 / §4.2）。
+- **manage registry row** は中央に `btn_manage_source_registry`（ラベル例: `Manage sources and profiles…`）を置く。専用 Sources タブは **作らない**。
 - controls shell の中央には `slideshow_controls_group` を置き、その中を `mode row`、`mode help row`、`interval/start/stop row` の 3 段に分ける。
 - `mode row` は `Mode`、`sequential`、`random` を独立 row として中央寄せで置く。
 - `mode help row` は mode の選択規則と runtime 反映条件を補足する説明 label を置く。
@@ -218,6 +220,52 @@ design 合意: [20260601-p01-p02-lr-swap-clear-slice.html](../../working/design/
 - swap / clear 後は `_sync_action_availability_from_owner`（または同等）で Start / Apply 等の有効状態を再評価する。
 - 第2波 impl は **Qt backend** を先行。GTK backend は maintenance mode だが、上記 handler と widget 配置は spec 上 **parity 対象**とする。
 
+### 4.2 Slideshow source registry（C-02）
+
+design 合意: [20260601-c02-slideshow-source-registry-slice.html](../../working/design/20260601-c02-slideshow-source-registry-slice.html)（#376 マージ済）。catalog 契約は [source-spec §7](../source/harite-source-spec.md)。
+
+| Widget / Handler | 用途 |
+| --- | --- |
+| `combo_slideshow_profile` | profile 選択 → L/R 一括反映 |
+| `combo_slideshow_source_l` / `combo_slideshow_source_r` | 側別 saved source 選択 |
+| `btn_manage_source_registry` | Manage dialog を開く |
+| `source_registry_dialog` | sources + profiles CRUD（modal） |
+| `on_select_slideshow_profile(profile_id \| none)` | profile → `resolve_profile_members` → owner / combo / label 更新 |
+| `on_select_slideshow_source(side, source_id \| none)` | 側別 `resolve_source` → owner / label 更新 |
+| `on_manage_source_registry()` | dialog 表示。Close 後に tab 上 combo を catalog から再構築 |
+
+**Saved source と Srcdir ブラウズの併存（オーナー合意 2026-06-01）:**
+
+| 操作 | owner path | registry tracking（`slideshow_source_id_*` / `slideshow_profile_id`） | combo 表示 |
+| --- | --- | --- | --- |
+| Saved combo で source 選択 | `resolve_source` → `slideshow_srcdir_*` 更新 | 当該 side の source id を記録 | 選択 source 名 |
+| Saved combo で `— none —` | path **は変更しない** | 当該 side の source id のみクリア | `— none —` |
+| Srcdir-L/R ブラウズ確定 | 従来どおり path 直書き | 当該 side の source id をクリア | `— none —` |
+| Profile 選択 | L/R 両 path を profile から展開 | `slideshow_profile_id` + 両 source id を記録 | 各 side を対応 source に |
+| Clear-L/R（§4.1 拡張） | 当該 side path を `""` | 当該 side source id をクリア | `— none —` |
+| Swap L/R（§4.1 拡張） | `slideshow_srcdir_l/r` swap | `slideshow_source_id_l/r` swap。`slideshow_profile_id` は **クリア**（L/R 対応が崩れるため） |
+
+- slideshow **実行**は引き続き `slideshow_srcdir_l/r` の path 文字列のみ参照する（source id は tracking / UI 同期用）。
+- registry 外 path（ブラウズのみ）も **許容**する。Saved combo が `— none —` でも path label に basename 省略表示があれば Start ガードは従来どおり評価する。
+- profile / source の **ordered list 化・profile 周回**は行わない。
+
+**Manage dialog:**
+
+- Sources: 一覧、Add（name + directory browse）、Delete（profile 参照中は [source-spec §7.5](../source/harite-source-spec.md) に従い拒否）。
+- Profiles: 一覧、L/R slot combo（source id または empty）、Add / Delete profile。
+- 保存は `sources.json` へ即 write。settings dialog とは別 surface。
+- dialog Close 後、Slideshow tab の profile / saved source combo を reload する。
+
+**§4.1 との関係:**
+
+- `on_swap_slideshow_srcdirs()` は §4.1 に加え、上表の tracking swap / profile id クリアを行う。
+- `on_clear_slideshow_srcdir(side)` は path に加え、当該 side の source id tracking と saved combo を `— none —` に同期する。
+
+**実装:**
+
+- 第4波 impl は **Qt backend** 先行。GTK は maintenance mode だが widget / handler は **parity 対象**。
+- core API は `harite.sources` のみ使用。CLI surface は追加しない。
+
 ## 5. 設定 (settings) 保存と再読込
 
 - startup 時に既定の設定ファイル (settings file) を読む。
@@ -250,7 +298,7 @@ design 合意: [20260601-p01-p02-lr-swap-clear-slice.html](../../working/design/
 - slideshow tab の mode 既定値は `random` とする。
 - `slideshow_interval_seconds` の既定値は `60`（秒）である。
 - mode は slideshow 関連設定値として load / save 対象に含める。
-- mode 選択面は srcdir row の下、interval/start/stop row の上に独立 row として置く。
+- mode 選択面は manage registry row（または srcdir row）の下、interval/start/stop row の上に独立 row として置く。
 - mode help row は選択中 mode の簡潔な補助説明を表示する user-facing surface とし、`sequential` 時は `Sequential rotates images.`、`random` 時は `Random rotates images.` を表示する。
 
 ### 6.1 path 省略表示（Main input / Slideshow current）
@@ -284,6 +332,12 @@ GTK / Qt 両 backend で、次の user-facing surface は **同じ省略規則**
 したがって、ユーザーが spin を 3 秒に変えて Start した場合、保存済み settings が 60 秒でも **3 秒がその Start の timer に使われる**。tray の Start も同じ backend 経路のため同規則が適用される。
 
 実装参照: `commit_slideshow_interval_from_spin(...)`（`gtk_runtime_slideshow_ui.py`）、各 backend の `_on_slideshow_start_clicked(...)`。
+
+### 6.3 source registry 接続（C-02）
+
+- Slideshow tab の registry UI は §4.2 の layout / handler に従う。catalog 永続化は [source-spec](../source/harite-source-spec.md) が正本。
+- startup / settings load 後、backend は catalog を load し、tab 上 combo を構築する。settings の任意 key `slideshow_source_id_l/r` / `slideshow_profile_id` があれば、対応 combo 選択を復元してよい（path は従来どおり `slideshow_srcdir_*` が実行値）。
+- Saved / Profile 選択および Srcdir ブラウズの優先関係は §4.2 の併存表が正本。**`— none —` は source id のみクリアし path は維持**、**Srcdir ブラウズは registry 外 path として combo を `— none —` に戻す**。
 
 ### slideshow start / tick / stop
 

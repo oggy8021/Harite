@@ -2,7 +2,12 @@
 
 - mock: [20260601-c02-slideshow-source-registry-slice.html](20260601-c02-slideshow-source-registry-slice.html)
 - 第4波（C-02）段4: GUI 最小
-- 段階: **design slice 合意** → gui-spec → tests → impl（各段階でマージ許可）
+- 段階: design slice **マージ済**（#376）→ gui-spec **起票中** → tests → impl
+
+## オーナー合意（2026-06-01）
+
+- design slice #376 **マージ済**
+- チェックリスト #4（Saved / Srcdir 併存）: **memo 提案どおり採用** — `— none —` は id のみクリア・path 維持；Srcdir ブラウズは combo を `— none —` に（gui-spec §4.2）
 
 ## 目的
 
@@ -87,13 +92,13 @@ center 列: Swap L/R のみ（P-01 維持）。
 
 ## 評価チェックリスト（オーナー）
 
-- [ ] Profile 行が srcdir grid の上で自然か（詰まりすぎ / 空きすぎないか）
-- [ ] side panel に Saved combo + Srcdir + path + Clear が収まるか
-- [ ] Manage dialog 1 枚で sources + profiles が足りるか（専用タブ不要でよいか）
-- [ ] Srcdir ブラウズと registry 選択の併存が理解しやすいか
+- [x] Profile 行が srcdir grid の上で自然か（#376 マージ）
+- [x] side panel に Saved combo + Srcdir + path + Clear が収まるか
+- [x] Manage dialog 1 枚で sources + profiles が足りるか（専用タブ不要）
+- [x] Srcdir ブラウズと registry 選択の併存 — **§4.2 併存表で spec 化**
 
 ## 合意後の次ステップ
 
-1. design PR マージ（オーナー許可後）
-2. `harite-gui-spec.md` §6 + §4 追記（widget / handler / sync）
+1. ~~design PR マージ~~（#376 済）
+2. ~~`harite-gui-spec.md` §4.2 / §6.3~~ — PR 起票中
 3. tests → Qt impl（GTK parity は spec に明記）
