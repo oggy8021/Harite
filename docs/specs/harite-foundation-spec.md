@@ -1,6 +1,6 @@
 # Harite 基本仕様 (Foundation Spec)
 
-最終更新: 2026-05-30 (Qt backend Phase 0 spec 追加)
+最終更新: 2026-06-01 (F-01 settings path 参照)
 
 ## 1. 文書の目的と適用範囲
 
@@ -119,6 +119,7 @@ flowchart TD
 ## 7. 設定 (settings) / save / apply の責務分担
 
 - 設定 (settings) は論理設定モデルとして保持され、物理保存は 設定ファイル (harite-settings.json) を使う。
+- 既定 path の解決規則は [core-spec §6.1](core/harite-core-spec.md) が正本（Linux: XDG config 配下、Windows: `%APPDATA%\harite\`）。
 - save は optimize 結果の出力先決定と書き出しを扱う。
 - apply は最終適用対象を解決したうえで plugin へ委譲する。
 - apply では、target 解決を core、plugin 名の選択と実行可否を呼び出し側 / plugin 側へ分けて扱う。
