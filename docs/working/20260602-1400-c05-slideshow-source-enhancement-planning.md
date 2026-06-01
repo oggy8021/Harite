@@ -52,10 +52,16 @@ C-02 が **箱と索引**（catalog CRUD + Slideshow からの選択 UI）を届
 
 ### 実機観測（C-02 後）
 
-[20260602-c02-real-device-observations.md](finished/20260602-c02-real-device-observations.md):
+[20260602-c02-real-device-observations.md](finished/20260602-c02-real-device-observations.md)（Linux）:
 
 - Thunar / GVFS 経由 NAS path（`/run/user/.../gvfs/smb-share:...`）が `local-dir` として登録・存在チェック通過しうる
 - Slideshow 実行で GLib-GIO-CRITICAL（クラッシュなし）— **低優先だが C-05 で policy 決定が必要**
+
+**オーナー観測（2026-06-02, Windows）:**
+
+- Google Drive を **G: 等のドライブレターにマウント** した path を source / slideshow に使うと **問題なく動作**（registry 登録・実行とも通常の `local-dir` と同様）。
+- 示唆: feature-overview の「同期済み cloud folder」は、**OS が通常の directory path として見せるもの**（Windows ドライブレター、Linux の `/mnt/...` 等）は **`local-dir` 一本で足りる**。追加 `kind` や Windows 向け特別扱いは **不要**。
+- GVFS transient path 問題は **Linux + ファイルマネージャ経由** に限定。Windows 実機では同型の問題は **未確認**。
 
 ## C-05 と隣接 feature の境界
 
@@ -94,15 +100,18 @@ feature-overview: local directory、**同期済み cloud folder**、**ローカ�
 
 **初期推奨（planning 案、未決）:** 案 A を default とし、GVFS 拒否等は **path 規則** で扱う。C-01 前に kind 分割が必要なら段 1 spec で B へ切替。
 
+**オーナー観測（Windows, Google Drive → G:）:** ドライブレター mount は現行 `local-dir` で十分 — **案 A を強める根拠**。
+
 ### 2. path 正規化と GVFS / NAS
 
 | 論点 | 選択肢 |
 | --- | --- |
 | GVFS path（`/run/user/.../gvfs/...`） | **拒否** / **警告のみで登録可** / **実 mount path へ正規化**（可能な場合） |
 | SMB / WebDAV | OS が見せる **ローカル mount path** のみ許可、GVFS は Thunar 等の transient path として扱う |
+| Windows cloud sync | **ドライブレター path**（例: `G:\Pictures`）は通常 directory として扱う — **追加検証不要**（オーナー確認済） |
 | CRUD vs 実行 | CRUD で拒否 vs CRUD は通し **tick で中断**（現状に近い） |
 
-実機メモ: [20260602-c02-real-device-observations.md](finished/20260602-c02-real-device-observations.md) §GVFS
+実機メモ: Linux GVFS — [20260602-c02-real-device-observations.md](finished/20260602-c02-real-device-observations.md) §GVFS。Windows ドライブレター cloud — 本書 §実機観測。
 
 ### 3. 実行時 resolve のタイミング
 
@@ -164,8 +173,8 @@ CLI 変更なし（C-02 打ち止め継続）。
 
 | # | 論点 | 選択肢 / メモ |
 | --- | --- | --- |
-| **1** | source `kind` 第 2 段階 | **A** `local-dir` 一本 + path 規則 **vs** **B** `mounted-dir` / `sync-dir` 追加 |
-| **2** | GVFS path（`/run/user/.../gvfs/...`） | **拒否** / **警告付き許可** / **正規化試行** |
+| **1** | source `kind` 第 2 段階 | **A** `local-dir` 一本 + path 規則 **vs** **B** `mounted-dir` / `sync-dir` 追加 — **Windows G: 実機は A で問題なし** |
+| **2** | GVFS path（Linux `/run/user/.../gvfs/...`） | **拒否** / **警告付き許可** / **正規化試行** — **Windows 対象外**（ドライブレターは #1 と同型） |
 | **3** | resolve タイミング | start のみ **vs** start + **毎 tick** **vs** tick + catalog mtime 監視 |
 | **4** | settings 正本 | **id 正本**（path は cache） **vs** 現状の **id + path 併存** |
 | **5** | tick 中 inaccessible | **即 stop** **vs** 1 回 retry **vs** 可能 side のみ継続 |
