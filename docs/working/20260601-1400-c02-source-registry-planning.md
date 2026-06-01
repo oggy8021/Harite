@@ -1,22 +1,32 @@
 # C-02 — source registry / source profiles  planning
 
-最終更新: 2026-06-01（第4波着手）
+最終更新: 2026-06-01（第4波着手・用語: Watch = slideshow 旧語）
 
 ## 位置づけ
 
 - 親 inventory: [20260518-2047-feature-overview.md](20260518-2047-feature-overview.md) §C-02
 - 第4波（大 feature）の **planning 入口**。本書は spec 正本の前段（`.cursorrules` §6 — working → specs 昇格）。
 - 後続: **C-05**（slideshow source 強化）→ **C-01**（外部壁紙サイト）の前提づくり。
-- **K-01**（Watch タブ再構成）は本波のスコープ外。Watch 向け icon mock は [design/gui-phase10-icon-mock.html](design/gui-phase10-icon-mock.html) のみ存在。
+
+## 用語（2026-06-01 オーナー確認）
+
+| 語 | 意味 |
+| --- | --- |
+| **Slideshow** | 現行 product 語。GUI の `Slideshow` タブ、interval/tick による壁紙ローテーション（[gui-spec §6](../../specs/gui/harite-gui-spec.md)）。 |
+| **Watch** | **slideshow の旧語**。新規 spec / planning / UI では使わない。 |
+| **Watch（design artifact）** | [gui-phase10-icon-mock.html](design/gui-phase10-icon-mock.html) 等の **legacy ラベル** — Slideshow 面の icon 比較用として残るが、別タブ・別機能ではない。 |
+| **K-01（feature-overview）** | 旧 inventory「watch 再構成」— 実体は slideshow 系の話と重複。**C-05 / C-02 整理後に再分類**（monitor 監視だけ残すなら別 ID）。 |
+
+以降、本書では **slideshow srcdir / directory source** と書き、Watch は legacy 注記に限る。
 
 ## ゴール（C-02 で言う「source registry」）
 
-watch directory や外部 source を **単発 path 入力**ではなく、**名前付き source** として登録・一覧・再利用できる基盤を作る。
+slideshow 用 directory や将来の外部 source を **単発 path 入力**ではなく、**名前付き source** として登録・一覧・再利用できる基盤を作る。
 
 | 現状 | C-02 後（目標イメージ） |
 | --- | --- |
 | Slideshow: `slideshow_srcdir_l/r` を settings に直書き | 登録済み source を **名前で参照**できる（path 直書きと共存可） |
-| Main: `input_path_l/r` はセッション中心 | 第1段階では **必須にしない**（registry は slideshow / 将来 watch 優先） |
+| Main: `input_path_l/r` はセッション中心 | 第1段階では **必須にしない**（registry は **slideshow** 優先） |
 | 永続化: `harite-settings.json` の flat key のみ | **registry 用のデータモデル + 保存先**を core/foundation に定義 |
 | 外部 API / cloud 直結なし | **local directory**（+ mount 済み path）のみ第1段階 |
 
@@ -39,9 +49,9 @@ watch directory や外部 source を **単発 path 入力**ではなく、**名�
 
 ### GUI / CLI
 
-- GUI: Slideshow タブの Srcdir-L/R picker（第2波 P-01/P-02 済）。**registry UI なし**。
+- GUI: **Slideshow** タブの Srcdir-L/R picker（第2波 P-01/P-02 済）。**registry UI なし**。
 - CLI: `--input` directory 等の **都度指定**（[cli-spec §6](../../specs/cli/harite-cli-spec.md)）。
-- Watch タブ: **未実装**（release notes に名称のみ）。
+- legacy design の「Watch mock」: Phase10 icon board 上の旧ラベル（= Slideshow 面の icon 比較）。**独立タブではない**。
 
 ## C-02 と隣接 feature の境界
 
@@ -49,10 +59,10 @@ watch directory や外部 source を **単発 path 入力**ではなく、**名�
 C-02  registry + profiles     … 名前付き source の CRUD・永続化・参照 API
 C-05  slideshow 強化          … 複数 source 順序・profile を slideshow 実行に載せる
 C-01  外部サイト              … source type = remote / API（C-02 type 拡張）
-K-01  Watch 再構成            … 監視トリガー UI（C-02 registry を **消費** する側）
+（旧 K-01）                   … Watch=slideshow 旧語のため inventory 再整理待ち
 ```
 
-**原則:** C-02 は「**箱と索引**」まで。slideshow の tick ロジック変更や Watch 自動化は C-05 / K-01 へ送る。
+**原則:** C-02 は「**箱と索引**」まで。slideshow の tick ロジック変更は **C-05** へ送る。
 
 ## planning で詰める論点（feature-overview より）
 
@@ -93,7 +103,7 @@ K-01  Watch 再構成            … 監視トリガー UI（C-02 registry を *
 | --- | --- | --- |
 | **core API** | list / get / add / update / delete source；resolve profile → paths | — |
 | **CLI** | `harite source list|add|remove`（サブコマンド） | profile CRUD は第2子段階可 |
-| **GUI** | Slideshow Srcdir 行に「登録済みから選ぶ」**最小**（combo または小 dialog） | 専用 Sources タブ・Watch 面 |
+| **GUI** | Slideshow Srcdir 行に「登録済みから選ぶ」**最小**（combo または小 dialog） | 専用 Sources 管理タブ（第1段階不要） |
 | **settings dialog** | 触らない（または registry path 表示のみ） | 一括 editor |
 
 GUI 変更があるため、具体 widget は **design slice 合意後**に gui-spec へ（§9）。planning では **導線の有無**だけ固定する。

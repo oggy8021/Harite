@@ -17,7 +17,7 @@
 ## 対象
 
 - 外部壁紙サイト連携
-- watch / sources / plugins の将来拡張案
+- slideshow / sources / plugins の将来拡張案
 - GUI / CLI の新導線案
 - 将来の product improvement 候補
 
@@ -44,7 +44,7 @@
 
 | ID | 項目 | 概要 | planning で最初に詰めること |
 | --- | --- | --- | --- |
-| C-02 | source registry / source profiles | watch directory や外部 source を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | **第4波 planning 中** — [20260601-1400-c02-source-registry-planning.md](20260601-1400-c02-source-registry-planning.md) |
+| C-02 | source registry / source profiles | slideshow 用 directory 等を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | **第4波 planning 中** — [20260601-1400-c02-source-registry-planning.md](20260601-1400-c02-source-registry-planning.md) |
 | C-05 | slideshow source 強化 | slideshow の source を単発 directory から、複数 source・source profile・将来の外部 source へ広げる。初期スコープは local directory、同期済み cloud folder、ローカル mount 済み NAS/SMB/WebDAV directory までとし、それ以上の直接連携は将来余裕がある場合に限る。 | source 正規化、順序規則、GUI owner state との整合 |
 | C-01 | 外部壁紙サイト連携 | 外部サイトや API から壁紙候補を取得し、Harite の source として扱えるようにする。C-05 の local/mounted source 扱いを一種の先行試行とみなせる。オーナー発案の本丸 feature。 | 対象サイト、取得方法、利用規約、キャッシュ方針 |
 
@@ -68,11 +68,11 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | --- | --- | --- | --- |
 | C-03 | plugin capability 可視化 | plugin ごとに受理 target や OS 制約を可視化し、apply / slideshow / GUI での分岐を分かりやすくする。 | **採用条件**: 仕様書に根拠を持ち、UIUX として明確に改善される論拠（spec 改訂案 + 表示面のストーリー）が示せたとき |
 | C-04 | GUI 利用導線の再設計 | optimize / apply / slideshow を単なる tab 群ではなく、利用目的ベースで再構成する。 | **採用条件**: 既存レイアウトの骨格を維持しつつ、世の標準傾向や UX トレンドを引用した「主要導線がより良くなる」ストーリーが組めたとき。「利用目的ベース」の具体が未整理のため現時点では積極採用しない |
-| K-01 | watch 機能の再構成 | 現行 slideshow / source / monitor 変化監視を含め、watch を独立機能として設計し直す。 | 現時点では source / slideshow / plugin の基礎設計が先。現行 GUI に Watch tab が存在するが実装は未完であり、Qt 移行後に方向性を整理する |
+| K-01 | ~~watch~~ slideshow 再構成（**旧語整理待ち**） | 旧 inventory「Watch」= 現 **Slideshow**。monitor 変化監視等を別 feature に切り出すなら K-01 を再定義。 | **構想保持・要再分類** — C-02/C-05 後。Phase10 mock の Watch 表記は legacy。 |
 | K-02 | source metadata / cache | 画像 source ごとにタグ、取得元、評価、最終利用履歴などを持てるようにする。 | 外部 source 連携や history 導線と一緒に詰めたほうがよい |
 | K-03 | favorites / history | 過去に生成・適用した壁紙や source を振り返り、再利用できるようにする。 | 保存スコープと UX を先に整理したい |
 | K-04 | plugin 拡張パック | Linux 以外や追加 desktop 向け plugin を外付け拡張として扱えるようにする。 | capability model と packaging 方針が先に必要 |
-| K-05 | scheduler / timed automation | 時刻・曜日・条件に応じて optimize / apply / slideshow を起動する。 | watch / source / profile 面が固まってからのほうが設計しやすい |
+| K-05 | scheduler / timed automation | 時刻・曜日・条件に応じて optimize / apply / slideshow を起動する。 | source / profile / slideshow 面が固まってからのほうが設計しやすい |
 | K-06 | import / export profiles | optimize / apply / slideshow の運用設定を profile 単位で持ち運べるようにする。 | source / settings / GUI 導線との責務分担を整理してからでよい |
 | P-03 | 単 display 時の -R 側無効化 | 検出 1 枚のとき右パネル操作を disabled にする案。 | **採用条件**: 単 display 再現手順、disabled 範囲の spec、GTK/Qt テスト方針が揃ったとき（[#359](../online-issues/issue-359.md)） |
 
@@ -102,12 +102,12 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 - 取得結果キャッシュ
 - source metadata
 
-### 2. source / watch / slideshow
+### 2. source / slideshow
 
 - source registry / source profiles
 - slideshow source 強化
-- watch 機能の再構成
-- scheduler / timed automation
+- scheduler / timed automation（[K-05](#2-構想保持)）
+- （旧語 Watch = slideshow — 2026-06-01 用語整理）
 
 ### 3. plugin / apply 拡張
 
@@ -149,7 +149,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 ### 4. 入口カテゴリの初期案
 
 - 外部ソース連携や取得導線の拡張
-- watch / sources / plugins の機能拡張
+- slideshow / sources / plugins の機能拡張
 - GUI / CLI の新しい利用導線
 - product improvement と UX 強化
 
