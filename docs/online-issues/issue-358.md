@@ -23,7 +23,7 @@
 
 ## 取り込み方針
 
-- **近端着手候補**（P-01 とまとめて Slideshow 面の widget slice 合意がよい）。
+- **第2波（着手順序）**。F-01 完了後。P-01 とまとめて Slideshow 面の widget slice 合意がよい。
 - 要決定: 左右 **同時クリア** のみか、個別 clear も要るか（初期案は simultaneous がテスト用途に足りる）。
 - GUI 版 slideshow は両 srcdir 必須のまま — clear 後は Start 不可になる挙動は現行 spec どおり。
 

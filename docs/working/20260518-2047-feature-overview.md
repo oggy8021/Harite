@@ -50,14 +50,14 @@
 
 ### 1b. 近端 backlog（Qt 完了後・2026-06-01）
 
-online-issues 由来。C-xx より先に **小さく入れやすい / 調査先行** の項目。詳細は各 issue と [online-issues/README.md](../online-issues/README.md)。
+online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-02 → issue 整理 → C-02。詳細は各 issue と [online-issues/README.md](../online-issues/README.md)。
 
 | ID | 項目 | Issue | 分類 | 現判断 |
 | --- | --- | --- | --- | --- |
-| F-01 | Windows 設定ファイル path | [#354](../online-issues/issue-354.md) | foundation | **近端着手** — **`AppData\Roaming\harite\` 採用確定** → foundation/core-spec。P-01/P-02 と並行可 |
-| P-01 | 左右 path / srcdir の swap | [#353](../online-issues/issue-353.md) | GUI polish | **近端着手** — F-01 / P-02 と **並行可**。design slice → gui-spec |
-| P-02 | Slideshow srcdir クリア | [#358](../online-issues/issue-358.md) | GUI polish | **近端着手** — P-01 と Slideshow 面をまとめて design 合意可（F-01 と並行可） |
-| P-03 | 単 display 時の -R 側無効化 | [#359](../online-issues/issue-359.md) | edge case UX | **構想保持（急がない）** — 再現手段・テストコスト整理後 |
+| F-01 | Windows 設定ファイル path | [#354](../online-issues/issue-354.md) | foundation | **第1波** — Roaming 採用確定 → foundation/core-spec → impl |
+| P-01 | 左右 path / srcdir の swap | [#353](../online-issues/issue-353.md) | GUI polish | **第2波** — P-02 とまとめて design slice → gui-spec → impl |
+| P-02 | Slideshow srcdir クリア | [#358](../online-issues/issue-358.md) | GUI polish | **第2波** — P-01 と Slideshow 面をまとめて design 合意 |
+| P-03 | 単 display 時の -R 側無効化 | [#359](../online-issues/issue-359.md) | edge case UX | **構想保持（着手順序外）** — 急がない |
 
 ### 2. 構想保持
 
@@ -153,31 +153,33 @@ online-issues 由来。C-xx より先に **小さく入れやすい / 調査先�
 - GUI / CLI の新しい利用導線
 - product improvement と UX 強化
 
-## 近中期の優先順序（2026-06-01 更新）
+## 近中期の優先順序（2026-06-01 確定）
 
 ```
 [完了] Qt 移行 + W-01〜W-03
          ↓
-[近端・並行可]（2026-06-01 確定 — 相互にブロックしない）
-  F-01  #354  Roaming\harite\harite-settings.json → foundation/core-spec → impl
-  P-01  #353  L/R swap          ┐ design 合意（docs/working/design/）
-  P-02  #358  srcdir clear      ┘ → gui-spec → impl
+[第1波] F-01  #354
+        Roaming\harite\harite-settings.json → foundation/core-spec → impl
          ↓
-[構想保持・急がない]
-  P-03  #359  単 display / -R 無効化
+[第2波] P-01  #353  L/R swap          ┐ design 合意（docs/working/design/）
+        P-02  #358  srcdir clear      ┘ → gui-spec → impl
          ↓
-[次段・大 feature]
-  C-02  source registry
-  C-05  slideshow source 強化
+[第3波] issue 整理
+        online-issues 索引・分類・close 移動、overview / backlog 同期
          ↓
-[本丸]
-  C-01  外部壁紙サイト連携
+[第4波・大 feature] C-02  source registry
+         ↓
+        C-05  slideshow source 強化
+         ↓
+[本丸]  C-01  外部壁紙サイト連携
+
+[着手順序外・構想保持] P-03 #359（単 display / -R 無効化 — 急がない）
 ```
 
 - Qt 移行の詳細は [docs/working/finished/20260530-2201-pyqt6-migration-plan.md](finished/20260530-2201-pyqt6-migration-plan.md) を参照する。
 - C-03 / C-04 は採用条件が揃った時点で着手候補へ再分類する。
-- P-03 は **構想保持のまま急がない**（2026-06-01 オーナー確認）。P-01–02 は §9 GUI 合意工程の最初の実践候補。
-- F-01 は Windows **`%APPDATA%\harite\harite-settings.json`**（Roaming）— 通例配置。**旧 `%USERPROFILE%` 直下 path の互換・移行は行わない**（正式 Windows ユーザー未存在）。
+- F-01 は Windows **`%APPDATA%\harite\harite-settings.json`**（Roaming）。**旧 path 互換・移行なし**。
+- P-01–02 は §9 GUI 合意工程の最初の実践候補。
 
 ## Qt 移行後 Windows 検証 backlog（W-xx）
 
@@ -206,7 +208,7 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 次段では Qt 移行計画を進め、完了後に C-02/C-05/C-01 の順で個別 planning 文書へ分離する。
 - 2026-05-31: Windows 実機検証由来の W-01〜W-03 を [finished/20260531-1200-windows-qt-validation-backlog.md](finished/20260531-1200-windows-qt-validation-backlog.md) に集約。
 - 2026-06-01: online-issues #353–359 を inventory 化。F-01 / P-01–02 を近端着手候補、P-03 を構想保持へ。C-02→C-05→C-01 は維持。
-- 2026-06-01: オーナー確認 — F-01 は Roaming 採用・旧 path 互換なし、F-01 と P-01/P-02 は並行可、P-03 は急がない。
+- 2026-06-01: 着手順序確定 — **F-01 → P-01/P-02 → issue 整理 → C-02**。P-03 は順序外（構想保持）。
 
 ## 完了条件
 

@@ -25,7 +25,7 @@
 
 ## 取り込み方針
 
-- **近端着手候補**。C-02 / P-01 / P-02 と **並行** でよい（2026-06-01 オーナー確認）。
+- **第1波（着手順序）**。完了後に P-01/P-02 へ。
 - **方針確定（2026-06-01）:** Windows 既定 path は **`%APPDATA%\harite\harite-settings.json`**（= `AppData\Roaming\harite\`）。通例に沿い、変な配置にしない。
 - 残タスク: foundation-spec / core-spec §6.1 へ反映 → impl。
 - **旧 path 互換なし（2026-06-01）:** `%USERPROFILE%\harite-settings.json` からの読み取り・移行は **行わない**。Windows 正式ユーザー未存在のため。clone 開発者は Roaming 新 path へ手動で置き直す想定。

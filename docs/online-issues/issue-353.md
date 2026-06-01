@@ -23,7 +23,7 @@
 
 ## 取り込み方針
 
-- **近端着手候補**（C-02 より先に小さく入れやすい GUI polish）。
+- **第2波（着手順序）**。F-01 完了後。P-02 と Slideshow 面をまとめて design slice → gui-spec。
 - Main / Slideshow の **左右入れ替え**（`◁▷` 等）を 1 設計でまとめ、`.cursorrules` §9 に従い widget slice で合意してから gui-spec へ。
 - スコープ: path / srcdir の値 swap のみ（ファイル移動や registry 変更は含めない）。
 
