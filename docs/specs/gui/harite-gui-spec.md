@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-01 (P-01/P-02 L/R swap & Slideshow srcdir clear)
+最終更新: 2026-06-01 (P-01/P-02 close — Main Swap 中段配置)
 
 ## 1. GUI の責務
 
@@ -110,8 +110,8 @@ Main Window:
 Main tab:
 
 - `Main` tab は縦積みの `main_col` を持ち、その上段に compose grid、下段に action cluster を置く。
-- compose grid は左・中央・右の 3 列構成で、左 panel と右 panel は display ごとの入力・方向操作面、中央 panel は pick state の表示面とする。
-- 中央 panel には pick state label の下に **`Swap L/R`** button を置き、左右の選択 path（`input_path_l` / `input_path_r`）を入れ替える（§4.1）。
+- compose grid は左・中央・右の 3 列構成で、左 panel と右 panel は display ごとの入力・方向操作面、中央 panel は pick state と swap 操作面とする。
+- 中央 panel は direction toggle 群と **同型 3 行**とし、上段に pick state label、**中段**（Left-L … Right-L / Left-R … Right-R と同高）に **`Swap L/R`** button を置く（§4.1）。
 - 左右 panel は同型で、上段に十字配置の direction toggle と `Open-L/R`、下段に選択 path 表示と `Clear-L/R` を置く。
 - Main tab の選択 path 表示（`entPathL` / `entPathR`）は full path をそのまま出さず、共通 helper `format_input_display(...)` で **basename の省略表示** にする（§6.1 参照）。
 - direction toggle 群は `Top/Bottom/Left/Right` を display ごとに十字状へ配置し、画像 picker button を中央に置く。
