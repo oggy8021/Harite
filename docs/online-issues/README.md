@@ -19,10 +19,13 @@ GitHub Issue の調査・観測・方針メモをリポジトリ内に残す置�
 
 ```text
 docs/online-issues/
-  issue-{番号}.md      ← 進行中（該当なしの場合は空）
+  issue-xxx.md         ← 複製用テンプレート（索引対象外）
+  issue-{番号}.md      ← 進行中
   closed/
     issue-{番号}.md    ← 解決済み（GitHub で close 後に git mv）
 ```
+
+新規 Issue メモは `issue-xxx.md` を複製し、`issue-{番号}.md` にリネームしてから埋める。
 
 ## ファイル命名
 
@@ -35,6 +38,8 @@ GitHub Issue 番号と 1:1 で対応させる。場所（直下 vs `closed/`）�
 ## 推奨テンプレート
 
 各 `issue-*.md` は次の見出しを揃える（短い Issue でも **分類** と **取り込み方針** は書く）。
+
+**コピー元:** [issue-xxx.md](issue-xxx.md)（プレースホルダ `#xxx` のまま索引には載せない）
 
 ```markdown
 # Issue #{番号}
