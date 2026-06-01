@@ -1,6 +1,6 @@
 # Harite Qt backend セットアップ手順書
 
-最終更新: 2026-05-30 (Phase 1: 空ウィンドウ起動まで)
+最終更新: 2026-05-31（XFCE 実機: `libxcb-cursor0` 追記）
 
 ## 概要
 
@@ -14,7 +14,7 @@ Qt backend は Phase 1（空ウィンドウ）から始まり、フェーズご�
 | 環境 | 必要なもの |
 |---|---|
 | Windows 11 | Python 3.12+、Git |
-| Linux Mint XFCE | Python 3.12+、Git、GTK 3 / python3-gi（GTK backend 用） |
+| Linux Mint XFCE | Python 3.12+、Git、GTK 3 / python3-gi（GTK backend 用）、**`libxcb-cursor0`**（Qt backend GUI 用・下記 §2.1） |
 | 共通 | `pip install PyQt6` が動作するネットワーク環境 |
 
 ---
@@ -26,6 +26,13 @@ Qt backend は Phase 1（空ウィンドウ）から始まり、フェーズご�
 ```bash
 # Qt backend を含めてインストール
 pip install -e ".[gui-qt]"
+```
+
+Linux（X11 / XFCE）で `harite-qt` のウィンドウを出す場合、pip だけでは不足する。Qt 6.5+ の xcb platform plugin は **`libxcb-cursor0`** を要求する（システム Qt SDK は不要）。
+
+```bash
+# Debian / Ubuntu / Linux Mint 系（XFCE 実機で確認済み）
+sudo apt install libxcb-cursor0
 ```
 
 これで以下のエントリーポイントが使えるようになる。
@@ -40,7 +47,7 @@ pip install -e ".[gui-qt]"
 ### 2.2 pipx を使う場合
 
 GTK backend は `--system-site-packages` が必要（python3-gi がシステム提供のため）。  
-Qt backend は pip install で完結するため不要。
+Qt backend の **Python パッケージ**は pip で完結するが、Linux GUI 表示には §2.1 の `libxcb-cursor0` が別途必要。
 
 ```bash
 # Qt backend のみ使う場合
@@ -125,6 +132,7 @@ PyQt6 なしの環境でも既存の GTK backend テストには影響しない�
 | 症状 | 対処 |
 |---|---|
 | `Harite Qt backend is unavailable` | `pip install PyQt6` を実行する |
+| `Could not load the Qt platform plugin "xcb"` / `libxcb-cursor0 is needed` | `sudo apt install libxcb-cursor0`（§2.1）。pip 側は既に OK のことが多い |
 | `QT_QPA_PLATFORM` 未設定でヘッドレス環境クラッシュ | `export QT_QPA_PLATFORM=offscreen` を追加する |
 | `harite-qt` コマンドが見つからない | `pip install -e ".[gui-qt]"` を再実行する |
 | Qt ウィンドウがアイコンなしで表示される | `PyQt6-Qt6` の SVG サポートが不足している可能性（`pip install PyQt6` 再インストール） |
