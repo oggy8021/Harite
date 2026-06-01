@@ -1,18 +1,18 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-01（第4波 C-02 planning 着手）
+最終更新: 2026-06-01（v1.0.0 リリース済み・第4波 C-02 planning）
 
 ## 位置づけ
 
 - 本書は [docs/reformation/harite-project-initial-build-reformation.md](docs/reformation/harite-project-initial-build-reformation.md) の Workstream 10 を具体化する子文書である。
-- 主題は、`1.0.0` 後の新運用で扱う後続機能の棚卸しと feature overview の作成である。
-- 本書は `1.0.0` gate ではなく、その後に開く backlog / planning 入口として扱う。
+- 主題は **v1.0.0 以降**の後続機能の棚卸しと planning 入口である。
+- **`1.0.0` はリリース済み**（2026-06）。当初の「gate 前は着手しない」等のガードは **適用しない**。本書は現行 backlog / planning 正本として随時更新する。
 
 ## この stream で固定すること
 
 - 断片的な feature アイデアを inventory 化する。
 - 実装候補、構想保持、破棄候補を粗く切り分ける。
-- post-`1.0.0` の feature planning 入口文書として、次期 planning の土台を作る。
+- post-`1.0.0` feature の planning 入口として、次期 planning の土台を更新し続ける。
 
 ## 対象
 
@@ -23,16 +23,15 @@
 
 ## 非対象
 
-- `1.0.0` 前に実装を始めること
-- release / packaging 整理
+- release / packaging 整理（別 stream）
 - docs 再編そのもの
-- 現行 surface の内部 issue 解決
+- 現行 surface の内部 issue 解決（online-issues / polish 波で扱う）
 
 ## 現在ステータス
 
-- WS10 は post-`1.0.0` planning の入口整備 stream として扱う。
+- **v1.0.0 リリース済み。** WS10 は post-1.0.x の **継続 planning / backlog 入口**として運用する。
 - **2026-06-01:** Qt 移行・W-xx 完了後、online-issues #353–359 を受けて **着手候補を再評価** した（下記 §近端 backlog / §近中期の優先順序）。
-- C-xx（大 feature）の順序は **C-02 → C-05 → C-01 を維持**。その前に **F-01 / P-01–02** の近端項目を入れられる。
+- C-xx（大 feature）の順序は **C-02 → C-05 → C-01 を維持**。近端 **F-01 / P-01–02 は完了**（2026-06-01）。
 
 ## 一次 inventory
 
@@ -185,12 +184,14 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 統合文書: [docs/working/finished/20260531-1200-windows-qt-validation-backlog.md](finished/20260531-1200-windows-qt-validation-backlog.md)  
 観測ログ: [docs/online-issues/README.md](../online-issues/README.md)
 
-## 初動タスク
+## 初動タスク（WS10 立ち上げ — **完了**）
 
-1. 現在頭にある後続機能案を列挙する。
-2. それぞれを「着手候補 / 構想保持 / 破棄候補」に粗く分類する。
-3. 外部壁紙サイト連携のような大きめ構想を、単発案ではなく overview 項目として受ける。
-4. post-`1.0.0` planning の入口となる最小構造を定める。
+1. ~~後続機能案を列挙する。~~ → 一次 inventory 反映済み
+2. ~~着手候補 / 構想保持 / 破棄候補に分類する。~~ → 本書 §1–3
+3. ~~大きめ構想を overview 項目として受ける。~~ → C-01 等
+4. ~~planning 入口の最小構造を定める。~~ → 本書 + `docs/working/` / online-issues 連携
+
+以降の更新は **inventory 追加・優先順序・完了記録**のみ（初動タスクの再実施は不要）。
 
 進捗メモ:
 
@@ -199,12 +200,14 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 次段では Qt 移行計画を進め、完了後に C-02/C-05/C-01 の順で個別 planning 文書へ分離する。
 - 2026-05-31: Windows 実機検証由来の W-01〜W-03 を [finished/20260531-1200-windows-qt-validation-backlog.md](finished/20260531-1200-windows-qt-validation-backlog.md) に集約。
 - 2026-06-01: online-issues #353–359 を inventory 化。F-01 / P-01–02 を近端着手候補、P-03 を構想保持へ。C-02→C-05→C-01 は維持。
+- 2026-06-01: **v1.0.0 リリース済み** — gate 前ガードは obsolete。本書を post-1.0.x backlog 入口として継続更新。
 - 2026-06-01: 第4波 **C-02 planning 着手** — [20260601-1400-c02-source-registry-planning.md](20260601-1400-c02-source-registry-planning.md)
 
-## 完了条件
+## 完了条件（WS10 立ち上げ — **達成済み**）
 
 - 後続機能 inventory の枠組みが説明可能になっている。
-- `1.0.0` gate の外に置く理由が説明可能になっている。
 - 構想の受け皿として overview を置く理由が説明可能になっている。
 - Workstream 1・3・4・5 と混線せずに次段へ送れる状態になっている。
 - 少なくとも一次 inventory が overview 上で参照可能になっている。
+
+※ 当初の「`1.0.0` gate の外に置く」完了条件は、**v1.0.0 リリースにより obsolete**。以降は上記 4 点 + 各 feature 完了記録の更新で十分。
