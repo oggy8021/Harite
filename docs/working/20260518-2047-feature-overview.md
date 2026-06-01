@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-01（Qt 完了後・online-issues #353–359 反映）
+最終更新: 2026-06-01（P-01/P-02 完了・#353/#358 closed）
 
 ## 位置づけ
 
@@ -55,8 +55,8 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | ID | 項目 | Issue | 分類 | 現判断 |
 | --- | --- | --- | --- | --- |
 | F-01 | Windows 設定ファイル path | [#354](../online-issues/closed/issue-354.md) | foundation | **完了**（#365–367, 2026-06-01 Windows 実機確認） |
-| P-01 | 左右 path / srcdir の swap | [#353](../online-issues/issue-353.md) | GUI polish | **第2波** — P-02 とまとめて design slice → gui-spec → impl |
-| P-02 | Slideshow srcdir クリア | [#358](../online-issues/issue-358.md) | GUI polish | **第2波** — P-01 と Slideshow 面をまとめて design 合意 |
+| P-01 | 左右 path / srcdir の swap | [#353](../online-issues/closed/issue-353.md) | GUI polish | **完了**（#369–371, 2026-06-01 オーナー確認） |
+| P-02 | Slideshow srcdir クリア | [#358](../online-issues/closed/issue-358.md) | GUI polish | **完了**（#369–371, 個別 clear 採用） |
 | P-03 | 単 display 時の -R 側無効化 | [#359](../online-issues/issue-359.md) | edge case UX | **構想保持（着手順序外）** — 急がない |
 
 ### 2. 構想保持
@@ -156,13 +156,9 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 ## 近中期の優先順序（2026-06-01 確定）
 
 ```
-[完了] Qt 移行 + W-01〜W-03 + F-01 #354
+[完了] Qt 移行 + W-01〜W-03 + F-01 #354 + P-01 #353 + P-02 #358
          ↓
-[第2波] P-01  #353  L/R swap          ┐ design 合意（docs/working/design/）
-        P-02  #358  srcdir clear      ┘ → gui-spec → impl
-         ↓
-[第3波] issue 整理
-        online-issues 索引・分類・close 移動、overview / backlog 同期
+[第3波] issue 整理（#353/#358 closed 移動 — 進行中）
          ↓
 [第4波・大 feature] C-02  source registry
          ↓
@@ -176,7 +172,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 - Qt 移行の詳細は [docs/working/finished/20260530-2201-pyqt6-migration-plan.md](finished/20260530-2201-pyqt6-migration-plan.md) を参照する。
 - C-03 / C-04 は採用条件が揃った時点で着手候補へ再分類する。
 - F-01 は Windows **`%APPDATA%\harite\harite-settings.json`**（Roaming）。**旧 path 互換・移行なし**。
-- P-01–02 は §9 GUI 合意工程の最初の実践候補。
+- P-01–02 は §9 GUI 合意工程の最初の実践。**2026-06-01 完了**（3 層 audit は [closed/issue-353](../online-issues/closed/issue-353.md) / [issue-358](../online-issues/closed/issue-358.md)）。
 
 ## Qt 移行後 Windows 検証 backlog（W-xx）
 

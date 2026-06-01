@@ -96,11 +96,11 @@ working メモも完了なら docs/working/finished/ へ移動
 | [#342](closed/issue-342.md) | Qt Main action cluster レイアウト | polish → **完了** | 同上 |
 | [#343](closed/issue-343.md) | Windows Apply / 壁紙 / 解像度 | **解決済** → spec 反映 | 同上 |
 | [#354](closed/issue-354.md) | Windows settings path（Roaming） | **解決済** → F-01 | [F-01](../../working/20260518-2047-feature-overview.md) |
+| [#353](closed/issue-353.md) | L/R path・srcdir swap | **解決済** → P-01 | [P-01](../../working/20260518-2047-feature-overview.md) |
+| [#358](closed/issue-358.md) | Slideshow srcdir 個別 clear | **解決済** → P-02 | [P-02](../../working/20260518-2047-feature-overview.md) |
 
 ## 索引（進行中）
 
 | Issue | タイトル要約 | 分類 | overview ID |
 | --- | --- | --- | --- |
-| [#353](issue-353.md) | L/R path・srcdir swap | polish | [P-01](../working/20260518-2047-feature-overview.md) |
-| [#358](issue-358.md) | Slideshow srcdir clear | polish | [P-02](../working/20260518-2047-feature-overview.md) |
 | [#359](issue-359.md) | 単 display で -R 無効化 | edge case UX | [P-03](../working/20260518-2047-feature-overview.md)（構想保持） |
