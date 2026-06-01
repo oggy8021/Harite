@@ -7,7 +7,7 @@ GUI の見た目合意形成用 artifact を置く（spec 正本の前段）。
 | 種別 | 用途 | 例 |
 | --- | --- | --- |
 | **icon board** | Lucide 選定・icon+label・tone 比較 | [gui-phase10-icon-mock.html](gui-phase10-icon-mock.html) |
-| **widget slice**（将来） | 新 widget 1 塊の配置・ラベル合意 | `YYYYMMDD-HHMM-*-slice.html` |
+| **widget slice** | 新 widget 1 塊の配置・ラベル合意 | [20260601-p01-p02-lr-swap-clear-slice.html](20260601-p01-p02-lr-swap-clear-slice.html) |
 | **評価メモ** | mock の pass/warn/fail 記録 | [gui-phase10-icon-mock-memo.md](gui-phase10-icon-mock-memo.md) |
 
 - HTML mock はブラウザで開いて比較する。CI 対象外。
@@ -20,3 +20,5 @@ GUI の見た目合意形成用 artifact を置く（spec 正本の前段）。
 | --- | --- |
 | [gui-phase10-icon-mock.html](gui-phase10-icon-mock.html) | Main / Watch icon 合意 board（Phase10 由来） |
 | [gui-phase10-icon-mock-memo.md](gui-phase10-icon-mock-memo.md) | 上記 mock の目的・評価観点・手順 |
+| [20260601-p01-p02-lr-swap-clear-slice.html](20260601-p01-p02-lr-swap-clear-slice.html) | 第2波 P-01/P-02 — Main swap + Slideshow swap/clear |
+| [20260601-p01-p02-lr-swap-clear-slice-memo.md](20260601-p01-p02-lr-swap-clear-slice-memo.md) | 上記 slice の配置案・handler 草案・評価 checklist |
