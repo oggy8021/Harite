@@ -36,6 +36,9 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         self._slideshow_paused: bool = False
         self._slideshow_srcdir_l: str = ""
         self._slideshow_srcdir_r: str = ""
+        self._slideshow_source_id_l: str = ""
+        self._slideshow_source_id_r: str = ""
+        self._slideshow_profile_id: str = ""
         self._slideshow_state_l: Any = None
         self._slideshow_state_r: Any = None
         self._slideshow_previous_l: Any = None
@@ -231,6 +234,10 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
     def _refresh_slideshow_source_labels(self) -> None:
         from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_source_labels
         refresh_slideshow_source_labels(self)
+
+    def _refresh_slideshow_registry_combos(self, owner: Any) -> None:
+        from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_registry_combos
+        refresh_slideshow_registry_combos(self, owner)
 
     def _refresh_slideshow_summary_label(self) -> None:
         from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_summary_label
@@ -619,6 +626,53 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             callback()
             owner = self._get_handler_owner("on_swap_slideshow_srcdirs")
             if owner is not None:
+                self._sync_slideshow_state_with_feedback_from_owner(owner)
+        except Exception as exc:
+            self._set_feedback(phase="Slideshow", state="error", error=str(exc))
+
+    def _on_slideshow_source_combo_changed(self, side: str) -> None:
+        combo = self._objects.get(f"combo_slideshow_source_{side.lower()}")
+        callback = self._signal_handlers.get("on_select_slideshow_source")
+        if combo is None or callback is None:
+            return
+        source_id = combo.currentData()
+        try:
+            ok = callback(side.upper(), source_id or None)
+            owner = self._get_handler_owner("on_select_slideshow_source")
+            if owner is not None and ok:
+                self._sync_slideshow_state_with_feedback_from_owner(owner)
+        except Exception as exc:
+            self._set_feedback(phase="Slideshow", state="error", error=str(exc))
+
+    def _on_slideshow_profile_combo_changed(self) -> None:
+        combo = self._objects.get("combo_slideshow_profile")
+        callback = self._signal_handlers.get("on_select_slideshow_profile")
+        if combo is None or callback is None:
+            return
+        profile_id = combo.currentData()
+        try:
+            ok = callback(profile_id or None)
+            owner = self._get_handler_owner("on_select_slideshow_profile")
+            if owner is not None and ok:
+                self._sync_slideshow_state_with_feedback_from_owner(owner)
+        except Exception as exc:
+            self._set_feedback(phase="Slideshow", state="error", error=str(exc))
+
+    def _on_manage_source_registry_clicked(self, *_args: Any) -> None:
+        from harite.gui.adapters_qt.qt_source_registry_dialog import run_source_registry_dialog
+        from harite.sources_file import resolve_default_sources_path
+
+        owner = self._get_handler_owner("on_manage_source_registry")
+        catalog_path = (
+            getattr(owner, "_source_catalog_path", None) if owner is not None else None
+        ) or resolve_default_sources_path()
+        parent = self._objects.get("mainwindow") or self._objects.get("slideshow_tab_box")
+        try:
+            changed = run_source_registry_dialog(parent, catalog_path=catalog_path)
+            callback = self._signal_handlers.get("on_manage_source_registry")
+            if callback is not None:
+                callback()
+            if owner is not None and changed:
                 self._sync_slideshow_state_with_feedback_from_owner(owner)
         except Exception as exc:
             self._set_feedback(phase="Slideshow", state="error", error=str(exc))

@@ -116,6 +116,9 @@ class SlideshowSettings:
     mode: str = "random"
     srcdir_l: str | None = None
     srcdir_r: str | None = None
+    source_id_l: str | None = None
+    source_id_r: str | None = None
+    profile_id: str | None = None
 
     @classmethod
     def from_settings_dict(cls, settings: dict[str, Any]) -> "SlideshowSettings":
@@ -124,15 +127,32 @@ class SlideshowSettings:
             mode=str(settings.get("slideshow_mode", "random")),
             srcdir_l=None if settings.get("slideshow_srcdir_l") is None else str(settings.get("slideshow_srcdir_l")),
             srcdir_r=None if settings.get("slideshow_srcdir_r") is None else str(settings.get("slideshow_srcdir_r")),
+            source_id_l=_optional_str(settings.get("slideshow_source_id_l")),
+            source_id_r=_optional_str(settings.get("slideshow_source_id_r")),
+            profile_id=_optional_str(settings.get("slideshow_profile_id")),
         )
 
     def to_settings_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "slideshow_interval_seconds": self.interval_seconds,
             "slideshow_mode": self.mode,
             "slideshow_srcdir_l": self.srcdir_l,
             "slideshow_srcdir_r": self.srcdir_r,
         }
+        if self.source_id_l:
+            payload["slideshow_source_id_l"] = self.source_id_l
+        if self.source_id_r:
+            payload["slideshow_source_id_r"] = self.source_id_r
+        if self.profile_id:
+            payload["slideshow_profile_id"] = self.profile_id
+        return payload
+
+
+def _optional_str(value: object | None) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 @dataclass

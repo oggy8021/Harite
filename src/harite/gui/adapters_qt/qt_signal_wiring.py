@@ -182,6 +182,26 @@ def _connect_slideshow_widgets(backend: Any, widgets: dict[str, Any]) -> None:
         lambda: backend._on_clear_slideshow_srcdir_clicked("R"),
     )
     _safe_connect(
+        widgets.get("combo_slideshow_source_l"),
+        "currentIndexChanged",
+        lambda _index: backend._on_slideshow_source_combo_changed("L"),
+    )
+    _safe_connect(
+        widgets.get("combo_slideshow_source_r"),
+        "currentIndexChanged",
+        lambda _index: backend._on_slideshow_source_combo_changed("R"),
+    )
+    _safe_connect(
+        widgets.get("combo_slideshow_profile"),
+        "currentIndexChanged",
+        lambda _index: backend._on_slideshow_profile_combo_changed(),
+    )
+    _safe_connect(
+        widgets.get("btn_manage_source_registry"),
+        "clicked",
+        backend._on_manage_source_registry_clicked,
+    )
+    _safe_connect(
         widgets.get("interval_spin"),
         "valueChanged",
         lambda val: backend._on_slideshow_interval_changed(None),
