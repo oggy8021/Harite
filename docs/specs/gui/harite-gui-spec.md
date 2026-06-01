@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-01 (F-01 settings path / startup widget sync)
+最終更新: 2026-06-01 (P-01/P-02 L/R swap & Slideshow srcdir clear)
 
 ## 1. GUI の責務
 
@@ -111,6 +111,7 @@ Main tab:
 
 - `Main` tab は縦積みの `main_col` を持ち、その上段に compose grid、下段に action cluster を置く。
 - compose grid は左・中央・右の 3 列構成で、左 panel と右 panel は display ごとの入力・方向操作面、中央 panel は pick state の表示面とする。
+- 中央 panel には pick state label の下に **`Swap L/R`** button を置き、左右の選択 path（`input_path_l` / `input_path_r`）を入れ替える（§4.1）。
 - 左右 panel は同型で、上段に十字配置の direction toggle と `Open-L/R`、下段に選択 path 表示と `Clear-L/R` を置く。
 - Main tab の選択 path 表示（`entPathL` / `entPathR`）は full path をそのまま出さず、共通 helper `format_input_display(...)` で **basename の省略表示** にする（§6.1 参照）。
 - direction toggle 群は `Top/Bottom/Left/Right` を display ごとに十字状へ配置し、画像 picker button を中央に置く。
@@ -137,7 +138,7 @@ Margins tab:
 Slideshow tab:
 
 - `Slideshow` tab は外周を縦積みで組み、top spacer、srcdir row、controls shell、detail shell、bottom spacer の順に置く。
-- srcdir row は左右 2 ブロック構成で、`Srcdir-L` / `L: ...` と `Srcdir-R` / `R: ...` を左右対称に配置する。
+- srcdir row は **Main tab compose grid と同型**の左・中央・右 3 列とする。左右 panel は `Srcdir-L/R` button、`L:` / `R:` path label、右下に `Clear-L/R` を持つ（Main の path 行 + Clear と同配置）。中央 panel には **`Swap L/R`** button のみを置く（§4.1）。
 - controls shell の中央には `slideshow_controls_group` を置き、その中を `mode row`、`mode help row`、`interval/start/stop row` の 3 段に分ける。
 - `mode row` は `Mode`、`sequential`、`random` を独立 row として中央寄せで置く。
 - `mode help row` は mode の選択規則と runtime 反映条件を補足する説明 label を置く。
@@ -197,6 +198,25 @@ apply mode の user-facing 意味:
 - GUI は plugin 名を settings から保持するが、target 解決規則は core に従う。
 - `_default_apply_mode` は XFCE セッション時 `per-monitor-auto-split`、Windows plugin かつ display 2 枚以上時も `per-monitor-auto-split`（UI 上 Span）、それ以外は `single-file`。
 - `_default_plugin_name` はプラットフォームマップ（`linux`→`linux`、`win32`→`windows`、`darwin`→`macos`）から初期値を決定する。マップに該当しないプラットフォームでは `linux` を既定とし、その値が `available_plugins` に存在しない場合は先頭の利用可能 plugin を使う。
+
+### 4.1 L/R swap と Slideshow srcdir clear（P-01 / P-02）
+
+design 合意: [20260601-p01-p02-lr-swap-clear-slice.html](../../working/design/20260601-p01-p02-lr-swap-clear-slice.html)
+
+| Handler | 呼び出し元 | Owner 操作 | Widget 同期 |
+| --- | --- | --- | --- |
+| `on_swap_input_paths()` | Main 中央 `Swap L/R` | `input_path_l` ↔ `input_path_r` を swap | `_apply_input_paths()` 経由で path 表示を更新 |
+| `on_swap_slideshow_srcdirs()` | Slideshow 中央 `Swap L/R` | `slideshow_srcdir_l` ↔ `slideshow_srcdir_r` を swap | srcdir label（`L:` / `R:` 行）を更新 |
+| `on_clear_slideshow_srcdir(side)` | Slideshow `Clear-L/R` | 指定 side の srcdir のみ `""` | 該当 label を空表示に更新 |
+
+- 上記 3 handler は `ui_adapter.py` の `RUNTIME_HANDLER_MAP` に追加し、GTK / Qt 両 backend が同じ handler 名で `MainWindow` メソッドへ dispatch する。
+- `side` 引数は `on_clear_input` と同型で、`"L"` / `"R"`（大文字小文字は strip 後に正規化）を受け付ける。不正 side は `False` を返し message history に理由を残す。
+- **Swap** は path / srcdir の **値のみ**入れ替える。ファイル移動、registry 更新、direction toggle、pick state、apply mode は変更しない。
+- **Swap** は片方だけ値がある場合も実行可能（空 ↔ 値の入れ替え）。
+- **Clear-L/R**（Slideshow）は Main の `on_clear_input` と同型の per-side clear とする。**Clear both（同時クリア）は提供しない**。
+- srcdir clear 後、両方非空でなければ `can_start_slideshow` は `False` となり Start を無効化する（§6 既存ガード）。実行中 slideshow を **自動 stop しない**（Main path clear と同様、owner 値と widget 表示の更新のみ）。
+- swap / clear 後は `_sync_action_availability_from_owner`（または同等）で Start / Apply 等の有効状態を再評価する。
+- 第2波 impl は **Qt backend** を先行。GTK backend は maintenance mode だが、上記 handler と widget 配置は spec 上 **parity 対象**とする。
 
 ## 5. 設定 (settings) 保存と再読込
 
@@ -366,6 +386,8 @@ button と icon の対応:
 - input 面の direction toggle は `Top-*` に `arrow-up.svg`、`Bottom-*` に `arrow-down.svg`、`Left-*` に `arrow-left.svg`、`Right-*` に `arrow-right.svg` を割り当てる。
 - input 面の `Open-L` / `Open-R` と slideshow 面の `Srcdir-L` / `Srcdir-R` には `folder-open.svg` を割り当てる。
 - input 面の `Clear-L` / `Clear-R` には `folder-x.svg` を割り当てる。
+- compose grid 中央および slideshow srcdir row 中央の **`Swap L/R`** には `arrow-left-right.svg` を割り当てる（Lucide resource を package に追加する）。
+- slideshow srcdir 面の `Clear-L` / `Clear-R` には `folder-x.svg` を割り当てる（Main Clear-L/R と同型）。
 - slideshow 面の `Slideshow Start` と `Slideshow Stop` にはそれぞれ `play.svg` と `pause.svg` を割り当てる。
 - settings dialog では header の `Save Settings` に `save.svg` を割り当てる。
 - 一方で settings dialog の `OK` / `Cancel` には現行実装で専用 icon 割当てはない。
