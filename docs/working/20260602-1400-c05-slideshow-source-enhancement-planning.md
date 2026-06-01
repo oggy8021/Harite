@@ -63,6 +63,11 @@ C-02 が **箱と索引**（catalog CRUD + Slideshow からの選択 UI）を届
 - 示唆: feature-overview の「同期済み cloud folder」は、**OS が通常の directory path として見せるもの**（Windows ドライブレター、Linux の `/mnt/...` 等）は **`local-dir` 一本で足りる**。追加 `kind` や Windows 向け特別扱いは **不要**。
 - GVFS transient path 問題は **Linux + ファイルマネージャ経由** に限定。Windows 実機では同型の問題は **未確認**。
 
+**オーナー想定（2026-06-02, XFCE / Linux — 未検証）:**
+
+- NAS も Thunar / GVFS に頼らず、**`/mnt` 等のマウントポイントまで path を直接指定**すれば slideshow source として使える **想定**（実機試行は未実施）。
+- 示唆: Linux で問題になるのは **ファイラーが返す GVFS transient path** であり、**fstab / mount 済みの実 path** は Windows ドライブレターと同型の `local-dir` として扱える見込み。C-05 spec では「推奨: マウントポイント path」「GVFS path は拒否または警告」と整理しうる。
+
 ## C-05 と隣接 feature の境界
 
 ```text
@@ -107,8 +112,9 @@ feature-overview: local directory、**同期済み cloud folder**、**ローカ�
 | 論点 | 選択肢 |
 | --- | --- |
 | GVFS path（`/run/user/.../gvfs/...`） | **拒否** / **警告のみで登録可** / **実 mount path へ正規化**（可能な場合） |
-| SMB / WebDAV | OS が見せる **ローカル mount path** のみ許可、GVFS は Thunar 等の transient path として扱う |
+| SMB / WebDAV | OS が見せる **ローカル mount path**（`/mnt/...`、Windows ドライブレター）を許可。GVFS は Thunar 等の **transient path** として別扱い |
 | Windows cloud sync | **ドライブレター path**（例: `G:\Pictures`）は通常 directory として扱う — **追加検証不要**（オーナー確認済） |
+| Linux NAS（想定・未検証） | **`/mnt/...` 等の直接マウント path** は `local-dir` として問題ない見込み。registry 登録は手入力 or path 直接指定が前提（ファイラー picker は GVFS を返しうる） |
 | CRUD vs 実行 | CRUD で拒否 vs CRUD は通し **tick で中断**（現状に近い） |
 
 実機メモ: Linux GVFS — [20260602-c02-real-device-observations.md](finished/20260602-c02-real-device-observations.md) §GVFS。Windows ドライブレター cloud — 本書 §実機観測。
@@ -174,7 +180,7 @@ CLI 変更なし（C-02 打ち止め継続）。
 | # | 論点 | 選択肢 / メモ |
 | --- | --- | --- |
 | **1** | source `kind` 第 2 段階 | **A** `local-dir` 一本 + path 規則 **vs** **B** `mounted-dir` / `sync-dir` 追加 — **Windows G: 実機は A で問題なし** |
-| **2** | GVFS path（Linux `/run/user/.../gvfs/...`） | **拒否** / **警告付き許可** / **正規化試行** — **Windows 対象外**（ドライブレターは #1 と同型） |
+| **2** | GVFS path（Linux `/run/user/.../gvfs/...`） | **拒否** / **警告付き許可** / **正規化試行** — **Windows 対象外**；**`/mnt` 直マウントは未検証だが local-dir 想定** |
 | **3** | resolve タイミング | start のみ **vs** start + **毎 tick** **vs** tick + catalog mtime 監視 |
 | **4** | settings 正本 | **id 正本**（path は cache） **vs** 現状の **id + path 併存** |
 | **5** | tick 中 inaccessible | **即 stop** **vs** 1 回 retry **vs** 可能 side のみ継続 |
