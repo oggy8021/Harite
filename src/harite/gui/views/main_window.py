@@ -35,6 +35,10 @@ from harite.positioning import reset_position_pair, update_position_pair
 from harite.plugins import registry as plugin_registry
 from harite.settings import AppSettings
 from harite.slideshow import SlideshowCycleState, collect_slideshow_input_images, run_slideshow_cycle
+from harite.sources import Catalog, get_profile, load_catalog, resolve_profile_members, resolve_source
+from harite.sources_file import resolve_default_sources_path
+
+REGISTRY_NONE_LABEL = "— none —"
 
 class MainWindow:
     """Framework-neutral model for the standalone GUI window."""
@@ -63,6 +67,10 @@ class MainWindow:
         self._slideshow_active_mode = "random"
         self.slideshow_srcdir_l = ""
         self.slideshow_srcdir_r = ""
+        self.slideshow_source_id_l = ""
+        self.slideshow_source_id_r = ""
+        self.slideshow_profile_id = ""
+        self._source_catalog_path: Path | None = None
         self.slideshow_summary_display = "Slideshow: stopped"
         self.slideshow_source_display = "Slideshow srcdirs: L=- | R=-"
         self.slideshow_current_display = "Slideshow current: idle"
@@ -277,12 +285,15 @@ class MainWindow:
             return False
         if normalized_side == "L":
             self.slideshow_srcdir_l = value
+            self.slideshow_source_id_l = ""
         elif normalized_side == "R":
             self.slideshow_srcdir_r = value
+            self.slideshow_source_id_r = ""
         else:
             self.last_error = "slideshow srcdir side is required"
             self._log("Slideshow srcdir ignored: missing side")
             return False
+        self.slideshow_profile_id = ""
         self._update_slideshow_source_display()
         self._refresh_action_availability()
         self._set_status("idle", "slideshow", f"slideshow srcdir {normalized_side} selected")
@@ -876,6 +887,9 @@ class MainWindow:
             self._slideshow_active_mode = self.slideshow_mode
         self.slideshow_srcdir_l = settings_value.slideshow.srcdir_l or ""
         self.slideshow_srcdir_r = settings_value.slideshow.srcdir_r or ""
+        self.slideshow_source_id_l = settings_value.slideshow.source_id_l or ""
+        self.slideshow_source_id_r = settings_value.slideshow.source_id_r or ""
+        self.slideshow_profile_id = settings_value.slideshow.profile_id or ""
         self._update_slideshow_source_display()
         self._update_slideshow_output_display()
         self._refresh_action_availability()
@@ -902,6 +916,9 @@ class MainWindow:
         self.preferences.slideshow.mode = self.slideshow_mode
         self.preferences.slideshow.srcdir_l = self.slideshow_srcdir_l or None
         self.preferences.slideshow.srcdir_r = self.slideshow_srcdir_r or None
+        self.preferences.slideshow.source_id_l = self.slideshow_source_id_l or None
+        self.preferences.slideshow.source_id_r = self.slideshow_source_id_r or None
+        self.preferences.slideshow.profile_id = self.slideshow_profile_id or None
         if self.form_state.two_screen is None:
             self.preferences.optimize.two_screen_mode = "auto"
         else:
@@ -1017,6 +1034,11 @@ class MainWindow:
             self.slideshow_srcdir_r,
             self.slideshow_srcdir_l,
         )
+        self.slideshow_source_id_l, self.slideshow_source_id_r = (
+            self.slideshow_source_id_r,
+            self.slideshow_source_id_l,
+        )
+        self.slideshow_profile_id = ""
         self._update_slideshow_source_display()
         self._refresh_action_availability()
         self._log("Slideshow srcdirs swapped (L/R)")
@@ -1026,16 +1048,99 @@ class MainWindow:
         normalized_side = side.strip().upper()
         if normalized_side == "L":
             self.slideshow_srcdir_l = ""
+            self.slideshow_source_id_l = ""
         elif normalized_side == "R":
             self.slideshow_srcdir_r = ""
+            self.slideshow_source_id_r = ""
         else:
             self.last_error = "slideshow srcdir clear side is required"
             self._log("Slideshow srcdir clear ignored: missing side")
             return False
 
+        self.slideshow_profile_id = ""
         self._update_slideshow_source_display()
         self._refresh_action_availability()
         self._log(f"Slideshow srcdir cleared ({normalized_side})")
+        return True
+
+    def load_source_catalog(self) -> Catalog:
+        path = self._source_catalog_path or resolve_default_sources_path()
+        return load_catalog(path)
+
+    def on_select_slideshow_source(self, side: str, source_id: str | None) -> bool:
+        normalized_side = side.strip().upper()
+        if normalized_side not in {"L", "R"}:
+            self.last_error = "slideshow source side is required"
+            return False
+
+        selected_id = (source_id or "").strip()
+        if not selected_id:
+            if normalized_side == "L":
+                self.slideshow_source_id_l = ""
+            else:
+                self.slideshow_source_id_r = ""
+            self.slideshow_profile_id = ""
+            self._log(f"Slideshow saved source cleared ({normalized_side})")
+            return True
+
+        try:
+            resolved = resolve_source(self.load_source_catalog(), selected_id)
+        except ValueError as exc:
+            self.last_error = str(exc)
+            self._log(f"Slideshow saved source failed ({normalized_side}): {exc}")
+            return False
+
+        if normalized_side == "L":
+            self.slideshow_source_id_l = selected_id
+            self.slideshow_srcdir_l = str(resolved)
+        else:
+            self.slideshow_source_id_r = selected_id
+            self.slideshow_srcdir_r = str(resolved)
+        self.slideshow_profile_id = ""
+        self._update_slideshow_source_display()
+        self._refresh_action_availability()
+        self._set_status("idle", "slideshow", f"slideshow saved source {normalized_side} selected")
+        self._log(f"Slideshow saved source selected ({normalized_side}): {selected_id}")
+        return True
+
+    def on_select_slideshow_profile(self, profile_id: str | None) -> bool:
+        selected_id = (profile_id or "").strip()
+        if not selected_id:
+            self.slideshow_profile_id = ""
+            self._log("Slideshow profile selection cleared")
+            return True
+
+        catalog = self.load_source_catalog()
+        profile = get_profile(catalog, selected_id)
+        if profile is None:
+            self.last_error = f"unknown profile id: {selected_id}"
+            return False
+
+        try:
+            members = resolve_profile_members(catalog, selected_id)
+        except ValueError as exc:
+            self.last_error = str(exc)
+            return False
+
+        self.slideshow_profile_id = selected_id
+        for side_key, slot_attr in (("L", "L"), ("R", "R")):
+            member_id = getattr(profile.members, slot_attr)
+            path = members[side_key]
+            if side_key == "L":
+                self.slideshow_source_id_l = member_id or ""
+                self.slideshow_srcdir_l = "" if path is None else str(path)
+            else:
+                self.slideshow_source_id_r = member_id or ""
+                self.slideshow_srcdir_r = "" if path is None else str(path)
+
+        self._update_slideshow_source_display()
+        self._refresh_action_availability()
+        self._set_status("idle", "slideshow", f"slideshow profile applied: {profile.name}")
+        self._log(f"Slideshow profile selected: {selected_id}")
+        return True
+
+    def on_manage_source_registry(self) -> bool:
+        self._log("Manage source registry requested (runtime dialog)")
         return True
 
     def on_about(self) -> bool:

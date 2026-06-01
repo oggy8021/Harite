@@ -120,6 +120,15 @@ def test_connect_qt_widgets_does_not_raise_with_empty_registry(qapp):
         def _on_clear_slideshow_srcdir_clicked(self, side):
             pass
 
+        def _on_slideshow_source_combo_changed(self, side):
+            pass
+
+        def _on_slideshow_profile_combo_changed(self):
+            pass
+
+        def _on_manage_source_registry_clicked(self):
+            pass
+
         def _on_save_clicked(self):
             pass
 
@@ -222,6 +231,9 @@ def test_connect_qt_widgets_wires_optimize_btn(qapp):
         def _on_swap_input_paths_clicked(self): pass
         def _on_swap_slideshow_srcdirs_clicked(self): pass
         def _on_clear_slideshow_srcdir_clicked(self, s): pass
+        def _on_slideshow_source_combo_changed(self, s): pass
+        def _on_slideshow_profile_combo_changed(self): pass
+        def _on_manage_source_registry_clicked(self): pass
         def _on_save_clicked(self): pass
         def _on_apply_clicked(self): pass
         def _on_settings_clicked(self): pass

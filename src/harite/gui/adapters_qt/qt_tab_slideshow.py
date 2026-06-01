@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from harite.gui.resource_access import set_qt_button_icon as _set_button_icon
+from harite.gui.views.main_window import REGISTRY_NONE_LABEL
 
 
 # ---------------------------------------------------------------------------
@@ -25,6 +25,7 @@ def _build_srcdir_row() -> dict[str, Any]:
     """Three-column srcdir row (L panel / center Swap / R panel), Main tab parity."""
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (
+        QComboBox,
         QGridLayout,
         QHBoxLayout,
         QLabel,
@@ -49,6 +50,17 @@ def _build_srcdir_row() -> dict[str, Any]:
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
 
+        saved_row = QWidget()
+        saved_row_layout = QVBoxLayout(saved_row)
+        saved_row_layout.setContentsMargins(0, 0, 0, 0)
+        saved_row_layout.setSpacing(4)
+        saved_label = QLabel("Saved source")
+        saved_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        combo = QComboBox()
+        combo.addItem(REGISTRY_NONE_LABEL, "")
+        saved_row_layout.addWidget(saved_label)
+        saved_row_layout.addWidget(combo)
+
         btn_row = QWidget()
         btn_row_layout = QHBoxLayout(btn_row)
         btn_row_layout.setContentsMargins(0, 0, 0, 0)
@@ -71,12 +83,14 @@ def _build_srcdir_row() -> dict[str, Any]:
         clear_row_layout.addStretch()
         clear_row_layout.addWidget(btn_clr)
 
+        layout.addWidget(saved_row)
         layout.addWidget(btn_row)
         layout.addWidget(lbl)
         layout.addWidget(clear_row)
 
         return {
             f"panel_{side_key}_srcdir": panel,
+            f"combo_slideshow_source_{side_key}": combo,
             f"btn_open_srcdir_{side_key}": btn,
             f"slideshow_source_label_{side_key}": lbl,
             f"btn_clr_srcdir_{side_key}": btn_clr,
@@ -111,6 +125,52 @@ def _build_srcdir_row() -> dict[str, Any]:
         "btn_clr_srcdir_l": left["btn_clr_srcdir_l"],
         "btn_clr_srcdir_r": right["btn_clr_srcdir_r"],
         "btn_swap_slideshow_srcdirs": btn_swap,
+        "combo_slideshow_source_l": left["combo_slideshow_source_l"],
+        "combo_slideshow_source_r": right["combo_slideshow_source_r"],
+    }
+
+
+def _build_profile_row() -> dict[str, Any]:
+    """Profile preset combo centred above srcdir grid."""
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QWidget
+
+    row = QWidget()
+    layout = QHBoxLayout(row)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+    profile_label = QLabel("Profile")
+    combo_slideshow_profile = QComboBox()
+    combo_slideshow_profile.addItem(REGISTRY_NONE_LABEL, "")
+    help_label = QLabel("Applies L/R together")
+    help_label.setStyleSheet("color: palette(mid);")
+
+    layout.addWidget(profile_label)
+    layout.addWidget(combo_slideshow_profile)
+    layout.addWidget(help_label)
+
+    return {
+        "slideshow_profile_row": row,
+        "combo_slideshow_profile": combo_slideshow_profile,
+    }
+
+
+def _build_manage_registry_row() -> dict[str, Any]:
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
+
+    row = QWidget()
+    layout = QHBoxLayout(row)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+    btn_manage_source_registry = QPushButton("Manage sources and profiles…")
+    layout.addWidget(btn_manage_source_registry)
+
+    return {
+        "slideshow_manage_registry_row": row,
+        "btn_manage_source_registry": btn_manage_source_registry,
     }
 
 
@@ -298,12 +358,18 @@ def build_slideshow_tab() -> dict[str, Any]:
     # Dynamic tab title label (adapter can update text via this reference)
     slideshow_tab_title = QLabel("Slideshow (stopped)")
 
+    profile_widgets = _build_profile_row()
     srcdir_widgets = _build_srcdir_row()
+    manage_widgets = _build_manage_registry_row()
     controls_widgets = _build_controls_section()
     detail_widgets = _build_detail_row()
 
     tab_layout.addStretch()
+    tab_layout.addWidget(profile_widgets["slideshow_profile_row"])
+    tab_layout.addSpacing(12)
     tab_layout.addWidget(srcdir_widgets["srcdir_row"])
+    tab_layout.addSpacing(8)
+    tab_layout.addWidget(manage_widgets["slideshow_manage_registry_row"])
     tab_layout.addSpacing(54)
     tab_layout.addWidget(controls_widgets["slideshow_controls_shell"])
     tab_layout.addSpacing(54)
@@ -314,7 +380,9 @@ def build_slideshow_tab() -> dict[str, Any]:
         "slideshow_tab_box": slideshow_tab_box,
         "slideshow_label": slideshow_label,
         "slideshow_tab_title": slideshow_tab_title,
+        **profile_widgets,
         **srcdir_widgets,
+        **manage_widgets,
         **controls_widgets,
         **detail_widgets,
     }

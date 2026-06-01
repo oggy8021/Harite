@@ -26,6 +26,9 @@ def parse_margin_values(value: object | None) -> tuple[int, int, int, int]:
 def sync_slideshow_state_from_owner(backend: Any, owner: Any) -> None:
     backend._slideshow_srcdir_l = str(getattr(owner, "slideshow_srcdir_l", backend._slideshow_srcdir_l) or "")
     backend._slideshow_srcdir_r = str(getattr(owner, "slideshow_srcdir_r", backend._slideshow_srcdir_r) or "")
+    backend._slideshow_source_id_l = str(getattr(owner, "slideshow_source_id_l", "") or "")
+    backend._slideshow_source_id_r = str(getattr(owner, "slideshow_source_id_r", "") or "")
+    backend._slideshow_profile_id = str(getattr(owner, "slideshow_profile_id", "") or "")
     backend.slideshow_mode = str(getattr(owner, "slideshow_mode", getattr(backend, "slideshow_mode", "random")) or "random")
     backend._slideshow_active_mode = str(
         getattr(owner, "_slideshow_active_mode", getattr(backend, "_slideshow_active_mode", backend.slideshow_mode))
@@ -50,6 +53,8 @@ def sync_slideshow_state_from_owner(backend: Any, owner: Any) -> None:
     backend._set_button_enabled("btnDaemonize", bool(getattr(owner, "can_start_slideshow", False)))
     backend._set_button_enabled("btnCancelDaemonize", bool(getattr(owner, "slideshow_running", False)))
     backend._refresh_slideshow_source_labels()
+    if hasattr(backend, "_refresh_slideshow_registry_combos"):
+        backend._refresh_slideshow_registry_combos(owner)
     backend._refresh_slideshow_summary_label()
     backend._refresh_slideshow_current_label()
     form_state = getattr(owner, "form_state", None)
