@@ -8,7 +8,8 @@
 | 観測 | 対応 |
 |------|------|
 | catalog ファイル名 `sources.json` が `harite-settings.json` とバランス不良 | 既定名を **`harite-sources.json`** に変更（旧名からの自動読み込みなし） |
-| Manage dialog — Profiles 登録で L/R slot が 1 件ずれ | L/R combo 更新中に `currentIndexChanged` が中間状態を persist → **両 slot 一括 blockSignals** |
+| Manage dialog — Profiles 登録で L/R slot が 1 件ずれ | slot 更新の中間状態 persist → **loading ガード + 一括 blockSignals** |
+| Manage dialog — 2 件目 profile 編集で 1 件目 members が上書き | Add 後 combo 選択失敗 + slot unblock 時の誤 persist → **`_select_combo_by_data` + loading ガード** |
 | Clear-L/R 後 Profile combo が旧 profile のまま | combo refresh  unblock 時に handler が再入 → **`_slideshow_registry_combo_refresh` ガード** + `None`/`""` 正規化 |
 
 ## 観測のみ（低優先・ガード未実装）
