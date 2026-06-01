@@ -7,6 +7,7 @@
 ```text
 docs/working/
   YYYYMMDD-HHMM-説明.md   ← 進行中
+  design/                  ← GUI mock / 見た目合意 artifact（HTML 等）
   finished/
     YYYYMMDD-HHMM-説明.md ← 完了（テーマ確定・正本反映後に git mv）
 ```
@@ -18,6 +19,10 @@ docs/working/
 | ファイル | 内容 |
 | --- | --- |
 | [20260518-2047-feature-overview.md](20260518-2047-feature-overview.md) | post-1.0.0 機能 inventory（C-xx）と W-xx 横断入口 |
+
+## design（GUI 合意 artifact）
+
+icon board / widget slice 等は [design/README.md](design/README.md) を参照。
 
 ## finished アーカイブ
 

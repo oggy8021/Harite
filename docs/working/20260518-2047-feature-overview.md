@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-05-30
+最終更新: 2026-06-01（Qt 完了後・online-issues #353–359 反映）
 
 ## 位置づけ
 
@@ -30,9 +30,9 @@
 
 ## 現在ステータス
 
-- WS10 は、reformation 本体の不整合修正 stream ではなく、post-`1.0.0` planning の入口整備 stream として扱う。
-- 現時点では feature の優先順位確定や issue 分解までは行わず、まず overview 上で inventory を受ける。
-- 本書の今回の役割は、断片案を「着手候補 / 構想保持 / 破棄候補」に粗く並べ、次の planning で掘る対象を見える化することにある。
+- WS10 は post-`1.0.0` planning の入口整備 stream として扱う。
+- **2026-06-01:** Qt 移行・W-xx 完了後、online-issues #353–359 を受けて **着手候補を再評価** した（下記 §近端 backlog / §近中期の優先順序）。
+- C-xx（大 feature）の順序は **C-02 → C-05 → C-01 を維持**。その前に **F-01 / P-01–02** の近端項目を入れられる。
 
 ## 一次 inventory
 
@@ -47,6 +47,17 @@
 | C-02 | source registry / source profiles | watch directory や外部 source を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | source モデル、GUI/CLI surface、設定保存形式 |
 | C-05 | slideshow source 強化 | slideshow の source を単発 directory から、複数 source・source profile・将来の外部 source へ広げる。初期スコープは local directory、同期済み cloud folder、ローカル mount 済み NAS/SMB/WebDAV directory までとし、それ以上の直接連携は将来余裕がある場合に限る。 | source 正規化、順序規則、GUI owner state との整合 |
 | C-01 | 外部壁紙サイト連携 | 外部サイトや API から壁紙候補を取得し、Harite の source として扱えるようにする。C-05 の local/mounted source 扱いを一種の先行試行とみなせる。オーナー発案の本丸 feature。 | 対象サイト、取得方法、利用規約、キャッシュ方針 |
+
+### 1b. 近端 backlog（Qt 完了後・2026-06-01）
+
+online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-02 → issue 整理 → C-02。詳細は各 issue と [online-issues/README.md](../online-issues/README.md)。
+
+| ID | 項目 | Issue | 分類 | 現判断 |
+| --- | --- | --- | --- | --- |
+| F-01 | Windows 設定ファイル path | [#354](../online-issues/issue-354.md) | foundation | **第1波** — Roaming 採用確定 → foundation/core-spec → impl |
+| P-01 | 左右 path / srcdir の swap | [#353](../online-issues/issue-353.md) | GUI polish | **第2波** — P-02 とまとめて design slice → gui-spec → impl |
+| P-02 | Slideshow srcdir クリア | [#358](../online-issues/issue-358.md) | GUI polish | **第2波** — P-01 と Slideshow 面をまとめて design 合意 |
+| P-03 | 単 display 時の -R 側無効化 | [#359](../online-issues/issue-359.md) | edge case UX | **構想保持（着手順序外）** — 急がない |
 
 ### 2. 構想保持
 
@@ -63,6 +74,7 @@
 | K-04 | plugin 拡張パック | Linux 以外や追加 desktop 向け plugin を外付け拡張として扱えるようにする。 | capability model と packaging 方針が先に必要 |
 | K-05 | scheduler / timed automation | 時刻・曜日・条件に応じて optimize / apply / slideshow を起動する。 | watch / source / profile 面が固まってからのほうが設計しやすい |
 | K-06 | import / export profiles | optimize / apply / slideshow の運用設定を profile 単位で持ち運べるようにする。 | source / settings / GUI 導線との責務分担を整理してからでよい |
+| P-03 | 単 display 時の -R 側無効化 | 検出 1 枚のとき右パネル操作を disabled にする案。 | **採用条件**: 単 display 再現手順、disabled 範囲の spec、GTK/Qt テスト方針が揃ったとき（[#359](../online-issues/issue-359.md)） |
 
 #### C-04 rough ideas（参考保持）
 
@@ -141,19 +153,33 @@
 - GUI / CLI の新しい利用導線
 - product improvement と UX 強化
 
-## 近中期の優先順序（2026-05-30 確定）
+## 近中期の優先順序（2026-06-01 確定）
 
 ```
-[先行] Qt 移行（harite-gtk / harite-qt 二本立て化）
-         ↓ 完了後
-[次段] C-02 source registry  ←── C-01 の器を作る
-       C-05 slideshow source 強化  ←── local/mounted まで
-         ↓ 揃ったら
-[本丸] C-01 外部壁紙サイト連携  ←── オーナー発案
+[完了] Qt 移行 + W-01〜W-03
+         ↓
+[第1波] F-01  #354
+        Roaming\harite\harite-settings.json → foundation/core-spec → impl
+         ↓
+[第2波] P-01  #353  L/R swap          ┐ design 合意（docs/working/design/）
+        P-02  #358  srcdir clear      ┘ → gui-spec → impl
+         ↓
+[第3波] issue 整理
+        online-issues 索引・分類・close 移動、overview / backlog 同期
+         ↓
+[第4波・大 feature] C-02  source registry
+         ↓
+        C-05  slideshow source 強化
+         ↓
+[本丸]  C-01  外部壁紙サイト連携
+
+[着手順序外・構想保持] P-03 #359（単 display / -R 無効化 — 急がない）
 ```
 
 - Qt 移行の詳細は [docs/working/finished/20260530-2201-pyqt6-migration-plan.md](finished/20260530-2201-pyqt6-migration-plan.md) を参照する。
-- C-03 / C-04 は採用条件が揃った時点で着手候補へ再分類する。条件が揃わなければ構想保持のまま維持する。
+- C-03 / C-04 は採用条件が揃った時点で着手候補へ再分類する。
+- F-01 は Windows **`%APPDATA%\harite\harite-settings.json`**（Roaming）。**旧 path 互換・移行なし**。
+- P-01–02 は §9 GUI 合意工程の最初の実践候補。
 
 ## Qt 移行後 Windows 検証 backlog（W-xx）
 
@@ -180,7 +206,9 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 一次 inventory を本書へ反映した。
 - 2026-05-30: オーナーとの議論を経て、C-03/C-04 を構想保持へ移動（採用条件付き）。Qt 移行を全 feature に先行させる方針を確定した。
 - 次段では Qt 移行計画を進め、完了後に C-02/C-05/C-01 の順で個別 planning 文書へ分離する。
-- 2026-05-31: Windows 実機検証由来の W-01〜W-03 を [20260531-1200-windows-qt-validation-backlog.md](20260531-1200-windows-qt-validation-backlog.md) に集約。
+- 2026-05-31: Windows 実機検証由来の W-01〜W-03 を [finished/20260531-1200-windows-qt-validation-backlog.md](finished/20260531-1200-windows-qt-validation-backlog.md) に集約。
+- 2026-06-01: online-issues #353–359 を inventory 化。F-01 / P-01–02 を近端着手候補、P-03 を構想保持へ。C-02→C-05→C-01 は維持。
+- 2026-06-01: 着手順序確定 — **F-01 → P-01/P-02 → issue 整理 → C-02**。P-03 は順序外（構想保持）。
 
 ## 完了条件
 

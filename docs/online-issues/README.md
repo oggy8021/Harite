@@ -19,10 +19,13 @@ GitHub Issue の調査・観測・方針メモをリポジトリ内に残す置�
 
 ```text
 docs/online-issues/
-  issue-{番号}.md      ← 進行中（該当なしの場合は空）
+  issue-xxx.md         ← 複製用テンプレート（索引対象外）
+  issue-{番号}.md      ← 進行中
   closed/
     issue-{番号}.md    ← 解決済み（GitHub で close 後に git mv）
 ```
+
+新規 Issue メモは `issue-xxx.md` を複製し、`issue-{番号}.md` にリネームしてから埋める。
 
 ## ファイル命名
 
@@ -35,6 +38,8 @@ GitHub Issue 番号と 1:1 で対応させる。場所（直下 vs `closed/`）�
 ## 推奨テンプレート
 
 各 `issue-*.md` は次の見出しを揃える（短い Issue でも **分類** と **取り込み方針** は書く）。
+
+**コピー元:** [issue-xxx.md](issue-xxx.md)（プレースホルダ `#xxx` のまま索引には載せない）
 
 ```markdown
 # Issue #{番号}
@@ -91,4 +96,11 @@ working メモも完了なら docs/working/finished/ へ移動
 | [#342](closed/issue-342.md) | Qt Main action cluster レイアウト | polish → **完了** | 同上 |
 | [#343](closed/issue-343.md) | Windows Apply / 壁紙 / 解像度 | **解決済** → spec 反映 | 同上 |
 
-進行中 Issue は本 README の索引に追記する（現時点: なし）。
+## 索引（進行中）
+
+| Issue | タイトル要約 | 分類 | overview ID |
+| --- | --- | --- | --- |
+| [#353](issue-353.md) | L/R path・srcdir swap | polish | [P-01](../working/20260518-2047-feature-overview.md) |
+| [#354](issue-354.md) | Windows settings path | investigation | [F-01](../working/20260518-2047-feature-overview.md) |
+| [#358](issue-358.md) | Slideshow srcdir clear | polish | [P-02](../working/20260518-2047-feature-overview.md) |
+| [#359](issue-359.md) | 単 display で -R 無効化 | edge case UX | [P-03](../working/20260518-2047-feature-overview.md)（構想保持） |
