@@ -37,4 +37,4 @@
 - **2026-06-01:** Roaming 採用で問題なし（オーナー）。Local ではなく Roaming（設定の持ち運び・バックアップ対象として一般的）。
 - 現行コード: Linux は `$XDG_CONFIG_HOME/harite/harite-settings.json`（未設定時 `~/.config/harite/...`）、Windows は `~/harite-settings.json`。
 - **2026-06-01:** 旧 `%USERPROFILE%\harite-settings.json` 互換・移行は **不要**（正式 Windows ユーザー未存在）。
-- 正本現状: [core-spec §6.1](../specs/core/harite-core-spec.md) — F-01 spec PR で Roaming に更新済み（docs/f-01）。
+- 正本: [core-spec §6.1](../specs/core/harite-core-spec.md) — Roaming 採用（F-01）。

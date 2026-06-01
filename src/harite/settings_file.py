@@ -11,6 +11,10 @@ def resolve_default_settings_path() -> Path:
     if sys.platform.startswith("linux"):
         config_home = Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"))
         return config_home / "harite" / "harite-settings.json"
+    if sys.platform == "win32":
+        appdata = os.environ.get("APPDATA")
+        roaming = Path(appdata) if appdata else Path.home() / "AppData" / "Roaming"
+        return roaming / "harite" / "harite-settings.json"
     return Path.home() / "harite-settings.json"
 
 
