@@ -253,7 +253,7 @@ design 合意: [20260601-c02-slideshow-source-registry-slice.html](../../working
 
 - Sources: 一覧、Add（name + directory browse）、Delete（profile 参照中は [source-spec §7.5](../source/harite-source-spec.md) に従い拒否）。
 - Profiles: 一覧、L/R slot combo（source id または empty）、Add / Delete profile。
-- 保存は `sources.json` へ即 write。settings dialog とは別 surface。
+- 保存は `harite-sources.json` へ即 write。settings dialog とは別 surface。
 - dialog Close 後、Slideshow tab の profile / saved source combo を reload する。
 
 **§4.1 との関係:**

@@ -20,6 +20,53 @@ from harite.sources import (
 )
 
 
+def source_slot_items(catalog: Catalog) -> list[tuple[str, str]]:
+    items = [("— empty —", "")]
+    for entry in list_sources(catalog):
+        items.append((entry.name, entry.id))
+    return items
+
+
+def fill_source_slot_combo(
+    combo: Any,
+    selected_id: str | None,
+    items: list[tuple[str, str]],
+    *,
+    block_signals: bool = True,
+) -> None:
+    if block_signals:
+        combo.blockSignals(True)
+    combo.clear()
+    selected = selected_id or ""
+    index_to_select = 0
+    for idx, (label, value) in enumerate(items):
+        combo.addItem(label, value)
+        if value == selected:
+            index_to_select = idx
+    combo.setCurrentIndex(index_to_select)
+    if block_signals:
+        combo.blockSignals(False)
+
+
+def apply_profile_slot_combos(
+    slot_l: Any,
+    slot_r: Any,
+    *,
+    member_l: str | None,
+    member_r: str | None,
+    items: list[tuple[str, str]],
+) -> None:
+    """Set L/R slot combos without emitting intermediate slot-change signals."""
+    slot_l.blockSignals(True)
+    slot_r.blockSignals(True)
+    try:
+        fill_source_slot_combo(slot_l, member_l, items, block_signals=False)
+        fill_source_slot_combo(slot_r, member_r, items, block_signals=False)
+    finally:
+        slot_r.blockSignals(False)
+        slot_l.blockSignals(False)
+
+
 def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
     """Show sources/profiles editor. Returns True if catalog was saved."""
     from PyQt6.QtWidgets import (
@@ -106,43 +153,42 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
             source_list.addItem(f"{entry.name} — {entry.path}")
 
     def _source_slot_items() -> list[tuple[str, str]]:
-        items = [("— empty —", "")]
-        for entry in list_sources(catalog):
-            items.append((entry.name, entry.id))
-        return items
+        return source_slot_items(catalog)
 
-    def _fill_slot_combo(combo: QComboBox, selected_id: str | None) -> None:
-        combo.blockSignals(True)
-        combo.clear()
-        selected = selected_id or ""
-        index_to_select = 0
-        for idx, (label, value) in enumerate(_source_slot_items()):
-            combo.addItem(label, value)
-            if value == selected:
-                index_to_select = idx
-        combo.setCurrentIndex(index_to_select)
-        combo.blockSignals(False)
+    def _apply_profile_slots(member_l: str | None, member_r: str | None) -> None:
+        apply_profile_slot_combos(
+            slot_l,
+            slot_r,
+            member_l=member_l,
+            member_r=member_r,
+            items=_source_slot_items(),
+        )
 
     def _refresh_profile_combo(select_id: str | None = None) -> None:
+        profiles = list_profiles(catalog)
+        if select_id is None or not str(select_id).strip():
+            prior = profile_combo.currentData()
+            if prior:
+                select_id = str(prior)
+
         profile_combo.blockSignals(True)
         profile_combo.clear()
-        profiles = list_profiles(catalog)
         if not profiles:
             profile_combo.addItem("— none —", "")
-            _fill_slot_combo(slot_l, None)
-            _fill_slot_combo(slot_r, None)
+            _apply_profile_slots(None, None)
             profile_combo.blockSignals(False)
             return
 
-        selected = select_id or profiles[0].id
+        selected = str(select_id).strip() if select_id else profiles[0].id
+        selected_index = 0
         for idx, entry in enumerate(profiles):
             profile_combo.addItem(entry.name, entry.id)
             if entry.id == selected:
-                profile_combo.setCurrentIndex(idx)
-        current = get_profile(catalog, profile_combo.currentData() or selected)
+                selected_index = idx
+        profile_combo.setCurrentIndex(selected_index)
+        current = get_profile(catalog, str(profile_combo.currentData() or selected))
         if current is not None:
-            _fill_slot_combo(slot_l, current.members.L)
-            _fill_slot_combo(slot_r, current.members.R)
+            _apply_profile_slots(current.members.L, current.members.R)
         profile_combo.blockSignals(False)
 
     def _persist() -> None:
@@ -190,14 +236,12 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
     def _on_profile_changed() -> None:
         profile_id = profile_combo.currentData()
         if not profile_id:
-            _fill_slot_combo(slot_l, None)
-            _fill_slot_combo(slot_r, None)
+            _apply_profile_slots(None, None)
             return
         current = get_profile(catalog, str(profile_id))
         if current is None:
             return
-        _fill_slot_combo(slot_l, current.members.L)
-        _fill_slot_combo(slot_r, current.members.R)
+        _apply_profile_slots(current.members.L, current.members.R)
 
     def _on_slot_changed() -> None:
         profile_id = profile_combo.currentData()

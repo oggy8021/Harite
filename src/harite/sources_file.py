@@ -6,16 +6,36 @@ from pathlib import Path
 import sys
 from typing import Any
 
+SOURCES_CATALOG_FILENAME = "harite-sources.json"
+LEGACY_SOURCES_CATALOG_FILENAME = "sources.json"
 
-def resolve_default_sources_path() -> Path:
+
+def _harite_config_dir() -> Path:
     if sys.platform.startswith("linux"):
         config_home = Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"))
-        return config_home / "harite" / "sources.json"
+        return config_home / "harite"
     if sys.platform == "win32":
         appdata = os.environ.get("APPDATA")
         roaming = Path(appdata) if appdata else Path.home() / "AppData" / "Roaming"
-        return roaming / "harite" / "sources.json"
-    return Path.home() / "harite" / "sources.json"
+        return roaming / "harite"
+    return Path.home() / "harite"
+
+
+def resolve_default_sources_path() -> Path:
+    return _harite_config_dir() / SOURCES_CATALOG_FILENAME
+
+
+def resolve_sources_path_for_load(path: Path | None = None) -> Path:
+    """Return path for catalog load (new file, or legacy ``sources.json`` beside it)."""
+    target = resolve_default_sources_path() if path is None else Path(path)
+    if target.exists():
+        return target
+    default = resolve_default_sources_path()
+    if path is None or target == default:
+        legacy = target.parent / LEGACY_SOURCES_CATALOG_FILENAME
+        if legacy.exists():
+            return legacy
+    return target
 
 
 def load_sources_json(path: Path) -> dict[str, Any]:
