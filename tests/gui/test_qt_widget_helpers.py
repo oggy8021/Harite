@@ -307,3 +307,62 @@ def test_on_margin_text_sync_does_not_recurse(qapp):
     entry = backend._objects["txtMarginText"]
     assert entry is not None
     backend._on_margin_text_changed(entry)
+
+
+# ---------------------------------------------------------------------------
+# Slideshow registry combos (C-02)
+# ---------------------------------------------------------------------------
+
+
+def _normalize_combo_data(value: object) -> str:
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def _write_catalog_for_refresh(left: Path, right: Path, catalog_path: Path) -> tuple[str, str, str]:
+    from harite.sources import add_profile, add_source, empty_catalog, save_catalog
+
+    catalog = empty_catalog()
+    left_entry = add_source(catalog, name="Left NAS", path=left)
+    right_entry = add_source(catalog, name="Right Cloud", path=right)
+    profile = add_profile(
+        catalog,
+        name="Dual",
+        members={"L": left_entry.id, "R": right_entry.id},
+    )
+    save_catalog(catalog, catalog_path)
+    return left_entry.id, right_entry.id, profile.id
+
+
+def test_refresh_slideshow_registry_combos_clears_profile_after_clear(qapp, backend, tmp_path):
+    from PyQt6.QtWidgets import QComboBox
+
+    from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_registry_combos
+    from harite.gui.views.main_window import MainWindow, REGISTRY_NONE_LABEL
+
+    left_dir = tmp_path / "left"
+    right_dir = tmp_path / "right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    catalog_path = tmp_path / "harite-sources.json"
+    _left_id, right_id, profile_id = _write_catalog_for_refresh(left_dir, right_dir, catalog_path)
+
+    window = MainWindow()
+    window._source_catalog_path = catalog_path
+    window.on_select_slideshow_profile(profile_id)
+
+    profile_combo = QComboBox()
+    source_l = QComboBox()
+    source_r = QComboBox()
+    backend._objects["combo_slideshow_profile"] = profile_combo
+    backend._objects["combo_slideshow_source_l"] = source_l
+    backend._objects["combo_slideshow_source_r"] = source_r
+
+    window.on_clear_slideshow_srcdir("L")
+    refresh_slideshow_registry_combos(backend, window)
+
+    assert window.slideshow_profile_id == ""
+    assert profile_combo.currentText() == REGISTRY_NONE_LABEL
+    assert _normalize_combo_data(source_l.currentData()) == ""
+    assert _normalize_combo_data(source_r.currentData()) == right_id

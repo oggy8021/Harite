@@ -309,11 +309,18 @@ def refresh_slideshow_output_label(backend: Any, output_dir: str | None = None) 
     set_label_text(backend, "lblSlideshowOutput", text)
 
 
+def _normalize_combo_data(value: object) -> str:
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
 def _set_combo_current_data(combo: Any, value: str) -> None:
     if combo is None:
         return
+    target = _normalize_combo_data(value)
     for index in range(combo.count()):
-        if combo.itemData(index) == value:
+        if _normalize_combo_data(combo.itemData(index)) == target:
             combo.setCurrentIndex(index)
             return
     combo.setCurrentIndex(0)
@@ -322,32 +329,38 @@ def _set_combo_current_data(combo: Any, value: str) -> None:
 def refresh_slideshow_registry_combos(backend: Any, owner: Any) -> None:
     from harite.sources import list_profiles, list_sources
 
-    catalog = owner.load_source_catalog()
+    setattr(backend, "_slideshow_registry_combo_refresh", True)
+    try:
+        catalog = owner.load_source_catalog()
 
-    profile_combo = backend._objects.get("combo_slideshow_profile")
-    if profile_combo is not None:
-        profile_combo.blockSignals(True)
-        profile_combo.clear()
-        profile_combo.addItem(REGISTRY_NONE_LABEL, "")
-        for entry in list_profiles(catalog):
-            profile_combo.addItem(entry.name, entry.id)
-        _set_combo_current_data(profile_combo, str(getattr(owner, "slideshow_profile_id", "") or ""))
-        profile_combo.blockSignals(False)
+        profile_combo = backend._objects.get("combo_slideshow_profile")
+        if profile_combo is not None:
+            profile_combo.blockSignals(True)
+            profile_combo.clear()
+            profile_combo.addItem(REGISTRY_NONE_LABEL, "")
+            for entry in list_profiles(catalog):
+                profile_combo.addItem(entry.name, entry.id)
+            profile_id = _normalize_combo_data(getattr(owner, "slideshow_profile_id", ""))
+            _set_combo_current_data(profile_combo, profile_id)
+            profile_combo.blockSignals(False)
 
-    for widget_key, id_attr in (
-        ("combo_slideshow_source_l", "slideshow_source_id_l"),
-        ("combo_slideshow_source_r", "slideshow_source_id_r"),
-    ):
-        combo = backend._objects.get(widget_key)
-        if combo is None:
-            continue
-        combo.blockSignals(True)
-        combo.clear()
-        combo.addItem(REGISTRY_NONE_LABEL, "")
-        for entry in list_sources(catalog):
-            combo.addItem(entry.name, entry.id)
-        _set_combo_current_data(combo, str(getattr(owner, id_attr, "") or ""))
-        combo.blockSignals(False)
+        for widget_key, id_attr in (
+            ("combo_slideshow_source_l", "slideshow_source_id_l"),
+            ("combo_slideshow_source_r", "slideshow_source_id_r"),
+        ):
+            combo = backend._objects.get(widget_key)
+            if combo is None:
+                continue
+            combo.blockSignals(True)
+            combo.clear()
+            combo.addItem(REGISTRY_NONE_LABEL, "")
+            for entry in list_sources(catalog):
+                combo.addItem(entry.name, entry.id)
+            source_id = _normalize_combo_data(getattr(owner, id_attr, ""))
+            _set_combo_current_data(combo, source_id)
+            combo.blockSignals(False)
+    finally:
+        setattr(backend, "_slideshow_registry_combo_refresh", False)
 
 
 def refresh_current_state_labels(backend: Any) -> None:

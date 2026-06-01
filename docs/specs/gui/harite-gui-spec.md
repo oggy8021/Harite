@@ -242,7 +242,7 @@ design 合意: [20260601-c02-slideshow-source-registry-slice.html](../../working
 | Saved combo で `— none —` | path **は変更しない** | 当該 side の source id のみクリア | `— none —` |
 | Srcdir-L/R ブラウズ確定 | 従来どおり path 直書き | 当該 side の source id をクリア | `— none —` |
 | Profile 選択 | L/R 両 path を profile から展開 | `slideshow_profile_id` + 両 source id を記録 | 各 side を対応 source に |
-| Clear-L/R（§4.1 拡張） | 当該 side path を `""` | 当該 side source id をクリア | `— none —` |
+| Clear-L/R（§4.1 拡張） | 当該 side path を `""` | 当該 side source id + **`slideshow_profile_id` をクリア** | 当該 side saved combo → `— none —`。**Profile combo → `— none —`** |
 | Swap L/R（§4.1 拡張） | `slideshow_srcdir_l/r` swap | `slideshow_source_id_l/r` swap。`slideshow_profile_id` は **クリア**（L/R 対応が崩れるため） |
 
 - slideshow **実行**は引き続き `slideshow_srcdir_l/r` の path 文字列のみ参照する（source id は tracking / UI 同期用）。
