@@ -258,6 +258,42 @@ def test_qt_signal_backend_connect_signals_stores_dispatch(qapp):
     assert backend._signal_handlers.get("on_optimize") is dispatch["on_optimize"]
 
 
+def test_qt_connect_signals_syncs_startup_settings_to_widgets(qapp, monkeypatch, tmp_path):
+    from harite.gui.adapters.ui_adapter import RUNTIME_HANDLER_MAP, create_mainwindow_signal_dispatch
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+    from harite.settings_file import save_settings
+
+    target = tmp_path / "harite-settings.json"
+    save_settings(
+        target,
+        {
+            "plugin": "windows",
+            "slideshow_interval_seconds": 33,
+            "slideshow_srcdir_l": "/slideshow/left",
+            "slideshow_srcdir_r": "/slideshow/right",
+            "margins": "12,0,0,0",
+        },
+    )
+    monkeypatch.setattr("harite.gui.views.main_window.resolve_default_settings_path", lambda: target)
+
+    window = MainWindow()
+    assert window.slideshow_interval_seconds == 33
+
+    backend = load_qt_runtime_signal_backend()
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        tuple(RUNTIME_HANDLER_MAP.keys()),
+        handler_map=RUNTIME_HANDLER_MAP,
+        signal_backend=backend,
+    )
+    backend.connect_signals(dispatch)
+
+    assert backend._read_spin_int("spnInterval") == 33
+    assert backend._slideshow_srcdir_l == "/slideshow/left"
+    assert backend._slideshow_srcdir_r == "/slideshow/right"
+    assert backend._read_spin_int("spnLeftMargin") == 12
+
 def test_qt_signal_backend_has_all_handler_stubs(qapp):
     """Verify all RUNTIME_HANDLER_MAP keys can be dispatched (no AttributeError)."""
     from harite.gui.adapters.ui_adapter import RUNTIME_HANDLER_MAP
