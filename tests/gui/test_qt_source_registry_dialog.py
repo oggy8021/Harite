@@ -60,17 +60,18 @@ def test_select_combo_by_data_finds_new_profile(qapp):
     assert _normalize_id(combo.currentData()) == "profile-2"
 
 
-def test_profile_slot_persist_does_not_touch_other_profile(qapp, tmp_path: Path):
-    """Regression: editing profile 2 must not overwrite profile 1 members."""
+def test_add_profile_uses_slot_values_without_overwriting_first(qapp, tmp_path: Path):
+    """Regression: set L/R, type new name, Add profile — first profile unchanged."""
     from PyQt6.QtWidgets import QComboBox
 
     from harite.gui.adapters_qt.qt_source_registry_dialog import (
         _normalize_id,
         _select_combo_by_data,
         apply_profile_slot_combos,
+        read_slot_members,
         source_slot_items,
     )
-    from harite.sources import add_profile, add_source, empty_catalog, get_profile, save_catalog, update_profile
+    from harite.sources import add_profile, add_source, empty_catalog, get_profile, save_catalog
 
     left = tmp_path / "left"
     right = tmp_path / "right"
@@ -84,43 +85,22 @@ def test_profile_slot_persist_does_not_touch_other_profile(qapp, tmp_path: Path)
     source_b = add_source(catalog, name="B", path=right)
     source_c = add_source(catalog, name="C", path=third)
     first = add_profile(catalog, name="First", members={"L": source_a.id, "R": None})
-    second = add_profile(catalog, name="Second", members={"L": None, "R": None})
 
     profile_combo = QComboBox()
     slot_l = QComboBox()
     slot_r = QComboBox()
-    for entry in (first, second):
-        profile_combo.addItem(entry.name, entry.id)
+    profile_combo.addItem(first.name, first.id)
 
     items = source_slot_items(catalog)
-    editor_state = {"profile_slots_loading": False}
+    loading = {"profile_slots_loading": False}
 
-    def _on_slot_changed() -> None:
-        if editor_state.get("profile_slots_loading"):
-            return
-        profile_id = _normalize_id(profile_combo.currentData())
-        if not profile_id:
-            return
-        update_profile(
-            catalog,
-            profile_id,
-            members={
-                "L": _normalize_id(slot_l.currentData()),
-                "R": _normalize_id(slot_r.currentData()),
-            },
-        )
-
-    slot_l.currentIndexChanged.connect(_on_slot_changed)
-    slot_r.currentIndexChanged.connect(_on_slot_changed)
-
-    assert _select_combo_by_data(profile_combo, second.id) is True
     apply_profile_slot_combos(
         slot_l,
         slot_r,
-        member_l=None,
-        member_r=None,
+        member_l=first.members.L,
+        member_r=first.members.R,
         items=items,
-        loading_state=editor_state,
+        loading_state=loading,
     )
 
     for combo, source_id in ((slot_l, source_b.id), (slot_r, source_c.id)):
@@ -128,6 +108,12 @@ def test_profile_slot_persist_does_not_touch_other_profile(qapp, tmp_path: Path)
             if _normalize_id(combo.itemData(index)) == source_id:
                 combo.setCurrentIndex(index)
                 break
+
+    second = add_profile(catalog, name="Second", members=read_slot_members(slot_l, slot_r))
+    save_catalog(catalog, tmp_path / "harite-sources.json")
+
+    profile_combo.addItem(second.name, second.id)
+    assert _select_combo_by_data(profile_combo, second.id) is True
 
     first_profile = get_profile(catalog, first.id)
     second_profile = get_profile(catalog, second.id)
@@ -137,4 +123,44 @@ def test_profile_slot_persist_does_not_touch_other_profile(qapp, tmp_path: Path)
     assert second_profile.members.L == source_b.id
     assert second_profile.members.R == source_c.id
 
-    save_catalog(catalog, tmp_path / "harite-sources.json")
+
+def test_profile_switch_flushes_previous_members(qapp, tmp_path: Path):
+    from PyQt6.QtWidgets import QComboBox
+
+    from harite.gui.adapters_qt.qt_source_registry_dialog import (
+        _normalize_id,
+        apply_profile_slot_combos,
+        read_slot_members,
+        source_slot_items,
+    )
+    from harite.sources import add_profile, add_source, empty_catalog, get_profile, update_profile
+
+    left = tmp_path / "left"
+    right = tmp_path / "right"
+    left.mkdir()
+    right.mkdir()
+
+    catalog = empty_catalog()
+    source_a = add_source(catalog, name="A", path=left)
+    source_b = add_source(catalog, name="B", path=right)
+    first = add_profile(catalog, name="First", members={"L": source_a.id, "R": None})
+    second = add_profile(catalog, name="Second", members={"L": None, "R": None})
+
+    slot_l = QComboBox()
+    slot_r = QComboBox()
+    items = source_slot_items(catalog)
+    loading = {"profile_slots_loading": False}
+
+    apply_profile_slot_combos(slot_l, slot_r, member_l=source_a.id, member_r=None, items=items, loading_state=loading)
+    for index in range(slot_r.count()):
+        if _normalize_id(slot_r.itemData(index)) == source_b.id:
+            slot_r.setCurrentIndex(index)
+            break
+
+    update_profile(catalog, first.id, members=read_slot_members(slot_l, slot_r))
+
+    first_profile = get_profile(catalog, first.id)
+    second_profile = get_profile(catalog, second.id)
+    assert first_profile is not None and second_profile is not None
+    assert first_profile.members.R == source_b.id
+    assert second_profile.members.L is None

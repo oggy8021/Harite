@@ -70,6 +70,13 @@ def fill_source_slot_combo(
         combo.blockSignals(False)
 
 
+def read_slot_members(slot_l: Any, slot_r: Any) -> dict[str, str | None]:
+    return {
+        "L": _normalize_id(slot_l.currentData()),
+        "R": _normalize_id(slot_r.currentData()),
+    }
+
+
 def apply_profile_slot_combos(
     slot_l: Any,
     slot_r: Any,
@@ -169,11 +176,20 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
     layout.addWidget(profile_actions)
 
     buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-    buttons.rejected.connect(dialog.reject)
     layout.addWidget(buttons)
 
     pending_path: dict[str, Path | None] = {"value": None}
     editor_state: dict[str, bool] = {"profile_slots_loading": False}
+    active_profile_id: dict[str, str | None] = {"value": None}
+
+    def _read_slot_members() -> dict[str, str | None]:
+        return read_slot_members(slot_l, slot_r)
+
+    def _flush_profile_slots(profile_id: str | None) -> None:
+        if not profile_id:
+            return
+        update_profile(catalog, profile_id, members=_read_slot_members())
+        _persist()
 
     def _refresh_source_list() -> None:
         source_list.clear()
@@ -220,6 +236,7 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
         if current is not None:
             _apply_profile_slots(current.members.L, current.members.R)
         profile_combo.blockSignals(False)
+        active_profile_id["value"] = _normalize_id(profile_combo.currentData())
 
     def _persist() -> None:
         nonlocal changed
@@ -264,34 +281,29 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
             QMessageBox.warning(dialog, "Delete source", str(exc))
 
     def _on_profile_changed() -> None:
-        profile_id = _normalize_id(profile_combo.currentData())
-        if not profile_id:
+        if editor_state.get("profile_slots_loading"):
+            return
+
+        new_id = _normalize_id(profile_combo.currentData())
+        previous_id = active_profile_id["value"]
+        if previous_id and previous_id != new_id:
+            try:
+                _flush_profile_slots(previous_id)
+            except ValueError as exc:
+                QMessageBox.warning(dialog, "Update profile", str(exc))
+                profile_combo.blockSignals(True)
+                _select_combo_by_data(profile_combo, previous_id)
+                profile_combo.blockSignals(False)
+                return
+
+        active_profile_id["value"] = new_id
+        if not new_id:
             _apply_profile_slots(None, None)
             return
-        current = get_profile(catalog, profile_id)
+        current = get_profile(catalog, new_id)
         if current is None:
             return
         _apply_profile_slots(current.members.L, current.members.R)
-
-    def _on_slot_changed() -> None:
-        if editor_state.get("profile_slots_loading"):
-            return
-        profile_id = _normalize_id(profile_combo.currentData())
-        if not profile_id:
-            return
-        try:
-            update_profile(
-                catalog,
-                profile_id,
-                members={
-                    "L": _normalize_id(slot_l.currentData()),
-                    "R": _normalize_id(slot_r.currentData()),
-                },
-            )
-            _persist()
-        except ValueError as exc:
-            QMessageBox.warning(dialog, "Update profile", str(exc))
-            _refresh_profile_combo(profile_id)
 
     def _on_add_profile() -> None:
         name = new_profile_name.text().strip()
@@ -299,8 +311,9 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
             QMessageBox.warning(dialog, "Add profile", "Profile name is required.")
             return
         try:
-            entry = add_profile(catalog, name=name, members={"L": None, "R": None})
+            entry = add_profile(catalog, name=name, members=_read_slot_members())
             _persist()
+            active_profile_id["value"] = entry.id
             _refresh_profile_combo(entry.id)
             new_profile_name.clear()
         except ValueError as exc:
@@ -321,13 +334,21 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
     add_btn.clicked.connect(_on_add_source)
     delete_btn.clicked.connect(_on_delete_source)
     profile_combo.currentIndexChanged.connect(_on_profile_changed)
-    slot_l.currentIndexChanged.connect(_on_slot_changed)
-    slot_r.currentIndexChanged.connect(_on_slot_changed)
     add_profile_btn.clicked.connect(_on_add_profile)
     delete_profile_btn.clicked.connect(_on_delete_profile)
 
     _refresh_source_list()
     _refresh_profile_combo()
+
+    def _close_dialog() -> None:
+        if not editor_state.get("profile_slots_loading"):
+            try:
+                _flush_profile_slots(active_profile_id["value"])
+            except ValueError:
+                pass
+        dialog.reject()
+
+    buttons.rejected.connect(_close_dialog)
 
     dialog.exec()
     return changed
