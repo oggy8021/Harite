@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-01（P-01/P-02 完了・#353/#358 closed）
+最終更新: 2026-06-01（第4波 C-02 planning 着手）
 
 ## 位置づけ
 
@@ -44,7 +44,7 @@
 
 | ID | 項目 | 概要 | planning で最初に詰めること |
 | --- | --- | --- | --- |
-| C-02 | source registry / source profiles | watch directory や外部 source を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | source モデル、GUI/CLI surface、設定保存形式 |
+| C-02 | source registry / source profiles | watch directory や外部 source を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | **第4波 planning 中** — [20260601-1400-c02-source-registry-planning.md](20260601-1400-c02-source-registry-planning.md) |
 | C-05 | slideshow source 強化 | slideshow の source を単発 directory から、複数 source・source profile・将来の外部 source へ広げる。初期スコープは local directory、同期済み cloud folder、ローカル mount 済み NAS/SMB/WebDAV directory までとし、それ以上の直接連携は将来余裕がある場合に限る。 | source 正規化、順序規則、GUI owner state との整合 |
 | C-01 | 外部壁紙サイト連携 | 外部サイトや API から壁紙候補を取得し、Harite の source として扱えるようにする。C-05 の local/mounted source 扱いを一種の先行試行とみなせる。オーナー発案の本丸 feature。 | 対象サイト、取得方法、利用規約、キャッシュ方針 |
 
@@ -156,11 +156,9 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 ## 近中期の優先順序（2026-06-01 確定）
 
 ```
-[完了] Qt 移行 + W-01〜W-03 + F-01 #354 + P-01 #353 + P-02 #358
+[完了] Qt 移行 + W-01〜W-03 + F-01 + P-01/P-02 + #353/#358 closed
          ↓
-[第3波] issue 整理（#353/#358 closed 移動 — 進行中）
-         ↓
-[第4波・大 feature] C-02  source registry
+[第4波] C-02  source registry     ← planning: [20260601-1400-c02-source-registry-planning.md](20260601-1400-c02-source-registry-planning.md)
          ↓
         C-05  slideshow source 強化
          ↓
@@ -201,7 +199,7 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 次段では Qt 移行計画を進め、完了後に C-02/C-05/C-01 の順で個別 planning 文書へ分離する。
 - 2026-05-31: Windows 実機検証由来の W-01〜W-03 を [finished/20260531-1200-windows-qt-validation-backlog.md](finished/20260531-1200-windows-qt-validation-backlog.md) に集約。
 - 2026-06-01: online-issues #353–359 を inventory 化。F-01 / P-01–02 を近端着手候補、P-03 を構想保持へ。C-02→C-05→C-01 は維持。
-- 2026-06-01: F-01 **完了** — #354 closed、Windows 実機 save/load 確認（#365–367）。
+- 2026-06-01: 第4波 **C-02 planning 着手** — [20260601-1400-c02-source-registry-planning.md](20260601-1400-c02-source-registry-planning.md)
 
 ## 完了条件
 
