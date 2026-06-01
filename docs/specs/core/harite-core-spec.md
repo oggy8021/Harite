@@ -1,6 +1,6 @@
 # Harite コア仕様 (Core Spec)
 
-最終更新: 2026-06-01 (F-01 Windows settings path — AppData Roaming)
+最終更新: 2026-06-01 (C-02 source-spec 参照 — settings tracking key)
 
 ## 1. コア (core) の責務
 
@@ -36,6 +36,7 @@ core が直接の主責務としないもの:
 - apply 設定面は、`plugin`, `apply_mode` など呼び出し側が保持する適用条件で構成される。
 - apply target 面は、core が解決した単一画像 path または monitor map で構成され、plugin 名そのものは含めない。
 - スライドショー面は、入力 directory 1 件または最大 2 件、interval、mode、サイクル state で構成される。
+- **source registry**（名前付き directory catalog / L-R profile）は [source-spec §3](../source/harite-source-spec.md) が正本。実行時は展開済み path を slideshow 面へ渡す。
 - 設定面は、optimize / apply / slideshow の論理グループを 1 つの設定ファイルへ統合して保存する。
 
 mode 値の扱い:
@@ -285,6 +286,7 @@ Windows の補足:
 - optimize 面: `resolution`, `two_screen`, `l_display`, `r_display`, `margins`, `align`, `valign`, `scaling`, `quality`, `background_color`, `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`
 - apply 面: `plugin`, `apply_mode`
 - スライドショー面: `slideshow_interval_seconds`, `slideshow_mode`, `slideshow_srcdir_l`, `slideshow_srcdir_r`
+- スライドショー registry 追跡（任意）: `slideshow_source_id_l`, `slideshow_source_id_r`, `slideshow_profile_id` — [source-spec §6.4](../source/harite-source-spec.md)
 
 主要 key の意味:
 
@@ -350,3 +352,4 @@ flowchart TD
 - command surface の詳細は [docs/specs/cli/harite-cli-spec.md](docs/specs/cli/harite-cli-spec.md)
 - GUI の状態遷移と画面責務は [docs/specs/gui/harite-gui-spec.md](docs/specs/gui/harite-gui-spec.md)
 - slideshow 実行面は [docs/specs/slideshow/harite-slideshow-spec.md](docs/specs/slideshow/harite-slideshow-spec.md)
+- source registry は [docs/specs/source/harite-source-spec.md](docs/specs/source/harite-source-spec.md)

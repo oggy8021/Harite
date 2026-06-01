@@ -1,11 +1,11 @@
 # C-02 — source registry / source profiles  planning
 
-最終更新: 2026-06-01（上限値確定・planning マージ待ち）
+最終更新: 2026-06-01（段 0 完了 → 段 1 spec 昇格済み）
 
 ## 位置づけ
 
 - 親 inventory: [20260518-2047-feature-overview.md](20260518-2047-feature-overview.md) §C-02
-- 第4波（大 feature）の **planning 入口**。本書は spec 正本の前段（`.cursorrules` §6 — working → specs 昇格）。
+- 第4波（大 feature）の **planning 入口**（段 0 完了）。spec 正本: [harite-source-spec.md](../specs/source/harite-source-spec.md)。
 - 後続: **C-05**（slideshow source 強化）→ **C-01**（外部壁紙サイト）の前提づくり。
 
 ## 用語（2026-06-01 オーナー確認）
@@ -188,15 +188,15 @@ C-05 は **段 3 完了後**に別 planning を切る（source type 拡張・sli
 
 | 層 | 現状 | C-02 完了時の期待 |
 | --- | --- | --- |
-| **spec** | source registry 記述なし（plugin registry のみ） | モデル（L/R profile, UUID）・`sources.json`・resolve・Slideshow GUI 最小 |
+| **spec** | ~~source registry 記述なし~~ | [harite-source-spec.md](../specs/source/harite-source-spec.md)（段 1 完了） |
 | **tests** | なし | CRUD + resolve + settings 共存 |
 | **impl** | なし | core モジュール +（段4で）Qt picker |
 
 ## 次アクション
 
-1. 本 PR をレビュー → **マージ許可**
-2. **spec PR**（段 1）を起票 — core-spec または `source-spec` 分冊。本 planning の決定表を正本へ昇格
-3. spec マージ後: tests → impl → GUI design slice（第2波同型）
+1. ~~planning マージ~~（#373 済）
+2. ~~**spec PR**（段 1）~~ → [harite-source-spec.md](../specs/source/harite-source-spec.md)
+3. spec マージ後: **tests PR**（段 2）→ impl（段 3）→ GUI design slice（段 4）
 
 ## 参照
 
