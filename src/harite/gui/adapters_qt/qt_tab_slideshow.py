@@ -22,55 +22,95 @@ from harite.gui.resource_access import set_qt_button_icon as _set_button_icon
 
 
 def _build_srcdir_row() -> dict[str, Any]:
-    """Two source-directory selector blocks (L / R) spread across the row."""
+    """Three-column srcdir row (L panel / center Swap / R panel), Main tab parity."""
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (
+        QGridLayout,
         QHBoxLayout,
         QLabel,
         QPushButton,
+        QSizePolicy,
         QVBoxLayout,
         QWidget,
     )
 
     row = QWidget()
-    row_layout = QHBoxLayout(row)
-    row_layout.setContentsMargins(0, 0, 0, 0)
-    row_layout.setSpacing(0)
+    grid = QGridLayout(row)
+    grid.setColumnStretch(0, 1)
+    grid.setColumnStretch(1, 0)
+    grid.setColumnStretch(2, 1)
+    grid.setSpacing(24)
+    grid.setContentsMargins(0, 0, 0, 0)
 
-    def _make_block(side: str) -> dict[str, Any]:
-        block = QWidget()
-        layout = QVBoxLayout(block)
+    def _build_side_panel(side_key: str, side_label: str) -> dict[str, Any]:
+        panel = QWidget()
+        panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
-        layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout.setSpacing(8)
 
-        btn = QPushButton(f"Srcdir-{side}")
+        btn_row = QWidget()
+        btn_row_layout = QHBoxLayout(btn_row)
+        btn_row_layout.setContentsMargins(0, 0, 0, 0)
+        btn_row_layout.addStretch()
+
+        btn = QPushButton(f"Srcdir-{side_label}")
         _set_button_icon(btn, "icons", "lucide", "folder-open.svg")
+        btn_row_layout.addWidget(btn)
+        btn_row_layout.addStretch()
 
-        lbl = QLabel(f"{side}: -")
-        lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        lbl = QLabel(f"{side_label}: -")
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        layout.addWidget(btn)
+        btn_clr = QPushButton(f"Clear-{side_label}")
+        _set_button_icon(btn_clr, "icons", "lucide", "folder-x.svg")
+
+        clear_row = QWidget()
+        clear_row_layout = QHBoxLayout(clear_row)
+        clear_row_layout.setContentsMargins(0, 0, 0, 0)
+        clear_row_layout.addStretch()
+        clear_row_layout.addWidget(btn_clr)
+
+        layout.addWidget(btn_row)
         layout.addWidget(lbl)
-        return {"block": block, "btn": btn, "lbl": lbl}
+        layout.addWidget(clear_row)
 
-    left = _make_block("L")
-    right = _make_block("R")
+        return {
+            f"panel_{side_key}_srcdir": panel,
+            f"btn_open_srcdir_{side_key}": btn,
+            f"slideshow_source_label_{side_key}": lbl,
+            f"btn_clr_srcdir_{side_key}": btn_clr,
+        }
 
-    row_layout.addStretch()
-    row_layout.addWidget(left["block"])
-    row_layout.addStretch()
-    row_layout.addWidget(right["block"])
-    row_layout.addStretch()
+    left = _build_side_panel("l", "L")
+    right = _build_side_panel("r", "R")
+
+    center_panel = QWidget()
+    center_panel.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred)
+    center_layout = QVBoxLayout(center_panel)
+    center_layout.setContentsMargins(0, 0, 0, 0)
+    center_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+    btn_swap = QPushButton("")
+    btn_swap.setToolTip("Swap L/R")
+    _set_button_icon(btn_swap, "icons", "lucide", "arrow-left-right.svg")
+    center_layout.addWidget(btn_swap, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+    grid.addWidget(left["panel_l_srcdir"], 0, 0)
+    grid.addWidget(center_panel, 0, 1)
+    grid.addWidget(right["panel_r_srcdir"], 0, 2)
 
     return {
         "srcdir_row": row,
-        "left_source_block": left["block"],
-        "right_source_block": right["block"],
-        "btn_open_srcdir_l": left["btn"],
-        "btn_open_srcdir_r": right["btn"],
-        "slideshow_source_label_l": left["lbl"],
-        "slideshow_source_label_r": right["lbl"],
+        "left_source_block": left["panel_l_srcdir"],
+        "right_source_block": right["panel_r_srcdir"],
+        "btn_open_srcdir_l": left["btn_open_srcdir_l"],
+        "btn_open_srcdir_r": right["btn_open_srcdir_r"],
+        "slideshow_source_label_l": left["slideshow_source_label_l"],
+        "slideshow_source_label_r": right["slideshow_source_label_r"],
+        "btn_clr_srcdir_l": left["btn_clr_srcdir_l"],
+        "btn_clr_srcdir_r": right["btn_clr_srcdir_r"],
+        "btn_swap_slideshow_srcdirs": btn_swap,
     }
 
 

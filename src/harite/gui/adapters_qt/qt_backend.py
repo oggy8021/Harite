@@ -595,6 +595,52 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         except Exception as exc:
             self._set_feedback(phase="Input", state="error", error=str(exc))
 
+    def _on_swap_input_paths_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_swap_input_paths")
+        if callback is None:
+            self._set_feedback(phase="Input", state="planned")
+            return
+        try:
+            callback()
+            owner = self._get_handler_owner("on_swap_input_paths")
+            if owner is not None:
+                self._sync_input_state_from_owner(owner)
+                self._sync_action_availability_from_owner(owner)
+                self._sync_feedback_from_owner(owner)
+        except Exception as exc:
+            self._set_feedback(phase="Input", state="error", error=str(exc))
+
+    def _on_swap_slideshow_srcdirs_clicked(self, *_args: Any) -> None:
+        callback = self._signal_handlers.get("on_swap_slideshow_srcdirs")
+        if callback is None:
+            self._set_feedback(phase="Slideshow", state="planned")
+            return
+        try:
+            callback()
+            owner = self._get_handler_owner("on_swap_slideshow_srcdirs")
+            if owner is not None:
+                self._sync_slideshow_state_with_feedback_from_owner(owner)
+        except Exception as exc:
+            self._set_feedback(phase="Slideshow", state="error", error=str(exc))
+
+    def _on_clear_slideshow_srcdir_clicked(self, side: str) -> None:
+        callback = self._signal_handlers.get("on_clear_slideshow_srcdir")
+        if callback is None:
+            self._set_feedback(phase="Slideshow", state="planned")
+            return
+        try:
+            ok = callback(side)
+            owner = self._get_handler_owner("on_clear_slideshow_srcdir")
+            if owner is not None:
+                self._sync_slideshow_state_with_feedback_from_owner(owner)
+                return
+            if ok is False:
+                self._set_feedback(phase="Slideshow", state="clear-rejected")
+            else:
+                self._set_feedback(phase="Slideshow", state="cleared")
+        except Exception as exc:
+            self._set_feedback(phase="Slideshow", state="error", error=str(exc))
+
     # ------------------------------------------------------------------
     # Event handlers: optimize / apply / save
     # ------------------------------------------------------------------

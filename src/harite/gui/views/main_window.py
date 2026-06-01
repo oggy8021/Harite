@@ -1006,6 +1006,38 @@ class MainWindow:
         self._log(f"Input cleared ({normalized_side})")
         return True
 
+    def on_swap_input_paths(self) -> bool:
+        self.input_path_l, self.input_path_r = self.input_path_r, self.input_path_l
+        self._apply_input_paths()
+        self._log("Input paths swapped (L/R)")
+        return True
+
+    def on_swap_slideshow_srcdirs(self) -> bool:
+        self.slideshow_srcdir_l, self.slideshow_srcdir_r = (
+            self.slideshow_srcdir_r,
+            self.slideshow_srcdir_l,
+        )
+        self._update_slideshow_source_display()
+        self._refresh_action_availability()
+        self._log("Slideshow srcdirs swapped (L/R)")
+        return True
+
+    def on_clear_slideshow_srcdir(self, side: str) -> bool:
+        normalized_side = side.strip().upper()
+        if normalized_side == "L":
+            self.slideshow_srcdir_l = ""
+        elif normalized_side == "R":
+            self.slideshow_srcdir_r = ""
+        else:
+            self.last_error = "slideshow srcdir clear side is required"
+            self._log("Slideshow srcdir clear ignored: missing side")
+            return False
+
+        self._update_slideshow_source_display()
+        self._refresh_action_availability()
+        self._log(f"Slideshow srcdir cleared ({normalized_side})")
+        return True
+
     def on_about(self) -> bool:
         self.about_dialog_open = True
         self._set_status("idle", "about", "about dialog opened")

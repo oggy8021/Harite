@@ -91,31 +91,25 @@ def _build_display_direction_grid(side: str) -> dict[str, Any]:
     }
 
 
-def _build_display_panel(side: str) -> dict[str, Any]:
-    """Build one full display panel (direction grid + path display + clear button)."""
+def _build_display_path_section(side: str) -> dict[str, Any]:
+    """Build path display + clear row for one display panel (below direction grid)."""
+    from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (
         QHBoxLayout,
-        QLabel,
         QLineEdit,
         QPushButton,
-        QSizePolicy,
         QVBoxLayout,
         QWidget,
     )
 
-    panel = QWidget()
-    panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-    layout = QVBoxLayout(panel)
+    path_panel = QWidget()
+    layout = QVBoxLayout(path_panel)
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setSpacing(8)
 
-    grid_widgets = _build_display_direction_grid(side)
-    layout.addWidget(grid_widgets[f"display_grid_{side}"])
-
-    # Path display (read-only QLineEdit)
     input_display = QLineEdit()
     input_display.setReadOnly(True)
-    input_display.setAlignment(__import__("PyQt6.QtCore", fromlist=["Qt"]).Qt.AlignmentFlag.AlignCenter)
+    input_display.setAlignment(Qt.AlignmentFlag.AlignCenter)
     input_display.setPlaceholderText(f"{'Left' if side == 'l' else 'Right'} image path")
 
     path_row = QWidget()
@@ -123,7 +117,6 @@ def _build_display_panel(side: str) -> dict[str, Any]:
     path_row_layout.setContentsMargins(0, 0, 0, 0)
     path_row_layout.addWidget(input_display)
 
-    # Clear button
     btn_clr = QPushButton(f"Clear-{side.upper()}")
     _set_button_icon(btn_clr, "icons", "lucide", "folder-x.svg")
 
@@ -139,9 +132,61 @@ def _build_display_panel(side: str) -> dict[str, Any]:
     return {
         f"input_display_{side}": input_display,
         f"btn_clr_path_{side}": btn_clr,
+        f"path_panel_{side}": path_panel,
+    }
+
+
+def _build_display_panel(side: str) -> dict[str, Any]:
+    """Build one full display panel (direction grid + path display + clear button)."""
+    from PyQt6.QtWidgets import QVBoxLayout, QWidget
+
+    grid_widgets = _build_display_direction_grid(side)
+    path_widgets = _build_display_path_section(side)
+
+    panel = QWidget()
+    layout = QVBoxLayout(panel)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setSpacing(8)
+    layout.addWidget(grid_widgets[f"display_grid_{side}"])
+    layout.addWidget(path_widgets[f"path_panel_{side}"])
+
+    return {
+        f"input_display_{side}": path_widgets[f"input_display_{side}"],
+        f"btn_clr_path_{side}": path_widgets[f"btn_clr_path_{side}"],
         f"panel_{side}": panel,
         **grid_widgets,
+        **path_widgets,
     }
+
+
+def _build_compose_center_column(
+    pick_state_label: Any,
+    btn_swap: Any,
+    *,
+    top_row_height: int,
+    middle_row_height: int,
+    bottom_row_height: int,
+) -> QWidget:
+    """Center column: pick state (top row) + swap on direction-grid middle row."""
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QGridLayout, QWidget
+
+    center = QWidget()
+    layout = QGridLayout(center)
+    layout.setSpacing(6)
+    layout.setContentsMargins(0, 0, 0, 0)
+
+    pick_state_label.setMinimumHeight(top_row_height)
+    pick_state_label.setMaximumHeight(top_row_height)
+    btn_swap.setFixedHeight(middle_row_height)
+
+    bottom_band = QWidget()
+    bottom_band.setFixedHeight(bottom_row_height)
+
+    layout.addWidget(pick_state_label, 0, 0, alignment=Qt.AlignmentFlag.AlignHCenter)
+    layout.addWidget(btn_swap, 1, 0, alignment=Qt.AlignmentFlag.AlignHCenter)
+    layout.addWidget(bottom_band, 2, 0)
+    return center
 
 
 def build_compose_grid_section() -> dict[str, Any]:
@@ -150,7 +195,8 @@ def build_compose_grid_section() -> dict[str, Any]:
     from PyQt6.QtWidgets import (
         QGridLayout,
         QLabel,
-        QSizePolicy,
+        QPushButton,
+        QVBoxLayout,
         QWidget,
     )
 
@@ -162,28 +208,58 @@ def build_compose_grid_section() -> dict[str, Any]:
     grid.setSpacing(24)
     grid.setContentsMargins(0, 0, 0, 0)
 
-    left_widgets = _build_display_panel("l")
-    right_widgets = _build_display_panel("r")
+    left_grid = _build_display_direction_grid("l")
+    right_grid = _build_display_direction_grid("r")
+    left_path = _build_display_path_section("l")
+    right_path = _build_display_path_section("r")
 
-    center_panel = QWidget()
-    center_panel.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred)
-    from PyQt6.QtWidgets import QVBoxLayout
-    center_layout = QVBoxLayout(center_panel)
-    center_layout.setContentsMargins(0, 0, 0, 0)
     pick_state_label = QLabel("")
     pick_state_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    center_layout.addWidget(pick_state_label)
 
-    grid.addWidget(left_widgets["panel_l"], 0, 0)
-    grid.addWidget(center_panel, 0, 1)
-    grid.addWidget(right_widgets["panel_r"], 0, 2)
+    btn_swap = QPushButton("")
+    btn_swap.setToolTip("Swap L/R")
+    _set_button_icon(btn_swap, "icons", "lucide", "arrow-left-right.svg")
+
+    top_row_height = left_grid["tgl_upper_l"].sizeHint().height()
+    middle_row_height = left_grid["btn_get_img_l"].sizeHint().height()
+    bottom_row_height = left_grid["tgl_lower_l"].sizeHint().height()
+
+    center_swap = _build_compose_center_column(
+        pick_state_label,
+        btn_swap,
+        top_row_height=top_row_height,
+        middle_row_height=middle_row_height,
+        bottom_row_height=bottom_row_height,
+    )
+
+    left_column = QWidget()
+    left_column_layout = QVBoxLayout(left_column)
+    left_column_layout.setContentsMargins(0, 0, 0, 0)
+    left_column_layout.setSpacing(8)
+    left_column_layout.addWidget(left_grid["display_grid_l"])
+    left_column_layout.addWidget(left_path["path_panel_l"])
+
+    right_column = QWidget()
+    right_column_layout = QVBoxLayout(right_column)
+    right_column_layout.setContentsMargins(0, 0, 0, 0)
+    right_column_layout.setSpacing(8)
+    right_column_layout.addWidget(right_grid["display_grid_r"])
+    right_column_layout.addWidget(right_path["path_panel_r"])
+
+    grid.addWidget(left_column, 0, 0, alignment=Qt.AlignmentFlag.AlignTop)
+    grid.addWidget(center_swap, 0, 1, alignment=Qt.AlignmentFlag.AlignTop)
+    grid.addWidget(right_column, 0, 2, alignment=Qt.AlignmentFlag.AlignTop)
+
+    left_widgets = {**left_grid, **left_path, "panel_l": left_column}
+    right_widgets = {**right_grid, **right_path, "panel_r": right_column}
 
     return {
         "compose_grid": compose_grid_widget,
-        "left_panel": left_widgets["panel_l"],
-        "center_panel": center_panel,
-        "right_panel": right_widgets["panel_r"],
+        "left_panel": left_column,
+        "center_panel": center_swap,
+        "right_panel": right_column,
         "pick_state_label": pick_state_label,
+        "btn_swap_input_paths": btn_swap,
         **{k: v for k, v in left_widgets.items() if k != "panel_l"},
         **{k: v for k, v in right_widgets.items() if k != "panel_r"},
     }
