@@ -210,7 +210,7 @@ catalog 本体は `sources.json` のみ。settings には次の **任意 key** �
 | --- | --- | --- |
 | **core API** | §7 全文 | impl 段 |
 | **CLI** | 変更なし | — |
-| **GUI** | Slideshow から registry 選択する **導線あり**（widget 詳細は gui-spec + design slice、段 4） | [gui-spec §6](../gui/harite-gui-spec.md) |
+| **GUI** | Slideshow から registry 選択する **導線あり**（widget 詳細は [gui-spec §4.2 / §6.3](../gui/harite-gui-spec.md)、design #376） | [gui-spec](../gui/harite-gui-spec.md) 段4 impl 待ち |
 
 ## 10. 他分冊との境界
 
