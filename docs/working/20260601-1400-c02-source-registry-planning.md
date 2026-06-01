@@ -1,6 +1,6 @@
 # C-02 — source registry / source profiles  planning
 
-最終更新: 2026-06-01（open questions 全決定・ordered list 非採用）
+最終更新: 2026-06-01（上限値確定・planning マージ待ち）
 
 ## 位置づけ
 
@@ -146,6 +146,19 @@ slideshow-spec に **registry エントリ削除**の直接先例はない。参
 | **実行時**（参照 path が消失・ inaccessible） | slideshow **中断** — start 前なら start failure、実行中なら stop / failure（既存 directory 検証と同型） |
 | **source ID** | **UUID** — ユーザー非表示。rename は `name` フィールドのみ |
 
+### 6. 上限・検証（確定）
+
+**オーナー決定（2026-06-01）:** 安全側の初期上限。超過時は **追加を拒否**（`ValueError` 等、spec で具体化）。
+
+| 対象 | 上限 |
+| --- | --- |
+| **source 数**（catalog 全体） | **64** |
+| **profile 数**（catalog 全体） | **32** |
+| **name**（source / profile 共通） | **64 文字** |
+| **notes**（source のみ・任意） | **512 文字** |
+
+path 長・存在確認は OS / 既存 slideshow 検証に従う。同名 source / profile の許容は **spec 段階**（未決なら拒否寄りで定義）。
+
 ## 提案フェーズ分割（第4波内）
 
 | 段 | 内容 | 正本 | 停止点 |
@@ -169,6 +182,7 @@ C-05 は **段 3 完了後**に別 planning を切る（source type 拡張・sli
 | **4** | CLI | **打ち止め** — 現行 4 command 維持 |
 | **5** | ID 規則 | **UUID**（ユーザー非表示） |
 | **6** | 削除ポリシー | slideshow に直接先例なし → **アクセス不能時点で中断**。参照中 source の delete は **拒否** |
+| **7** | 上限 | source **64** / profile **32** / name **64 文字** / notes **512 文字** — 超過は追加拒否 |
 
 ## 3 層比較（planning 時点 — 未実装）
 
