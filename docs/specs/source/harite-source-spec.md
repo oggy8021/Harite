@@ -24,7 +24,7 @@ planning 正本: [20260601-1400-c02-source-registry-planning.md](../../working/2
 | --- | --- |
 | **source** | 1 件の local directory を指す catalog エントリ（`id`, `name`, `kind`, `path`） |
 | **source profile** | L/R 2 スロットに source id を割り当てた名前付きプリセット |
-| **catalog** | `harite-sources.json` に保存される source 列 + profile 列の全体（旧名 `sources.json` は load 時のみ fallback） |
+| **catalog** | `harite-sources.json` に保存される source 列 + profile 列の全体 |
 | **resolve** | source id または profile id から **実行用 directory path** を得る操作 |
 
 ## 3. データモデル
@@ -110,8 +110,6 @@ profile は **L/R 固定 2 スロットのみ**を持つ。list 型 `members` �
 | Linux（未設定） | `~/.config/harite/harite-sources.json` |
 | Windows | `%APPDATA%\harite\harite-sources.json` |
 
-- 旧ファイル名 **`sources.json`** が同ディレクトリにのみ存在する場合、load は fallback して読む。save は常に **`harite-sources.json`** へ書く。
-
 - 初回 save 時に親ディレクトリを作成する（`mkdir(parents=True)`）。
 - ファイル不存在時の load は **空 catalog**（`schema_version: 1`, `sources: []`, `profiles: []`）として扱ってよい。
 
@@ -129,8 +127,6 @@ profile は **L/R 固定 2 スロットのみ**を持つ。list 型 `members` �
 | --- | --- |
 | **`harite-sources.json`** | source / profile catalog（本書） |
 | **`harite-settings.json`** | 実行 state。従来どおり `slideshow_srcdir_l` / `slideshow_srcdir_r` に **展開済み path** を保持 |
-
-catalog の save 先は **`harite-sources.json`**。load は §6.1 の legacy fallback に従う。
 
 registry 選択時の流れ:
 

@@ -7,7 +7,6 @@ import sys
 from typing import Any
 
 SOURCES_CATALOG_FILENAME = "harite-sources.json"
-LEGACY_SOURCES_CATALOG_FILENAME = "sources.json"
 
 
 def _harite_config_dir() -> Path:
@@ -23,19 +22,6 @@ def _harite_config_dir() -> Path:
 
 def resolve_default_sources_path() -> Path:
     return _harite_config_dir() / SOURCES_CATALOG_FILENAME
-
-
-def resolve_sources_path_for_load(path: Path | None = None) -> Path:
-    """Return path for catalog load (new file, or legacy ``sources.json`` beside it)."""
-    target = resolve_default_sources_path() if path is None else Path(path)
-    if target.exists():
-        return target
-    default = resolve_default_sources_path()
-    if path is None or target == default:
-        legacy = target.parent / LEGACY_SOURCES_CATALOG_FILENAME
-        if legacy.exists():
-            return legacy
-    return target
 
 
 def load_sources_json(path: Path) -> dict[str, Any]:

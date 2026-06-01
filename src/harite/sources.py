@@ -6,12 +6,7 @@ from pathlib import Path
 from typing import Any
 import uuid
 
-from harite.sources_file import (
-    load_sources_json,
-    resolve_default_sources_path,
-    resolve_sources_path_for_load,
-    save_sources_json,
-)
+from harite.sources_file import load_sources_json, resolve_default_sources_path, save_sources_json
 
 SCHEMA_VERSION = 1
 KIND_LOCAL_DIR = "local-dir"
@@ -247,7 +242,7 @@ def catalog_from_dict(data: dict[str, Any]) -> Catalog:
 
 
 def load_catalog(path: Path | None = None) -> Catalog:
-    target = resolve_sources_path_for_load(path)
+    target = path or resolve_default_sources_path()
     if not target.exists():
         return empty_catalog()
     return catalog_from_dict(load_sources_json(target))
