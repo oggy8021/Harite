@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 pytest.importorskip("PyQt6.QtWidgets")
@@ -314,6 +316,11 @@ def test_on_margin_text_sync_does_not_recurse(qapp):
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Slideshow registry combos (C-02)
+# ---------------------------------------------------------------------------
+
+
 def _normalize_combo_data(value: object) -> str:
     if value is None:
         return ""
@@ -333,6 +340,41 @@ def _write_catalog_for_refresh(left: Path, right: Path, catalog_path: Path) -> t
     )
     save_catalog(catalog, catalog_path)
     return left_entry.id, right_entry.id, profile.id
+
+
+def test_refresh_slideshow_registry_combos_restores_owner_selection(qapp, backend, tmp_path):
+    from PyQt6.QtWidgets import QComboBox
+
+    from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_registry_combos
+    from harite.gui.views.main_window import MainWindow, REGISTRY_NONE_LABEL
+
+    left_dir = tmp_path / "left"
+    right_dir = tmp_path / "right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    catalog_path = tmp_path / "harite-sources.json"
+    left_id, _right_id, profile_id = _write_catalog_for_refresh(left_dir, right_dir, catalog_path)
+
+    owner = MainWindow()
+    owner._source_catalog_path = catalog_path
+    owner.slideshow_profile_id = profile_id
+    owner.slideshow_source_id_l = left_id
+    owner.slideshow_source_id_r = ""
+
+    profile_combo = QComboBox()
+    source_l = QComboBox()
+    source_r = QComboBox()
+    backend._objects["combo_slideshow_profile"] = profile_combo
+    backend._objects["combo_slideshow_source_l"] = source_l
+    backend._objects["combo_slideshow_source_r"] = source_r
+
+    refresh_slideshow_registry_combos(backend, owner)
+
+    assert _normalize_combo_data(profile_combo.currentData()) == profile_id
+    assert profile_combo.currentText() == "Dual"
+    assert _normalize_combo_data(source_l.currentData()) == left_id
+    assert _normalize_combo_data(source_r.currentData()) == ""
+    assert source_r.currentText() == REGISTRY_NONE_LABEL
 
 
 def test_refresh_slideshow_registry_combos_clears_profile_after_clear(qapp, backend, tmp_path):

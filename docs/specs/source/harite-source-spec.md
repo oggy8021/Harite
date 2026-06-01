@@ -1,6 +1,6 @@
 # Harite source registry 仕様 (Source Spec)
 
-最終更新: 2026-06-01 (C-02 段 1 — planning #373 昇格)
+最終更新: 2026-06-01 (C-02 完了 — 3-layer audit close)
 
 ## 1. 責務
 
@@ -208,9 +208,9 @@ settings には次の **任意 key** を追加してよい（未設定時は無�
 
 | surface | C-02 段 1（本書） | 後続 |
 | --- | --- | --- |
-| **core API** | §7 全文 | impl 段 |
+| **core API** | §7 全文 | #375 マージ済 |
 | **CLI** | 変更なし | — |
-| **GUI** | Slideshow から registry 選択する **導線あり**（widget 詳細は [gui-spec §4.2 / §6.3](../gui/harite-gui-spec.md)、design #376） | [gui-spec](../gui/harite-gui-spec.md) 段4 impl 待ち |
+| **GUI** | Slideshow から registry 選択（[gui-spec §4.2 / §6.3](../gui/harite-gui-spec.md)、design #376） | **Qt impl 済**（#378）。GTK parity は follow-up |
 
 ## 10. 他分冊との境界
 
@@ -223,6 +223,9 @@ settings には次の **任意 key** を追加してよい（未設定時は無�
 
 | 層 | 状態 |
 | --- | --- |
-| **spec** | 本書（段 1） |
-| **tests** | [tests/test_sources.py](../../tests/test_sources.py), [tests/test_sources_file.py](../../tests/test_sources_file.py)（段 2） |
-| **impl** | `harite.sources`, `harite.sources_file`（段 2 — tests と同 PR） |
+| **spec** | 本書（段 1 — #374） |
+| **tests (core)** | [tests/test_sources.py](../../tests/test_sources.py), [tests/test_sources_file.py](../../tests/test_sources_file.py)（#375） |
+| **impl (core)** | `harite.sources`, `harite.sources_file`（#375） |
+| **tests (GUI)** | [tests/gui/test_c02_source_registry_gui.py](../../tests/gui/test_c02_source_registry_gui.py), [tests/gui/test_qt_tab_slideshow.py](../../tests/gui/test_qt_tab_slideshow.py)（#378） |
+| **impl (GUI)** | Qt: `qt_tab_slideshow`, `qt_source_registry_dialog`, `MainWindow` handlers（#378）。GTK registry widget は未実装 |
+| **audit** | [20260601-c02-3layer-audit.md](../../working/finished/20260601-c02-3layer-audit.md) |
