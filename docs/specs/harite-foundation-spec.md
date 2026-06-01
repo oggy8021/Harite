@@ -1,6 +1,6 @@
 # Harite 基本仕様 (Foundation Spec)
 
-最終更新: 2026-06-01 (F-01 settings path 参照)
+最終更新: 2026-06-01 (C-02 source-spec 分冊)
 
 ## 1. 文書の目的と適用範囲
 
@@ -58,16 +58,17 @@
 
 ## 5. 全体アーキテクチャ概要
 
-Harite の主な面は以下の 6 つである。
+Harite の主な面は以下の 7 つである。
 
 1. 基本仕様 (foundation): 全体像と分冊導線
 2. コア仕様 (core): 最適化、設定、適用条件の基底仕様
-3. CLI 仕様 (CLI): command surface
-4. GUI 仕様 (GUI): 画面、操作、状態、tray
-5. スライドショー仕様: 継続実行、pause / retry、観測面
-6. plugin 仕様 (plugin): OS / desktop 環境ごとの適用実行
+3. **source registry 仕様 (source): slideshow 用 directory catalog と L/R profile**
+4. CLI 仕様 (CLI): command surface
+5. GUI 仕様 (GUI): 画面、操作、状態、tray
+6. スライドショー仕様: 継続実行、pause / retry、観測面
+7. plugin 仕様 (plugin): OS / desktop 環境ごとの適用実行
 
-この 6 面は、責務を分離するための文書分冊であって、実装が完全に独立していることを意味しない。実装上は core, plugin, GUI state, slideshow state が相互に接続しているため、本書は「どこからどこまでをどの分冊で説明するか」の境界線として機能する。
+この 7 面は、責務を分離するための文書分冊であって、実装が完全に独立していることを意味しない。実装上は core, plugin, GUI state, slideshow state, source catalog が相互に接続しているため、本書は「どこからどこまでをどの分冊で説明するか」の境界線として機能する。
 
 ## 6. GUI / CLI / スライドショー / tray の関係
 
@@ -104,6 +105,7 @@ flowchart TD
 | 入力検証 | CLI / GUI | core は受け取った値の基底正規化を行う（不正値に対して例外ではなくフォールバック値を返す場合がある。例: `background_color` 不正 → `#1E1E1E`、margins 変換失敗 → `(0,0,0,0)`） | plugin |
 | optimize 条件解決 | core | CLI / GUI は入力採用値を決めて渡す | plugin |
 | 設定ファイル path 解決と JSON 入出力 | settings_file | CLI / GUI は load/save の契機を持つ | plugin |
+| source registry catalog CRUD / resolve | sources（`harite.sources`） | GUI Slideshow picker、settings へ path 展開 | CLI（C-02 打ち止め） |
 | apply target 解決 | core | CLI / GUI / slideshow は apply_mode と file 条件を渡す | plugin |
 | plugin 名の選択 | CLI / GUI / 設定 | plugin registry は解決を補助する | core |
 | plugin registry 解決 | plugins registry | CLI / GUI が名前を与える | core |
@@ -165,6 +167,7 @@ src/harite/
   cli.py                  CLI entrypoint と command surface
   settings_file.py        設定ファイル (harite-settings.json) の path 解決と JSON load/save
   settings.py             設定モデルと JSON との相互変換
+  sources.py              source registry catalog CRUD / resolve（C-02 段 3 で追加予定）
   core.py                 optimize の基底ロジック（配置計算・embed・auto-split）
   optimize_settings.py    display 設定の解決（入力値と two-screen context から optimize パラメータを確定）
   display_context.py      接続中 display 群の検出と two-screen context の生成
@@ -249,6 +252,7 @@ GUI 配下の file / module を読むときは、次の配置規則を前提に�
 ## 11. 分冊導線
 
 - core 詳細は [docs/specs/core/harite-core-spec.md](docs/specs/core/harite-core-spec.md)
+- source registry 詳細は [docs/specs/source/harite-source-spec.md](docs/specs/source/harite-source-spec.md)
 - CLI 詳細は [docs/specs/cli/harite-cli-spec.md](docs/specs/cli/harite-cli-spec.md)
 - GUI 詳細は [docs/specs/gui/harite-gui-spec.md](docs/specs/gui/harite-gui-spec.md)
 - スライドショー詳細は [docs/specs/slideshow/harite-slideshow-spec.md](docs/specs/slideshow/harite-slideshow-spec.md)

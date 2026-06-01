@@ -43,7 +43,7 @@
 
 | ID | 項目 | 概要 | planning で最初に詰めること |
 | --- | --- | --- | --- |
-| C-02 | source registry / source profiles | slideshow 用 directory 等を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | **第4波 planning 中** — [20260601-1400-c02-source-registry-planning.md](20260601-1400-c02-source-registry-planning.md) |
+| C-02 | source registry / source profiles | slideshow 用 directory 等を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | **spec 段階** — [harite-source-spec.md](../specs/source/harite-source-spec.md)（planning: [20260601-1400-c02-source-registry-planning.md](20260601-1400-c02-source-registry-planning.md)） |
 | C-05 | slideshow source 強化 | slideshow の source を単発 directory から、複数 source・source profile・将来の外部 source へ広げる。初期スコープは local directory、同期済み cloud folder、ローカル mount 済み NAS/SMB/WebDAV directory までとし、それ以上の直接連携は将来余裕がある場合に限る。 | source 正規化、順序規則、GUI owner state との整合 |
 | C-01 | 外部壁紙サイト連携 | 外部サイトや API から壁紙候補を取得し、Harite の source として扱えるようにする。C-05 の local/mounted source 扱いを一種の先行試行とみなせる。オーナー発案の本丸 feature。 | 対象サイト、取得方法、利用規約、キャッシュ方針 |
 
