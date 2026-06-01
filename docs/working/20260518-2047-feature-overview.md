@@ -1,38 +1,37 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-01（P-01/P-02 完了・#353/#358 closed）
+最終更新: 2026-06-01（v1.0.0 リリース済み・第4波 C-02 planning）
 
 ## 位置づけ
 
 - 本書は [docs/reformation/harite-project-initial-build-reformation.md](docs/reformation/harite-project-initial-build-reformation.md) の Workstream 10 を具体化する子文書である。
-- 主題は、`1.0.0` 後の新運用で扱う後続機能の棚卸しと feature overview の作成である。
-- 本書は `1.0.0` gate ではなく、その後に開く backlog / planning 入口として扱う。
+- 主題は **v1.0.0 以降**の後続機能の棚卸しと planning 入口である。
+- **`1.0.0` はリリース済み**（2026-06）。当初の「gate 前は着手しない」等のガードは **適用しない**。本書は現行 backlog / planning 正本として随時更新する。
 
 ## この stream で固定すること
 
 - 断片的な feature アイデアを inventory 化する。
 - 実装候補、構想保持、破棄候補を粗く切り分ける。
-- post-`1.0.0` の feature planning 入口文書として、次期 planning の土台を作る。
+- post-`1.0.0` feature の planning 入口として、次期 planning の土台を更新し続ける。
 
 ## 対象
 
 - 外部壁紙サイト連携
-- watch / sources / plugins の将来拡張案
+- slideshow / sources / plugins の将来拡張案
 - GUI / CLI の新導線案
 - 将来の product improvement 候補
 
 ## 非対象
 
-- `1.0.0` 前に実装を始めること
-- release / packaging 整理
+- release / packaging 整理（別 stream）
 - docs 再編そのもの
-- 現行 surface の内部 issue 解決
+- 現行 surface の内部 issue 解決（online-issues / polish 波で扱う）
 
 ## 現在ステータス
 
-- WS10 は post-`1.0.0` planning の入口整備 stream として扱う。
+- **v1.0.0 リリース済み。** WS10 は post-1.0.x の **継続 planning / backlog 入口**として運用する。
 - **2026-06-01:** Qt 移行・W-xx 完了後、online-issues #353–359 を受けて **着手候補を再評価** した（下記 §近端 backlog / §近中期の優先順序）。
-- C-xx（大 feature）の順序は **C-02 → C-05 → C-01 を維持**。その前に **F-01 / P-01–02** の近端項目を入れられる。
+- C-xx（大 feature）の順序は **C-02 → C-05 → C-01 を維持**。近端 **F-01 / P-01–02 は完了**（2026-06-01）。
 
 ## 一次 inventory
 
@@ -44,7 +43,7 @@
 
 | ID | 項目 | 概要 | planning で最初に詰めること |
 | --- | --- | --- | --- |
-| C-02 | source registry / source profiles | watch directory や外部 source を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | source モデル、GUI/CLI surface、設定保存形式 |
+| C-02 | source registry / source profiles | slideshow 用 directory 等を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | **第4波 planning 中** — [20260601-1400-c02-source-registry-planning.md](20260601-1400-c02-source-registry-planning.md) |
 | C-05 | slideshow source 強化 | slideshow の source を単発 directory から、複数 source・source profile・将来の外部 source へ広げる。初期スコープは local directory、同期済み cloud folder、ローカル mount 済み NAS/SMB/WebDAV directory までとし、それ以上の直接連携は将来余裕がある場合に限る。 | source 正規化、順序規則、GUI owner state との整合 |
 | C-01 | 外部壁紙サイト連携 | 外部サイトや API から壁紙候補を取得し、Harite の source として扱えるようにする。C-05 の local/mounted source 扱いを一種の先行試行とみなせる。オーナー発案の本丸 feature。 | 対象サイト、取得方法、利用規約、キャッシュ方針 |
 
@@ -68,11 +67,11 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | --- | --- | --- | --- |
 | C-03 | plugin capability 可視化 | plugin ごとに受理 target や OS 制約を可視化し、apply / slideshow / GUI での分岐を分かりやすくする。 | **採用条件**: 仕様書に根拠を持ち、UIUX として明確に改善される論拠（spec 改訂案 + 表示面のストーリー）が示せたとき |
 | C-04 | GUI 利用導線の再設計 | optimize / apply / slideshow を単なる tab 群ではなく、利用目的ベースで再構成する。 | **採用条件**: 既存レイアウトの骨格を維持しつつ、世の標準傾向や UX トレンドを引用した「主要導線がより良くなる」ストーリーが組めたとき。「利用目的ベース」の具体が未整理のため現時点では積極採用しない |
-| K-01 | watch 機能の再構成 | 現行 slideshow / source / monitor 変化監視を含め、watch を独立機能として設計し直す。 | 現時点では source / slideshow / plugin の基礎設計が先。現行 GUI に Watch tab が存在するが実装は未完であり、Qt 移行後に方向性を整理する |
+| K-01 | ~~watch~~ slideshow 再構成（**旧語整理待ち**） | 旧 inventory「Watch」= 現 **Slideshow**。monitor 変化監視等を別 feature に切り出すなら K-01 を再定義。 | **構想保持・要再分類** — C-02/C-05 後。Phase10 mock の Watch 表記は legacy。 |
 | K-02 | source metadata / cache | 画像 source ごとにタグ、取得元、評価、最終利用履歴などを持てるようにする。 | 外部 source 連携や history 導線と一緒に詰めたほうがよい |
 | K-03 | favorites / history | 過去に生成・適用した壁紙や source を振り返り、再利用できるようにする。 | 保存スコープと UX を先に整理したい |
 | K-04 | plugin 拡張パック | Linux 以外や追加 desktop 向け plugin を外付け拡張として扱えるようにする。 | capability model と packaging 方針が先に必要 |
-| K-05 | scheduler / timed automation | 時刻・曜日・条件に応じて optimize / apply / slideshow を起動する。 | watch / source / profile 面が固まってからのほうが設計しやすい |
+| K-05 | scheduler / timed automation | 時刻・曜日・条件に応じて optimize / apply / slideshow を起動する。 | source / profile / slideshow 面が固まってからのほうが設計しやすい |
 | K-06 | import / export profiles | optimize / apply / slideshow の運用設定を profile 単位で持ち運べるようにする。 | source / settings / GUI 導線との責務分担を整理してからでよい |
 | P-03 | 単 display 時の -R 側無効化 | 検出 1 枚のとき右パネル操作を disabled にする案。 | **採用条件**: 単 display 再現手順、disabled 範囲の spec、GTK/Qt テスト方針が揃ったとき（[#359](../online-issues/issue-359.md)） |
 
@@ -102,12 +101,12 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 - 取得結果キャッシュ
 - source metadata
 
-### 2. source / watch / slideshow
+### 2. source / slideshow
 
 - source registry / source profiles
 - slideshow source 強化
-- watch 機能の再構成
-- scheduler / timed automation
+- scheduler / timed automation（[K-05](#2-構想保持)）
+- （旧語 Watch = slideshow — 2026-06-01 用語整理）
 
 ### 3. plugin / apply 拡張
 
@@ -149,18 +148,16 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 ### 4. 入口カテゴリの初期案
 
 - 外部ソース連携や取得導線の拡張
-- watch / sources / plugins の機能拡張
+- slideshow / sources / plugins の機能拡張
 - GUI / CLI の新しい利用導線
 - product improvement と UX 強化
 
 ## 近中期の優先順序（2026-06-01 確定）
 
 ```
-[完了] Qt 移行 + W-01〜W-03 + F-01 #354 + P-01 #353 + P-02 #358
+[完了] Qt 移行 + W-01〜W-03 + F-01 + P-01/P-02 + #353/#358 closed
          ↓
-[第3波] issue 整理（#353/#358 closed 移動 — 進行中）
-         ↓
-[第4波・大 feature] C-02  source registry
+[第4波] C-02  source registry     ← planning: [20260601-1400-c02-source-registry-planning.md](20260601-1400-c02-source-registry-planning.md)
          ↓
         C-05  slideshow source 強化
          ↓
@@ -187,12 +184,14 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 統合文書: [docs/working/finished/20260531-1200-windows-qt-validation-backlog.md](finished/20260531-1200-windows-qt-validation-backlog.md)  
 観測ログ: [docs/online-issues/README.md](../online-issues/README.md)
 
-## 初動タスク
+## 初動タスク（WS10 立ち上げ — **完了**）
 
-1. 現在頭にある後続機能案を列挙する。
-2. それぞれを「着手候補 / 構想保持 / 破棄候補」に粗く分類する。
-3. 外部壁紙サイト連携のような大きめ構想を、単発案ではなく overview 項目として受ける。
-4. post-`1.0.0` planning の入口となる最小構造を定める。
+1. ~~後続機能案を列挙する。~~ → 一次 inventory 反映済み
+2. ~~着手候補 / 構想保持 / 破棄候補に分類する。~~ → 本書 §1–3
+3. ~~大きめ構想を overview 項目として受ける。~~ → C-01 等
+4. ~~planning 入口の最小構造を定める。~~ → 本書 + `docs/working/` / online-issues 連携
+
+以降の更新は **inventory 追加・優先順序・完了記録**のみ（初動タスクの再実施は不要）。
 
 進捗メモ:
 
@@ -201,12 +200,14 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 次段では Qt 移行計画を進め、完了後に C-02/C-05/C-01 の順で個別 planning 文書へ分離する。
 - 2026-05-31: Windows 実機検証由来の W-01〜W-03 を [finished/20260531-1200-windows-qt-validation-backlog.md](finished/20260531-1200-windows-qt-validation-backlog.md) に集約。
 - 2026-06-01: online-issues #353–359 を inventory 化。F-01 / P-01–02 を近端着手候補、P-03 を構想保持へ。C-02→C-05→C-01 は維持。
-- 2026-06-01: F-01 **完了** — #354 closed、Windows 実機 save/load 確認（#365–367）。
+- 2026-06-01: **v1.0.0 リリース済み** — gate 前ガードは obsolete。本書を post-1.0.x backlog 入口として継続更新。
+- 2026-06-01: 第4波 **C-02 planning 着手** — [20260601-1400-c02-source-registry-planning.md](20260601-1400-c02-source-registry-planning.md)
 
-## 完了条件
+## 完了条件（WS10 立ち上げ — **達成済み**）
 
 - 後続機能 inventory の枠組みが説明可能になっている。
-- `1.0.0` gate の外に置く理由が説明可能になっている。
 - 構想の受け皿として overview を置く理由が説明可能になっている。
 - Workstream 1・3・4・5 と混線せずに次段へ送れる状態になっている。
 - 少なくとも一次 inventory が overview 上で参照可能になっている。
+
+※ 当初の「`1.0.0` gate の外に置く」完了条件は、**v1.0.0 リリースにより obsolete**。以降は上記 4 点 + 各 feature 完了記録の更新で十分。
