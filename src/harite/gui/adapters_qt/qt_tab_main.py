@@ -174,6 +174,13 @@ def build_compose_grid_section() -> dict[str, Any]:
     pick_state_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
     center_layout.addWidget(pick_state_label)
 
+    from PyQt6.QtWidgets import QPushButton
+
+    btn_swap = QPushButton("")
+    btn_swap.setToolTip("Swap L/R")
+    _set_button_icon(btn_swap, "icons", "lucide", "arrow-left-right.svg")
+    center_layout.addWidget(btn_swap, alignment=Qt.AlignmentFlag.AlignHCenter)
+
     grid.addWidget(left_widgets["panel_l"], 0, 0)
     grid.addWidget(center_panel, 0, 1)
     grid.addWidget(right_widgets["panel_r"], 0, 2)
@@ -184,6 +191,7 @@ def build_compose_grid_section() -> dict[str, Any]:
         "center_panel": center_panel,
         "right_panel": right_widgets["panel_r"],
         "pick_state_label": pick_state_label,
+        "btn_swap_input_paths": btn_swap,
         **{k: v for k, v in left_widgets.items() if k != "panel_l"},
         **{k: v for k, v in right_widgets.items() if k != "panel_r"},
     }

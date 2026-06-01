@@ -51,6 +51,11 @@ def _connect_input_widgets(backend: Any, widgets: dict[str, Any]) -> None:
         "clicked",
         lambda: backend._on_clear_input_clicked("R"),
     )
+    _safe_connect(
+        widgets.get("btn_swap_input_paths"),
+        "clicked",
+        backend._on_swap_input_paths_clicked,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -160,6 +165,21 @@ def _connect_slideshow_widgets(backend: Any, widgets: dict[str, Any]) -> None:
         widgets.get("btn_open_srcdir_r"),
         "clicked",
         lambda: backend._on_pick_srcdir_clicked("R"),
+    )
+    _safe_connect(
+        widgets.get("btn_swap_slideshow_srcdirs"),
+        "clicked",
+        backend._on_swap_slideshow_srcdirs_clicked,
+    )
+    _safe_connect(
+        widgets.get("btn_clr_srcdir_l"),
+        "clicked",
+        lambda: backend._on_clear_slideshow_srcdir_clicked("L"),
+    )
+    _safe_connect(
+        widgets.get("btn_clr_srcdir_r"),
+        "clicked",
+        lambda: backend._on_clear_slideshow_srcdir_clicked("R"),
     )
     _safe_connect(
         widgets.get("interval_spin"),
