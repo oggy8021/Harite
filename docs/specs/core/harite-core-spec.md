@@ -1,6 +1,6 @@
 # Harite コア仕様 (Core Spec)
 
-最終更新: 2026-05-31 (Windows display detection / W-03-C)
+最終更新: 2026-06-01 (F-01 Windows settings path — AppData Roaming)
 
 ## 1. コア (core) の責務
 
@@ -255,9 +255,19 @@ monitor map 解決:
 
 ### 6.1 設定ファイル (`harite-settings.json`) の保存場所
 
-- Linux: `XDG_CONFIG_HOME/harite/harite-settings.json`
-- Linux で `XDG_CONFIG_HOME` 未設定: `~/.config/harite/harite-settings.json`
-- 非 Linux: `~/harite-settings.json`
+`resolve_default_settings_path()` が返す既定 path は次のとおり。
+
+| プラットフォーム | 既定 path |
+| --- | --- |
+| Linux（`XDG_CONFIG_HOME` 設定時） | `$XDG_CONFIG_HOME/harite/harite-settings.json` |
+| Linux（`XDG_CONFIG_HOME` 未設定） | `~/.config/harite/harite-settings.json` |
+| Windows | `%APPDATA%\harite\harite-settings.json`（= `AppData\Roaming\harite\harite-settings.json`） |
+
+Windows の補足:
+
+- `%APPDATA%` は環境変数 `APPDATA` を指す。未設定時は `Path.home() / "AppData" / "Roaming"` を Roaming 相当として使う。
+- 旧 `%USERPROFILE%\harite-settings.json`（ホーム直下）からの **読み取り互換・自動移行は行わない**（[#354](../../online-issues/issue-354.md) / F-01）。
+- 初回 save 時に `harite/` ディレクトリを作成する（`save_settings` の `mkdir(parents=True)`）。
 
 ### 6.2 物理形式
 
