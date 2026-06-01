@@ -1,6 +1,6 @@
 # C-02 — source registry / source profiles  planning
 
-最終更新: 2026-06-01（第4波着手・用語: Watch = slideshow 旧語）
+最終更新: 2026-06-01（第4波着手・用語: Watch = slideshow 旧語・CLI 打ち止め）
 
 ## 位置づけ
 
@@ -102,9 +102,11 @@ C-01  外部サイト              … source type = remote / API（C-02 type �
 | surface | 第1段階 | 送る |
 | --- | --- | --- |
 | **core API** | list / get / add / update / delete source；resolve profile → paths | — |
-| **CLI** | `harite source list|add|remove`（サブコマンド） | profile CRUD は第2子段階可 |
+| **CLI** | **打ち止め** — 現行 4 command（optimize / apply / slideshow / install-desktop-entry）維持 | `harite source` サブコマンドは C-02 外 |
 | **GUI** | Slideshow Srcdir 行に「登録済みから選ぶ」**最小**（combo または小 dialog） | 専用 Sources 管理タブ（第1段階不要） |
 | **settings dialog** | 触らない（または registry path 表示のみ） | 一括 editor |
+
+**オーナー決定（2026-06-01）:** CLI は **A. 打ち止め**。registry CRUD は **GUI + core API** のみ。既存 CLI は `--input` 等の都度指定のまま（[cli-spec §6](../../specs/cli/harite-cli-spec.md)）。
 
 GUI 変更があるため、具体 widget は **design slice 合意後**に gui-spec へ（§9）。planning では **導線の有無**だけ固定する。
 
@@ -123,16 +125,23 @@ GUI 変更があるため、具体 widget は **design slice 合意後**に gui-
 | **2** | tests — registry CRUD / resolve / 互換 | tests | tests PR マージ |
 | **3** | impl — `harite.sources`（名 TBD）+ persistence | src | impl PR マージ |
 | **4** | GUI 最小（Slideshow から registry 選択） | gui-spec + design slice | 第2波と同型の段階停止 |
-| **5** | CLI サブコマンド（任意・C-02 内 or 直後） | cli-spec | 同上 |
+| ~~**5**~~ | ~~CLI サブコマンド~~ | — | **C-02 外**（オーナー: CLI 打ち止め） |
 
 C-05 は **段 3 完了後**に別 planning を切る（slideshow が複数 source をどう回すか）。
 
-## Open questions（オーナー決定待ち）
+## Open questions
+
+### 決定済み
+
+| # | 論点 | 決定 |
+| --- | --- | --- |
+| **4** | CLI | **打ち止め** — 現行 4 command 維持。`harite source` サブコマンドは C-02 に含めない。registry は GUI + core API。 |
+
+### オーナー決定待ち
 
 1. **profile 形状:** L/R 2 スロット固定 vs 名前付きリスト（C-05 見込みで list 寄り？）
 2. **永続化:** 案 A / B / C のどれで開始するか
 3. **第1 GUI:** Slideshow のみで足りるか、Main input path の registry 参照も同波に含めるか
-4. **CLI:** C-02 必須か、GUI 先行か
 5. **ID 規則:** UUID vs ユーザー指定 slug（rename 時の参照更新）
 6. **削除ポリシー:** profile が参照中の source を delete したとき warn / block
 
@@ -140,14 +149,14 @@ C-05 は **段 3 完了後**に別 planning を切る（slideshow が複数 sour
 
 | 層 | 現状 | C-02 完了時の期待 |
 | --- | --- | --- |
-| **spec** | source registry 記述なし（plugin registry のみ） | モデル・永続化・resolve・GUI/CLI 最小 surface |
+| **spec** | source registry 記述なし（plugin registry のみ） | モデル・永続化・resolve・GUI 最小 surface（CLI 拡張なし） |
 | **tests** | なし | CRUD + resolve + settings 共存 |
 | **impl** | なし | core モジュール +（段4で）Qt picker |
 
 ## 次アクション
 
 1. 本 PR をレビュー → **マージ許可**
-2. Open questions 1–6 をオーナーが回答
+2. 残り Open questions（1–3, 5–6）をオーナーが回答
 3. 回答を反映した **spec PR**（段 1）を起票 — **ここで初めて正本改定**
 
 ## 参照
