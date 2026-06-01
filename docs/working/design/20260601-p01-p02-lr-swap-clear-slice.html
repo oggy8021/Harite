@@ -187,13 +187,27 @@
     }
 
     .center-panel {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-rows: auto auto auto;
+      gap: 4px;
       align-items: center;
-      justify-content: center;
-      gap: 14px;
+      justify-items: center;
       min-width: 96px;
       padding: 8px 4px;
+    }
+
+    .center-panel .pick-state {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .center-panel .swap-row {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .pick-state {
@@ -246,7 +260,7 @@
     <section class="slice" id="main-slice">
       <div class="slice-head">
         <h2>Main タブ — compose grid 中央列（P-01）</h2>
-        <p>既存 3 列（L panel | center pick state | R panel）の <strong>center 列</strong>に Swap を追加。</p>
+        <p>既存 3 列（L panel | center pick state | R panel）の <strong>center 列</strong>に Swap を追加（direction grid 中段 = Left-L … Right-R のライン）。</p>
       </div>
       <div class="slice-body">
         <div class="compose-grid">
@@ -272,16 +286,18 @@
           </div>
 
           <div class="center-panel">
-            <div class="pick-state">（pick state ラベル — 既存）</div>
-            <button type="button" class="btn new icon-only" title="Swap L/R paths">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M8 3 4 7l4 4"></path>
-                <path d="M4 7h16"></path>
-                <path d="m16 21 4-4-4-4"></path>
-                <path d="M20 17H4"></path>
-              </svg>
-            </button>
-            <span style="font-size:11px;color:var(--muted);">Swap L/R</span>
+            <div class="pick-state">（pick state — 上段）</div>
+            <div class="swap-row">
+              <button type="button" class="btn new icon-only" title="Swap L/R paths">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8 3 4 7l4 4"></path>
+                  <path d="M4 7h16"></path>
+                  <path d="m16 21 4-4-4-4"></path>
+                  <path d="M20 17H4"></path>
+                </svg>
+              </button>
+            </div>
+            <span style="font-size:11px;color:var(--muted);visibility:hidden;">spacer</span>
           </div>
 
           <div class="side-panel">
