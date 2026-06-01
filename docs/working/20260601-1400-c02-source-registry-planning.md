@@ -166,7 +166,7 @@ path 長・存在確認は OS / 既存 slideshow 検証に従う。同名 source
 | **0** | 本 planning + オーナー決定（open questions） | working（本書） | マージ許可 |
 | **1** | core/foundation spec — モデル・path・API・保存形式 | core-spec または新 `source-spec` 分冊 | spec PR マージ |
 | **2** | tests — registry CRUD / resolve / 互換 | tests | tests PR マージ |
-| **3** | impl — `harite.sources`（名 TBD）+ persistence | src | impl PR マージ |
+| **3** | impl — `harite.sources` + persistence | src | **段 2 PR に同梱**（CI green） |
 | **4** | GUI 最小（Slideshow から registry 選択） | gui-spec + design slice | 第2波と同型の段階停止 |
 | ~~**5**~~ | ~~CLI サブコマンド~~ | — | **C-02 外**（オーナー: CLI 打ち止め） |
 
@@ -189,14 +189,15 @@ C-05 は **段 3 完了後**に別 planning を切る（source type 拡張・sli
 | 層 | 現状 | C-02 完了時の期待 |
 | --- | --- | --- |
 | **spec** | ~~source registry 記述なし~~ | [harite-source-spec.md](../specs/source/harite-source-spec.md)（段 1 完了） |
-| **tests** | なし | CRUD + resolve + settings 共存 |
-| **impl** | なし | core モジュール +（段4で）Qt picker |
+| **tests** | なし | CRUD + resolve + limits + delete policy |
+| **impl** | なし | `harite.sources` + `sources_file`（段 2 PR） |
 
 ## 次アクション
 
 1. ~~planning マージ~~（#373 済）
 2. ~~**spec PR**（段 1）~~ → [harite-source-spec.md](../specs/source/harite-source-spec.md)
-3. spec マージ後: **tests PR**（段 2）→ impl（段 3）→ GUI design slice（段 4）
+3. ~~spec マージ後: **tests PR**（段 2）~~ → 起票中（impl 同梱）
+4. tests マージ後: GUI design slice（段 4）
 
 ## 参照
 

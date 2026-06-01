@@ -224,5 +224,5 @@ catalog 本体は `sources.json` のみ。settings には次の **任意 key** �
 | 層 | 状態 |
 | --- | --- |
 | **spec** | 本書（段 1） |
-| **tests** | 未実装（段 2） |
-| **impl** | `harite.sources` 未存在（段 3） |
+| **tests** | [tests/test_sources.py](../../tests/test_sources.py), [tests/test_sources_file.py](../../tests/test_sources_file.py)（段 2） |
+| **impl** | `harite.sources`, `harite.sources_file`（段 2 — tests と同 PR） |
