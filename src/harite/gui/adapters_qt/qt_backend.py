@@ -100,8 +100,8 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         connect_qt_widgets(self, self._objects)
         owner = self._get_connected_owner()
         if owner is not None:
+            self._sync_non_preview_state_from_owner(owner)
             self._sync_action_availability_from_owner(owner)
-            self._sync_feedback_from_owner(owner)
 
     # ------------------------------------------------------------------
     # Tray
