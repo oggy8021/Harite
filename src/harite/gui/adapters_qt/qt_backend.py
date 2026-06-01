@@ -631,6 +631,8 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             self._set_feedback(phase="Slideshow", state="error", error=str(exc))
 
     def _on_slideshow_source_combo_changed(self, side: str) -> None:
+        if getattr(self, "_slideshow_registry_combo_refresh", False):
+            return
         combo = self._objects.get(f"combo_slideshow_source_{side.lower()}")
         callback = self._signal_handlers.get("on_select_slideshow_source")
         if combo is None or callback is None:
@@ -645,6 +647,8 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             self._set_feedback(phase="Slideshow", state="error", error=str(exc))
 
     def _on_slideshow_profile_combo_changed(self) -> None:
+        if getattr(self, "_slideshow_registry_combo_refresh", False):
+            return
         combo = self._objects.get("combo_slideshow_profile")
         callback = self._signal_handlers.get("on_select_slideshow_profile")
         if combo is None or callback is None:

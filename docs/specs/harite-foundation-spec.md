@@ -168,7 +168,7 @@ src/harite/
   settings_file.py        設定ファイル (harite-settings.json) の path 解決と JSON load/save
   settings.py             設定モデルと JSON との相互変換
   sources.py              source registry catalog CRUD / resolve（C-02 — #375）
-  sources_file.py         sources.json path 解決と load/save（C-02 — #375）
+  sources_file.py         harite-sources.json path 解決と load/save（C-02 — #375）
   core.py                 optimize の基底ロジック（配置計算・embed・auto-split）
   optimize_settings.py    display 設定の解決（入力値と two-screen context から optimize パラメータを確定）
   display_context.py      接続中 display 群の検出と two-screen context の生成

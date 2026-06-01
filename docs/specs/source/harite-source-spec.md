@@ -24,7 +24,7 @@ planning 正本: [20260601-1400-c02-source-registry-planning.md](../../working/2
 | --- | --- |
 | **source** | 1 件の local directory を指す catalog エントリ（`id`, `name`, `kind`, `path`） |
 | **source profile** | L/R 2 スロットに source id を割り当てた名前付きプリセット |
-| **catalog** | `sources.json` に保存される source 列 + profile 列の全体 |
+| **catalog** | `harite-sources.json` に保存される source 列 + profile 列の全体 |
 | **resolve** | source id または profile id から **実行用 directory path** を得る操作 |
 
 ## 3. データモデル
@@ -106,9 +106,9 @@ profile は **L/R 固定 2 スロットのみ**を持つ。list 型 `members` �
 
 | プラットフォーム | 既定 path |
 | --- | --- |
-| Linux（`XDG_CONFIG_HOME` 設定時） | `$XDG_CONFIG_HOME/harite/sources.json` |
-| Linux（未設定） | `~/.config/harite/sources.json` |
-| Windows | `%APPDATA%\harite\sources.json` |
+| Linux（`XDG_CONFIG_HOME` 設定時） | `$XDG_CONFIG_HOME/harite/harite-sources.json` |
+| Linux（未設定） | `~/.config/harite/harite-sources.json` |
+| Windows | `%APPDATA%\harite\harite-sources.json` |
 
 - 初回 save 時に親ディレクトリを作成する（`mkdir(parents=True)`）。
 - ファイル不存在時の load は **空 catalog**（`schema_version: 1`, `sources: []`, `profiles: []`）として扱ってよい。
@@ -125,7 +125,7 @@ profile は **L/R 固定 2 スロットのみ**を持つ。list 型 `members` �
 
 | 保存先 | 内容 |
 | --- | --- |
-| **`sources.json`** | source / profile catalog（本書） |
+| **`harite-sources.json`** | source / profile catalog（本書） |
 | **`harite-settings.json`** | 実行 state。従来どおり `slideshow_srcdir_l` / `slideshow_srcdir_r` に **展開済み path** を保持 |
 
 registry 選択時の流れ:
@@ -138,7 +138,7 @@ registry 選択時の流れ:
 
 ### 6.4 settings 上の任意 tracking key（第 1 段階）
 
-catalog 本体は `sources.json` のみ。settings には次の **任意 key** を追加してよい（未実装時は無視）。
+settings には次の **任意 key** を追加してよい（未設定時は無視）。
 
 | key | 意味 |
 | --- | --- |

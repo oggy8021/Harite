@@ -141,6 +141,24 @@ def test_on_clear_slideshow_srcdir_clears_tracking(tmp_path: Path):
     assert window.on_clear_slideshow_srcdir("L") is True
     assert window.slideshow_srcdir_l == ""
     assert window.slideshow_source_id_l == ""
+    assert window.slideshow_profile_id == ""
+
+
+def test_on_clear_slideshow_srcdir_after_profile_clears_profile_id(tmp_path: Path):
+    left_dir = tmp_path / "left"
+    right_dir = tmp_path / "right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    catalog_path = tmp_path / "harite-sources.json"
+    _, _, profile_id = _write_catalog(catalog_path, left_dir, right_dir)
+
+    window = MainWindow()
+    window._source_catalog_path = catalog_path
+    window.on_select_slideshow_profile(profile_id)
+
+    assert window.on_clear_slideshow_srcdir("R") is True
+    assert window.slideshow_profile_id == ""
+    assert window.slideshow_srcdir_r == ""
 
 
 def test_export_settings_includes_registry_tracking_keys(tmp_path: Path):
