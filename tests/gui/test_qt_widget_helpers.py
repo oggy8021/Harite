@@ -307,3 +307,52 @@ def test_on_margin_text_sync_does_not_recurse(qapp):
     entry = backend._objects["txtMarginText"]
     assert entry is not None
     backend._on_margin_text_changed(entry)
+
+
+# ---------------------------------------------------------------------------
+# Slideshow registry combos (C-02)
+# ---------------------------------------------------------------------------
+
+
+def test_refresh_slideshow_registry_combos_restores_owner_selection(qapp, backend, tmp_path):
+    from PyQt6.QtWidgets import QComboBox
+
+    from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_registry_combos
+    from harite.gui.views.main_window import MainWindow, REGISTRY_NONE_LABEL
+    from harite.sources import add_profile, add_source, empty_catalog, save_catalog
+
+    left_dir = tmp_path / "left"
+    right_dir = tmp_path / "right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    catalog_path = tmp_path / "sources.json"
+    catalog = empty_catalog()
+    left_entry = add_source(catalog, name="Left NAS", path=left_dir)
+    right_entry = add_source(catalog, name="Right Cloud", path=right_dir)
+    profile = add_profile(
+        catalog,
+        name="Dual",
+        members={"L": left_entry.id, "R": right_entry.id},
+    )
+    save_catalog(catalog, catalog_path)
+
+    owner = MainWindow()
+    owner._source_catalog_path = catalog_path
+    owner.slideshow_profile_id = profile.id
+    owner.slideshow_source_id_l = left_entry.id
+    owner.slideshow_source_id_r = ""
+
+    profile_combo = QComboBox()
+    source_l = QComboBox()
+    source_r = QComboBox()
+    backend._objects["combo_slideshow_profile"] = profile_combo
+    backend._objects["combo_slideshow_source_l"] = source_l
+    backend._objects["combo_slideshow_source_r"] = source_r
+
+    refresh_slideshow_registry_combos(backend, owner)
+
+    assert profile_combo.currentData() == profile.id
+    assert profile_combo.currentText() == "Dual"
+    assert source_l.currentData() == left_entry.id
+    assert source_r.currentData() == ""
+    assert source_r.currentText() == REGISTRY_NONE_LABEL

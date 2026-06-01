@@ -1,6 +1,6 @@
 # Harite 基本仕様 (Foundation Spec)
 
-最終更新: 2026-06-01 (C-02 source-spec 分冊)
+最終更新: 2026-06-01 (C-02 source registry 完了)
 
 ## 1. 文書の目的と適用範囲
 
@@ -105,7 +105,7 @@ flowchart TD
 | 入力検証 | CLI / GUI | core は受け取った値の基底正規化を行う（不正値に対して例外ではなくフォールバック値を返す場合がある。例: `background_color` 不正 → `#1E1E1E`、margins 変換失敗 → `(0,0,0,0)`） | plugin |
 | optimize 条件解決 | core | CLI / GUI は入力採用値を決めて渡す | plugin |
 | 設定ファイル path 解決と JSON 入出力 | settings_file | CLI / GUI は load/save の契機を持つ | plugin |
-| source registry catalog CRUD / resolve | sources（`harite.sources`） | GUI Slideshow picker、settings へ path 展開 | CLI（C-02 打ち止め） |
+| source registry catalog CRUD / resolve | sources（`harite.sources`） | GUI Slideshow picker（Qt #378）、settings へ path 展開 | CLI（C-02 打ち止め） |
 | apply target 解決 | core | CLI / GUI / slideshow は apply_mode と file 条件を渡す | plugin |
 | plugin 名の選択 | CLI / GUI / 設定 | plugin registry は解決を補助する | core |
 | plugin registry 解決 | plugins registry | CLI / GUI が名前を与える | core |
@@ -167,7 +167,8 @@ src/harite/
   cli.py                  CLI entrypoint と command surface
   settings_file.py        設定ファイル (harite-settings.json) の path 解決と JSON load/save
   settings.py             設定モデルと JSON との相互変換
-  sources.py              source registry catalog CRUD / resolve（C-02 段 3 で追加予定）
+  sources.py              source registry catalog CRUD / resolve（C-02 — #375）
+  sources_file.py         sources.json path 解決と load/save（C-02 — #375）
   core.py                 optimize の基底ロジック（配置計算・embed・auto-split）
   optimize_settings.py    display 設定の解決（入力値と two-screen context から optimize パラメータを確定）
   display_context.py      接続中 display 群の検出と two-screen context の生成

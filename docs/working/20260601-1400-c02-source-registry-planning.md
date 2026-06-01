@@ -1,6 +1,6 @@
 # C-02 — source registry / source profiles  planning
 
-最終更新: 2026-06-01（段 0 完了 → 段 1 spec 昇格済み）
+最終更新: 2026-06-01（**段 0–4 完了** — 3-layer audit: [20260601-c02-3layer-audit.md](finished/20260601-c02-3layer-audit.md)）
 
 ## 位置づけ
 
@@ -184,20 +184,26 @@ C-05 は **段 3 完了後**に別 planning を切る（source type 拡張・sli
 | **6** | 削除ポリシー | slideshow に直接先例なし → **アクセス不能時点で中断**。参照中 source の delete は **拒否** |
 | **7** | 上限 | source **64** / profile **32** / name **64 文字** / notes **512 文字** — 超過は追加拒否 |
 
-## 3 層比較（planning 時点 — 未実装）
+## 3 層比較（完了 — 2026-06-01）
 
-| 層 | 現状 | C-02 完了時の期待 |
-| --- | --- | --- |
-| **spec** | ~~source registry 記述なし~~ | [harite-source-spec.md](../specs/source/harite-source-spec.md)（段 1 完了） |
-| **tests** | なし | CRUD + resolve + limits + delete policy |
-| **impl** | なし | `harite.sources` + `sources_file`（段 2 PR） |
+正本: [20260601-c02-3layer-audit.md](finished/20260601-c02-3layer-audit.md)
+
+| 層 | 状態 |
+| --- | --- |
+| **spec** | [harite-source-spec.md](../specs/source/harite-source-spec.md)（#374）+ gui-spec §4.2 / §6.3（#377） |
+| **tests** | core #375 + GUI #378 + combo refresh（audit close PR） |
+| **impl** | `harite.sources` + Qt Slideshow registry UI（#375, #378） |
+
+**既知 follow-up:** GTK registry widget parity、Manage dialog E2E（手動確認で可）。
 
 ## 次アクション
 
 1. ~~planning マージ~~（#373 済）
-2. ~~**spec PR**（段 1）~~ → [harite-source-spec.md](../specs/source/harite-source-spec.md)
-3. ~~spec マージ後: **tests PR**（段 2）~~ → 起票中（impl 同梱）
-4. tests マージ後: GUI design slice（段 4）
+2. ~~**spec PR**（段 1）~~ → #374
+3. ~~**tests + core impl**（段 2–3）~~ → #375
+4. ~~GUI design + gui-spec + impl~~ → #376–378
+5. ~~**3-layer audit / close docs**~~ → [20260601-c02-3layer-audit.md](finished/20260601-c02-3layer-audit.md)
+6. **C-05 planning 入口** — source type 拡張・slideshow 実行面（本 feature とは別 planning）
 
 ## 参照
 
