@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C-02 — Slideshow source registry slice</title>
+  <style>
+    :root {
+      --page-bg: #ece7dc;
+      --panel-bg: #f8f5ee;
+      --chrome-bg: #e2dccc;
+      --chrome-dark: #cfc7b3;
+      --line: #817866;
+      --line-soft: #b8b09c;
+      --text: #2a261e;
+      --muted: #69614f;
+      --accent: #3f6a57;
+      --accent-soft: #d7e4dc;
+      --button-bg: #fdfbf6;
+      --new-bg: #e8f3ed;
+      --new-border: #3f6a57;
+      --font-main: "Yu Gothic UI", "Hiragino Sans", sans-serif;
+      --font-mono: "Cascadia Code", "Consolas", monospace;
+      --shadow: 0 14px 32px rgba(52, 44, 30, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.75), transparent 24%),
+        linear-gradient(180deg, #f5f1e8 0%, var(--page-bg) 100%);
+      color: var(--text);
+      font-family: var(--font-main);
+    }
+
+    .page {
+      width: min(1100px, calc(100vw - 40px));
+      margin: 24px auto 48px;
+    }
+
+    .masthead h1 { margin: 0; font-size: 26px; }
+    .masthead p { margin: 8px 0 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      margin: 16px 0 28px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .chip-new {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px dashed var(--new-border);
+      background: var(--new-bg);
+      border-radius: 3px;
+    }
+
+    .slice {
+      background: var(--panel-bg);
+      border: 1px solid var(--chrome-dark);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+
+    .slice-head {
+      padding: 14px 18px;
+      background: var(--chrome-bg);
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .slice-head h2 { margin: 0; font-size: 17px; }
+    .slice-head p { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+
+    .slice-body { padding: 20px 22px 24px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 34px;
+      padding: 6px 12px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--button-bg);
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+      cursor: default;
+      white-space: nowrap;
+    }
+
+    .btn.new {
+      background: var(--new-bg);
+      border: 2px dashed var(--new-border);
+    }
+
+    .btn.linkish {
+      background: transparent;
+      border-style: dashed;
+      color: var(--accent);
+    }
+
+    .tab-shell {
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      padding: 16px 18px 20px;
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .tab-title {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .profile-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px 12px;
+      margin-bottom: 16px;
+      padding: 10px 12px;
+      border: 2px dashed var(--new-border);
+      border-radius: 10px;
+      background: var(--new-bg);
+    }
+
+    .profile-row label { font-size: 13px; color: var(--muted); }
+
+    select.registry {
+      min-width: 200px;
+      min-height: 34px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      padding: 4px 8px;
+      font: inherit;
+      font-size: 13px;
+      background: white;
+    }
+
+    select.registry.new {
+      border: 2px dashed var(--new-border);
+      background: #fafffb;
+    }
+
+    .compose-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .side-panel {
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    .side-panel h3 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .saved-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--line-soft);
+    }
+
+    .saved-row label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .srcdir-btn-row {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .path-display {
+      min-height: 32px;
+      border: 1px solid var(--line-soft);
+      border-radius: 6px;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .clear-row {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .center-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 96px;
+      padding: 8px 4px;
+    }
+
+    .manage-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 14px;
+    }
+
+    .controls-placeholder {
+      margin-top: 18px;
+      padding: 12px;
+      border: 1px dashed var(--line-soft);
+      border-radius: 8px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .note {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .dialog-backdrop {
+      display: flex;
+      justify-content: center;
+      padding: 8px 0;
+    }
+
+    .dialog {
+      width: min(520px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel-bg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .dialog-head {
+      padding: 12px 16px;
+      background: var(--chrome-bg);
+      border-bottom: 1px solid var(--line-soft);
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .dialog-body { padding: 16px; }
+
+    .dialog-section {
+      margin-bottom: 16px;
+    }
+
+    .dialog-section h4 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .source-list {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: white;
+      font-size: 13px;
+    }
+
+    .source-list div {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .source-list div:last-child { border-bottom: none; }
+    .source-list div.selected { background: var(--accent-soft); }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .form-row input[type="text"] {
+      flex: 1;
+      min-width: 120px;
+      min-height: 32px;
+      border: 1px solid var(--line-soft);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font: inherit;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .profile-slot {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      padding: 8px;
+      background: white;
+      font-size: 12px;
+    }
+
+    .dialog-foot {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .flow {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .open-issues {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .open-issues a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <h1>C-02 — Slideshow source registry widget slice</h1>
+      <p>
+        第4波 段4: Slideshow タブに registry 選択を載せる。<strong>Profile 行 + 各 L/R に Saved source combo</strong> を追加し、
+        既存 Srcdir ブラウズ / Swap / Clear は維持。破線枠 = 新規 widget。正本は design 合意後に gui-spec へ。
+      </p>
+    </header>
+
+    <div class="legend">
+      <span><i class="chip-new"></i> 新規（C-02）</span>
+      <span>既存: Srcdir-L/R · Swap · Clear-L/R · Mode · Interval · Start/Stop</span>
+      <span>専用 Sources タブは<strong>作らない</strong> — Manage dialog のみ</span>
+    </div>
+
+    <!-- Slice 1: full tab -->
+    <section class="slice">
+      <div class="slice-head">
+        <h2>Slideshow タブ — レイアウト案（上 → 下）</h2>
+        <p>
+          srcdir 3 列グリッドの<strong>上</strong>に Profile 行、<strong>下</strong>に Manage リンク。
+          各 side panel は縦に「Saved combo → Srcdir ボタン → path → Clear」。
+        </p>
+      </div>
+      <div class="slice-body">
+        <div class="tab-shell">
+          <div class="tab-title">Slideshow (stopped)</div>
+
+          <!-- NEW: profile row -->
+          <div class="profile-row">
+            <label for="profile-select">Profile</label>
+            <select id="profile-select" class="registry new" title="Apply L+R preset">
+              <option>— none —</option>
+              <option selected>常用（L: Travel NAS · R: Cloud sync）</option>
+              <option>週末用</option>
+            </select>
+            <span style="font-size:12px;color:var(--muted);">選択で L/R 両方を一括反映（周回しない）</span>
+          </div>
+
+          <!-- existing 3-column grid, side panels extended -->
+          <div class="compose-grid">
+            <div class="side-panel">
+              <h3>L srcdir block</h3>
+              <div class="saved-row">
+                <label for="saved-l">Saved source</label>
+                <select id="saved-l" class="registry new">
+                  <option>— none —</option>
+                  <option selected>Travel NAS</option>
+                  <option>Cloud sync</option>
+                  <option>Work wallpapers</option>
+                </select>
+              </div>
+              <div class="srcdir-btn-row">
+                <button type="button" class="btn">Srcdir-L</button>
+              </div>
+              <div class="path-display">L: …/Travel NAS</div>
+              <div class="clear-row">
+                <button type="button" class="btn" title="Clear-L">Clear-L</button>
+              </div>
+            </div>
+
+            <div class="center-panel">
+              <button type="button" class="btn" title="Swap L/R">⇄</button>
+              <span style="font-size:11px;color:var(--muted);">Swap L/R</span>
+            </div>
+
+            <div class="side-panel">
+              <h3>R srcdir block</h3>
+              <div class="saved-row">
+                <label for="saved-r">Saved source</label>
+                <select id="saved-r" class="registry new">
+                  <option>— none —</option>
+                  <option>Travel NAS</option>
+                  <option selected>Cloud sync</option>
+                  <option>Work wallpapers</option>
+                </select>
+              </div>
+              <div class="srcdir-btn-row">
+                <button type="button" class="btn">Srcdir-R</button>
+              </div>
+              <div class="path-display">R: …/Cloud sync</div>
+              <div class="clear-row">
+                <button type="button" class="btn" title="Clear-R">Clear-R</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- NEW: manage link -->
+          <div class="manage-row">
+            <button type="button" class="btn linkish new">Manage sources and profiles…</button>
+          </div>
+
+          <div class="controls-placeholder">
+            （既存）Mode row · Interval · Slideshow Start / Stop — 変更なし
+          </div>
+        </div>
+
+        <div class="note">
+          <strong>Saved source combo:</strong> catalog から 1 件選ぶと <code>resolve_source</code> →
+          <code>slideshow_srcdir_l/r</code> と path label を更新。任意で <code>slideshow_source_id_l/r</code> を settings に記録。<br>
+          <strong>Srcdir-L/R:</strong> 従来どおりフォルダブラウズ。registry 外 path も可（選択 combo は <code>— none —</code> に戻す）。<br>
+          <strong>Profile:</strong> L/R メンバーを一括展開。profile 間の自動ローテはしない（ordered list 非採用）。<br>
+          <strong>Swap / Clear:</strong> path に加え、当該 side の source id tracking も swap / clear（P-01/P-02 拡張）。<br>
+          <strong>Start ガード:</strong> 両 srcdir 非空の現行ルールは維持。
+        </div>
+
+        <div class="flow">
+          <strong>タブ縦構成（確定案）:</strong><br>
+          stretch → <em>Profile row</em> → srcdir grid → <em>Manage link</em> → spacer → controls shell → spacer → detail shell → stretch
+        </div>
+      </div>
+    </section>
+
+    <!-- Slice 2: manage dialog -->
+    <section class="slice">
+      <div class="slice-head">
+        <h2>Manage sources and profiles — 小 dialog</h2>
+        <p>専用タブの代わり。Sources 一覧 CRUD + Profiles（L/R スロット）を 1 画面。Modal。</p>
+      </div>
+      <div class="slice-body">
+        <div class="dialog-backdrop">
+          <div class="dialog">
+            <div class="dialog-head">Manage sources and profiles</div>
+            <div class="dialog-body">
+              <div class="dialog-section">
+                <h4>Sources (local directory)</h4>
+                <div class="source-list">
+                  <div class="selected"><strong>Travel NAS</strong> — /mnt/photos/travel</div>
+                  <div><strong>Cloud sync</strong> — ~/Pictures/sync</div>
+                  <div><strong>Work wallpapers</strong> — /data/wall</div>
+                </div>
+                <div class="form-row">
+                  <input type="text" placeholder="Name" value="">
+                  <button type="button" class="btn">Browse…</button>
+                  <button type="button" class="btn new">Add</button>
+                  <button type="button" class="btn">Delete</button>
+                </div>
+                <p style="margin:8px 0 0;font-size:12px;color:var(--muted);">
+                  Delete は profile 参照中なら拒否（source-spec §7.5）。
+                </p>
+              </div>
+
+              <div class="dialog-section">
+                <h4>Profiles (L/R preset)</h4>
+                <select class="registry" style="width:100%;margin-bottom:8px;">
+                  <option selected>常用</option>
+                  <option>週末用</option>
+                </select>
+                <div class="profile-grid">
+                  <div class="profile-slot">
+                    <strong>L slot</strong><br>
+                    <select class="registry" style="width:100%;margin-top:4px;">
+                      <option selected>Travel NAS</option>
+                      <option>— empty —</option>
+                    </select>
+                  </div>
+                  <div class="profile-slot">
+                    <strong>R slot</strong><br>
+                    <select class="registry" style="width:100%;margin-top:4px;">
+                      <option selected>Cloud sync</option>
+                      <option>— empty —</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <input type="text" placeholder="New profile name">
+                  <button type="button" class="btn new">Add profile</button>
+                  <button type="button" class="btn">Delete profile</button>
+                </div>
+              </div>
+            </div>
+            <div class="dialog-foot">
+              <button type="button" class="btn">Close</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="note">
+          dialog は Qt <code>QDialog</code> 想定。Save は catalog を <code>sources.json</code> へ即 write（settings dialog とは別）。
+          タブ上の combo は dialog Close 後に reload。
+        </div>
+      </div>
+    </section>
+
+    <p class="open-issues">
+      正本: <a href="../20260601-1400-c02-source-registry-planning.md">C-02 planning</a>,
+      <a href="../../specs/source/harite-source-spec.md">source-spec</a> —
+      評価は <a href="20260601-c02-slideshow-source-registry-slice-memo.md">memo</a>。
+    </p>
+  </div>
+</body>
+</html>
