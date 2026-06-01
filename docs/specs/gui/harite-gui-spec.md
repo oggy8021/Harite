@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-05-31 (Main tab action cluster Qt layout; W-02-B 見送り)
+最終更新: 2026-06-01 (F-01 settings path / startup widget sync)
 
 ## 1. GUI の責務
 
@@ -209,6 +209,7 @@ apply mode の user-facing 意味:
 - startup では既定 path を解決し、ファイルが存在する場合だけ読み込みを試みる。
 - startup 読み込みで `FileNotFoundError`, `OSError`, `ValueError` が起きた場合は、GUI 全体を失敗させず message history に skip 理由を残して続行する。
 - startup 読み込み時は、既存の `status_level`, `status_phase`, `status_message`, `last_error` を退避し、設定反映後に復元することで、起動直後の status を不必要に上書きしない。
+- startup で owner（`MainWindow`）へ設定を反映したあと、各 backend は **`connect_signals` 完了時点**で owner → widget の非 preview 状態（input / main / margins / slideshow / feedback）を同期する。GTK は `_sync_non_preview_state_from_owner`、Qt も同型。これにより事前配置した既定 settings が起動直後の widget に載る。
 
 設定 dialog の責務:
 
