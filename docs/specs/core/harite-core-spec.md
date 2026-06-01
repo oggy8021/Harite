@@ -266,7 +266,7 @@ monitor map 解決:
 Windows の補足:
 
 - `%APPDATA%` は環境変数 `APPDATA` を指す。未設定時は `Path.home() / "AppData" / "Roaming"` を Roaming 相当として使う。
-- 旧 `%USERPROFILE%\harite-settings.json`（ホーム直下）からの **読み取り互換・自動移行は行わない**（[#354](../../online-issues/issue-354.md) / F-01）。
+- 旧 `%USERPROFILE%\harite-settings.json`（ホーム直下）からの **読み取り互換・自動移行は行わない**（[#354](../../online-issues/closed/issue-354.md) / F-01）。
 - 初回 save 時に `harite/` ディレクトリを作成する（`save_settings` の `mkdir(parents=True)`）。
 
 ### 6.2 物理形式
