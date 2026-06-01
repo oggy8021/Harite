@@ -27,7 +27,8 @@
 
 - **近端着手候補**。C-02 / P-01 / P-02 と **並行** でよい（2026-06-01 オーナー確認）。
 - **方針確定（2026-06-01）:** Windows 既定 path は **`%APPDATA%\harite\harite-settings.json`**（= `AppData\Roaming\harite\`）。通例に沿い、変な配置にしない。
-- 残タスク: foundation-spec / core-spec §6.1 へ反映、旧 `%USERPROFILE%\harite-settings.json` からの **読み取り互換 or 移行** を spec に書いてから impl。
+- 残タスク: foundation-spec / core-spec §6.1 へ反映 → impl。
+- **旧 path 互換なし（2026-06-01）:** `%USERPROFILE%\harite-settings.json` からの読み取り・移行は **行わない**。Windows 正式ユーザー未存在のため。clone 開発者は Roaming 新 path へ手動で置き直す想定。
 - Linux は現行どおり `XDG_CONFIG_HOME/harite/...`（`Roaming` 相当の config 領域）— 対称性は app 名サブディレクトリで揃う。
 
 ## 調査メモ
@@ -35,4 +36,5 @@
 - memo（オーナー）: AppData 準拠を検討すべきでは、との観測。
 - **2026-06-01:** Roaming 採用で問題なし（オーナー）。Local ではなく Roaming（設定の持ち運び・バックアップ対象として一般的）。
 - 現行コード: Linux は `$XDG_CONFIG_HOME/harite/harite-settings.json`（未設定時 `~/.config/harite/...`）、Windows は `~/harite-settings.json`。
-- 正本現状: [core-spec §6.1](../specs/core/harite-core-spec.md) は非 Linux を `~/harite-settings.json` と記載 — F-01 spec PR で更新予定。
+- **2026-06-01:** 旧 `%USERPROFILE%\harite-settings.json` 互換・移行は **不要**（正式 Windows ユーザー未存在）。
+- 正本現状: [core-spec §6.1](../specs/core/harite-core-spec.md) は非 Linux を `~/harite-settings.json` と記載 — F-01 spec PR で Roaming に更新予定。

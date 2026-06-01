@@ -177,7 +177,7 @@ online-issues 由来。C-xx より先に **小さく入れやすい / 調査先�
 - Qt 移行の詳細は [docs/working/finished/20260530-2201-pyqt6-migration-plan.md](finished/20260530-2201-pyqt6-migration-plan.md) を参照する。
 - C-03 / C-04 は採用条件が揃った時点で着手候補へ再分類する。
 - P-03 は **構想保持のまま急がない**（2026-06-01 オーナー確認）。P-01–02 は §9 GUI 合意工程の最初の実践候補。
-- F-01 は Windows **`%APPDATA%\harite\harite-settings.json`**（Roaming）— 通例配置。旧 `%USERPROFILE%` 直下 path からの互換は spec PR で定義。
+- F-01 は Windows **`%APPDATA%\harite\harite-settings.json`**（Roaming）— 通例配置。**旧 `%USERPROFILE%` 直下 path の互換・移行は行わない**（正式 Windows ユーザー未存在）。
 
 ## Qt 移行後 Windows 検証 backlog（W-xx）
 
@@ -206,7 +206,7 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 次段では Qt 移行計画を進め、完了後に C-02/C-05/C-01 の順で個別 planning 文書へ分離する。
 - 2026-05-31: Windows 実機検証由来の W-01〜W-03 を [finished/20260531-1200-windows-qt-validation-backlog.md](finished/20260531-1200-windows-qt-validation-backlog.md) に集約。
 - 2026-06-01: online-issues #353–359 を inventory 化。F-01 / P-01–02 を近端着手候補、P-03 を構想保持へ。C-02→C-05→C-01 は維持。
-- 2026-06-01: オーナー確認 — F-01 は Roaming 採用、F-01 と P-01/P-02 は並行可、P-03 は急がない。
+- 2026-06-01: オーナー確認 — F-01 は Roaming 採用・旧 path 互換なし、F-01 と P-01/P-02 は並行可、P-03 は急がない。
 
 ## 完了条件
 
