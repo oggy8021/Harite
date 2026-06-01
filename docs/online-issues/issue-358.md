@@ -23,10 +23,11 @@
 
 ## 取り込み方針
 
-- **第2波（着手順序）**。F-01 完了後。P-01 とまとめて Slideshow 面の widget slice 合意がよい。
-- 要決定: 左右 **同時クリア** のみか、個別 clear も要るか（初期案は simultaneous がテスト用途に足りる）。
-- GUI 版 slideshow は両 srcdir 必須のまま — clear 後は Start 不可になる挙動は現行 spec どおり。
+- **第2波（着手順序）**。F-01 完了後。P-01 とまとめて Slideshow 面の widget slice 合意。
+- **採用（2026-06-01 design slice）**: **個別 clear**（Clear-L / Clear-R）。Main タブ Clear-L/R と同配置（各 side panel 右下）。Clear both は不採用。
+- GUI 版 slideshow は両 srcdir 必須のまま — 片方または両方空 → Start 不可（現行 spec どおり）。
 
 ## 調査メモ
 
-- memo（オーナー）: 左右同時クリアか等は要検討だが、懸案として記録。
+- memo（オーナー）: 間違えた side だけ空にしたい。Clear both は UX が悪い。
+- design: [20260601-p01-p02-lr-swap-clear-slice.html](../working/design/20260601-p01-p02-lr-swap-clear-slice.html)

@@ -7,30 +7,28 @@
 ## 目的
 
 1. **P-01**: Main / Slideshow の L/R 値をワンクリックで入れ替え（path / srcdir の swap のみ）。
-2. **P-02**: Slideshow の Srcdir-L/R を **同時に** クリア（テストや条件変更のやり直し用）。
+2. **P-02**: Slideshow の Srcdir-L/R を **個別に** クリア（間違えた side だけ空にできる）。
 
-## 配置案（本 mock の提案）
+## 配置案（オーナー合意反映）
 
 | タブ | 位置 | 新 widget |
 | --- | --- | --- |
 | Main | compose grid **中央列**（`pick_state_label` の下） | Swap L/R（icon + tooltip） |
-| Slideshow | srcdir 行 L/R ブロック **の間** | Swap L/R + Clear both（縦積み） |
+| Slideshow | **Main と同型** 3 列（L panel \| center Swap \| R panel） | 各 side 右下に Clear-L/R；中央に Swap |
 
 ### 採用理由
 
-- issue #353 メモ「画面中央部に swap」→ Main は既存 center 列を拡張（新列追加なし）。
-- Slideshow は `_build_srcdir_row()` が L | gap | R 構造のため、gap にまとめると P-01/P-02 を 1 塊で合意できる。
-- Main の per-side Clear-L/R は既存のまま（P-02 は Slideshow のみ）。
+- issue #353 メモ「画面中央部に swap」→ Main は既存 center 列を拡張。
+- Slideshow も Main compose grid と同型にし、Clear-L/R を各 side panel 右下に置く（Main Clear-L/R と parity）。
+- **Clear both は不採用** — 片方だけやり直したい用途に合わず UX が悪い（オーナー判断 2026-06-01）。
+- 個別 clear 後も「両 srcdir 必須」ガードで Start ブロック — 現行 spec と矛盾しない。
 
 ## Icon / ラベル案
 
 | 操作 | Lucide | ラベル | 備考 |
 | --- | --- | --- | --- |
 | Swap | `arrow-left-right` | tooltip `Swap L/R` | リポジトリ未同梱 → impl 時に SVG 追加 |
-| Clear both | `folder-x`（既存） | tooltip `Clear both` | Main Clear-L/R と同系。icon-only + tooltip |
-
-- ボタンは **icon-only**（Main の Clear-L/R と同 tone）。Slideshow 中央は縦 2 ボタン。
-- 代替案: Slideshow Clear both に短いテキストラベル — 中央幅が狭い場合は要再検討。
+| Clear-L/R | `folder-x`（既存） | tooltip `Clear-L` / `Clear-R` | Main Clear-L/R と同型（icon-only + tooltip） |
 
 ## 振る舞い（spec 化予定の要点）
 
@@ -47,10 +45,12 @@
 - srcdir ラベル（`L:` / `R:` 行）を更新。
 - 実行中 slideshow への影響は gui-spec 既存ルールに従う（spec 段階で明記）。
 
-### Clear both（Slideshow）
+### Clear-L/R（Slideshow）
 
-- 両 srcdir を `""` に。個別 clear ボタンは **第2波では作らない**。
-- 両方空 → Start 不可（現行 spec 維持）。
+- 指定 `side`（`"l"` / `"r"`）の srcdir のみ `""` に。
+- 該当 side のラベルを空表示に更新。
+- 両方揃わない状態 → Start 不可（現行 spec 維持）。
+- Main `on_clear_input(side)` と handler 形状を揃える。
 
 ### Handler 名（spec 草案 — 合意後に gui-spec へ）
 
@@ -58,17 +58,16 @@
 | --- | --- |
 | `on_swap_input_paths()` | Main L/R path swap |
 | `on_swap_slideshow_srcdirs()` | Slideshow L/R srcdir swap |
-| `on_clear_slideshow_srcdirs()` | Slideshow 両方 clear |
+| `on_clear_slideshow_srcdir(side)` | Slideshow 個別 clear（Main `on_clear_input` と対） |
 
 ## 評価チェックリスト（オーナー）
 
 ブラウザで HTML を開き、以下を確認:
 
 - [ ] Main: center 列の Swap が L/R パネル間の視覚的「中央」に見えるか
-- [ ] Main: pick state ラベルと Swap の縦バランス
-- [ ] Slideshow: L/R srcdir ブロック間の Swap + Clear both が窮屈でないか
+- [ ] Slideshow: Main と同型 3 列 + 各 side 右下 Clear で parity が取れているか
+- [ ] Slideshow: center 列は Swap のみでシンプルか
 - [ ] icon-only + tooltip で Main Clear-L/R とトーンが揃うか
-- [ ] Clear both を simultaneous のみで足りるか（個別 clear は defer でよいか）
 
 ## 合意後の次ステップ
 
@@ -79,5 +78,5 @@
 ## スコープ外（第2波）
 
 - P-03 (#359) 単一ディスプレイ無効化
-- Slideshow 個別 srcdir clear
+- Slideshow Clear both（同時クリア）
 - path / srcdir swap 時の undo や確認ダイアログ

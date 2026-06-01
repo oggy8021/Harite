@@ -213,45 +213,7 @@
       color: var(--text);
     }
 
-    /* --- Slideshow srcdir row --- */
-    .srcdir-row {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 16px;
-      align-items: center;
-    }
-
-    .srcdir-block {
-      border: 1px solid var(--line-soft);
-      border-radius: 10px;
-      padding: 14px;
-      background: rgba(255, 255, 255, 0.45);
-      text-align: center;
-    }
-
-    .srcdir-block .btn { margin-bottom: 10px; }
-
-    .srcdir-label {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: var(--muted);
-      min-height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px dashed var(--line-soft);
-      border-radius: 6px;
-      background: white;
-      padding: 4px 8px;
-    }
-
-    .center-stack {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      min-width: 110px;
-    }
+    /* Slideshow reuses compose-grid + side-panel (Main tab parity) */
 
     .open-issues {
       margin-top: 8px;
@@ -268,7 +230,7 @@
       <div>
         <h1>P-01 / P-02 widget slice</h1>
         <p>
-          第2波: Main タブの L/R path swap（#353）と Slideshow タブの L/R srcdir swap + 同時クリア（#358）。<br>
+          第2波: Main タブの L/R path swap（#353）と Slideshow タブの L/R srcdir swap + 個別 clear（#358）。<br>
           破線枠 = 新規 widget。振る舞いの正本は gui-spec（本 mock は配置・ラベル合意用）。
         </p>
       </div>
@@ -277,7 +239,7 @@
     <div class="legend">
       <span><i class="chip-new"></i> 新規（第2波）</span>
       <span>Swap icon 案: Lucide <code>arrow-left-right</code>（要 SVG 追加）</span>
-      <span>Clear both icon 案: 既存 <code>folder-x.svg</code>（Main Clear-L/R と同系）</span>
+      <span>Clear-L/R icon 案: 既存 <code>folder-x.svg</code>（Main と同型・各 side panel 右下）</span>
     </div>
 
     <!-- Slice 1: Main tab -->
@@ -354,17 +316,25 @@
     <!-- Slice 2: Slideshow tab -->
     <section class="slice" id="slideshow-slice">
       <div class="slice-head">
-        <h2>Slideshow タブ — srcdir 行の中央ギャップ（P-01 + P-02）</h2>
-        <p>既存 L/R srcdir ブロックの <strong>間</strong>に Swap と Clear both を縦積み。</p>
+        <h2>Slideshow タブ — srcdir 行（P-01 + P-02）</h2>
+        <p>Main タブ compose grid と同型: L panel | center Swap | R panel。Clear は各 side の右下（Main Clear-L/R と同配置）。</p>
       </div>
       <div class="slice-body">
-        <div class="srcdir-row">
-          <div class="srcdir-block">
-            <button type="button" class="btn">Srcdir-L</button>
-            <div class="srcdir-label">L: /home/user/photos/a</div>
+        <div class="compose-grid">
+          <div class="side-panel">
+            <h3>L srcdir block</h3>
+            <div style="display:flex;justify-content:center;margin-bottom:8px;">
+              <button type="button" class="btn">Srcdir-L</button>
+            </div>
+            <div class="path-row">
+              <div class="path-display">L: /home/user/photos/a</div>
+            </div>
+            <div class="clear-row">
+              <button type="button" class="btn new icon-only" title="Clear-L srcdir">✕📁</button>
+            </div>
           </div>
 
-          <div class="center-stack">
+          <div class="center-panel">
             <button type="button" class="btn new icon-only" title="Swap L/R srcdirs">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M8 3 4 7l4 4"></path>
@@ -374,26 +344,26 @@
               </svg>
             </button>
             <span style="font-size:11px;color:var(--muted);">Swap L/R</span>
-            <button type="button" class="btn new icon-only" title="Clear both srcdirs">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 20h16"></path>
-                <path d="m6 16 6-12 6 12"></path>
-                <path d="M8 12h8"></path>
-              </svg>
-            </button>
-            <span style="font-size:11px;color:var(--muted);">Clear both</span>
           </div>
 
-          <div class="srcdir-block">
-            <button type="button" class="btn">Srcdir-R</button>
-            <div class="srcdir-label">R: /home/user/photos/b</div>
+          <div class="side-panel">
+            <h3>R srcdir block</h3>
+            <div style="display:flex;justify-content:center;margin-bottom:8px;">
+              <button type="button" class="btn">Srcdir-R</button>
+            </div>
+            <div class="path-row">
+              <div class="path-display">R: /home/user/photos/b</div>
+            </div>
+            <div class="clear-row">
+              <button type="button" class="btn new icon-only" title="Clear-R srcdir">✕📁</button>
+            </div>
           </div>
         </div>
 
         <div class="note">
           <strong>Swap（P-01）:</strong> <code>slideshow_srcdir_l</code> / <code>slideshow_srcdir_r</code> の値のみ swap。<br>
-          <strong>Clear both（P-02）:</strong> 両 srcdir を同時に空にする。個別 Clear は第2波スコープ外（将来 #358 追記可）。<br>
-          Clear 後は両方空 → Start ブロック（現行 spec どおり）。
+          <strong>Clear-L/R（P-02）:</strong> 指定 side の srcdir のみ空にする（Main <code>on_clear_input(side)</code> と同型）。<br>
+          片方だけ空 → Start ブロック（両 srcdir 必須の現行ガードは維持）。両方空も同様。
         </div>
       </div>
     </section>
