@@ -1,6 +1,6 @@
 # Harite source registry 仕様 (Source Spec)
 
-最終更新: 2026-06-02 (C-05 段 1 — slideshow 実行面・path 注記)
+最終更新: 2026-06-02 (C-05 完了 — 3-layer audit: [20260602-c05-3layer-audit.md](../../working/finished/20260602-c05-3layer-audit.md))
 
 ## 1. 責務
 
@@ -265,9 +265,9 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 
 | 層 | C-02 | C-05 |
 | --- | --- | --- |
-| **spec** | #374 | 本書 段 1（§4.1, §6.3–6.4, §7.6） |
-| **tests (core)** | #375 | 段 2 — resolve-at-start 等 |
-| **impl (core)** | #375 | 段 3 — 変更最小（GUI start 経路が主） |
-| **tests (GUI)** | #378 | 段 2–3 — start 前 resolve、catalog 変更 stop |
-| **impl (GUI)** | #378 | 段 3 — `on_slideshow_start` 等 |
-| **audit** | [20260601-c02-3layer-audit.md](../../working/finished/20260601-c02-3layer-audit.md) | 段完了後 |
+| **spec** | #374 | #383（§4.1, §6.3–6.4, §7.6） |
+| **tests (core)** | #375 | —（C-05 は GUI 経路） |
+| **impl (core)** | #375 | — |
+| **tests (GUI)** | #378 | #384 — [test_c05_slideshow_source_resolve.py](../../tests/gui/test_c05_slideshow_source_resolve.py) |
+| **impl (GUI)** | #378 | #384 — `on_slideshow_start`, `on_source_catalog_saved` |
+| **audit** | [20260601-c02-3layer-audit.md](../../working/finished/20260601-c02-3layer-audit.md) | [20260602-c05-3layer-audit.md](../../working/finished/20260602-c05-3layer-audit.md) |
