@@ -233,6 +233,7 @@ design 合意: [20260601-c02-slideshow-source-registry-slice.html](../../working
 | `on_select_slideshow_profile(profile_id \| none)` | profile → `resolve_profile_members` → owner / combo / label 更新 |
 | `on_select_slideshow_source(side, source_id \| none)` | 側別 `resolve_source` → owner / label 更新 |
 | `on_manage_source_registry()` | dialog 表示。Close 後に tab 上 combo を catalog から再構築 |
+| （C-01）`bootstrap_preset_sources` | startup / Manage Close 後 — §6.5。combo に `*…` 行を載せる前提 |
 
 **Saved source と Srcdir ブラウズの併存（オーナー合意 2026-06-01）:**
 
@@ -337,7 +338,7 @@ GTK / Qt 両 backend で、次の user-facing surface は **同じ省略規則**
 ### 6.3 source registry 接続（C-02）
 
 - Slideshow tab の registry UI は §4.2 の layout / handler に従う。catalog 永続化は [source-spec](../source/harite-source-spec.md) が正本。
-- startup / settings load 後、backend は catalog を load し、tab 上 combo を構築する。settings の任意 key `slideshow_source_id_l/r` / `slideshow_profile_id` があれば、対応 combo 選択を復元してよい（path は従来どおり `slideshow_srcdir_*` が実行値）。
+- startup / settings load 後、backend は catalog を load し、**C-01:** `bootstrap_preset_sources`（§6.5）ののち tab 上 combo を構築する。settings の任意 key `slideshow_source_id_l/r` / `slideshow_profile_id` があれば、対応 combo 選択を復元してよい（path は従来どおり `slideshow_srcdir_*` が実行値）。
 - Saved / Profile 選択および Srcdir ブラウズの優先関係は §4.2 の併存表が正本。**`— none —` は source id のみクリアし path は維持**、**Srcdir ブラウズは registry 外 path として combo を `— none —` に戻す**。
 
 ### 6.4 Registry resolve at start（C-05）
@@ -347,18 +348,51 @@ GTK / Qt 両 backend で、次の user-facing surface は **同じ省略規則**
 
 ### 6.5 Remote source と preset（C-01）
 
-契約の正本は [source-spec §12–16](../source/harite-source-spec.md)。**段 1a では GUI 挙動を追加しない。**
+契約の正本は [source-spec §12–16](../source/harite-source-spec.md)。**Preset** は別画面の「候補一覧 + Import ボタン」ではなく、**既存 Slideshow combo に予約項目として載る**組み込み source である（オーナー合意 2026-06-03）。
 
-| 項目 | 段 4 で追加予定 |
+#### 意図（Import / Sync ボタンを置かない理由）
+
+段 1a 草案の「Import」「手動 Sync」は、planning §11 の「user catalog に最初から書かない」を **ユーザー操作の Import** と読んだための **過剰 UI** だった。オーナー期待は次のとおり。
+
+| 期待 | spec 上の対応 |
 | --- | --- |
-| Preset 一覧 | Manage dialog または同等 surface（読み取り専用） |
-| Import | 「Add to my sources」→ `import_preset_source` |
-| Sync | remote source 行に **手動 Sync**（`sync_remote_source`） |
-| Icons | Profile 行・Manage 行（planning #12 — Lucide `archive` 等） |
-| 除外 | 相手先サイト内検索・サムネプレビュー（planning #7） |
+| 起動時点で preset 分の **materialize + Sync 相当が済んでいる** | GUI startup（§6.3 の catalog load 直後）で [source-spec §13.4](../source/harite-source-spec.md) `bootstrap_preset_sources` を呼ぶ |
+| `combo_slideshow_source_l/r` や `combo_slideshow_profile` に **`*気象庁` / `*JMA` 等**が最初から見える | combo 表示名に **`*` 接頭辞**（§4.2 拡張）。実体は user catalog 上の source / profile（起動時 bootstrap で確保） |
+| ユーザーが毎回「取り込む」「同期する」を押さない | **専用 Import / Sync ボタンは Slideshow タブに置かない** |
 
-- remote source 選択後の slideshow 経路は **C-05 と同型**（start 前 resolve → cache directory を `slideshow_srcdir_*` に展開）。
-- GTK preset / Sync UI parity は follow-up（Qt 先行）。
+同梱 preset ファイルは **テンプレート正本**（site-packages）。user `harite-sources.json` には起動時 bootstrap で **エントリを書き込む**（削除されても次回起動で再 materialize してよい — §13.4）。
+
+#### Startup（Qt 先行）
+
+catalog load のあと、settings 反映前でも後でもよいが **Slideshow combo 構築前**に:
+
+1. `bootstrap_preset_sources(catalog)` — 不足 preset source / profile を import 相当で補完し `save_catalog` してよい。
+2. 各 preset remote source に対し `sync_remote_source` を **best-effort**（失敗は message history、起動は継続）。
+3. §4.2 の combo 再構築。preset 由来行は表示 `*{name}`（例: `*気象庁`、短縮 `*JMA` は §15 / preset `name` に従う）。
+
+**slideshow Start 直前の network fetch は行わない**（planning #4 維持 — 起動時 bootstrap Sync のみ）。
+
+#### §4.2 拡張 — combo 表示
+
+| 種別 | combo 表示例 | 内部値 |
+| --- | --- | --- |
+| ユーザー追加 `local-dir` | 従来どおり `name`（`*` なし） | source `id` |
+| preset 由来 remote | `*{name}`（例: `*気象庁`） | source `id`（`notes` 等の preset マーカーで識別 — [source-spec §13.4](../source/harite-source-spec.md)） |
+| preset 由来 profile | `*{name}`（例: `*気象庁 天気図`） | profile `id` |
+| `— none —` | 従来どおり | none |
+
+選択・resolve・tracking の handler は **C-02 / C-05 と同型**（`on_select_slideshow_source` 等）。表示だけ `*` 付き。
+
+#### 段 4 で追加する surface
+
+| 項目 | 内容 |
+| --- | --- |
+| Startup bootstrap | 上記 1–3（**必須**） |
+| Icons | Profile 行・Manage 行（planning #12 — Lucide `archive` 等） |
+| Manage 拡張（任意） | remote 行の **Refresh**（= `sync_remote_source`）は **任意**。Slideshow タブに Sync ボタンは **置かない** |
+| 除外 | 相手先サイト内検索・サムネ・preset 専用一覧ダイアログ（planning #7） |
+
+- GTK parity は follow-up（Qt 先行）。
 
 ### slideshow start / tick / stop
 

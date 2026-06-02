@@ -42,12 +42,14 @@
 | **改変責任** | ユーザーが site-packages 内の同梱ファイルを **書き換え・削除**した場合は **製品責任外** |
 | **拡張** | 新サイトは **preset ファイルへエントリ追加** + provider 実装（#10）。user catalog schema 変更は **不要** |
 
-**UX（案）:**
+**UX（2026-06-03 オーナー訂正）:**
 
-1. Slideshow / Manage から **Preset 一覧**を表示（読み取り専用）
-2. ユーザーが **「Add to my sources」** → エントリを **user catalog にコピー**（新 UUID 採番）
-3. 以降は通常の C-02 source として Manage / profile / slideshow 連携
-4. **Sync** で cache 更新（手動。§4）
+1. **起動時** `bootstrap_preset_sources` — 同梱 preset を user catalog に materialize + **Sync 相当**（best-effort）
+2. Slideshow の **Profile / Saved source combo** に **`*気象庁` / `*JMA` 等**を予約行として表示（専用 Import ボタンは **不要**）
+3. 選択・Start は C-02 / C-05 と同型（Start 直前の network fetch は **しない** — §4）
+4. Manage 内 **Refresh**（手動 Sync）は **任意**。Slideshow タブに Sync ボタンは **置かない**
+
+（旧案の preset 一覧 + 「Add to my sources」は **採用しない** — spec/gui-spec §6.5）
 
 ```text
 [同梱] resources/source-presets/*.json   … 読み取り専用テンプレート
@@ -83,7 +85,7 @@ K-05         … 定期 auto-sync は対象外
 - `kind` 命名 `remote-{略称}`（#2）
 - cache 根の OS 別規則（#3）
 - provider: **気象庁**（詳細は spec 1b。NASA は対象外）
-- GUI: preset 一覧・import・Sync・既存 combo 連携
+- GUI: 起動 bootstrap・combo `*…` 表示・既存 combo 連携（専用 Import/Sync ボタンなし）
 - 帰属・ToS 文言（#9、サイトごと）
 - Slideshow 用 **アイコン**（#12、Lucide 追加）
 
@@ -136,7 +138,7 @@ NASA APOD（https://api.nasa.gov/）は **API に DEMO key が必要**なため�
 | **4** | start 前 auto-sync | preset 同梱ファイルは **アプリ版とともに不変**（版アップまで考慮不要）。**user source の sync** は手動（Sync 操作）— stale 自動 poll は初期外 |
 | **5** | API key | **一切使わない**（ユーザー管理・DEMO_KEY 埋め込み含む） |
 | **6** | catalog schema | **変更なし**（v1）。preset は **別ファイル**（§11） |
-| **7** | GUI 深度 | **相手先サイトの検索 UI 連携は不要・予定なし**。**サムネ取得・表示もしない**。Harite 側は **preset 一覧 + import + Sync** のみ（Manage 最小） |
+| **7** | GUI 深度 | **検索・サムネなし**。combo に **`*…` preset 行** + 起動 bootstrap（**専用 Import/Sync ボタンなし**） |
 | **8** | CLI | **打ち止め・対象外**（C-02 継続） |
 | **9** | 帰属・ToS | **各ターゲットサイトの規約に従う**（出典明記等は provider / GUI 文言で） |
 | **10** | 追加サイト | **§11 preset に定義を足す** + provider 追加。user schema 変更なし |

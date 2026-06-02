@@ -270,9 +270,9 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 外部サイトから取得した壁紙候補を **cache-first** で扱う。fetch → ローカル cache directory → 既存 `resolve` → C-05 slideshow（実行面は `local-dir` と同型の directory 列挙）。
 
 ```text
-[同梱 preset §13] → user import → harite-sources.json (schema v1, kind=remote-*)
-       → 手動 Sync (§12.4) → cache/{source_id}/
-       → resolve → slideshow_srcdir_* (C-05)
+[同梱 preset §13] → 起動時 bootstrap (§13.4) → harite-sources.json (schema v1, kind=remote-*)
+       → 起動時 Sync (§12.4) → cache/{source_id}/
+       → combo に *{name} 表示 (gui-spec §6.5) → 選択 → resolve → slideshow (C-05)
 ```
 
 ### 12.1 `kind` 命名
@@ -321,7 +321,9 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 
 | タイミング | 契約 |
 | --- | --- |
-| **Sync** | ユーザー明示操作（GUI 等）。**start 前 auto-sync はしない**（planning #4） |
+| **Preset bootstrap Sync** | GUI **起動時**（§13.4）。同梱 preset ごとに `sync_remote_source` を **best-effort**（失敗しても起動継続） |
+| **手動 Refresh** | **任意**（Manage 内等）。Slideshow タブに **Sync ボタンは置かない**（gui-spec §6.5） |
+| **slideshow Start 直前** | **network fetch しない**（planning #4 — 起動時 bootstrap のみ） |
 | **resolve** | cache directory が **存在し directory である**こと（§4 と同型の `normalize_directory_path`）。空 directory や画像 0 件は **resolve 時には成功しうる**が、slideshow start の画像収集は [slideshow-spec](../slideshow/harite-slideshow-spec.md) で失敗しうる |
 | **実行中** | cache 削除・Sync による参照不能 → §7.5 / §7.6 と同型（stop / start failure） |
 
@@ -329,7 +331,7 @@ network エラー・HTTP 4xx/5xx は Sync 時に `ValueError`（またはラッ�
 
 ## 13. Source preset（C-01 段 1a）
 
-製品同梱の **読み取り専用**テンプレート。user の `harite-sources.json` には **自動書き込みしない**（planning §11）。
+製品同梱の **読み取り専用**テンプレート正本。user `harite-sources.json` への反映は **起動時 bootstrap**（§13.4）で行う。ユーザーが catalog から削除しても、次回起動で **再 materialize してよい**。
 
 ### 13.1 配置と読み込み
 
@@ -369,7 +371,7 @@ user catalog とは **別ファイル**。ルート object:
 
 profile import は、参照する source `preset_id` が **同一操作または既存 catalog に存在**することを要求する。
 
-### 13.3 Import 契約
+### 13.3 Import API（core）
 
 | 操作 | 契約 |
 | --- | --- |
@@ -377,8 +379,21 @@ profile import は、参照する source `preset_id` が **同一操作または
 | `import_preset_source(user_catalog, preset_id)` | 新 UUID、`path` = `remote_cache_dir(source_id)`、§5 上限・名前一意性を検証 |
 | `import_preset_profile(user_catalog, preset_id)` | 新 UUID。`members` の preset_id を **新規 import した source id** へ解決（同一 import バッチ内の対応表） |
 
-- 同一 `name` の source が既にあれば `ValueError`（再 import はユーザーが rename するか別名 preset を使う）。
+- GUI の主経路は **§13.4 bootstrap**（ユーザーが Import ボタンを押す想定ではない）。
 - import は **CLI 対象外**（planning #8）。
+
+### 13.4 Preset bootstrap（GUI 起動時）
+
+| 操作 | 契約 |
+| --- | --- |
+| `bootstrap_preset_sources(catalog)` | 同梱 preset の各 `preset_id` について、catalog に **対応 source が無ければ** `import_preset_source` 相当で追加。対応 profile が無ければ `import_preset_profile` 相当で追加（任意 preset） |
+| マーカー | preset 由来 source の `notes` に `harite-preset:{preset_id}` を含める（既存行の検索用）。表示名の `*` 接頭辞は **GUI のみ**（catalog `name` は `*なし` — 例: `気象庁`） |
+| 永続化 | 変更があれば `save_catalog` してよい |
+| Sync | bootstrap 直後、追加・既存の preset 由来 remote それぞれに `sync_remote_source` を **best-effort**（§12.4） |
+
+**同一 `name` の衝突:** ユーザーが同名の `local-dir` を既に持つ場合は `ValueError` を避けるため、bootstrap は **マーカー一致の既存行を優先**し、無関係の同名があるときは preset `name` にサフィックスを付けた実装をしてよい（具体は impl 段、1b で気象庁名を確定）。
+
+**削除後:** ユーザーが preset 由来 source を catalog から delete しても、次回 `bootstrap_preset_sources` で **再作成してよい**（profile 参照が残る場合は §7.5 に従い delete 拒否のまま）。
 
 ## 14. Provider 契約（C-01 段 1a）
 
@@ -436,7 +451,7 @@ load / save 時の catalog 検証では、`remote-*` の `path` は **存在し�
 | surface | 段 1a spec | 段 4 以降 |
 | --- | --- | --- |
 | **CLI** | 変更なし（打ち止め） | 変更なし |
-| **GUI** | [gui-spec §6.5](../gui/harite-gui-spec.md) に境界のみ | preset 一覧、import、Sync、icons（planning #12） |
+| **GUI** | [gui-spec §6.5](../gui/harite-gui-spec.md) — combo `*…`、起動 bootstrap | startup bootstrap + icons（planning #12）。専用 Import/Sync ボタンは **置かない** |
 
 ## 11. 実装状態
 
