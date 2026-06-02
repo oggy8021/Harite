@@ -1,6 +1,6 @@
 # Harite source registry 仕様 (Source Spec)
 
-最終更新: 2026-06-03 (C-01 — §12–16 remote / preset / cache / provider。§15 気象庁は未記載)
+最終更新: 2026-06-03 (C-01 — §12–16、§15 気象庁 provider)
 
 ## 1. 責務
 
@@ -15,7 +15,6 @@
 - CLI `harite source` サブコマンド（CLI 打ち止め — [cli-spec](../cli/harite-cli-spec.md)）
 - plugin registry（[plugin-spec](../plugins/harite-plugin-spec.md)）— OS apply plugin 登録であり、入力 source ではない
 - profile / source の **ordered list** 形状、profile 間の周回ローテ
-- 気象庁 provider の取得・L/R 割当・帰属（§15 未記載）
 
 planning 正本: [20260601-1400-c02-source-registry-planning.md](../../working/20260601-1400-c02-source-registry-planning.md)（C-02）、[20260602-1400-c05-slideshow-source-enhancement-planning.md](../../working/20260602-1400-c05-slideshow-source-enhancement-planning.md)（C-05）、[20260603-1400-c01-external-wallpaper-source-planning.md](../../working/20260603-1400-c01-external-wallpaper-source-planning.md)（C-01）
 
@@ -432,28 +431,80 @@ Sync は **idempotent** でよい（同一内容の再取得可）。
 
 load / save 時の catalog 検証では、`remote-*` の `path` は **存在しなくても load 可**（resolve / Sync / start 時に失敗）。
 
-## 15. Provider 実装 — 気象庁（C-01）
+## 15. Provider 実装 — 気象庁（C-01 段 1b）
+
+`kind`: **`remote-jma-weather-map`**。API key は用いない。
+
+### 15.1 データ源
+
+| 項目 | URL |
+| --- | --- |
+| 一覧 | `https://www.jma.go.jp/bosai/weather_map/data/list.json` |
+| 画像 | `https://www.jma.go.jp/bosai/weather_map/data/png/{filename}` — `{filename}` は list 要素の文字列 |
+
+`list.json` ルートの category key と preset の対応:
+
+| `preset_id` | list.json パス | 内容 |
+| --- | --- | --- |
+| `jma-near-color` | `near.now` | 日本付近・カラー実況天気図 |
+| `jma-asia-color` | `asia.now` | アジア域・カラー実況天気図 |
+
+`near_monochrome` / `asia_monochrome` および `ft24` / `ft48` は **Sync 対象外**。
+
+### 15.2 Sync 手順
+
+`sync_remote_source`（`harite-preset:{preset_id}` で分岐）:
+
+1. `list.json` を GET（UTF-8 JSON）。
+2. 上表の配列から、ファイル名に **`JRcolor`** を含む要素のみ対象とする。
+3. 配列の **最終要素**を `{filename}` とする。空配列は `ValueError`。
+4. `https://www.jma.go.jp/bosai/weather_map/data/png/{filename}` を GET（PNG）。
+5. cache directory（§12.3）へ保存:
+   - 現行: `latest.png`
+   - 直前: `previous.png`（§12.3 の 2 世代保持）
+6. `default_notes` が未設定で catalog `notes` が空のとき、§15.4 の帰属 1 行目を `notes` に追記してよい。
+
+### 15.3 同梱 preset
+
+package: `harite.gui` / `resources/source_presets/harite-source-presets.json`（§13.2）。
+
+| `preset_id` | `name` | `kind` | profile |
+| --- | --- | --- | --- |
+| `jma-near-color` | `気象庁（日本付近）` | `remote-jma-weather-map` | — |
+| `jma-asia-color` | `気象庁（アジア域）` | `remote-jma-weather-map` | — |
+| `jma-dual-lr` | `気象庁 L/R` | — | `members.L` = `jma-near-color`, `members.R` = `jma-asia-color` |
+
+GUI combo 表示は `*{name}`（例: `*気象庁（日本付近）` — [gui-spec §6.5](../gui/harite-gui-spec.md)）。
+
+### 15.4 帰属
+
+preset `notes` および Manage で表示する出典（公共データ利用規約 第 1.0 版）:
+
+```text
+harite-preset:{preset_id}
+出典：気象庁ホームページ（https://www.jma.go.jp/）
+```
+
+### 15.5 デュアル slideshow L/R
 
 | 項目 | 契約 |
 | --- | --- |
-| 第 1 provider | 気象庁（天気図等） |
-| `kind` | `remote-jma-weather-map`（確定値は本節追記時に更新） |
-| 取得 URL / list.json | （未記載） |
-| デュアル slideshow L/R 割当 | （未記載） |
-| 帰属文言 | （未記載） |
+| 既定 profile | 同梱 `jma-dual-lr` — L = `jma-near-color`、R = `jma-asia-color` |
+| start 前 resolve | [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md) — 各 side の cache を `slideshow_srcdir_*` に展開 |
+| 画像収集 | 各 cache に `latest.png` 1 件。L/R 独立 cycle は §6.6 既存どおり |
 
 ## 16. GUI / CLI（C-01）
 
 | surface | 契約 |
 | --- | --- |
-| **CLI** | remote / preset API を **露出しない** |
+| **CLI** | 変更なし |
 | **GUI** | [gui-spec §6.5](../gui/harite-gui-spec.md) |
 
 ## 11. 実装状態
 
 | 層 | C-02 | C-05 | C-01 |
 | --- | --- | --- | --- |
-| **spec** | #374 | #383 | #388 — §12–16（§15 気象庁は未記載） |
+| **spec** | #374 | #383 | #388 §12–16、1b §15 |
 | **tests (core)** | #375 | — | 段 2 |
 | **impl (core)** | #375 | — | 段 3 |
 | **tests (GUI)** | #378 | #384 | 段 4 |

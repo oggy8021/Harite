@@ -291,7 +291,7 @@ stop 時は作業ディレクトリ内のスロットファイル **を削除し
 
 ### 6.6 Registry 連動実行（C-05）
 
-[source-spec](../source/harite-source-spec.md) の catalog と GUI slideshow 実行の接続。planning: [20260602-1400-c05-slideshow-source-enhancement-planning.md](../../working/20260602-1400-c05-slideshow-source-enhancement-planning.md)。
+[source-spec](../source/harite-source-spec.md) の catalog と GUI slideshow 実行の接続。
 
 #### start 前の resolve
 
@@ -303,7 +303,9 @@ stop 時は作業ディレクトリ内のスロットファイル **を削除し
 4. `resolve_*` が `ValueError`（inaccessible / 未知 id）なら **start failure** とし、slideshow は開始しない（transient / pause 扱いにしない）。
 5. 確定した `slideshow_srcdir_l/r` で §2 の directory 検証と `collect_slideshow_input_images` を行う。
 
-**手動 Srcdir のみ**の side（tracking key 空）は、手順 2–3 をスキップし、既存 `slideshow_srcdir_*` を検証する。
+`remote-*` source の cache directory は `local-dir` と同型の slideshow 入力 directory として扱う（[source-spec §15.5](../source/harite-source-spec.md)）。
+
+手動 Srcdir のみの side（tracking key 空）は、手順 2–3 をスキップし、既存 `slideshow_srcdir_*` を検証する。
 
 #### tick 中
 

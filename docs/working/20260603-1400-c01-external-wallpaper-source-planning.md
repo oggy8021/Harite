@@ -1,6 +1,6 @@
 # C-01 — 外部壁紙サイト連携 planning
 
-最終更新: 2026-06-03（**段 1a 完了** #388。**次:** spec 1b 気象庁）
+最終更新: 2026-06-03（**段 1b spec** 着手中 — 1a #388 / #389 済）
 
 ## 位置づけ
 
@@ -42,14 +42,11 @@
 | **改変責任** | ユーザーが site-packages 内の同梱ファイルを **書き換え・削除**した場合は **製品責任外** |
 | **拡張** | 新サイトは **preset ファイルへエントリ追加** + provider 実装（#10）。user catalog schema 変更は **不要** |
 
-**UX（2026-06-03 オーナー訂正）:**
+**UX:**
 
-1. **起動時** `bootstrap_preset_sources` — 同梱 preset を user catalog に materialize + **Sync 相当**（best-effort）
-2. Slideshow の **Profile / Saved source combo** に **`*気象庁` / `*JMA` 等**を予約行として表示（専用 Import ボタンは **不要**）
-3. 選択・Start は C-02 / C-05 と同型（Start 直前の network fetch は **しない** — §4）
-4. Manage 内 **Refresh**（手動 Sync）は **任意**。Slideshow タブに Sync ボタンは **置かない**
-
-（旧案の preset 一覧 + 「Add to my sources」は **採用しない** — spec/gui-spec §6.5）
+1. 起動時 `bootstrap_preset_sources` + preset 由来 `sync_remote_source`（best-effort）
+2. Slideshow combo に `*気象庁（日本付近）` 等（[gui-spec §6.5](../specs/gui/harite-gui-spec.md)）
+3. 既定 profile `気象庁 L/R` — L=日本付近、R=アジア域（[source-spec §15](../specs/source/harite-source-spec.md)）
 
 ```text
 [同梱] resources/source-presets/*.json   … 読み取り専用テンプレート
@@ -175,7 +172,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 | --- | --- | --- |
 | **0** | 本 planning（本書） | ~~マージ許可~~ **完了**（#386） |
 | **1a** | spec — preset 契約、remote kind、cache 根、provider インタフェース | ~~spec PR~~ **完了**（#388） |
-| **1b** | spec — **気象庁調査**（取得画像・list.json/URL 組み立て・**L/R 割当**・帰属・`remote-jma-*`） | spec PR — **オーナー確認で確定** |
+| **1b** | spec — 気象庁 §15（list.json / png URL / L/R profile / preset JSON） | spec PR |
 | **2** | tests — preset load、fetch モック、resolve + slideshow 連携 | tests PR |
 | **3** | impl — preset loader、第 1 provider、cache、resolve 拡張 | impl PR |
 | **4** | GUI — bootstrap、combo `*…`、Refresh、icons（#12） | 段階停止 |
@@ -187,7 +184,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 
 | 層 | 状態 |
 | --- | --- |
-| **spec** | 段 1a 骨格（[harite-source-spec §12–16](../specs/source/harite-source-spec.md)）— 1b §15 気象庁は未記載 |
+| **spec** | [harite-source-spec §12–15](../specs/source/harite-source-spec.md)（1b PR レビュー中） |
 | **tests** | なし |
 | **impl** | なし |
 
@@ -196,7 +193,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 1. ~~open questions #1–12~~ — **決定済**（**#1 = 気象庁**）
 2. ~~**本 planning PR マージ**~~ — **#386 済**
 3. ~~**spec PR 1a**~~ — **#388 済**
-4. **spec PR 1b** — 気象庁（§15）・画像選定・L/R・帰属
+4. **spec PR 1b** — 気象庁 §15（PR 作成中）
 5. tests + impl → GUI → audit
 
 ## 参照

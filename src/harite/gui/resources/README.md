@@ -14,3 +14,4 @@
 3. signal や layout の追跡は docs/specs/gui/ の文書で管理する
 4. product icon のような runtime asset は package 内 resource としてここへ置く
 5. runtime からは importlib.resources 経由で参照し、docs/mock asset とは混線させない
+6. source preset は `source_presets/harite-source-presets.json`（[source-spec §15](../../../docs/specs/source/harite-source-spec.md)）
