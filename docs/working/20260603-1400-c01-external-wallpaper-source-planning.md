@@ -1,231 +1,189 @@
 # C-01 — 外部壁紙サイト連携 planning
 
-最終更新: 2026-06-03（**段 0 着手** — open questions 未決）
+最終更新: 2026-06-03（**段 0** — open questions **オーナー決定済**）
 
 ## 位置づけ
 
 - 親 inventory: [20260518-2047-feature-overview.md](20260518-2047-feature-overview.md) §C-01
-- 第4波の **本丸**（オーナー発案）。前提: **C-02**（registry）+ **C-05**（slideshow 実行面）**完了**
-- `kind` フィールドは C-02/C-05 で **将来拡張用**として温存済み — C-01 で初めて **remote 系 kind** を載せる
+- 第4波の **本丸**（オーナー発案）。前提: **C-02** + **C-05** **完了**
+- ユーザーの `harite-sources.json` の **schema は変更しない**（v1 維持）。remote 用の設定は **同じ source 形状** + 新 `kind` 値で表現
 
 ## 用語
 
 | 語 | 意味 |
 | --- | --- |
-| **source** | [harite-source-spec.md](../specs/source/harite-source-spec.md) の catalog エントリ |
-| **`local-dir`** | 既存 kind。OS 上の directory path を直接参照 |
-| **remote source**（C-01 案） | 外部サイト / API から画像候補を取得し、**ローカル cache directory** へ同期したうえで slideshow / optimize が読む source |
-| **provider** | サイト別の取得実装（API client、認証、ページング） |
-| **resolve** | C-05 継承 — start 前に id → **実行用 directory path**（remote の場合は **cache 済み directory**） |
+| **user catalog** | ユーザー設定配下の `harite-sources.json`（C-02） |
+| **source preset** | 製品同梱の **候補定義**（§11）。user catalog には **自動では書かない** |
+| **`local-dir`** | 既存 kind |
+| **remote source** | `kind` が `remote-{provider略称}` の source。fetch 後は **cache directory** を `path` に持つ |
+| **provider** | サイト別 fetch 実装（NASA APOD 等） |
+| **resolve** | C-05 継承 — start 前に id → 実行用 directory `Path`（remote は cache 済み path） |
 
-## ゴール（C-01 で言う「外部壁紙サイト連携」）
+## ゴール（C-01）
 
-外部サイトや公開 API から壁紙候補を取得し、**既存の source registry / profile / slideshow 経路**で再利用できるようにする。
+外部 API から壁紙候補を取得し、**既存 registry / profile / slideshow** で使えるようにする。
 
-| 現状（C-05 完了後） | C-01 後（目標イメージ） |
+| 方針 | 内容 |
 | --- | --- |
-| `kind: local-dir` のみ | **`local-dir` + remote 系 kind**（1 種類から開始可） |
-| 入力は手動 path / ローカル NAS のみ | **登録済み remote source** を catalog に保存し、profile / Slideshow から選択 |
-| slideshow は directory 内画像を列挙 | remote も **最終的には local cache directory** を `resolve` し、C-05 実行面を **そのまま流用** |
-| 利用規約・キャッシュなし | **サイトごとの取得規則 + ローカル cache 方針**を spec で固定 |
+| **cache-first** | fetch → ローカル cache → `resolve` → C-05 slideshow（実行面はほぼ流用） |
+| **preset 配布** | サイト定義は **package 内 JSON**（§11）。ユーザーが **自分の catalog に取り込む** |
+| **schema 不変** | `harite-sources.json` の `schema_version: 1` とフィールド集合は **そのまま** |
+| **第 1 impl** | オーナー選定: **NASA 今日の天文写真（APOD）** — 他サイトは preset 追加で拡張 |
 
-**product 上の価値:** オーナー用途の「ネット上の壁紙ストックを Harite の slideshow に載せる」。C-05 で固めた NAS/UNC/G: はローカル系として維持し、**インターネット経由の候補源**を足す。
+## §11 — Source preset（オーナー決定・本 feature の柱）
 
-## 現状 inventory（2026-06-03、post C-05）
+製品に **事前登録した source 候補** を同梱する。ユーザーの `harite-sources.json` には **最初から書かない**（削除されやすいため）。
 
-### 既存基盤（再利用）
+| 項目 | 決定 |
+| --- | --- |
+| **置き場** | `src/harite/gui/resources/` 配下（[resources README](../../src/harite/gui/resources/README.md) 方針: `importlib.resources` 参照）。例: `source-presets/harite-source-presets.json` または provider 別 JSON |
+| **形式** | `harite-sources.json` **近似**（同じ `sources` / `profiles` 構造を **参考にした preset 用ファイル**）。user catalog とは **別ファイル** |
+| **Profiles** | preset 内に profile 例を載せてもよいが、**ユーザーの profile に入れるかはユーザ判断** |
+| **改変責任** | ユーザーが site-packages 内の同梱ファイルを **書き換え・削除**した場合は **製品責任外** |
+| **拡張** | 新サイトは **preset ファイルへエントリ追加** + provider 実装（#10）。user catalog schema 変更は **不要** |
+
+**UX（案）:**
+
+1. Slideshow / Manage から **Preset 一覧**を表示（読み取り専用）
+2. ユーザーが **「Add to my sources」** → エントリを **user catalog にコピー**（新 UUID 採番）
+3. 以降は通常の C-02 source として Manage / profile / slideshow 連携
+4. **Sync** で cache 更新（手動。§4）
+
+```text
+[同梱] resources/source-presets/*.json   … 読み取り専用テンプレート
+         ↓ ユーザー操作（import）
+[user]   harite-sources.json             … schema v1 不変、kind=remote-* を追加
+         ↓ Sync
+[cache]  OS 別 cache 根（§3）/ {source_id}/
+         ↓ resolve（C-05 start 前）
+[run]    slideshow / optimize
+```
+
+## 現状 inventory（post C-05）
 
 | 層 | 内容 |
 | --- | --- |
-| **catalog** | `harite-sources.json` — `harite.sources` CRUD / resolve |
-| **settings tracking** | `slideshow_source_id_l/r`, `slideshow_profile_id` |
-| **slideshow 実行** | start 前 resolve（#384）、tick は path のみ、catalog 変更 stop（§7.6） |
-| **GUI** | Qt: Manage dialog、Saved source / profile combo（GTK parity は follow-up） |
-| **CLI** | `harite source` サブコマンド **なし**（C-02 打ち止め） |
-
-### 未存在
-
-- remote / API 用 **provider** モジュール
-- catalog 上の **remote 設定フィールド**（endpoint、query、API key 参照 id 等）
-- **cache directory**  layout と sync / refresh API
-- サイト別 **利用規約・帰属**の product 記載
-- GUI: 検索・プレビュー・「今すぐ同期」等の **remote 専用 UI**
-
-### C-05 / C-02 から引き継ぐ制約
-
-| 決定 | C-01 への影響 |
-| --- | --- |
-| PyGObject / GVFS で NAS 読む案は **見送り** | remote も **HTTP(S) + ローカル cache** が自然。SMB 直結は `local-dir` のまま |
-| `smbprotocol` 等の独自 SMB クライアント **見送り** | 同上 |
-| profile **ordered list 非採用** | remote も **フラット catalog + L/R profile** のみ |
-| slideshow **tick 毎の catalog 再 load なし** | remote 画像の更新は **明示 refresh** または **start 前 sync** で扱う |
-| Main タブ input の registry 化 **対象外** | C-01 は **Slideshow source 系**を主戦場 |
+| **user catalog** | `harite.sources` + Qt Manage（C-02） |
+| **slideshow** | start 前 resolve（C-05 #384） |
+| **同梱 preset** | **未存在** |
+| **remote fetch** | **未存在** |
 
 ## C-01 と隣接 feature の境界
 
 ```text
-C-02  registry + profiles     … 完了
-C-05  slideshow 実行面        … 完了（local-dir resolve）
-C-01  外部サイト / API        … remote kind + cache + provider + GUI（本 planning）
-K-02  metadata / history      … 構想保持（C-01 と同時に広げない）
-K-05  scheduler               … 構想保持（自動 refresh は別 feature）
+C-02 / C-05  … 完了
+C-01         … preset 配布 + remote kind + cache + provider（NASA 第1弾）+ GUI import/sync
+K-02         … metadata 本格化は対象外
+K-05         … 定期 auto-sync は対象外
 ```
 
-**C-01 に含める（案）:**
+**C-01 に含める:**
 
-- source-spec 拡張: remote kind、cache path 規則、resolve 契約（cache 必須）
-- 新規または分冊: **remote provider 契約**（1 サイト目の API 詳細）
-- core: fetch + cache 書き込み + `resolve_source` 拡張
-- GUI: remote source 登録・同期トリガー・Slideshow 既存 combo 連携
-- tests: provider モック、cache layout、resolve-at-start 連携
+- 同梱 preset ファイル + loader（`importlib.resources`）
+- `kind` 命名 `remote-{略称}`（#2）
+- cache 根の OS 別規則（#3）
+- provider: **NASA APOD**（第 1 実装）
+- GUI: preset 一覧・import・Sync・既存 combo 連携
+- 帰属・ToS 文言（#9、サイトごと）
+- Slideshow 用 **アイコン**（#12、Lucide 追加）
 
 **C-01 に含めない（初期）:**
 
-- **複数サイト同時** — 1 provider 完了後に追加（plugin パック型は K-04 構想）
-- **K-02** タグ・評価・履歴の本格モデル
-- **CLI `harite source sync`** — C-02 打ち止めを **維持する案が default**（open question）
-- **GTK parity** — Qt-first（C-02 follow-up と同型）
-- **認証 UI の一般化** — 1 サイト目で最小（API key を settings / env のどちらか）
+- ユーザー管理 **API key** が必要なサイト（#5）
+- **CLI** 拡張（#8）
+- **catalog schema_version 2**（#6）
+- リッチな **検索ギャラリー**（#7 → 不要寄り）
+- **embed 強制マージン**へのライセンス焼き込み（面白いが **議論分かれ・defer**）
+- GTK registry / preset UI parity（follow-up）
 
-## planning で詰める論点
+## オーナー選定 — 第 1 ターゲット候補（#1）
 
-### 1. 第 1 ターゲットサイト / API
+**第 1 実装:** **NASA 今日の天文写真（APOD）** — https://api.nasa.gov/
 
-feature-overview: 対象サイト、取得方法、利用規約。
-
-| 観点 | planning 案 |
+| 候補（preset / 後続 provider） | メモ |
 | --- | --- |
-| **第 1 弾** | **1 サイト / 1 公開 API** に限定（完了定義を明確化） |
-| **候補** | オーナー指定待ち — 例: Wallhaven 系 API、Unsplash Source、静的 JSON フィード、自作 NAS の HTTP index（`local-dir` で足りるなら対象外） |
-| **利用規約** | 各 provider の ToS / 帰属表示を **spec + README** に明記。実装前に **オーナー確認** |
+| **NASA APOD** | 第 1 impl |
+| **気象庁** 天気図等 | https://www.jma.go.jp/ … [list.json](https://www.jma.go.jp/bosai/weather_map/data/list.json) 等。CC BY 4.0 互換。出典「気象庁ホームページより引用」等。**細かい画像取得・API 組み立ては別途** |
+| **NDL** デジタルコレクション API | https://dl.ndl.go.jp/ — 出典メタデータ推奨。別途 |
+| **CODH** 江戸マップ API | https://codh.rois.ac.jp/ — CC BY-SA、出展明記・同一ライセンス配布。別途 |
 
-### 2. アーキテクチャ — cache-first（推奨案）
+NASA 以外は **preset 定義 + provider 実装**を段階追加（#10）。一括実装はしない。
 
-slideshow / Pillow / `collect_slideshow_input_images` は **ローカル file path 前提**（C-05）。よって remote source の **resolve 結果は常に directory path** とする。
+**API key（#5 との関係）:** オーナー決定は **ユーザーが登録・管理する API key を要するサイトは採用しない**。NASA の公開 DEMO_KEY 等、**実装に固定で埋め込む非秘密パラメータ**がある場合は spec 段で明示（要否は APOD 仕様確認）。
+
+## Open questions — オーナー決定（2026-06-03）
+
+| # | 論点 | 決定 |
+| --- | --- | --- |
+| **1** | 第 1 ターゲット | **NASA APOD**。他は上表のとおり preset / 後続 provider |
+| **2** | `kind` 命名 | **`remote-{provider略称}`**（例: `remote-nasa-apod`） |
+| **3** | cache 場所 | **Linux:** `XDG_CACHE_HOME` 配下。**Windows:** Roaming の `harite/` 配下（settings と同系）。不可なら `%USERPROFILE%\Pictures` 等に `harite_cache_dir` — **spec 段で技術確認** |
+| **3b** | cache 保持 | fetch 済み・貼り付け中画像を **最小世代分** 保持（初案） |
+| **4** | start 前 auto-sync | preset 同梱ファイルは **アプリ版とともに不変**（版アップまで考慮不要）。**user source の sync** は手動（Sync 操作）— stale 自動 poll は初期外 |
+| **5** | API key | **ユーザー管理 API key を要するサイトは使わない** |
+| **6** | catalog schema | **変更なし**（v1）。preset は **別ファイル**（§11） |
+| **7** | GUI 深度 | **説明:** 当初は「Manage 最小 vs 検索プレビュー付きギャラリー」の二択。**結論:** ギャラリーは **初期不要**。preset 一覧 + import + Sync で足りる |
+| **8** | CLI | **打ち止め・対象外**（C-02 継続） |
+| **9** | 帰属・ToS | **各ターゲットサイトの規約に従う**（出典明記等は provider / GUI 文言で） |
+| **10** | 追加サイト | **§11 preset に定義を足す** + provider 追加。user schema 変更なし |
+| **11** | Source preset | **上記 §11 確定** |
+| **12** | アイコン（Lucide） | **Profile 行:** `bookmark` / `star` / `folder-heart` から選定（spec 段）。**Manage:** `archive`。既存 [resources/icons/lucide/](../../src/harite/gui/resources/icons/lucide/) に SVG 追加 |
+
+## planning で詰める論点（確定済み要約）
+
+### アーキテクチャ — cache-first（維持）
 
 ```text
-[登録] catalog: kind=remote-*, provider_id, query, ...
-         ↓
-[同期] provider.fetch → cache_dir/{source_id}/ に画像保存
-         ↓
-[resolve] resolve_source → cache_dir の Path（directory 検証は C-05 同型）
-         ↓
-[実行] on_slideshow_start 前 resolve → collect_slideshow_input_images（変更最小）
+preset（同梱）→ ユーザーが import → user catalog（schema v1）
+         → 手動 Sync → cache/{source_id}/
+         → resolve → slideshow（C-05）
 ```
 
-| 案 | 内容 | トレードオフ |
-| --- | --- | --- |
-| **A. cache-first（推奨）** | 上記。C-05 実行面を **ほぼ無変更** | ディスク使用、明示 sync が必要 |
-| **B. 毎 tick HTTP** | tick ごとに URL 取得 | slideshow / Pillow 改修大。非採用寄り |
-| **C. 一時 download のみ** | start 時だけ全取得 | 毎 start が遅い。A の部分集合 |
+### sync / refresh
 
-**cache 場所（案）:**
-
-| 案 | path |
+| タイミング | 決定 |
 | --- | --- |
-| **A** | `{XDG_CACHE_HOME}/harite/sources/{source_id}/` — 揮発扱い可 |
-| **B** | `{ピクチャ}/Harite/sources/{source_id}/` — slideshow 作業 dir と同型の非揮発 |
+| **手動 Sync** | 第 1 段階の正本 |
+| **start 前 auto-sync** | **しない**（#4） |
+| **定期** | K-05 — 対象外 |
 
-**初期推奨:** 案 A（cache）。オーナーが「常に残す」要望なら B へ。
+### エラー
 
-### 3. データモデル — `kind` と追加フィールド
-
-| フィールド（案） | 用途 |
-| --- | --- |
-| `kind` | 例: `"remote-wallhaven"` または `"remote"` + `provider` サブフィールド |
-| `provider` | サイト識別子（registry 内 enum） |
-| `remote_config` | object — query、category、API key 参照名等（**path は cache 解決後に denormalize 可**） |
-| `path` | **同期後**の cache directory 絶対 path（`local-dir` と同型の実行値）または空＋resolve 時生成 |
-
-**schema_version:** `harite-sources.json` を **2** に上げるか、source エントリに **optional `remote`** のみ足し v1 維持か — open question。
-
-### 4. sync / refresh のタイミング
-
-C-05（tick 毎 catalog 再 load なし）と整合:
-
-| タイミング | 案 |
-| --- | --- |
-| **手動** | Manage dialog または source 詳細の「Sync now」 |
-| **start 前** | `resolve` 内で **stale なら同期**（max-age 設定） |
-| **scheduled** | K-05 — **C-01 初期外** |
-
-**open:** start 前の自動 sync を **必須**にするか（遅延許容 vs 失敗）。
-
-### 5. 認証・秘密情報
-
-| 案 | 説明 |
-| --- | --- |
-| **settings** | `harite-settings.json` に `remote_api_keys.{provider}` — GUI settings で編集 |
-| **env** | `HARITE_WALLHAVEN_API_KEY` 等 — CI / ヘッドレス向け |
-| **catalog 禁止** | API key を `harite-sources.json` に **平文保存しない** |
-
-### 6. GUI スコープ（第 1 段階）
-
-| 含める（案） | 含めない（初期） |
-| --- | --- |
-| Manage dialog に remote source 追加（provider + 最小 query） | リッチなギャラリー browser |
-| Sync ボタン + last_sync / 件数表示 | Main タブへの統合 |
-| 既存 Slideshow combo / profile 連携 | GTK parity |
-| sync 失敗時の status / `last_error` | 複数 provider 横断検索 |
-
-### 7. エラー・オフライン
-
-| 条件 | 案 |
-| --- | --- |
-| sync 失敗 | CRUD / sync は `ValueError`。start 前 resolve で cache 空 → **start failure**（C-05 同型） |
-| 実行中 cache 削除 | **inaccessible** → stop（§7.5 既存） |
-| レート制限 | provider が backoff / user-facing メッセージ |
-
-### 8. CLI
-
-C-02 **打ち止め**を default 維持。remote 追加でも `harite source` サブコマンドは **初期外**（open question）。
+- sync 失敗 → `ValueError` / status
+- cache 空で start → start failure（C-05 同型）
+- 実行中 cache 削除 → stop（§7.5）
 
 ## 提案フェーズ分割（第4波内・C-01）
 
-| 段 | 内容 | 正本 | 停止点 |
-| --- | --- | --- | --- |
-| **0** | 本 planning + オーナー決定（open questions） | working（本書） | マージ許可 |
-| **1** | spec — source-spec 拡張 + provider 分冊（1 サイト目） | `source-spec` + `remote-*-spec` 案 | spec PR マージ |
-| **2** | tests — provider モック、cache、resolve | tests | tests PR マージ |
-| **3** | impl — `harite.sources` 拡張 + 1 provider | src | 段 2 と同梱可 |
-| **4** | GUI — Manage + sync + Slideshow 連携 | gui-spec + design slice | 段階停止 |
-| **5** | 3-layer audit | `docs/working/finished/` | close |
-
-## Open questions — 未決（オーナー確認待ち）
-
-| # | 論点 | 選択肢 / メモ |
+| 段 | 内容 | 停止点 |
 | --- | --- | --- |
-| **1** | 第 1 ターゲット | **どのサイト / API から始めるか**（必須） |
-| **2** | `kind` 命名 | `"remote"` + `provider` **vs** `"remote-{site}"` 固定 |
-| **3** | cache 場所 | **XDG cache** **vs** ピクチャ配下 **vs** catalog `path` にユーザー指定 |
-| **4** | start 前 auto-sync | **必須** **vs** 手動 sync のみ **vs** stale 時のみ |
-| **5** | API key 保管 | **settings** **vs** **env のみ** **vs** 両方 |
-| **6** | catalog schema | **v2** **vs** v1 + optional `remote` object |
-| **7** | 第 1 GUI 深度 | Manage 最小 **vs** 検索プレビュー付き |
-| **8** | CLI | **打ち止め維持** **vs** `harite source sync` 追加 |
-| **9** | 帰属・ToS | 表示義務（ウォーターマーク、クレジット）の要否 |
-| **10** | 追加サイト | 第 1 完了後に **同型 provider 追加**でよいか |
+| **0** | 本 planning（本書） | マージ許可 |
+| **1** | spec — preset ファイル契約、remote kind、cache 根、NASA APOD provider、帰属 | spec PR |
+| **2** | tests — preset load、fetch モック、resolve + slideshow 連携 | tests PR |
+| **3** | impl — preset loader、NASA provider、cache、resolve 拡張 | impl PR |
+| **4** | GUI — preset import、Sync、icons（#12）、gui-spec | 段階停止 |
+| **5** | 3-layer audit | close |
+
+**第 1 完了定義（案）:** NASA APOD preset から import した source で Sync → Slideshow start が Linux/Windows で動作し、帰属文言が spec 通り。
 
 ## 3 層比較（段 0 — 未着手）
 
 | 層 | 状態 |
 | --- | --- |
-| **spec** | C-05 まで `local-dir` のみ。remote 未記載 |
+| **spec** | 未記載（段 1） |
 | **tests** | なし |
 | **impl** | なし |
 
 ## 次アクション
 
-1. **本 planning PR** — オーナーが open questions (#1–10) を決定
-2. **spec PR**（段 1）
-3. **tests + impl**（段 2–3）
-4. **GUI**（段 4）
-5. **audit close**
+1. ~~open questions #1–12~~ — **2026-06-03 決定済**
+2. **本 planning PR マージ**
+3. **spec PR** — preset パス、remote kind、cache、NASA APOD、帰属（JMA/NDL/CODH は preset スタブのみ可）
+4. tests + impl → GUI → audit
 
 ## 参照
 
-- [C-02 planning](20260601-1400-c02-source-registry-planning.md) / [audit](finished/20260601-c02-3layer-audit.md)
-- [C-05 planning](20260602-1400-c05-slideshow-source-enhancement-planning.md) / [audit](finished/20260602-c05-3layer-audit.md)
+- [C-02](../20260601-1400-c02-source-registry-planning.md) / [C-05](../20260602-1400-c05-slideshow-source-enhancement-planning.md) planning
 - [harite-source-spec.md](../specs/source/harite-source-spec.md)
-- [harite-slideshow-spec.md](../specs/slideshow/harite-slideshow-spec.md) §6.6
+- [gui resources README](../../src/harite/gui/resources/README.md)
 - [feature-overview §C-01](20260518-2047-feature-overview.md)
