@@ -1,6 +1,6 @@
 # C-01 — 外部壁紙サイト連携 planning
 
-最終更新: 2026-06-03（**段 1a spec 着手中** — 段 0 #386/#387 済）
+最終更新: 2026-06-03（**段 1a 完了** #388。**次:** spec 1b 気象庁）
 
 ## 位置づけ
 
@@ -174,11 +174,11 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 | 段 | 内容 | 停止点 |
 | --- | --- | --- |
 | **0** | 本 planning（本書） | ~~マージ許可~~ **完了**（#386） |
-| **1a** | spec — preset 契約、remote kind、cache 根、provider インタフェース | spec PR（**着手中**） |
+| **1a** | spec — preset 契約、remote kind、cache 根、provider インタフェース | ~~spec PR~~ **完了**（#388） |
 | **1b** | spec — **気象庁調査**（取得画像・list.json/URL 組み立て・**L/R 割当**・帰属・`remote-jma-*`） | spec PR — **オーナー確認で確定** |
 | **2** | tests — preset load、fetch モック、resolve + slideshow 連携 | tests PR |
 | **3** | impl — preset loader、第 1 provider、cache、resolve 拡張 | impl PR |
-| **4** | GUI — preset import、Sync、icons（#12）、gui-spec | 段階停止 |
+| **4** | GUI — bootstrap、combo `*…`、Refresh、icons（#12） | 段階停止 |
 | **5** | 3-layer audit | close |
 
 **第 1 完了定義（案）:** 気象庁 preset を import → Sync → Slideshow start（単独・デュアル L/R は **1b で定めた割当**どおり）、帰属文言は spec 通り。
@@ -195,8 +195,8 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 
 1. ~~open questions #1–12~~ — **決定済**（**#1 = 気象庁**）
 2. ~~**本 planning PR マージ**~~ — **#386 済**
-3. **spec PR 1a** — 骨格（**PR 作成中**）
-4. **spec PR 1b** — 気象庁サイト調査・画像選定・L/R・帰属（**調査はここ。オーナーは PR レビュー**）
+3. ~~**spec PR 1a**~~ — **#388 済**
+4. **spec PR 1b** — 気象庁（§15）・画像選定・L/R・帰属
 5. tests + impl → GUI → audit
 
 ## 参照
