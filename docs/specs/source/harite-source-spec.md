@@ -1,6 +1,6 @@
 # Harite source registry 仕様 (Source Spec)
 
-最終更新: 2026-06-03 (C-01 段 1a — remote 骨格・preset・cache・provider 契約。気象庁詳細は **段 1b**)
+最終更新: 2026-06-03 (C-01 — §12–16 remote / preset / cache / provider。§15 気象庁は未記載)
 
 ## 1. 責務
 
@@ -15,8 +15,7 @@
 - CLI `harite source` サブコマンド（CLI 打ち止め — [cli-spec](../cli/harite-cli-spec.md)）
 - plugin registry（[plugin-spec](../plugins/harite-plugin-spec.md)）— OS apply plugin 登録であり、入力 source ではない
 - profile / source の **ordered list** 形状、profile 間の周回ローテ
-- **気象庁 provider** の取得画像種別・list.json 組み立て・L/R 割当・帰属文言の確定（C-01 **段 1b** — §15）
-- GUI preset 一覧 / Sync ボタン / Lucide アイコン（C-01 **段 4** — [gui-spec §6.5](../gui/harite-gui-spec.md)）
+- 気象庁 provider の取得・L/R 割当・帰属（§15 未記載）
 
 planning 正本: [20260601-1400-c02-source-registry-planning.md](../../working/20260601-1400-c02-source-registry-planning.md)（C-02）、[20260602-1400-c05-slideshow-source-enhancement-planning.md](../../working/20260602-1400-c05-slideshow-source-enhancement-planning.md)（C-05）、[20260603-1400-c01-external-wallpaper-source-planning.md](../../working/20260603-1400-c01-external-wallpaper-source-planning.md)（C-01）
 
@@ -282,7 +281,7 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 | 接頭辞 | `remote-` で始まる |
 | 略称 | 小文字英数字と `-` のみ（例: `remote-jma-weather-map`）。正規表現 `^remote-[a-z0-9]+(?:-[a-z0-9]+)*$` |
 | 登録 | 各 `kind` は **1 つの provider 実装**に対応（§14）。未登録 `kind` の Sync は `ValueError` |
-| API key | **採用しない**（ユーザー管理・実装埋め込み DEMO_KEY 含む — planning #5） |
+| API key | **採用しない**（ユーザー管理・実装埋め込みを含む） |
 
 `local-dir` 以外で `remote-` 接頭辞を持たない `kind` は **拒否**する。
 
@@ -310,9 +309,9 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 | `{cache_root}/{source_id}/` | 1 remote source あたり 1 ディレクトリ。catalog の `path` はこの **絶対 path** と一致させる |
 | 配下ファイル | provider が Sync で配置する画像（拡張子・命名は §15 / provider 実装） |
 
-**保持（planning #3b）:**
+**保持:**
 
-- Sync は **最小世代分**を残す。第 1 段階の下限は **2 世代**（現行採用候補 + 直前世代）。provider がさらに保持してよい。
+- Sync 後も **少なくとも 2 世代**の画像を残す（現行採用候補 + 直前世代）。provider がさらに保持してよい。
 - slideshow **実行中**に Sync が当該 side が参照中のファイルを削除してはならない（安全側: 参照中 basename は削除しない、または Sync を拒否）。
 
 **初回 import 時:** cache directory は **未作成でもよい**。`path` は `{cache_root}/{source_id}` を **予約**として catalog に書く。初回 Sync 成功で directory と画像が出現する。
@@ -321,9 +320,9 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 
 | タイミング | 契約 |
 | --- | --- |
-| **Preset bootstrap Sync** | GUI **起動時**（§13.4）。同梱 preset ごとに `sync_remote_source` を **best-effort**（失敗しても起動継続） |
-| **手動 Refresh** | **任意**（Manage 内等）。Slideshow タブに **Sync ボタンは置かない**（gui-spec §6.5） |
-| **slideshow Start 直前** | **network fetch しない**（planning #4 — 起動時 bootstrap のみ） |
+| **Preset bootstrap Sync** | GUI 起動時（§13.4）。各 preset 由来 remote に `sync_remote_source`（失敗しても起動継続） |
+| **Refresh** | Manage dialog 内 **任意**（[gui-spec §6.5](../gui/harite-gui-spec.md)） |
+| **slideshow Start / tick** | **network fetch しない** |
 | **resolve** | cache directory が **存在し directory である**こと（§4 と同型の `normalize_directory_path`）。空 directory や画像 0 件は **resolve 時には成功しうる**が、slideshow start の画像収集は [slideshow-spec](../slideshow/harite-slideshow-spec.md) で失敗しうる |
 | **実行中** | cache 削除・Sync による参照不能 → §7.5 / §7.6 と同型（stop / start failure） |
 
@@ -379,8 +378,8 @@ profile import は、参照する source `preset_id` が **同一操作または
 | `import_preset_source(user_catalog, preset_id)` | 新 UUID、`path` = `remote_cache_dir(source_id)`、§5 上限・名前一意性を検証 |
 | `import_preset_profile(user_catalog, preset_id)` | 新 UUID。`members` の preset_id を **新規 import した source id** へ解決（同一 import バッチ内の対応表） |
 
-- GUI の主経路は **§13.4 bootstrap**（ユーザーが Import ボタンを押す想定ではない）。
-- import は **CLI 対象外**（planning #8）。
+- GUI は §13.4 `bootstrap_preset_sources` を用いる。
+- CLI から `import_preset_*` は **呼び出さない**。
 
 ### 13.4 Preset bootstrap（GUI 起動時）
 
@@ -391,9 +390,8 @@ profile import は、参照する source `preset_id` が **同一操作または
 | 永続化 | 変更があれば `save_catalog` してよい |
 | Sync | bootstrap 直後、追加・既存の preset 由来 remote それぞれに `sync_remote_source` を **best-effort**（§12.4） |
 
-**同一 `name` の衝突:** ユーザーが同名の `local-dir` を既に持つ場合は `ValueError` を避けるため、bootstrap は **マーカー一致の既存行を優先**し、無関係の同名があるときは preset `name` にサフィックスを付けた実装をしてよい（具体は impl 段、1b で気象庁名を確定）。
-
-**削除後:** ユーザーが preset 由来 source を catalog から delete しても、次回 `bootstrap_preset_sources` で **再作成してよい**（profile 参照が残る場合は §7.5 に従い delete 拒否のまま）。
+- 同名 `local-dir` が既にあり preset マーカー行が無い場合、`name` にサフィックスを付けて追加してよい。
+- preset 由来 source を delete した場合、次回 bootstrap で **再作成してよい**（profile 参照中は §7.5 により delete 拒否）。
 
 ## 14. Provider 契約（C-01 段 1a）
 
@@ -434,24 +432,22 @@ Sync は **idempotent** でよい（同一内容の再取得可）。
 
 load / save 時の catalog 検証では、`remote-*` の `path` は **存在しなくても load 可**（resolve / Sync / start 時に失敗）。
 
-## 15. Provider 実装 — 気象庁（C-01 段 1b）
+## 15. Provider 実装 — 気象庁（C-01）
 
-**本節は段 1b で記載する。** 段 1a では次のみプレースホルダとする。
-
-| 項目 | 状態 |
+| 項目 | 契約 |
 | --- | --- |
-| 第 1 provider | **気象庁**（天気図等）— planning #1 |
-| 確定 `kind` | 例 `remote-jma-weather-map`（1b で確定） |
-| 取得 URL / list.json | 1b で調査・記載 |
-| L/R 割当 | 1b で C-05 デュアル slideshow と整合する案を提示 → オーナー確認 |
-| 帰属 | CC BY 4.0 互換・「気象庁ホームページより引用」等（planning #9） |
+| 第 1 provider | 気象庁（天気図等） |
+| `kind` | `remote-jma-weather-map`（確定値は本節追記時に更新） |
+| 取得 URL / list.json | （未記載） |
+| デュアル slideshow L/R 割当 | （未記載） |
+| 帰属文言 | （未記載） |
 
 ## 16. GUI / CLI（C-01）
 
-| surface | 段 1a spec | 段 4 以降 |
-| --- | --- | --- |
-| **CLI** | 変更なし（打ち止め） | 変更なし |
-| **GUI** | [gui-spec §6.5](../gui/harite-gui-spec.md) — combo `*…`、起動 bootstrap | startup bootstrap + icons（planning #12）。専用 Import/Sync ボタンは **置かない** |
+| surface | 契約 |
+| --- | --- |
+| **CLI** | remote / preset API を **露出しない** |
+| **GUI** | [gui-spec §6.5](../gui/harite-gui-spec.md) |
 
 ## 11. 実装状態
 
