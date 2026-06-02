@@ -1,6 +1,6 @@
 # Harite source registry 仕様 (Source Spec)
 
-最終更新: 2026-06-01 (C-02 完了 — 3-layer audit close)
+最終更新: 2026-06-02 (C-05 段 1 — slideshow 実行面・path 注記)
 
 ## 1. 責務
 
@@ -10,13 +10,13 @@
 
 本書が扱わないもの:
 
-- slideshow の tick / cycle ロジック変更（[slideshow-spec](../slideshow/harite-slideshow-spec.md) — C-05）
+- slideshow の tick / cycle **算法**の変更（選択モード・L/R 独立 state 等は [slideshow-spec](../slideshow/harite-slideshow-spec.md)）
 - Main タブ input path の registry（ファイラーお気に入りで賄う）
 - CLI `harite source` サブコマンド（CLI 打ち止め — [cli-spec](../cli/harite-cli-spec.md)）
 - plugin registry（[plugin-spec](../plugins/harite-plugin-spec.md)）— OS apply plugin 登録であり、入力 source ではない
 - profile / source の **ordered list** 形状、profile 間の周回ローテ
 
-planning 正本: [20260601-1400-c02-source-registry-planning.md](../../working/20260601-1400-c02-source-registry-planning.md)
+planning 正本: [20260601-1400-c02-source-registry-planning.md](../../working/20260601-1400-c02-source-registry-planning.md)（C-02）、[20260602-1400-c05-slideshow-source-enhancement-planning.md](../../working/20260602-1400-c05-slideshow-source-enhancement-planning.md)（C-05）
 
 ## 2. 用語
 
@@ -31,7 +31,9 @@ planning 正本: [20260601-1400-c02-source-registry-planning.md](../../working/2
 
 ### 3.1 Source
 
-第 1 段階の `kind` は **`local-dir` のみ**。
+第 1 段階（C-02）および C-05 段階の `kind` は **`local-dir` のみ**。
+
+`kind` フィールドは **将来拡張**（C-01 の network / REST API source 等）のために保持する。C-05 では新 kind を追加しない。
 
 | フィールド | 型 | 必須 | 説明 |
 | --- | --- | --- | --- |
@@ -71,6 +73,19 @@ profile は **L/R 固定 2 スロットのみ**を持つ。list 型 `members` �
 2. 末尾の path セパレータは除去する。
 3. 正規化後の path が **既存 directory** であること（ファイルのみ・不存在は拒否）。
 4. directory 内に slideshow 採用可能な画像が 1 件以上あることは **registry CRUD 時には要求しない**（実行時検証は [slideshow-spec §2](../slideshow/harite-slideshow-spec.md) / [core-spec §7](../core/harite-core-spec.md) に従う）。
+
+### 4.1 `local-dir` path のプラットフォーム注記（C-05）
+
+マウント済み NAS / 同期 cloud folder は **OS が通常の directory path として見せるもの**を `local-dir` の `path` として登録する。専用 `kind` や SMB クライアント（`smbprotocol` 等）は **採用しない**。
+
+| 環境 | 推奨 path 例 | 契約 |
+| --- | --- | --- |
+| Windows | `G:\Pictures`、`\\server\share\Photo`（UNC） | Win32 / Pillow が directory として読める path を **そのまま**保存・resolve する |
+| Linux | `/mnt/nas/photos` 等の **fstab / mount 済み** path | 通常の `local-dir` として扱う |
+| Linux（GVFS） | `/run/user/.../gvfs/smb-share:...`（Thunar picker 等） | **CRUD 拒否はしない**（現状許容）。slideshow 実行の成功は **保証しない**。product 文書では `/mnt` 直指定を **推奨**（[実機観測](../../working/finished/20260602-c02-real-device-observations.md)） |
+
+- PyGObject / GIO による GVFS 専用読み取りは **採用しない**（Qt 寄せ方針）。
+- path 正規化（§4 1–3）は GVFS path に対しても適用する。存在チェックを通過しても、実行時の画像列挙が失敗しうる（[slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md)）。
 
 ## 5. 上限と一意性
 
@@ -132,7 +147,9 @@ registry 選択時の流れ:
 
 1. GUI または core API が source / profile を resolve する。
 2. 得られた path を owner / settings の `slideshow_srcdir_l/r` へ書く。
-3. 任意で、どの registry エントリを選んだかを settings に記録する（§6.4）。
+3. どの registry エントリを選んだかを settings の tracking key に記録する（§6.4）。
+
+**slideshow start 前**（C-05）の流れは [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md) を参照。tracking key がある side は **start 直前に再 resolve** し、得られた path で `slideshow_srcdir_*` を上書きする。
 
 **自動 migration は行わない** — 既存 `slideshow_srcdir_*` から catalog へ推測 import しない（F-01 / C-02 planning と同型）。
 
@@ -146,7 +163,17 @@ settings には次の **任意 key** を追加してよい（未設定時は無�
 | `slideshow_source_id_r` | 最後に R 側で選んだ source `id` |
 | `slideshow_profile_id` | 最後に適用した profile `id`（L/R 両方を profile から展開した場合） |
 
-これらは **実行 path の代替ではない**。slideshow 実行は引き続き `slideshow_srcdir_l/r` の path 文字列を参照する。
+**手動 Srcdir-L/R**（path picker / 直接入力）では、当該 side の tracking key は **空にする**（source UUID を付与しない）。**許容**する。
+
+**実行時の path 正本（C-05）:**
+
+| 経路 | start 前 | tick 中 |
+| --- | --- | --- |
+| tracking key **あり** | `resolve_source` / `resolve_profile_members` で `slideshow_srcdir_*` を更新してから画像収集 | **再 resolve しない**。start 時点の path を使用 |
+| tracking key **なし**（手動 path のみ） | 既存 `slideshow_srcdir_*` をそのまま検証 | 同上 |
+| CLI | 本書の tracking key は **使わない**（都度 `--input`） | — |
+
+tick 毎の catalog 再 load は **行わない**。catalog の読み込みはアプリ起動時および Manage dialog 等の明示操作（C-02 現状維持）。
 
 ## 7. core API（契約）
 
@@ -196,7 +223,22 @@ settings には次の **任意 key** を追加してよい（未設定時は無�
 | 操作 | ポリシー |
 | --- | --- |
 | **source delete** | いずれかの profile の `members.L` または `members.R` が当該 `source_id` を参照している場合 **拒否**（`ValueError`） |
-| **実行時** | 参照 directory にアクセス不能 → slideshow **中断**（start 前: start failure、実行中: stop / failure。[core-spec §7](../core/harite-core-spec.md) / slideshow-spec §9 と同型） |
+| **実行時** | 参照 directory にアクセス不能 → slideshow **中断**（start 前: start failure、実行中: stop / failure。[core-spec §7](../core/harite-core-spec.md) / [slideshow-spec §9](../slideshow/harite-slideshow-spec.md) と同型） |
+
+### 7.6 実行中の catalog 変更（C-05 — GUI）
+
+slideshow **running** 中に `harite-sources.json` が保存されたとき、GUI は **安全側**に倒す。
+
+| 変更 | 動作 |
+| --- | --- |
+| 実行中 L/R が参照する `source_id` の **path 変更**・**source 削除** | **slideshow stop**（failure 扱い） |
+| 実行中に適用した `slideshow_profile_id` の **members 変更**（L/R の source id 割当変更） | **slideshow stop** |
+| 実行中 side の tracking `source_id` が catalog に **存在しなくなった** | **slideshow stop** |
+| **無関係** source の `notes` / `name` のみ変更 | **続行**（次 tick からも start 時 path を維持） |
+| 無関係 profile の変更 | **続行** |
+
+- start 時に、実行に使う L/R の `source_id`（あれば）と `slideshow_profile_id`（あれば）を **実行スナップショット**として保持してよい。
+- tick 毎の catalog 再 load は行わない（§6.4）。Manage dialog Close 後、上表に該当する変更があれば **即 stop** してよい（次 tick 待ちでもよい — 実装は stop を遅らせない方を推奨）。
 
 ## 8. エラー
 
@@ -204,13 +246,13 @@ settings には次の **任意 key** を追加してよい（未設定時は無�
 - catalog JSON 不正は load 時に `ValueError`。
 - 明示 path 指定 load でファイル不存在は、呼び出し文脈により `FileNotFoundError` または空 catalog（§6.1）。
 
-## 9. GUI / CLI surface（第 1 段階）
+## 9. GUI / CLI surface
 
-| surface | C-02 段 1（本書） | 後続 |
+| surface | C-02 | C-05（本書） |
 | --- | --- | --- |
-| **core API** | §7 全文 | #375 マージ済 |
-| **CLI** | 変更なし | — |
-| **GUI** | Slideshow から registry 選択（[gui-spec §4.2 / §6.3](../gui/harite-gui-spec.md)、design #376） | **Qt impl 済**（#378）。GTK parity は follow-up |
+| **core API** | §7 CRUD / resolve | §6.4 実行時 path、§7.6 catalog 変更 |
+| **CLI** | 変更なし | 変更なし |
+| **GUI** | registry 選択（[gui-spec §4.2 / §6.3](../gui/harite-gui-spec.md)） | start 前 resolve（§6.3 / [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md)）。GTK parity は follow-up |
 
 ## 10. 他分冊との境界
 
@@ -221,11 +263,11 @@ settings には次の **任意 key** を追加してよい（未設定時は無�
 
 ## 11. 実装状態
 
-| 層 | 状態 |
-| --- | --- |
-| **spec** | 本書（段 1 — #374） |
-| **tests (core)** | [tests/test_sources.py](../../tests/test_sources.py), [tests/test_sources_file.py](../../tests/test_sources_file.py)（#375） |
-| **impl (core)** | `harite.sources`, `harite.sources_file`（#375） |
-| **tests (GUI)** | [tests/gui/test_c02_source_registry_gui.py](../../tests/gui/test_c02_source_registry_gui.py), [tests/gui/test_qt_tab_slideshow.py](../../tests/gui/test_qt_tab_slideshow.py)（#378） |
-| **impl (GUI)** | Qt: `qt_tab_slideshow`, `qt_source_registry_dialog`, `MainWindow` handlers（#378）。GTK registry widget は未実装 |
-| **audit** | [20260601-c02-3layer-audit.md](../../working/finished/20260601-c02-3layer-audit.md) |
+| 層 | C-02 | C-05 |
+| --- | --- | --- |
+| **spec** | #374 | 本書 段 1（§4.1, §6.3–6.4, §7.6） |
+| **tests (core)** | #375 | 段 2 — resolve-at-start 等 |
+| **impl (core)** | #375 | 段 3 — 変更最小（GUI start 経路が主） |
+| **tests (GUI)** | #378 | 段 2–3 — start 前 resolve、catalog 変更 stop |
+| **impl (GUI)** | #378 | 段 3 — `on_slideshow_start` 等 |
+| **audit** | [20260601-c02-3layer-audit.md](../../working/finished/20260601-c02-3layer-audit.md) | 段完了後 |

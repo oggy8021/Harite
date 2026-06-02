@@ -1,6 +1,6 @@
 # C-05 — slideshow source 強化 planning
 
-最終更新: 2026-06-02（**段 0** — open questions **オーナー決定済**）
+最終更新: 2026-06-02（**段 1 spec 着手** — open questions 決定済）
 
 ## 位置づけ
 
@@ -214,15 +214,15 @@ CLI 変更なし（C-02 打ち止め継続）。
 
 | 層 | 状態 |
 | --- | --- |
-| **spec** | C-02 正本のみ。tick/registry 連動は **未記載**（送り先: 本 feature） |
+| **spec** | C-05 段 1 — [source-spec](../specs/source/harite-source-spec.md) §4.1, §6.3–6.4, §7.6 / [slideshow-spec](../specs/slideshow/harite-slideshow-spec.md) §6.6 |
 | **tests** | C-02 registry / GUI tests あり。**実行時 resolve** の tests なし |
 | **impl** | path 直参照の slideshow 経路。GVFS ガードなし |
 
 ## 次アクション
 
 1. ~~open questions (#1–9)~~ — **2026-06-02 決定済**
-2. **本 planning PR マージ** — オーナー許可後
-3. **spec PR**（段 1）— source-spec + slideshow-spec 更新
+2. ~~**本 planning PR マージ**~~ — #382 済
+3. **spec PR**（段 1）— source-spec + slideshow-spec + gui-spec §6.4
 4. **tests + impl**（段 2–3）
 5. **GUI / gui-spec**（段 4、必要分のみ）
 6. **3-layer audit** — `docs/working/finished/YYYYMMDD-c05-3layer-audit.md`

@@ -245,7 +245,8 @@ design 合意: [20260601-c02-slideshow-source-registry-slice.html](../../working
 | Clear-L/R（§4.1 拡張） | 当該 side path を `""` | 当該 side source id + **`slideshow_profile_id` をクリア** | 当該 side saved combo → `— none —`。**Profile combo → `— none —`** |
 | Swap L/R（§4.1 拡張） | `slideshow_srcdir_l/r` swap | `slideshow_source_id_l/r` swap。`slideshow_profile_id` は **クリア**（L/R 対応が崩れるため） |
 
-- slideshow **実行**は引き続き `slideshow_srcdir_l/r` の path 文字列のみ参照する（source id は tracking / UI 同期用）。
+- slideshow **tick 中**は `slideshow_srcdir_l/r` の path のみ参照する（C-05 — [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md)）。
+- **Start 直前**に tracking `source_id` / `profile_id` から [source-spec §6.4](../source/harite-source-spec.md) に従い再 resolve し、`slideshow_srcdir_*` を上書きしてから画像収集する。
 - registry 外 path（ブラウズのみ）も **許容**する。Saved combo が `— none —` でも path label に basename 省略表示があれば Start ガードは従来どおり評価する。
 - profile / source の **ordered list 化・profile 周回**は行わない。
 
@@ -338,6 +339,11 @@ GTK / Qt 両 backend で、次の user-facing surface は **同じ省略規則**
 - Slideshow tab の registry UI は §4.2 の layout / handler に従う。catalog 永続化は [source-spec](../source/harite-source-spec.md) が正本。
 - startup / settings load 後、backend は catalog を load し、tab 上 combo を構築する。settings の任意 key `slideshow_source_id_l/r` / `slideshow_profile_id` があれば、対応 combo 選択を復元してよい（path は従来どおり `slideshow_srcdir_*` が実行値）。
 - Saved / Profile 選択および Srcdir ブラウズの優先関係は §4.2 の併存表が正本。**`— none —` は source id のみクリアし path は維持**、**Srcdir ブラウズは registry 外 path として combo を `— none —` に戻す**。
+
+### 6.4 Registry resolve at start（C-05）
+
+- `on_slideshow_start`（tray Start 含む）の画像収集前に §4.2 / [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md) の resolve を行う。
+- Manage dialog Close で catalog を保存したとき、実行中 slideshow が [source-spec §7.6](../source/harite-source-spec.md) の「影響あり」変更を含めば **stop** する。
 
 ### slideshow start / tick / stop
 

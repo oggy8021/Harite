@@ -1,6 +1,6 @@
 # Harite スライドショー仕様 (Slideshow Spec)
 
-最終更新: 2026-05-31 (W-02-A Windows dual-source / Interval commit / current path 省略表示)
+最終更新: 2026-06-02 (C-05 — registry 連動実行 / start 前 resolve)
 
 ## 1. スライドショー機能の責務
 
@@ -33,6 +33,13 @@ CLI 側の入力正規化:
 
 GUI 側では、これに加えて現在の画面状態、設定、スライドショー source directory の整合が必要になる。
 
+GUI の registry 連動（C-05）:
+
+- Start 前に [source-spec §6.4](../source/harite-source-spec.md) に従い、tracking `source_id` / `profile_id` から **再 resolve** して `slideshow_srcdir_l/r` を更新する（§6.6）。
+- **Srcdir-L と Srcdir-R の両方**が非空であること（現行維持）。どちらか空なら start 前に拒否。
+- 手動 Srcdir のみ（tracking key なし）の side は、既存 path をそのまま検証する。
+- CLI は registry tracking を使わず、従来どおり `--input` directory path のみ。
+
 ## 3. スライドショーシーケンス図 (slideshow sequence)
 
 ```mermaid
@@ -44,6 +51,7 @@ sequenceDiagram
     participant Plugin as plugin impl
 
     User->>GUI: start slideshow
+    GUI->>GUI: resolve registry ids to srcdir paths (C-05)
     GUI->>GUI: validate srcdir / plugin / apply mode
     GUI->>Slideshow: collect or select next image(s)
     alt single source
@@ -281,6 +289,36 @@ stop 時は作業ディレクトリ内のスロットファイル **を削除し
 - stop 時に `_slideshow_active_generated_files` と `_slideshow_tick_generated_files` は **クリア**する（次回 start で古い追跡を引き継がない）。
 - 次回 `on_slideshow_start` では、R2 スロット path へ上書きする前提で作業ディレクトリを用意する（必要なら `mkdir -p`）。R1 掃除は各 tick 終了時に継続する。
 
+### 6.6 Registry 連動実行（C-05）
+
+[source-spec](../source/harite-source-spec.md) の catalog と GUI slideshow 実行の接続。planning: [20260602-1400-c05-slideshow-source-enhancement-planning.md](../../working/20260602-1400-c05-slideshow-source-enhancement-planning.md)。
+
+#### start 前の resolve
+
+`on_slideshow_start`（および tray からの start が同経路の場合）の **画像収集より前**に次を行う。
+
+1. in-memory catalog を参照する（**この時点で disk からの再 load は必須ではない** — 起動時 / Manage dialog Close 済み catalog でよい）。
+2. `slideshow_profile_id` が設定されていれば `resolve_profile_members` で L/R path と tracking id を揃える。
+3. 各 side で `slideshow_source_id_l` / `slideshow_source_id_r` が設定されていれば `resolve_source` で当該 side の `slideshow_srcdir_*` を上書きする（profile 展開と矛盾する場合は **profile 優先** — 実装は start 直前の単一パスで L/R を確定すること）。
+4. `resolve_*` が `ValueError`（inaccessible / 未知 id）なら **start failure** とし、slideshow は開始しない（transient / pause 扱いにしない）。
+5. 確定した `slideshow_srcdir_l/r` で §2 の directory 検証と `collect_slideshow_input_images` を行う。
+
+**手動 Srcdir のみ**の side（tracking key 空）は、手順 2–3 をスキップし、既存 `slideshow_srcdir_*` を検証する。
+
+#### tick 中
+
+- **catalog の再 load も、id からの再 resolve も行わない**。start 時に確定した path で `collect_slideshow_input_images` / cycle を継続する。
+- directory がアクセス不能になった場合、または画像 0 件になった場合は、**新規取り決めを設けず** §9 および [source-spec §7.5](../source/harite-source-spec.md) / [core-spec §7](../core/harite-core-spec.md) の既存 failure 分類に従い **stop / failure** とする（display loss による **pause** とは別軸）。
+- start 条件（L/R 両方必須）・dual-source cycle 算法・L/R 独立 `SlideshowCycleState` は **変更しない**。
+
+#### 実行中の catalog 変更
+
+[source-spec §7.6](../source/harite-source-spec.md) が正本。実行に影響する保存内容があれば GUI は **slideshow stop** する。
+
+#### path 種別（NAS / GVFS）
+
+[source-spec §4.1](../source/harite-source-spec.md)。GVFS path の slideshow 成功は保証しない。Windows UNC / ドライブレターは `local-dir` のまま利用する。
+
 ## 7. CLI `slideshow` command の責務
 
 - 入力 directory 1 件または最大 2 件からの画像収集
@@ -352,11 +390,23 @@ CLI の主な観測値:
 - `KeyboardInterrupt` は CLI では異常終了ではなく、ユーザー中断として `0` 扱いにする。
 - GUI dual-source auto-split では、display 条件喪失が一時的なら pause で吸収し、raw な `ValueError` をそのまま user-facing failure にしない。
 
+### registry / directory の実行時失敗（C-05）
+
+| タイミング | 条件 | 扱い |
+| --- | --- | --- |
+| start 前 | `resolve_source` / `resolve_profile_members` 失敗 | start failure（§6.6） |
+| start 前 | `collect_slideshow_input_images` が空 directory / 不存在 | start failure（§2） |
+| tick 中 | start 時 path が inaccessible または画像 0 件 | stop / failure（source-spec §7.5 既存。pause ではない） |
+| tick 中 | catalog 変更が [source-spec §7.6](../source/harite-source-spec.md) に該当 | slideshow stop |
+
+片側のみ inaccessible になった場合の **可能 side のみ継続**は **採用しない**（現段階は現行どおり全体 stop）。
+
 ## 10. core / GUI / CLI との境界
 
 - スライドショー helper の最小ループは `slideshow.py` にある。
 - GUI 実運用の状態管理は `MainWindow` と GTK runtime に跨る。
 - core / apply target 解決は [docs/specs/core/harite-core-spec.md](docs/specs/core/harite-core-spec.md) を参照する。
+- source registry / start 前 resolve / catalog 変更は [source-spec](docs/specs/source/harite-source-spec.md) §6.4, §7.6 および本書 §6.6。
 
 境界整理:
 
