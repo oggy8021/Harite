@@ -1,6 +1,6 @@
 # C-05 — slideshow source 強化 planning
 
-最終更新: 2026-06-02（**段 0 着手** — open questions 未決）
+最終更新: 2026-06-02（**段 0** — open questions **オーナー決定済**）
 
 ## 位置づけ
 
@@ -22,8 +22,8 @@ C-02 が **箱と索引**（catalog CRUD + Slideshow からの選択 UI）を届
 
 | 現状（C-02 完了後） | C-05 後（目標イメージ） |
 | --- | --- |
-| registry 選択時に path を **一度** `slideshow_srcdir_l/r` へコピー | start / tick 前に catalog から **再 resolve**（path 陳腐化・NAS 一時切断を検知） |
-| `kind: local-dir` のみ。GVFS path 等は CRUD を通過しうる | **path 正規化 / 拒否規則** が mounted / sync 系を spec で説明可能 |
+| registry 選択時に path を **一度** `slideshow_srcdir_l/r` へコピー | **slideshow start 前**に id から **再 resolve**（path 陳腐化を start 時点で検知） |
+| `kind: local-dir` のみ。GVFS path 等は CRUD を通過しうる | C-05 は **`local-dir` 維持** + path **推奨注記**（`/mnt`・ドライブレター）。GVFS 専用ガードは **必須外** |
 | inaccessible path の契約は source-spec §7.5 に記載あるが GUI tick 未統合 | start 前 / tick 中の **中断・status** が spec / tests / impl で一致 |
 | slideshow tick / cycle 変更は source-spec で C-05 送り | slideshow-spec に **registry 連動実行** を明文化 |
 
@@ -80,8 +80,8 @@ C-01  外部サイト              … remote / API source type（C-05 の type 
 
 - source-spec 更新: `kind` / path 検証の第 2 段階（mounted / sync の説明、GVFS 方針）
 - slideshow-spec 更新: registry ID からの resolve タイミング、inaccessible 時の stop / failure 分類
-- core / GUI: start・tick 前の resolve、settings の path と id の整合
-- tests: resolve-at-tick、NAS 切断相当の failure 分類
+- core / GUI: **start 前**の resolve、settings の path と id の整合
+- tests: resolve-at-start、既存 spec に沿う inaccessible 分類
 
 **C-05 に含めない（C-02 / 他 feature で固定）:**
 
@@ -103,9 +103,11 @@ feature-overview: local directory、**同期済み cloud folder**、**ローカ�
 | **A. `local-dir` 一本化** | 実体はすべて directory path。`notes` や UI ラベルで用途を区別 | モデル単純。GVFS / mount の **検証規則** を path 規則に集約 |
 | **B. kind 追加** | 例: `mounted-dir`, `sync-dir` — 検証・help text が kind 別 | C-01 の remote kind 追加と整合しやすい。CRUD / GUI がやや重い |
 
-**初期推奨（planning 案、未決）:** 案 A を default とし、GVFS 拒否等は **path 規則** で扱う。C-01 前に kind 分割が必要なら段 1 spec で B へ切替。
+**オーナー決定（2026-06-02）:**
 
-**オーナー観測（Windows, Google Drive → G:）:** ドライブレター mount は現行 `local-dir` で十分 — **案 A を強める根拠**。
+- `kind` フィールドを設ける理由は **将来拡張性**（C-01 の network / REST API source 等）への備えでよい。
+- **C-05 段階**では新 kind は追加せず **`local-dir` のみ**（案 A）。mounted / sync / ドライブレターはすべて `local-dir` の path として扱う。
+- オーナー観測（Windows G:）は上記を裏付け。
 
 ### 2. path 正規化と GVFS / NAS
 
@@ -115,7 +117,12 @@ feature-overview: local directory、**同期済み cloud folder**、**ローカ�
 | SMB / WebDAV | OS が見せる **ローカル mount path**（`/mnt/...`、Windows ドライブレター）を許可。GVFS は Thunar 等の **transient path** として別扱い |
 | Windows cloud sync | **ドライブレター path**（例: `G:\Pictures`）は通常 directory として扱う — **追加検証不要**（オーナー確認済） |
 | Linux NAS（想定・未検証） | **`/mnt/...` 等の直接マウント path** は `local-dir` として問題ない見込み。registry 登録は手入力 or path 直接指定が前提（ファイラー picker は GVFS を返しうる） |
-| CRUD vs 実行 | CRUD で拒否 vs CRUD は通し **tick で中断**（現状に近い） |
+| CRUD vs 実行 | 既存 spec に従う（§5 参照）。GVFS 専用 CRUD 拒否は **C-05 必須外** |
+
+**オーナー決定（2026-06-02）:**
+
+- GVFS path を pip 依存で読めるかは **一般論として未確定** — C-05 では **新規 pip / GVFS 専用実装はしない**（マウント一般も珍しい前提）。
+- 実機問題は観測メモに残す。product 上は **`/mnt` 等の直接マウント path を推奨**（docs / notes 程度）。Thunar picker 経由の GVFS 登録は **禁止しない**（低優先）。
 
 実機メモ: Linux GVFS — [20260602-c02-real-device-observations.md](finished/20260602-c02-real-device-observations.md) §GVFS。Windows ドライブレター cloud — 本書 §実機観測。
 
@@ -125,9 +132,9 @@ feature-overview: local directory、**同期済み cloud folder**、**ローカ�
 | --- | --- |
 | **選択時**（現状） | combo / profile 適用 → path + id を owner / settings へ |
 | **start 前**（C-05 候補） | id から path を再取得。inaccessible → start failure |
-| **各 tick 前**（C-05 候補） | NAS 一時切断等を検知。source-spec §7.5「実行時中断」と整合 |
+| **各 tick 前** | **catalog 再 load しない**（機会が細かすぎる） |
 
-**open:** tick 毎の catalog 再 load は **毎回** か、**mtime / 明示 refresh** か。
+**オーナー決定（2026-06-02）:** **start 前**に resolve を実施。**tick 毎の catalog 再 load は不要**。catalog の読み込みは **現状どおりアプリ起動時**（および Manage dialog 等の明示操作）で足りる。tick 中の inaccessible は **新規取り決めなし** — 既存 §7.5 / slideshow-spec に従う（§5）。
 
 ### 4. settings の path と id の正本
 
@@ -138,7 +145,7 @@ feature-overview: local directory、**同期済み cloud folder**、**ローカ�
 | **id 正本** | 実行は常に id → resolve。path は表示・legacy 互換の denormalized cache |
 | **path 正本**（現状に近い） | 手動 picker path は id なし。registry 選択のみ id あり |
 
-**open:** 手動 path picker と registry 選択の **混在** を今後も許容するか（C-02 では許容）。
+**オーナー決定（2026-06-02）:** 論点 #4 は **手動 Srcdir-L/R 指定時に source UUID を付与しない** ことの確認。**その理解で正しい。許容**（registry 選択時のみ id、手動 picker は srcdir のみ — C-02 現状維持）。
 
 ### 5. inaccessible / 空 directory の振る舞い
 
@@ -146,7 +153,7 @@ source-spec §7.5 / slideshow-spec §9 と揃える:
 
 - **start 前:** start failure（transient 扱いしない）
 - **tick 中:** stop / failure（pause 対象か — display loss の pause とは別軸）
-- **片側のみ inaccessible**（L だけ NAS 切断）: 両方 stop か、可能側のみ継続か
+**オーナー決定（2026-06-02）:** **特別な新規取り決めは作らない**。source-spec §7.5 / slideshow-spec / core-spec の先行仕様に沿う。
 
 ### 6. slideshow tick / cycle ロジック
 
@@ -155,13 +162,15 @@ source-spec が C-05 送りにした項目。C-05 で **必須** とする範囲
 - registry 連動の **入力解決**（cycle 算法そのものの変更は最小）
 - dual-source 時の L/R **独立 state** は現行維持（[slideshow-spec §5](../../specs/slideshow/harite-slideshow-spec.md)）
 
-**open:** 空画像 directory・単 side のみ registry 等、start 条件の緩和は **対象外** か（現行: L/R 両方 path 必須）。
+**オーナー決定（2026-06-02）:** start 条件・cycle ロジックは **現段階では変えない**（L/R 両方 path 必須等、現行維持）。
 
 ### 7. GUI / owner state
 
-- combo 表示: source **name** vs resolved path（現行 label 規則の維持）
-- inaccessible 時の status message / `last_error` 文言
-- catalog 更新後（Manage dialog Close）の **実行中** slideshow — 次 tick から新 catalog を見るか即 stop か
+| サブ | 論点 | オーナー決定（2026-06-02） |
+| --- | --- | --- |
+| **7-1** | C-02 の combo 選択 → source **label** 反映 | **現状維持** — combo で選んだ registry 内容がラベル等に反映される仕様はこのまま（意図の確認: **合っている**） |
+| **7-2** | C-05 追加 GUI（kind 別ヒント等） | **現時点では想起なし** — 段 4 は status / start 前 resolve 連動が必要なら最小追記 |
+| **7-3** | 実行中の catalog 変更（旧 #9） | **安全側** — **実行に影響する変更**なら **stop**、影響しないなら **続行**。切り分けは spec 段で定義（下表 #9） |
 
 ## 提案フェーズ分割（第4波内・C-05）
 
@@ -175,19 +184,19 @@ source-spec が C-05 送りにした項目。C-05 で **必須** とする範囲
 
 CLI 変更なし（C-02 打ち止め継続）。
 
-## Open questions — **未決**（オーナー確認待ち）
+## Open questions — オーナー決定（2026-06-02）
 
-| # | 論点 | 選択肢 / メモ |
+| # | 論点 | 決定 |
 | --- | --- | --- |
-| **1** | source `kind` 第 2 段階 | **A** `local-dir` 一本 + path 規則 **vs** **B** `mounted-dir` / `sync-dir` 追加 — **Windows G: 実機は A で問題なし** |
-| **2** | GVFS path（Linux `/run/user/.../gvfs/...`） | **拒否** / **警告付き許可** / **正規化試行** — **Windows 対象外**；**`/mnt` 直マウントは未検証だが local-dir 想定** |
-| **3** | resolve タイミング | start のみ **vs** start + **毎 tick** **vs** tick + catalog mtime 監視 |
-| **4** | settings 正本 | **id 正本**（path は cache） **vs** 現状の **id + path 併存** |
-| **5** | tick 中 inaccessible | **即 stop** **vs** 1 回 retry **vs** 可能 side のみ継続 |
-| **6** | 片側 inaccessible | **全体 stop** **vs** 可能 side のみ tick |
-| **7** | start 条件 | L/R **両方必須** 維持 **vs** 片側 registry のみ許可 |
-| **8** | C-05 GUI スコープ | status / error のみ **vs** kind 別 picker ヒント **vs** GTK registry parity を同梱 |
-| **9** | catalog 変更と実行中 slideshow | 次 tick 反映 **vs** 即 stop **vs** 実行中は catalog スナップショット |
+| **1** | source `kind` | **`kind` は将来拡張用フィールド**（C-01 の network / REST API 等）。**C-05 は `local-dir` のみ** — 新 kind 追加なし |
+| **2** | GVFS / NAS path | **GVFS 専用 pip・CRUD 拒否は C-05 必須外**（低優先）。推奨は `/mnt`・ドライブレター直指定（doc のみ可）。GVFS 登録は禁止しない |
+| **3** | resolve タイミング | **slideshow start 前**に id → path を再 resolve。**tick 毎の catalog 再 load なし**。catalog load は **起動時＋明示操作**（現状維持） |
+| **4** | 手動 Srcdir vs UUID | **手動 L/R は source UUID なしで許容**（registry 選択時のみ id）。id + path **併存維持** |
+| **5** | tick 中 inaccessible | **新規取り決めなし** — source-spec §7.5 / slideshow-spec 既存に従う |
+| **6** | 片側 inaccessible / start 条件 | **現段階では変更なし**（#7 と同型） |
+| **7** | start 条件 | **L/R 両方 path 必須など現行維持** |
+| **8** | C-05 GUI スコープ | **7-1** combo→label 維持。**7-2** 追加 GUI は現時点なし。GTK parity は C-02 follow-up のまま defer |
+| **9** | 実行中 catalog 変更 | **安全側**: 実行中 slideshow が参照する source / profile に **影響する変更** → **stop**；**影響しない**（無関係 source の notes 等）→ **続行**。spec 段で影響判定を列挙（例: 実行中 side の `source_id` の path 変更・削除、当該 profile の member 変更 → stop） |
 
 ## 3 層比較（段 0 — 未着手）
 
@@ -199,11 +208,12 @@ CLI 変更なし（C-02 打ち止め継続）。
 
 ## 次アクション
 
-1. **本 planning PR** — オーナーが open questions (#1–9) を決定
-2. **spec PR**（段 1）— source-spec + slideshow-spec 更新
-3. **tests + impl**（段 2–3）
-4. **GUI / gui-spec**（段 4、必要分のみ）
-5. **3-layer audit** — `docs/working/finished/YYYYMMDD-c05-3layer-audit.md`
+1. ~~open questions (#1–9)~~ — **2026-06-02 決定済**
+2. **本 planning PR マージ** — オーナー許可後
+3. **spec PR**（段 1）— source-spec + slideshow-spec 更新
+4. **tests + impl**（段 2–3）
+5. **GUI / gui-spec**（段 4、必要分のみ）
+6. **3-layer audit** — `docs/working/finished/YYYYMMDD-c05-3layer-audit.md`
 
 ## 参照
 
