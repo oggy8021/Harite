@@ -358,17 +358,7 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 | 2 | preset 由来の各 remote source に `sync_remote_source`（失敗は message history、起動は継続） |
 | 3 | §4.2 の profile / saved source combo を再構築 |
 
-`on_slideshow_start` および tick 中に **network fetch は行わない**（Sync は startup および §6.5 の Refresh のみ）。
-
-**Slideshow tab surface:**
-
-| 項目 | 契約 |
-| --- | --- |
-| `combo_slideshow_profile` / `combo_slideshow_source_l` / `combo_slideshow_source_r` | 同梱 preset 由来の source / profile を **常に列挙**する |
-| Import ボタン | **設けない** |
-| Sync ボタン | **設けない** |
-| preset 専用一覧 dialog | **設けない** |
-| 相手先サイト検索・サムネ表示 | **設けない** |
+`combo_slideshow_profile` / `combo_slideshow_source_l` / `combo_slideshow_source_r` は、同梱 preset 由来の source / profile を user 追加分とあわせて列挙する。
 
 **Combo 表示（catalog `name` とは別。GUI 接頭辞 `*` のみ）:**
 
@@ -384,7 +374,7 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 
 | 項目 | 契約 |
 | --- | --- |
-| remote source 行の Refresh | **任意**。`sync_remote_source` を呼ぶ |
+| remote source 行の Refresh | `sync_remote_source` |
 | Profile 行 icon | Lucide `bookmark` / `star` / `folder-heart` のいずれか（package resource） |
 | Manage 行 icon | Lucide `archive`（package resource） |
 
