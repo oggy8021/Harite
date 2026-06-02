@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from harite.display_context import TwoScreenOptimizeContext
 from harite.gui.adapters.ui_adapter import RUNTIME_HANDLER_MAP
 from harite.gui.views.main_window import MainWindow
 from harite.sources import (
@@ -17,6 +18,7 @@ from harite.sources import (
     save_catalog,
     update_source,
 )
+from harite.workspace import Display
 
 
 def _install_dummy_plugin(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -28,6 +30,27 @@ def _install_dummy_plugin(monkeypatch: pytest.MonkeyPatch) -> None:
         "harite.gui.views.main_window.plugin_registry.get",
         lambda _name: DummyPlugin(),
     )
+
+
+def _install_dual_slideshow_start_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """CI headless Linux has no two physical displays; stub dual-source prerequisites."""
+    _install_dummy_plugin(monkeypatch)
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="HDMI-1", width=1920, height=1080, x_offset=0, y_offset=0),
+                Display(name="DP-1", width=1920, height=1080, x_offset=1920, y_offset=0),
+            ),
+            resolution=(3840, 1080),
+            l_display=(1920, 1080),
+            r_display=(1920, 1080),
+        ),
+    )
+    def _apply_ok(self, left, right, cycle_phase="tick"):
+        return True, None
+
+    monkeypatch.setattr(MainWindow, "_apply_slideshow_selection", _apply_ok)
 
 
 def _write_dual_catalog(path: Path, left: Path, right: Path) -> tuple[str, str, str]:
@@ -56,7 +79,7 @@ def _prepare_dual_window(
     (right_dir / "right.jpg").write_bytes(b"R")
     catalog_path = tmp_path / "harite-sources.json"
     left_id, right_id, profile_id = _write_dual_catalog(catalog_path, left_dir, right_dir)
-    _install_dummy_plugin(monkeypatch)
+    _install_dual_slideshow_start_env(monkeypatch)
     window = MainWindow()
     window._source_catalog_path = catalog_path
     window.on_select_slideshow_profile(profile_id)
@@ -80,7 +103,7 @@ def test_start_re_resolves_stale_srcdir_from_catalog(monkeypatch: pytest.MonkeyP
     new_dir.mkdir()
     (new_dir / "new.jpg").write_bytes(b"new")
 
-    _install_dummy_plugin(monkeypatch)
+    _install_dual_slideshow_start_env(monkeypatch)
     window = MainWindow()
     window._source_catalog_path = catalog_path
     window.on_select_slideshow_source("L", left_entry.id)
@@ -170,7 +193,7 @@ def test_manual_srcdir_without_source_id_still_starts(monkeypatch: pytest.Monkey
     (left_dir / "l.jpg").write_bytes(b"L")
     (right_dir / "r.jpg").write_bytes(b"R")
 
-    _install_dummy_plugin(monkeypatch)
+    _install_dual_slideshow_start_env(monkeypatch)
     window = MainWindow()
     window.on_pick_slideshow_srcdir(str(left_dir), "L")
     window.on_pick_slideshow_srcdir(str(right_dir), "R")
