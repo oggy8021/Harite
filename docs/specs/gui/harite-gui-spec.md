@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-01 (C-02 Slideshow source registry — design #376)
+最終更新: 2026-06-03 (C-01 — remote/preset GUI §6.5)
 
 ## 1. GUI の責務
 
@@ -233,6 +233,7 @@ design 合意: [20260601-c02-slideshow-source-registry-slice.html](../../working
 | `on_select_slideshow_profile(profile_id \| none)` | profile → `resolve_profile_members` → owner / combo / label 更新 |
 | `on_select_slideshow_source(side, source_id \| none)` | 側別 `resolve_source` → owner / label 更新 |
 | `on_manage_source_registry()` | dialog 表示。Close 後に tab 上 combo を catalog から再構築 |
+| `bootstrap_preset_sources` | startup および Manage dialog Close 後（[source-spec §13.4](../source/harite-source-spec.md)） |
 
 **Saved source と Srcdir ブラウズの併存（オーナー合意 2026-06-01）:**
 
@@ -337,13 +338,47 @@ GTK / Qt 両 backend で、次の user-facing surface は **同じ省略規則**
 ### 6.3 source registry 接続（C-02）
 
 - Slideshow tab の registry UI は §4.2 の layout / handler に従う。catalog 永続化は [source-spec](../source/harite-source-spec.md) が正本。
-- startup / settings load 後、backend は catalog を load し、tab 上 combo を構築する。settings の任意 key `slideshow_source_id_l/r` / `slideshow_profile_id` があれば、対応 combo 選択を復元してよい（path は従来どおり `slideshow_srcdir_*` が実行値）。
+- startup / settings load 後、backend は catalog を load し、[source-spec §13.4](../source/harite-source-spec.md) `bootstrap_preset_sources` のち tab 上 combo を構築する（§6.5）。settings の任意 key `slideshow_source_id_l/r` / `slideshow_profile_id` があれば、対応 combo 選択を復元してよい（path は従来どおり `slideshow_srcdir_*` が実行値）。
 - Saved / Profile 選択および Srcdir ブラウズの優先関係は §4.2 の併存表が正本。**`— none —` は source id のみクリアし path は維持**、**Srcdir ブラウズは registry 外 path として combo を `— none —` に戻す**。
 
 ### 6.4 Registry resolve at start（C-05）
 
 - `on_slideshow_start`（tray Start 含む）の画像収集前に §4.2 / [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md) の resolve を行う。
 - Manage dialog Close で catalog を保存したとき、実行中 slideshow が [source-spec §7.6](../source/harite-source-spec.md) の「影響あり」変更を含めば **stop** する。
+
+### 6.5 Remote source と preset（C-01）
+
+catalog / cache / provider の契約は [source-spec §12–16](../source/harite-source-spec.md)。
+
+**Startup（Slideshow combo 構築前）:**
+
+| 順序 | 処理 |
+| --- | --- |
+| 1 | `bootstrap_preset_sources(catalog)` — 変更時は `save_catalog` |
+| 2 | preset 由来の各 remote source に `sync_remote_source`（失敗は message history、起動は継続） |
+| 3 | §4.2 の profile / saved source combo を再構築 |
+
+`combo_slideshow_profile` / `combo_slideshow_source_l` / `combo_slideshow_source_r` は、同梱 preset 由来の source / profile を user 追加分とあわせて列挙する。
+
+**Combo 表示（catalog `name` とは別。GUI 接頭辞 `*` のみ）:**
+
+| エントリ種別 | 表示 | 内部値 |
+| --- | --- | --- |
+| `local-dir` | `name` | source / profile `id` |
+| preset 由来（`notes` に `harite-preset:{preset_id}`） | `*{name}` | source / profile `id` |
+| 未選択 | `— none —` | none |
+
+選択時の handler・tracking・start 前 resolve は §4.2 / §6.4 と同型。
+
+**Manage dialog:**
+
+| 項目 | 契約 |
+| --- | --- |
+| remote source 行の Refresh | `sync_remote_source` |
+| Profile 行 icon | Lucide `bookmark` / `star` / `folder-heart` のいずれか（package resource） |
+| Manage 行 icon | Lucide `archive`（package resource） |
+
+**Backend:** 第 4 波 GUI impl は Qt 先行。GTK は maintenance mode（parity 対象）。
 
 ### slideshow start / tick / stop
 

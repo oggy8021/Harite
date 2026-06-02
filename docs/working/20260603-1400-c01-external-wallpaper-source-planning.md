@@ -1,6 +1,6 @@
 # C-01 — 外部壁紙サイト連携 planning
 
-最終更新: 2026-06-03（**段 0 完了** — planning #386 マージ済。**次:** spec 1a → 1b）
+最終更新: 2026-06-03（**段 1a spec 着手中** — 段 0 #386/#387 済）
 
 ## 位置づけ
 
@@ -42,12 +42,14 @@
 | **改変責任** | ユーザーが site-packages 内の同梱ファイルを **書き換え・削除**した場合は **製品責任外** |
 | **拡張** | 新サイトは **preset ファイルへエントリ追加** + provider 実装（#10）。user catalog schema 変更は **不要** |
 
-**UX（案）:**
+**UX（2026-06-03 オーナー訂正）:**
 
-1. Slideshow / Manage から **Preset 一覧**を表示（読み取り専用）
-2. ユーザーが **「Add to my sources」** → エントリを **user catalog にコピー**（新 UUID 採番）
-3. 以降は通常の C-02 source として Manage / profile / slideshow 連携
-4. **Sync** で cache 更新（手動。§4）
+1. **起動時** `bootstrap_preset_sources` — 同梱 preset を user catalog に materialize + **Sync 相当**（best-effort）
+2. Slideshow の **Profile / Saved source combo** に **`*気象庁` / `*JMA` 等**を予約行として表示（専用 Import ボタンは **不要**）
+3. 選択・Start は C-02 / C-05 と同型（Start 直前の network fetch は **しない** — §4）
+4. Manage 内 **Refresh**（手動 Sync）は **任意**。Slideshow タブに Sync ボタンは **置かない**
+
+（旧案の preset 一覧 + 「Add to my sources」は **採用しない** — spec/gui-spec §6.5）
 
 ```text
 [同梱] resources/source-presets/*.json   … 読み取り専用テンプレート
@@ -83,7 +85,7 @@ K-05         … 定期 auto-sync は対象外
 - `kind` 命名 `remote-{略称}`（#2）
 - cache 根の OS 別規則（#3）
 - provider: **気象庁**（詳細は spec 1b。NASA は対象外）
-- GUI: preset 一覧・import・Sync・既存 combo 連携
+- GUI: 起動 bootstrap・combo `*…` 表示・既存 combo 連携（専用 Import/Sync ボタンなし）
 - 帰属・ToS 文言（#9、サイトごと）
 - Slideshow 用 **アイコン**（#12、Lucide 追加）
 
@@ -136,7 +138,7 @@ NASA APOD（https://api.nasa.gov/）は **API に DEMO key が必要**なため�
 | **4** | start 前 auto-sync | preset 同梱ファイルは **アプリ版とともに不変**（版アップまで考慮不要）。**user source の sync** は手動（Sync 操作）— stale 自動 poll は初期外 |
 | **5** | API key | **一切使わない**（ユーザー管理・DEMO_KEY 埋め込み含む） |
 | **6** | catalog schema | **変更なし**（v1）。preset は **別ファイル**（§11） |
-| **7** | GUI 深度 | **相手先サイトの検索 UI 連携は不要・予定なし**。**サムネ取得・表示もしない**。Harite 側は **preset 一覧 + import + Sync** のみ（Manage 最小） |
+| **7** | GUI 深度 | **検索・サムネなし**。combo に **`*…` preset 行** + 起動 bootstrap（**専用 Import/Sync ボタンなし**） |
 | **8** | CLI | **打ち止め・対象外**（C-02 継続） |
 | **9** | 帰属・ToS | **各ターゲットサイトの規約に従う**（出典明記等は provider / GUI 文言で） |
 | **10** | 追加サイト | **§11 preset に定義を足す** + provider 追加。user schema 変更なし |
@@ -172,7 +174,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 | 段 | 内容 | 停止点 |
 | --- | --- | --- |
 | **0** | 本 planning（本書） | ~~マージ許可~~ **完了**（#386） |
-| **1a** | spec — preset 契約、remote kind、cache 根、provider インタフェース | spec PR |
+| **1a** | spec — preset 契約、remote kind、cache 根、provider インタフェース | spec PR（**着手中**） |
 | **1b** | spec — **気象庁調査**（取得画像・list.json/URL 組み立て・**L/R 割当**・帰属・`remote-jma-*`） | spec PR — **オーナー確認で確定** |
 | **2** | tests — preset load、fetch モック、resolve + slideshow 連携 | tests PR |
 | **3** | impl — preset loader、第 1 provider、cache、resolve 拡張 | impl PR |
@@ -185,7 +187,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 
 | 層 | 状態 |
 | --- | --- |
-| **spec** | 未記載（段 1） |
+| **spec** | 段 1a 骨格（[harite-source-spec §12–16](../specs/source/harite-source-spec.md)）— 1b §15 気象庁は未記載 |
 | **tests** | なし |
 | **impl** | なし |
 
@@ -193,7 +195,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 
 1. ~~open questions #1–12~~ — **決定済**（**#1 = 気象庁**）
 2. ~~**本 planning PR マージ**~~ — **#386 済**
-3. **spec PR 1a** — 骨格
+3. **spec PR 1a** — 骨格（**PR 作成中**）
 4. **spec PR 1b** — 気象庁サイト調査・画像選定・L/R・帰属（**調査はここ。オーナーは PR レビュー**）
 5. tests + impl → GUI → audit
 
