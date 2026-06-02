@@ -66,7 +66,12 @@ C-02 が **箱と索引**（catalog CRUD + Slideshow からの選択 UI）を届
 **オーナー想定（2026-06-02, XFCE / Linux — 未検証）:**
 
 - NAS も Thunar / GVFS に頼らず、**`/mnt` 等のマウントポイントまで path を直接指定**すれば slideshow source として使える **想定**（実機試行は未実施）。
-- 示唆: Linux で問題になるのは **ファイラーが返す GVFS transient path** であり、**fstab / mount 済みの実 path** は Windows ドライブレターと同型の `local-dir` として扱える見込み。C-05 spec では「推奨: マウントポイント path」「GVFS path は拒否または警告」と整理しうる。
+- 示唆: Linux で問題になるのは **ファイラーが返す GVFS transient path** であり、**fstab / mount 済みの実 path** は Windows ドライブレターと同型の `local-dir` として扱える見込み。
+
+**オーナー観測（2026-06-02, Windows — SMB UNC）:**
+
+- registry に **`\\fortress\share\Photo`** 形式（`harite-sources.json` 上は `\\\\fortress\\share\\Photo`）を登録し、**slideshow は動作**（家の NAS 利用の主経路は Windows 側で足りうる）。
+- 示唆: Windows では UNC が **通常の `local-dir` path** として Win32 API / Pillow で読める。C-05 で SMB 専用 kind やクライアントは **不要**。
 
 ## C-05 と隣接 feature の境界
 
@@ -124,7 +129,14 @@ feature-overview: local directory、**同期済み cloud folder**、**ローカ�
 - GVFS path を pip 依存で読めるかは **一般論として未確定** — C-05 では **新規 pip / GVFS 専用実装はしない**（マウント一般も珍しい前提）。
 - 実機問題は観測メモに残す。product 上は **`/mnt` 等の直接マウント path を推奨**（docs / notes 程度）。Thunar picker 経由の GVFS 登録は **禁止しない**（低優先）。
 
-実機メモ: Linux GVFS — [20260602-c02-real-device-observations.md](finished/20260602-c02-real-device-observations.md) §GVFS。Windows ドライブレター cloud — 本書 §実機観測。
+**オーナー決定（追記 — NAS UX / 技術路線の見直し）:**
+
+- 家に NAS があり UX 上の需要は **ある**（Windows UNC 実機で足りうる）。
+- **採用しない:** `smbprotocol` 等の独自 SMB（id/password 管理が増える）。**PyGObject / GIO で GVFS を読む**（Qt 寄せの意味が薄れる）— **両方とも見送り**。
+- **C-05 の #2:** **現状許容で確定** — GVFS path の登録は拒否しない。Linux GVFS で slideshow が失敗するケースは観測メモ＋**`/mnt` 直指定を推奨**（doc）。Windows は **UNC・ドライブレター** で `local-dir` としてそのまま使う。
+- 将来、Linux GVFS 同等が必須になった場合は **C-01 以降の remote source** や別 feature で再検討（PyGObject 経路は product 方針上 **再採用しない**）。
+
+実機メモ: Linux GVFS — [20260602-c02-real-device-observations.md](finished/20260602-c02-real-device-observations.md) §GVFS。Windows — 本書 §実機観測（G:、UNC）。
 
 ### 3. 実行時 resolve のタイミング
 
@@ -178,7 +190,7 @@ source-spec が C-05 送りにした項目。C-05 で **必須** とする範囲
 | --- | --- | --- | --- |
 | **0** | 本 planning + オーナー決定（open questions） | working（本書） | マージ許可 |
 | **1** | spec — source-spec §kind/path、slideshow-spec §実行/registry 連動 | `source-spec` + `slideshow-spec` | spec PR マージ |
-| **2** | tests — resolve-at-start/tick、inaccessible、GVFS 拒否（方針決定後） | tests | tests PR マージ |
+| **2** | tests — resolve-at-start、inaccessible（既存 spec 準拠） | tests | tests PR マージ |
 | **3** | impl — `MainWindow` / slideshow 経路、必要なら `sources.py` 検証 | src | **段 2 PR に同梱可** |
 | **4** | GUI — status / 表示のみ必要なら gui-spec 追記 + Qt（GTK parity は follow-up） | gui-spec + design（必要時） | 段階停止 |
 
@@ -189,7 +201,7 @@ CLI 変更なし（C-02 打ち止め継続）。
 | # | 論点 | 決定 |
 | --- | --- | --- |
 | **1** | source `kind` | **`kind` は将来拡張用フィールド**（C-01 の network / REST API 等）。**C-05 は `local-dir` のみ** — 新 kind 追加なし |
-| **2** | GVFS / NAS path | **GVFS 専用 pip・CRUD 拒否は C-05 必須外**（低優先）。推奨は `/mnt`・ドライブレター直指定（doc のみ可）。GVFS 登録は禁止しない |
+| **2** | GVFS / NAS path | **現状許容で確定** — pip / PyGObject / smbprotocol **なし**。Windows **UNC**・ドライブレターは `local-dir` のまま。Linux GVFS 失敗時は doc で `/mnt` 推奨。登録拒否・専用 resolve **しない** |
 | **3** | resolve タイミング | **slideshow start 前**に id → path を再 resolve。**tick 毎の catalog 再 load なし**。catalog load は **起動時＋明示操作**（現状維持） |
 | **4** | 手動 Srcdir vs UUID | **手動 L/R は source UUID なしで許容**（registry 選択時のみ id）。id + path **併存維持** |
 | **5** | tick 中 inaccessible | **新規取り決めなし** — source-spec §7.5 / slideshow-spec 既存に従う |
