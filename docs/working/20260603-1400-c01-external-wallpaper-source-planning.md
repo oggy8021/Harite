@@ -1,6 +1,6 @@
 # C-01 — 外部壁紙サイト連携 planning
 
-最終更新: 2026-06-03（**段 0 完了** — planning #386 マージ済。**次:** spec 1a → 1b）
+最終更新: 2026-06-03（**段 1a spec 着手中** — 段 0 #386/#387 済）
 
 ## 位置づけ
 
@@ -172,7 +172,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 | 段 | 内容 | 停止点 |
 | --- | --- | --- |
 | **0** | 本 planning（本書） | ~~マージ許可~~ **完了**（#386） |
-| **1a** | spec — preset 契約、remote kind、cache 根、provider インタフェース | spec PR |
+| **1a** | spec — preset 契約、remote kind、cache 根、provider インタフェース | spec PR（**着手中**） |
 | **1b** | spec — **気象庁調査**（取得画像・list.json/URL 組み立て・**L/R 割当**・帰属・`remote-jma-*`） | spec PR — **オーナー確認で確定** |
 | **2** | tests — preset load、fetch モック、resolve + slideshow 連携 | tests PR |
 | **3** | impl — preset loader、第 1 provider、cache、resolve 拡張 | impl PR |
@@ -185,7 +185,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 
 | 層 | 状態 |
 | --- | --- |
-| **spec** | 未記載（段 1） |
+| **spec** | 段 1a 骨格（[harite-source-spec §12–16](../specs/source/harite-source-spec.md)）— 1b §15 気象庁は未記載 |
 | **tests** | なし |
 | **impl** | なし |
 
@@ -193,7 +193,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 
 1. ~~open questions #1–12~~ — **決定済**（**#1 = 気象庁**）
 2. ~~**本 planning PR マージ**~~ — **#386 済**
-3. **spec PR 1a** — 骨格
+3. **spec PR 1a** — 骨格（**PR 作成中**）
 4. **spec PR 1b** — 気象庁サイト調査・画像選定・L/R・帰属（**調査はここ。オーナーは PR レビュー**）
 5. tests + impl → GUI → audit
 

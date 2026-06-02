@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-01 (C-02 Slideshow source registry — design #376)
+最終更新: 2026-06-03 (C-01 段 1a — remote/preset 境界。UI 詳細は段 4)
 
 ## 1. GUI の責務
 
@@ -344,6 +344,21 @@ GTK / Qt 両 backend で、次の user-facing surface は **同じ省略規則**
 
 - `on_slideshow_start`（tray Start 含む）の画像収集前に §4.2 / [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md) の resolve を行う。
 - Manage dialog Close で catalog を保存したとき、実行中 slideshow が [source-spec §7.6](../source/harite-source-spec.md) の「影響あり」変更を含めば **stop** する。
+
+### 6.5 Remote source と preset（C-01）
+
+契約の正本は [source-spec §12–16](../source/harite-source-spec.md)。**段 1a では GUI 挙動を追加しない。**
+
+| 項目 | 段 4 で追加予定 |
+| --- | --- |
+| Preset 一覧 | Manage dialog または同等 surface（読み取り専用） |
+| Import | 「Add to my sources」→ `import_preset_source` |
+| Sync | remote source 行に **手動 Sync**（`sync_remote_source`） |
+| Icons | Profile 行・Manage 行（planning #12 — Lucide `archive` 等） |
+| 除外 | 相手先サイト内検索・サムネプレビュー（planning #7） |
+
+- remote source 選択後の slideshow 経路は **C-05 と同型**（start 前 resolve → cache directory を `slideshow_srcdir_*` に展開）。
+- GTK preset / Sync UI parity は follow-up（Qt 先行）。
 
 ### slideshow start / tick / stop
 

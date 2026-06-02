@@ -1,6 +1,6 @@
 # Harite source registry 仕様 (Source Spec)
 
-最終更新: 2026-06-02 (C-05 完了 — 3-layer audit: [20260602-c05-3layer-audit.md](../../working/finished/20260602-c05-3layer-audit.md))
+最終更新: 2026-06-03 (C-01 段 1a — remote 骨格・preset・cache・provider 契約。気象庁詳細は **段 1b**)
 
 ## 1. 責務
 
@@ -15,33 +15,37 @@
 - CLI `harite source` サブコマンド（CLI 打ち止め — [cli-spec](../cli/harite-cli-spec.md)）
 - plugin registry（[plugin-spec](../plugins/harite-plugin-spec.md)）— OS apply plugin 登録であり、入力 source ではない
 - profile / source の **ordered list** 形状、profile 間の周回ローテ
+- **気象庁 provider** の取得画像種別・list.json 組み立て・L/R 割当・帰属文言の確定（C-01 **段 1b** — §15）
+- GUI preset 一覧 / Sync ボタン / Lucide アイコン（C-01 **段 4** — [gui-spec §6.5](../gui/harite-gui-spec.md)）
 
-planning 正本: [20260601-1400-c02-source-registry-planning.md](../../working/20260601-1400-c02-source-registry-planning.md)（C-02）、[20260602-1400-c05-slideshow-source-enhancement-planning.md](../../working/20260602-1400-c05-slideshow-source-enhancement-planning.md)（C-05）
+planning 正本: [20260601-1400-c02-source-registry-planning.md](../../working/20260601-1400-c02-source-registry-planning.md)（C-02）、[20260602-1400-c05-slideshow-source-enhancement-planning.md](../../working/20260602-1400-c05-slideshow-source-enhancement-planning.md)（C-05）、[20260603-1400-c01-external-wallpaper-source-planning.md](../../working/20260603-1400-c01-external-wallpaper-source-planning.md)（C-01）
 
 ## 2. 用語
 
 | 語 | 意味 |
 | --- | --- |
-| **source** | 1 件の local directory を指す catalog エントリ（`id`, `name`, `kind`, `path`） |
+| **source** | slideshow 用 directory を指す catalog エントリ（`id`, `name`, `kind`, `path`） |
 | **source profile** | L/R 2 スロットに source id を割り当てた名前付きプリセット |
 | **catalog** | `harite-sources.json` に保存される source 列 + profile 列の全体 |
 | **resolve** | source id または profile id から **実行用 directory path** を得る操作 |
+| **remote source** | `kind` が `remote-*` の source。`path` は **sync 済み cache directory**（§12） |
+| **source preset** | 製品同梱の読み取り専用テンプレート（§13）。user catalog へは **import のみ** |
+| **provider** | remote source の **手動 Sync** で cache を更新するサイト別実装（§14） |
+| **sync** | provider が外部から画像を取得し cache を更新する操作（**手動のみ**、§12.4） |
 
 ## 3. データモデル
 
 ### 3.1 Source
 
-第 1 段階（C-02）および C-05 段階の `kind` は **`local-dir` のみ**。
-
-`kind` フィールドは **将来拡張**（C-01 の network / REST API source 等）のために保持する。C-05 では新 kind を追加しない。
+`kind` は **`local-dir`** または **`remote-{provider略称}`**（§12.1）。user catalog の `schema_version` は **1 のまま**（新 field は追加しない）。
 
 | フィールド | 型 | 必須 | 説明 |
 | --- | --- | --- | --- |
 | `id` | string (UUID) | ✓ | 安定 ID。ユーザー非表示。生成は実装側 |
 | `name` | string | ✓ | ユーザー向け表示名。catalog 内で **一意**（§5.2） |
-| `kind` | string | ✓ | 第 1 段階は `"local-dir"` 固定 |
-| `path` | string | ✓ | directory **絶対 path**（§4 正規化後） |
-| `notes` | string | — | 任意メモ |
+| `kind` | string | ✓ | `"local-dir"` または `remote-*`（§12.1） |
+| `path` | string | ✓ | **local-dir:** ユーザー指定 directory の絶対 path（§4）。**remote:** §12.3 の cache directory（import / add 時に自動設定） |
+| `notes` | string | — | 任意メモ。remote の帰属・preset 由来マーカー等に使用してよい（§15 は 1b） |
 
 ### 3.2 Source profile
 
@@ -258,16 +262,191 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 
 - 設定ファイル path 規則の親: [core-spec §6.1](../core/harite-core-spec.md)
 - slideshow 実行・directory 検証: [slideshow-spec](../slideshow/harite-slideshow-spec.md)
-- GUI Slideshow タブ widget: [gui-spec](../gui/harite-gui-spec.md)（段 4 で追記）
+- GUI Slideshow タブ widget: [gui-spec](../gui/harite-gui-spec.md)（C-01 GUI は §6.5）
 - 全体導線: [foundation-spec](../harite-foundation-spec.md)
+
+## 12. Remote source（C-01 段 1a）
+
+外部サイトから取得した壁紙候補を **cache-first** で扱う。fetch → ローカル cache directory → 既存 `resolve` → C-05 slideshow（実行面は `local-dir` と同型の directory 列挙）。
+
+```text
+[同梱 preset §13] → user import → harite-sources.json (schema v1, kind=remote-*)
+       → 手動 Sync (§12.4) → cache/{source_id}/
+       → resolve → slideshow_srcdir_* (C-05)
+```
+
+### 12.1 `kind` 命名
+
+| 規則 | 内容 |
+| --- | --- |
+| 接頭辞 | `remote-` で始まる |
+| 略称 | 小文字英数字と `-` のみ（例: `remote-jma-weather-map`）。正規表現 `^remote-[a-z0-9]+(?:-[a-z0-9]+)*$` |
+| 登録 | 各 `kind` は **1 つの provider 実装**に対応（§14）。未登録 `kind` の Sync は `ValueError` |
+| API key | **採用しない**（ユーザー管理・実装埋め込み DEMO_KEY 含む — planning #5） |
+
+`local-dir` 以外で `remote-` 接頭辞を持たない `kind` は **拒否**する。
+
+### 12.2 Cache 根 directory
+
+設定・catalog と **別ディレクトリ**に置く。`resolve_default_remote_cache_root()` が返す path。
+
+| プラットフォーム | 第 1 候補 | 契約 |
+| --- | --- | --- |
+| Linux（`XDG_CACHE_HOME` 設定時） | `$XDG_CACHE_HOME/harite/remote-cache` | 親を `mkdir(parents=True)` してよい |
+| Linux（未設定） | `~/.cache/harite/remote-cache` | 同上 |
+| Windows | `%APPDATA%\harite\remote-cache` | §6.1 と同系の `harite/` 配下（`APPDATA` 未設定時は `Path.home() / "AppData" / "Roaming"`） |
+
+**Windows フォールバック（第 1 候補が作成不能な場合のみ）:**
+
+1. `%USERPROFILE%\Pictures\harite_cache_dir\remote-cache` を試す。
+2. いずれも作成不能なら `ValueError`（user-facing メッセージ可）。
+
+フォールバック採用時も、当該 run のあいだ **一貫した root** を使う（起動毎に候補を再評価してよい）。
+
+### 12.3 Cache レイアウト
+
+| path | 意味 |
+| --- | --- |
+| `{cache_root}/{source_id}/` | 1 remote source あたり 1 ディレクトリ。catalog の `path` はこの **絶対 path** と一致させる |
+| 配下ファイル | provider が Sync で配置する画像（拡張子・命名は §15 / provider 実装） |
+
+**保持（planning #3b）:**
+
+- Sync は **最小世代分**を残す。第 1 段階の下限は **2 世代**（現行採用候補 + 直前世代）。provider がさらに保持してよい。
+- slideshow **実行中**に Sync が当該 side が参照中のファイルを削除してはならない（安全側: 参照中 basename は削除しない、または Sync を拒否）。
+
+**初回 import 時:** cache directory は **未作成でもよい**。`path` は `{cache_root}/{source_id}` を **予約**として catalog に書く。初回 Sync 成功で directory と画像が出現する。
+
+### 12.4 Sync と resolve
+
+| タイミング | 契約 |
+| --- | --- |
+| **Sync** | ユーザー明示操作（GUI 等）。**start 前 auto-sync はしない**（planning #4） |
+| **resolve** | cache directory が **存在し directory である**こと（§4 と同型の `normalize_directory_path`）。空 directory や画像 0 件は **resolve 時には成功しうる**が、slideshow start の画像収集は [slideshow-spec](../slideshow/harite-slideshow-spec.md) で失敗しうる |
+| **実行中** | cache 削除・Sync による参照不能 → §7.5 / §7.6 と同型（stop / start failure） |
+
+network エラー・HTTP 4xx/5xx は Sync 時に `ValueError`（またはラップした `OSError` を `ValueError` に変換してよい）。
+
+## 13. Source preset（C-01 段 1a）
+
+製品同梱の **読み取り専用**テンプレート。user の `harite-sources.json` には **自動書き込みしない**（planning §11）。
+
+### 13.1 配置と読み込み
+
+| 項目 | 契約 |
+| --- | --- |
+| package path | `harite.gui` の `resources/source_presets/harite-source-presets.json`（[resource_access.py](../../src/harite/gui/resource_access.py) と同型の `importlib.resources`） |
+| 改変 | site-packages 内ファイルのユーザー改変・削除は **製品責任外** |
+| 版 | アプリ版とともに更新。実行時の preset **再 fetch はしない** |
+
+### 13.2 Preset ファイル schema
+
+user catalog とは **別ファイル**。ルート object:
+
+| フィールド | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| `preset_schema_version` | integer | ✓ | 現行は **1** |
+| `sources` | array | ✓ | テンプレート source の列 |
+| `profiles` | array | — | テンプレート profile の列（任意） |
+
+**テンプレート source 要素:**
+
+| フィールド | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| `preset_id` | string | ✓ | 安定 ID（import 追跡用）。`[a-z0-9]+(?:-[a-z0-9]+)*` |
+| `name` | string | ✓ | import 後の source `name` 初期値（§5.1 上限に従う） |
+| `kind` | string | ✓ | `remote-*`（§12.1） |
+| `notes` | string | — | import 後の `notes` 初期値 |
+| `path` | string | — | **無視**（import 時に cache path を再計算） |
+
+**テンプレート profile 要素（任意）:**
+
+| フィールド | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| `preset_id` | string | ✓ | profile テンプレート ID |
+| `name` | string | ✓ | import 後の profile `name` |
+| `members` | object | ✓ | `{ "L": "<source_preset_id> \| null>", "R": "..." }` — 値は **source の `preset_id`**（UUID ではない） |
+
+profile import は、参照する source `preset_id` が **同一操作または既存 catalog に存在**することを要求する。
+
+### 13.3 Import 契約
+
+| 操作 | 契約 |
+| --- | --- |
+| `load_source_presets()` | preset ファイル → in-memory preset catalog。`preset_schema_version` 未対応は `ValueError` |
+| `import_preset_source(user_catalog, preset_id)` | 新 UUID、`path` = `remote_cache_dir(source_id)`、§5 上限・名前一意性を検証 |
+| `import_preset_profile(user_catalog, preset_id)` | 新 UUID。`members` の preset_id を **新規 import した source id** へ解決（同一 import バッチ内の対応表） |
+
+- 同一 `name` の source が既にあれば `ValueError`（再 import はユーザーが rename するか別名 preset を使う）。
+- import は **CLI 対象外**（planning #8）。
+
+## 14. Provider 契約（C-01 段 1a）
+
+実装 module は **`harite.sources.remote`**（ファイル分割可）とする。`harite.sources` から re-export してよい。
+
+### 14.1 登録
+
+| 操作 | 契約 |
+| --- | --- |
+| `register_remote_provider(kind: str, provider)` | 起動時または module import 時に 1 回。`kind` は §12.1 |
+| `get_remote_provider(kind: str)` | 未登録は `KeyError` または `ValueError` |
+
+### 14.2 Provider インタフェース
+
+各 provider は次を実装する。
+
+| メソッド / 属性 | 契約 |
+| --- | --- |
+| `kind` | 担当 `remote-*` 文字列（登録 key と一致） |
+| `sync(catalog, source_id)` | 当該 source の cache directory を更新。成功時は §12.3 の保持規則に従い古い世代を削除してよい |
+| （任意）`default_notes` | import 時に `notes` が空なら埋める帰属プレースホルダ（文言確定は §15） |
+
+Sync は **idempotent** でよい（同一内容の再取得可）。
+
+### 14.3 Core API 拡張（remote）
+
+| 操作 | 契約 |
+| --- | --- |
+| `is_remote_kind(kind)` | `kind.startswith("remote-")` かつ §12.1 正規表現 |
+| `remote_cache_dir_for_source(source_id)` | `resolve_default_remote_cache_root() / source_id` |
+| `add_remote_source(catalog, *, name, kind, notes?)` | UUID 採番、`path` 自動。`kind` 検証・provider 登録確認 |
+| `sync_remote_source(catalog, source_id)` | provider に委譲。完了後 catalog の `path` が cache root と一致していること |
+| `resolve_source` | **remote も local-dir も** 最終的に `normalize_directory_path(entry.path)`（§7.4 維持） |
+
+`add_source`（既存・`local-dir` 専用）は **`kind` を変更しない**。remote の新規追加は `add_remote_source` または `import_preset_source` のみ。
+
+`update_source` で remote の `kind` 変更は **拒否**。`path` の手動変更は **拒否**（cache 整合のため）。`name` / `notes` のみ更新可。
+
+load / save 時の catalog 検証では、`remote-*` の `path` は **存在しなくても load 可**（resolve / Sync / start 時に失敗）。
+
+## 15. Provider 実装 — 気象庁（C-01 段 1b）
+
+**本節は段 1b で記載する。** 段 1a では次のみプレースホルダとする。
+
+| 項目 | 状態 |
+| --- | --- |
+| 第 1 provider | **気象庁**（天気図等）— planning #1 |
+| 確定 `kind` | 例 `remote-jma-weather-map`（1b で確定） |
+| 取得 URL / list.json | 1b で調査・記載 |
+| L/R 割当 | 1b で C-05 デュアル slideshow と整合する案を提示 → オーナー確認 |
+| 帰属 | CC BY 4.0 互換・「気象庁ホームページより引用」等（planning #9） |
+
+## 16. GUI / CLI（C-01）
+
+| surface | 段 1a spec | 段 4 以降 |
+| --- | --- | --- |
+| **CLI** | 変更なし（打ち止め） | 変更なし |
+| **GUI** | [gui-spec §6.5](../gui/harite-gui-spec.md) に境界のみ | preset 一覧、import、Sync、icons（planning #12） |
 
 ## 11. 実装状態
 
-| 層 | C-02 | C-05 |
-| --- | --- | --- |
-| **spec** | #374 | #383（§4.1, §6.3–6.4, §7.6） |
-| **tests (core)** | #375 | —（C-05 は GUI 経路） |
-| **impl (core)** | #375 | — |
-| **tests (GUI)** | #378 | #384 — [test_c05_slideshow_source_resolve.py](../../tests/gui/test_c05_slideshow_source_resolve.py) |
-| **impl (GUI)** | #378 | #384 — `on_slideshow_start`, `on_source_catalog_saved` |
-| **audit** | [20260601-c02-3layer-audit.md](../../working/finished/20260601-c02-3layer-audit.md) | [20260602-c05-3layer-audit.md](../../working/finished/20260602-c05-3layer-audit.md) |
+| 層 | C-02 | C-05 | C-01 |
+| --- | --- | --- | --- |
+| **spec** | #374 | #383 | **段 1a** — §12–16（段 1b: §15） |
+| **tests (core)** | #375 | — | 段 2 |
+| **impl (core)** | #375 | — | 段 3 |
+| **tests (GUI)** | #378 | #384 | 段 4 |
+| **impl (GUI)** | #378 | #384 | 段 4 |
+| **audit** | [20260601-c02-3layer-audit.md](../../working/finished/20260601-c02-3layer-audit.md) | [20260602-c05-3layer-audit.md](../../working/finished/20260602-c05-3layer-audit.md) | 段 5 |
+
+C-01 planning 段 0: #386 / #387。

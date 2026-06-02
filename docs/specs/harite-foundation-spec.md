@@ -1,6 +1,6 @@
 # Harite 基本仕様 (Foundation Spec)
 
-最終更新: 2026-06-01 (C-02 source registry 完了)
+最終更新: 2026-06-03 (C-01 source spec 段 1a — remote / preset 骨格)
 
 ## 1. 文書の目的と適用範囲
 
