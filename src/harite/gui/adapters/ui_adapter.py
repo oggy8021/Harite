@@ -33,6 +33,7 @@ RUNTIME_HANDLER_MAP: dict[str, str] = {
     "on_select_slideshow_source": "on_select_slideshow_source",
     "on_select_slideshow_profile": "on_select_slideshow_profile",
     "on_manage_source_registry": "on_manage_source_registry",
+    "on_source_catalog_saved": "on_source_catalog_saved",
     "on_about": "on_about",
     "on_set_color": "on_set_color",
     "on_toggle_position_pressed": "on_toggle_position_pressed",
