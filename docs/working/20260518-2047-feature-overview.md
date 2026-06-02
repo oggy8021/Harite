@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-01（v1.0.0 リリース済み・第4波 **C-02 完了**）
+最終更新: 2026-06-02（v1.0.0 リリース済み・第4波 **C-05 planning 着手**）
 
 ## 位置づけ
 
@@ -44,7 +44,7 @@
 | ID | 項目 | 概要 | planning で最初に詰めること |
 | --- | --- | --- | --- |
 | C-02 | source registry / source profiles | slideshow 用 directory 等を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | **完了**（#373–378, audit: [20260601-c02-3layer-audit.md](finished/20260601-c02-3layer-audit.md)） — [harite-source-spec.md](../specs/source/harite-source-spec.md) |
-| C-05 | slideshow source 強化 | slideshow の source を単発 directory から、複数 source・source profile・将来の外部 source へ広げる。初期スコープは local directory、同期済み cloud folder、ローカル mount 済み NAS/SMB/WebDAV directory までとし、それ以上の直接連携は将来余裕がある場合に限る。 | source 正規化、順序規則、GUI owner state との整合 |
+| C-05 | slideshow source 強化 | slideshow の source を単発 directory から、複数 source・source profile・将来の外部 source へ広げる。初期スコープは local directory、同期済み cloud folder、ローカル mount 済み NAS/SMB/WebDAV directory までとし、それ以上の直接連携は将来余裕がある場合に限る。 | **planning 段 0** — [20260602-1400-c05-slideshow-source-enhancement-planning.md](20260602-1400-c05-slideshow-source-enhancement-planning.md)（実行時 resolve・path 種別・GVFS 方針） |
 | C-01 | 外部壁紙サイト連携 | 外部サイトや API から壁紙候補を取得し、Harite の source として扱えるようにする。C-05 の local/mounted source 扱いを一種の先行試行とみなせる。オーナー発案の本丸 feature。 | 対象サイト、取得方法、利用規約、キャッシュ方針 |
 
 ### 1b. 近端 backlog（Qt 完了後・2026-06-01）
@@ -159,7 +159,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
          ↓
 [完了] C-02  source registry     ← #373–378, audit: [20260601-c02-3layer-audit.md](finished/20260601-c02-3layer-audit.md)
          ↓
-        C-05  slideshow source 強化   ← 次 planning 入口
+        C-05  slideshow source 強化   ← planning 段 0（[20260602-1400-c05-…](20260602-1400-c05-slideshow-source-enhancement-planning.md)）
          ↓
 [本丸]  C-01  外部壁紙サイト連携
 
@@ -203,6 +203,7 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 2026-06-01: **v1.0.0 リリース済み** — gate 前ガードは obsolete。本書を post-1.0.x backlog 入口として継続更新。
 - 2026-06-01: 第4波 **C-02 planning 着手** — [20260601-1400-c02-source-registry-planning.md](20260601-1400-c02-source-registry-planning.md)
 - 2026-06-01: 第4波 **C-02 完了**（#373–378）— 3-layer audit: [20260601-c02-3layer-audit.md](finished/20260601-c02-3layer-audit.md)。次は C-05 planning。
+- 2026-06-02: 第4波 **C-05 planning 着手** — [20260602-1400-c05-slideshow-source-enhancement-planning.md](20260602-1400-c05-slideshow-source-enhancement-planning.md)（open questions #1–9 オーナー確認待ち）
 
 ## 完了条件（WS10 立ち上げ — **達成済み**）
 
