@@ -1,6 +1,6 @@
 # C-05 — slideshow source 強化 planning
 
-最終更新: 2026-06-02（**段 1 spec 着手** — open questions 決定済）
+最終更新: 2026-06-02（**段 0–3 完了** — audit: [20260602-c05-3layer-audit.md](finished/20260602-c05-3layer-audit.md)）
 
 ## 位置づけ
 
@@ -210,22 +210,22 @@ CLI 変更なし（C-02 打ち止め継続）。
 | **8** | C-05 GUI スコープ | **7-1** combo→label 維持。**7-2** 追加 GUI は現時点なし。GTK parity は C-02 follow-up のまま defer |
 | **9** | 実行中 catalog 変更 | **安全側**: 実行中 slideshow が参照する source / profile に **影響する変更** → **stop**；**影響しない**（無関係 source の notes 等）→ **続行**。spec 段で影響判定を列挙（例: 実行中 side の `source_id` の path 変更・削除、当該 profile の member 変更 → stop） |
 
-## 3 層比較（段 0 — 未着手）
+## 3 層比較（完了 — 2026-06-02）
+
+正本: [20260602-c05-3layer-audit.md](finished/20260602-c05-3layer-audit.md)
 
 | 層 | 状態 |
 | --- | --- |
-| **spec** | C-05 段 1 — [source-spec](../specs/source/harite-source-spec.md) §4.1, §6.3–6.4, §7.6 / [slideshow-spec](../specs/slideshow/harite-slideshow-spec.md) §6.6 |
-| **tests** | C-02 registry / GUI tests あり。**実行時 resolve** の tests なし |
-| **impl** | path 直参照の slideshow 経路。GVFS ガードなし |
+| **spec** | #383 — [source-spec](../specs/source/harite-source-spec.md) / [slideshow-spec](../specs/slideshow/harite-slideshow-spec.md) / [gui-spec §6.4](../specs/gui/harite-gui-spec.md) |
+| **tests** | #384 — [test_c05_slideshow_source_resolve.py](../../tests/gui/test_c05_slideshow_source_resolve.py) |
+| **impl** | #384 — `MainWindow` start resolve、catalog stop、`qt_backend` |
 
 ## 次アクション
 
-1. ~~open questions (#1–9)~~ — **2026-06-02 決定済**
-2. ~~**本 planning PR マージ**~~ — #382 済
-3. **spec PR**（段 1）— source-spec + slideshow-spec + gui-spec §6.4
-4. **tests + impl**（段 2–3）
-5. **GUI / gui-spec**（段 4、必要分のみ）
-6. **3-layer audit** — `docs/working/finished/YYYYMMDD-c05-3layer-audit.md`
+1. ~~段 0–3~~ — **完了**（#382–384）
+2. ~~段 4 追加 GUI~~ — **不要**（gui-spec §6.4 + impl で充足）
+3. ~~3-layer audit~~ — [20260602-c05-3layer-audit.md](finished/20260602-c05-3layer-audit.md)
+4. **C-01 planning 入口** — 外部壁紙サイト連携
 
 ## 参照
 
