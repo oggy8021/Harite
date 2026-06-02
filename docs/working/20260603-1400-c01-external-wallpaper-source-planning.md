@@ -1,6 +1,6 @@
 # C-01 — 外部壁紙サイト連携 planning
 
-最終更新: 2026-06-03（**段 0** — #1–12 決定済。**#1 訂正:** NASA APOD 見送り）
+最終更新: 2026-06-03（**段 0** — #1–12 決定済。**#1:** 第1 = **気象庁**、画像種別・L/R は **段 1b 調査**）
 
 ## 位置づけ
 
@@ -28,7 +28,7 @@
 | **cache-first** | fetch → ローカル cache → `resolve` → C-05 slideshow（実行面はほぼ流用） |
 | **preset 配布** | サイト定義は **package 内 JSON**（§11）。ユーザーが **自分の catalog に取り込む** |
 | **schema 不変** | `harite-sources.json` の `schema_version: 1` とフィールド集合は **そのまま** |
-| **第 1 impl** | **オーナー再選定待ち**（NASA APOD は DEMO key 必須のため **見送り**）。候補: 気象庁 / NDL / CODH |
+| **第 1 impl** | **気象庁**（天気図等）。どの画像を取得するか・**左右ディスプレイへの割当**は **段 1b（spec）** でサイト調査のうえ確定 |
 
 ## §11 — Source preset（オーナー決定・本 feature の柱）
 
@@ -72,7 +72,7 @@
 
 ```text
 C-02 / C-05  … 完了
-C-01         … preset 配布 + remote kind + cache + provider（第1サイトは再選定後）+ GUI import/sync
+C-01         … preset 配布 + remote kind + cache + provider（気象庁）+ GUI import/sync
 K-02         … metadata 本格化は対象外
 K-05         … 定期 auto-sync は対象外
 ```
@@ -82,7 +82,7 @@ K-05         … 定期 auto-sync は対象外
 - 同梱 preset ファイル + loader（`importlib.resources`）
 - `kind` 命名 `remote-{略称}`（#2）
 - cache 根の OS 別規則（#3）
-- provider: **第 1 サイト**（再選定後。NASA は対象外）
+- provider: **気象庁**（詳細は spec 1b。NASA は対象外）
 - GUI: preset 一覧・import・Sync・既存 combo 連携
 - 帰属・ToS 文言（#9、サイトごと）
 - Slideshow 用 **アイコン**（#12、Lucide 追加）
@@ -102,14 +102,24 @@ K-05         … 定期 auto-sync は対象外
 
 NASA APOD（https://api.nasa.gov/）は **API に DEMO key が必要**なため、**第 1 実装から除外**（オーナー判断・調査不足の訂正）。**#5** と整合させ、**実装への API key 埋め込み（DEMO 含む）も行わない**。
 
-**第 1 実装サイト:** **未選定** — 下表のいずれかをオーナーが再指定するまで、provider 実装の spec 確定は **保留**（preset / remote / cache / GUI の骨格は先行可）。
+**第 1 実装サイト:** **気象庁**（2026-06-03 オーナー指定）。参照: [天気図コメント](https://www.jma.go.jp/jma/kishou/info/coment.html)、[weather_map list.json](https://www.jma.go.jp/bosai/weather_map/data/list.json) 等。CC BY 4.0 互換・出典「気象庁ホームページより引用」等（#9）。
+
+**planning では決めない（段 1b に委任）:**
+
+| 論点 | 段 1b で行うこと | 停止点 |
+| --- | --- | --- |
+| 取得対象 | list.json / 公開 URL から **どの天気図（種別・時刻帯）を cache するか** | spec PR で提案 → **オーナー確認** |
+| 左右割当 | デュアルスライドショー（C-05）と整合する **L/R への画像対応**（同一画像・種別ペア・profile 2 source 等） | 同上 |
+| fetch 手順 | キー不要エンドポイント、更新頻度、ファイル名規則、失敗時 | spec に記載 |
+| 帰属 | 表示文言・メタデータの置き場（#9） | spec に記載 |
+
+オーナーは **高レベルで気象庁を選ぶ**のみ。細部調査・案作成は **spec 段（1b）の担当**とし、PR レビューで合意する（本リポジトリの通常フロー）。
 
 | 候補（preset / provider） | メモ |
 | --- | --- |
 | ~~**NASA APOD**~~ | **見送り**（DEMO key 必須） |
-| **気象庁** 天気図等 | https://www.jma.go.jp/ … [list.json](https://www.jma.go.jp/bosai/weather_map/data/list.json) 等。CC BY 4.0 互換。出典「気象庁ホームページより引用」等。**画像取得・API 組み立ては別途** |
-| **NDL** デジタルコレクション API | https://dl.ndl.go.jp/ — 出典メタデータ推奨。別途 |
-| **CODH** 江戸マップ API | https://codh.rois.ac.jp/ — CC BY-SA、出展明記・同一ライセンス配布。別途 |
+| **気象庁** | **第 1 impl** — `kind` 例: `remote-jma-weather-map`（略称は spec 1b で確定） |
+| **NDL** / **CODH** | 後続（#10） |
 
 採用サイトは **preset 定義 + provider 実装**を段階追加（#10）。一括実装はしない。
 
@@ -119,8 +129,8 @@ NASA APOD（https://api.nasa.gov/）は **API に DEMO key が必要**なため�
 
 | # | 論点 | 決定 |
 | --- | --- | --- |
-| **1** | 第 1 ターゲット | ~~NASA APOD~~ **見送り**。**再選定待ち**（気象庁 / NDL / CODH から） |
-| **2** | `kind` 命名 | **`remote-{provider略称}`**（例: `remote-nasa-apod`） |
+| **1** | 第 1 ターゲット | **気象庁**。~~NASA APOD~~ 見送り。画像種別・L/R は **1b 調査** |
+| **2** | `kind` 命名 | **`remote-{provider略称}`**（例: `remote-jma-weather-map` — 1b で確定） |
 | **3** | cache 場所 | **Linux:** `XDG_CACHE_HOME` 配下。**Windows:** Roaming の `harite/` 配下（settings と同系）。不可なら `%USERPROFILE%\Pictures` 等に `harite_cache_dir` — **spec 段で技術確認** |
 | **3b** | cache 保持 | fetch 済み・貼り付け中画像を **最小世代分** 保持（初案） |
 | **4** | start 前 auto-sync | preset 同梱ファイルは **アプリ版とともに不変**（版アップまで考慮不要）。**user source の sync** は手動（Sync 操作）— stale 自動 poll は初期外 |
@@ -162,14 +172,14 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 | 段 | 内容 | 停止点 |
 | --- | --- | --- |
 | **0** | 本 planning（本書） | マージ許可 |
-| **1a** | spec — preset 契約、remote kind、cache 根、provider インタフェース | spec PR（**#1 再選定前でも可**） |
-| **1b** | spec — 第 1 provider + 帰属（**#1 確定後**） | spec PR 追記 or 分割 |
+| **1a** | spec — preset 契約、remote kind、cache 根、provider インタフェース | spec PR |
+| **1b** | spec — **気象庁調査**（取得画像・list.json/URL 組み立て・**L/R 割当**・帰属・`remote-jma-*`） | spec PR — **オーナー確認で確定** |
 | **2** | tests — preset load、fetch モック、resolve + slideshow 連携 | tests PR |
 | **3** | impl — preset loader、第 1 provider、cache、resolve 拡張 | impl PR |
 | **4** | GUI — preset import、Sync、icons（#12）、gui-spec | 段階停止 |
 | **5** | 3-layer audit | close |
 
-**第 1 完了定義（案）:** 再選定した第 1 サイトの preset を import → Sync → Slideshow start（Linux/Windows）、帰属文言は spec 通り。
+**第 1 完了定義（案）:** 気象庁 preset を import → Sync → Slideshow start（単独・デュアル L/R は **1b で定めた割当**どおり）、帰属文言は spec 通り。
 
 ## 3 層比較（段 0 — 未着手）
 
@@ -181,10 +191,10 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 
 ## 次アクション
 
-1. ~~open questions #1–12~~ — **2026-06-03 決定済**（**#1 NASA 見送り・再選定待ち**）
-2. **オーナー:** 第 1 サイトを気象庁 / NDL / CODH から指定（API key 不要であることの事前確認推奨）
-3. **本 planning PR マージ**（再選定前でも §11・骨格は確定）
-4. **spec PR** — 1a 骨格 → 1b 第 1 provider（#1 後）
+1. ~~open questions #1–12~~ — **決定済**（**#1 = 気象庁**）
+2. **本 planning PR マージ**
+3. **spec PR 1a** — 骨格
+4. **spec PR 1b** — 気象庁サイト調査・画像選定・L/R・帰属（**調査はここ。オーナーは PR レビュー**）
 5. tests + impl → GUI → audit
 
 ## 参照
