@@ -35,7 +35,7 @@ from harite.positioning import reset_position_pair, update_position_pair
 from harite.plugins import registry as plugin_registry
 from harite.settings import AppSettings
 from harite.slideshow import SlideshowCycleState, collect_slideshow_input_images, run_slideshow_cycle
-from harite.sources import Catalog, get_profile, load_catalog, resolve_profile_members, resolve_source
+from harite.sources import Catalog, get_profile, get_source, load_catalog, resolve_profile_members, resolve_source
 from harite.sources_file import resolve_default_sources_path
 
 REGISTRY_NONE_LABEL = "— none —"
@@ -88,6 +88,7 @@ class MainWindow:
         self._slideshow_dual_auto_split_enabled = False
         self._slideshow_active_generated_files: tuple[Path, ...] = ()
         self._slideshow_tick_generated_files: tuple[Path, ...] = ()
+        self._slideshow_run_snapshot: dict[str, object] | None = None
         self.open_image_dialog_open = False
         self.open_image_dialog_side: str | None = None
         self._save_path_dialog_open = False
@@ -1143,6 +1144,130 @@ class MainWindow:
         self._log("Manage source registry requested (runtime dialog)")
         return True
 
+    def on_source_catalog_saved(self) -> bool:
+        if self.slideshow_running and self._catalog_change_affects_running_slideshow():
+            self._stop_slideshow_for_catalog_change()
+        return True
+
+    def _resolve_slideshow_srcdirs_for_start(self) -> bool:
+        catalog = self.load_source_catalog()
+        profile_id = (self.slideshow_profile_id or "").strip()
+        try:
+            if profile_id:
+                profile = get_profile(catalog, profile_id)
+                if profile is None:
+                    raise ValueError(f"unknown profile id: {profile_id}")
+                members = resolve_profile_members(catalog, profile_id)
+                for side_key, id_attr, path_attr in (
+                    ("L", "slideshow_source_id_l", "slideshow_srcdir_l"),
+                    ("R", "slideshow_source_id_r", "slideshow_srcdir_r"),
+                ):
+                    member_id = getattr(profile.members, side_key)
+                    path = members[side_key]
+                    setattr(self, id_attr, member_id or "")
+                    setattr(self, path_attr, "" if path is None else str(path))
+            else:
+                for id_attr, path_attr in (
+                    ("slideshow_source_id_l", "slideshow_srcdir_l"),
+                    ("slideshow_source_id_r", "slideshow_srcdir_r"),
+                ):
+                    source_id = (getattr(self, id_attr) or "").strip()
+                    if source_id:
+                        resolved = resolve_source(catalog, source_id)
+                        setattr(self, path_attr, str(resolved))
+            self._update_slideshow_source_display()
+            self._refresh_action_availability()
+            return True
+        except ValueError as exc:
+            self._set_status(
+                "error",
+                "slideshow",
+                "slideshow source resolve failed",
+                error=str(exc),
+            )
+            self._log(f"Slideshow start blocked: source resolve failed: {exc}")
+            return False
+
+    def _capture_slideshow_run_snapshot(self) -> None:
+        catalog = self.load_source_catalog()
+        profile_id = (self.slideshow_profile_id or "").strip()
+        profile_member_l: str | None = None
+        profile_member_r: str | None = None
+        if profile_id:
+            profile = get_profile(catalog, profile_id)
+            if profile is not None:
+                profile_member_l = profile.members.L
+                profile_member_r = profile.members.R
+
+        source_paths: dict[str, str] = {}
+        for source_id in (self.slideshow_source_id_l, self.slideshow_source_id_r):
+            sid = (source_id or "").strip()
+            if not sid:
+                continue
+            entry = get_source(catalog, sid)
+            if entry is not None:
+                source_paths[sid] = entry.path
+
+        self._slideshow_run_snapshot = {
+            "profile_id": profile_id,
+            "profile_member_l": profile_member_l,
+            "profile_member_r": profile_member_r,
+            "source_id_l": (self.slideshow_source_id_l or "").strip(),
+            "source_id_r": (self.slideshow_source_id_r or "").strip(),
+            "source_paths": source_paths,
+        }
+
+    def _clear_slideshow_run_snapshot(self) -> None:
+        self._slideshow_run_snapshot = None
+
+    def _catalog_change_affects_running_slideshow(self) -> bool:
+        snapshot = self._slideshow_run_snapshot
+        if snapshot is None:
+            return False
+
+        catalog = self.load_source_catalog()
+        profile_id = str(snapshot.get("profile_id") or "").strip()
+        if profile_id:
+            profile = get_profile(catalog, profile_id)
+            if profile is None:
+                return True
+            if profile.members.L != snapshot.get("profile_member_l"):
+                return True
+            if profile.members.R != snapshot.get("profile_member_r"):
+                return True
+
+        stored_paths = snapshot.get("source_paths")
+        if not isinstance(stored_paths, dict):
+            stored_paths = {}
+
+        for side_key, id_key in (("L", "source_id_l"), ("R", "source_id_r")):
+            source_id = str(snapshot.get(id_key) or "").strip()
+            if not source_id:
+                continue
+            entry = get_source(catalog, source_id)
+            if entry is None:
+                return True
+            if stored_paths.get(source_id) != entry.path:
+                return True
+
+        return False
+
+    def _stop_slideshow_for_catalog_change(self) -> None:
+        if not self.slideshow_running:
+            return
+        self.slideshow_running = False
+        self._slideshow_active_mode = self.slideshow_mode
+        self._clear_slideshow_pause()
+        self._slideshow_plugin_impl = None
+        self._slideshow_active_generated_files = ()
+        self._slideshow_tick_generated_files = ()
+        self._clear_slideshow_run_snapshot()
+        self._refresh_action_availability()
+        self._update_slideshow_summary_display()
+        message = "slideshow stopped: source catalog changed"
+        self._set_status("error", "slideshow", message, error=message)
+        self._log(message)
+
     def on_about(self) -> bool:
         self.about_dialog_open = True
         self._set_status("idle", "about", "about dialog opened")
@@ -1412,6 +1537,8 @@ class MainWindow:
         self._clear_slideshow_pause()
         self._slideshow_feedback_dirty = False
         self._slideshow_active_mode = self.slideshow_mode
+        if not self._resolve_slideshow_srcdirs_for_start():
+            return False
         sources: list[tuple[str, Path]] = []
         self._ensure_slideshow_output_dir()
         if self.slideshow_srcdir_l.strip():
@@ -1442,6 +1569,7 @@ class MainWindow:
                 selected_right = selected
 
         self.slideshow_running = True
+        self._capture_slideshow_run_snapshot()
         self._refresh_action_availability()
         self._update_slideshow_summary_display()
         self._update_slideshow_source_display()
@@ -1449,6 +1577,7 @@ class MainWindow:
         applied, error_message = self._apply_slideshow_selection(selected_left, selected_right, cycle_phase="start")
         if not applied:
             self.slideshow_running = False
+            self._clear_slideshow_run_snapshot()
             self._refresh_action_availability()
             self._update_slideshow_summary_display()
             self._set_status("error", "slideshow", error_message or "slideshow start apply failed", error=error_message or "slideshow start apply failed")
@@ -1496,6 +1625,7 @@ class MainWindow:
             return True
         if not applied:
             self.slideshow_running = False
+            self._clear_slideshow_run_snapshot()
             self._clear_slideshow_pause()
             self._refresh_action_availability()
             self._update_slideshow_summary_display()
@@ -1520,6 +1650,7 @@ class MainWindow:
         self._slideshow_active_mode = self.slideshow_mode
         self._clear_slideshow_pause()
         self._slideshow_plugin_impl = None
+        self._clear_slideshow_run_snapshot()
         # R4: clear tracking state; slot files are intentionally kept on disk
         self._slideshow_active_generated_files = ()
         self._slideshow_tick_generated_files = ()

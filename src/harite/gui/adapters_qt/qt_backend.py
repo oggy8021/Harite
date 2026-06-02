@@ -677,6 +677,9 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             if callback is not None:
                 callback()
             if owner is not None and changed:
+                saved_callback = self._signal_handlers.get("on_source_catalog_saved")
+                if saved_callback is not None:
+                    saved_callback()
                 self._sync_slideshow_state_with_feedback_from_owner(owner)
         except Exception as exc:
             self._set_feedback(phase="Slideshow", state="error", error=str(exc))
