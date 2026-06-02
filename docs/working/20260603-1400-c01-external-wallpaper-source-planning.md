@@ -92,7 +92,7 @@ K-05         … 定期 auto-sync は対象外
 - ユーザー管理 **API key** が必要なサイト（#5）
 - **CLI** 拡張（#8）
 - **catalog schema_version 2**（#6）
-- リッチな **検索ギャラリー**（#7 → 不要寄り）
+- **相手先サイト内検索**・**サムネプレビュー**・検索ギャラリー UI（#7 — **対象外・予定なし**）
 - **embed 強制マージン**へのライセンス焼き込み（面白いが **議論分かれ・defer**）
 - GTK registry / preset UI parity（follow-up）
 
@@ -122,7 +122,7 @@ NASA 以外は **preset 定義 + provider 実装**を段階追加（#10）。一
 | **4** | start 前 auto-sync | preset 同梱ファイルは **アプリ版とともに不変**（版アップまで考慮不要）。**user source の sync** は手動（Sync 操作）— stale 自動 poll は初期外 |
 | **5** | API key | **ユーザー管理 API key を要するサイトは使わない** |
 | **6** | catalog schema | **変更なし**（v1）。preset は **別ファイル**（§11） |
-| **7** | GUI 深度 | **説明:** 当初は「Manage 最小 vs 検索プレビュー付きギャラリー」の二択。**結論:** ギャラリーは **初期不要**。preset 一覧 + import + Sync で足りる |
+| **7** | GUI 深度 | **相手先サイトの検索 UI 連携は不要・予定なし**。**サムネ取得・表示もしない**。Harite 側は **preset 一覧 + import + Sync** のみ（Manage 最小） |
 | **8** | CLI | **打ち止め・対象外**（C-02 継続） |
 | **9** | 帰属・ToS | **各ターゲットサイトの規約に従う**（出典明記等は provider / GUI 文言で） |
 | **10** | 追加サイト | **§11 preset に定義を足す** + provider 追加。user schema 変更なし |
