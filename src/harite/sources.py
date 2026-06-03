@@ -143,7 +143,10 @@ def _validate_catalog(catalog: Catalog) -> None:
         _validate_name(entry.name, label="source")
         _validate_notes(entry.notes)
         if entry.kind != KIND_LOCAL_DIR:
-            raise ValueError(f"unsupported source kind: {entry.kind}")
+            from harite.sources_remote import is_remote_kind
+
+            if not is_remote_kind(entry.kind):
+                raise ValueError(f"unsupported source kind: {entry.kind}")
 
     source_names: set[str] = set()
     for entry in catalog.sources:
@@ -291,12 +294,16 @@ def add_source(
 
 
 def update_source(catalog: Catalog, source_id: str, **fields: Any) -> SourceEntry:
+    from harite.sources_remote import is_remote_kind
+
     entry = get_source(catalog, source_id)
     if entry is None:
         raise ValueError(f"unknown source id: {source_id}")
 
     if "id" in fields:
         raise ValueError("source id cannot be changed")
+
+    remote = is_remote_kind(entry.kind)
 
     if "name" in fields:
         validated_name = _validate_name(str(fields["name"]), label="source")
@@ -305,13 +312,19 @@ def update_source(catalog: Catalog, source_id: str, **fields: Any) -> SourceEntr
         entry.name = validated_name
 
     if "path" in fields:
+        if remote:
+            raise ValueError("remote source path cannot be changed manually")
         entry.path = str(normalize_directory_path(fields["path"]))
 
     if "notes" in fields:
         entry.notes = _validate_notes(fields["notes"])
 
-    if "kind" in fields and str(fields["kind"]) != KIND_LOCAL_DIR:
-        raise ValueError(f"unsupported source kind: {fields['kind']}")
+    if "kind" in fields:
+        new_kind = str(fields["kind"])
+        if remote and new_kind != entry.kind:
+            raise ValueError("remote source kind cannot be changed")
+        if not remote and new_kind != KIND_LOCAL_DIR:
+            raise ValueError(f"unsupported source kind: {new_kind}")
 
     return entry
 
@@ -412,3 +425,22 @@ def resolve_profile_members(catalog: Catalog, profile_id: str) -> dict[str, Path
         source_id = getattr(entry.members, side)
         resolved[side] = resolve_source(catalog, source_id) if source_id else None
     return resolved
+
+
+# C-01 re-exports (source-spec §13–14)
+from harite.sources_preset import (  # noqa: E402
+    bootstrap_preset_sources,
+    catalog_slideshow_interval_floor,
+    import_preset_profile,
+    import_preset_source,
+    load_source_presets,
+    preset_min_slideshow_interval,
+)
+from harite.sources_remote import (  # noqa: E402
+    KIND_JMA_WEATHER_MAP,
+    add_remote_source,
+    is_remote_kind,
+    remote_cache_dir_for_source,
+    resolve_default_remote_cache_root,
+    sync_remote_source,
+)
