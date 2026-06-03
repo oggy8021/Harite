@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "id": "c074983e-a728-4982-8f99-6640e5a3aa6c",
+      "name": "気象庁（日本付近）",
+      "kind": "remote-jma-weather-map",
+      "path": "C:\\Users\\oggy_\\Develop\\Repos\\Harite\\_tmp_c01_test2\\remote-cache\\c074983e-a728-4982-8f99-6640e5a3aa6c",
+      "notes": "harite-preset:jma-near-color\nharite-preset:jma-near-color\n出典：気象庁ホームページ（https://www.jma.go.jp/）\nharite-min-interval:600"
+    },
+    {
+      "id": "9e24521e-3d74-4546-83df-acfaa50caed9",
+      "name": "気象庁（アジア域）",
+      "kind": "remote-jma-weather-map",
+      "path": "C:\\Users\\oggy_\\Develop\\Repos\\Harite\\_tmp_c01_test2\\remote-cache\\9e24521e-3d74-4546-83df-acfaa50caed9",
+      "notes": "harite-preset:jma-asia-color\nharite-preset:jma-asia-color\n出典：気象庁ホームページ（https://www.jma.go.jp/）\nharite-min-interval:600"
+    }
+  ],
+  "profiles": [
+    {
+      "id": "b547057c-4c5e-4b49-8f60-8b6878e72e00",
+      "name": "気象庁 L/R",
+      "members": {
+        "L": "c074983e-a728-4982-8f99-6640e5a3aa6c",
+        "R": "9e24521e-3d74-4546-83df-acfaa50caed9"
+      }
+    }
+  ]
+}

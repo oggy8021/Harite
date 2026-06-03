@@ -35,7 +35,15 @@ from harite.positioning import reset_position_pair, update_position_pair
 from harite.plugins import registry as plugin_registry
 from harite.settings import AppSettings
 from harite.slideshow import SlideshowCycleState, collect_slideshow_input_images, run_slideshow_cycle
-from harite.sources import Catalog, get_profile, get_source, load_catalog, resolve_profile_members, resolve_source
+from harite.sources import (
+    Catalog,
+    catalog_slideshow_interval_floor,
+    get_profile,
+    get_source,
+    load_catalog,
+    resolve_profile_members,
+    resolve_source,
+)
 from harite.sources_file import resolve_default_sources_path
 
 REGISTRY_NONE_LABEL = "— none —"
@@ -1068,6 +1076,25 @@ class MainWindow:
         path = self._source_catalog_path or resolve_default_sources_path()
         return load_catalog(path)
 
+    def _apply_slideshow_interval_floor(
+        self,
+        *,
+        source_id_l: str | None = None,
+        source_id_r: str | None = None,
+        profile_id: str | None = None,
+    ) -> None:
+        floor = catalog_slideshow_interval_floor(
+            self.load_source_catalog(),
+            source_id_l=source_id_l,
+            source_id_r=source_id_r,
+            profile_id=profile_id,
+        )
+        if floor is None:
+            return
+        if int(self.slideshow_interval_seconds) < floor:
+            self.slideshow_interval_seconds = floor
+            self._log(f"Slideshow interval raised to {floor}s (catalog minimum)")
+
     def on_select_slideshow_source(self, side: str, source_id: str | None) -> bool:
         normalized_side = side.strip().upper()
         if normalized_side not in {"L", "R"}:
@@ -1100,6 +1127,10 @@ class MainWindow:
         self.slideshow_profile_id = ""
         self._update_slideshow_source_display()
         self._refresh_action_availability()
+        if normalized_side == "L":
+            self._apply_slideshow_interval_floor(source_id_l=selected_id)
+        else:
+            self._apply_slideshow_interval_floor(source_id_r=selected_id)
         self._set_status("idle", "slideshow", f"slideshow saved source {normalized_side} selected")
         self._log(f"Slideshow saved source selected ({normalized_side}): {selected_id}")
         return True
@@ -1136,6 +1167,7 @@ class MainWindow:
 
         self._update_slideshow_source_display()
         self._refresh_action_availability()
+        self._apply_slideshow_interval_floor(profile_id=selected_id)
         self._set_status("idle", "slideshow", f"slideshow profile applied: {profile.name}")
         self._log(f"Slideshow profile selected: {selected_id}")
         return True
