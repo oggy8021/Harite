@@ -1149,10 +1149,44 @@ class MainWindow:
             self._stop_slideshow_for_catalog_change()
         return True
 
+    def _remote_source_ids_for_slideshow_start(self, catalog: Catalog) -> list[str]:
+        from harite.sources_remote import KIND_JMA_WEATHER_MAP
+
+        ids: list[str] = []
+        profile_id = (self.slideshow_profile_id or "").strip()
+        if profile_id:
+            profile = get_profile(catalog, profile_id)
+            if profile is None:
+                return ids
+            for side in ("L", "R"):
+                source_id = getattr(profile.members, side)
+                if not source_id:
+                    continue
+                entry = get_source(catalog, source_id)
+                if entry is not None and entry.kind == KIND_JMA_WEATHER_MAP:
+                    ids.append(source_id)
+            return ids
+
+        for source_id in (self.slideshow_source_id_l, self.slideshow_source_id_r):
+            selected = (source_id or "").strip()
+            if not selected:
+                continue
+            entry = get_source(catalog, selected)
+            if entry is not None and entry.kind == KIND_JMA_WEATHER_MAP:
+                ids.append(selected)
+        return ids
+
+    def _sync_remote_sources_for_slideshow_start(self, catalog: Catalog) -> None:
+        from harite.sources_remote import sync_remote_source
+
+        for source_id in self._remote_source_ids_for_slideshow_start(catalog):
+            sync_remote_source(catalog, source_id)
+
     def _resolve_slideshow_srcdirs_for_start(self) -> bool:
         catalog = self.load_source_catalog()
         profile_id = (self.slideshow_profile_id or "").strip()
         try:
+            self._sync_remote_sources_for_slideshow_start(catalog)
             if profile_id:
                 profile = get_profile(catalog, profile_id)
                 if profile is None:
