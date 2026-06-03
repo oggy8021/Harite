@@ -22,7 +22,21 @@ from harite.workspace import Display
 
 from harite.gui.adapters_qt.qt_widget_helpers import format_slideshow_output_label_text
 
-from tests.gui.test_slideshow_output_issue317 import _setup_linux_pictures_env
+
+def _setup_linux_pictures_env(monkeypatch, tmp_path: Path) -> tuple[Path, Path]:
+    import sys
+
+    home = tmp_path / "home"
+    pictures_root = home / "Pictures"
+    pictures_root.mkdir(parents=True)
+    xdg_config = tmp_path / "xdg-config"
+    xdg_config.mkdir()
+    (xdg_config / "user-dirs.dirs").write_text('XDG_PICTURES_DIR="$HOME/Pictures"\n', encoding="utf-8")
+    monkeypatch.setattr("harite.gui.views.main_window.Path.home", lambda: home)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config))
+    monkeypatch.setattr("harite.gui.views.main_window.sys.platform", "linux")
+    work_dir = pictures_root / "Harite" / "slideshow"
+    return pictures_root, work_dir
 
 
 class _Orientation:
