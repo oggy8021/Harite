@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-03（第4波 **C-01** spec 完了・段 2 tests 着手可）
+最終更新: 2026-06-03（第4波 **C-01 完了** — audit [20260603-c01-3layer-audit.md](finished/20260603-c01-3layer-audit.md)）
 
 ## 位置づけ
 
@@ -45,7 +45,7 @@
 | --- | --- | --- | --- |
 | C-02 | source registry / source profiles | slideshow 用 directory 等を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | **完了**（#373–378, audit: [20260601-c02-3layer-audit.md](finished/20260601-c02-3layer-audit.md)） — [harite-source-spec.md](../specs/source/harite-source-spec.md) |
 | C-05 | slideshow source 強化 | slideshow の source を単発 directory から、複数 source・source profile・将来の外部 source へ広げる。初期スコープは local directory、同期済み cloud folder、ローカル mount 済み NAS/SMB/WebDAV directory までとし、それ以上の直接連携は将来余裕がある場合に限る。 | **完了**（#382–384, audit: [20260602-c05-3layer-audit.md](finished/20260602-c05-3layer-audit.md)） |
-| C-01 | 外部壁紙サイト連携 | 外部 API から **都度取得** し remote cache（ステージング）経由で slideshow に載せる。第1 provider=気象庁。 | **段 2 tests** — spec [#388–390](../specs/source/harite-source-spec.md) |
+| C-01 | 外部壁紙サイト連携 | 外部 API から **都度取得** し remote cache（ステージング）経由で slideshow に載せる。第1 provider=気象庁。 | **完了** — [#392–393](finished/20260603-c01-3layer-audit.md) |
 | C-01-J | JMA 天気図 list.json カタログ | list.json 全種の日本語整理と **preset 選定ストーリー**（公式 schema なし）。 | **別フェーズ** — [inventory](20260603-jma-weather-map-list-inventory.md) |
 | C-01-E | 外部 source 探索拡張 | NDL / CODH 等の調査・preset 追加。 | **別フェーズ**（C-01 第1 impl 後） |
 
@@ -163,7 +163,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
          ↓
 [完了] C-05  slideshow source 強化   ← #382–384, audit: [20260602-c05-3layer-audit.md](finished/20260602-c05-3layer-audit.md)
          ↓
-        C-01  外部壁紙サイト連携   ← spec 1b #390 済、段 2 tests
+        C-01  外部壁紙サイト連携   ← 完了 #392–393 + audit
         C-01-J / C-01-E  … 別フェーズ（list カタログ / 他 source 探索）
 
 [着手順序外・構想保持] P-03 #359（単 display / -R 無効化 — 急がない）
@@ -210,6 +210,7 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 2026-06-02: 第4波 **C-05 完了**（#382–384）— audit: [20260602-c05-3layer-audit.md](finished/20260602-c05-3layer-audit.md)。次は **C-01** planning。
 - 2026-06-03: 第4波 **C-01 spec 1b 完了**（#390）— 気象庁 §15、preset JSON、オンデマンド cache、Interval 下限は preset 駆動
 - 2026-06-03: **C-01-J**（list.json カタログ）・**C-01-E**（他 source 探索）を overview 別フェーズとして追加
+- 2026-06-03: 第4波 **C-01 完了**（#392 core、#393 GUI）— audit: [20260603-c01-3layer-audit.md](finished/20260603-c01-3layer-audit.md)
 
 ## 完了条件（WS10 立ち上げ — **達成済み**）
 
