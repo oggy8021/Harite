@@ -359,12 +359,38 @@ def refresh_slideshow_current_label(
     set_label_text(backend, "lblSlideshowCurrent", text)
 
 
+def slideshow_output_dir_from_owner(owner: Any) -> str | None:
+    """Resolve slideshow work dir for GUI labels (slideshow-spec §6.1), not Main output_dir."""
+    if hasattr(owner, "slideshow_work_dir"):
+        return str(owner.slideshow_work_dir)
+    if hasattr(owner, "_resolve_slideshow_work_dir"):
+        return str(owner._resolve_slideshow_work_dir())
+    form_state = getattr(owner, "form_state", None)
+    if form_state is not None:
+        return str(getattr(form_state, "output_dir", "") or "").strip() or None
+    return None
+
+
+def _format_path_for_slideshow_output_label(full: str) -> str:
+    """Prefer showing the Harite/slideshow suffix when the path matches spec §6.1."""
+    from pathlib import Path
+
+    if len(full) <= 60:
+        return full
+    parts = Path(full).parts
+    if len(parts) >= 2 and parts[-1].lower() == "slideshow" and parts[-2].lower() == "harite":
+        import os
+
+        return f"…{os.sep}Harite{os.sep}slideshow"
+    return format_input_display(full)
+
+
 def format_slideshow_output_label_text(output_dir: str | None) -> tuple[str, str]:
     """Return (on-screen label, full path for tooltip)."""
     full = str(output_dir or ".").strip() or "."
     if full == ".":
         return "Slideshow output: .", ""
-    return f"Slideshow output: {format_input_display(full)}", full
+    return f"Slideshow output: {_format_path_for_slideshow_output_label(full)}", full
 
 
 def refresh_slideshow_output_label(backend: Any, output_dir: str | None = None) -> None:

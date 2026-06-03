@@ -61,8 +61,9 @@ def sync_slideshow_state_from_owner(backend: Any, owner: Any) -> None:
         backend._refresh_slideshow_registry_combos(owner)
     backend._refresh_slideshow_summary_label()
     backend._refresh_slideshow_current_label()
-    form_state = getattr(owner, "form_state", None)
-    backend._refresh_slideshow_output_label(getattr(form_state, "output_dir", None) if form_state is not None else None)
+    from harite.gui.adapters_qt.qt_widget_helpers import slideshow_output_dir_from_owner
+
+    backend._refresh_slideshow_output_label(slideshow_output_dir_from_owner(owner))
 
 
 def sync_main_state_from_owner(backend: Any, owner: Any) -> None:

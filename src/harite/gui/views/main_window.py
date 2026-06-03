@@ -208,6 +208,11 @@ class MainWindow:
     def _resolve_slideshow_work_dir(self) -> Path:
         return self._resolve_default_output_dir() / "Harite" / "slideshow"
 
+    @property
+    def slideshow_work_dir(self) -> str:
+        """Slideshow 作業ディレクトリ（slideshow-spec §6.1）。Main の output_dir とは別。"""
+        return str(self._resolve_slideshow_work_dir())
+
     def _resolve_windows_pictures_dir(self) -> Path | None:
         try:
             buffer = ctypes.create_unicode_buffer(260)

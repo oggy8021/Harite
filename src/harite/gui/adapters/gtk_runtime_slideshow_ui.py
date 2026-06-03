@@ -56,8 +56,13 @@ def refresh_slideshow_current_label(backend: Any, left: str | None = None, right
 
 
 def refresh_slideshow_output_label(backend: Any, output_dir: str | None = None) -> None:
-    value = str(output_dir or "").strip() or "."
-    backend._set_label_text("lblSlideshowOutput", f"Slideshow output: {value}")
+    from harite.gui.adapters_qt.qt_widget_helpers import format_slideshow_output_label_text
+
+    text, tooltip = format_slideshow_output_label_text(output_dir)
+    backend._set_label_text("lblSlideshowOutput", text)
+    widget = backend._objects.get("lblSlideshowOutput") or backend._objects.get("slideshow_output_label")
+    if widget is not None and hasattr(widget, "setToolTip"):
+        widget.setToolTip(tooltip if tooltip else "")
 
 
 def on_slideshow_interval_changed(backend: Any, widget: Any) -> None:
