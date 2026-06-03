@@ -6,7 +6,12 @@ from pathlib import Path
 from typing import Any
 
 from harite.sources import Catalog, ProfileEntry, SourceEntry, load_catalog, save_catalog
-from harite.sources_preset import bootstrap_preset_sources, find_catalog_profile_for_preset, load_source_presets
+from harite.sources_preset import (
+    bootstrap_preset_sources,
+    find_catalog_profile_for_preset,
+    load_source_presets,
+    repair_preset_catalog_integrity,
+)
 from harite.sources_remote import PRESET_MARKER_PREFIX, is_remote_kind, preset_id_from_notes
 
 
@@ -27,17 +32,26 @@ def slideshow_profile_combo_label(catalog: Catalog, entry: ProfileEntry) -> str:
     return entry.name
 
 
+def _load_catalog_for_materialize(path: Path) -> Catalog:
+    if not path.exists():
+        return load_catalog(path)
+    try:
+        return load_catalog(path)
+    except ValueError:
+        return load_catalog(path, validate_member_refs=False)
+
+
 def materialize_source_catalog_at_path(path: Path, *, owner: Any | None = None) -> Catalog:
-    """Bootstrap presets, best-effort remote sync, persist when new entries are added."""
-    catalog = load_catalog(path)
-    changed = bootstrap_preset_sources(catalog, sync=True)
-    if changed:
-        save_catalog(catalog, path)
-        return catalog
+    """Bootstrap presets, best-effort remote sync, persist catalog updates to disk."""
+    catalog = _load_catalog_for_materialize(path)
+    dirty = repair_preset_catalog_integrity(catalog)
+    dirty = bootstrap_preset_sources(catalog, sync=False) or dirty
+    dirty = repair_preset_catalog_integrity(catalog) or dirty
 
     for entry in catalog.sources:
         if not is_remote_kind(entry.kind) or PRESET_MARKER_PREFIX not in entry.notes:
             continue
+        path_before = entry.path
         try:
             from harite.sources_remote import sync_remote_source
 
@@ -46,15 +60,27 @@ def materialize_source_catalog_at_path(path: Path, *, owner: Any | None = None) 
             log = getattr(owner, "_log", None) if owner is not None else None
             if callable(log):
                 log(f"Preset sync skipped ({entry.name}): {exc}")
+        else:
+            if entry.path != path_before:
+                dirty = True
+
+    if dirty:
+        save_catalog(catalog, path)
     return catalog
 
 
 def prepare_owner_source_catalog(owner: Any) -> Catalog:
     from harite.sources_file import resolve_default_sources_path
 
+    cached = getattr(owner, "_source_catalog_cache", None)
+    if cached is not None:
+        return cached
+
     path = getattr(owner, "_source_catalog_path", None) or resolve_default_sources_path()
     if not isinstance(path, Path):
         path = Path(path)
     setattr(owner, "_source_catalog_path", path)
-    return materialize_source_catalog_at_path(path, owner=owner)
+    catalog = materialize_source_catalog_at_path(path, owner=owner)
+    setattr(owner, "_source_catalog_cache", catalog)
+    return catalog
 

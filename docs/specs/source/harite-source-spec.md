@@ -488,6 +488,8 @@ GUI combo 表示は `*{name}`（例: `*気象庁（日本付近）` — [gui-spe
 
 ### 15.4 帰属
 
+**正本の置き場所:** 出典・`harite-preset` / `harite-min-interval` マーカーは **`harite-sources.json` の source `notes`** に記載する。Manage 画面でも同内容を表示する。Optimize / Export 画像への EXIF 等の埋め込みは **行わない**（壁紙実体は cache の PNG をそのまま apply する）。
+
 preset `notes` および Manage で表示する出典（公共データ利用規約 第 1.0 版）:
 
 ```text

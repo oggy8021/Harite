@@ -41,7 +41,9 @@ def load_sources_json(path: Path) -> dict[str, Any]:
 def save_sources_json(path: Path, payload: dict[str, Any]) -> Path:
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
-    with p.open("w", encoding="utf-8") as fh:
+    tmp = p.with_suffix(p.suffix + ".tmp")
+    with tmp.open("w", encoding="utf-8") as fh:
         json.dump(payload, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
+    tmp.replace(p)
     return p

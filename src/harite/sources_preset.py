@@ -66,15 +66,90 @@ def _validate_preset_id(preset_id: str) -> str:
     return preset_id
 
 
+def _strip_managed_preset_note_lines(text: str) -> str:
+    """Remove harite-preset / harite-min-interval lines (re-built by _format_preset_notes)."""
+    kept: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith(PRESET_MARKER_PREFIX) or stripped.startswith(MIN_INTERVAL_NOTE_PREFIX):
+            continue
+        kept.append(stripped)
+    return "\n".join(kept)
+
+
 def _format_preset_notes(
     template: PresetSourceTemplate,
 ) -> str:
     lines = [f"{PRESET_MARKER_PREFIX}{template.preset_id}"]
-    if template.notes.strip():
-        lines.append(template.notes.strip())
+    body = _strip_managed_preset_note_lines(template.notes)
+    if body:
+        lines.append(body)
     if template.min_slideshow_interval_seconds is not None:
         lines.append(f"{MIN_INTERVAL_NOTE_PREFIX}{template.min_slideshow_interval_seconds}")
     return "\n".join(lines)
+
+
+def canonical_preset_source_notes(template: PresetSourceTemplate) -> str:
+    from harite.sources import _validate_notes
+
+    return _validate_notes(_format_preset_notes(template))
+
+
+def repair_preset_profile_members(
+    catalog: Catalog,
+    *,
+    preset_catalog: PresetCatalog | None = None,
+) -> bool:
+    """Re-link bundled profile L/R members to current preset source ids."""
+    templates = preset_catalog or load_source_presets()
+    changed = False
+    for template in templates.profiles:
+        profile = next((entry for entry in catalog.profiles if entry.name == template.name), None)
+        if profile is None:
+            continue
+        new_members = ProfileMembers()
+        for side in ("L", "R"):
+            member_preset = getattr(template.members, side)
+            if member_preset is None:
+                setattr(new_members, side, None)
+                continue
+            source = find_catalog_source_for_preset(catalog, member_preset)
+            setattr(new_members, side, source.id if source is not None else None)
+        if profile.members.L != new_members.L or profile.members.R != new_members.R:
+            profile.members = new_members
+            changed = True
+    return changed
+
+
+def repair_preset_catalog_integrity(
+    catalog: Catalog,
+    *,
+    preset_catalog: PresetCatalog | None = None,
+) -> bool:
+    return repair_preset_source_notes(catalog, preset_catalog=preset_catalog) or repair_preset_profile_members(
+        catalog, preset_catalog=preset_catalog
+    )
+
+
+def repair_preset_source_notes(
+    catalog: Catalog,
+    *,
+    preset_catalog: PresetCatalog | None = None,
+) -> bool:
+    """Normalize preset-derived source notes (fix duplicates, add missing markers)."""
+    templates = preset_catalog or load_source_presets()
+    changed = False
+    for template in templates.sources:
+        entry = find_catalog_source_for_preset(catalog, template.preset_id)
+        if entry is None:
+            continue
+        canonical = canonical_preset_source_notes(template)
+        if entry.notes != canonical:
+            entry.notes = canonical
+            changed = True
+    return changed
 
 
 def min_interval_from_notes(notes: str) -> int | None:
@@ -241,7 +316,7 @@ def import_preset_source(
         user_catalog,
         name=name,
         kind=template.kind,
-        notes=_format_preset_notes(template),
+        notes=canonical_preset_source_notes(template),
         cache_root=cache_root,
     )
 
@@ -368,6 +443,8 @@ def bootstrap_preset_sources(
         if find_catalog_profile_for_preset(
             catalog, template.preset_id, preset_catalog=templates
         ) is not None:
+            continue
+        if any(entry.name == template.name for entry in catalog.profiles):
             continue
         import_preset_profile(
             catalog,
