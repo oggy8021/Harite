@@ -1,6 +1,6 @@
 # C-01 — 外部壁紙サイト連携 planning
 
-最終更新: 2026-06-03（**段 1a 完了** #388。**次:** spec 1b 気象庁）
+最終更新: 2026-06-03（**段 1b spec** — オンデマンド cache / Interval 600s / C-01-J・E は overview）
 
 ## 位置づけ
 
@@ -25,7 +25,7 @@
 
 | 方針 | 内容 |
 | --- | --- |
-| **cache-first** | fetch → ローカル cache → `resolve` → C-05 slideshow（実行面はほぼ流用） |
+| **cache-first** | **都度 API 取得** → cache は **最新 1 枚のステージング**（世代蓄積しない）→ `resolve` → slideshow |
 | **preset 配布** | サイト定義は **package 内 JSON**（§11）。ユーザーが **自分の catalog に取り込む** |
 | **schema 不変** | `harite-sources.json` の `schema_version: 1` とフィールド集合は **そのまま** |
 | **第 1 impl** | **気象庁**（天気図等）。どの画像を取得するか・**左右ディスプレイへの割当**は **段 1b（spec）** でサイト調査のうえ確定 |
@@ -42,24 +42,19 @@
 | **改変責任** | ユーザーが site-packages 内の同梱ファイルを **書き換え・削除**した場合は **製品責任外** |
 | **拡張** | 新サイトは **preset ファイルへエントリ追加** + provider 実装（#10）。user catalog schema 変更は **不要** |
 
-**UX（2026-06-03 オーナー訂正）:**
+**UX:**
 
-1. **起動時** `bootstrap_preset_sources` — 同梱 preset を user catalog に materialize + **Sync 相当**（best-effort）
-2. Slideshow の **Profile / Saved source combo** に **`*気象庁` / `*JMA` 等**を予約行として表示（専用 Import ボタンは **不要**）
-3. 選択・Start は C-02 / C-05 と同型（Start 直前の network fetch は **しない** — §4）
-4. Manage 内 **Refresh**（手動 Sync）は **任意**。Slideshow タブに Sync ボタンは **置かない**
-
-（旧案の preset 一覧 + 「Add to my sources」は **採用しない** — spec/gui-spec §6.5）
+1. 起動時 `bootstrap_preset_sources` + preset 由来 `sync_remote_source`（best-effort）
+2. Slideshow combo に `*気象庁（日本付近）` 等（[gui-spec §6.5](../specs/gui/harite-gui-spec.md)）
+3. 既定 profile `気象庁 L/R` — L=日本付近、R=アジア域（[source-spec §15](../specs/source/harite-source-spec.md)）
 
 ```text
-[同梱] resources/source-presets/*.json   … 読み取り専用テンプレート
-         ↓ ユーザー操作（import）
-[user]   harite-sources.json             … schema v1 不変、kind=remote-* を追加
-         ↓ Sync
-[cache]  OS 別 cache 根（§3）/ {source_id}/
-         ↓ resolve（C-05 start 前）
-[run]    slideshow / optimize
+[preset] → bootstrap → harite-sources.json
+         → Sync（起動 / Refresh / Start 直前）→ cache/{id}/latest.png のみ
+         → resolve → slideshow（tick は再 fetch しない）
 ```
+
+**別フェーズ:** [list.json カタログ](20260603-jma-weather-map-list-inventory.md)（C-01-J）、[他 source 探索](20260518-2047-feature-overview.md)（C-01-E）
 
 ## 現状 inventory（post C-05）
 
@@ -134,7 +129,7 @@ NASA APOD（https://api.nasa.gov/）は **API に DEMO key が必要**なため�
 | **1** | 第 1 ターゲット | **気象庁**。~~NASA APOD~~ 見送り。画像種別・L/R は **1b 調査** |
 | **2** | `kind` 命名 | **`remote-{provider略称}`**（例: `remote-jma-weather-map` — 1b で確定） |
 | **3** | cache 場所 | **Linux:** `XDG_CACHE_HOME` 配下。**Windows:** Roaming の `harite/` 配下（settings と同系）。不可なら `%USERPROFILE%\Pictures` 等に `harite_cache_dir` — **spec 段で技術確認** |
-| **3b** | cache 保持 | fetch 済み・貼り付け中画像を **最小世代分** 保持（初案） |
+| **3b** | cache 保持 | **最新 1 枚のみ**（都度上書き。古い天気図は保持しない） |
 | **4** | start 前 auto-sync | preset 同梱ファイルは **アプリ版とともに不変**（版アップまで考慮不要）。**user source の sync** は手動（Sync 操作）— stale 自動 poll は初期外 |
 | **5** | API key | **一切使わない**（ユーザー管理・DEMO_KEY 埋め込み含む） |
 | **6** | catalog schema | **変更なし**（v1）。preset は **別ファイル**（§11） |
@@ -175,7 +170,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 | --- | --- | --- |
 | **0** | 本 planning（本書） | ~~マージ許可~~ **完了**（#386） |
 | **1a** | spec — preset 契約、remote kind、cache 根、provider インタフェース | ~~spec PR~~ **完了**（#388） |
-| **1b** | spec — **気象庁調査**（取得画像・list.json/URL 組み立て・**L/R 割当**・帰属・`remote-jma-*`） | spec PR — **オーナー確認で確定** |
+| **1b** | spec — 気象庁 §15（list.json / png URL / L/R profile / preset JSON） | spec PR |
 | **2** | tests — preset load、fetch モック、resolve + slideshow 連携 | tests PR |
 | **3** | impl — preset loader、第 1 provider、cache、resolve 拡張 | impl PR |
 | **4** | GUI — bootstrap、combo `*…`、Refresh、icons（#12） | 段階停止 |
@@ -187,7 +182,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 
 | 層 | 状態 |
 | --- | --- |
-| **spec** | 段 1a 骨格（[harite-source-spec §12–16](../specs/source/harite-source-spec.md)）— 1b §15 気象庁は未記載 |
+| **spec** | [harite-source-spec §12–15](../specs/source/harite-source-spec.md)（1b PR レビュー中） |
 | **tests** | なし |
 | **impl** | なし |
 
@@ -196,7 +191,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 1. ~~open questions #1–12~~ — **決定済**（**#1 = 気象庁**）
 2. ~~**本 planning PR マージ**~~ — **#386 済**
 3. ~~**spec PR 1a**~~ — **#388 済**
-4. **spec PR 1b** — 気象庁（§15）・画像選定・L/R・帰属
+4. **spec PR 1b** — 気象庁 §15（PR 作成中）
 5. tests + impl → GUI → audit
 
 ## 参照
