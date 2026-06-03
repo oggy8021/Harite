@@ -450,19 +450,21 @@ load / save 時の catalog 検証では、`remote-*` の `path` は **存在し�
 
 `list.json` ルートの category key と preset の対応:
 
-| `preset_id` | list.json パス | 内容 |
-| --- | --- | --- |
-| `jma-near-color` | `near.now` | 日本付近・カラー実況天気図 |
-| `jma-asia-color` | `asia.now` | アジア域・カラー実況天気図 |
+| `preset_id` | list.json パス | ファイル名タグ | 内容 |
+| --- | --- | --- | --- |
+| `jma-near-color` | `near.now` | `JRcolor` | 日本付近・カラー実況天気図 |
+| `jma-asia-color` | `asia.now` | `JRcolor` | アジア域・カラー実況天気図 |
+| `jma-near-monochrome` | `near_monochrome.now` | `JRjmahp` | 日本付近・モノクロ実況天気図 |
+| `jma-asia-monochrome` | `asia_monochrome.now` | `JRjmahp` | アジア域・モノクロ実況天気図 |
 
-`near_monochrome` / `asia_monochrome` および `ft24` / `ft48` は **Sync 対象外**。
+`ft24` / `ft48` および上表以外の list パスは **Sync 対象外**。
 
 ### 15.2 Sync 手順
 
 `sync_remote_source`（`harite-preset:{preset_id}` で分岐）:
 
 1. `list.json` を GET（UTF-8 JSON）。
-2. 上表の配列から、ファイル名に **`JRcolor`** を含む要素のみ対象とする。
+2. 上表の配列から、当該 preset の **ファイル名タグ**（`JRcolor` または `JRjmahp`）を含む要素のみ対象とする。
 3. 配列の **最終要素**を `{filename}` とする。空配列は `ValueError`。
 4. `https://www.jma.go.jp/bosai/weather_map/data/png/{filename}` を GET（PNG）。
 5. cache directory へ **`latest.png` として上書き保存**。当該 directory の他 `*.png` は削除してよい。
@@ -478,6 +480,8 @@ package: `harite.gui` / `resources/source_presets/harite-source-presets.json`（
 | --- | --- | --- | --- |
 | `jma-near-color` | `気象庁（日本付近）` | `remote-jma-weather-map` | — |
 | `jma-asia-color` | `気象庁（アジア域）` | `remote-jma-weather-map` | — |
+| `jma-near-monochrome` | `気象庁（日本付近・モノクロ）` | `remote-jma-weather-map` | — |
+| `jma-asia-monochrome` | `気象庁（アジア域・モノクロ）` | `remote-jma-weather-map` | — |
 | `jma-dual-lr` | `気象庁 L/R` | — | `members.L` = `jma-near-color`, `members.R` = `jma-asia-color` |
 
 GUI combo 表示は `*{name}`（例: `*気象庁（日本付近）` — [gui-spec §6.5](../gui/harite-gui-spec.md)）。

@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-03（第4波 **C-01 完了** — audit [20260603-c01-3layer-audit.md](finished/20260603-c01-3layer-audit.md)）
+最終更新: 2026-06-03（**C-01-J 完了**・実機確認済 / C-01-E は未着手）
 
 ## 位置づけ
 
@@ -46,7 +46,7 @@
 | C-02 | source registry / source profiles | slideshow 用 directory 等を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | **完了**（#373–378, audit: [20260601-c02-3layer-audit.md](finished/20260601-c02-3layer-audit.md)） — [harite-source-spec.md](../specs/source/harite-source-spec.md) |
 | C-05 | slideshow source 強化 | slideshow の source を単発 directory から、複数 source・source profile・将来の外部 source へ広げる。初期スコープは local directory、同期済み cloud folder、ローカル mount 済み NAS/SMB/WebDAV directory までとし、それ以上の直接連携は将来余裕がある場合に限る。 | **完了**（#382–384, audit: [20260602-c05-3layer-audit.md](finished/20260602-c05-3layer-audit.md)） |
 | C-01 | 外部壁紙サイト連携 | 外部 API から **都度取得** し remote cache（ステージング）経由で slideshow に載せる。第1 provider=気象庁。 | **完了** — [#392–393](finished/20260603-c01-3layer-audit.md) |
-| C-01-J | JMA 天気図 list.json カタログ | list.json 全種の日本語整理と **preset 選定ストーリー**（公式 schema なし）。 | **別フェーズ** — [inventory](20260603-jma-weather-map-list-inventory.md) |
+| C-01-J | JMA 天気図 list.json カタログ | list.json 棚卸・preset 選定（カラー 2 + モノクロ実況 2）。全 12 葉のギャラリー UI は **スコープ外**。 | **完了**（2026-06-03 実機確認）— [調査・完了記録](20260603-jma-weather-map-list-inventory.md) |
 | C-01-E | 外部 source 探索拡張 | NDL / CODH 等の調査・preset 追加。 | **別フェーズ**（C-01 第1 impl 後） |
 
 ### 1b. 近端 backlog（Qt 完了後・2026-06-01）
@@ -70,11 +70,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | C-03 | plugin capability 可視化 | plugin ごとに受理 target や OS 制約を可視化し、apply / slideshow / GUI での分岐を分かりやすくする。 | **採用条件**: 仕様書に根拠を持ち、UIUX として明確に改善される論拠（spec 改訂案 + 表示面のストーリー）が示せたとき |
 | C-04 | GUI 利用導線の再設計 | optimize / apply / slideshow を単なる tab 群ではなく、利用目的ベースで再構成する。 | **採用条件**: 既存レイアウトの骨格を維持しつつ、世の標準傾向や UX トレンドを引用した「主要導線がより良くなる」ストーリーが組めたとき。「利用目的ベース」の具体が未整理のため現時点では積極採用しない |
 | K-01 | ~~watch~~ slideshow 再構成（**旧語整理待ち**） | 旧 inventory「Watch」= 現 **Slideshow**。monitor 変化監視等を別 feature に切り出すなら K-01 を再定義。 | **構想保持・要再分類** — C-02/C-05 後。Phase10 mock の Watch 表記は legacy。 |
-| K-02 | source metadata / cache | 画像 source ごとにタグ、取得元、評価、最終利用履歴などを持てるようにする。 | 外部 source 連携や history 導線と一緒に詰めたほうがよい |
-| K-03 | favorites / history | 過去に生成・適用した壁紙や source を振り返り、再利用できるようにする。 | 保存スコープと UX を先に整理したい |
 | K-04 | plugin 拡張パック | Linux 以外や追加 desktop 向け plugin を外付け拡張として扱えるようにする。 | capability model と packaging 方針が先に必要 |
-| K-05 | scheduler / timed automation | 時刻・曜日・条件に応じて optimize / apply / slideshow を起動する。 | source / profile / slideshow 面が固まってからのほうが設計しやすい |
-| K-06 | import / export profiles | optimize / apply / slideshow の運用設定を profile 単位で持ち運べるようにする。 | source / settings / GUI 導線との責務分担を整理してからでよい |
 | P-03 | 単 display 時の -R 側無効化 | 検出 1 枚のとき右パネル操作を disabled にする案。 | **採用条件**: 単 display 再現手順、disabled 範囲の spec、GTK/Qt テスト方針が揃ったとき（[#359](../online-issues/issue-359.md)） |
 
 #### C-04 rough ideas（参考保持）
@@ -94,6 +90,10 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | H-01 | 内部 issue の延長での feature 化 | reformation 中に出た surface 不整合を、そのまま新 feature として抱え続ける。 | WS10 の対象外。現行 surface の整合修正は WS1-WS9 側で閉じる |
 | H-02 | 旧 UI / 旧 surface 互換の長期維持 | 旧 CLI option や旧 GUI 前提を将来 feature の制約として保持し続ける。 | reformation 後の負債持ち越しになりやすく、基本は縮小方向 |
 | H-03 | 早期の多機能化 | source / plugin / GUI を一度に拡張する大規模 feature を最初の planning でまとめて始める。 | planning 粒度が粗すぎるため、入口では採らない |
+| H-04 | K-02 source metadata / cache | 画像 source ごとのタグ・取得元・評価・利用履歴。 | **オーナー棚卸: 不要**（2026-06-03）。C-02/C-05/C-01 の source モデルで足りる |
+| H-05 | K-03 favorites / history | 過去の生成・適用壁紙や source の振り返り・再利用。 | **オーナー棚卸: 不要**（2026-06-03）。保存スコープと product 焦点がずれる |
+| H-06 | K-06 import / export profiles | optimize / apply / slideshow 設定の profile 単位の持ち運び。 | **オーナー棚卸: 不要・やめる**（2026-06-03）。registry + preset で運用し、別途 export は負債になりやすい |
+| H-07 | K-05 scheduler / timed automation | 時刻・曜日・条件で optimize / apply / slideshow を起動。 | **オーナー棚卸: 不要に近い**（2026-06-03）。下記 §K-05 残ストーリー参照。明示ニーズが出るまで採らない |
 
 ## planning 入口カテゴリ
 
@@ -107,8 +107,8 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 
 - source registry / source profiles
 - slideshow source 強化
-- scheduler / timed automation（[K-05](#2-構想保持)）
 - （旧語 Watch = slideshow — 2026-06-01 用語整理）
+- ~~scheduler / timed automation~~ — [H-07](#3-破棄候補--保留延長)（オーナー: 不要に近い）
 
 ### 3. plugin / apply 拡張
 
@@ -119,8 +119,8 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 ### 4. GUI / UX 導線改善
 
 - GUI 利用導線の再設計
-- import / export profiles
-- favorites / history
+- ~~import / export profiles~~ — [H-06](#3-破棄候補--保留延長)
+- ~~favorites / history~~ — [H-05](#3-破棄候補--保留延長)
 
 ## 次期 planning への渡し方
 
@@ -164,7 +164,8 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 [完了] C-05  slideshow source 強化   ← #382–384, audit: [20260602-c05-3layer-audit.md](finished/20260602-c05-3layer-audit.md)
          ↓
         C-01  外部壁紙サイト連携   ← 完了 #392–393 + audit
-        C-01-J / C-01-E  … 別フェーズ（list カタログ / 他 source 探索）
+        C-01-J  JMA list / preset 選定   ← 完了（調査 + モノクロ 2 preset、実機確認）
+        C-01-E  他 source 探索   ← 未着手
 
 [着手順序外・構想保持] P-03 #359（単 display / -R 無効化 — 急がない）
 ```
@@ -211,6 +212,22 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 2026-06-03: 第4波 **C-01 spec 1b 完了**（#390）— 気象庁 §15、preset JSON、オンデマンド cache、Interval 下限は preset 駆動
 - 2026-06-03: **C-01-J**（list.json カタログ）・**C-01-E**（他 source 探索）を overview 別フェーズとして追加
 - 2026-06-03: 第4波 **C-01 完了**（#392 core、#393 GUI）— audit: [20260603-c01-3layer-audit.md](finished/20260603-c01-3layer-audit.md)
+- 2026-06-03: オーナー棚卸 — **K-02 / K-03 / K-06 破棄**（H-04–H-06）、**K-05 不要に近い**（H-07）
+- 2026-06-03: **C-01-J 調査完了** — live list.json 全 12 葉棚卸 → [20260603-jma-weather-map-list-inventory.md](20260603-jma-weather-map-list-inventory.md)
+- 2026-06-03: **C-01-J 完了** — モノクロ実況 preset 2 種 + オーナー実機確認。ft24/48・カタログ UI は見送り確定
+
+### K-05（scheduler）— 残しうるストーリーと見送り理由
+
+オーナー判断どおり **当面は採らない**。次のような話は成立しうるが、現行 product では代替で足りる、または別製品寄りの責務になりやすい。
+
+| ストーリー | なぜ弱い / 代替 |
+| --- | --- |
+| 勤務時間だけ slideshow を回したい | Interval + 手動 Start/Stop で足りる。常駐 scheduler は tray/サービス設計が要る |
+| 朝 9 時に気象図を取り直して apply | C-01 は start 前 sync + slideshow interval。OS のログイン時起動は Harite 外 |
+| 夜は個人写真・昼は JMA preset に自動切替 | profile / srcdir の**時刻連動切替**は未実装だが、scheduler 全体より「preset 切替ルール」小 feature の方が筋がよい（それでも今は不要寄り） |
+| 曜日ごとに別 source profile | 運用ニーズはあるが、GUI 複雑化・テスト・スリープ復帰とセット。明示要望なし |
+
+**結論:** 時刻駆動の**汎用 automation 基盤**（K-05）は Harite の core 価値（optimize / apply / slideshow + source）から外す。将来「時刻で profile だけ切替」程度のニーズが出たら、K-05 復活ではなく**限定スコープ**で再検討する。
 
 ## 完了条件（WS10 立ち上げ — **達成済み**）
 

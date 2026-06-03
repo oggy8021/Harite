@@ -24,8 +24,6 @@ from harite.gui.adapters_qt.qt_widget_helpers import format_slideshow_output_lab
 
 
 def _setup_linux_pictures_env(monkeypatch, tmp_path: Path) -> tuple[Path, Path]:
-    import sys
-
     home = tmp_path / "home"
     pictures_root = home / "Pictures"
     pictures_root.mkdir(parents=True)

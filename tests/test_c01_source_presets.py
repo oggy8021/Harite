@@ -32,7 +32,12 @@ def test_load_bundled_jma_presets() -> None:
     presets = load_source_presets()
     assert presets.preset_schema_version == 1
     ids = {template.preset_id for template in presets.sources}
-    assert ids == {"jma-near-color", "jma-asia-color"}
+    assert ids == {
+        "jma-near-color",
+        "jma-asia-color",
+        "jma-near-monochrome",
+        "jma-asia-monochrome",
+    }
     profile_ids = {template.preset_id for template in presets.profiles}
     assert profile_ids == {"jma-dual-lr"}
     for template in presets.sources:
@@ -88,8 +93,13 @@ def test_bootstrap_materializes_missing_presets(tmp_path: Path) -> None:
     changed = bootstrap_preset_sources(catalog, cache_root=cache_root, sync=False)
 
     assert changed is True
-    assert find_catalog_source_for_preset(catalog, "jma-near-color") is not None
-    assert find_catalog_source_for_preset(catalog, "jma-asia-color") is not None
+    for preset_id in (
+        "jma-near-color",
+        "jma-asia-color",
+        "jma-near-monochrome",
+        "jma-asia-monochrome",
+    ):
+        assert find_catalog_source_for_preset(catalog, preset_id) is not None
     assert len(catalog.profiles) == 1
 
     changed_again = bootstrap_preset_sources(catalog, cache_root=cache_root, sync=False)
