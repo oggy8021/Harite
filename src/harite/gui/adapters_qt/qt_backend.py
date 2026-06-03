@@ -231,9 +231,15 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         from harite.gui.adapters_qt.qt_widget_helpers import refresh_save_target_label
         refresh_save_target_label(self, filename)
 
-    def _refresh_slideshow_source_labels(self) -> None:
+    def _refresh_slideshow_source_labels(self, owner: Any | None = None) -> None:
         from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_source_labels
-        refresh_slideshow_source_labels(self)
+
+        refresh_slideshow_source_labels(self, owner)
+
+    def _refresh_slideshow_mode_controls(self, owner: Any) -> None:
+        from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_mode_controls
+
+        refresh_slideshow_mode_controls(self, owner)
 
     def _refresh_slideshow_registry_combos(self, owner: Any) -> None:
         from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_registry_combos

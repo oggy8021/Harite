@@ -262,7 +262,109 @@ def test_format_input_display_empty():
 # ---------------------------------------------------------------------------
 
 
-def test_refresh_slideshow_source_labels(qapp, backend):
+def test_format_slideshow_output_label_text_truncates_long_paths() -> None:
+    from harite.gui.adapters_qt.qt_widget_helpers import format_slideshow_output_label_text
+
+    long_path = "C:/Users/example/画像/" + ("work/" * 20) + "Harite/slideshow"
+    label, tooltip = format_slideshow_output_label_text(long_path)
+    assert label.startswith("Slideshow output:")
+    assert "Harite" in label and "slideshow" in label
+    assert tooltip == long_path
+    assert len(label) < len(long_path)
+
+
+def test_slideshow_output_sync_uses_work_dir_not_pictures_root(qapp, monkeypatch, tmp_path: Path) -> None:
+    from PyQt6.QtWidgets import QLabel
+
+    from harite.gui.adapters.gtk_runtime_sync import sync_slideshow_state_from_owner
+    from harite.gui.views.main_window import MainWindow
+
+    home = tmp_path / "home"
+    pictures = home / "Pictures"
+    pictures.mkdir(parents=True)
+    xdg_config = tmp_path / "xdg-config"
+    xdg_config.mkdir()
+    (xdg_config / "user-dirs.dirs").write_text('XDG_PICTURES_DIR="$HOME/Pictures"\n', encoding="utf-8")
+    monkeypatch.setattr("harite.gui.views.main_window.Path.home", lambda: home)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config))
+    monkeypatch.setattr("harite.gui.views.main_window.sys.platform", "linux")
+
+    work_dir = pictures / "Harite" / "slideshow"
+    window = MainWindow()
+    window.form_state.output_dir = str(pictures)
+
+    class _SyncBackend:
+        def __init__(self) -> None:
+            self._objects: dict = {}
+            self._slideshow_srcdir_l = ""
+            self._slideshow_srcdir_r = ""
+            self.slideshow_mode = "random"
+            self._slideshow_active_mode = "random"
+            self._slideshow_running = False
+            self._slideshow_paused = False
+            self._slideshow_state_l = None
+            self._slideshow_state_r = None
+            self._slideshow_previous_l = None
+            self._slideshow_previous_r = None
+
+        def _set_spin_value(self, *_args: object) -> None:
+            pass
+
+        def _set_toggle_active(self, *_args: object) -> None:
+            pass
+
+        def _set_label_text(self, name: str, value: object) -> None:
+            from harite.gui.adapters_qt.qt_widget_helpers import set_label_text
+
+            set_label_text(self, name, value)
+
+        def _set_button_enabled(self, *_args: object) -> None:
+            pass
+
+        def _refresh_slideshow_source_labels(self, owner: object) -> None:
+            pass
+
+        def _refresh_slideshow_mode_controls(self, owner: object) -> None:
+            pass
+
+        def _refresh_slideshow_registry_combos(self, owner: object) -> None:
+            pass
+
+        def _refresh_slideshow_summary_label(self) -> None:
+            pass
+
+        def _refresh_slideshow_current_label(self) -> None:
+            pass
+
+        def _refresh_slideshow_output_label(self, output_dir: str | None) -> None:
+            from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_output_label
+
+            refresh_slideshow_output_label(self, output_dir)
+
+    backend = _SyncBackend()
+    lbl = QLabel()
+    backend._objects["lblSlideshowOutput"] = lbl
+
+    sync_slideshow_state_from_owner(backend, window)
+
+    assert "Harite" in lbl.text() and "slideshow" in lbl.text()
+    assert lbl.toolTip() == str(work_dir)
+
+
+def test_refresh_slideshow_output_label_sets_tooltip(qapp, backend) -> None:
+    from PyQt6.QtWidgets import QLabel
+
+    from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_output_label
+
+    lbl = QLabel()
+    backend._objects["lblSlideshowOutput"] = lbl
+    full = "C:/Users/example/画像/" + ("nested/" * 12) + "Harite/slideshow"
+    refresh_slideshow_output_label(backend, full)
+    assert "…" in lbl.text()
+    assert lbl.toolTip() == full
+
+
+def test_refresh_slideshow_source_labels_truncates_long_paths(qapp, backend):
     from PyQt6.QtWidgets import QLabel
 
     from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_source_labels
@@ -271,11 +373,12 @@ def test_refresh_slideshow_source_labels(qapp, backend):
     lbl_r = QLabel()
     backend._objects["lblSlideshowSourceL"] = lbl_l
     backend._objects["lblSlideshowSourceR"] = lbl_r
-    backend._slideshow_srcdir_l = "/tmp/left"
+    backend._slideshow_srcdir_l = "C:/cache/" + ("x" * 80)
     backend._slideshow_srcdir_r = ""
     refresh_slideshow_source_labels(backend)
-    assert "/tmp/left" in lbl_l.text()
-    assert "-" in lbl_r.text()
+    assert lbl_l.text().startswith("L:")
+    assert "…" in lbl_l.text()
+    assert "R: -" in lbl_r.text()
 
 
 # ---------------------------------------------------------------------------

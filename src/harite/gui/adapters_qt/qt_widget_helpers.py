@@ -266,11 +266,66 @@ def refresh_save_target_label(backend: Any, filename: str | None = None) -> None
         set_label_text(backend, "lblSaveTarget", "Export target: not-selected")
 
 
-def refresh_slideshow_source_labels(backend: Any) -> None:
+def format_slideshow_srcdir_side_label(
+    side: str,
+    path: str,
+    *,
+    source_name: str | None = None,
+) -> str:
+    side_key = side.strip().upper()
+    if not path.strip():
+        return f"{side_key}: -"
+    if source_name and source_name.strip():
+        return f"{side_key}: {source_name.strip()}"
+    return f"{side_key}: {format_input_display(path)}"
+
+
+def refresh_slideshow_source_labels(backend: Any, owner: Any | None = None) -> None:
+    catalog = None
+    if owner is not None and hasattr(owner, "load_source_catalog"):
+        try:
+            catalog = owner.load_source_catalog()
+        except Exception:
+            catalog = None
+
+    def _side_label(side_key: str, path: str, source_id: str) -> str:
+        source_name = None
+        if catalog is not None and source_id.strip():
+            from harite.sources import get_source
+
+            entry = get_source(catalog, source_id.strip())
+            if entry is not None:
+                source_name = entry.name
+        return format_slideshow_srcdir_side_label(side_key, path, source_name=source_name)
+
     l_src = getattr(backend, "_slideshow_srcdir_l", "")
     r_src = getattr(backend, "_slideshow_srcdir_r", "")
-    set_label_text(backend, "lblSlideshowSourceL", f"L: {l_src or '-'}")
-    set_label_text(backend, "lblSlideshowSourceR", f"R: {r_src or '-'}")
+    l_id = getattr(owner, "slideshow_source_id_l", "") if owner is not None else ""
+    r_id = getattr(owner, "slideshow_source_id_r", "") if owner is not None else ""
+    set_label_text(backend, "lblSlideshowSourceL", _side_label("L", l_src, l_id))
+    set_label_text(backend, "lblSlideshowSourceR", _side_label("R", r_src, r_id))
+
+
+def refresh_slideshow_mode_controls(backend: Any, owner: Any) -> None:
+    enabled = bool(getattr(owner, "slideshow_mode_controls_enabled", True))
+    for widget_key in ("rad_slideshow_mode_sequential", "rad_slideshow_mode_random"):
+        widget = backend._objects.get(widget_key)
+        if widget is not None:
+            widget.setEnabled(enabled)
+    if enabled:
+        mode = str(getattr(owner, "slideshow_mode", "random") or "random")
+        help_text = (
+            "Sequential rotates images."
+            if mode == "sequential"
+            else "Random rotates images."
+        )
+        set_label_text(backend, "lblSlideshowModeHelp", help_text)
+    else:
+        set_label_text(
+            backend,
+            "lblSlideshowModeHelp",
+            "Mode is fixed while a weather-map preset is selected (single image per side).",
+        )
 
 
 def refresh_slideshow_summary_label(backend: Any) -> None:
@@ -304,9 +359,46 @@ def refresh_slideshow_current_label(
     set_label_text(backend, "lblSlideshowCurrent", text)
 
 
+def slideshow_output_dir_from_owner(owner: Any) -> str | None:
+    """Resolve slideshow work dir for GUI labels (slideshow-spec §6.1), not Main output_dir."""
+    if hasattr(owner, "slideshow_work_dir"):
+        return str(owner.slideshow_work_dir)
+    if hasattr(owner, "_resolve_slideshow_work_dir"):
+        return str(owner._resolve_slideshow_work_dir())
+    form_state = getattr(owner, "form_state", None)
+    if form_state is not None:
+        return str(getattr(form_state, "output_dir", "") or "").strip() or None
+    return None
+
+
+def _format_path_for_slideshow_output_label(full: str) -> str:
+    """Prefer showing the Harite/slideshow suffix when the path matches spec §6.1."""
+    from pathlib import Path
+
+    if len(full) <= 60:
+        return full
+    parts = Path(full).parts
+    if len(parts) >= 2 and parts[-1].lower() == "slideshow" and parts[-2].lower() == "harite":
+        import os
+
+        return f"…{os.sep}Harite{os.sep}slideshow"
+    return format_input_display(full)
+
+
+def format_slideshow_output_label_text(output_dir: str | None) -> tuple[str, str]:
+    """Return (on-screen label, full path for tooltip)."""
+    full = str(output_dir or ".").strip() or "."
+    if full == ".":
+        return "Slideshow output: .", ""
+    return f"Slideshow output: {_format_path_for_slideshow_output_label(full)}", full
+
+
 def refresh_slideshow_output_label(backend: Any, output_dir: str | None = None) -> None:
-    text = f"Slideshow output: {output_dir or '.'}"
+    text, tooltip = format_slideshow_output_label_text(output_dir)
     set_label_text(backend, "lblSlideshowOutput", text)
+    widget = _get(backend, "lblSlideshowOutput")
+    if widget is not None and hasattr(widget, "setToolTip"):
+        widget.setToolTip(tooltip if tooltip else "")
 
 
 def _normalize_combo_data(value: object) -> str:
@@ -326,15 +418,6 @@ def _set_combo_current_data(combo: Any, value: str) -> None:
     combo.setCurrentIndex(0)
 
 
-def _slideshow_profile_combo_icon() -> Any:
-    from PyQt6.QtGui import QIcon
-
-    from harite.gui.resource_access import gui_resource_path
-
-    with gui_resource_path("icons", "lucide", "bookmark.svg") as icon_path:
-        return QIcon(str(icon_path))
-
-
 def refresh_slideshow_registry_combos(backend: Any, owner: Any) -> None:
     from harite.gui.adapters_qt.qt_source_catalog import (
         prepare_owner_source_catalog,
@@ -346,7 +429,6 @@ def refresh_slideshow_registry_combos(backend: Any, owner: Any) -> None:
     setattr(backend, "_slideshow_registry_combo_refresh", True)
     try:
         catalog = prepare_owner_source_catalog(owner)
-        profile_icon = _slideshow_profile_combo_icon()
 
         profile_combo = backend._objects.get("combo_slideshow_profile")
         if profile_combo is not None:
@@ -354,10 +436,7 @@ def refresh_slideshow_registry_combos(backend: Any, owner: Any) -> None:
             profile_combo.clear()
             profile_combo.addItem(REGISTRY_NONE_LABEL, "")
             for entry in list_profiles(catalog):
-                label = slideshow_profile_combo_label(catalog, entry)
-                profile_combo.addItem(label, entry.id)
-                if label.startswith("*"):
-                    profile_combo.setItemIcon(profile_combo.count() - 1, profile_icon)
+                profile_combo.addItem(slideshow_profile_combo_label(catalog, entry), entry.id)
             profile_id = _normalize_combo_data(getattr(owner, "slideshow_profile_id", ""))
             _set_combo_current_data(profile_combo, profile_id)
             profile_combo.blockSignals(False)

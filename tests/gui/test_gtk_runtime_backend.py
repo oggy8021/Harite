@@ -20,6 +20,24 @@ from harite.gui.adapters.ui_adapter import create_mainwindow_signal_dispatch
 from harite.gui.views.main_window import MainWindow
 from harite.workspace import Display
 
+from harite.gui.adapters_qt.qt_widget_helpers import format_slideshow_output_label_text
+
+
+def _setup_linux_pictures_env(monkeypatch, tmp_path: Path) -> tuple[Path, Path]:
+    import sys
+
+    home = tmp_path / "home"
+    pictures_root = home / "Pictures"
+    pictures_root.mkdir(parents=True)
+    xdg_config = tmp_path / "xdg-config"
+    xdg_config.mkdir()
+    (xdg_config / "user-dirs.dirs").write_text('XDG_PICTURES_DIR="$HOME/Pictures"\n', encoding="utf-8")
+    monkeypatch.setattr("harite.gui.views.main_window.Path.home", lambda: home)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config))
+    monkeypatch.setattr("harite.gui.views.main_window.sys.platform", "linux")
+    work_dir = pictures_root / "Harite" / "slideshow"
+    return pictures_root, work_dir
+
 
 class _Orientation:
     VERTICAL = 1
@@ -1111,6 +1129,7 @@ def test_runtime_backend_slideshow_srcdir_selection_and_slideshow_cycle_updates_
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
 
+    pictures_root, work_dir = _setup_linux_pictures_env(monkeypatch, tmp_path)
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
 
@@ -1143,7 +1162,7 @@ def test_runtime_backend_slideshow_srcdir_selection_and_slideshow_cycle_updates_
     )
     backend.connect_signals(dispatch)
     window.slideshow_mode = "sequential"
-    window.form_state.output_dir = str(tmp_path / "slideshow-output")
+    window.form_state.output_dir = str(pictures_root)
     backend._sync_slideshow_state_from_owner(window)
 
     srcdir_l.click()
@@ -1152,7 +1171,8 @@ def test_runtime_backend_slideshow_srcdir_selection_and_slideshow_cycle_updates_
 
     assert slideshow_source_l.text == f"L: {left_dir}"
     assert slideshow_source_r.text == "R: -"
-    assert slideshow_output.text == f"Slideshow output: {tmp_path / 'slideshow-output'}"
+    expected_output_label, _ = format_slideshow_output_label_text(str(work_dir))
+    assert slideshow_output.text == expected_output_label
 
     interval.set_value(90)
     interval.emit("value-changed", interval)
@@ -1260,10 +1280,11 @@ def test_runtime_backend_slideshow_srcdir_confirm_propagates_unexpected_runtime_
         backend.get_object("SrcdirDialog").confirm()
 
 
-def test_runtime_backend_connect_signals_syncs_slideshow_output_from_owner():
+def test_runtime_backend_connect_signals_syncs_slideshow_output_from_owner(monkeypatch, tmp_path):
+    pictures_root, work_dir = _setup_linux_pictures_env(monkeypatch, tmp_path)
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
-    window.form_state.output_dir = "/gui/pictures"
+    window.form_state.output_dir = str(pictures_root)
 
     dispatch = create_mainwindow_signal_dispatch(
         window,
@@ -1276,7 +1297,8 @@ def test_runtime_backend_connect_signals_syncs_slideshow_output_from_owner():
     )
     backend.connect_signals(dispatch)
 
-    assert backend.get_object("lblSlideshowOutput").text == "Slideshow output: /gui/pictures"
+    expected_output_label, _ = format_slideshow_output_label_text(str(work_dir))
+    assert backend.get_object("lblSlideshowOutput").text == expected_output_label
 
 
 def test_runtime_backend_slideshow_interval_change_uses_integer_contract_without_owner():
