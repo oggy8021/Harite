@@ -80,6 +80,7 @@ class MainWindow:
         self.slideshow_profile_id = ""
         self._source_catalog_path: Path | None = None
         self._source_catalog_cache: Catalog | None = None
+        self._source_catalog_cache_mtime: float | None = None
         self.slideshow_summary_display = "Slideshow: stopped"
         self.slideshow_source_display = "Slideshow srcdirs: L=- | R=-"
         self.slideshow_current_display = "Slideshow current: idle"
@@ -1087,6 +1088,7 @@ class MainWindow:
 
     def _invalidate_source_catalog_cache(self) -> None:
         self._source_catalog_cache = None
+        self._source_catalog_cache_mtime = None
 
     def _uses_preset_single_image_sources(self) -> bool:
         from harite.sources_preset import find_catalog_profile_for_preset, load_source_presets

@@ -69,18 +69,27 @@ def materialize_source_catalog_at_path(path: Path, *, owner: Any | None = None) 
     return catalog
 
 
+def _catalog_path_mtime(path: Path) -> float:
+    if not path.exists():
+        return 0.0
+    return path.stat().st_mtime
+
+
 def prepare_owner_source_catalog(owner: Any) -> Catalog:
     from harite.sources_file import resolve_default_sources_path
-
-    cached = getattr(owner, "_source_catalog_cache", None)
-    if cached is not None:
-        return cached
 
     path = getattr(owner, "_source_catalog_path", None) or resolve_default_sources_path()
     if not isinstance(path, Path):
         path = Path(path)
     setattr(owner, "_source_catalog_path", path)
+
+    mtime = _catalog_path_mtime(path)
+    cached = getattr(owner, "_source_catalog_cache", None)
+    if cached is not None and getattr(owner, "_source_catalog_cache_mtime", None) == mtime:
+        return cached
+
     catalog = materialize_source_catalog_at_path(path, owner=owner)
     setattr(owner, "_source_catalog_cache", catalog)
+    setattr(owner, "_source_catalog_cache_mtime", _catalog_path_mtime(path))
     return catalog
 
