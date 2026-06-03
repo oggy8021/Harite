@@ -15,6 +15,8 @@ from harite.sources_remote import JMA_LIST_URL, sync_remote_source
 _SAMPLE_LIST = {
     "near": {"now": ["stale_JRcolor.png", "fresh_JRcolor.png"]},
     "asia": {"now": ["asia_JRcolor.png"]},
+    "near_monochrome": {"now": ["stale_JRjmahp.png", "fresh_JRjmahp.png"]},
+    "asia_monochrome": {"now": ["asia_JRjmahp.png"]},
 }
 _PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
 
@@ -39,7 +41,14 @@ def _install_jma_urlopen_mock(monkeypatch: pytest.MonkeyPatch) -> None:
 
             return _Response()
         if "weather_map/data/png/" in target:
-            assert target.endswith("fresh_JRcolor.png") or target.endswith("asia_JRcolor.png")
+            assert target.endswith(
+                (
+                    "fresh_JRcolor.png",
+                    "asia_JRcolor.png",
+                    "fresh_JRjmahp.png",
+                    "asia_JRjmahp.png",
+                )
+            )
 
             class _PngResponse:
                 def read(self) -> bytes:
@@ -77,6 +86,41 @@ def test_jma_sync_writes_latest_png(
     assert latest.is_file()
     assert latest.read_bytes() == _PNG_BYTES
     assert list(cache_dir.glob("*.png")) == [latest]
+
+
+def test_jma_sync_near_monochrome_preset_picks_jrjmahp_latest(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    _install_jma_urlopen_mock(monkeypatch)
+    cache_root = tmp_path / "remote-cache"
+    catalog = empty_catalog()
+    entry = import_preset_source(
+        catalog,
+        "jma-near-monochrome",
+        cache_root=cache_root,
+    )
+
+    sync_remote_source(catalog, entry.id, cache_root=cache_root)
+
+    assert (Path(entry.path) / "latest.png").read_bytes() == _PNG_BYTES
+
+
+def test_jma_sync_asia_monochrome_preset(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    _install_jma_urlopen_mock(monkeypatch)
+    cache_root = tmp_path / "remote-cache"
+    catalog = empty_catalog()
+    entry = import_preset_source(
+        catalog,
+        "jma-asia-monochrome",
+        cache_root=cache_root,
+    )
+
+    sync_remote_source(catalog, entry.id, cache_root=cache_root)
+    assert (Path(entry.path) / "latest.png").is_file()
 
 
 def test_jma_sync_asia_preset_picks_asia_now(

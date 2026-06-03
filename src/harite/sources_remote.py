@@ -34,6 +34,15 @@ PRESET_MARKER_PREFIX = "harite-preset:"
 _JMA_PRESET_LIST_KEYS: dict[str, tuple[str, ...]] = {
     "jma-near-color": ("near", "now"),
     "jma-asia-color": ("asia", "now"),
+    "jma-near-monochrome": ("near_monochrome", "now"),
+    "jma-asia-monochrome": ("asia_monochrome", "now"),
+}
+
+_JMA_PRESET_FILENAME_TAG: dict[str, str] = {
+    "jma-near-color": "JRcolor",
+    "jma-asia-color": "JRcolor",
+    "jma-near-monochrome": "JRjmahp",
+    "jma-asia-monochrome": "JRjmahp",
 }
 
 
@@ -189,7 +198,12 @@ def _http_get_bytes(url: str) -> bytes:
         raise ValueError(f"remote fetch failed: {exc}") from exc
 
 
-def _jma_pick_filename(list_payload: dict[str, Any], list_path: tuple[str, ...]) -> str:
+def _jma_pick_filename(
+    list_payload: dict[str, Any],
+    list_path: tuple[str, ...],
+    *,
+    filename_tag: str,
+) -> str:
     node: Any = list_payload
     for key in list_path:
         if not isinstance(node, dict) or key not in node:
@@ -197,9 +211,9 @@ def _jma_pick_filename(list_payload: dict[str, Any], list_path: tuple[str, ...])
         node = node[key]
     if not isinstance(node, list):
         raise ValueError(f"list.json path is not an array: {'.'.join(list_path)}")
-    candidates = [str(item) for item in node if "JRcolor" in str(item)]
+    candidates = [str(item) for item in node if filename_tag in str(item)]
     if not candidates:
-        raise ValueError("no JRcolor weather map filename in list.json")
+        raise ValueError(f"no {filename_tag} weather map filename in list.json")
     return candidates[-1]
 
 
@@ -211,7 +225,8 @@ def _jma_sync(catalog: Catalog, source_id: str) -> None:
     if preset_id is None:
         raise ValueError("JMA sync requires harite-preset marker in notes")
     list_path = _JMA_PRESET_LIST_KEYS.get(preset_id)
-    if list_path is None:
+    filename_tag = _JMA_PRESET_FILENAME_TAG.get(preset_id)
+    if list_path is None or filename_tag is None:
         raise ValueError(f"unsupported JMA preset for sync: {preset_id}")
 
     raw = _http_get_bytes(JMA_LIST_URL)
@@ -222,7 +237,7 @@ def _jma_sync(catalog: Catalog, source_id: str) -> None:
     if not isinstance(list_payload, dict):
         raise ValueError("invalid list.json from JMA")
 
-    filename = _jma_pick_filename(list_payload, list_path)
+    filename = _jma_pick_filename(list_payload, list_path, filename_tag=filename_tag)
     png_bytes = _http_get_bytes(JMA_PNG_URL.format(filename=filename))
 
     cache_dir = Path(entry.path)
