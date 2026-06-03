@@ -306,12 +306,13 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 | path | 意味 |
 | --- | --- |
 | `{cache_root}/{source_id}/` | 1 remote source あたり 1 ディレクトリ。catalog の `path` はこの **絶対 path** と一致させる |
-| 配下ファイル | provider が Sync で配置する画像（拡張子・命名は §15 / provider 実装） |
+| 配下ファイル | provider が **その時点で必要な画像のみ** 配置する（アーカイブではない） |
 
-**保持:**
+**保持（オンデマンド）:**
 
-- Sync 後も **少なくとも 2 世代**の画像を残す（現行採用候補 + 直前世代）。provider がさらに保持してよい。
-- slideshow **実行中**に Sync が当該 side が参照中のファイルを削除してはならない（安全側: 参照中 basename は削除しない、または Sync を拒否）。
+- 1 回の `sync_remote_source` は **必要な PNG を都度 GET** し、cache へ **上書き** する。世代蓄積は **しない**。
+- 気象庁（§15）: cache 内の採用ファイルは **`latest.png` 1 件**。Sync 成功時、当該 directory の他 `*.png` は削除してよい。
+- slideshow **実行中**の Sync は、当該 run が参照中の `latest.png` を置き換えない（実行中は Sync を拒否、または stop 後に Refresh）。
 
 **初回 import 時:** cache directory は **未作成でもよい**。`path` は `{cache_root}/{source_id}` を **予約**として catalog に書く。初回 Sync 成功で directory と画像が出現する。
 
@@ -320,8 +321,9 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 | タイミング | 契約 |
 | --- | --- |
 | **Preset bootstrap Sync** | GUI 起動時（§13.4）。各 preset 由来 remote に `sync_remote_source`（失敗しても起動継続） |
-| **Refresh** | Manage dialog 内 **任意**（[gui-spec §6.5](../gui/harite-gui-spec.md)） |
-| **slideshow Start / tick** | **network fetch しない** |
+| **Refresh** | Manage dialog の Refresh — `sync_remote_source` |
+| **slideshow Start 直前** | 実行予定の L/R が参照する `remote-jma-weather-map` source について `sync_remote_source`（[gui-spec §6.5](../gui/harite-gui-spec.md)） |
+| **slideshow tick** | network fetch しない（表示更新は cache の `latest.png`） |
 | **resolve** | cache directory が **存在し directory である**こと（§4 と同型の `normalize_directory_path`）。空 directory や画像 0 件は **resolve 時には成功しうる**が、slideshow start の画像収集は [slideshow-spec](../slideshow/harite-slideshow-spec.md) で失敗しうる |
 | **実行中** | cache 削除・Sync による参照不能 → §7.5 / §7.6 と同型（stop / start failure） |
 
@@ -410,7 +412,7 @@ profile import は、参照する source `preset_id` が **同一操作または
 | メソッド / 属性 | 契約 |
 | --- | --- |
 | `kind` | 担当 `remote-*` 文字列（登録 key と一致） |
-| `sync(catalog, source_id)` | 当該 source の cache directory を更新。成功時は §12.3 の保持規則に従い古い世代を削除してよい |
+| `sync(catalog, source_id)` | 当該 source に必要な画像を API から取得し cache を **上書き**（§12.3） |
 | （任意）`default_notes` | import 時に `notes` が空なら埋める帰属プレースホルダ（文言確定は §15） |
 
 Sync は **idempotent** でよい（同一内容の再取得可）。
@@ -459,10 +461,10 @@ load / save 時の catalog 検証では、`remote-*` の `path` は **存在し�
 2. 上表の配列から、ファイル名に **`JRcolor`** を含む要素のみ対象とする。
 3. 配列の **最終要素**を `{filename}` とする。空配列は `ValueError`。
 4. `https://www.jma.go.jp/bosai/weather_map/data/png/{filename}` を GET（PNG）。
-5. cache directory（§12.3）へ保存:
-   - 現行: `latest.png`
-   - 直前: `previous.png`（§12.3 の 2 世代保持）
+5. cache directory へ **`latest.png` として上書き保存**。当該 directory の他 `*.png` は削除してよい。
 6. `default_notes` が未設定で catalog `notes` が空のとき、§15.4 の帰属 1 行目を `notes` に追記してよい。
+
+`list.json` の公式 schema 文書は気象庁から公開されていない。カテゴリ一覧は [JMA weather map list inventory](../../working/20260603-jma-weather-map-list-inventory.md)（別フェーズの選定参考）。
 
 ### 15.3 同梱 preset
 
@@ -491,7 +493,8 @@ harite-preset:{preset_id}
 | --- | --- |
 | 既定 profile | 同梱 `jma-dual-lr` — L = `jma-near-color`、R = `jma-asia-color` |
 | start 前 resolve | [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md) — 各 side の cache を `slideshow_srcdir_*` に展開 |
-| 画像収集 | 各 cache に `latest.png` 1 件。L/R 独立 cycle は §6.6 既存どおり |
+| 画像収集 | 各 cache の `latest.png`（1 枚）。tick 毎の再取得は **しない**（鮮度は Start 直前 Sync / Refresh） |
+| Interval 下限 | [gui-spec §6.5](../gui/harite-gui-spec.md) — `remote-jma-weather-map` 参照時 |
 
 ## 16. GUI / CLI（C-01）
 

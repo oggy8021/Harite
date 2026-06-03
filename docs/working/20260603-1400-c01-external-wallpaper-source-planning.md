@@ -1,6 +1,6 @@
 # C-01 — 外部壁紙サイト連携 planning
 
-最終更新: 2026-06-03（**段 1b spec** 着手中 — 1a #388 / #389 済）
+最終更新: 2026-06-03（**段 1b spec** — オンデマンド cache / Interval 600s / C-01-J・E は overview）
 
 ## 位置づけ
 
@@ -25,7 +25,7 @@
 
 | 方針 | 内容 |
 | --- | --- |
-| **cache-first** | fetch → ローカル cache → `resolve` → C-05 slideshow（実行面はほぼ流用） |
+| **cache-first** | **都度 API 取得** → cache は **最新 1 枚のステージング**（世代蓄積しない）→ `resolve` → slideshow |
 | **preset 配布** | サイト定義は **package 内 JSON**（§11）。ユーザーが **自分の catalog に取り込む** |
 | **schema 不変** | `harite-sources.json` の `schema_version: 1` とフィールド集合は **そのまま** |
 | **第 1 impl** | **気象庁**（天気図等）。どの画像を取得するか・**左右ディスプレイへの割当**は **段 1b（spec）** でサイト調査のうえ確定 |
@@ -49,14 +49,12 @@
 3. 既定 profile `気象庁 L/R` — L=日本付近、R=アジア域（[source-spec §15](../specs/source/harite-source-spec.md)）
 
 ```text
-[同梱] resources/source-presets/*.json   … 読み取り専用テンプレート
-         ↓ ユーザー操作（import）
-[user]   harite-sources.json             … schema v1 不変、kind=remote-* を追加
-         ↓ Sync
-[cache]  OS 別 cache 根（§3）/ {source_id}/
-         ↓ resolve（C-05 start 前）
-[run]    slideshow / optimize
+[preset] → bootstrap → harite-sources.json
+         → Sync（起動 / Refresh / Start 直前）→ cache/{id}/latest.png のみ
+         → resolve → slideshow（tick は再 fetch しない）
 ```
+
+**別フェーズ:** [list.json カタログ](20260603-jma-weather-map-list-inventory.md)（C-01-J）、[他 source 探索](20260518-2047-feature-overview.md)（C-01-E）
 
 ## 現状 inventory（post C-05）
 
@@ -131,7 +129,7 @@ NASA APOD（https://api.nasa.gov/）は **API に DEMO key が必要**なため�
 | **1** | 第 1 ターゲット | **気象庁**。~~NASA APOD~~ 見送り。画像種別・L/R は **1b 調査** |
 | **2** | `kind` 命名 | **`remote-{provider略称}`**（例: `remote-jma-weather-map` — 1b で確定） |
 | **3** | cache 場所 | **Linux:** `XDG_CACHE_HOME` 配下。**Windows:** Roaming の `harite/` 配下（settings と同系）。不可なら `%USERPROFILE%\Pictures` 等に `harite_cache_dir` — **spec 段で技術確認** |
-| **3b** | cache 保持 | fetch 済み・貼り付け中画像を **最小世代分** 保持（初案） |
+| **3b** | cache 保持 | **最新 1 枚のみ**（都度上書き。古い天気図は保持しない） |
 | **4** | start 前 auto-sync | preset 同梱ファイルは **アプリ版とともに不変**（版アップまで考慮不要）。**user source の sync** は手動（Sync 操作）— stale 自動 poll は初期外 |
 | **5** | API key | **一切使わない**（ユーザー管理・DEMO_KEY 埋め込み含む） |
 | **6** | catalog schema | **変更なし**（v1）。preset は **別ファイル**（§11） |

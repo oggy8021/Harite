@@ -298,10 +298,11 @@ stop 時は作業ディレクトリ内のスロットファイル **を削除し
 `on_slideshow_start`（および tray からの start が同経路の場合）の **画像収集より前**に次を行う。
 
 1. in-memory catalog を参照する（**この時点で disk からの再 load は必須ではない** — 起動時 / Manage dialog Close 済み catalog でよい）。
-2. `slideshow_profile_id` が設定されていれば `resolve_profile_members` で L/R path と tracking id を揃える。
-3. 各 side で `slideshow_source_id_l` / `slideshow_source_id_r` が設定されていれば `resolve_source` で当該 side の `slideshow_srcdir_*` を上書きする（profile 展開と矛盾する場合は **profile 優先** — 実装は start 直前の単一パスで L/R を確定すること）。
-4. `resolve_*` が `ValueError`（inaccessible / 未知 id）なら **start failure** とし、slideshow は開始しない（transient / pause 扱いにしない）。
-5. 確定した `slideshow_srcdir_l/r` で §2 の directory 検証と `collect_slideshow_input_images` を行う。
+2. 実行 L/R が参照する `remote-jma-weather-map` source について `sync_remote_source`（[source-spec §12.4](../source/harite-source-spec.md)）。
+3. `slideshow_profile_id` が設定されていれば `resolve_profile_members` で L/R path と tracking id を揃える。
+4. 各 side で `slideshow_source_id_l` / `slideshow_source_id_r` が設定されていれば `resolve_source` で当該 side の `slideshow_srcdir_*` を上書きする（profile 展開と矛盾する場合は **profile 優先** — 実装は start 直前の単一パスで L/R を確定すること）。
+5. `resolve_*` が `ValueError`（inaccessible / 未知 id）なら **start failure** とし、slideshow は開始しない（transient / pause 扱いにしない）。
+6. 確定した `slideshow_srcdir_l/r` で §2 の directory 検証と `collect_slideshow_input_images` を行う。
 
 `remote-*` source の cache directory は `local-dir` と同型の slideshow 入力 directory として扱う（[source-spec §15.5](../source/harite-source-spec.md)）。
 

@@ -370,6 +370,13 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 
 選択時の handler・tracking・start 前 resolve は §4.2 / §6.4 と同型。
 
+**`remote-jma-weather-map` 選択時（saved source または profile の members 経由）:**
+
+| 項目 | 契約 |
+| --- | --- |
+| slideshow Interval spin 下限 | **600** 秒。現在値が下回る場合は **600 へ引き上げ**（owner `slideshow_interval_seconds` と spin を同期） |
+| `on_slideshow_start` 直前 | 実行 L/R が参照する当該 source それぞれで `sync_remote_source`（[source-spec §12.4](../source/harite-source-spec.md)） |
+
 **Manage dialog:**
 
 | 項目 | 契約 |
