@@ -359,9 +359,20 @@ def refresh_slideshow_current_label(
     set_label_text(backend, "lblSlideshowCurrent", text)
 
 
+def format_slideshow_output_label_text(output_dir: str | None) -> tuple[str, str]:
+    """Return (on-screen label, full path for tooltip)."""
+    full = str(output_dir or ".").strip() or "."
+    if full == ".":
+        return "Slideshow output: .", ""
+    return f"Slideshow output: {format_input_display(full)}", full
+
+
 def refresh_slideshow_output_label(backend: Any, output_dir: str | None = None) -> None:
-    text = f"Slideshow output: {output_dir or '.'}"
+    text, tooltip = format_slideshow_output_label_text(output_dir)
     set_label_text(backend, "lblSlideshowOutput", text)
+    widget = _get(backend, "lblSlideshowOutput")
+    if widget is not None and hasattr(widget, "setToolTip"):
+        widget.setToolTip(tooltip if tooltip else "")
 
 
 def _normalize_combo_data(value: object) -> str:

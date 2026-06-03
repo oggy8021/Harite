@@ -262,6 +262,30 @@ def test_format_input_display_empty():
 # ---------------------------------------------------------------------------
 
 
+def test_format_slideshow_output_label_text_truncates_long_paths() -> None:
+    from harite.gui.adapters_qt.qt_widget_helpers import format_slideshow_output_label_text
+
+    long_path = "C:/Users/example/画像/" + ("work/" * 20) + "Harite/slideshow"
+    label, tooltip = format_slideshow_output_label_text(long_path)
+    assert label.startswith("Slideshow output:")
+    assert "…" in label
+    assert tooltip == long_path
+    assert len(label) < len(long_path)
+
+
+def test_refresh_slideshow_output_label_sets_tooltip(qapp, backend) -> None:
+    from PyQt6.QtWidgets import QLabel
+
+    from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_output_label
+
+    lbl = QLabel()
+    backend._objects["lblSlideshowOutput"] = lbl
+    full = "C:/Users/example/画像/" + ("nested/" * 12) + "Harite/slideshow"
+    refresh_slideshow_output_label(backend, full)
+    assert "…" in lbl.text()
+    assert lbl.toolTip() == full
+
+
 def test_refresh_slideshow_source_labels_truncates_long_paths(qapp, backend):
     from PyQt6.QtWidgets import QLabel
 

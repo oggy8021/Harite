@@ -315,7 +315,7 @@ def _build_controls_section() -> dict[str, Any]:
 def _build_detail_row() -> dict[str, Any]:
     """Current image and output-path status labels, centred."""
     from PyQt6.QtCore import Qt
-    from PyQt6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
+    from PyQt6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
     detail_row = QWidget()
     detail_row_layout = QVBoxLayout(detail_row)
@@ -325,9 +325,13 @@ def _build_detail_row() -> dict[str, Any]:
 
     slideshow_current_label = QLabel("Slideshow current: idle")
     slideshow_current_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+    slideshow_current_label.setWordWrap(False)
+    slideshow_current_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
 
     slideshow_output_label = QLabel("Slideshow output: .")
     slideshow_output_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+    slideshow_output_label.setWordWrap(False)
+    slideshow_output_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
 
     detail_row_layout.addWidget(slideshow_current_label)
     detail_row_layout.addWidget(slideshow_output_label)
