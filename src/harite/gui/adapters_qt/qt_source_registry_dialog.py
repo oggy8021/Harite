@@ -18,6 +18,7 @@ from harite.sources import (
     save_catalog,
     update_profile,
 )
+from harite.sources_remote import is_remote_kind, sync_remote_source
 
 
 def _normalize_id(value: object) -> str | None:
@@ -43,9 +44,11 @@ def _select_combo_by_data(combo: Any, value: object) -> bool:
 
 
 def source_slot_items(catalog: Catalog) -> list[tuple[str, str]]:
+    from harite.gui.adapters_qt.qt_source_catalog import slideshow_source_combo_label
+
     items = [("— empty —", "")]
     for entry in list_sources(catalog):
-        items.append((entry.name, entry.id))
+        items.append((slideshow_source_combo_label(entry), entry.id))
     return items
 
 
@@ -118,7 +121,9 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
         QWidget,
     )
 
-    catalog = load_catalog(catalog_path)
+    from harite.gui.adapters_qt.qt_source_catalog import materialize_source_catalog_at_path
+
+    catalog = materialize_source_catalog_at_path(catalog_path)
     changed = False
 
     dialog = QDialog(parent)
@@ -127,25 +132,33 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
     layout = QVBoxLayout(dialog)
 
     source_list = QListWidget()
-    layout.addWidget(QLabel("Sources (local directory)"))
+    layout.addWidget(QLabel("Sources"))
     layout.addWidget(source_list)
+
+    source_actions = QWidget()
+    source_actions_layout = QHBoxLayout(source_actions)
+    source_actions_layout.setContentsMargins(0, 0, 0, 0)
+    refresh_source_btn = QPushButton("Refresh")
+    delete_btn = QPushButton("Delete")
+    source_actions_layout.addWidget(refresh_source_btn)
+    source_actions_layout.addStretch(1)
+    source_actions_layout.addWidget(delete_btn)
+    layout.addWidget(source_actions)
 
     add_row = QWidget()
     add_layout = QHBoxLayout(add_row)
     add_layout.setContentsMargins(0, 0, 0, 0)
     name_entry = QLineEdit()
-    name_entry.setPlaceholderText("Name")
+    name_entry.setPlaceholderText("Local directory name")
     path_display = QLineEdit()
     path_display.setReadOnly(True)
     path_display.setPlaceholderText("Directory path")
     browse_btn = QPushButton("Browse…")
-    add_btn = QPushButton("Add")
-    delete_btn = QPushButton("Delete")
+    add_btn = QPushButton("Add local")
     add_layout.addWidget(name_entry)
     add_layout.addWidget(path_display)
     add_layout.addWidget(browse_btn)
     add_layout.addWidget(add_btn)
-    add_layout.addWidget(delete_btn)
     layout.addWidget(add_row)
 
     layout.addWidget(QLabel("Profiles (L/R preset)"))
@@ -191,10 +204,33 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
         update_profile(catalog, profile_id, members=_read_slot_members())
         _persist()
 
+    def _selected_source_entry():
+        row = source_list.currentRow()
+        sources = list_sources(catalog)
+        if row < 0 or row >= len(sources):
+            return None
+        return sources[row]
+
     def _refresh_source_list() -> None:
         source_list.clear()
         for entry in list_sources(catalog):
-            source_list.addItem(f"{entry.name} — {entry.path}")
+            kind_hint = entry.kind if is_remote_kind(entry.kind) else "local-dir"
+            source_list.addItem(f"{entry.name} [{kind_hint}] — {entry.path}")
+
+    def _on_refresh_source() -> None:
+        entry = _selected_source_entry()
+        if entry is None:
+            QMessageBox.information(dialog, "Refresh", "Select a source first.")
+            return
+        if not is_remote_kind(entry.kind):
+            QMessageBox.information(dialog, "Refresh", "Refresh applies to remote sources only.")
+            return
+        try:
+            sync_remote_source(catalog, entry.id)
+            _persist()
+            _refresh_source_list()
+        except ValueError as exc:
+            QMessageBox.warning(dialog, "Refresh", str(exc))
 
     def _source_slot_items() -> list[tuple[str, str]]:
         return source_slot_items(catalog)
@@ -267,11 +303,9 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
             QMessageBox.warning(dialog, "Add source", str(exc))
 
     def _on_delete_source() -> None:
-        row = source_list.currentRow()
-        sources = list_sources(catalog)
-        if row < 0 or row >= len(sources):
+        entry = _selected_source_entry()
+        if entry is None:
             return
-        entry = sources[row]
         try:
             delete_source(catalog, entry.id)
             _persist()
@@ -332,6 +366,7 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
 
     browse_btn.clicked.connect(_on_browse)
     add_btn.clicked.connect(_on_add_source)
+    refresh_source_btn.clicked.connect(_on_refresh_source)
     delete_btn.clicked.connect(_on_delete_source)
     profile_combo.currentIndexChanged.connect(_on_profile_changed)
     add_profile_btn.clicked.connect(_on_add_profile)

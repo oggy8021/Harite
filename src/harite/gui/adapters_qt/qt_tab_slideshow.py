@@ -166,6 +166,7 @@ def _build_manage_registry_row() -> dict[str, Any]:
     layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
     btn_manage_source_registry = QPushButton("Manage sources and profiles…")
+    _set_button_icon(btn_manage_source_registry, "icons", "lucide", "archive.svg")
     layout.addWidget(btn_manage_source_registry)
 
     return {

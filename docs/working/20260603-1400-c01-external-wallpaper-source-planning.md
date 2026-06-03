@@ -1,6 +1,6 @@
 # C-01 — 外部壁紙サイト連携 planning
 
-最終更新: 2026-05-31（**段 2 tests 着手** — core preset/remote + tests PR）
+最終更新: 2026-05-31（**段 4 GUI 着手** — bootstrap / combo `*` / Refresh / icons）
 
 ## 位置づけ
 
@@ -171,9 +171,9 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 | **0** | 本 planning（本書） | ~~マージ許可~~ **完了**（#386） |
 | **1a** | spec — preset 契約、remote kind、cache 根、provider インタフェース | ~~spec PR~~ **完了**（#388） |
 | **1b** | spec — 気象庁 §15、オンデマンド cache、preset `min_slideshow_interval_seconds` | ~~spec PR~~ **完了**（#390） |
-| **2** | tests — preset load、fetch モック、resolve + slideshow 連携 | tests PR |
-| **3** | impl — preset loader、第 1 provider、cache、resolve 拡張 | impl PR |
-| **4** | GUI — bootstrap、combo `*…`、Refresh、icons（#12） | 段階停止 |
+| **2** | tests — preset load、fetch モック、resolve + slideshow 連携 | ~~#392~~ **完了** |
+| **3** | impl — preset loader、第 1 provider、cache、resolve 拡張 | **#392 に同梱** |
+| **4** | GUI — bootstrap、combo `*…`、Refresh、icons（#12） | GUI PR |
 | **5** | 3-layer audit | close |
 
 **第 1 完了定義（案）:** 気象庁 preset を import → Sync → Slideshow start（単独・デュアル L/R は **1b で定めた割当**どおり）、帰属文言は spec 通り。

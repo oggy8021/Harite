@@ -326,12 +326,27 @@ def _set_combo_current_data(combo: Any, value: str) -> None:
     combo.setCurrentIndex(0)
 
 
+def _slideshow_profile_combo_icon() -> Any:
+    from PyQt6.QtGui import QIcon
+
+    from harite.gui.resource_access import gui_resource_path
+
+    with gui_resource_path("icons", "lucide", "bookmark.svg") as icon_path:
+        return QIcon(str(icon_path))
+
+
 def refresh_slideshow_registry_combos(backend: Any, owner: Any) -> None:
+    from harite.gui.adapters_qt.qt_source_catalog import (
+        prepare_owner_source_catalog,
+        slideshow_profile_combo_label,
+        slideshow_source_combo_label,
+    )
     from harite.sources import list_profiles, list_sources
 
     setattr(backend, "_slideshow_registry_combo_refresh", True)
     try:
-        catalog = owner.load_source_catalog()
+        catalog = prepare_owner_source_catalog(owner)
+        profile_icon = _slideshow_profile_combo_icon()
 
         profile_combo = backend._objects.get("combo_slideshow_profile")
         if profile_combo is not None:
@@ -339,7 +354,10 @@ def refresh_slideshow_registry_combos(backend: Any, owner: Any) -> None:
             profile_combo.clear()
             profile_combo.addItem(REGISTRY_NONE_LABEL, "")
             for entry in list_profiles(catalog):
-                profile_combo.addItem(entry.name, entry.id)
+                label = slideshow_profile_combo_label(catalog, entry)
+                profile_combo.addItem(label, entry.id)
+                if label.startswith("*"):
+                    profile_combo.setItemIcon(profile_combo.count() - 1, profile_icon)
             profile_id = _normalize_combo_data(getattr(owner, "slideshow_profile_id", ""))
             _set_combo_current_data(profile_combo, profile_id)
             profile_combo.blockSignals(False)
@@ -355,7 +373,7 @@ def refresh_slideshow_registry_combos(backend: Any, owner: Any) -> None:
             combo.clear()
             combo.addItem(REGISTRY_NONE_LABEL, "")
             for entry in list_sources(catalog):
-                combo.addItem(entry.name, entry.id)
+                combo.addItem(slideshow_source_combo_label(entry), entry.id)
             source_id = _normalize_combo_data(getattr(owner, id_attr, ""))
             _set_combo_current_data(combo, source_id)
             combo.blockSignals(False)
