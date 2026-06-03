@@ -512,10 +512,10 @@ harite-preset:{preset_id}
 | 層 | C-02 | C-05 | C-01 |
 | --- | --- | --- | --- |
 | **spec** | #374 | #383 | #388–390 §12–15 |
-| **tests (core)** | #375 | — | 段 2 |
-| **impl (core)** | #375 | — | 段 3 |
-| **tests (GUI)** | #378 | #384 | 段 4 |
-| **impl (GUI)** | #378 | #384 | 段 4 |
-| **audit** | [20260601-c02-3layer-audit.md](../../working/finished/20260601-c02-3layer-audit.md) | [20260602-c05-3layer-audit.md](../../working/finished/20260602-c05-3layer-audit.md) | 段 5 |
+| **tests (core)** | #375 | — | #392 |
+| **impl (core)** | #375 | — | #392 |
+| **tests (GUI)** | #378 | #384 | #393 |
+| **impl (GUI)** | #378 | #384 | #393 |
+| **audit** | [20260601-c02-3layer-audit.md](../../working/finished/20260601-c02-3layer-audit.md) | [20260602-c05-3layer-audit.md](../../working/finished/20260602-c05-3layer-audit.md) | [20260603-c01-3layer-audit.md](../../working/finished/20260603-c01-3layer-audit.md) |
 
 C-01 planning 段 0: #386 / #387。

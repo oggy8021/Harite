@@ -1,6 +1,6 @@
 # C-01 — 外部壁紙サイト連携 planning
 
-最終更新: 2026-05-31（**段 4 GUI 着手** — bootstrap / combo `*` / Refresh / icons）
+最終更新: 2026-06-03（**段 5 audit 完了** — [3層比較](finished/20260603-c01-3layer-audit.md)）
 
 ## 位置づけ
 
@@ -173,27 +173,25 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 | **1b** | spec — 気象庁 §15、オンデマンド cache、preset `min_slideshow_interval_seconds` | ~~spec PR~~ **完了**（#390） |
 | **2** | tests — preset load、fetch モック、resolve + slideshow 連携 | ~~#392~~ **完了** |
 | **3** | impl — preset loader、第 1 provider、cache、resolve 拡張 | **#392 に同梱** |
-| **4** | GUI — bootstrap、combo `*…`、Refresh、icons（#12） | GUI PR |
-| **5** | 3-layer audit | close |
+| **4** | GUI — bootstrap、combo `*…`、Refresh、icons（#12） | ~~#393~~ **完了** |
+| **5** | 3-layer audit | ~~本 audit~~ **完了** |
 
 **第 1 完了定義（案）:** 気象庁 preset を import → Sync → Slideshow start（単独・デュアル L/R は **1b で定めた割当**どおり）、帰属文言は spec 通り。
 
-## 3 層比較（段 0 — 未着手）
+## 3 層比較
 
 | 層 | 状態 |
 | --- | --- |
-| **spec** | [harite-source-spec §12–15](../specs/source/harite-source-spec.md)（#388–390） |
-| **tests** | なし |
-| **impl** | なし |
+| **spec** | §12–15（#388–390） |
+| **tests + core** | #392 — `test_c01_*` |
+| **tests + GUI** | #393 — `test_c01_gui_preset_combos` 等 |
+| **audit** | [20260603-c01-3layer-audit.md](finished/20260603-c01-3layer-audit.md) |
 
 ## 次アクション
 
-1. ~~open questions #1–12~~ — **決定済**（**#1 = 気象庁**）
-2. ~~**本 planning PR マージ**~~ — **#386 済**
-3. ~~**spec PR 1a**~~ — **#388 済**
-4. ~~**spec PR 1b**~~ — **#390 済**
-5. **段 2 tests** — preset / sync モック、resolve + slideshow
-6. tests + impl → GUI → audit
+1. ~~段 0–5（C-01 第1 impl）~~ — **完了**
+2. **C-01-J** — list.json カタログ（別フェーズ）
+3. **C-01-E** — 他 provider（NDL / CODH 等）
 
 ## 参照
 
