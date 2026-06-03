@@ -1,6 +1,6 @@
 # C-01 — 外部壁紙サイト連携 planning
 
-最終更新: 2026-06-03（**段 1b spec** — オンデマンド cache / Interval 600s / C-01-J・E は overview）
+最終更新: 2026-06-03（**段 1b 完了** #390。**次:** 段 2 tests）
 
 ## 位置づけ
 
@@ -170,7 +170,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 | --- | --- | --- |
 | **0** | 本 planning（本書） | ~~マージ許可~~ **完了**（#386） |
 | **1a** | spec — preset 契約、remote kind、cache 根、provider インタフェース | ~~spec PR~~ **完了**（#388） |
-| **1b** | spec — 気象庁 §15（list.json / png URL / L/R profile / preset JSON） | spec PR |
+| **1b** | spec — 気象庁 §15、オンデマンド cache、preset `min_slideshow_interval_seconds` | ~~spec PR~~ **完了**（#390） |
 | **2** | tests — preset load、fetch モック、resolve + slideshow 連携 | tests PR |
 | **3** | impl — preset loader、第 1 provider、cache、resolve 拡張 | impl PR |
 | **4** | GUI — bootstrap、combo `*…`、Refresh、icons（#12） | 段階停止 |
@@ -182,7 +182,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 
 | 層 | 状態 |
 | --- | --- |
-| **spec** | [harite-source-spec §12–15](../specs/source/harite-source-spec.md)（1b PR レビュー中） |
+| **spec** | [harite-source-spec §12–15](../specs/source/harite-source-spec.md)（#388–390） |
 | **tests** | なし |
 | **impl** | なし |
 
@@ -191,8 +191,9 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 1. ~~open questions #1–12~~ — **決定済**（**#1 = 気象庁**）
 2. ~~**本 planning PR マージ**~~ — **#386 済**
 3. ~~**spec PR 1a**~~ — **#388 済**
-4. **spec PR 1b** — 気象庁 §15（PR 作成中）
-5. tests + impl → GUI → audit
+4. ~~**spec PR 1b**~~ — **#390 済**
+5. **段 2 tests** — preset / sync モック、resolve + slideshow
+6. tests + impl → GUI → audit
 
 ## 参照
 
