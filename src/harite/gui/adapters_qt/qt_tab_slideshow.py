@@ -74,8 +74,7 @@ def _build_srcdir_row() -> dict[str, Any]:
         lbl = QLabel(f"{side_label}: -")
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl.setWordWrap(False)
-        lbl.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
-        lbl.setMaximumWidth(280)
+        lbl.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
 
         btn_clr = QPushButton(f"Clear-{side_label}")
         _set_button_icon(btn_clr, "icons", "lucide", "folder-x.svg")
@@ -324,14 +323,14 @@ def _build_detail_row() -> dict[str, Any]:
     detail_row_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
     slideshow_current_label = QLabel("Slideshow current: idle")
-    slideshow_current_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+    slideshow_current_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
     slideshow_current_label.setWordWrap(False)
-    slideshow_current_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+    slideshow_current_label.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred)
 
     slideshow_output_label = QLabel("Slideshow output: .")
-    slideshow_output_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+    slideshow_output_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
     slideshow_output_label.setWordWrap(False)
-    slideshow_output_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+    slideshow_output_label.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred)
 
     detail_row_layout.addWidget(slideshow_current_label)
     detail_row_layout.addWidget(slideshow_output_label)
