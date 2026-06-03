@@ -79,6 +79,8 @@ class MainWindow:
         self.slideshow_source_id_r = ""
         self.slideshow_profile_id = ""
         self._source_catalog_path: Path | None = None
+        self._source_catalog_cache: Catalog | None = None
+        self._source_catalog_cache_mtime: float | None = None
         self.slideshow_summary_display = "Slideshow: stopped"
         self.slideshow_source_display = "Slideshow srcdirs: L=- | R=-"
         self.slideshow_current_display = "Slideshow current: idle"
@@ -1080,8 +1082,13 @@ class MainWindow:
         return True
 
     def load_source_catalog(self) -> Catalog:
-        path = self._source_catalog_path or resolve_default_sources_path()
-        return load_catalog(path)
+        from harite.gui.adapters_qt.qt_source_catalog import prepare_owner_source_catalog
+
+        return prepare_owner_source_catalog(self)
+
+    def _invalidate_source_catalog_cache(self) -> None:
+        self._source_catalog_cache = None
+        self._source_catalog_cache_mtime = None
 
     def _uses_preset_single_image_sources(self) -> bool:
         from harite.sources_preset import find_catalog_profile_for_preset, load_source_presets
@@ -1212,6 +1219,7 @@ class MainWindow:
         return True
 
     def on_source_catalog_saved(self) -> bool:
+        self._invalidate_source_catalog_cache()
         if self.slideshow_running and self._catalog_change_affects_running_slideshow():
             self._stop_slideshow_for_catalog_change()
         return True

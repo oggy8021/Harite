@@ -131,7 +131,7 @@ def _profile_name_taken(catalog: Catalog, name: str, *, exclude_id: str | None =
     return any(entry.name == name and entry.id != exclude_id for entry in catalog.profiles)
 
 
-def _validate_catalog(catalog: Catalog) -> None:
+def _validate_catalog(catalog: Catalog, *, validate_member_refs: bool = True) -> None:
     if catalog.schema_version != SCHEMA_VERSION:
         raise ValueError(f"unsupported schema_version: {catalog.schema_version}")
 
@@ -166,7 +166,8 @@ def _validate_catalog(catalog: Catalog) -> None:
         if entry.name in profile_names:
             raise ValueError(f"duplicate profile name: {entry.name}")
         profile_names.add(entry.name)
-        _validate_member_refs(catalog, entry.members)
+        if validate_member_refs:
+            _validate_member_refs(catalog, entry.members)
 
     if len(catalog.profiles) > MAX_PROFILES:
         raise ValueError(f"profile count exceeds {MAX_PROFILES}")
@@ -197,7 +198,7 @@ def catalog_to_dict(catalog: Catalog) -> dict[str, Any]:
     }
 
 
-def catalog_from_dict(data: dict[str, Any]) -> Catalog:
+def catalog_from_dict(data: dict[str, Any], *, validate_member_refs: bool = True) -> Catalog:
     schema_version = data.get("schema_version")
     if schema_version != SCHEMA_VERSION:
         raise ValueError(f"unsupported schema_version: {schema_version}")
@@ -240,15 +241,15 @@ def catalog_from_dict(data: dict[str, Any]) -> Catalog:
         )
 
     catalog = Catalog(schema_version=SCHEMA_VERSION, sources=sources, profiles=profiles)
-    _validate_catalog(catalog)
+    _validate_catalog(catalog, validate_member_refs=validate_member_refs)
     return catalog
 
 
-def load_catalog(path: Path | None = None) -> Catalog:
+def load_catalog(path: Path | None = None, *, validate_member_refs: bool = True) -> Catalog:
     target = path or resolve_default_sources_path()
     if not target.exists():
         return empty_catalog()
-    return catalog_from_dict(load_sources_json(target))
+    return catalog_from_dict(load_sources_json(target), validate_member_refs=validate_member_refs)
 
 
 def save_catalog(catalog: Catalog, path: Path | None = None) -> Path:

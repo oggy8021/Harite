@@ -6,28 +6,28 @@
       "name": "気象庁（日本付近）",
       "kind": "remote-jma-weather-map",
       "min_slideshow_interval_seconds": 600,
-      "notes": "harite-preset:jma-near-color\n出典：気象庁ホームページ（https://www.jma.go.jp/）"
+      "notes": "出典：気象庁ホームページ（https://www.jma.go.jp/）"
     },
     {
       "preset_id": "jma-asia-color",
       "name": "気象庁（アジア域）",
       "kind": "remote-jma-weather-map",
       "min_slideshow_interval_seconds": 600,
-      "notes": "harite-preset:jma-asia-color\n出典：気象庁ホームページ（https://www.jma.go.jp/）"
+      "notes": "出典：気象庁ホームページ（https://www.jma.go.jp/）"
     },
     {
       "preset_id": "jma-near-monochrome",
       "name": "気象庁（日本付近・モノクロ）",
       "kind": "remote-jma-weather-map",
       "min_slideshow_interval_seconds": 600,
-      "notes": "harite-preset:jma-near-monochrome\n出典：気象庁ホームページ（https://www.jma.go.jp/）"
+      "notes": "出典：気象庁ホームページ（https://www.jma.go.jp/）"
     },
     {
       "preset_id": "jma-asia-monochrome",
       "name": "気象庁（アジア域・モノクロ）",
       "kind": "remote-jma-weather-map",
       "min_slideshow_interval_seconds": 600,
-      "notes": "harite-preset:jma-asia-monochrome\n出典：気象庁ホームページ（https://www.jma.go.jp/）"
+      "notes": "出典：気象庁ホームページ（https://www.jma.go.jp/）"
     }
   ],
   "profiles": [
