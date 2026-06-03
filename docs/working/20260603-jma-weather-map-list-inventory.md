@@ -46,7 +46,7 @@
 | 気象庁（アジア域） | `jma-asia-color` | `asia.now` 最新 |
 | 気象庁 L/R | `jma-dual-lr` | L/R = 上記 2 source |
 
-契約: [harite-source-spec §15](../specs/source/harite-source-spec.md)
+契約: [harite-source-spec §15](../specs/source/harite-source-spec.md)。Interval 下限 **600** 秒は [preset JSON](../../src/harite/gui/resources/source_presets/harite-source-presets.json) の `min_slideshow_interval_seconds`。
 
 ## 別フェーズで検討する拡張
 

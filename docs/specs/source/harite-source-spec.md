@@ -360,6 +360,7 @@ user catalog とは **別ファイル**。ルート object:
 | `kind` | string | ✓ | `remote-*`（§12.1） |
 | `notes` | string | — | import 後の `notes` 初期値 |
 | `path` | string | — | **無視**（import 時に cache path を再計算） |
+| `min_slideshow_interval_seconds` | integer | — | 当該 source 選択時の slideshow Interval **下限**（秒）。未指定時は下限なし |
 
 **テンプレート profile 要素（任意）:**
 
@@ -368,6 +369,7 @@ user catalog とは **別ファイル**。ルート object:
 | `preset_id` | string | ✓ | profile テンプレート ID |
 | `name` | string | ✓ | import 後の profile `name` |
 | `members` | object | ✓ | `{ "L": "<source_preset_id> \| null>", "R": "..." }` — 値は **source の `preset_id`**（UUID ではない） |
+| `min_slideshow_interval_seconds` | integer | — | profile 選択時の Interval **下限**（秒）。未指定時は members の source preset の下限の **最大値** |
 
 profile import は、参照する source `preset_id` が **同一操作または既存 catalog に存在**することを要求する。
 
@@ -376,7 +378,9 @@ profile import は、参照する source `preset_id` が **同一操作または
 | 操作 | 契約 |
 | --- | --- |
 | `load_source_presets()` | preset ファイル → in-memory preset catalog。`preset_schema_version` 未対応は `ValueError` |
-| `import_preset_source(user_catalog, preset_id)` | 新 UUID、`path` = `remote_cache_dir(source_id)`、§5 上限・名前一意性を検証 |
+| `import_preset_source(user_catalog, preset_id)` | 新 UUID、`path` = `remote_cache_dir(source_id)`、§5 上限・名前一意性を検証。`min_slideshow_interval_seconds` があるとき `notes` に `harite-min-interval:{秒}` を追記 |
+| `preset_min_slideshow_interval(preset_catalog, preset_id)` | source / profile テンプレートの下限秒。未定義は `None` |
+| `catalog_slideshow_interval_floor(catalog, *, source_id_l, source_id_r, profile_id)` | 現在の combo 選択から適用する Interval 下限秒（`None` は下限なし） |
 | `import_preset_profile(user_catalog, preset_id)` | 新 UUID。`members` の preset_id を **新規 import した source id** へ解決（同一 import バッチ内の対応表） |
 
 - GUI は §13.4 `bootstrap_preset_sources` を用いる。
@@ -387,7 +391,7 @@ profile import は、参照する source `preset_id` が **同一操作または
 | 操作 | 契約 |
 | --- | --- |
 | `bootstrap_preset_sources(catalog)` | 同梱 preset の各 `preset_id` について、catalog に **対応 source が無ければ** `import_preset_source` 相当で追加。対応 profile が無ければ `import_preset_profile` 相当で追加（任意 preset） |
-| マーカー | preset 由来 source の `notes` に `harite-preset:{preset_id}` を含める（既存行の検索用）。表示名の `*` 接頭辞は **GUI のみ**（catalog `name` は `*なし` — 例: `気象庁`） |
+| マーカー | preset 由来 source の `notes` に `harite-preset:{preset_id}` を含める。`min_slideshow_interval_seconds` があるとき `harite-min-interval:{秒}` を追記。表示名の `*` 接頭辞は **GUI のみ** |
 | 永続化 | 変更があれば `save_catalog` してよい |
 | Sync | bootstrap 直後、追加・既存の preset 由来 remote それぞれに `sync_remote_source` を **best-effort**（§12.4） |
 
@@ -494,7 +498,7 @@ harite-preset:{preset_id}
 | 既定 profile | 同梱 `jma-dual-lr` — L = `jma-near-color`、R = `jma-asia-color` |
 | start 前 resolve | [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md) — 各 side の cache を `slideshow_srcdir_*` に展開 |
 | 画像収集 | 各 cache の `latest.png`（1 枚）。tick 毎の再取得は **しない**（鮮度は Start 直前 Sync / Refresh） |
-| Interval 下限 | [gui-spec §6.5](../gui/harite-gui-spec.md) — `remote-jma-weather-map` 参照時 |
+| Interval 下限 | 同梱 preset の `min_slideshow_interval_seconds`（気象庁: **600**）— [gui-spec §6.5](../gui/harite-gui-spec.md) |
 
 ## 16. GUI / CLI（C-01）
 

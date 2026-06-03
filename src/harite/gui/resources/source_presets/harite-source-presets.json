@@ -5,12 +5,14 @@
       "preset_id": "jma-near-color",
       "name": "気象庁（日本付近）",
       "kind": "remote-jma-weather-map",
+      "min_slideshow_interval_seconds": 600,
       "notes": "harite-preset:jma-near-color\n出典：気象庁ホームページ（https://www.jma.go.jp/）"
     },
     {
       "preset_id": "jma-asia-color",
       "name": "気象庁（アジア域）",
       "kind": "remote-jma-weather-map",
+      "min_slideshow_interval_seconds": 600,
       "notes": "harite-preset:jma-asia-color\n出典：気象庁ホームページ（https://www.jma.go.jp/）"
     }
   ],
@@ -18,6 +20,7 @@
     {
       "preset_id": "jma-dual-lr",
       "name": "気象庁 L/R",
+      "min_slideshow_interval_seconds": 600,
       "members": {
         "L": "jma-near-color",
         "R": "jma-asia-color"
