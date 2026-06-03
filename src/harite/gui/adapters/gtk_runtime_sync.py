@@ -52,7 +52,11 @@ def sync_slideshow_state_from_owner(backend: Any, owner: Any) -> None:
     )
     backend._set_button_enabled("btnDaemonize", bool(getattr(owner, "can_start_slideshow", False)))
     backend._set_button_enabled("btnCancelDaemonize", bool(getattr(owner, "slideshow_running", False)))
-    backend._refresh_slideshow_source_labels()
+    if hasattr(backend, "_refresh_slideshow_mode_controls"):
+        backend._refresh_slideshow_source_labels(owner)
+        backend._refresh_slideshow_mode_controls(owner)
+    else:
+        backend._refresh_slideshow_source_labels()
     if hasattr(backend, "_refresh_slideshow_registry_combos"):
         backend._refresh_slideshow_registry_combos(owner)
     backend._refresh_slideshow_summary_label()

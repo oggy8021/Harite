@@ -262,7 +262,7 @@ def test_format_input_display_empty():
 # ---------------------------------------------------------------------------
 
 
-def test_refresh_slideshow_source_labels(qapp, backend):
+def test_refresh_slideshow_source_labels_truncates_long_paths(qapp, backend):
     from PyQt6.QtWidgets import QLabel
 
     from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_source_labels
@@ -271,11 +271,12 @@ def test_refresh_slideshow_source_labels(qapp, backend):
     lbl_r = QLabel()
     backend._objects["lblSlideshowSourceL"] = lbl_l
     backend._objects["lblSlideshowSourceR"] = lbl_r
-    backend._slideshow_srcdir_l = "/tmp/left"
+    backend._slideshow_srcdir_l = "C:/cache/" + ("x" * 80)
     backend._slideshow_srcdir_r = ""
     refresh_slideshow_source_labels(backend)
-    assert "/tmp/left" in lbl_l.text()
-    assert "-" in lbl_r.text()
+    assert lbl_l.text().startswith("L:")
+    assert "…" in lbl_l.text()
+    assert "R: -" in lbl_r.text()
 
 
 # ---------------------------------------------------------------------------

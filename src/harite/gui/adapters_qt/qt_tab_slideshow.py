@@ -73,6 +73,9 @@ def _build_srcdir_row() -> dict[str, Any]:
 
         lbl = QLabel(f"{side_label}: -")
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl.setWordWrap(False)
+        lbl.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        lbl.setMaximumWidth(280)
 
         btn_clr = QPushButton(f"Clear-{side_label}")
         _set_button_icon(btn_clr, "icons", "lucide", "folder-x.svg")
@@ -133,12 +136,28 @@ def _build_srcdir_row() -> dict[str, Any]:
 def _build_profile_row() -> dict[str, Any]:
     """Profile preset combo centred above srcdir grid."""
     from PyQt6.QtCore import Qt
+    from PyQt6.QtGui import QPixmap
     from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QWidget
+
+    from harite.gui.resource_access import gui_resource_path
 
     row = QWidget()
     layout = QHBoxLayout(row)
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+    profile_icon_label = QLabel()
+    profile_icon_label.setToolTip("Saved profile preset")
+    with gui_resource_path("icons", "lucide", "bookmark.svg") as icon_path:
+        pixmap = QPixmap(str(icon_path))
+        profile_icon_label.setPixmap(
+            pixmap.scaled(
+                16,
+                16,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+        )
 
     profile_label = QLabel("Profile")
     combo_slideshow_profile = QComboBox()
@@ -146,12 +165,14 @@ def _build_profile_row() -> dict[str, Any]:
     help_label = QLabel("Applies L/R together")
     help_label.setStyleSheet("color: palette(mid);")
 
+    layout.addWidget(profile_icon_label)
     layout.addWidget(profile_label)
     layout.addWidget(combo_slideshow_profile)
     layout.addWidget(help_label)
 
     return {
         "slideshow_profile_row": row,
+        "slideshow_profile_icon_label": profile_icon_label,
         "combo_slideshow_profile": combo_slideshow_profile,
     }
 

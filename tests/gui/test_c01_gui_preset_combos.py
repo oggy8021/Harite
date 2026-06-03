@@ -93,6 +93,49 @@ def test_profile_select_raises_interval_to_preset_floor(tmp_path: Path) -> None:
     assert window.slideshow_interval_seconds == 600
 
 
+def test_preset_profile_disables_slideshow_mode_controls(tmp_path: Path) -> None:
+    cache_root = tmp_path / "remote-cache"
+    catalog_path = tmp_path / "harite-sources.json"
+    catalog = empty_catalog()
+    bootstrap_preset_sources(catalog, cache_root=cache_root, sync=False)
+    save_catalog(catalog, catalog_path)
+    profile_id = catalog.profiles[0].id
+
+    window = MainWindow()
+    window._source_catalog_path = catalog_path
+    assert window.slideshow_mode_controls_enabled is True
+    window.on_select_slideshow_profile(profile_id)
+    assert window.slideshow_mode_controls_enabled is False
+
+
+def test_refresh_slideshow_source_labels_use_source_name(qapp, tmp_path: Path) -> None:
+    from PyQt6.QtWidgets import QLabel
+
+    from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_source_labels
+
+    cache_root = tmp_path / "remote-cache"
+    catalog_path = tmp_path / "harite-sources.json"
+    catalog = empty_catalog()
+    bootstrap_preset_sources(catalog, cache_root=cache_root, sync=False)
+    save_catalog(catalog, catalog_path)
+
+    owner = MainWindow()
+    owner._source_catalog_path = catalog_path
+    owner.on_select_slideshow_profile(catalog.profiles[0].id)
+
+    backend = _FakeBackend()
+    backend._objects["lblSlideshowSourceL"] = QLabel()
+    backend._objects["lblSlideshowSourceR"] = QLabel()
+    backend._slideshow_srcdir_l = owner.slideshow_srcdir_l
+    backend._slideshow_srcdir_r = owner.slideshow_srcdir_r
+
+    refresh_slideshow_source_labels(backend, owner)
+
+    assert "気象庁（日本付近）" in backend._objects["lblSlideshowSourceL"].text()
+    assert "気象庁（アジア域）" in backend._objects["lblSlideshowSourceR"].text()
+    assert "remote-cache" not in backend._objects["lblSlideshowSourceL"].text()
+
+
 def test_slideshow_profile_combo_label_detects_preset_profile(tmp_path: Path) -> None:
     cache_root = tmp_path / "remote-cache"
     catalog = empty_catalog()

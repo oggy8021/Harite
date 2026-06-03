@@ -641,6 +641,8 @@ class MainWindow:
         return True
 
     def on_change_slideshow_mode(self, mode: str) -> bool:
+        if not self.slideshow_mode_controls_enabled:
+            return True
         value = (mode or "").strip().lower()
         if value not in {"sequential", "random"}:
             self.last_error = f"unknown slideshow mode: {mode}"
@@ -1075,6 +1077,34 @@ class MainWindow:
     def load_source_catalog(self) -> Catalog:
         path = self._source_catalog_path or resolve_default_sources_path()
         return load_catalog(path)
+
+    def _uses_preset_single_image_sources(self) -> bool:
+        from harite.sources_preset import find_catalog_profile_for_preset, load_source_presets
+        from harite.sources_remote import preset_id_from_notes
+
+        catalog = self.load_source_catalog()
+        profile_id = (self.slideshow_profile_id or "").strip()
+        if profile_id:
+            presets = load_source_presets()
+            for template in presets.profiles:
+                matched = find_catalog_profile_for_preset(
+                    catalog, template.preset_id, preset_catalog=presets
+                )
+                if matched is not None and matched.id == profile_id:
+                    return True
+
+        for source_id in (self.slideshow_source_id_l, self.slideshow_source_id_r):
+            selected = (source_id or "").strip()
+            if not selected:
+                continue
+            entry = get_source(catalog, selected)
+            if entry is not None and preset_id_from_notes(entry.notes):
+                return True
+        return False
+
+    @property
+    def slideshow_mode_controls_enabled(self) -> bool:
+        return not self._uses_preset_single_image_sources()
 
     def _apply_slideshow_interval_floor(
         self,
