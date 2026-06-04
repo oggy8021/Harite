@@ -16,7 +16,7 @@
 - plugin registry（[plugin-spec](../plugins/harite-plugin-spec.md)）— OS apply plugin 登録であり、入力 source ではない
 - profile / source の **ordered list** 形状、profile 間の周回ローテ
 
-planning 正本: [20260601-1400-c02-source-registry-planning.md](../../working/20260601-1400-c02-source-registry-planning.md)（C-02）、[20260602-1400-c05-slideshow-source-enhancement-planning.md](../../working/20260602-1400-c05-slideshow-source-enhancement-planning.md)（C-05）、[20260603-1400-c01-external-wallpaper-source-planning.md](../../working/20260603-1400-c01-external-wallpaper-source-planning.md)（C-01）
+planning 正本: [20260601-1400-c02-source-registry-planning.md](../../working/finished/20260601-1400-c02-source-registry-planning.md)（C-02）、[20260602-1400-c05-slideshow-source-enhancement-planning.md](../../working/finished/20260602-1400-c05-slideshow-source-enhancement-planning.md)（C-05）、[20260603-1400-c01-external-wallpaper-source-planning.md](../../working/finished/20260603-1400-c01-external-wallpaper-source-planning.md)（C-01）
 
 ## 2. 用語
 
@@ -478,7 +478,7 @@ load / save 時の catalog 検証では、`remote-*` の `path` は **存在し�
 5. cache directory へ **`latest.png` として上書き保存**。当該 directory の他 `*.png` は削除してよい。
 6. `default_notes` が未設定で catalog `notes` が空のとき、§15.4 の帰属 1 行目を `notes` に追記してよい。
 
-`list.json` の公式 schema 文書は気象庁から公開されていない。カテゴリ一覧は [JMA weather map list inventory](../../working/20260603-jma-weather-map-list-inventory.md)（別フェーズの選定参考）。
+`list.json` の公式 schema 文書は気象庁から公開されていない。カテゴリ一覧は [JMA weather map list inventory](../../working/finished/20260603-jma-weather-map-list-inventory.md)（別フェーズの選定参考）。
 
 ### 15.3 同梱 preset
 
@@ -516,7 +516,7 @@ harite-preset:{preset_id}
 
 ## 15.6 Provider 実装 — NDL 次世代デジタルライブラリー（C-01-E）
 
-`kind`: **`remote-ndl-tsugidigi`**。API key は用いない。調査正本: [NDL inventory](../../working/20260603-c01-e-ndl-tsugidigi-inventory.md)。
+`kind`: **`remote-ndl-tsugidigi`**。API key は用いない。調査正本: [NDL inventory](../../working/finished/20260603-c01-e-ndl-tsugidigi-inventory.md)。
 
 | `preset_id` | 取得 |
 | --- | --- |
@@ -533,7 +533,7 @@ Sync: 返却 `Illustration` から IIIF URL（`dl.ndl.go.jp/api/iiif/{pid}/{page
 
 ## 15.7 Provider 実装 — CODH 江戸 ICP（C-01-E）
 
-`kind`: **`remote-codh-edo`**。Canvas Indexer API（`mp.ex.nii.ac.jp`）。調査正本: [CODH inventory](../../working/20260603-c01-e-codh-icp-inventory.md)。
+`kind`: **`remote-codh-edo`**。Canvas Indexer API（`mp.ex.nii.ac.jp`）。調査正本: [CODH inventory](../../working/finished/20260603-c01-e-codh-icp-inventory.md)。
 
 | `preset_id` | 検索 |
 | --- | --- |

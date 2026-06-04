@@ -196,7 +196,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 
 ## 参照
 
-- [C-02](../20260601-1400-c02-source-registry-planning.md) / [C-05](../20260602-1400-c05-slideshow-source-enhancement-planning.md) planning
+- [C-02](20260601-1400-c02-source-registry-planning.md) / [C-05](20260602-1400-c05-slideshow-source-enhancement-planning.md) planning
 - [harite-source-spec.md](../specs/source/harite-source-spec.md)
 - [gui resources README](../../src/harite/gui/resources/README.md)
 - [feature-overview §C-01](20260518-2047-feature-overview.md)

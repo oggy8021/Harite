@@ -1,6 +1,6 @@
 # C-01-E: 外部 provider 調査 — 統合索引
 
-最終更新: 2026-06-03（**実現性検証クローズ** — 開発プロセス続き）
+最終更新: 2026-06-04（**完了** — #400 merge、`finished/` へ移動）
 
 ## 位置づけ
 
@@ -9,7 +9,7 @@
 | 親 | [feature-overview §C-01-E](20260518-2047-feature-overview.md) |
 | 実装 | ブランチ `feature/c01-e-ndl-codh` — `remote-ndl-tsugidigi` / `remote-codh-edo` + 同梱 preset |
 | spec | [harite-source-spec §15.6–15.7](../specs/source/harite-source-spec.md) |
-| 状態 | **実現性検証（V1）完了** — 本書 §実現性検証。以降は通常の PR / audit / merge |
+| 状態 | **完了**（#400）— 本書 §実現性検証。[軽量 audit](20260603-c01-e-3layer-audit.md) |
 
 ## 調査ドキュメント
 
@@ -48,16 +48,7 @@ Interval 下限 **600 s**（JMA と同型）。江戸マップ・座標連携は
 | cache UUID 手動削除 | 選択で空フォルダ再作成。Start/Refresh で画像再取得 |
 | 孤児 UUID フォルダ | materialize 時自動削除（§12.3） |
 
-**第 4 波 C-01（JMA）audit** は [20260603-c01-3layer-audit.md](finished/20260603-c01-3layer-audit.md) で完了済み。C-01-E はその **provider 拡張** で、同型のフル audit より **軽量差分確認** で足りる。
-
-## 開発プロセス（続き）
-
-| 順 | 作業 | 備考 |
-| --- | --- | --- |
-| 1 | `pytest`（`test_c01_remote_*` / GUI preset 系） | branch `feature/c01-e-ndl-codh` |
-| 2 | **PR** 作成（spec §15.6–15.7、preset 5 種、追補: materialize 非ブロック、cache prune、resolve 再作成） | 親 C-01 #392–393 の延長 |
-| 3 | **軽量 3-layer audit**（spec ↔ tests ↔ impl の差分のみ） | 必要なら `docs/working/finished/20260603-c01-e-3layer-audit.md` |
-| 4 | merge → overview 上 C-01-E を **完了** に更新 | キーワードユーザー指定（C-01-E-KW）は §2 のまま |
+**第 4 波 C-01（JMA）audit** は [20260603-c01-3layer-audit.md](20260603-c01-3layer-audit.md) で完了済み。C-01-E は [20260603-c01-e-3layer-audit.md](20260603-c01-e-3layer-audit.md) で差分確認。
 
 ## 見送り（調査済み・preset 未実装）
 
@@ -79,3 +70,4 @@ curl の Schannel `(35)` / PowerShell の `&` `|` — [NDL inventory §6](202606
 | --- | --- |
 | 2026-06-03 | 統合索引 + 実装 preset 一覧 |
 | 2026-06-03 | 実現性検証クローズ + 開発プロセス続き（PR / 軽量 audit） |
+| 2026-06-04 | #400 merge、[軽量 audit](20260603-c01-e-3layer-audit.md)、`finished/` へ移動 |
