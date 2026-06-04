@@ -88,8 +88,20 @@ def test_slideshow_start_syncs_jma_profile_and_resolves_cache(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    from harite.gui.adapters_qt import qt_source_catalog
+
     _install_jma_urlopen_mock(monkeypatch)
     _install_dual_slideshow_env(monkeypatch)
+    _materialize_orig = qt_source_catalog.materialize_source_catalog_at_path
+
+    def _materialize_no_bulk_sync(path: Path, *, owner: object | None = None, **kwargs: object) -> object:
+        return _materialize_orig(path, owner=owner, sync_remote=False)
+
+    monkeypatch.setattr(
+        qt_source_catalog,
+        "materialize_source_catalog_at_path",
+        _materialize_no_bulk_sync,
+    )
 
     cache_root = tmp_path / "remote-cache"
     catalog_path = tmp_path / "harite-sources.json"

@@ -413,6 +413,10 @@ def resolve_source(catalog: Catalog, source_id: str) -> Path:
     entry = get_source(catalog, source_id)
     if entry is None:
         raise ValueError(f"unknown source id: {source_id}")
+    from harite.sources_remote import ensure_remote_cache_dir, is_remote_kind
+
+    if is_remote_kind(entry.kind):
+        return ensure_remote_cache_dir(entry)
     return normalize_directory_path(entry.path)
 
 
@@ -438,7 +442,9 @@ from harite.sources_preset import (  # noqa: E402
     preset_min_slideshow_interval,
 )
 from harite.sources_remote import (  # noqa: E402
+    KIND_CODH_EDO,
     KIND_JMA_WEATHER_MAP,
+    KIND_NDL_TSUGIDIGI,
     add_remote_source,
     is_remote_kind,
     remote_cache_dir_for_source,

@@ -1225,7 +1225,7 @@ class MainWindow:
         return True
 
     def _remote_source_ids_for_slideshow_start(self, catalog: Catalog) -> list[str]:
-        from harite.sources_remote import KIND_JMA_WEATHER_MAP
+        from harite.sources_remote import is_remote_kind
 
         ids: list[str] = []
         profile_id = (self.slideshow_profile_id or "").strip()
@@ -1238,7 +1238,7 @@ class MainWindow:
                 if not source_id:
                     continue
                 entry = get_source(catalog, source_id)
-                if entry is not None and entry.kind == KIND_JMA_WEATHER_MAP:
+                if entry is not None and is_remote_kind(entry.kind):
                     ids.append(source_id)
             return ids
 
@@ -1247,7 +1247,7 @@ class MainWindow:
             if not selected:
                 continue
             entry = get_source(catalog, selected)
-            if entry is not None and entry.kind == KIND_JMA_WEATHER_MAP:
+            if entry is not None and is_remote_kind(entry.kind):
                 ids.append(selected)
         return ids
 
