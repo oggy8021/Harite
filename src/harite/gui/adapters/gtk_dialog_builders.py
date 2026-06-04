@@ -87,9 +87,10 @@ def build_settings_section(gtk_module: Any, *, configure_spin_button: Any) -> di
     from harite.apply_surface import is_windows_host
 
     prefs_windows_apply_span = gtk_module.CheckButton(label="Apply with Span when using Span mode")
-    if not is_windows_host() and hasattr(prefs_windows_apply_span, "set_no_show_all"):
+    if is_windows_host():
+        _prefs_row("Windows", prefs_windows_apply_span)
+    elif hasattr(prefs_windows_apply_span, "set_no_show_all"):
         prefs_windows_apply_span.set_no_show_all(True)
-    _prefs_row("Windows", prefs_windows_apply_span)
 
     prefs_actions = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
     prefs_actions.pack_start(prefs_cancel_btn, False, False, 0)

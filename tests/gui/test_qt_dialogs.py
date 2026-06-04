@@ -90,6 +90,28 @@ def test_settings_dialog_apply_mode_is_mutually_exclusive(qapp):
     assert not w["prefs_apply_single"].isChecked()
 
 
+def test_settings_dialog_windows_span_row_only_on_windows_host(qapp, monkeypatch):
+    from PyQt6.QtWidgets import QLabel
+
+    from harite.gui.adapters_qt.qt_dialogs import build_settings_dialog
+
+    def _windows_label(editor) -> QLabel | None:
+        for label in editor.findChildren(QLabel):
+            if label.text() == "Windows":
+                return label
+        return None
+
+    monkeypatch.setattr("harite.apply_surface.is_windows_host", lambda: False)
+    w = build_settings_dialog()
+    assert _windows_label(w["prefs_editor_box"]) is None
+    assert w["prefs_windows_apply_span"].parent() is None
+
+    monkeypatch.setattr("harite.apply_surface.is_windows_host", lambda: True)
+    w_win = build_settings_dialog()
+    assert _windows_label(w_win["prefs_editor_box"]) is not None
+    assert w_win["prefs_windows_apply_span"].parent() is not None
+
+
 def test_settings_dialog_two_screen_is_mutually_exclusive(qapp):
     from harite.gui.adapters_qt.qt_dialogs import build_settings_dialog
 
