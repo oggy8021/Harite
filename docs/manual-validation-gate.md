@@ -208,7 +208,7 @@ owner が XFCE 実機確認を行うときは、次をそのままメモまた�
 - MainWindow input update: pass/fail
 - Save As or Optimize flow: pass/fail
 - Apply immediate flow: pass/fail/not-available
-- Watch flow (if changed): pass/fail/not-available
+- Slideshow flow (if changed): pass/fail/not-available
 - Screenshots:
   - MainWindow: [attached/path]
   - Optimize: [attached/path]
@@ -250,7 +250,7 @@ python.exe -m pytest -q tests/gui/test_main_window_signals.py tests/gui/test_gtk
 
 受け入れ基準:
 
-- runtime fallback でのラベル規約（Status/Error/Optimize result/Apply target/Watch）が固定されている。
+- runtime fallback でのラベル規約（Status/Error/Optimize result/Apply target/Slideshow）が固定されている。
 - current handler 名での dispatch / bind が維持され、legacy signal 名へ戻っていない。
 - handler 未接続時に `handler-missing` が表示され、例外クラッシュしない。
 - 本項目の確認結果が PR 本文またはコメントに記録されている。

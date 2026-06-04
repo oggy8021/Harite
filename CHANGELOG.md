@@ -14,14 +14,14 @@
 
 ### Changed
 
-- Main / Margins / Watch tab の構成を見直し、GUI の視認性と操作導線を改善。
+- Main / Margins / Slideshow tab の構成を見直し、GUI の視認性と操作導線を改善。
 - Settings / Color / About dialog の役割を整理し、操作の意味づけを明確化。
 - README、release note、配布物の説明を現行の利用形態に合わせて整理。
 
 ### Fixed
 
 - GUI preview の画像・ファイルパス判定のずれを修正。
-- Watch tab の layout ずれを抑制。
+- Slideshow tab の layout ずれを抑制。
 - 一時的な display 検出崩れに対する watch の安定性を改善。
 
 ## 0.1.3 (2026-05-16)
@@ -33,14 +33,14 @@
 
 ### Changed (0.1.3)
 
-- Main / Margins / Watch tab の構成を見直し、GUI の視認性と操作導線を改善。
+- Main / Margins / Slideshow tab の構成を見直し、GUI の視認性と操作導線を改善。
 - Settings / Color / About dialog の役割を整理し、操作の意味づけを明確化。
 - header command bar を icon ベースに整理。
 
 ### Fixed (0.1.3)
 
 - GUI preview の画像・ファイルパス判定のずれを修正。
-- Watch tab の layout ずれを抑制。
+- Slideshow tab の layout ずれを抑制。
 
 ## 0.1.2 (2026-04-12)
 

@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-04（第4波 planning/inventory を `finished/` へ移動。active は本書のみ）
+最終更新: 2026-06-04（K-01 破棄 → H-08。§2 は C-03/C-04 中心に整理）
 
 ## 位置づけ
 
@@ -58,7 +58,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | F-01 | Windows 設定ファイル path | [#354](../online-issues/closed/issue-354.md) | foundation | **完了**（#365–367, 2026-06-01 Windows 実機確認） |
 | P-01 | 左右 path / srcdir の swap | [#353](../online-issues/closed/issue-353.md) | GUI polish | **完了**（#369–371, 2026-06-01 オーナー確認） |
 | P-02 | Slideshow srcdir クリア | [#358](../online-issues/closed/issue-358.md) | GUI polish | **完了**（#369–371, 個別 clear 採用） |
-| P-03 | 単 display 時の -R 側無効化 | [#359](../online-issues/issue-359.md) | edge case UX | **構想保持（着手順序外）** — 急がない |
+| P-03 | 単 display / monitor まわり UX | [#359](../online-issues/issue-359.md) | edge case UX | **構想保持（着手順序外）** — display 検出に依存する -R 無効化等。旧 K-01 monitor 縁 |
 
 ### 2. 構想保持
 
@@ -69,9 +69,8 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | --- | --- | --- | --- |
 | C-03 | plugin capability 可視化 | plugin ごとに受理 target や OS 制約を可視化し、apply / slideshow / GUI での分岐を分かりやすくする。 | **採用条件**: 仕様書に根拠を持ち、UIUX として明確に改善される論拠（spec 改訂案 + 表示面のストーリー）が示せたとき |
 | C-04 | GUI 利用導線の再設計 | optimize / apply / slideshow を単なる tab 群ではなく、利用目的ベースで再構成する。 | **採用条件**: 既存レイアウトの骨格を維持しつつ、世の標準傾向や UX トレンドを引用した「主要導線がより良くなる」ストーリーが組めたとき。「利用目的ベース」の具体が未整理のため現時点では積極採用しない |
-| K-01 | ~~watch~~ slideshow 再構成（**旧語整理待ち**） | 旧 inventory「Watch」= 現 **Slideshow**。monitor 変化監視等を別 feature に切り出すなら K-01 を再定義。 | **構想保持・要再分類** — C-02/C-05 後。Phase10 mock の Watch 表記は legacy。 |
 | K-04 | plugin 拡張パック | Linux 以外や追加 desktop 向け plugin を外付け拡張として扱えるようにする。 | capability model と packaging 方針が先に必要 |
-| P-03 | 単 display 時の -R 側無効化 | 検出 1 枚のとき右パネル操作を disabled にする案。 | **採用条件**: 単 display 再現手順、disabled 範囲の spec、GTK/Qt テスト方針が揃ったとき（[#359](../online-issues/issue-359.md)） |
+| P-03 | 単 display / monitor まわり UX | 検出 1 枚のとき -R 側（path / srcdir / direction 等）を disabled にする案。**display 検出・枚数に依存する操作の整理**はここで扱う（旧 K-01 の「monitor 監視」含む）。 | **採用条件**: 単 display 再現手順、disabled 範囲の spec、GTK/Qt テスト方針が揃ったとき（[#359](../online-issues/issue-359.md)） |
 | C-01-E-KW | CODH キーワード検索のユーザー指定 | 現状 **「桜」はコード固定**（`codh-edo-spots-sakura` → `_CODH_PRESET_SEARCH`）。任意文字列は `where_metadata_value` へ。近い代替は **同梱 preset を増やす**（梅・花火など）。 | **先送り（2026-06-03）** — **Manage sources and profiles…** 周りの UI が既に込み入っているため、専用入力・notes 機械行は今回やらない。採用時は indexer allowlist 固定 + `urlencode` + キーワード長上限でリスク低め（[CODH inventory](finished/20260603-c01-e-codh-icp-inventory.md)）。GUI 明示の「キャッシュ掃除」ボタンも同様に見送り（materialize 時の孤児削除で足りる — [source-spec §12.3](../specs/source/harite-source-spec.md)） |
 
 #### C-04 rough ideas（参考保持）
@@ -95,6 +94,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | H-05 | K-03 favorites / history | 過去の生成・適用壁紙や source の振り返り・再利用。 | **オーナー棚卸: 不要**（2026-06-03）。保存スコープと product 焦点がずれる |
 | H-06 | K-06 import / export profiles | optimize / apply / slideshow 設定の profile 単位の持ち運び。 | **オーナー棚卸: 不要・やめる**（2026-06-03）。registry + preset で運用し、別途 export は負債になりやすい |
 | H-07 | K-05 scheduler / timed automation | 時刻・曜日・条件で optimize / apply / slideshow を起動。 | **オーナー棚卸: 不要に近い**（2026-06-03）。下記 §K-05 残ストーリー参照。明示ニーズが出るまで採らない |
+| H-08 | K-01 ~~watch~~ slideshow 再構成 | 旧 inventory「Watch」= 現 **Slideshow** タブ。slideshow 再構成は **C-02 / C-05 で充足**。 | **オーナー棚卸: 破棄**（2026-06-04）。monitor / 単 display の操作整理は **P-03**（[#359](../online-issues/issue-359.md)）。Phase10 mock 等の「Watch」表記は legacy 掃除対象（product 名ではない） |
 
 ## planning 入口カテゴリ
 
@@ -108,7 +108,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 
 - source registry / source profiles
 - slideshow source 強化
-- （旧語 Watch = slideshow — 2026-06-01 用語整理）
+- ~~K-01 watch 再構成~~ — [H-08](#3-破棄候補--保留延長)（C-02/C-05 充足。monitor 縁は P-03）
 - ~~scheduler / timed automation~~ — [H-07](#3-破棄候補--保留延長)（オーナー: 不要に近い）
 
 ### 3. plugin / apply 拡張
@@ -219,6 +219,7 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 2026-06-03: **C-01-E 追補** — remote-cache 孤児 directory の materialize 時自動削除（`prune_orphan_remote_cache_dirs`）。**C-01-E-KW**（CODH キーワードユーザー指定）は §2 構想保持へ先送り
 - 2026-06-03: **C-01-E 完了** — 実現性検証 + #400 merge。[統合索引](finished/20260603-c01-e-merged-inventory.md) / [軽量 audit](finished/20260603-c01-e-3layer-audit.md)
 - 2026-06-04: **第4波 C-02/C-05/C-01/C-01-J/C-01-E** の planning・inventory を `working/finished/` へ移動（本 overview のみ `working/` に残す）
+- 2026-06-04: **K-01 破棄（H-08）** — slideshow 再構成は C-02/C-05 済み。display / monitor 縁は P-03 に集約。legacy「Watch」表記の docs 掃除を開始
 
 ### K-05（scheduler）— 残しうるストーリーと見送り理由
 
