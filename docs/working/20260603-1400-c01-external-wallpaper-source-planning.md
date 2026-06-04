@@ -192,7 +192,7 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 1. ~~段 0–5（C-01 第1 impl）~~ — **完了**
 2. ~~**C-01-J**~~ — list.json カタログ — **完了**
 3. ~~**C-01-E** 実現性検証~~ — **完了**（[統合索引 §実現性検証](20260603-c01-e-merged-inventory.md)）
-4. **C-01-E 開発プロセス** — `feat/c01-e-ndl-codh` → pytest → PR → 軽量 audit → merge
+4. **C-01-E 開発プロセス** — `feature/c01-e-ndl-codh` → pytest → PR → 軽量 audit → merge
 
 ## 参照
 

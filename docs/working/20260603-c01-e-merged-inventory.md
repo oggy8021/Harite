@@ -7,7 +7,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 親 | [feature-overview §C-01-E](20260518-2047-feature-overview.md) |
-| 実装 | ブランチ `feat/c01-e-ndl-codh` — `remote-ndl-tsugidigi` / `remote-codh-edo` + 同梱 preset |
+| 実装 | ブランチ `feature/c01-e-ndl-codh` — `remote-ndl-tsugidigi` / `remote-codh-edo` + 同梱 preset |
 | spec | [harite-source-spec §15.6–15.7](../specs/source/harite-source-spec.md) |
 | 状態 | **実現性検証（V1）完了** — 本書 §実現性検証。以降は通常の PR / audit / merge |
 
@@ -54,7 +54,7 @@ Interval 下限 **600 s**（JMA と同型）。江戸マップ・座標連携は
 
 | 順 | 作業 | 備考 |
 | --- | --- | --- |
-| 1 | `pytest`（`test_c01_remote_*` / GUI preset 系） | branch `feat/c01-e-ndl-codh` |
+| 1 | `pytest`（`test_c01_remote_*` / GUI preset 系） | branch `feature/c01-e-ndl-codh` |
 | 2 | **PR** 作成（spec §15.6–15.7、preset 5 種、追補: materialize 非ブロック、cache prune、resolve 再作成） | 親 C-01 #392–393 の延長 |
 | 3 | **軽量 3-layer audit**（spec ↔ tests ↔ impl の差分のみ） | 必要なら `docs/working/finished/20260603-c01-e-3layer-audit.md` |
 | 4 | merge → overview 上 C-01-E を **完了** に更新 | キーワードユーザー指定（C-01-E-KW）は §2 のまま |
