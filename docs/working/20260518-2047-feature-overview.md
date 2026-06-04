@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-04（K-01 破棄 → H-08。§2 は C-03/C-04 中心に整理）
+最終更新: 2026-06-04（C-04 計画正本を [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md) へ分離）
 
 ## 位置づけ
 
@@ -67,18 +67,13 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 
 | ID | 項目 | 概要 | 保持理由 / 採用条件 |
 | --- | --- | --- | --- |
-| C-03 | plugin capability 可視化 | plugin ごとに受理 target や OS 制約を可視化し、apply / slideshow / GUI での分岐を分かりやすくする。 | **採用条件**: 仕様書に根拠を持ち、UIUX として明確に改善される論拠（spec 改訂案 + 表示面のストーリー）が示せたとき |
-| C-04 | GUI 利用導線の再設計 | optimize / apply / slideshow を単なる tab 群ではなく、利用目的ベースで再構成する。 | **採用条件**: 既存レイアウトの骨格を維持しつつ、世の標準傾向や UX トレンドを引用した「主要導線がより良くなる」ストーリーが組めたとき。「利用目的ベース」の具体が未整理のため現時点では積極採用しない |
+| C-03 | plugin capability 可視化 | plugin ごとに受理 target や OS 制約を可視化し、apply / slideshow / GUI での分岐を分かりやすくする。 | **保留・縮小** — 詳細は [C-04 計画正本](20260604-c04-gui-surface-planning-draft.md) §6（独立パネルは出さず help 整理に吸収可） |
+| C-04 | GUI surface / 利用導線 | 3 tab 骨格は維持。Slideshow/Margins の密度整理、feedback・Error 視覚、Drawer、preset 余地。 | **planning 着手** — 計画正本: [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md)。採用条件は同書 §8 |
 | K-04 | plugin 拡張パック | Linux 以外や追加 desktop 向け plugin を外付け拡張として扱えるようにする。 | capability model と packaging 方針が先に必要 |
 | P-03 | 単 display / monitor まわり UX | 検出 1 枚のとき -R 側（path / srcdir / direction 等）を disabled にする案。**display 検出・枚数に依存する操作の整理**はここで扱う（旧 K-01 の「monitor 監視」含む）。 | **採用条件**: 単 display 再現手順、disabled 範囲の spec、GTK/Qt テスト方針が揃ったとき（[#359](../online-issues/issue-359.md)） |
 | C-01-E-KW | CODH キーワード検索のユーザー指定 | 現状 **「桜」はコード固定**（`codh-edo-spots-sakura` → `_CODH_PRESET_SEARCH`）。任意文字列は `where_metadata_value` へ。近い代替は **同梱 preset を増やす**（梅・花火など）。 | **先送り（2026-06-03）** — **Manage sources and profiles…** 周りの UI が既に込み入っているため、専用入力・notes 機械行は今回やらない。採用時は indexer allowlist 固定 + `urlencode` + キーワード長上限でリスク低め（[CODH inventory](finished/20260603-c01-e-codh-icp-inventory.md)）。GUI 明示の「キャッシュ掃除」ボタンも同様に見送り（materialize 時の孤児削除で足りる — [source-spec §12.3](../specs/source/harite-source-spec.md)） |
 
-#### C-04 rough ideas（参考保持）
-
-- task ベース: 「作る」「適用する」「回す」の 3 系統から入る。
-- scenario ベース: 「単画面で 1 枚作る」「2 画面向けに合成する」「すぐ適用する」「slideshow を始める」のような利用目的から入る。
-- progressive disclosure: 最初から全 widget を見せず、基本面と詳細面を分ける。
-- Wallpaperoptimizer 的な強みは残しつつ、最初の入口は「やりたいこと」から入り、細かい調整は後で開く。
+C-04 の rough ideas・採択表・widget 切り分けは [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md) を参照（本 overview では重複しない）。
 
 ### 3. 破棄候補 / 保留延長
 
@@ -172,7 +167,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 ```
 
 - Qt 移行の詳細は [docs/working/finished/20260530-2201-pyqt6-migration-plan.md](finished/20260530-2201-pyqt6-migration-plan.md) を参照する。
-- C-03 / C-04 は採用条件が揃った時点で着手候補へ再分類する。
+- C-04 は [計画正本](20260604-c04-gui-surface-planning-draft.md) で具体化中。合意後に spec / Wave 0 へ。
 - F-01 は Windows **`%APPDATA%\harite\harite-settings.json`**（Roaming）。**旧 path 互換・移行なし**。
 - P-01–02 は §9 GUI 合意工程の最初の実践。**2026-06-01 完了**（3 層 audit は [closed/issue-353](../online-issues/closed/issue-353.md) / [issue-358](../online-issues/closed/issue-358.md)）。
 
@@ -220,6 +215,7 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 2026-06-03: **C-01-E 完了** — 実現性検証 + #400 merge。[統合索引](finished/20260603-c01-e-merged-inventory.md) / [軽量 audit](finished/20260603-c01-e-3layer-audit.md)
 - 2026-06-04: **第4波 C-02/C-05/C-01/C-01-J/C-01-E** の planning・inventory を `working/finished/` へ移動（本 overview のみ `working/` に残す）
 - 2026-06-04: **K-01 破棄（H-08）** — slideshow 再構成は C-02/C-05 済み。display / monitor 縁は P-03 に集約。legacy「Watch」表記の docs 掃除を開始
+- 2026-06-04: **C-04 計画正本** — [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md)（GUI surface / オーナー観測・採択表・Slideshow/Margins 切り分け）
 
 ### K-05（scheduler）— 残しうるストーリーと見送り理由
 

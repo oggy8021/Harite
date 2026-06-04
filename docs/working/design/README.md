@@ -22,3 +22,6 @@ GUI の見た目合意形成用 artifact を置く（spec 正本の前段）。
 | [gui-phase10-icon-mock-memo.md](gui-phase10-icon-mock-memo.md) | 上記 mock の目的・評価観点・手順 |
 | [20260601-p01-p02-lr-swap-clear-slice.html](20260601-p01-p02-lr-swap-clear-slice.html) | 第2波 P-01/P-02 — Main swap + Slideshow swap/clear |
 | [20260601-p01-p02-lr-swap-clear-slice-memo.md](20260601-p01-p02-lr-swap-clear-slice-memo.md) | 上記 slice の配置案・handler 草案・評価 checklist |
+| [20260604-glade2-legacy-interpretation-memo.md](20260604-glade2-legacy-interpretation-memo.md) | 母体 `wallpositapplet.glade` 読解・A12/A13 推奨（C-04） |
+| [20260604-c04-slideshow-margins-surface-slice.html](20260604-c04-slideshow-margins-surface-slice.html) | C-04 §4 Slideshow + §5 Margins 将来像（現行 vs 提案 / Drawer） |
+| [20260604-c04-slideshow-margins-surface-slice-memo.md](20260604-c04-slideshow-margins-surface-slice-memo.md) | 上記 slice の合意 checklist |

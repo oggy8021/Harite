@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-03 (C-01 — remote/preset GUI §6.5)
+最終更新: 2026-06-04 (C-04 — Slideshow/Margins surface + footer feedback)
 
 ## 1. GUI の責務
 
@@ -89,8 +89,8 @@ layout 戦略:
   - header の flow legend
   - footer の status / slideshow summary / error
   - Main tab の `apply mode help row`
-  - Margins tab の `notes`
-  - Slideshow tab の `mode help row`
+  - Margins tab の embed / margin text まわり（line limit 等は tooltip）
+  - Slideshow tab の mode help（**Drawer 内** — C-04）
   - settings dialog の state/notice
   - color dialog の state/notice
 - これらの補助説明面は、操作 widget と同一 row に埋め込まず、対応する操作面の近傍に独立 row または独立 block として置く。
@@ -106,6 +106,8 @@ Main Window:
 - footer も 2 行構成で、1 行目は左に `Status`、右に `Slideshow summary` を置く。
 - footer 2 行目は separator の下に `Error` を置き、status と error を縦 2 段で分離する。
 - footer の `Status`、`Slideshow summary`、`Error` は実行状態と失敗面を読むための常設説明面である。
+- footer の `Error` は `Status` / `Slideshow summary` と **視覚的に区別**する（例: 赤系 foreground）。同一の muted 色で status と error を並べない（C-04 Wave 0 — [planning draft](../../working/20260604-c04-gui-surface-planning-draft.md) §3）。
+- footer の `Status` 行に **`{Phase}: {state}`** 形式（例: `Slideshow: planned`, `Margins: updated`）を常設しない。ユーザー向けは短い人間語または空とし、進行中の slideshow 状態は 1 行目右の `Slideshow summary` に寄せる。内部の `status_phase` は保持してよい（C-04 — 同上 §3.2）。
 
 Main tab:
 
@@ -126,28 +128,28 @@ Main tab:
 
 Margins tab:
 
-- `Margins` tab は単一の縦積み column を持ち、その中で current state block を上に、cross-grid editor を下に置く。
+- `Margins` tab は **専用 tab として維持**する（C-04 案 A）。Main tab への全面統合や permanent 3-tab 廃止は行わない。将来の Main+Margins Drawer（案 B）は操作削減なしの載せ替えオプションとして [planning draft](../../working/20260604-c04-gui-surface-planning-draft.md) §7.2 に記す。
+- `Margins` tab は単一の縦積み column を持ち、**cross-grid editor を主役**とする（4 辺 margin spin + 中央 stack）。
 - cross-grid editor は上に top margin、左に left margin、右に right margin、下に bottom margin を置き、中央に詳細編集 stack を置く。
-- 中央 stack は上から `current alignment summary`、`embed pattern`、`margin text notebook`、`position selector`、`notes` を縦積みする。
+- 中央 stack は上から `embed pattern`、`margin text notebook`、`position selector` を縦積みする。**`current alignment summary`（`align=...` 長文）と `notes`（3 行 legend）は持たない** — ルール・制限は tooltip / hoobar へ逃がす（C-04 — [surface slice memo](../../working/design/20260604-c04-slideshow-margins-surface-slice-memo.md) §5）。
 - `embed pattern` は `Off` / `Settings` / `Text only` / `Both` の radio row を持つ。
 - `margin text notebook` は `Settings` page と `Text` page の 2 page 構成とする。
 - `Settings` page は preview label を中心とした状態確認面、`Text` page は margin text entry 面とする。
-- `position selector` は `Left` 列と `Right` 列を横並びに置き、それぞれ `Top` / `Bottom` radio を持つ。
-- `notes` には line limit hint、priority rule、current behavior legend を縦積みする。
+- `position selector` は `Left` 列と `Right` 列を横並びに置き、それぞれ `Top` / `Bottom` radio を持つ（Main の direction 十字とは別物のまま維持する）。
 
 Slideshow tab:
 
-- `Slideshow` tab は外周を縦積みで組み、top spacer、**profile row**、srcdir row、**manage registry row**、spacer、controls shell、spacer、detail shell、bottom spacer の順に置く（C-02 — [design slice](../../working/design/20260601-c02-slideshow-source-registry-slice.html)）。
-- **profile row** は tab 幅中央に `combo_slideshow_profile`（`— none —` + profile 名一覧）を 1 本置く。補助説明 label で「選択で L/R を一括反映」を示してよい。
+- `Slideshow` tab の **正面（中核）** は外周を縦積みで組み、top spacer、**profile row**、srcdir row、**interval/start/stop row**、（任意）**More slideshow options…** トリガ、bottom spacer の順とする（C-02 骨格 + C-04 — [surface slice](../../working/design/20260604-c04-slideshow-margins-surface-slice.html) / [memo](../../working/design/20260604-c04-slideshow-margins-surface-slice-memo.md)）。
+- **profile row** は tab 幅中央に `combo_slideshow_profile`（`— none —` + profile 名一覧）を 1 本置く。常設の「選択で L/R を一括反映」類の補助 label は **持たない**（tooltip で足りる）。
 - srcdir row は **Main tab compose grid と同型**の左・中央・右 3 列とする。左右 panel は上から **`combo_slideshow_source_l/r`（Saved source）**、`Srcdir-L/R` button、`L:` / `R:` path label、右下に `Clear-L/R` を持つ。中央 panel には **`Swap L/R`** button のみを置く（§4.1 / §4.2）。
-- **manage registry row** は中央に `btn_manage_source_registry`（ラベル例: `Manage sources and profiles…`）を置く。専用 Sources タブは **作らない**。
-- controls shell の中央には `slideshow_controls_group` を置き、その中を `mode row`、`mode help row`、`interval/start/stop row` の 3 段に分ける。
-- `mode row` は `Mode`、`sequential`、`random` を独立 row として中央寄せで置く。
-- `mode help row` は mode の選択規則と runtime 反映条件を補足する説明 label を置く。
-- `interval/start/stop row` は `Interval`、spin、`Slideshow Start`、`Slideshow Stop` を 1 行にまとめる。
-- detail shell は `current` と `output` を縦積みした detail row を中央に置く。
-- `Slideshow current` は tick / start で選ばれた L/R 画像 path を示す。**表示は Main tab の path 省略と同型**（§6.1）とし、full path を label にそのまま出さない。
-- したがって slideshow mode は controls row の 1 要素ではなく、`apply mode row` と同様に独立 row と補助説明 row を持つ面として扱う。
+- **interval/start/stop row** は正面に `Interval`、spin、`Slideshow Start`、`Slideshow Stop` を 1 行にまとめ、視線の終点とする。
+- **補助面（Drawer）** — 正面からは `manage registry row`、`mode row`、`mode help row`、`detail row`（current/output）を除き、**開閉パネル（Drawer）** 内へ移す。トリガ label は `More slideshow options…`（rename 可）。Drawer 内に置くもの:
+  - `Mode` + sequential/random + 短い mode help（1 行まで）
+  - `btn_manage_source_registry`（`Manage sources and profiles…`）— 専用 Sources タブは **作らない**
+  - `Slideshow current` / output 表示（path は tooltip または footer 要約で足りる場合は常設 label を省略してよい）
+  - 将来の C-01-E-KW 入力は **Manage dialog 内**（Drawer 経由）を前提とする
+- registry / remote の **Refresh** 注意は既存どおり OK ダイアログ（C-04 パターン）。
+- 現行実装が manage/mode/detail を tab 正面に並べている間は **移行中** とみなし、上記が C-04 Wave b の目標配置である。
 
 Dialogs:
 
@@ -571,15 +573,16 @@ margin text preflight の現行規則:
 ## 9. GUI での失敗時挙動
 
 - GUI は `status_level`, `status_phase`, `status_message`, `last_error` を持つ。
-- footer に `Status:` と `Error:` を表示する。
-- slideshow, apply, 設定, input dialog などの failure は phase 単位で表示する。
+- footer に `Status:` と `Error:` を表示する。`Status` は **人間語の `status_message`（または空）** とし、`status_phase` をそのまま `"{phase}: {state}"` として出さない（§3 Main Window footer）。
+- `Error` は failure 本文を示し、status 行と **色・重みで区別**する。
+- slideshow, apply, 設定, input dialog などの failure は `last_error` / Error 行で読めるようにする（内部では phase 名を揃えてよい）。
 - GUI の `logs` 相当領域も、利用者向けには message history として扱う。
 - CLI の実行メッセージ粒度 option のような概念を GUI に持ち込まず、GUI 側は状態表示と履歴表示の面として説明する。
 
 status 更新の原則:
 
 - `_set_status(...)` は `status_level`, `status_phase`, `status_message`, `last_error` を一括更新する統一入口である。
-- `settings`, `slideshow`, `apply`, `input` など phase 名を揃えて、どの面の失敗かを footer で読めるようにする。
+- `settings`, `slideshow`, `apply`, `input` など phase 名は内部 trace 用に揃える。footer Status への phase 機械語の常設表示は行わない（§3）。
 - message history は設定 dialog open/apply/save、slideshow start/tick/pause/resume/stop、startup settings load skip などの運用イベントを残す。
 
 ## 10. メッセージ分類
