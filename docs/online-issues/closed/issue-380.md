@@ -4,6 +4,7 @@
 
 - URL: <https://github.com/oggy8021/Harite/issues/380>
 - opened: 2026-06-02
+- **closed: 2026-06-04**（XFCE 実機確認後、#402 マージ）
 - title: `Windows以外の設定ダイアログにおいて、 Windows とのラベルだけの箇所がある`
 
 ## 事象
@@ -13,20 +14,18 @@
 
 ## 分類
 
-- `bug` / `polish`
+- `bug` / `polish` → **resolved**
 
 ## 関連
 
-- feature-overview: W-03 B-lite — [20260518-2047-feature-overview.md](../working/20260518-2047-feature-overview.md)
-- 正本: [harite-gui-spec.md](../specs/gui/harite-gui-spec.md) — `windows_apply_span`
-- 他 Issue: [#343](closed/issue-343.md)（Span opt-in 実装）
+- feature-overview: W-03 B-lite — [20260518-2047-feature-overview.md](../../working/20260518-2047-feature-overview.md)
+- 正本: [harite-gui-spec.md](../../specs/gui/harite-gui-spec.md) — `windows_apply_span`
+- 他 Issue: [#343](issue-343.md)（Span opt-in 実装）
 - 実装: `src/harite/gui/adapters_qt/qt_dialogs.py`, `src/harite/gui/adapters/gtk_dialog_builders.py`
 
 ## 取り込み方針
 
-- 現時点の判断: **着手**（小 fix）
-- スコープ: 非 Windows ホストでは Settings の Windows 行をレイアウトに載せない（GTK も同様）。設定キー `windows_apply_span` のシリアライズ用ウィジェットはレジストリ用に残す。
-- 含めない: 非 Windows で無効化表示のまま行を見せる案（GTK `no_show_all` のみではラベルが残るため不採用）
+- **完了（小 fix）。** 非 Windows ホストでは Settings の Windows 行をレイアウトに載せない（GTK も同様）。設定キー `windows_apply_span` のシリアライズ用ウィジェットはレジストリ用に残す。
 
 ## 調査メモ
 
@@ -36,6 +35,8 @@
 
 ## resolution
 
-- closed: （PR マージ後）
-- 正本反映: 不要（表示バグのみ）
-- 備考: `tests/gui/test_qt_dialogs.py::test_settings_dialog_windows_span_row_only_on_windows_host`
+- **closed:** 2026-06-04
+- **正本反映:** 不要（表示バグのみ）
+- **PR:** [#402](https://github.com/oggy8021/Harite/pull/402)
+- **手元確認:** XFCE 実機 — Settings に孤立「Windows」ラベルなし（オーナー 2026-06-04）
+- **テスト:** `tests/gui/test_qt_dialogs.py::test_settings_dialog_windows_span_row_only_on_windows_host`
