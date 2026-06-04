@@ -139,9 +139,10 @@ def build_settings_dialog(parent: Any = None) -> dict[str, Any]:
     from harite.apply_surface import is_windows_host
 
     prefs_windows_apply_span = QCheckBox("Apply with Span when using Span mode")
-    if not is_windows_host():
+    if is_windows_host():
+        _add_row("Windows", prefs_windows_apply_span)
+    else:
         prefs_windows_apply_span.setVisible(False)
-    _add_row("Windows", prefs_windows_apply_span)
 
     # -- action buttons --
     prefs_ok_btn = QPushButton("OK")
