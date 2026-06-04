@@ -26,26 +26,39 @@ from harite.sources_preset import (
     repair_preset_source_notes,
 )
 from harite.sources_remote import (
+    KIND_CODH_EDO,
     KIND_JMA_WEATHER_MAP,
+    KIND_NDL_TSUGIDIGI,
     is_remote_kind,
     preset_id_from_notes,
 )
 
+_BUNDLED_SOURCE_PRESET_IDS = {
+    "jma-near-color",
+    "jma-asia-color",
+    "jma-near-monochrome",
+    "jma-asia-monochrome",
+    "ndl-random",
+    "ndl-random-map",
+    "codh-edo-spots-sakura",
+    "codh-edo-spots-random",
+    "codh-edo-shops-random",
+}
 
-def test_load_bundled_jma_presets() -> None:
+
+def test_load_bundled_presets() -> None:
     presets = load_source_presets()
     assert presets.preset_schema_version == 1
     ids = {template.preset_id for template in presets.sources}
-    assert ids == {
-        "jma-near-color",
-        "jma-asia-color",
-        "jma-near-monochrome",
-        "jma-asia-monochrome",
-    }
+    assert ids == _BUNDLED_SOURCE_PRESET_IDS
     profile_ids = {template.preset_id for template in presets.profiles}
     assert profile_ids == {"jma-dual-lr"}
+    kind_by_id = {template.preset_id: template.kind for template in presets.sources}
+    assert kind_by_id["jma-near-color"] == KIND_JMA_WEATHER_MAP
+    assert kind_by_id["ndl-random"] == KIND_NDL_TSUGIDIGI
+    assert kind_by_id["codh-edo-spots-sakura"] == KIND_CODH_EDO
     for template in presets.sources:
-        assert template.kind == KIND_JMA_WEATHER_MAP
+        assert is_remote_kind(template.kind)
         assert template.min_slideshow_interval_seconds == 600
 
 
@@ -218,12 +231,7 @@ def test_bootstrap_materializes_missing_presets(tmp_path: Path) -> None:
     changed = bootstrap_preset_sources(catalog, cache_root=cache_root, sync=False)
 
     assert changed is True
-    for preset_id in (
-        "jma-near-color",
-        "jma-asia-color",
-        "jma-near-monochrome",
-        "jma-asia-monochrome",
-    ):
+    for preset_id in _BUNDLED_SOURCE_PRESET_IDS:
         assert find_catalog_source_for_preset(catalog, preset_id) is not None
     assert len(catalog.profiles) == 1
 

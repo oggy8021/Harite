@@ -116,7 +116,7 @@ NASA APOD（https://api.nasa.gov/）は **API に DEMO key が必要**なため�
 | --- | --- |
 | ~~**NASA APOD**~~ | **見送り**（DEMO key 必須） |
 | **気象庁** | **第 1 impl** — `kind` 例: `remote-jma-weather-map`（略称は spec 1b で確定） |
-| **NDL** / **CODH** | 後続（#10） |
+| **NDL** / **CODH** | **C-01-E 実装** — [統合索引](20260603-c01-e-merged-inventory.md) |
 
 採用サイトは **preset 定義 + provider 実装**を段階追加（#10）。一括実装はしない。
 
@@ -190,8 +190,9 @@ preset（同梱）→ ユーザーが import → user catalog（schema v1）
 ## 次アクション
 
 1. ~~段 0–5（C-01 第1 impl）~~ — **完了**
-2. **C-01-J** — list.json カタログ（別フェーズ）
-3. **C-01-E** — 他 provider（NDL / CODH 等）
+2. ~~**C-01-J**~~ — list.json カタログ — **完了**
+3. ~~**C-01-E** 実現性検証~~ — **完了**（[統合索引 §実現性検証](20260603-c01-e-merged-inventory.md)）
+4. **C-01-E 開発プロセス** — `feat/c01-e-ndl-codh` → pytest → PR → 軽量 audit → merge
 
 ## 参照
 

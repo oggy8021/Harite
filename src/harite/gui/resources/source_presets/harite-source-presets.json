@@ -1,44 +1,159 @@
 {
+
   "preset_schema_version": 1,
+
   "sources": [
+
     {
+
       "preset_id": "jma-near-color",
+
       "name": "気象庁（日本付近）",
+
       "kind": "remote-jma-weather-map",
+
       "min_slideshow_interval_seconds": 600,
+
       "notes": "出典：気象庁ホームページ（https://www.jma.go.jp/）"
+
     },
+
     {
+
       "preset_id": "jma-asia-color",
+
       "name": "気象庁（アジア域）",
+
       "kind": "remote-jma-weather-map",
+
       "min_slideshow_interval_seconds": 600,
+
       "notes": "出典：気象庁ホームページ（https://www.jma.go.jp/）"
+
     },
+
     {
+
       "preset_id": "jma-near-monochrome",
+
       "name": "気象庁（日本付近・モノクロ）",
+
       "kind": "remote-jma-weather-map",
+
       "min_slideshow_interval_seconds": 600,
+
       "notes": "出典：気象庁ホームページ（https://www.jma.go.jp/）"
+
     },
+
     {
+
       "preset_id": "jma-asia-monochrome",
+
       "name": "気象庁（アジア域・モノクロ）",
+
       "kind": "remote-jma-weather-map",
+
       "min_slideshow_interval_seconds": 600,
+
       "notes": "出典：気象庁ホームページ（https://www.jma.go.jp/）"
-    }
-  ],
-  "profiles": [
+
+    },
+
     {
-      "preset_id": "jma-dual-lr",
-      "name": "気象庁 L/R",
+
+      "preset_id": "ndl-random",
+
+      "name": "NDL 図版（おまかせ）",
+
+      "kind": "remote-ndl-tsugidigi",
+
       "min_slideshow_interval_seconds": 600,
-      "members": {
-        "L": "jma-near-color",
-        "R": "jma-asia-color"
-      }
+
+      "notes": "出典：国立国会図書館デジタルコレクション・次世代デジタルライブラリー（https://dl.ndl.go.jp/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-random-map",
+
+      "name": "NDL 図版（地図）",
+
+      "kind": "remote-ndl-tsugidigi",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション・次世代デジタルライブラリー（https://dl.ndl.go.jp/）"
+
+    },
+
+    {
+
+      "preset_id": "codh-edo-spots-sakura",
+
+      "name": "江戸観光（桜）",
+
+      "kind": "remote-codh-edo",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：人文学オープンデータ共同利用センター（CODH）江戸観光案内（https://codh.rois.ac.jp/edo-spots/）"
+
+    },
+
+    {
+
+      "preset_id": "codh-edo-spots-random",
+
+      "name": "江戸観光（おまかせ）",
+
+      "kind": "remote-codh-edo",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：人文学オープンデータ共同利用センター（CODH）江戸観光案内（https://codh.rois.ac.jp/edo-spots/）"
+
+    },
+
+    {
+
+      "preset_id": "codh-edo-shops-random",
+
+      "name": "江戸買物（おまかせ）",
+
+      "kind": "remote-codh-edo",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：人文学オープンデータ共同利用センター（CODH）江戸買物案内（https://codh.rois.ac.jp/edo-shops/）"
+
     }
+
+  ],
+
+  "profiles": [
+
+    {
+
+      "preset_id": "jma-dual-lr",
+
+      "name": "気象庁 L/R",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "members": {
+
+        "L": "jma-near-color",
+
+        "R": "jma-asia-color"
+
+      }
+
+    }
+
   ]
+
 }
+
+

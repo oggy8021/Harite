@@ -41,28 +41,52 @@ def _load_catalog_for_materialize(path: Path) -> Catalog:
         return load_catalog(path, validate_member_refs=False)
 
 
-def materialize_source_catalog_at_path(path: Path, *, owner: Any | None = None) -> Catalog:
-    """Bootstrap presets, best-effort remote sync, persist catalog updates to disk."""
+def _remote_cache_has_latest_image(cache_dir: Path) -> bool:
+    if not cache_dir.is_dir():
+        return False
+    return any((cache_dir / name).is_file() for name in ("latest.png", "latest.jpg"))
+
+
+def materialize_source_catalog_at_path(
+    path: Path,
+    *,
+    owner: Any | None = None,
+    sync_remote: bool = False,
+) -> Catalog:
+    """Bootstrap presets, persist catalog updates.
+
+    Remote fetch is **off by default** so GUI startup and catalog reads stay
+    non-blocking. Use Manage **Refresh** or slideshow **Start** (see
+    ``sync_remote_source``) to populate cache.
+    """
     catalog = _load_catalog_for_materialize(path)
     dirty = repair_preset_catalog_integrity(catalog)
     dirty = bootstrap_preset_sources(catalog, sync=False) or dirty
     dirty = repair_preset_catalog_integrity(catalog) or dirty
 
-    for entry in catalog.sources:
-        if not is_remote_kind(entry.kind) or PRESET_MARKER_PREFIX not in entry.notes:
-            continue
-        path_before = entry.path
-        try:
-            from harite.sources_remote import sync_remote_source
+    from harite.sources_remote import prune_orphan_remote_cache_dirs
 
-            sync_remote_source(catalog, entry.id)
-        except ValueError as exc:
-            log = getattr(owner, "_log", None) if owner is not None else None
-            if callable(log):
-                log(f"Preset sync skipped ({entry.name}): {exc}")
-        else:
-            if entry.path != path_before:
-                dirty = True
+    prune_orphan_remote_cache_dirs(catalog)
+
+    if sync_remote:
+        for entry in catalog.sources:
+            if not is_remote_kind(entry.kind) or PRESET_MARKER_PREFIX not in entry.notes:
+                continue
+            cache_dir = Path(entry.path)
+            if _remote_cache_has_latest_image(cache_dir):
+                continue
+            path_before = entry.path
+            try:
+                from harite.sources_remote import sync_remote_source
+
+                sync_remote_source(catalog, entry.id)
+            except ValueError as exc:
+                log = getattr(owner, "_log", None) if owner is not None else None
+                if callable(log):
+                    log(f"Preset sync skipped ({entry.name}): {exc}")
+            else:
+                if entry.path != path_before:
+                    dirty = True
 
     if dirty:
         save_catalog(catalog, path)

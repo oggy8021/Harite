@@ -23,6 +23,22 @@ class _FakeBackend:
         self._objects: dict = {}
 
 
+@pytest.fixture(autouse=True)
+def _materialize_without_network_sync(monkeypatch: pytest.MonkeyPatch) -> None:
+    from harite.gui.adapters_qt import qt_source_catalog
+
+    _original = qt_source_catalog.materialize_source_catalog_at_path
+
+    def _wrapped(path: Path, *, owner: object | None = None, **kwargs: object) -> object:
+        return _original(path, owner=owner, sync_remote=False)
+
+    monkeypatch.setattr(
+        qt_source_catalog,
+        "materialize_source_catalog_at_path",
+        _wrapped,
+    )
+
+
 def _normalize_combo_data(value: object) -> str:
     if value is None:
         return ""
@@ -59,6 +75,7 @@ def test_refresh_registry_combos_shows_preset_star_labels(qapp, tmp_path: Path) 
     labels = [source_l.itemText(i) for i in range(source_l.count())]
     assert "*気象庁（日本付近）" in labels
     assert "*気象庁（アジア域）" in labels
+    assert "*NDL 図版（おまかせ）" in labels
 
     profile_combo = backend._objects["combo_slideshow_profile"]
     profile_labels = [profile_combo.itemText(i) for i in range(profile_combo.count())]

@@ -159,6 +159,33 @@ def test_resolve_source_after_sync(
     assert (resolved / "latest.png").is_file()
 
 
+def test_resolve_remote_source_recreates_missing_cache_dir(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    import shutil
+
+    _install_jma_urlopen_mock(monkeypatch)
+    cache_root = tmp_path / "remote-cache"
+    catalog = empty_catalog()
+    entry = import_preset_source(
+        catalog,
+        "jma-near-color",
+        cache_root=cache_root,
+    )
+    sync_remote_source(catalog, entry.id, cache_root=cache_root)
+    cache_dir = Path(entry.path)
+    assert cache_dir.is_dir()
+
+    shutil.rmtree(cache_dir)
+    assert not cache_dir.exists()
+
+    resolved = resolve_source(catalog, entry.id)
+    assert resolved == cache_dir.resolve()
+    assert cache_dir.is_dir()
+    assert not (resolved / "latest.png").is_file()
+
+
 def test_update_source_rejects_remote_path_change(tmp_path: Path) -> None:
     from harite.sources import update_source as core_update_source
 

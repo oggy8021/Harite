@@ -269,7 +269,7 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 
 ```text
 [同梱 preset §13] → 起動時 bootstrap (§13.4) → harite-sources.json (schema v1, kind=remote-*)
-       → 起動時 Sync (§12.4) → cache/{source_id}/
+       → Refresh / Start 直前 Sync (§12.4) → cache/{source_id}/
        → combo に *{name} 表示 (gui-spec §6.5) → 選択 → resolve → slideshow (C-05)
 ```
 
@@ -316,15 +316,23 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 
 **初回 import 時:** cache directory は **未作成でもよい**。`path` は `{cache_root}/{source_id}` を **予約**として catalog に書く。初回 Sync 成功で directory と画像が出現する。
 
+**孤児 directory の掃除（C-01）:** `prune_orphan_remote_cache_dirs` は `{cache_root}` 直下の subdirectory のうち、**現在の catalog に存在する `remote-*` source の `id` と一致しない名前**の directory を削除する。GUI の **catalog materialize**（起動・combo 更新・Manage 保存後の再読込）のたびに best-effort で実行する。専用の「キャッシュ掃除」ボタンは置かない。
+
+**ユーザーによる手動削除:**
+
+- `{cache_root}` 自体、またはその中の **一部 / 全部の UUID subdirectory** を削除してよい（設定・catalog は別ファイルのため壊れない）。
+- 削除後、Saved source で remote を選ぶと `resolve` が当該 `{source_id}/` を **空 directory として再作成**する（画像ファイルはまだ無い）。
+- 画像の再取得は **Manage の Refresh** または slideshow **Start 直前の sync** で行う。起動時 materialize だけではネットワーク取得しない（§12.4）。
+
 ### 12.4 Sync と resolve
 
 | タイミング | 契約 |
 | --- | --- |
-| **Preset bootstrap Sync** | GUI 起動時（§13.4）。各 preset 由来 remote に `sync_remote_source`（失敗しても起動継続） |
-| **Refresh** | Manage dialog の Refresh — `sync_remote_source` |
-| **slideshow Start 直前** | 実行予定の L/R が参照する `remote-jma-weather-map` source について `sync_remote_source`（[gui-spec §6.5](../gui/harite-gui-spec.md)） |
+| **Catalog materialize** | GUI 起動・combo 更新時 — preset 追加・修復、**孤児 cache directory 削除**（§12.3）。**ネットワーク sync は行わない**（UI ブロック防止） |
+| **Refresh** | Manage dialog の Refresh — 選択中 remote に `sync_remote_source` |
+| **slideshow Start 直前** | 実行予定の L/R が参照する **すべての `remote-*`** source に `sync_remote_source`（[gui-spec §6.5](../gui/harite-gui-spec.md)） |
 | **slideshow tick** | network fetch しない（表示更新は cache の `latest.png`） |
-| **resolve** | cache directory が **存在し directory である**こと（§4 と同型の `normalize_directory_path`）。空 directory や画像 0 件は **resolve 時には成功しうる**が、slideshow start の画像収集は [slideshow-spec](../slideshow/harite-slideshow-spec.md) で失敗しうる |
+| **resolve** | `remote-*` は cache directory が無ければ **作成してから** §4 と同型の `normalize_directory_path` を満たす。`local-dir` は既存 directory 必須。空 directory や画像 0 件は **resolve 時には成功しうる**が、slideshow start の画像収集は [slideshow-spec](../slideshow/harite-slideshow-spec.md) で失敗しうる |
 | **実行中** | cache 削除・Sync による参照不能 → §7.5 / §7.6 と同型（stop / start failure） |
 
 network エラー・HTTP 4xx/5xx は Sync 時に `ValueError`（またはラップした `OSError` を `ValueError` に変換してよい）。
@@ -393,7 +401,7 @@ profile import は、参照する source `preset_id` が **同一操作または
 | `bootstrap_preset_sources(catalog)` | 同梱 preset の各 `preset_id` について、catalog に **対応 source が無ければ** `import_preset_source` 相当で追加。対応 profile が無ければ `import_preset_profile` 相当で追加（任意 preset） |
 | マーカー | preset 由来 source の `notes` に `harite-preset:{preset_id}` を含める。`min_slideshow_interval_seconds` があるとき `harite-min-interval:{秒}` を追記。表示名の `*` 接頭辞は **GUI のみ** |
 | 永続化 | 変更があれば `save_catalog` してよい |
-| Sync | bootstrap 直後、追加・既存の preset 由来 remote それぞれに `sync_remote_source` を **best-effort**（§12.4） |
+| Sync | **起動時は行わない**（§12.4）。`bootstrap_preset_sources(..., sync=False)`。画像は Refresh / Start 直前 |
 
 - 同名 `local-dir` が既にあり preset マーカー行が無い場合、`name` にサフィックスを付けて追加してよい。
 - preset 由来 source を delete した場合、次回 bootstrap で **再作成してよい**（profile 参照中は §7.5 により delete 拒否）。
@@ -505,6 +513,39 @@ harite-preset:{preset_id}
 | start 前 resolve | [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md) — 各 side の cache を `slideshow_srcdir_*` に展開 |
 | 画像収集 | 各 cache の `latest.png`（1 枚）。tick 毎の再取得は **しない**（鮮度は Start 直前 Sync / Refresh） |
 | Interval 下限 | 同梱 preset の `min_slideshow_interval_seconds`（気象庁: **600**）— [gui-spec §6.5](../gui/harite-gui-spec.md) |
+
+## 15.6 Provider 実装 — NDL 次世代デジタルライブラリー（C-01-E）
+
+`kind`: **`remote-ndl-tsugidigi`**。API key は用いない。調査正本: [NDL inventory](../../working/20260603-c01-e-ndl-tsugidigi-inventory.md)。
+
+| `preset_id` | 取得 |
+| --- | --- |
+| `ndl-random` | `GET .../illustration/random?size=1` |
+| `ndl-random-map` | `GET .../illustration/randomwithfacet?size=1&f-graphictags.tagname=graphic_map` |
+
+Sync: 返却 `Illustration` から IIIF URL（`dl.ndl.go.jp/api/iiif/{pid}/{page}/pct:.../max/0/default.jpg`）を GET。cache は **`latest.jpg`**（JPEG）または **`latest.png`**（URL に応じて §14 共通ヘルパ）。
+
+帰属（preset `notes`）:
+
+```text
+出典：国立国会図書館デジタルコレクション・次世代デジタルライブラリー（https://dl.ndl.go.jp/）
+```
+
+## 15.7 Provider 実装 — CODH 江戸 ICP（C-01-E）
+
+`kind`: **`remote-codh-edo`**。Canvas Indexer API（`mp.ex.nii.ac.jp`）。調査正本: [CODH inventory](../../working/20260603-c01-e-codh-icp-inventory.md)。
+
+| `preset_id` | 検索 |
+| --- | --- |
+| `codh-edo-spots-sakura` | `edo-spots` — `キーワード` = `桜` |
+| `codh-edo-spots-random` | `edo-spots` — `total` 取得後 `start` 乱数 + `limit=1` |
+| `codh-edo-shops-random` | `edo-shops` — 同上 |
+
+Sync: `results[0].canvasThumbnail` の `/200,/` を `/max/` に置換して GET。cache ファイル名は §15.6 と同様。
+
+帰属（preset `notes`）: 江戸観光案内 / 江戸買物案内の各 URL（同梱 preset JSON 参照）。
+
+**スコープ外:** 江戸マップ ID・緯度経度・GIS。
 
 ## 16. GUI / CLI（C-01）
 
