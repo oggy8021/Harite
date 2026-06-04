@@ -229,7 +229,7 @@ CLI 変更なし（C-02 打ち止め継続）。
 
 ## 参照
 
-- [C-02 planning](20260601-1400-c02-source-registry-planning.md) / [audit](finished/20260601-c02-3layer-audit.md)
+- [C-02 planning](20260601-1400-c02-source-registry-planning.md) / [audit](20260601-c02-3layer-audit.md)
 - [C-02 実機観測](finished/20260602-c02-real-device-observations.md)
 - [harite-source-spec.md](../specs/source/harite-source-spec.md)
 - [harite-slideshow-spec.md](../specs/slideshow/harite-slideshow-spec.md)

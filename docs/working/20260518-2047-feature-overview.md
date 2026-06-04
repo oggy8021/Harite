@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-03（**C-01-E** 実現性検証完了 → 開発プロセス: PR / 軽量 audit）
+最終更新: 2026-06-04（第4波 planning/inventory を `finished/` へ移動。active は本書のみ）
 
 ## 位置づけ
 
@@ -43,11 +43,11 @@
 
 | ID | 項目 | 概要 | planning で最初に詰めること |
 | --- | --- | --- | --- |
-| C-02 | source registry / source profiles | slideshow 用 directory 等を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | **完了**（#373–378, audit: [20260601-c02-3layer-audit.md](finished/20260601-c02-3layer-audit.md)） — [harite-source-spec.md](../specs/source/harite-source-spec.md) |
-| C-05 | slideshow source 強化 | slideshow の source を単発 directory から、複数 source・source profile・将来の外部 source へ広げる。初期スコープは local directory、同期済み cloud folder、ローカル mount 済み NAS/SMB/WebDAV directory までとし、それ以上の直接連携は将来余裕がある場合に限る。 | **完了**（#382–384, audit: [20260602-c05-3layer-audit.md](finished/20260602-c05-3layer-audit.md)） |
-| C-01 | 外部壁紙サイト連携 | 外部 API から **都度取得** し remote cache（ステージング）経由で slideshow に載せる。第1 provider=気象庁。 | **完了** — [#392–393](finished/20260603-c01-3layer-audit.md) |
-| C-01-J | JMA 天気図 list.json カタログ | list.json 棚卸・preset 選定（カラー 2 + モノクロ実況 2）。全 12 葉のギャラリー UI は **スコープ外**。 | **完了**（2026-06-03 実機確認）— [調査・完了記録](20260603-jma-weather-map-list-inventory.md) |
-| C-01-E | 外部 source 探索拡張 | NDL / CODH preset + provider（実現性検証スコープ）。 | **実現性検証完了（V1）** — [統合索引・完了記録](20260603-c01-e-merged-inventory.md)。実装は `feature/c01-e-ndl-codh` → **PR・軽量 3-layer audit** の順。拡張（キーワードユーザー指定等）は §2 |
+| C-02 | source registry / source profiles | slideshow 用 directory 等を単発入力ではなく、名前付き source 群として保存・再利用できるようにする。 | **完了** — [planning](finished/20260601-1400-c02-source-registry-planning.md) / [audit](finished/20260601-c02-3layer-audit.md) / [source-spec](../specs/source/harite-source-spec.md) |
+| C-05 | slideshow source 強化 | slideshow の source を単発 directory から、複数 source・source profile・将来の外部 source へ広げる。 | **完了** — [planning](finished/20260602-1400-c05-slideshow-source-enhancement-planning.md) / [audit](finished/20260602-c05-3layer-audit.md) |
+| C-01 | 外部壁紙サイト連携 | 外部 API から **都度取得** し remote cache 経由で slideshow に載せる。第1 provider=気象庁。 | **完了** — [planning](finished/20260603-1400-c01-external-wallpaper-source-planning.md) / [audit](finished/20260603-c01-3layer-audit.md) |
+| C-01-J | JMA 天気図 list.json カタログ | list.json 棚卸・preset 選定（カラー 2 + モノクロ実況 2）。全 12 葉のギャラリー UI は **スコープ外**。 | **完了**（2026-06-03 実機確認）— [調査・完了記録](finished/20260603-jma-weather-map-list-inventory.md) |
+| C-01-E | 外部 source 探索拡張 | NDL / CODH preset + provider（実現性検証スコープ）。 | **完了**（#400）— [統合索引](finished/20260603-c01-e-merged-inventory.md) / [軽量 audit](finished/20260603-c01-e-3layer-audit.md)。拡張（キーワードユーザー指定等）は §2 |
 
 ### 1b. 近端 backlog（Qt 完了後・2026-06-01）
 
@@ -72,7 +72,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | K-01 | ~~watch~~ slideshow 再構成（**旧語整理待ち**） | 旧 inventory「Watch」= 現 **Slideshow**。monitor 変化監視等を別 feature に切り出すなら K-01 を再定義。 | **構想保持・要再分類** — C-02/C-05 後。Phase10 mock の Watch 表記は legacy。 |
 | K-04 | plugin 拡張パック | Linux 以外や追加 desktop 向け plugin を外付け拡張として扱えるようにする。 | capability model と packaging 方針が先に必要 |
 | P-03 | 単 display 時の -R 側無効化 | 検出 1 枚のとき右パネル操作を disabled にする案。 | **採用条件**: 単 display 再現手順、disabled 範囲の spec、GTK/Qt テスト方針が揃ったとき（[#359](../online-issues/issue-359.md)） |
-| C-01-E-KW | CODH キーワード検索のユーザー指定 | 現状 **「桜」はコード固定**（`codh-edo-spots-sakura` → `_CODH_PRESET_SEARCH`）。任意文字列は `where_metadata_value` へ。近い代替は **同梱 preset を増やす**（梅・花火など）。 | **先送り（2026-06-03）** — **Manage sources and profiles…** 周りの UI が既に込み入っているため、専用入力・notes 機械行は今回やらない。採用時は indexer allowlist 固定 + `urlencode` + キーワード長上限でリスク低め（[CODH inventory](20260603-c01-e-codh-icp-inventory.md)）。GUI 明示の「キャッシュ掃除」ボタンも同様に見送り（materialize 時の孤児削除で足りる — [source-spec §12.3](../specs/source/harite-source-spec.md)） |
+| C-01-E-KW | CODH キーワード検索のユーザー指定 | 現状 **「桜」はコード固定**（`codh-edo-spots-sakura` → `_CODH_PRESET_SEARCH`）。任意文字列は `where_metadata_value` へ。近い代替は **同梱 preset を増やす**（梅・花火など）。 | **先送り（2026-06-03）** — **Manage sources and profiles…** 周りの UI が既に込み入っているため、専用入力・notes 機械行は今回やらない。採用時は indexer allowlist 固定 + `urlencode` + キーワード長上限でリスク低め（[CODH inventory](finished/20260603-c01-e-codh-icp-inventory.md)）。GUI 明示の「キャッシュ掃除」ボタンも同様に見送り（materialize 時の孤児削除で足りる — [source-spec §12.3](../specs/source/harite-source-spec.md)） |
 
 #### C-04 rough ideas（参考保持）
 
@@ -206,18 +206,19 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 2026-05-31: Windows 実機検証由来の W-01〜W-03 を [finished/20260531-1200-windows-qt-validation-backlog.md](finished/20260531-1200-windows-qt-validation-backlog.md) に集約。
 - 2026-06-01: online-issues #353–359 を inventory 化。F-01 / P-01–02 を近端着手候補、P-03 を構想保持へ。C-02→C-05→C-01 は維持。
 - 2026-06-01: **v1.0.0 リリース済み** — gate 前ガードは obsolete。本書を post-1.0.x backlog 入口として継続更新。
-- 2026-06-01: 第4波 **C-02 planning 着手** — [20260601-1400-c02-source-registry-planning.md](20260601-1400-c02-source-registry-planning.md)
+- 2026-06-01: 第4波 **C-02 planning 着手** — [20260601-1400-c02-source-registry-planning.md](finished/20260601-1400-c02-source-registry-planning.md)
 - 2026-06-01: 第4波 **C-02 完了**（#373–378）— 3-layer audit: [20260601-c02-3layer-audit.md](finished/20260601-c02-3layer-audit.md)。次は C-05 planning。
-- 2026-06-02: 第4波 **C-05 planning 着手** — [20260602-1400-c05-slideshow-source-enhancement-planning.md](20260602-1400-c05-slideshow-source-enhancement-planning.md)
+- 2026-06-02: 第4波 **C-05 planning 着手** — [20260602-1400-c05-slideshow-source-enhancement-planning.md](finished/20260602-1400-c05-slideshow-source-enhancement-planning.md)
 - 2026-06-02: 第4波 **C-05 完了**（#382–384）— audit: [20260602-c05-3layer-audit.md](finished/20260602-c05-3layer-audit.md)。次は **C-01** planning。
 - 2026-06-03: 第4波 **C-01 spec 1b 完了**（#390）— 気象庁 §15、preset JSON、オンデマンド cache、Interval 下限は preset 駆動
 - 2026-06-03: **C-01-J**（list.json カタログ）・**C-01-E**（他 source 探索）を overview 別フェーズとして追加
 - 2026-06-03: 第4波 **C-01 完了**（#392 core、#393 GUI）— audit: [20260603-c01-3layer-audit.md](finished/20260603-c01-3layer-audit.md)
 - 2026-06-03: オーナー棚卸 — **K-02 / K-03 / K-06 破棄**（H-04–H-06）、**K-05 不要に近い**（H-07）
-- 2026-06-03: **C-01-J 調査完了** — live list.json 全 12 葉棚卸 → [20260603-jma-weather-map-list-inventory.md](20260603-jma-weather-map-list-inventory.md)
+- 2026-06-03: **C-01-J 調査完了** — live list.json 全 12 葉棚卸 → [20260603-jma-weather-map-list-inventory.md](finished/20260603-jma-weather-map-list-inventory.md)
 - 2026-06-03: **C-01-J 完了** — モノクロ実況 preset 2 種 + オーナー実機確認。ft24/48・カタログ UI は見送り確定
 - 2026-06-03: **C-01-E 追補** — remote-cache 孤児 directory の materialize 時自動削除（`prune_orphan_remote_cache_dirs`）。**C-01-E-KW**（CODH キーワードユーザー指定）は §2 構想保持へ先送り
-- 2026-06-03: **C-01-E 実現性検証クローズ** — オーナー実機（NDL L/R、CODH 桜/おまかせ、cache 挙動）で十分。開発プロセスは branch `feature/c01-e-ndl-codh` の PR → 軽量 audit → merge（[統合索引 §開発プロセス](20260603-c01-e-merged-inventory.md)）
+- 2026-06-03: **C-01-E 完了** — 実現性検証 + #400 merge。[統合索引](finished/20260603-c01-e-merged-inventory.md) / [軽量 audit](finished/20260603-c01-e-3layer-audit.md)
+- 2026-06-04: **第4波 C-02/C-05/C-01/C-01-J/C-01-E** の planning・inventory を `working/finished/` へ移動（本 overview のみ `working/` に残す）
 
 ### K-05（scheduler）— 残しうるストーリーと見送り理由
 
