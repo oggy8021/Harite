@@ -21,7 +21,7 @@ Harite は、マルチディスプレイ環境で壁紙画像を生成・配置�
 ### GUI / UX
 
 - GUI を通常利用向けの構成として整理しました。
-- Main / Margins / Watch tab の構成を見直し、日常利用で迷いにくい導線へ寄せました。
+- Main / Margins / Slideshow tab の構成を見直し、日常利用で迷いにくい導線へ寄せました。
 - Settings / Color / About dialog の役割を整理し、操作上の意味づけを明確化しました。
 - application icon と header icon を含む GUI 資産を整理しました。
 

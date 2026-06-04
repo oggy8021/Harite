@@ -15,7 +15,7 @@
 | **Slideshow** | 現行 product 語。GUI の `Slideshow` タブ、interval/tick による壁紙ローテーション（[gui-spec §6](../../specs/gui/harite-gui-spec.md)）。 |
 | **Watch** | **slideshow の旧語**。新規 spec / planning / UI では使わない。 |
 | **Watch（design artifact）** | [gui-phase10-icon-mock.html](design/gui-phase10-icon-mock.html) 等の **legacy ラベル** — Slideshow 面の icon 比較用として残るが、別タブ・別機能ではない。 |
-| **K-01（feature-overview）** | 旧 inventory「watch 再構成」— 実体は slideshow 系の話と重複。**C-05 / C-02 整理後に再分類**（monitor 監視だけ残すなら別 ID）。 |
+| **K-01（feature-overview）** | **破棄 → H-08**（2026-06-04）。slideshow 再構成は C-02/C-05 充足。monitor 縁は **P-03**。 |
 
 以降、本書では **slideshow srcdir / directory source** と書き、Watch は legacy 注記に限る。
 
@@ -59,7 +59,7 @@ slideshow 用 directory や将来の外部 source を **単発 path 入力**で�
 C-02  registry + profiles     … 名前付き source の CRUD・永続化・参照 API（L/R profile のみ）
 C-05  slideshow 強化          … source type 拡張・実行面強化（**ordered list profile は持たない**）
 C-01  外部サイト              … source type = remote / API（C-02 type 拡張）
-（旧 K-01）                   … Watch=slideshow 旧語のため inventory 再整理待ち
+（旧 K-01 → H-08）            … 破棄。Watch=slideshow 旧語のみ legacy 掃除対象
 ```
 
 **原則:** C-02 は「**箱と索引**」まで。slideshow の tick ロジック変更は **C-05** へ送る。

@@ -17,7 +17,7 @@
 
 ## 関連
 
-- feature-overview: [P-03](../working/20260518-2047-feature-overview.md)（構想保持）
+- feature-overview: [P-03](../working/20260518-2047-feature-overview.md)（構想保持 — **display / monitor まわり UX の入口**。旧 K-01 の monitor 縁はここ。K-01 は [H-08](../working/20260518-2047-feature-overview.md#3-破棄候補--保留延長) 破棄）
 - gui-spec: Main / Slideshow の dual-display 前提、monitor 検出
 
 ## 取り込み方針

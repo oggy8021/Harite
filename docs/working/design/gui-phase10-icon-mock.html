@@ -501,7 +501,7 @@
     <header class="masthead">
       <div>
         <h1>GUI Phase10 Icon Mock</h1>
-        <p>Main Window 面と Watch 面を同幅の縦積みで見比べる local SVG asset mock</p>
+        <p>Main Window 面と Slideshow 面を同幅の縦積みで見比べる local SVG asset mock（旧 design ラベル Watch）</p>
       </div>
       <div class="controls">
         <div class="toggle-group" aria-label="tone switch">
@@ -638,16 +638,16 @@
       <section class="window watch-window" aria-labelledby="watch-window-title">
         <div class="window-bar">
           <div class="dots"><span></span><span></span><span></span></div>
-          <div class="window-title">Watch mock</div>
+          <div class="window-title">Slideshow mock</div>
           <div class="badge">structure-only check</div>
         </div>
         <div class="window-body watch-shell">
           <div class="watch-top">
             <div>
-              <div class="eyebrow">Watch</div>
-              <div class="main-title" id="watch-window-title" style="font-size:18px;">Watch Controls</div>
+              <div class="eyebrow">Slideshow</div>
+              <div class="main-title" id="watch-window-title" style="font-size:18px;">Slideshow Controls</div>
             </div>
-            <div class="watch-summary">Watch current: idle</div>
+            <div class="watch-summary">Slideshow current: idle</div>
           </div>
 
           <article class="watch-card">
@@ -680,11 +680,11 @@
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <div class="button emphasis">
                   <img class="icon icon-img" alt="" data-lucide="mock-assets/lucide/play.svg" data-feather="mock-assets/feather/play.svg">
-                  <span class="label">Watch Start</span>
+                  <span class="label">Slideshow Start</span>
                 </div>
                 <div class="button">
                   <img class="icon icon-img" alt="" data-lucide="mock-assets/lucide/pause.svg" data-feather="mock-assets/feather/pause.svg">
-                  <span class="label">Watch Stop</span>
+                  <span class="label">Slideshow Stop</span>
                 </div>
               </div>
             </div>
@@ -693,15 +693,15 @@
           <article class="watch-card">
             <h2>Status lines</h2>
             <div class="watch-details">
-              <div class="detail-line"><span>Watch srcdirs</span><span>L=ok / R=ok</span></div>
-              <div class="detail-line"><span>Watch current</span><span>idle</span></div>
-              <div class="detail-line"><span>Watch output</span><span>output/optimized.png</span></div>
+              <div class="detail-line"><span>Slideshow srcdirs</span><span>L=ok / R=ok</span></div>
+              <div class="detail-line"><span>Slideshow current</span><span>idle</span></div>
+              <div class="detail-line"><span>Slideshow output</span><span>output/optimized.png</span></div>
             </div>
           </article>
 
           <div class="legend">
             <div class="badge">Srcdir-L / Srcdir-R stays visible</div>
-            <div class="badge">Watch Start / Stop reads as pair</div>
+            <div class="badge">Slideshow Start / Stop reads as pair</div>
             <div class="badge">Not for Main Window weight comparison</div>
           </div>
         </div>
@@ -713,7 +713,7 @@
       <ul>
         <li>Lucide / Feather は local mock asset を実参照しており、仮 SVG ではなく実 icon を見ている。</li>
         <li>Icons only 切替で、十字配置と Open / Clear の区別、header command 群の騒がしさをまとめて確認する。</li>
-        <li>Watch 面は別ウィンドウ風 card として横に置くが、Main Window との重み比較には使わず、Srcdir-L / Srcdir-R と Watch Start / Stop の左右感だけを切り出して見る。</li>
+        <li>Slideshow 面は別ウィンドウ風 card として横に置くが、Main Window との重み比較には使わず、Srcdir-L / Srcdir-R と Slideshow Start / Stop の左右感だけを切り出して見る。</li>
         <li>外部 fetch は使わず、local mock としてそのまま開けるようにしてある。</li>
       </ul>
     </aside>

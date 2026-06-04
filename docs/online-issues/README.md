@@ -103,4 +103,4 @@ working メモも完了なら docs/working/finished/ へ移動
 
 | Issue | タイトル要約 | 分類 | overview ID |
 | --- | --- | --- | --- |
-| [#359](issue-359.md) | 単 display で -R 無効化 | edge case UX | [P-03](../working/20260518-2047-feature-overview.md)（構想保持） |
+| [#359](issue-359.md) | 単 display / monitor まわり UX（-R 無効化等） | edge case UX | [P-03](../working/20260518-2047-feature-overview.md)（構想保持。旧 K-01 monitor 縁） |
