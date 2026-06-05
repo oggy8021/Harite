@@ -329,8 +329,28 @@ class _Image(_WidgetBase):
         self.file_path = str(file_path)
 
 
+class _Revealer(_WidgetBase):
+    def __init__(self):
+        super().__init__()
+        self._revealed = False
+        self.child = None
+
+    def set_reveal_child(self, revealed):
+        self._revealed = bool(revealed)
+
+    def get_reveal_child(self):
+        return self._revealed
+
+    def add(self, child):
+        if getattr(child, "_parent", None) is not None:
+            raise AssertionError("child already has a parent")
+        child._parent = self
+        self.child = child
+
+
 class _FakeGtk:
     Orientation = _Orientation
+    Revealer = _Revealer
     Window = _Window
     Box = _Box
     Grid = _Grid

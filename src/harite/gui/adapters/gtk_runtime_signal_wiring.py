@@ -83,6 +83,13 @@ def _connect_slideshow_widgets(backend: Any, widgets: dict[str, Any]) -> None:
     )
     widgets["btn_daemonize"].connect("clicked", backend._on_slideshow_start_clicked)
     widgets["btn_cancel_daemonize"].connect("clicked", backend._on_slideshow_stop_clicked)
+    if "btn_slideshow_options_more" in widgets:
+        from harite.gui.views.slideshow_options_drawer import toggle_slideshow_options_drawer
+
+        widgets["btn_slideshow_options_more"].connect(
+            "clicked",
+            lambda *_args: toggle_slideshow_options_drawer(backend),
+        )
 
 
 def _connect_margin_text_widgets(backend: Any, widgets: dict[str, Any]) -> None:
