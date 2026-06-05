@@ -73,7 +73,7 @@ def test_phase5_runtime_smoke_optimize_then_apply_updates_visual_states():
 
     apply_btn.click()
 
-    assert status.text == "Apply: ok"
+    assert status.text == "Status: ready"
     assert apply_target.text == "Apply target: last applied"
 
 

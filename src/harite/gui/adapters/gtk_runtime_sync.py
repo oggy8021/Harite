@@ -212,9 +212,15 @@ def sync_margins_state_from_owner(backend: Any, owner: Any) -> None:
 
 
 def sync_feedback_from_owner(backend: Any, owner: Any) -> None:
+    level = str(getattr(owner, "status_level", "") or "").strip().lower()
     phase = str(getattr(owner, "status_phase", "") or "").strip() or "slideshow"
     message = str(getattr(owner, "status_message", "") or "").strip() or "state-updated"
     error = str(getattr(owner, "last_error", "") or "").strip() or None
-    if error == message:
+    if error and error == message and level != "error":
         error = None
-    backend._set_feedback(phase=phase.capitalize(), state=message, error=error)
+    backend._set_feedback(
+        phase=phase.capitalize(),
+        state=message,
+        error=error,
+        status_level=level or None,
+    )

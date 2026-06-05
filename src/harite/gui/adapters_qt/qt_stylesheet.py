@@ -31,10 +31,17 @@ QPushButton:checked {
     font-weight: bold;
 }
 
-/* ---- Labels ---- */
-QLabel#statusLabel, QLabel#errorLabel {
+/* ---- Footer labels (C-04 Wave 0) ---- */
+QLabel#statusLabel {
     color: #555;
     font-size: 8pt;
+}
+QLabel#errorLabel {
+    color: #555;
+    font-size: 8pt;
+}
+QLabel#errorLabel[hasError="true"] {
+    color: #c0392b;
 }
 
 /* ---- Preview boxes ---- */

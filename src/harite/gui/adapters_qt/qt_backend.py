@@ -179,9 +179,16 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         from harite.gui.adapters_qt.qt_widget_helpers import set_error
         set_error(self, message)
 
-    def _set_feedback(self, *, phase: str, state: str, error: str | None = None) -> None:
+    def _set_feedback(
+        self,
+        *,
+        phase: str,
+        state: str,
+        error: str | None = None,
+        status_level: str | None = None,
+    ) -> None:
         from harite.gui.adapters_qt.qt_widget_helpers import set_feedback
-        set_feedback(self, phase=phase, state=state, error=error)
+        set_feedback(self, phase=phase, state=state, error=error, status_level=status_level)
 
     def _set_label_text(self, name: str, value: object | None) -> None:
         from harite.gui.adapters_qt.qt_widget_helpers import set_label_text
