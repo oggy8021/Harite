@@ -1577,6 +1577,7 @@ def test_runtime_backend_shows_owner_slideshow_tick_failure_reason(monkeypatch, 
 
     plugin = DummyPlugin()
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
+    monkeypatch.setattr(MainWindow, "_load_default_settings_on_startup", lambda self: None)
 
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
@@ -1617,7 +1618,7 @@ def test_runtime_backend_shows_owner_slideshow_tick_failure_reason(monkeypatch, 
 
     assert backend.run_slideshow_cycle_once() is False
     assert status.text == "Status: ready"
-    assert error.text == "Error: slideshow cycle per-monitor auto-split apply failed"
+    assert error.text == "Error: slideshow cycle single-file apply failed"
     assert slideshow_tab_title.text == "Slideshow (stopped)"
     assert slideshow_current.text == "Slideshow current: L=left-2.jpg | R=-"
 
