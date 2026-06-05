@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-04 (C-04 Wave a — Margins tab slimming)
+最終更新: 2026-06-04 (C-04 Wave c — icon/tooltip surface)
 
 ## 1. GUI の責務
 
@@ -494,11 +494,11 @@ button と icon の対応:
 - header command では `Color` に `palette.svg`、`Settings` に `settings.svg`、`About` に `info.svg` を割り当てる。
 - flow row の `Export Image` には `image-down.svg` を割り当てる。
 - action cluster の `Optimize` には `image.svg`、`Apply` には `wallpaper.svg` を割り当てる。
-- input 面の direction toggle は `Top-*` に `arrow-up.svg`、`Bottom-*` に `arrow-down.svg`、`Left-*` に `arrow-left.svg`、`Right-*` に `arrow-right.svg` を割り当てる。
-- input 面の `Open-L` / `Open-R` と slideshow 面の `Srcdir-L` / `Srcdir-R` には `folder-open.svg` を割り当てる。
-- input 面の `Clear-L` / `Clear-R` には `folder-x.svg` を割り当てる。
+- input 面の direction toggle は `Top-*` に `arrow-up.svg`、`Bottom-*` に `arrow-down.svg`、`Left-*` に `arrow-left.svg`、`Right-*` に `arrow-right.svg` を割り当てる。C-04 Wave c 以降、これらは **icon-only + tooltip**（例: tooltip `Top-L`）とし、icon と重複する on-face label は持たない。
+- input 面の `Open-L` / `Open-R` と slideshow 面の `Srcdir-L` / `Srcdir-R` には `folder-open.svg` を割り当てる（C-04 Wave c: **icon-only + tooltip**）。
+- input 面の `Clear-L` / `Clear-R` には `folder-x.svg` を割り当てる（C-04 Wave c: **icon-only + tooltip**）。
 - compose grid 中央および slideshow srcdir row 中央の **`Swap L/R`** には `arrow-left-right.svg` を割り当てる（Lucide resource を package に追加する）。
-- slideshow srcdir 面の `Clear-L` / `Clear-R` には `folder-x.svg` を割り当てる（Main Clear-L/R と同型）。
+- slideshow srcdir 面の `Clear-L` / `Clear-R` には `folder-x.svg` を割り当てる（Main Clear-L/R と同型；C-04 Wave c: **icon-only + tooltip**）。
 - slideshow 面の `Slideshow Start` と `Slideshow Stop` にはそれぞれ `play.svg` と `pause.svg` を割り当てる。
 - settings dialog では header の `Save Settings` に `save.svg` を割り当てる。
 - 一方で settings dialog の `OK` / `Cancel` には現行実装で専用 icon 割当てはない。

@@ -77,11 +77,15 @@ def test_slideshow_tab_required_widgets(qapp):
 # ---------------------------------------------------------------------------
 
 
-def test_srcdir_button_labels(qapp):
+def test_srcdir_buttons_icon_only_with_tooltips(qapp):
     w = _make_slideshow_tab(qapp)
 
-    assert "Srcdir-L" in w["btn_open_srcdir_l"].text()
-    assert "Srcdir-R" in w["btn_open_srcdir_r"].text()
+    assert w["btn_open_srcdir_l"].text() == ""
+    assert w["btn_open_srcdir_r"].text() == ""
+    assert w["btn_clr_srcdir_l"].text() == ""
+    assert w["btn_clr_srcdir_r"].text() == ""
+    assert w["btn_open_srcdir_l"].toolTip() == "Srcdir-L"
+    assert w["btn_clr_srcdir_l"].toolTip() == "Clear-L"
 
 
 def test_srcdir_source_labels_initial(qapp):

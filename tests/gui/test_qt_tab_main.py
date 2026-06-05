@@ -80,20 +80,18 @@ def test_open_buttons_not_checkable(qapp):
     assert not w["btn_get_img_r"].isCheckable()
 
 
-def test_open_button_labels(qapp):
+def test_compose_icon_only_buttons_use_tooltips(qapp):
     from harite.gui.adapters_qt.qt_tab_main import build_compose_grid_section
 
     w = build_compose_grid_section()
-    assert w["btn_get_img_l"].text() == "Open-L"
-    assert w["btn_get_img_r"].text() == "Open-R"
-
-
-def test_clear_button_labels(qapp):
-    from harite.gui.adapters_qt.qt_tab_main import build_compose_grid_section
-
-    w = build_compose_grid_section()
-    assert w["btn_clr_path_l"].text() == "Clear-L"
-    assert w["btn_clr_path_r"].text() == "Clear-R"
+    assert w["btn_get_img_l"].text() == ""
+    assert w["btn_get_img_r"].text() == ""
+    assert w["btn_clr_path_l"].text() == ""
+    assert w["btn_clr_path_r"].text() == ""
+    assert w["btn_get_img_l"].toolTip() == "Open-L"
+    assert w["btn_clr_path_l"].toolTip() == "Clear-L"
+    assert w["tgl_upper_l"].toolTip() == "Top-L"
+    assert w["btn_swap_input_paths"].toolTip() == "Swap L/R"
 
 
 def test_path_display_is_readonly(qapp):

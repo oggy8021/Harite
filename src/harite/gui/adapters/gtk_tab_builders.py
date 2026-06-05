@@ -195,16 +195,18 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     if hasattr(right_display_grid, "set_row_spacing"):
         right_display_grid.set_row_spacing(8)
 
-    tgl_upper_l = gtk_module.ToggleButton(label="Top-L")
-    tgl_upper_r = gtk_module.ToggleButton(label="Top-R")
-    tgl_lower_l = gtk_module.ToggleButton(label="Bottom-L")
-    tgl_lower_r = gtk_module.ToggleButton(label="Bottom-R")
-    tgl_push_left_l = gtk_module.ToggleButton(label="Left-L")
-    tgl_push_right_l = gtk_module.ToggleButton(label="Right-L")
-    btn_get_img_l = gtk_module.Button(label="Open-L")
-    tgl_push_left_r = gtk_module.ToggleButton(label="Left-R")
-    tgl_push_right_r = gtk_module.ToggleButton(label="Right-R")
-    btn_get_img_r = gtk_module.Button(label="Open-R")
+    from harite.gui.views.icon_button_surface import apply_icon_only_button
+
+    tgl_upper_l = gtk_module.ToggleButton(label="")
+    tgl_upper_r = gtk_module.ToggleButton(label="")
+    tgl_lower_l = gtk_module.ToggleButton(label="")
+    tgl_lower_r = gtk_module.ToggleButton(label="")
+    tgl_push_left_l = gtk_module.ToggleButton(label="")
+    tgl_push_right_l = gtk_module.ToggleButton(label="")
+    btn_get_img_l = gtk_module.Button(label="")
+    tgl_push_left_r = gtk_module.ToggleButton(label="")
+    tgl_push_right_r = gtk_module.ToggleButton(label="")
+    btn_get_img_r = gtk_module.Button(label="")
 
     set_button_icon_if_supported(gtk_module, tgl_upper_l, "icons", "lucide", "arrow-up.svg")
     set_button_icon_if_supported(gtk_module, tgl_upper_r, "icons", "lucide", "arrow-up.svg")
@@ -216,6 +218,20 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     set_button_icon_if_supported(gtk_module, tgl_push_left_r, "icons", "lucide", "arrow-left.svg")
     set_button_icon_if_supported(gtk_module, tgl_push_right_r, "icons", "lucide", "arrow-right.svg")
     set_button_icon_if_supported(gtk_module, btn_get_img_r, "icons", "lucide", "folder-open.svg")
+
+    for widget, tooltip in (
+        (tgl_upper_l, "Top-L"),
+        (tgl_upper_r, "Top-R"),
+        (tgl_lower_l, "Bottom-L"),
+        (tgl_lower_r, "Bottom-R"),
+        (tgl_push_left_l, "Left-L"),
+        (tgl_push_right_l, "Right-L"),
+        (tgl_push_left_r, "Left-R"),
+        (tgl_push_right_r, "Right-R"),
+        (btn_get_img_l, "Open-L"),
+        (btn_get_img_r, "Open-R"),
+    ):
+        apply_icon_only_button(widget, tooltip)
 
     if hasattr(left_display_grid, "attach"):
         left_display_grid.attach(tgl_upper_l, 1, 0, 1, 1)
@@ -233,8 +249,9 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     set_xalign_if_supported(input_display_l, 0.5)
     if hasattr(input_display_l, "set_editable"):
         input_display_l.set_editable(False)
-    btn_clr_path_l = gtk_module.Button(label="Clear-L")
+    btn_clr_path_l = gtk_module.Button(label="")
     set_button_icon_if_supported(gtk_module, btn_clr_path_l, "icons", "lucide", "folder-x.svg")
+    apply_icon_only_button(btn_clr_path_l, "Clear-L")
     input_path_row_l = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(input_path_row_l, gtk_module.Align.CENTER)
@@ -268,8 +285,9 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     set_xalign_if_supported(input_display_r, 0.5)
     if hasattr(input_display_r, "set_editable"):
         input_display_r.set_editable(False)
-    btn_clr_path_r = gtk_module.Button(label="Clear-R")
+    btn_clr_path_r = gtk_module.Button(label="")
     set_button_icon_if_supported(gtk_module, btn_clr_path_r, "icons", "lucide", "folder-x.svg")
+    apply_icon_only_button(btn_clr_path_r, "Clear-R")
     input_path_row_r = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(input_path_row_r, gtk_module.Align.CENTER)
@@ -430,10 +448,14 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
         set_halign_if_supported(left_source_block, gtk_module.Align.CENTER)
         set_halign_if_supported(right_source_block, gtk_module.Align.CENTER)
 
-    btn_open_srcdir_l = gtk_module.Button(label="Srcdir-L")
-    btn_open_srcdir_r = gtk_module.Button(label="Srcdir-R")
+    btn_open_srcdir_l = gtk_module.Button(label="")
+    btn_open_srcdir_r = gtk_module.Button(label="")
     set_button_icon_if_supported(gtk_module, btn_open_srcdir_l, "icons", "lucide", "folder-open.svg")
     set_button_icon_if_supported(gtk_module, btn_open_srcdir_r, "icons", "lucide", "folder-open.svg")
+    from harite.gui.views.icon_button_surface import apply_icon_only_button
+
+    apply_icon_only_button(btn_open_srcdir_l, "Srcdir-L")
+    apply_icon_only_button(btn_open_srcdir_r, "Srcdir-R")
     slideshow_source_label_l = gtk_module.Label(label="L: -")
     slideshow_source_label_r = gtk_module.Label(label="R: -")
     set_xalign_if_supported(slideshow_source_label_l, 0.5)
