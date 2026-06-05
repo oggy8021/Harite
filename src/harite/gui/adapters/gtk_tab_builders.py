@@ -393,17 +393,12 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
     set_xalign_if_supported(slideshow_tab_title)
     slideshow_top_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     slideshow_srcdir_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    slideshow_between_srcdir_and_controls = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     slideshow_controls_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    slideshow_between_controls_and_detail = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    slideshow_detail_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    slideshow_options_trigger_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    slideshow_options_drawer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
     slideshow_bottom_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     if hasattr(slideshow_top_row, "set_size_request"):
         slideshow_top_row.set_size_request(-1, 16)
-    if hasattr(slideshow_between_srcdir_and_controls, "set_size_request"):
-        slideshow_between_srcdir_and_controls.set_size_request(-1, 54)
-    if hasattr(slideshow_between_controls_and_detail, "set_size_request"):
-        slideshow_between_controls_and_detail.set_size_request(-1, 54)
     if hasattr(slideshow_bottom_row, "set_size_request"):
         slideshow_bottom_row.set_size_request(-1, 16)
     if hasattr(slideshow_top_row, "set_vexpand"):
@@ -412,10 +407,21 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
         slideshow_bottom_row.set_vexpand(True)
     slideshow_tab_box.pack_start(slideshow_top_row, True, True, 0)
     slideshow_tab_box.pack_start(slideshow_srcdir_row, False, False, 0)
-    slideshow_tab_box.pack_start(slideshow_between_srcdir_and_controls, False, False, 0)
     slideshow_tab_box.pack_start(slideshow_controls_shell, False, False, 0)
-    slideshow_tab_box.pack_start(slideshow_between_controls_and_detail, False, False, 0)
-    slideshow_tab_box.pack_start(slideshow_detail_shell, False, False, 0)
+    slideshow_tab_box.pack_start(slideshow_options_trigger_row, False, False, 0)
+    slideshow_options_revealer = None
+    revealer_cls = getattr(gtk_module, "Revealer", None)
+    if revealer_cls is not None:
+        slideshow_options_revealer = revealer_cls()
+        if hasattr(slideshow_options_revealer, "set_reveal_child"):
+            slideshow_options_revealer.set_reveal_child(False)
+        if hasattr(slideshow_options_revealer, "add"):
+            slideshow_options_revealer.add(slideshow_options_drawer)
+        slideshow_tab_box.pack_start(slideshow_options_revealer, False, False, 0)
+    else:
+        if hasattr(slideshow_options_drawer, "hide"):
+            slideshow_options_drawer.hide()
+        slideshow_tab_box.pack_start(slideshow_options_drawer, False, False, 0)
     slideshow_tab_box.pack_start(slideshow_bottom_row, True, True, 0)
 
     left_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
@@ -483,8 +489,6 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
     slideshow_mode_row.pack_start(rad_slideshow_mode_sequential, False, False, 0)
     slideshow_mode_row.pack_start(rad_slideshow_mode_random, False, False, 0)
     slideshow_mode_help_row.pack_start(slideshow_mode_help_label, True, True, 0)
-    slideshow_controls_group.pack_start(slideshow_mode_row, False, False, 0)
-    slideshow_controls_group.pack_start(slideshow_mode_help_row, False, False, 0)
     slideshow_controls_group.pack_start(slideshow_controls_row, False, False, 0)
     slideshow_controls_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     slideshow_controls_right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
@@ -505,15 +509,26 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
     slideshow_output_label = gtk_module.Label(label="Slideshow output: .")
     set_xalign_if_supported(slideshow_output_label)
     slideshow_detail_row.pack_start(slideshow_output_label, False, False, 0)
-    slideshow_detail_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    slideshow_detail_right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    if hasattr(slideshow_detail_left_gap, "set_hexpand"):
-        slideshow_detail_left_gap.set_hexpand(True)
-    if hasattr(slideshow_detail_right_gap, "set_hexpand"):
-        slideshow_detail_right_gap.set_hexpand(True)
-    slideshow_detail_shell.pack_start(slideshow_detail_left_gap, True, True, 0)
-    slideshow_detail_shell.pack_start(slideshow_detail_row, False, False, 0)
-    slideshow_detail_shell.pack_start(slideshow_detail_right_gap, True, True, 0)
+
+    from harite.gui.views.slideshow_options_drawer import MORE_LABEL
+
+    slideshow_options_drawer.pack_start(slideshow_mode_row, False, False, 0)
+    slideshow_options_drawer.pack_start(slideshow_mode_help_row, False, False, 0)
+    slideshow_options_drawer.pack_start(slideshow_detail_row, False, False, 0)
+
+    btn_slideshow_options_more = gtk_module.Button(label=MORE_LABEL)
+    set_button_icon_if_supported(gtk_module, btn_slideshow_options_more, "icons", "lucide", "arrow-down.svg")
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(slideshow_options_trigger_row, gtk_module.Align.CENTER)
+    slideshow_options_trigger_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    slideshow_options_trigger_right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(slideshow_options_trigger_left_gap, "set_hexpand"):
+        slideshow_options_trigger_left_gap.set_hexpand(True)
+    if hasattr(slideshow_options_trigger_right_gap, "set_hexpand"):
+        slideshow_options_trigger_right_gap.set_hexpand(True)
+    slideshow_options_trigger_row.pack_start(slideshow_options_trigger_left_gap, True, True, 0)
+    slideshow_options_trigger_row.pack_start(btn_slideshow_options_more, False, False, 0)
+    slideshow_options_trigger_row.pack_start(slideshow_options_trigger_right_gap, True, True, 0)
 
     return {
         "slideshow_tab_box": slideshow_tab_box,
@@ -524,6 +539,10 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
         "slideshow_mode_row": slideshow_mode_row,
         "slideshow_mode_help_row": slideshow_mode_help_row,
         "slideshow_detail_row": slideshow_detail_row,
+        "slideshow_options_drawer": slideshow_options_drawer,
+        "slideshow_options_revealer": slideshow_options_revealer,
+        "slideshow_options_trigger_row": slideshow_options_trigger_row,
+        "btn_slideshow_options_more": btn_slideshow_options_more,
         "left_source_block": left_source_block,
         "right_source_block": right_source_block,
         "btn_open_srcdir_l": btn_open_srcdir_l,

@@ -55,6 +55,9 @@ def test_slideshow_tab_required_widgets(qapp):
         "slideshow_source_label_r",
         "btn_manage_source_registry",
         "slideshow_manage_registry_row",
+        "btn_slideshow_options_more",
+        "slideshow_options_drawer",
+        "slideshow_options_trigger_row",
         "interval_label",
         "interval_spin",
         "slideshow_mode_label",
@@ -168,6 +171,34 @@ def test_detail_label_initial_text(qapp):
 def test_slideshow_tab_title_initial_text(qapp):
     w = _make_slideshow_tab(qapp)
     assert w["slideshow_tab_title"].text() == "Slideshow (stopped)"
+
+
+def test_options_drawer_hidden_by_default(qapp):
+    w = _make_slideshow_tab(qapp)
+    assert not w["slideshow_options_drawer"].isVisible()
+    assert w["btn_slideshow_options_more"].text() == "More slideshow options…"
+
+
+def test_options_drawer_toggle_updates_trigger_label(qapp):
+    from harite.gui.views.slideshow_options_drawer import toggle_slideshow_options_drawer
+
+    w = _make_slideshow_tab(qapp)
+    backend = type("B", (), {"_objects": w})()
+    toggle_slideshow_options_drawer(backend)
+    assert w["btn_slideshow_options_more"].text() == "Fewer slideshow options…"
+    toggle_slideshow_options_drawer(backend)
+    assert w["btn_slideshow_options_more"].text() == "More slideshow options…"
+
+
+def test_profile_row_has_no_applies_lr_label(qapp):
+    w = _make_slideshow_tab(qapp)
+    profile_row = w["slideshow_profile_row"]
+    texts = [
+        profile_row.layout().itemAt(index).widget().text()
+        for index in range(profile_row.layout().count())
+        if profile_row.layout().itemAt(index).widget() is not None and hasattr(profile_row.layout().itemAt(index).widget(), "text")
+    ]
+    assert not any("Applies L/R" in text for text in texts)
 
 
 # ---------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-04 (C-04 — Slideshow/Margins surface + footer feedback)
+最終更新: 2026-06-04 (C-04 Wave b — Slideshow options drawer)
 
 ## 1. GUI の責務
 
@@ -149,7 +149,7 @@ Slideshow tab:
   - `Slideshow current` / output 表示（path は tooltip または footer 要約で足りる場合は常設 label を省略してよい）
   - 将来の C-01-E-KW 入力は **Manage dialog 内**（Drawer 経由）を前提とする
 - registry / remote の **Refresh** 注意は既存どおり OK ダイアログ（C-04 パターン）。
-- 現行実装が manage/mode/detail を tab 正面に並べている間は **移行中** とみなし、上記が C-04 Wave b の目標配置である。
+- C-04 Wave b 以降、補助面は **options drawer**（`More slideshow options…`）内に置き、正面は中核のみとする。
 
 Dialogs:
 

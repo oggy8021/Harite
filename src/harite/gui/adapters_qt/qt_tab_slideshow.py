@@ -161,13 +161,11 @@ def _build_profile_row() -> dict[str, Any]:
     profile_label = QLabel("Profile")
     combo_slideshow_profile = QComboBox()
     combo_slideshow_profile.addItem(REGISTRY_NONE_LABEL, "")
-    help_label = QLabel("Applies L/R together")
-    help_label.setStyleSheet("color: palette(mid);")
+    combo_slideshow_profile.setToolTip("Selecting a profile applies L/R sources together.")
 
     layout.addWidget(profile_icon_label)
     layout.addWidget(profile_label)
     layout.addWidget(combo_slideshow_profile)
-    layout.addWidget(help_label)
 
     return {
         "slideshow_profile_row": row,
@@ -196,12 +194,12 @@ def _build_manage_registry_row() -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Controls section (mode + interval + start/stop)
+# Controls section (interval + start/stop on tab front; mode in drawer)
 # ---------------------------------------------------------------------------
 
 
-def _build_controls_section() -> dict[str, Any]:
-    """Mode selector, interval spin, and Start/Stop buttons — all centred."""
+def _build_mode_section() -> dict[str, Any]:
+    """Mode selector and help row — placed inside the options drawer."""
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (
         QButtonGroup,
@@ -214,11 +212,11 @@ def _build_controls_section() -> dict[str, Any]:
         QWidget,
     )
 
-    controls_group = QWidget()
-    controls_group_layout = QVBoxLayout(controls_group)
-    controls_group_layout.setContentsMargins(0, 0, 0, 0)
-    controls_group_layout.setSpacing(6)
-    controls_group_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+    mode_group_host = QWidget()
+    mode_group_layout = QVBoxLayout(mode_group_host)
+    mode_group_layout.setContentsMargins(0, 0, 0, 0)
+    mode_group_layout.setSpacing(6)
+    mode_group_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
     # -- mode row --
     mode_row = QWidget()
@@ -232,7 +230,7 @@ def _build_controls_section() -> dict[str, Any]:
     rad_slideshow_mode_random = QRadioButton("random")
     rad_slideshow_mode_random.setChecked(True)
 
-    mode_group = QButtonGroup(controls_group)
+    mode_group = QButtonGroup(mode_group_host)
     mode_group.addButton(rad_slideshow_mode_sequential)
     mode_group.addButton(rad_slideshow_mode_random)
 
@@ -248,9 +246,42 @@ def _build_controls_section() -> dict[str, Any]:
 
     slideshow_mode_help_label = QLabel("Random rotates images.")
     slideshow_mode_help_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+    slideshow_mode_help_label.setWordWrap(True)
     mode_help_row_layout.addWidget(slideshow_mode_help_label)
 
-    # -- controls row: interval + start + stop --
+    mode_group_layout.addWidget(mode_row)
+    mode_group_layout.addWidget(mode_help_row)
+
+    return {
+        "slideshow_mode_group": mode_group_host,
+        "slideshow_mode_row": mode_row,
+        "slideshow_mode_help_row": mode_help_row,
+        "slideshow_mode_label": slideshow_mode_label,
+        "slideshow_mode_help_label": slideshow_mode_help_label,
+        "rad_slideshow_mode_sequential": rad_slideshow_mode_sequential,
+        "rad_slideshow_mode_random": rad_slideshow_mode_random,
+        "_slideshow_mode_group": mode_group,
+    }
+
+
+def _build_interval_controls_section() -> dict[str, Any]:
+    """Interval spin and Start/Stop buttons — centred on the tab front."""
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import (
+        QHBoxLayout,
+        QLabel,
+        QPushButton,
+        QSpinBox,
+        QVBoxLayout,
+        QWidget,
+    )
+
+    controls_group = QWidget()
+    controls_group_layout = QVBoxLayout(controls_group)
+    controls_group_layout.setContentsMargins(0, 0, 0, 0)
+    controls_group_layout.setSpacing(6)
+    controls_group_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
     controls_row = QWidget()
     controls_row_layout = QHBoxLayout(controls_row)
     controls_row_layout.setContentsMargins(0, 0, 0, 0)
@@ -276,8 +307,6 @@ def _build_controls_section() -> dict[str, Any]:
     controls_row_layout.addWidget(btn_daemonize)
     controls_row_layout.addWidget(btn_cancel_daemonize)
 
-    controls_group_layout.addWidget(mode_row)
-    controls_group_layout.addWidget(mode_help_row)
     controls_group_layout.addWidget(controls_row)
 
     # Outer shell with horizontal stretch
@@ -292,17 +321,56 @@ def _build_controls_section() -> dict[str, Any]:
         "slideshow_controls_shell": shell,
         "slideshow_controls_group": controls_group,
         "slideshow_controls_row": controls_row,
-        "slideshow_mode_row": mode_row,
-        "slideshow_mode_help_row": mode_help_row,
         "interval_label": interval_label,
         "interval_spin": interval_spin,
-        "slideshow_mode_label": slideshow_mode_label,
-        "slideshow_mode_help_label": slideshow_mode_help_label,
-        "rad_slideshow_mode_sequential": rad_slideshow_mode_sequential,
-        "rad_slideshow_mode_random": rad_slideshow_mode_random,
         "btn_daemonize": btn_daemonize,
         "btn_cancel_daemonize": btn_cancel_daemonize,
-        "_slideshow_mode_group": mode_group,
+    }
+
+
+def _build_options_drawer_trigger() -> dict[str, Any]:
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
+
+    from harite.gui.views.slideshow_options_drawer import MORE_LABEL
+
+    row = QWidget()
+    layout = QHBoxLayout(row)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+    btn_slideshow_options_more = QPushButton(MORE_LABEL)
+    _set_button_icon(btn_slideshow_options_more, "icons", "lucide", "arrow-down.svg")
+    layout.addWidget(btn_slideshow_options_more)
+
+    return {
+        "slideshow_options_trigger_row": row,
+        "btn_slideshow_options_more": btn_slideshow_options_more,
+    }
+
+
+def _build_options_drawer() -> dict[str, Any]:
+    """Collapsible panel: mode, manage registry, current/output detail."""
+    from PyQt6.QtWidgets import QVBoxLayout, QWidget
+
+    mode_widgets = _build_mode_section()
+    manage_widgets = _build_manage_registry_row()
+    detail_widgets = _build_detail_row()
+
+    drawer = QWidget()
+    drawer.setVisible(False)
+    drawer_layout = QVBoxLayout(drawer)
+    drawer_layout.setContentsMargins(0, 8, 0, 0)
+    drawer_layout.setSpacing(10)
+    drawer_layout.addWidget(mode_widgets["slideshow_mode_group"])
+    drawer_layout.addWidget(manage_widgets["slideshow_manage_registry_row"])
+    drawer_layout.addWidget(detail_widgets["slideshow_detail_shell"])
+
+    return {
+        "slideshow_options_drawer": drawer,
+        **mode_widgets,
+        **manage_widgets,
+        **detail_widgets,
     }
 
 
@@ -360,11 +428,11 @@ def build_slideshow_tab() -> dict[str, Any]:
 
     Layout (top → bottom, with vertical stretch around content):
         [stretch]
-        srcdir_row          (Srcdir-L / Srcdir-R centred)
-        [spacer ~54 px]
-        controls_shell      (Mode + Interval + Start/Stop centred)
-        [spacer ~54 px]
-        detail_shell        (current / output labels centred)
+        profile_row
+        srcdir_row          (L/R source grid + Swap)
+        controls_shell      (Interval + Start/Stop centred)
+        options trigger     ("More slideshow options…")
+        options drawer      (Mode, Manage, current/output — hidden by default)
         [stretch]
 
     The tab title label ``slideshow_tab_title`` is kept in the registry so
@@ -385,20 +453,19 @@ def build_slideshow_tab() -> dict[str, Any]:
 
     profile_widgets = _build_profile_row()
     srcdir_widgets = _build_srcdir_row()
-    manage_widgets = _build_manage_registry_row()
-    controls_widgets = _build_controls_section()
-    detail_widgets = _build_detail_row()
+    controls_widgets = _build_interval_controls_section()
+    trigger_widgets = _build_options_drawer_trigger()
+    drawer_widgets = _build_options_drawer()
 
     tab_layout.addStretch()
     tab_layout.addWidget(profile_widgets["slideshow_profile_row"])
     tab_layout.addSpacing(12)
     tab_layout.addWidget(srcdir_widgets["srcdir_row"])
-    tab_layout.addSpacing(8)
-    tab_layout.addWidget(manage_widgets["slideshow_manage_registry_row"])
-    tab_layout.addSpacing(54)
+    tab_layout.addSpacing(12)
     tab_layout.addWidget(controls_widgets["slideshow_controls_shell"])
-    tab_layout.addSpacing(54)
-    tab_layout.addWidget(detail_widgets["slideshow_detail_shell"])
+    tab_layout.addSpacing(8)
+    tab_layout.addWidget(trigger_widgets["slideshow_options_trigger_row"])
+    tab_layout.addWidget(drawer_widgets["slideshow_options_drawer"])
     tab_layout.addStretch()
 
     return {
@@ -407,7 +474,7 @@ def build_slideshow_tab() -> dict[str, Any]:
         "slideshow_tab_title": slideshow_tab_title,
         **profile_widgets,
         **srcdir_widgets,
-        **manage_widgets,
         **controls_widgets,
-        **detail_widgets,
+        **trigger_widgets,
+        **drawer_widgets,
     }

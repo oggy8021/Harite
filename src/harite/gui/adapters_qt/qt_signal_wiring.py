@@ -221,6 +221,13 @@ def _connect_slideshow_widgets(backend: Any, widgets: dict[str, Any]) -> None:
         )
     _safe_connect(widgets.get("btn_daemonize"), "clicked", backend._on_slideshow_start_clicked)
     _safe_connect(widgets.get("btn_cancel_daemonize"), "clicked", backend._on_slideshow_stop_clicked)
+    from harite.gui.views.slideshow_options_drawer import toggle_slideshow_options_drawer
+
+    _safe_connect(
+        widgets.get("btn_slideshow_options_more"),
+        "clicked",
+        lambda *_args: toggle_slideshow_options_drawer(backend),
+    )
 
 
 # ---------------------------------------------------------------------------
