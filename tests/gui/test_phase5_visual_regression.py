@@ -35,8 +35,8 @@ def test_phase5_visual_tokens_snapshot_is_stable():
         "apply": "Apply",
         "settings": "Settings",
         "about": "About",
-        "open_l": "Open-L",
-        "open_r": "Open-R",
+        "open_l": "",
+        "open_r": "",
     }
 
 

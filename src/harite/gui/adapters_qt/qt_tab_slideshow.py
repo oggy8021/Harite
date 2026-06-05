@@ -66,8 +66,11 @@ def _build_srcdir_row() -> dict[str, Any]:
         btn_row_layout.setContentsMargins(0, 0, 0, 0)
         btn_row_layout.addStretch()
 
-        btn = QPushButton(f"Srcdir-{side_label}")
+        from harite.gui.views.icon_button_surface import apply_icon_only_button
+
+        btn = QPushButton("")
         _set_button_icon(btn, "icons", "lucide", "folder-open.svg")
+        apply_icon_only_button(btn, f"Srcdir-{side_label}")
         btn_row_layout.addWidget(btn)
         btn_row_layout.addStretch()
 
@@ -76,8 +79,9 @@ def _build_srcdir_row() -> dict[str, Any]:
         lbl.setWordWrap(False)
         lbl.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
 
-        btn_clr = QPushButton(f"Clear-{side_label}")
+        btn_clr = QPushButton("")
         _set_button_icon(btn_clr, "icons", "lucide", "folder-x.svg")
+        apply_icon_only_button(btn_clr, f"Clear-{side_label}")
 
         clear_row = QWidget()
         clear_row_layout = QHBoxLayout(clear_row)

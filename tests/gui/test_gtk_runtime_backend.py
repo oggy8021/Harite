@@ -215,9 +215,13 @@ class _Button(_WidgetBase):
     def __init__(self, label=""):
         super().__init__()
         self.label = label
+        self.tooltip_text = ""
         self.sensitive = True
         self.image = None
         self.always_show_image = False
+
+    def set_tooltip_text(self, text):
+        self.tooltip_text = text
 
     def set_sensitive(self, enabled):
         self.sensitive = bool(enabled)
@@ -1099,6 +1103,7 @@ def test_runtime_backend_shows_current_labels_and_controls():
     tgl_push_left_r = backend.get_object("tglPushLeftR")
     tgl_push_right_r = backend.get_object("tglPushRightR")
     tgl_lower_r = backend.get_object("tglLowerR")
+    btn_get_img_l = backend.get_object("btnGetImgL")
 
     assert do_it.text == "Apply updates wallpaper immediately"
     assert priority.text == "Rule: margins define area; align/valign act inside it"
@@ -1130,14 +1135,17 @@ def test_runtime_backend_shows_current_labels_and_controls():
     assert save_btn.image.file_path.endswith("image-down.svg")
     assert optimize_btn.label == "Optimize"
     assert apply_btn.label == "Apply"
-    assert tgl_upper_l.label == "Top-L"
-    assert tgl_upper_r.label == "Top-R"
-    assert tgl_push_left_l.label == "Left-L"
-    assert tgl_push_right_l.label == "Right-L"
-    assert tgl_lower_l.label == "Bottom-L"
-    assert tgl_push_left_r.label == "Left-R"
-    assert tgl_push_right_r.label == "Right-R"
-    assert tgl_lower_r.label == "Bottom-R"
+    assert tgl_upper_l.label == ""
+    assert tgl_upper_r.label == ""
+    assert tgl_push_left_l.label == ""
+    assert tgl_push_right_l.label == ""
+    assert tgl_lower_l.label == ""
+    assert tgl_push_left_r.label == ""
+    assert tgl_push_right_r.label == ""
+    assert tgl_lower_r.label == ""
+    assert tgl_upper_l.tooltip_text == "Top-L"
+    assert btn_get_img_l.label == ""
+    assert btn_get_img_l.tooltip_text == "Open-L"
 
 
 def test_runtime_backend_slideshow_srcdir_selection_and_slideshow_cycle_updates_labels(monkeypatch, tmp_path):

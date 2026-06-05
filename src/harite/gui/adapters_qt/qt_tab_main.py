@@ -57,23 +57,24 @@ def _build_display_direction_grid(side: str) -> dict[str, Any]:
     grid.setSpacing(6)
     grid.setContentsMargins(0, 0, 0, 0)
 
-    def _tgl(label: str) -> QPushButton:
-        btn = QPushButton(label)
+    from harite.gui.views.icon_button_surface import apply_icon_only_button
+
+    def _tgl(tooltip: str, icon_name: str) -> QPushButton:
+        btn = QPushButton("")
         btn.setCheckable(True)
         btn.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        _set_button_icon(btn, "icons", "lucide", icon_name)
+        apply_icon_only_button(btn, tooltip)
         return btn
 
-    tgl_upper = _tgl(f"Top-{side.upper()}")
-    tgl_lower = _tgl(f"Bottom-{side.upper()}")
-    tgl_push_left = _tgl(f"Left-{side.upper()}")
-    tgl_push_right = _tgl(f"Right-{side.upper()}")
-    btn_get_img = QPushButton(f"Open-{side.upper()}")
-
-    _set_button_icon(tgl_upper, "icons", "lucide", "arrow-up.svg")
-    _set_button_icon(tgl_lower, "icons", "lucide", "arrow-down.svg")
-    _set_button_icon(tgl_push_left, "icons", "lucide", "arrow-left.svg")
-    _set_button_icon(tgl_push_right, "icons", "lucide", "arrow-right.svg")
+    side_tag = side.upper()
+    tgl_upper = _tgl(f"Top-{side_tag}", "arrow-up.svg")
+    tgl_lower = _tgl(f"Bottom-{side_tag}", "arrow-down.svg")
+    tgl_push_left = _tgl(f"Left-{side_tag}", "arrow-left.svg")
+    tgl_push_right = _tgl(f"Right-{side_tag}", "arrow-right.svg")
+    btn_get_img = QPushButton("")
     _set_button_icon(btn_get_img, "icons", "lucide", "folder-open.svg")
+    apply_icon_only_button(btn_get_img, f"Open-{side_tag}")
 
     grid.addWidget(tgl_upper, 0, 1)
     grid.addWidget(tgl_push_left, 1, 0)
@@ -117,8 +118,11 @@ def _build_display_path_section(side: str) -> dict[str, Any]:
     path_row_layout.setContentsMargins(0, 0, 0, 0)
     path_row_layout.addWidget(input_display)
 
-    btn_clr = QPushButton(f"Clear-{side.upper()}")
+    btn_clr = QPushButton("")
     _set_button_icon(btn_clr, "icons", "lucide", "folder-x.svg")
+    from harite.gui.views.icon_button_surface import apply_icon_only_button
+
+    apply_icon_only_button(btn_clr, f"Clear-{side.upper()}")
 
     clear_row = QWidget()
     clear_row_layout = QHBoxLayout(clear_row)
