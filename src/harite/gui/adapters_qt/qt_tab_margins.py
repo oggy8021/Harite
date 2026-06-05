@@ -2,8 +2,8 @@
 
 Builds the Margins tab content:
   - cross-grid editor: Top / Left / center_stack / Right / Bottom
-  - center_stack: current state + embed pattern + margin text sub-tabs
-                  + position selector + notes
+  - center_stack: embed pattern + margin text sub-tabs + position selector
+                  (C-04 Wave a: no alignment summary / notes on tab face)
 
 Widget naming follows the GTK adapter convention.
 """
@@ -254,41 +254,15 @@ def _build_position_selector() -> dict[str, Any]:
     }
 
 
-def _build_notes_box(
-    priority_note_label: Any,
-    style_legend_label: Any,
-) -> dict[str, Any]:
-    """Notes block: hint + priority rule + style legend."""
-    from PyQt6.QtCore import Qt
-    from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
-
-    box = QWidget()
-    layout = QVBoxLayout(box)
-    layout.setContentsMargins(0, 0, 0, 0)
-    layout.setSpacing(4)
-
-    margin_text_hint = QLabel("Line limits are chosen automatically for the selected margin text mode.")
-    margin_text_hint.setAlignment(Qt.AlignmentFlag.AlignLeft)
-    margin_text_hint.setWordWrap(True)
-
-    margin_text_max_lines_spin = _make_spin(1, 20, step=1, initial=3)
-
-    layout.addWidget(margin_text_hint)
-    layout.addWidget(priority_note_label)
-    layout.addWidget(style_legend_label)
-
-    return {
-        "notes_box": box,
-        "margin_text_hint": margin_text_hint,
-        "margin_text_max_lines_spin": margin_text_max_lines_spin,
-    }
+def _build_hidden_max_lines_spin() -> dict[str, Any]:
+    """Keep max-lines spin for sync/wiring; effective lines still come from mode."""
+    spin = _make_spin(1, 20, step=1, initial=3)
+    spin.setVisible(False)
+    return {"margin_text_max_lines_spin": spin}
 
 
-def _build_center_stack(
-    priority_note_label: Any,
-    style_legend_label: Any,
-) -> dict[str, Any]:
-    """Center stack: state summary + embed pattern + sub-tabs + position + notes."""
+def _build_center_stack() -> dict[str, Any]:
+    """Center stack: embed pattern + sub-tabs + position (cross-grid primary)."""
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (
         QLabel,
@@ -303,14 +277,6 @@ def _build_center_stack(
     stack_layout.setContentsMargins(0, 0, 0, 0)
     stack_layout.setSpacing(8)
 
-    # Current state display
-    current_state_title_display = QLabel("Main Window Current alignment:")
-    current_state_title_display.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    current_state_summary_display = QLabel("align=center,center/center,center")
-    current_state_summary_display.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    stack_layout.addWidget(current_state_title_display)
-    stack_layout.addWidget(current_state_summary_display)
-
     # Embed pattern
     embed_widgets = _build_embed_pattern_block()
     stack_layout.addWidget(embed_widgets["embed_pattern_block"])
@@ -323,18 +289,26 @@ def _build_center_stack(
     position_widgets = _build_position_selector()
     stack_layout.addWidget(position_widgets["margin_position_shell"])
 
-    # Notes
-    notes_widgets = _build_notes_box(priority_note_label, style_legend_label)
-    stack_layout.addWidget(notes_widgets["notes_box"])
+    hidden_spin = _build_hidden_max_lines_spin()
+
+    from harite.gui.views.margins_surface import (
+        MARGIN_CROSS_GRID_TOOLTIP,
+        MARGIN_PRIORITY_RULE_TOOLTIP,
+        MARGIN_TEXT_LINE_LIMITS_TOOLTIP,
+        apply_widget_tooltip,
+    )
+
+    apply_widget_tooltip(embed_widgets["margin_text_mode_label"], MARGIN_TEXT_LINE_LIMITS_TOOLTIP)
+    apply_widget_tooltip(text_tab_widgets["margin_text_entry"], MARGIN_TEXT_LINE_LIMITS_TOOLTIP)
+    apply_widget_tooltip(position_widgets["margin_position_shell"], MARGIN_PRIORITY_RULE_TOOLTIP)
+    apply_widget_tooltip(stack, MARGIN_CROSS_GRID_TOOLTIP)
 
     return {
         "center_stack": stack,
-        "current_state_title_display": current_state_title_display,
-        "current_state_summary_display": current_state_summary_display,
         **embed_widgets,
         **text_tab_widgets,
         **position_widgets,
-        **notes_widgets,
+        **hidden_spin,
     }
 
 
@@ -359,8 +333,8 @@ def build_margins_tab(
         (0,1) left_margin  (1,1) center_stack  (2,1) right_margin
         (1,2) bottom_margin
 
-    The six reference labels (priority_note_label etc.) are passed in from
-    the shared runtime state labels built by qt_tab_main.build_runtime_state_labels.
+    Legacy label refs (priority_note_label etc.) are accepted for layout-builder
+    compatibility; they are not placed on the Margins tab face (C-04 Wave a).
     """
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (
@@ -401,7 +375,8 @@ def build_margins_tab(
     right_shell = _vcenter_widget(right["block"])
 
     # -- center stack --
-    center_widgets = _build_center_stack(priority_note_label, style_legend_label)
+    _ = (priority_note_label, style_legend_label, current_state_section_label, current_margins_label, current_left_label, current_right_label)
+    center_widgets = _build_center_stack()
 
     # -- cross-grid --
     cross_grid_widget = QWidget()
@@ -419,6 +394,12 @@ def build_margins_tab(
     cross_grid.addWidget(bottom_shell, 2, 1, Qt.AlignmentFlag.AlignHCenter)
 
     outer_layout.addWidget(cross_grid_widget, stretch=1)
+
+    from harite.gui.views.margins_surface import MARGIN_BEHAVIOR_TOOLTIP, apply_widget_tooltip
+
+    apply_widget_tooltip(cross_grid_widget, MARGIN_BEHAVIOR_TOOLTIP)
+    for edge in (top["label"], left["label"], right["label"], bottom["label"]):
+        apply_widget_tooltip(edge, MARGIN_BEHAVIOR_TOOLTIP)
 
     return {
         "margins_tab_box": margins_tab_box,

@@ -505,11 +505,9 @@ def refresh_slideshow_registry_combos(backend: Any, owner: Any) -> None:
 
 
 def refresh_current_state_labels(backend: Any) -> None:
-    """Refresh the Margins tab 'current state' summary."""
+    """Refresh legacy main-window margin state labels (if still registered)."""
     lm = read_spin_int(backend, "spnLeftMargin")
     rm = read_spin_int(backend, "spnRightMargin")
     tm = read_spin_int(backend, "spnTopMargin")
     bm = read_spin_int(backend, "spnBottomMargin")
-    summary = f"align=center,center/center,center  margins={lm},{rm},{tm},{bm}"
-    set_label_text(backend, "current_state_summary_display", summary)
     set_label_text(backend, "lblCurrentMargins", f"margins={lm},{rm},{tm},{bm}")

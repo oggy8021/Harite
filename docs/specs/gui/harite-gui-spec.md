@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-04 (C-04 Wave b — Slideshow options drawer)
+最終更新: 2026-06-04 (C-04 Wave a — Margins tab slimming)
 
 ## 1. GUI の責務
 
@@ -131,7 +131,7 @@ Margins tab:
 - `Margins` tab は **専用 tab として維持**する（C-04 案 A）。Main tab への全面統合や permanent 3-tab 廃止は行わない。将来の Main+Margins Drawer（案 B）は操作削減なしの載せ替えオプションとして [planning draft](../../working/20260604-c04-gui-surface-planning-draft.md) §7.2 に記す。
 - `Margins` tab は単一の縦積み column を持ち、**cross-grid editor を主役**とする（4 辺 margin spin + 中央 stack）。
 - cross-grid editor は上に top margin、左に left margin、右に right margin、下に bottom margin を置き、中央に詳細編集 stack を置く。
-- 中央 stack は上から `embed pattern`、`margin text notebook`、`position selector` を縦積みする。**`current alignment summary`（`align=...` 長文）と `notes`（3 行 legend）は持たない** — ルール・制限は tooltip / hoobar へ逃がす（C-04 — [surface slice memo](../../working/design/20260604-c04-slideshow-margins-surface-slice-memo.md) §5）。
+- 中央 stack は上から `embed pattern`、`margin text notebook`、`position selector` を縦積みする。**`current alignment summary`（`align=...` 長文）と `notes`（3 行 legend）は持たない** — ルール・制限は tooltip / hoobar へ逃がす（C-04 Wave a 実装済 — [surface slice memo](../../working/design/20260604-c04-slideshow-margins-surface-slice-memo.md) §5）。
 - `embed pattern` は `Off` / `Settings` / `Text only` / `Both` の radio row を持つ。
 - `margin text notebook` は `Settings` page と `Text` page の 2 page 構成とする。
 - `Settings` page は preview label を中心とした状態確認面、`Text` page は margin text entry 面とする。

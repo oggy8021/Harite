@@ -593,16 +593,7 @@ def build_margins_tab_section(
         margins_layout_col.set_vexpand(True)
     margins_tab_box.pack_start(margins_layout_col, True, True, 0)
 
-    current_state_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-    current_state_box.pack_start(current_state_section_label, False, False, 0)
-    current_state_box.pack_start(current_margins_label, False, False, 0)
-    current_state_box.pack_start(current_left_label, False, False, 0)
-    current_state_box.pack_start(current_right_label, False, False, 0)
-
-    current_state_title_display = gtk_module.Label(label="Main Window Current alignment:")
-    set_xalign_if_supported(current_state_title_display)
-    current_state_summary_display = gtk_module.Label(label="align=center,center/center,center")
-    set_xalign_if_supported(current_state_summary_display)
+    _ = (current_state_section_label, current_margins_label, current_left_label, current_right_label)
 
     top_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
     top_margin_box.pack_start(top_margin_label, False, False, 0)
@@ -669,16 +660,6 @@ def build_margins_tab_section(
     bottom_margin_shell.pack_start(bottom_margin_box, False, False, 0)
 
     center_stack = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
-
-    center_state_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    center_state_display_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=2)
-    if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(center_state_shell, gtk_module.Align.CENTER)
-        set_halign_if_supported(center_state_display_box, gtk_module.Align.CENTER)
-    center_state_display_box.pack_start(current_state_title_display, False, False, 0)
-    center_state_display_box.pack_start(current_state_summary_display, False, False, 0)
-    center_state_shell.pack_start(center_state_display_box, False, False, 0)
-    center_stack.pack_start(center_state_shell, False, False, 0)
 
     margin_text_mode_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     center_stack.pack_start(margin_text_mode_block, False, False, 0)
@@ -789,15 +770,14 @@ def build_margins_tab_section(
 
     margin_text_max_lines_spin = gtk_module.SpinButton()
     configure_spin_button(margin_text_max_lines_spin, minimum=1, maximum=20, step=1, page=5, initial=3)
-    margin_text_hint = gtk_module.Label(label="Line limits are chosen automatically for the selected margin text mode.")
-    set_xalign_if_supported(margin_text_hint)
-    notes_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
-    notes_box.pack_start(margin_text_hint, False, False, 0)
-    notes_box.pack_start(priority_note_label, False, False, 0)
-    notes_box.pack_start(style_legend_label, False, False, 0)
+    if hasattr(margin_text_max_lines_spin, "set_no_show_all"):
+        margin_text_max_lines_spin.set_no_show_all(True)
+    if hasattr(margin_text_max_lines_spin, "hide"):
+        margin_text_max_lines_spin.hide()
+
+    _ = (priority_note_label, style_legend_label)
 
     center_stack.pack_start(margin_position_shell, False, False, 0)
-    center_stack.pack_start(notes_box, False, False, 0)
 
     margins_cross_grid = gtk_module.Grid()
     if hasattr(margins_cross_grid, "set_column_spacing"):
@@ -833,6 +813,22 @@ def build_margins_tab_section(
 
     margins_layout_col.pack_start(margins_cross_grid, True, True, 0)
 
+    from harite.gui.views.margins_surface import (
+        MARGIN_BEHAVIOR_TOOLTIP,
+        MARGIN_CROSS_GRID_TOOLTIP,
+        MARGIN_PRIORITY_RULE_TOOLTIP,
+        MARGIN_TEXT_LINE_LIMITS_TOOLTIP,
+        apply_widget_tooltip,
+    )
+
+    apply_widget_tooltip(margin_text_mode_label, MARGIN_TEXT_LINE_LIMITS_TOOLTIP)
+    apply_widget_tooltip(margin_text_entry, MARGIN_TEXT_LINE_LIMITS_TOOLTIP)
+    apply_widget_tooltip(margin_position_shell, MARGIN_PRIORITY_RULE_TOOLTIP)
+    apply_widget_tooltip(center_stack, MARGIN_CROSS_GRID_TOOLTIP)
+    apply_widget_tooltip(margins_cross_grid, MARGIN_BEHAVIOR_TOOLTIP)
+    for edge_label in (top_margin_label, left_margin_label, right_margin_label, bottom_margin_label):
+        apply_widget_tooltip(edge_label, MARGIN_BEHAVIOR_TOOLTIP)
+
     margins_tab_title = gtk_module.Label(label="Margins (for each display)")
     set_xalign_if_supported(margins_tab_title)
 
@@ -862,5 +858,4 @@ def build_margins_tab_section(
         "margin_position_left_bottom": margin_position_left_bottom,
         "margin_position_right_top": margin_position_right_top,
         "margin_text_max_lines_spin": margin_text_max_lines_spin,
-        "current_state_summary_display": current_state_summary_display,
     }
