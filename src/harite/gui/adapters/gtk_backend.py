@@ -206,7 +206,7 @@ class GtkRuntimeSignalBackend:
                 current_left_label=current_left_label,
                 current_right_label=current_right_label,
             )
-            self._current_state_summary_display = tab_runtime["current_state_summary_display"]
+            self._current_state_summary_display = tab_runtime.get("current_state_summary_display")
 
             footer_runtime = self._build_footer_runtime_widgets(
                 gtk_module,

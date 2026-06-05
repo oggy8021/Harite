@@ -195,21 +195,38 @@ def test_position_selector_is_mutually_exclusive(qapp):
 
 
 # ---------------------------------------------------------------------------
-# Notes and state display
+# C-04 Wave a: slim surface (no summary / notes on tab face)
 # ---------------------------------------------------------------------------
 
 
-def test_current_state_display_widgets_present(qapp):
+def test_margins_tab_has_no_alignment_summary_widgets(qapp):
     w = _make_margins_tab(qapp)
 
-    assert "current_state_title_display" in w
-    assert "current_state_summary_display" in w
+    assert "current_state_title_display" not in w
+    assert "current_state_summary_display" not in w
+    assert "notes_box" not in w
 
 
-def test_margin_text_max_lines_spin_present(qapp):
+def test_margin_text_max_lines_spin_hidden_but_wired(qapp):
     w = _make_margins_tab(qapp)
-    assert "margin_text_max_lines_spin" in w
-    assert w["margin_text_max_lines_spin"].value() == 3
+    spin = w["margin_text_max_lines_spin"]
+    assert spin.value() == 3
+    assert not spin.isVisible()
+
+
+def test_margins_tab_tooltips_on_primary_controls(qapp):
+    from harite.gui.views.margins_surface import (
+        MARGIN_BEHAVIOR_TOOLTIP,
+        MARGIN_PRIORITY_RULE_TOOLTIP,
+        MARGIN_TEXT_LINE_LIMITS_TOOLTIP,
+    )
+
+    w = _make_margins_tab(qapp)
+
+    assert MARGIN_TEXT_LINE_LIMITS_TOOLTIP in w["margin_text_mode_label"].toolTip()
+    assert MARGIN_TEXT_LINE_LIMITS_TOOLTIP in w["margin_text_entry"].toolTip()
+    assert MARGIN_PRIORITY_RULE_TOOLTIP in w["margin_position_shell"].toolTip()
+    assert MARGIN_BEHAVIOR_TOOLTIP in w["top_margin_label"].toolTip()
 
 
 # ---------------------------------------------------------------------------

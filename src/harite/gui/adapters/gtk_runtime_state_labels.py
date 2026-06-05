@@ -31,9 +31,6 @@ def refresh_current_state_labels(backend: Any) -> None:
     backend._set_label_text("lblCurrentMargins", f"margins={left},{right},{top},{bottom}")
     backend._set_label_text("lblCurrentStateL", f"L: align={align_l} valign={valign_l}")
     backend._set_label_text("lblCurrentStateR", f"R: align={align_r} valign={valign_r}")
-    current_state_summary_display = getattr(backend, "_current_state_summary_display", None)
-    if current_state_summary_display is not None and hasattr(current_state_summary_display, "set_text"):
-        current_state_summary_display.set_text(f"align={align_l},{align_r}/{valign_l},{valign_r}")
     backend._set_label_text("lblMarginSettingsPreview", backend._build_margin_settings_preview())
 
 
