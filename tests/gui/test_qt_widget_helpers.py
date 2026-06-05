@@ -87,7 +87,7 @@ def test_set_error_clears_on_none(qapp, backend):
     lbl = QLabel("previous")
     backend._objects["lblError"] = lbl
     set_error(backend, None)
-    assert lbl.text() == ""
+    assert lbl.text() == "Error: none"
 
 
 def test_set_feedback_sets_status_and_error(qapp, backend):
@@ -100,8 +100,8 @@ def test_set_feedback_sets_status_and_error(qapp, backend):
     backend._objects["lblStatus"] = status
     backend._objects["lblError"] = error
     set_feedback(backend, phase="Test", state="done", error="oops")
-    assert "Test: done" == status.text()
-    assert "oops" == error.text()
+    assert status.text() == "Status: ready"
+    assert error.text() == "Error: oops"
 
 
 # ---------------------------------------------------------------------------

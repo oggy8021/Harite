@@ -615,7 +615,7 @@ def test_runtime_backend_input_controls_optimize_button_state():
     assert optimize_btn.sensitive is True
     assert optimize_modern_btn.sensitive is True
     assert apply_btn.sensitive is False
-    assert status.text == "Input: updated"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
 
 
@@ -628,7 +628,7 @@ def test_runtime_backend_input_change_reports_legacy_handler_signature_error():
     entry.set_text("/tmp/example.jpg")
     entry.emit("changed", entry)
 
-    assert backend.get_object("lblStatus").text == "Input: failed"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "takes 0 positional arguments" in backend.get_object("lblError").text
 
 
@@ -662,7 +662,7 @@ def test_runtime_backend_optimize_result_controls_apply_button_state():
     optimize_btn.click()
 
     assert apply_btn.sensitive is True
-    assert status.text == "Optimize: ok"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
     assert optimize_result.text == "Optimize result: success"
     assert apply_target.text == "Apply target: ready"
@@ -671,7 +671,7 @@ def test_runtime_backend_optimize_result_controls_apply_button_state():
     optimize_btn.click()
 
     assert apply_btn.sensitive is False
-    assert status.text == "Optimize: failed"
+    assert status.text == "Status: ready"
     assert error.text == "Error: optimize returned false"
     assert optimize_result.text == "Optimize result: failed"
     assert apply_target.text == "Apply target: not-ready"
@@ -820,7 +820,7 @@ def test_runtime_backend_margins_tab_updates_owner_state_and_cli_preview(tmp_pat
     assert window.form_state.embed_info == "free"
     assert window.form_state.embed_text == "hello\nworld"
     assert window.form_state.embed_position == "left-top"
-    assert backend.get_object("lblStatus").text.startswith("Margins: margin text ready in left top position")
+    assert backend.get_object("lblStatus").text.startswith("Status: margin text ready in left top position")
     assert backend.get_object("lblError").text == "Error: none"
 
     preview = window.build_optimize_cli_preview()
@@ -837,7 +837,7 @@ def test_runtime_backend_margin_text_mode_reports_legacy_handler_signature_error
     backend.connect_signals({"on_change_margin_text_mode": lambda: True})
     backend.get_object("radMarginTextModeText").click()
 
-    assert backend.get_object("lblStatus").text == "Margins: info-error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "takes 0 positional arguments" in backend.get_object("lblError").text
 
 
@@ -886,7 +886,7 @@ def test_runtime_backend_margin_text_reports_legacy_handler_signature_error():
     backend.connect_signals({"on_change_margin_text": lambda: True})
     backend.get_object("txtMarginText").set_text("hello")
 
-    assert backend.get_object("lblStatus").text == "Margins: text-error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "takes 0 positional arguments" in backend.get_object("lblError").text
 
 
@@ -922,7 +922,7 @@ def test_runtime_backend_margin_text_preflight_reports_small_margin_error():
     backend.get_object("radMarginTextModeSettings").click()
     backend.get_object("radMarginTextPositionRightBottom").click()
 
-    assert backend.get_object("lblStatus").text == "Margins: margin text does not fit current margin area"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert backend.get_object("lblError").text == "Error: selected margin area is too small for margin text"
 
 
@@ -932,7 +932,7 @@ def test_runtime_backend_margin_text_position_reports_legacy_handler_signature_e
     backend.connect_signals({"on_change_margin_text_position": lambda: True})
     backend.get_object("radMarginTextPositionLeftTop").click()
 
-    assert backend.get_object("lblStatus").text == "Margins: position-error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "takes 0 positional arguments" in backend.get_object("lblError").text
 
 
@@ -955,7 +955,7 @@ def test_runtime_backend_margin_text_max_lines_reports_legacy_handler_signature_
     backend.connect_signals({"on_change_margin_text_max_lines": lambda: True})
     backend.get_object("spnMarginTextMaxLines").emit("value-changed", backend.get_object("spnMarginTextMaxLines"))
 
-    assert backend.get_object("lblStatus").text == "Margins: max-lines-error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "takes 0 positional arguments" in backend.get_object("lblError").text
 
 
@@ -994,7 +994,7 @@ def test_runtime_backend_margin_text_preflight_uses_two_screen_display_slice_are
     backend.get_object("radMarginTextPositionRightTop").click()
 
     assert window.form_state.embed_position == "right-top"
-    assert backend.get_object("lblStatus").text == "Margins: margin text ready in right top position (1030x80)"
+    assert backend.get_object("lblStatus").text == "Status: margin text ready in right top position (1030x80)"
     assert backend.get_object("lblError").text == "Error: none"
 
 
@@ -1174,11 +1174,11 @@ def test_runtime_backend_slideshow_srcdir_selection_and_slideshow_cycle_updates_
 
     interval.set_value(90)
     interval.emit("value-changed", interval)
-    assert status.text == "Slideshow: interval-updated(90s)"
+    assert status.text == "Status: ready"
     assert slideshow_tab_title.text == "Slideshow (stopped)"
 
     slideshow_start.click()
-    assert status.text == "Slideshow: started"
+    assert status.text == "Status: ready"
     assert slideshow_tab_title.text == "Slideshow (running)"
     assert slideshow_current.text == "Slideshow current: L=left-1.jpg | R=-"
 
@@ -1187,7 +1187,7 @@ def test_runtime_backend_slideshow_srcdir_selection_and_slideshow_cycle_updates_
     assert slideshow_current.text == "Slideshow current: L=left-2.jpg | R=-"
 
     slideshow_stop.click()
-    assert status.text == "Slideshow: stopped"
+    assert status.text == "Status: ready"
     assert slideshow_tab_title.text == "Slideshow (stopped)"
     assert backend.run_slideshow_cycle_once() is False
 
@@ -1255,7 +1255,7 @@ def test_runtime_backend_slideshow_srcdir_confirm_reports_legacy_handler_signatu
     backend.get_object("SrcdirDialog").set_current_folder(str(left_dir))
     backend.get_object("SrcdirDialog").confirm()
 
-    assert backend.get_object("lblStatus").text == "Srcdir-L: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "takes 0 positional arguments" in backend.get_object("lblError").text
 
 
@@ -1316,7 +1316,7 @@ def test_runtime_backend_slideshow_interval_change_uses_integer_contract_without
     interval.emit("value-changed", interval)
 
     assert observed == {"seconds": 75}
-    assert status.text == "Slideshow: interval-updated(75s)"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
 
 
@@ -1329,7 +1329,7 @@ def test_runtime_backend_slideshow_interval_change_reports_legacy_widget_signatu
     interval.set_value(75)
     interval.emit("value-changed", interval)
 
-    assert backend.get_object("lblStatus").text == "Slideshow: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "required positional argument" in backend.get_object("lblError").text or "positional arguments" in backend.get_object("lblError").text
 
 
@@ -1561,8 +1561,8 @@ def test_runtime_backend_shows_owner_slideshow_start_failure_reason(monkeypatch,
 
     slideshow_start.click()
 
-    assert status.text == "Slideshow: dual-source slideshow requires two detected displays"
-    assert error.text == "Error: none"
+    assert status.text == "Status: ready"
+    assert error.text == "Error: dual-source slideshow requires two detected displays"
     assert slideshow_tab_title.text == "Slideshow (stopped)"
 
 
@@ -1577,6 +1577,7 @@ def test_runtime_backend_shows_owner_slideshow_tick_failure_reason(monkeypatch, 
 
     plugin = DummyPlugin()
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
+    monkeypatch.setattr(MainWindow, "_load_default_settings_on_startup", lambda self: None)
 
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
@@ -1612,12 +1613,12 @@ def test_runtime_backend_shows_owner_slideshow_tick_failure_reason(monkeypatch, 
     srcdir_dialog.confirm()
 
     slideshow_start.click()
-    assert status.text == "Slideshow: started"
+    assert status.text == "Status: ready"
     assert slideshow_tab_title.text == "Slideshow (running)"
 
     assert backend.run_slideshow_cycle_once() is False
-    assert status.text == "Slideshow: slideshow cycle single-file apply failed"
-    assert error.text == "Error: none"
+    assert status.text == "Status: ready"
+    assert error.text == "Error: slideshow cycle single-file apply failed"
     assert slideshow_tab_title.text == "Slideshow (stopped)"
     assert slideshow_current.text == "Slideshow current: L=left-2.jpg | R=-"
 
@@ -1710,11 +1711,11 @@ def test_runtime_backend_slideshow_cycle_pauses_when_detected_displays_temporari
     srcdir_dialog.confirm()
 
     slideshow_start.click()
-    assert status.text == "Slideshow: started"
+    assert status.text == "Status: ready"
     assert slideshow_tab_title.text == "Slideshow (running)"
 
     assert backend.run_slideshow_cycle_once() is True
-    assert status.text == "Slideshow: slideshow paused: waiting for two detected displays for auto-split"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
     assert slideshow_tab_title.text == "Slideshow (paused)"
 
@@ -1743,7 +1744,7 @@ def test_runtime_backend_open_l_uses_dialog_selection_and_calls_pick_handler():
     assert observed["side"] == "L"
     assert entry.get_text() == "left.jpg"
     assert pick_state.text == "Open-L: selected"
-    assert status.text == "Open-L: selected"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
 
 
@@ -1770,7 +1771,7 @@ def test_runtime_backend_open_dialog_confirm_reports_legacy_handler_signature_er
     backend.get_object("ImgOpenDialog").confirm()
 
     assert backend.get_object("lblPickState").text == "Open-L: error"
-    assert backend.get_object("lblStatus").text == "Open-L: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "takes 0 positional arguments" in backend.get_object("lblError").text
 
 
@@ -1816,7 +1817,7 @@ def test_runtime_backend_clear_l_clears_only_left_side_and_keeps_right_input():
     assert entry_r.get_text() == "right-image.jpg"
     assert window.form_state.input_value == "/tmp/right-image.jpg"
     assert optimize_btn.sensitive is True
-    assert status.text == "Input: input ready"
+    assert status.text == "Status: ready"
 
 
 def test_runtime_backend_clear_r_disables_actions_when_last_input_cleared():
@@ -1848,7 +1849,7 @@ def test_runtime_backend_clear_button_reports_missing_clear_handler():
 
     backend.get_object("btnClrPathL").click()
 
-    assert backend.get_object("lblStatus").text == "Clear-L: handler-missing"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert backend.get_object("lblError").text == "Error: handler not connected"
 
 
@@ -1858,7 +1859,7 @@ def test_runtime_backend_clear_button_reports_legacy_handler_signature_error():
     backend.connect_signals({"on_clear_input": lambda: True})
     backend.get_object("btnClrPathL").click()
 
-    assert backend.get_object("lblStatus").text == "Clear-L: failed"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "takes 0 positional arguments" in backend.get_object("lblError").text
 
 
@@ -1890,7 +1891,7 @@ def test_runtime_backend_open_r_opens_dialog_without_entry_path_requirement():
     assert dialog.get_side() == "R"
     assert dialog.get_title() == "Open image (R)"
     assert pick_state.text == "Open-R: dialog-open"
-    assert status.text == "Open-R: dialog-open"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
 
 
@@ -1908,7 +1909,7 @@ def test_runtime_backend_open_r_cancel_updates_status_and_closes_dialog():
 
     assert dialog.is_visible() is False
     assert pick_state.text == "Open-R: canceled"
-    assert status.text == "Open-R: canceled"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
 
 
@@ -1941,7 +1942,7 @@ def test_runtime_backend_color_click_opens_dialog():
     color_btn.click()
 
     assert color_dialog.is_visible() is True
-    assert status.text == "Color: opened"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
 
 
@@ -1971,7 +1972,7 @@ def test_runtime_backend_color_apply_updates_handler_and_feedback():
     assert backend.get_object("ColorDialog").is_visible() is False
     assert backend.get_object("lblColorState").text == "Color: #224466"
     assert backend.get_object("lblColorNotice").text == ""
-    assert backend.get_object("lblStatus").text == "Color: updated"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert backend.get_object("lblError").text == "Error: none"
 
 
@@ -1988,7 +1989,7 @@ def test_runtime_backend_color_open_reports_settings_getter_failure():
     backend.get_object("btnSetColor").click()
 
     assert backend.get_object("ColorDialog").is_visible() is False
-    assert backend.get_object("lblStatus").text == "Color: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert backend.get_object("lblError").text == "Error: color settings getter failed"
 
 
@@ -2049,7 +2050,7 @@ def test_runtime_backend_color_apply_shows_invalid_color_feedback():
     assert backend.get_object("ColorDialog").is_visible() is True
     assert backend.get_object("lblColorState").text == "Color: #1E1E1E"
     assert backend.get_object("lblColorNotice").text == "Color: invalid background color"
-    assert backend.get_object("lblStatus").text == "Color: opened"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert backend.get_object("lblError").text == "Error: none"
 
 
@@ -2392,7 +2393,7 @@ def test_runtime_backend_about_click_opens_dialog():
     assert backend.get_object("AboutDialog").is_visible() is True
     assert backend.get_object("lblAboutTitle").text == "Harite"
     assert backend.get_object("lblAboutVersion").text == "Version: 0.1.2"
-    assert backend.get_object("lblStatus").text == "About: opened"
+    assert backend.get_object("lblStatus").text == "Status: ready"
 
 
 def test_runtime_backend_about_open_reports_info_getter_failure():
@@ -2408,7 +2409,7 @@ def test_runtime_backend_about_open_reports_info_getter_failure():
     backend.get_object("btnAbout").click()
 
     assert backend.get_object("AboutDialog").is_visible() is False
-    assert backend.get_object("lblStatus").text == "About: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert backend.get_object("lblError").text == "Error: about info getter failed"
 
 
@@ -2482,7 +2483,7 @@ def test_runtime_backend_save_click_passes_selected_path_to_handler():
     assert save_path_chooser.is_visible() is False
     assert save_path_state.text == "Export path: saved"
     assert save_target.text == "Export target: /tmp/from-runtime-dialog.jpg"
-    assert status.text == "SavePath: saved"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
 
 
@@ -2520,7 +2521,7 @@ def test_runtime_backend_native_save_path_chooser_confirm_runs_modal_flow():
 
     assert observed == {"save": 1, "confirm": "/tmp/native-save.jpg", "cancel": 0}
     assert save_path_state.text == "Export path: saved"
-    assert status.text == "SavePath: saved"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
     assert _NativeFileChooserDialog.last_created is not None
     assert _NativeFileChooserDialog.last_created.title == "Export Image"
@@ -2563,7 +2564,7 @@ def test_runtime_backend_native_save_path_chooser_cancel_does_not_continue_save_
 
     assert observed == {"save": 1, "confirm": 0, "cancel": 1}
     assert save_path_state.text == "Export path: canceled"
-    assert status.text == "SavePath: canceled"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
 
 
@@ -2577,7 +2578,7 @@ def test_runtime_backend_save_click_handler_failure_surfaces_feedback():
 
     backend.get_object("btnSave").click()
 
-    assert backend.get_object("lblStatus").text == "SavePath: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert backend.get_object("lblError").text == "Error: save path open failed"
     assert backend.get_object("SavePathDialog").is_visible() is False
 
@@ -2604,7 +2605,7 @@ def test_runtime_backend_save_click_without_path_uses_default_filename():
     assert save_path_state.text == "Export path: saved"
     assert save_target.text.endswith("harite-output.jpg")
     assert save_target.text.startswith("Export target: ")
-    assert status.text == "SavePath: saved"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
 
 
@@ -2616,7 +2617,7 @@ def test_runtime_backend_save_path_confirm_reports_legacy_handler_signature_erro
     backend.get_object("SavePathDialog").set_filename("/tmp/from-runtime-dialog.jpg")
     backend.get_object("btnSave").click()
 
-    assert backend.get_object("lblStatus").text == "SavePath: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "takes 0 positional arguments" in backend.get_object("lblError").text
 
 
@@ -2661,7 +2662,7 @@ def test_runtime_backend_save_path_chooser_cancel_calls_current_handler_on_nativ
 
     assert observed["called"] is True
     assert save_path_state.text == "Export path: canceled"
-    assert status.text == "SavePath: canceled"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
 
 
@@ -2674,7 +2675,7 @@ def test_runtime_backend_save_path_cancel_reports_legacy_handler_signature_error
 
     backend.get_object("btnSave").click()
 
-    assert backend.get_object("lblStatus").text == "SavePath: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "required positional argument" in backend.get_object("lblError").text or "positional arguments" in backend.get_object("lblError").text
 
 
@@ -2821,7 +2822,7 @@ def test_runtime_backend_apply_success_updates_apply_target():
     optimize_btn.click()
     apply_btn.click()
 
-    assert status.text == "Apply: ok"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
     assert apply_target.text == "Apply target: last applied"
 
@@ -2853,7 +2854,7 @@ def test_runtime_backend_apply_mode_toggle_dispatches_and_updates_label(monkeypa
 
     assert observed["mode"] == "per-monitor-auto-split"
     assert backend.get_object("lblApplyMode").text == "Split the optimized image and apply per display."
-    assert backend.get_object("lblStatus").text == "ApplyMode: updated"
+    assert backend.get_object("lblStatus").text == "Status: ready"
 
 
 def test_runtime_backend_apply_mode_reports_legacy_handler_signature_error():
@@ -2863,7 +2864,7 @@ def test_runtime_backend_apply_mode_reports_legacy_handler_signature_error():
 
     backend.get_object("radApplyPerMonitor").click()
 
-    assert backend.get_object("lblStatus").text == "ApplyMode: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "takes 0 positional arguments" in backend.get_object("lblError").text
 
 
@@ -2944,7 +2945,7 @@ def test_runtime_backend_settings_button_dispatches_open_handler(monkeypatch, tm
     backend.get_object("btnSettings").click()
 
     assert observed["opened"] == 1
-    assert backend.get_object("lblStatus").text == "Settings: opened"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert backend.get_object("SettingsDialog").is_visible() is True
     assert backend.get_object("SettingsDialog").get_settings()["plugin"] == "linux"
     assert backend.get_object("entSettingsPlugin").get_text() == "linux"
@@ -2975,7 +2976,7 @@ def test_runtime_backend_settings_open_reports_notice_build_failure(monkeypatch)
 
     backend.get_object("btnSettings").click()
 
-    assert backend.get_object("lblStatus").text == "Settings: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert backend.get_object("lblError").text == "Error: settings path probe failed"
 
 
@@ -3066,7 +3067,7 @@ def test_runtime_backend_settings_ok_save_and_cancel_dispatch_handlers(tmp_path)
     assert observed["apply"]["slideshow_srcdir_l"] == "/slideshow/left"
     assert dialog.is_visible() is False
     assert backend.get_object("lblSettingsState").text == "Settings: current values"
-    assert backend.get_object("lblStatus").text == "SettingsApply: applied"
+    assert backend.get_object("lblStatus").text == "Status: ready"
 
     dialog.show()
     backend.get_object("lblSettingsState").set_text("Settings: current values")
@@ -3121,7 +3122,7 @@ def test_runtime_backend_settings_save_reports_legacy_handler_signature_error(tm
 
     backend.get_object("btnSettingsSave").click()
 
-    assert backend.get_object("lblStatus").text == "SettingsSave: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "takes 1 positional argument" in backend.get_object("lblError").text
 
 
@@ -3224,7 +3225,7 @@ def test_runtime_backend_optimize_sets_running_state_before_handler_call():
     backend.connect_signals({"on_optimize": on_optimize_clicked})
     optimize_btn.click()
 
-    assert observed["status_when_called"] == "Optimize: running"
+    assert observed["status_when_called"] == "Status: ready"
 
 
 def test_runtime_backend_optimize_reports_legacy_handler_signature_error():
@@ -3233,7 +3234,7 @@ def test_runtime_backend_optimize_reports_legacy_handler_signature_error():
     backend.connect_signals({"on_optimize": lambda _arg: True})
     backend.get_object("btnOptimize").click()
 
-    assert backend.get_object("lblStatus").text == "Optimize: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "required positional argument" in backend.get_object("lblError").text or "positional arguments" in backend.get_object("lblError").text
     assert backend.get_object("lblOptimizeResult").text == "Optimize result: error"
 
@@ -3261,7 +3262,7 @@ def test_runtime_backend_apply_failure_updates_error_message():
     backend.connect_signals({"on_apply": lambda: False})
     apply_btn.click()
 
-    assert status.text == "Apply: failed"
+    assert status.text == "Status: ready"
     assert error.text == "Error: apply returned false"
 
 
@@ -3271,7 +3272,7 @@ def test_runtime_backend_apply_reports_legacy_handler_signature_error():
     backend.connect_signals({"on_apply": lambda _arg: True})
     backend.get_object("btnSetWall").click()
 
-    assert backend.get_object("lblStatus").text == "Apply: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "required positional argument" in backend.get_object("lblError").text or "positional arguments" in backend.get_object("lblError").text
 
 
@@ -3299,7 +3300,7 @@ def test_runtime_backend_optimize_handler_missing_sets_status_and_error():
 
     optimize_btn.click()
 
-    assert status.text == "Optimize: handler-missing"
+    assert status.text == "Status: ready"
     assert error.text == "Error: handler not connected"
     assert optimize_result.text == "Optimize result: handler-missing"
     assert apply_target.text == "Apply target: not-ready"
@@ -3324,7 +3325,7 @@ def test_runtime_backend_save_button_skips_optimize_handler_and_reports_missing_
     assert calls == ["save"]
     assert save_path_chooser.is_visible() is False
     assert save_path_state.text == "Export path: idle"
-    assert status.text == "SavePath: handler-missing"
+    assert status.text == "Status: ready"
 
 
 def test_runtime_backend_optimize_button_does_not_fallback_to_save_handler():
@@ -3344,7 +3345,7 @@ def test_runtime_backend_optimize_button_does_not_fallback_to_save_handler():
     optimize_btn.click()
 
     assert calls == []
-    assert status.text == "Optimize: handler-missing"
+    assert status.text == "Status: ready"
     assert error.text == "Error: handler not connected"
     assert optimize_result.text == "Optimize result: handler-missing"
     assert apply_target.text == "Apply target: not-ready"
@@ -3364,7 +3365,7 @@ def test_runtime_backend_save_button_does_not_use_legacy_save_alias():
     save_btn.click()
 
     assert calls == []
-    assert status.text == "SavePath: handler-missing"
+    assert status.text == "Status: ready"
 
 
 def test_runtime_backend_apply_handler_missing_sets_status_and_error():
@@ -3377,7 +3378,7 @@ def test_runtime_backend_apply_handler_missing_sets_status_and_error():
 
     apply_btn.click()
 
-    assert status.text == "Apply: handler-missing"
+    assert status.text == "Status: ready"
     assert error.text == "Error: handler not connected"
     assert apply_target.text == "Apply target: handler-missing"
 
@@ -3472,7 +3473,7 @@ def test_runtime_backend_toggle_position_failure_surfaces_feedback():
 
     backend.get_object("tglUpperL").click()
 
-    assert backend.get_object("lblStatus").text == "Position: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert backend.get_object("lblError").text == "Error: toggle position failed"
 
 
@@ -3488,7 +3489,7 @@ def test_runtime_backend_toggle_position_reset_failure_surfaces_feedback():
     toggle.click()
     toggle.click()
 
-    assert backend.get_object("lblStatus").text == "Position: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert backend.get_object("lblError").text == "Error: toggle reset failed"
 
 
@@ -3502,7 +3503,7 @@ def test_runtime_backend_toggle_position_pressed_failure_surfaces_feedback():
 
     backend.get_object("tglUpperL").click()
 
-    assert backend.get_object("lblStatus").text == "Position: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert backend.get_object("lblError").text == "Error: toggle press failed"
 
 
@@ -3521,7 +3522,7 @@ def test_runtime_backend_toggle_position_opposite_reset_failure_surfaces_feedbac
 
     right.click()
 
-    assert backend.get_object("lblStatus").text == "Position: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert backend.get_object("lblError").text == "Error: toggle opposite reset failed"
 
 
@@ -3545,7 +3546,7 @@ def test_runtime_backend_margin_change_propagates_all_values():
     backend.get_object("spnLeftMargin").emit("value-changed", backend.get_object("spnLeftMargin"))
 
     assert captured == {"name": "spnLeftMargin", "value": 11}
-    assert status.text == "Margins: updated"
+    assert status.text == "Status: ready"
     assert error.text == "Error: none"
     assert backend.get_object("lblCurrentMargins").text == "margins=11,22,33,44"
 
@@ -3556,7 +3557,7 @@ def test_runtime_backend_margin_change_reports_legacy_handler_signature_error():
     backend.connect_signals({"on_change_margins": lambda _name: True})
     backend.get_object("spnLeftMargin").emit("value-changed", backend.get_object("spnLeftMargin"))
 
-    assert backend.get_object("lblStatus").text == "Margins: error"
+    assert backend.get_object("lblStatus").text == "Status: ready"
     assert "positional argument" in backend.get_object("lblError").text
 
 

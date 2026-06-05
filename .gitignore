@@ -34,3 +34,5 @@ harite-xfce-logs/*
 
 # phase10-mock
 docs/specs/gui/mock-assets/*
+
+_tmp_catalog_test/

@@ -115,6 +115,7 @@ from harite.gui.adapters.gtk_runtime_sync import sync_input_state_from_owner
 from harite.gui.adapters.gtk_runtime_sync import sync_main_state_from_owner
 from harite.gui.adapters.gtk_runtime_sync import sync_margins_state_from_owner
 from harite.gui.adapters.gtk_runtime_sync import sync_slideshow_state_from_owner
+from harite.gui.adapters.gtk_runtime_widget_access import ensure_gtk_footer_error_styles
 from harite.gui.adapters.gtk_runtime_widget_access import is_toggle_active
 from harite.gui.adapters.gtk_runtime_widget_access import read_entry_text
 from harite.gui.adapters.gtk_runtime_widget_access import read_spin_int
@@ -169,6 +170,7 @@ class GtkRuntimeSignalBackend:
 
     def __init__(self, gtk_module: Any) -> None:
         self._gtk = gtk_module
+        ensure_gtk_footer_error_styles(gtk_module)
         self._signal_handlers: dict[str, Callable[..., Any]] = {}
         self._initialize_runtime_state()
 
@@ -523,8 +525,15 @@ class GtkRuntimeSignalBackend:
     def _set_error(self, message: str | None) -> None:
         set_error(self, message)
 
-    def _set_feedback(self, *, phase: str, state: str, error: str | None = None) -> None:
-        set_feedback(self, phase=phase, state=state, error=error)
+    def _set_feedback(
+        self,
+        *,
+        phase: str,
+        state: str,
+        error: str | None = None,
+        status_level: str | None = None,
+    ) -> None:
+        set_feedback(self, phase=phase, state=state, error=error, status_level=status_level)
 
     def _set_label_text(self, object_name: str, message: str) -> None:
         set_label_text(self, object_name, message)

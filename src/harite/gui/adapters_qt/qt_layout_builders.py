@@ -176,6 +176,7 @@ def build_footer_section() -> dict[str, Any]:
     status_row_layout.setSpacing(8)
 
     status_label = QLabel("Status: ready")
+    status_label.setObjectName("statusLabel")
     status_row_layout.addWidget(status_label)
 
     status_spacer = QWidget()
@@ -200,6 +201,7 @@ def build_footer_section() -> dict[str, Any]:
     message_row_layout.setSpacing(8)
 
     error_label = QLabel("Error: none")
+    error_label.setObjectName("errorLabel")
     message_row_layout.addWidget(error_label)
 
     footer_layout.addWidget(message_row)

@@ -2,6 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
+from harite.gui.views.footer_feedback import (
+    footer_error_is_active,
+    format_footer_error,
+    format_footer_status,
+)
+
 
 def set_status(backend: Any, message: str) -> None:
     status = backend._objects.get("lblStatus")
@@ -9,16 +15,60 @@ def set_status(backend: Any, message: str) -> None:
         status.set_text(message)
 
 
-def set_error(backend: Any, message: str | None) -> None:
-    if not message:
-        set_label_text(backend, "lblError", "Error: none")
+def _apply_gtk_error_label_style(label: Any, *, active: bool) -> None:
+    style_context = getattr(label, "get_style_context", None)
+    if style_context is None:
         return
-    set_label_text(backend, "lblError", f"Error: {message}")
+    try:
+        ctx = style_context()
+    except Exception:
+        return
+    add_class = getattr(ctx, "add_class", None)
+    remove_class = getattr(ctx, "remove_class", None)
+    if not add_class or not remove_class:
+        return
+    if active:
+        add_class("harite-error-active")
+    else:
+        remove_class("harite-error-active")
 
 
-def set_feedback(backend: Any, *, phase: str, state: str, error: str | None = None) -> None:
-    set_status(backend, f"{phase}: {state}")
-    set_error(backend, error)
+def set_error(backend: Any, message: str | None) -> None:
+    label = backend._objects.get("lblError")
+    if label is None:
+        return
+    text = message or "Error: none"
+    if hasattr(label, "set_text"):
+        label.set_text(text)
+    _apply_gtk_error_label_style(label, active=footer_error_is_active(text))
+
+
+def set_feedback(
+    backend: Any,
+    *,
+    phase: str,
+    state: str,
+    error: str | None = None,
+    status_level: str | None = None,
+) -> None:
+    set_status(
+        backend,
+        format_footer_status(
+            phase=phase,
+            state=state,
+            error=error,
+            status_level=status_level,
+        ),
+    )
+    set_error(
+        backend,
+        format_footer_error(
+            phase=phase,
+            state=state,
+            error=error,
+            status_level=status_level,
+        ),
+    )
 
 
 def set_label_text(backend: Any, object_name: str, message: str) -> None:
@@ -119,3 +169,32 @@ def is_toggle_active(backend: Any, object_name: str) -> bool:
     if hasattr(toggle, "get_active"):
         return bool(toggle.get_active())
     return bool(getattr(toggle, "active", False))
+
+
+_footer_error_css_loaded = False
+
+
+def ensure_gtk_footer_error_styles(gtk_module: Any) -> None:
+    """Load application CSS for active footer error labels (best-effort)."""
+    global _footer_error_css_loaded
+    if _footer_error_css_loaded:
+        return
+    css_provider_cls = getattr(gtk_module, "CssProvider", None)
+    style_context_cls = getattr(gtk_module, "StyleContext", None)
+    if css_provider_cls is None or style_context_cls is None:
+        return
+    try:
+        provider = css_provider_cls()
+        provider.load_from_data(b"label.harite-error-active { color: #c0392b; }")
+        screen = None
+        gdk = getattr(gtk_module, "gdk", None)
+        if gdk is not None:
+            screen_getter = getattr(getattr(gdk, "Screen", None), "get_default", None)
+            if screen_getter is not None:
+                screen = screen_getter()
+        priority = getattr(gtk_module, "STYLE_PROVIDER_PRIORITY_APPLICATION", 600)
+        if screen is not None:
+            style_context_cls.add_provider_for_screen(screen, provider, priority)
+        _footer_error_css_loaded = True
+    except Exception:
+        return

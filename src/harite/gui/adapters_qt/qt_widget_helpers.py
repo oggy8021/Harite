@@ -17,6 +17,11 @@ from contextlib import contextmanager
 from typing import Any
 
 from harite.gui.adapters.gtk_runtime_file_dialog_flow import format_slideshow_path_display
+from harite.gui.views.footer_feedback import (
+    footer_error_is_active,
+    format_footer_error,
+    format_footer_status,
+)
 from harite.gui.views.main_window import REGISTRY_NONE_LABEL
 
 
@@ -60,13 +65,52 @@ def set_status(backend: Any, message: str) -> None:
     set_label_text(backend, "lblStatus", message)
 
 
+def _apply_qt_error_label_style(widget: Any, *, active: bool) -> None:
+    if widget is None or not hasattr(widget, "setProperty"):
+        return
+    widget.setProperty("hasError", bool(active))
+    style = getattr(widget, "style", None)
+    if style is None:
+        return
+    try:
+        style.unpolish(widget)
+        style.polish(widget)
+    except Exception:
+        pass
+
+
 def set_error(backend: Any, message: str | None) -> None:
-    set_label_text(backend, "lblError", message or "")
+    text = message or "Error: none"
+    set_label_text(backend, "lblError", text)
+    _apply_qt_error_label_style(_get(backend, "lblError"), active=footer_error_is_active(text))
 
 
-def set_feedback(backend: Any, *, phase: str, state: str, error: str | None = None) -> None:
-    set_status(backend, f"{phase}: {state}")
-    set_error(backend, error)
+def set_feedback(
+    backend: Any,
+    *,
+    phase: str,
+    state: str,
+    error: str | None = None,
+    status_level: str | None = None,
+) -> None:
+    set_status(
+        backend,
+        format_footer_status(
+            phase=phase,
+            state=state,
+            error=error,
+            status_level=status_level,
+        ),
+    )
+    set_error(
+        backend,
+        format_footer_error(
+            phase=phase,
+            state=state,
+            error=error,
+            status_level=status_level,
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
