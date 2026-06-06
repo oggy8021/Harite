@@ -134,8 +134,8 @@ def test_codh_spots_keyword_sync_reads_settings(
 
     search_urls = [u for u in seen if "edo-spots/search" in u]
     assert search_urls
-    assert "where_metadata_label" in search_urls[-1]
-    assert "where_metadata_value" in search_urls[-1]
+    assert "where=" in search_urls[-1]
+    assert "where_metadata_label" not in search_urls[-1]
     assert (Path(entry.path) / "latest.jpg").is_file()
 
 

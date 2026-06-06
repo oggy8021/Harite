@@ -55,7 +55,7 @@
 | --- | --- |
 | **indexer** | **`edo-spots` + `edo-shops`** — 同一のユーザー入力 KW を両方で使う（API の metadata label は indexer 別にマップ — §5） |
 | **preset** | **案 B:** 新 `codh-edo-spots-keyword`（＋買物側は `codh-edo-shops-keyword` 等）。`codh-edo-spots-sakura` は **同梱廃止** |
-| **検索 API** | `where_metadata_label` + `where_metadata_value`（観光=`キーワード`、買物=`備考` — [inventory §4](finished/20260603-c01-e-codh-icp-inventory.md)） |
+| **検索 API** | ユーザー入力は `where={kw}`（部分一致 — 地名・キーワード横断）。[inventory §2](finished/20260603-c01-e-codh-icp-inventory.md)。`where_metadata_*` 完全一致は キーワード facet 104 値のみ（飛鳥山等は 0 件） |
 | **保存** | `harite-settings.json` の `codh_keyword`（観光・買物共通）。`notes` には書かない（§3） |
 | **UI** | Manage dialog — 上記 keyword 系 preset の source 選択時のみ入力行を表示 |
 | **多様性** | **疑似ランダム**（`total` → `start`）— `codh-edo-spots-random` と同型 |
@@ -111,10 +111,7 @@ Sources を **ALL なし**で二面板に分ける（[P-05](20260518-2047-featur
 ```
 _codh_sync (keyword preset)
   1. settings から codh_keyword を読む（default 桜）
-  2. preset の indexer に応じて label を選択:
-       edo-spots → where_metadata_label=キーワード
-       edo-shops → where_metadata_label=備考
-     where_metadata_value={kw}
+  2. `where={kw}`（Canvas Indexer 部分一致 — 観光・買物共通）
   3. total 取得 → random start（codh-edo-*-random 同型）→ limit=1
   4. canvasThumbnail → /max/ → latest.*
 ```

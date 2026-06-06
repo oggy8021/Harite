@@ -82,20 +82,24 @@ class _CodhSearchSpec:
     metadata_value: str | None = None
     random_pick: bool = False
     keyword_from_settings: bool = False
+    # User-entered text: Canvas Indexer ``where`` (partial match). Exact
+    # ``where_metadata_*`` only hits the キーワード facet (e.g. 桜) and misses
+    # place names (飛鳥山) stored under 名所（統一地名）.
+    keyword_where: bool = False
 
 
 _CODH_PRESET_SEARCH: dict[str, _CodhSearchSpec] = {
     "codh-edo-spots-keyword": _CodhSearchSpec(
         indexer="edo-spots",
-        metadata_label="キーワード",
         random_pick=True,
         keyword_from_settings=True,
+        keyword_where=True,
     ),
     "codh-edo-shops-keyword": _CodhSearchSpec(
         indexer="edo-shops",
-        metadata_label="備考",
         random_pick=True,
         keyword_from_settings=True,
+        keyword_where=True,
     ),
     "codh-edo-spots-random": _CodhSearchSpec(indexer="edo-spots", random_pick=True),
     "codh-edo-shops-random": _CodhSearchSpec(indexer="edo-shops", random_pick=True),
@@ -532,7 +536,9 @@ def _codh_search_query(
     if start is not None:
         params.append(("start", str(start)))
     effective_value = metadata_value if metadata_value is not None else spec.metadata_value
-    if spec.metadata_label and effective_value:
+    if spec.keyword_where and effective_value:
+        params.append(("where", effective_value))
+    elif spec.metadata_label and effective_value:
         params.append(("where_metadata_label", spec.metadata_label))
         params.append(("where_metadata_value", effective_value))
     return urlencode(params)

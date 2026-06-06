@@ -543,8 +543,8 @@ Sync: 返却 `Illustration` から IIIF URL（`dl.ndl.go.jp/api/iiif/{pid}/{page
 
 | `preset_id` | 検索 |
 | --- | --- |
-| `codh-edo-spots-keyword` | `edo-spots` — `where_metadata_label=キーワード` + settings `codh_keyword`。`total` → random `start` |
-| `codh-edo-shops-keyword` | `edo-shops` — `where_metadata_label=備考` + 同一 `codh_keyword`。random `start` |
+| `codh-edo-spots-keyword` | `edo-spots` — `where={codh_keyword}`（部分一致。地名・題材を横断）。`total` → random `start` |
+| `codh-edo-shops-keyword` | `edo-shops` — 同一 `where={codh_keyword}`。random `start` |
 | `codh-edo-spots-random` | `edo-spots` — `total` 取得後 `start` 乱数 + `limit=1` |
 | `codh-edo-shops-random` | `edo-shops` — 同上 |
 
