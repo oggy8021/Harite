@@ -386,7 +386,7 @@ profile import は、参照する source `preset_id` が **同一操作または
 | 操作 | 契約 |
 | --- | --- |
 | `load_source_presets()` | preset ファイル → in-memory preset catalog。`preset_schema_version` 未対応は `ValueError` |
-| `import_preset_source(user_catalog, preset_id)` | 新 UUID、`path` = `remote_cache_dir(source_id)`、§5 上限・名前一意性を検証。`min_slideshow_interval_seconds` があるとき `notes` に `harite-min-interval:{秒}` を追記 |
+| `import_preset_source(user_catalog, preset_id)` | 新 UUID、`path` = `remote_cache_dir(source_id)`、§5 上限・名前一意性を検証。Interval 下限は **preset テンプレート**（`min_slideshow_interval_seconds`）から `harite-preset:` 経由で解決 — `notes` には **書かない** |
 | `preset_min_slideshow_interval(preset_catalog, preset_id)` | source / profile テンプレートの下限秒。未定義は `None` |
 | `catalog_slideshow_interval_floor(catalog, *, source_id_l, source_id_r, profile_id)` | 現在の combo 選択から適用する Interval 下限秒（`None` は下限なし） |
 | `import_preset_profile(user_catalog, preset_id)` | 新 UUID。`members` の preset_id を **新規 import した source id** へ解決（同一 import バッチ内の対応表） |
@@ -399,7 +399,7 @@ profile import は、参照する source `preset_id` が **同一操作または
 | 操作 | 契約 |
 | --- | --- |
 | `bootstrap_preset_sources(catalog)` | 同梱 preset の各 `preset_id` について、catalog に **対応 source が無ければ** `import_preset_source` 相当で追加。対応 profile が無ければ `import_preset_profile` 相当で追加（任意 preset） |
-| マーカー | preset 由来 source の `notes` に `harite-preset:{preset_id}` を含める。`min_slideshow_interval_seconds` があるとき `harite-min-interval:{秒}` を追記。表示名の `*` 接頭辞は **GUI のみ** |
+| マーカー | preset 由来 source の `notes` に `harite-preset:{preset_id}` と出典のみ。Interval 下限は同梱 preset JSON の `min_slideshow_interval_seconds` を参照（`notes` に `harite-min-interval:` は **書かない**；旧行は repair で除去）。表示名の `*` 接頭辞は **GUI のみ** |
 | 永続化 | 変更があれば `save_catalog` してよい |
 | Sync | **起動時は行わない**（§12.4）。`bootstrap_preset_sources(..., sync=False)`。画像は Refresh / Start 直前 |
 
@@ -496,7 +496,7 @@ GUI combo 表示は `*{name}`（例: `*気象庁（日本付近）` — [gui-spe
 
 ### 15.4 帰属
 
-**正本の置き場所:** 出典・`harite-preset` / `harite-min-interval` マーカーは **`harite-sources.json` の source `notes`** に記載する。Manage 画面でも同内容を表示する。Optimize / Export 画像への EXIF 等の埋め込みは **行わない**（壁紙実体は cache の PNG をそのまま apply する）。
+**正本の置き場所:** 出典・`harite-preset` マーカーは **`harite-sources.json` の source `notes`** に記載する。Interval 下限は **同梱 preset JSON** の `min_slideshow_interval_seconds`（`harite-preset:` から解決）。Manage 画面でも同内容を表示する。Optimize / Export 画像への EXIF 等の埋め込みは **行わない**（壁紙実体は cache の PNG をそのまま apply する）。
 
 preset `notes` および Manage で表示する出典（公共データ利用規約 第 1.0 版）:
 

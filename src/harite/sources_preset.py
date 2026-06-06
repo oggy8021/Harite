@@ -91,8 +91,6 @@ def _format_preset_notes(
     body = _strip_managed_preset_note_lines(template.notes)
     if body:
         lines.append(body)
-    if template.min_slideshow_interval_seconds is not None:
-        lines.append(f"{MIN_INTERVAL_NOTE_PREFIX}{template.min_slideshow_interval_seconds}")
     return "\n".join(lines)
 
 
@@ -386,14 +384,31 @@ def preset_min_slideshow_interval(
     raise ValueError(f"unknown preset id: {preset_id}")
 
 
+def source_slideshow_interval_floor(
+    entry: SourceEntry,
+    *,
+    preset_catalog: PresetCatalog | None = None,
+) -> int | None:
+    preset_id = preset_id_from_notes(entry.notes)
+    if preset_id:
+        templates = preset_catalog or load_source_presets()
+        try:
+            return preset_min_slideshow_interval(templates, preset_id)
+        except ValueError:
+            pass
+    return min_interval_from_notes(entry.notes)
+
+
 def catalog_slideshow_interval_floor(
     catalog: Catalog,
     *,
     source_id_l: str | None = None,
     source_id_r: str | None = None,
     profile_id: str | None = None,
+    preset_catalog: PresetCatalog | None = None,
 ) -> int | None:
     floors: list[int] = []
+    templates = preset_catalog or load_source_presets()
 
     if profile_id:
         profile = get_profile(catalog, profile_id)
@@ -404,7 +419,7 @@ def catalog_slideshow_interval_floor(
             if source_id:
                 entry = get_source(catalog, source_id)
                 if entry is not None:
-                    floor = min_interval_from_notes(entry.notes)
+                    floor = source_slideshow_interval_floor(entry, preset_catalog=templates)
                     if floor is not None:
                         floors.append(floor)
         return max(floors) if floors else None
@@ -415,7 +430,7 @@ def catalog_slideshow_interval_floor(
         entry = get_source(catalog, source_id)
         if entry is None:
             continue
-        floor = min_interval_from_notes(entry.notes)
+        floor = source_slideshow_interval_floor(entry, preset_catalog=templates)
         if floor is not None:
             floors.append(floor)
     return max(floors) if floors else None

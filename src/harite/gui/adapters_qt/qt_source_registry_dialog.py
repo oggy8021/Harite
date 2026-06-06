@@ -20,10 +20,10 @@ from harite.sources import (
 )
 from harite.sources_remote import (
     CODH_KEYWORD_MAX_LEN,
-    apply_codh_keyword_to_settings,
     codh_keyword_from_settings,
     is_remote_kind,
     load_codh_keyword_settings,
+    save_codh_keyword_settings,
     source_supports_codh_keyword,
     sync_remote_source,
     validate_codh_keyword,
@@ -136,7 +136,7 @@ def run_source_registry_dialog(
     )
 
     from harite.gui.adapters_qt.qt_source_catalog import materialize_source_catalog_at_path
-    from harite.settings_file import resolve_default_settings_path, save_settings
+    from harite.settings_file import resolve_default_settings_path
 
     resolved_settings_path = settings_path or resolve_default_settings_path()
     catalog = materialize_source_catalog_at_path(catalog_path)
@@ -252,12 +252,11 @@ def run_source_registry_dialog(
         keyword_entry.setText(persisted_keyword["value"])
 
     def _flush_keyword_to_settings() -> None:
-        nonlocal settings_data, settings_changed
+        nonlocal settings_changed
         keyword = validate_codh_keyword(keyword_entry.text())
         if keyword == persisted_keyword["value"]:
             return
-        settings_data = apply_codh_keyword_to_settings(settings_data, keyword)
-        save_settings(resolved_settings_path, settings_data)
+        save_codh_keyword_settings(resolved_settings_path, keyword)
         persisted_keyword["value"] = keyword
         settings_changed = True
 

@@ -381,7 +381,7 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 | --- | --- |
 | saved source / profile 選択変更 | `catalog_slideshow_interval_floor`（[source-spec §13.3](../source/harite-source-spec.md)）を求め、戻り値があれば `slideshow_interval_seconds` と spin を **その秒数以上**へ引き上げ |
 | profile 選択 | profile テンプレートに `min_slideshow_interval_seconds` があればそれを使う。無ければ members の各 source preset 下限の **最大値** |
-| 側別 source 選択 | 当該 source の `notes` の `harite-min-interval:{秒}`（import 時に preset から複写）または preset 定義を参照 |
+| 側別 source 選択 | 当該 source の `harite-preset:{id}` から同梱 preset の `min_slideshow_interval_seconds` を参照（`notes` に interval 行は書かない） |
 
 **`remote-jma-weather-map` 実行（Start 直前 Sync）:**
 

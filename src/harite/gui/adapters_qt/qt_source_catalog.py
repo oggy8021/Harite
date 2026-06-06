@@ -59,7 +59,7 @@ def materialize_source_catalog_at_path(
     non-blocking. Use Manage **Refresh** or slideshow **Start** (see
     ``sync_remote_source``) to populate cache.
     """
-    from harite.settings_file import resolve_default_settings_path, save_settings
+    from harite.settings_file import resolve_default_settings_path
     from harite.sources_remote import load_codh_keyword_settings, migrate_codh_keyword_notes_to_settings
 
     catalog = _load_catalog_for_materialize(path)
@@ -68,7 +68,9 @@ def materialize_source_catalog_at_path(
     settings, catalog_migrated, settings_migrated = migrate_codh_keyword_notes_to_settings(catalog, settings)
     dirty = catalog_migrated
     if settings_migrated:
-        save_settings(settings_path, settings)
+        from harite.sources_remote import CODH_KEYWORD_SETTINGS_KEY, save_codh_keyword_settings
+
+        save_codh_keyword_settings(settings_path, str(settings[CODH_KEYWORD_SETTINGS_KEY]))
     dirty = repair_preset_catalog_integrity(catalog) or dirty
     dirty = bootstrap_preset_sources(catalog, sync=False) or dirty
     dirty = repair_preset_catalog_integrity(catalog) or dirty

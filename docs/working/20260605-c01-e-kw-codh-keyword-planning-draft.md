@@ -72,7 +72,7 @@
 | キー | `codh_keyword`（`sources_remote.CODH_KEYWORD_SETTINGS_KEY`） |
 | 値 | UTF-8 文字列。前後空白は strip。**空は無効**（sync 時は default `桜`） |
 | 長さ上限 | **16 文字**（`len()` 基準） |
-| preset JSON / source `notes` | **書かない**（出典・`harite-preset` / `harite-min-interval` のみ） |
+| preset JSON / source `notes` | **書かない**（出典・`harite-preset` のみ。interval 下限も preset JSON フィールドから解決） |
 | 初期値 | **`桜`**（settings 未設定時） |
 | 廃止 | `codh-edo-spots-sakura`、notes 内 `harite-codh-keyword:`（migrate で settings へ移行後 strip） |
 

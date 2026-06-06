@@ -275,6 +275,12 @@ def apply_codh_keyword_to_settings(settings: dict[str, Any], keyword: str) -> di
     return updated
 
 
+def save_codh_keyword_settings(settings_path: Path, keyword: str) -> Path:
+    from harite.settings_file import patch_settings_value
+
+    return patch_settings_value(settings_path, CODH_KEYWORD_SETTINGS_KEY, validate_codh_keyword(keyword))
+
+
 def load_codh_keyword_settings(settings_path: Path | None = None) -> dict[str, Any]:
     from harite.settings_file import load_settings, resolve_default_settings_path
 
