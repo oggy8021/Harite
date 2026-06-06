@@ -37,6 +37,22 @@
 
 P-03 の主眼は **「検出 1 枚のとき R 側 UI を誤操作不能にする」**。Slideshow の L/R 両方必須を緩めるかは **P3-2 gate**（本波のスコープ外にできる）。
 
+### 1.2 観測で見えた穴 — `len==2` 幽霊と auto-split（P-03 本波の外）
+
+**Win / XFCE 共通:** ケーブル活線のまま OS が **2 枚と数える**（Linux L1 の `connected` 幽霊、Windows W4-HDMI 等）とき、Harite は **`len==2` のまま** → P-03 の `len < 2` だけでは **R 無効化も Start ブロックもかからない**。
+
+さらに現行 product は **枚数のみ**で 2 枚判定する（`build_two_screen_optimize_context` / `resolve_apply_settings` — 解像度 `0x0` の出力を除外しない）:
+
+| 観測例 | Harite `len` | auto-split / dual slideshow |
+| --- | --- | --- |
+| Linux L1-HDMI（`HDMI-1` 幽霊 `0x0` + `DP-1` 実出力） | **2** | **開始しうる**（左=幽霊・右=実出力など誤分割のリスク） |
+| Linux L1-DP（`DP-1` 幽霊 + `HDMI-1` 実出力） | **2** | 同上 |
+| Windows W4-HDMI（EDID 幽霊で `len==2`） | **2** | Windows は **Span** 経路だが dual-source は **2 枚前提**のまま |
+
+→ **「ユーザーには 1 画面」≠「Harite は 1 枚」** のとき、**auto-split が動いてしまう**のは P-03 の R-disabled だけでは防げない。**GTK / Qt 共通**（core の `detect_displays` 正本）。`harite-gtk` の目視は未実施だが、backend 差はない想定でよい。
+
+**follow-up 候補（P3-2 以降・別 issue 可）:** 「アクティブ出力」の定義（例: `width>0 && height>0`）で枚数判定するか、幽霊検出時も dual-source / auto-split を止めるか。
+
 ---
 
 ## 2. 目標（案）
@@ -363,7 +379,7 @@ Harite: `len==2`（名前・座標は xrandr と一致）
 | L4 電源 off | **実施** — R モニター DP 側 off → `len==1`。**復帰確認済み** → `len==2` |
 | L3 ケーブル抜き | **スキップ** — L4 で `disconnected` 確認済み。物理 1 台想定で十分（§4.2.4） |
 | L2 XFCE GUI | **未実施**（L1 と同型の見込み） |
-| `harite-gtk` R UI | **未実施**（P-03 未実装・任意） |
+| `harite-gtk` R UI | **未実施** — core 共通のため Qt と同型と見做す（§1.2） |
 | 観測クローズ | **2026-06-06 完了** |
 
 ---
@@ -405,3 +421,4 @@ Harite: `len==2`（名前・座標は xrandr と一致）
 | 2026-06-06 | L1-HDMI — `HDMI-1 --off` でも `connected` 残存・`primary` 維持 → `len==2` |
 | 2026-06-06 | L1-HDMI 復帰 — 明示 xrandr でベースライン復帰（`len==2`） |
 | 2026-06-06 | L3 スキップ・Linux 観測クローズ — §4.2.4 物理 1 台想定。P3-1 pass（両 OS） |
+| 2026-06-06 | §1.2 — 活線幽霊 `len==2` 時は auto-split も通りうる（P-03 本波の外） |
