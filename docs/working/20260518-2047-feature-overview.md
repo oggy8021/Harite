@@ -73,7 +73,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | K-04 | plugin 拡張パック | Linux 以外や追加 desktop 向け plugin を外付け拡張として扱えるようにする。 | capability model と packaging 方針が先に必要 |
 | P-03 | 単 display / monitor まわり UX | 検出 1 枚のとき -R 側（path / srcdir / direction 等）を disabled にする案。**display 検出・枚数に依存する操作の整理**はここで扱う（旧 K-01 の「monitor 監視」含む）。 | **採用条件**: 単 display 再現手順、disabled 範囲の spec、GTK/Qt テスト方針が揃ったとき（[#359](../online-issues/issue-359.md)） |
 | P-05 | Manage sources リスト整理 | **自動ソート + グループ見出し**。理想: Sources を **ALL なし**で **local 面板**（Delete/name/path/Browse/Add local）と **preset 面板**（Refresh + keyword(CODH)）に分離。C-01-E-KW の暫定 keyword 行は preset 側へ移設する想定。 | **ストック**（2026-06-05 理想像追記）。本波 C-01-E-KW では面板分割に **触らない** |
-| C-01-E-KW | CODH キーワード検索のユーザー指定 | 江戸観光 `キーワード` を Manage dialog で 1 語指定。`notes` に `harite-codh-keyword:`。 | **planning draft** — [20260605-c01-e-kw-codh-keyword-planning-draft.md](20260605-c01-e-kw-codh-keyword-planning-draft.md)。C-01-F と並行可（tick なしでは体感薄い） |
+| C-01-E-KW | CODH キーワード検索のユーザー指定 | 江戸観光・買物で共通の 1 語を Manage dialog で指定。`harite-settings.json` の `codh_keyword`。 | **planning draft** — [20260605-c01-e-kw-codh-keyword-planning-draft.md](20260605-c01-e-kw-codh-keyword-planning-draft.md)。C-01-F と並行可（tick なしでは体感薄い） |
 
 C-04 の rough ideas・採択表・widget 切り分けは [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md) を参照（本 overview では重複しない）。
 

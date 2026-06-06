@@ -543,14 +543,14 @@ Sync: 返却 `Illustration` から IIIF URL（`dl.ndl.go.jp/api/iiif/{pid}/{page
 
 | `preset_id` | 検索 |
 | --- | --- |
-| `codh-edo-spots-keyword` | `edo-spots` — `where_metadata_label=キーワード` + `harite-codh-keyword:` 値。`total` → random `start` |
-| `codh-edo-shops-keyword` | `edo-shops` — `where_metadata_label=備考` + 同一 KW 文字列。random `start` |
+| `codh-edo-spots-keyword` | `edo-spots` — `where_metadata_label=キーワード` + settings `codh_keyword`。`total` → random `start` |
+| `codh-edo-shops-keyword` | `edo-shops` — `where_metadata_label=備考` + 同一 `codh_keyword`。random `start` |
 | `codh-edo-spots-random` | `edo-spots` — `total` 取得後 `start` 乱数 + `limit=1` |
 | `codh-edo-shops-random` | `edo-shops` — 同上 |
 
 plain `codh-edo-spots-sakura`（固定 `桜`）は **同梱しない**。
 
-**`harite-codh-keyword:`（C-01-E-KW）:** source `notes` の機械行（**同梱 preset JSON の `notes` には書かない** — `canonical_preset_source_notes` が import / repair 時に注入）。最大 **16** 文字（`len` 基準）。初期値 **`桜`**。`repair_preset_source_notes` はユーザー上書きを保持する。
+**`codh_keyword`（C-01-E-KW）:** `harite-settings.json` トップレベル。観光・買物 keyword preset **共通**（K1）。最大 **16** 文字（`len` 基準）。初期値 **`桜`**。source `notes` / 同梱 preset JSON には **書かない**（旧 `harite-codh-keyword:` 行は起動時 migrate で settings へ移し notes から除去）。
 
 Sync: `results[0].canvasThumbnail` の `/200,/` を `/max/` に置換して GET。cache ファイル名は §15.6 と同様。
 

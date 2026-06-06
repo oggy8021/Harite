@@ -256,7 +256,7 @@ design 合意: [20260601-c02-slideshow-source-registry-slice.html](../../working
 **Manage dialog:**
 
 - Sources: 一覧、Add（name + directory browse）、Delete（profile 参照中は [source-spec §7.5](../source/harite-source-spec.md) に従い拒否）。
-- **keyword(CODH)**（C-01-E-KW）: source リスト直下・Refresh 行の **直上**に **常設** `QLineEdit`（ラベル `keyword(CODH)`、初期値 `桜`、`maxLength=16`）。`codh-edo-spots-keyword` / `codh-edo-shops-keyword` 選択時のみ **enabled**；他 source 選択時は disabled。Refresh 前および Close 時に `harite-codh-keyword:` を選択中 source の `notes` へ反映（[source-spec §15.7](../source/harite-source-spec.md)）。配置は **暫定** — 理想像は [P-05](../../working/20260518-2047-feature-overview.md) preset 面板。
+- **keyword(CODH)**（C-01-E-KW）: source リスト直下・Refresh 行の **直上**に **常設** `QLineEdit`（ラベル `keyword(CODH)`、初期値 `桜`、`maxLength=16`）。`codh-edo-spots-keyword` / `codh-edo-shops-keyword` 選択時のみ **enabled**；他 source 選択時は disabled（表示は settings の共通値のまま）。Refresh 前および Close 時に `harite-settings.json` の `codh_keyword` へ反映（[source-spec §15.7](../source/harite-source-spec.md)）。配置は **暫定** — 理想像は [P-05](../../working/20260518-2047-feature-overview.md) preset 面板。
 - Profiles: 一覧、L/R slot combo（source id または empty）、Add / Delete profile。
 - 保存は `harite-sources.json` へ即 write。settings dialog とは別 surface。
 - dialog Close 後、Slideshow tab の profile / saved source combo を reload する。

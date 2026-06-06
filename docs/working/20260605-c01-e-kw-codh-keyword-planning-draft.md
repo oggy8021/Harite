@@ -56,33 +56,25 @@
 | **indexer** | **`edo-spots` + `edo-shops`** — 同一のユーザー入力 KW を両方で使う（API の metadata label は indexer 別にマップ — §5） |
 | **preset** | **案 B:** 新 `codh-edo-spots-keyword`（＋買物側は `codh-edo-shops-keyword` 等）。`codh-edo-spots-sakura` は **同梱廃止** |
 | **検索 API** | `where_metadata_label` + `where_metadata_value`（観光=`キーワード`、買物=`備考` — [inventory §4](finished/20260603-c01-e-codh-icp-inventory.md)） |
-| **保存** | `harite-sources.json` の source `notes` に機械行（§3） |
+| **保存** | `harite-settings.json` の `codh_keyword`（観光・買物共通）。`notes` には書かない（§3） |
 | **UI** | Manage dialog — 上記 keyword 系 preset の source 選択時のみ入力行を表示 |
 | **多様性** | **疑似ランダム**（`total` → `start`）— `codh-edo-spots-random` と同型 |
 
 
 ---
 
-## 3. `notes` 契約（案）
+## 3. `codh_keyword` 契約（確定 — 2026-06 impl 改訂）
 
-既存マーカーと並列する **機械行**（1 source あたり最大 1 行）:
+**保存先:** `harite-settings.json` トップレベル `codh_keyword`（**観光・買物で共通** — K1）。
 
-```text
-harite-codh-keyword:桜
-```
-
-
-| 項目          | 契約                                                                                                  |
-| ----------- | --------------------------------------------------------------------------------------------------- |
-| プレフィックス     | `harite-codh-keyword:`（`sources_remote` で定数化）                                                       |
-| 値           | UTF-8 文字列。前後空白は strip。**空は無効**（sync 拒否）                                                             |
-| 長さ上限 | **16 文字**（マルチバイトも 1 文字として数える。Python `len()` 相当） |
-| 許可文字 | **制御文字・改行なし**。印字可能 Unicode（`urlencode`） |
-| preset | `harite-preset:codh-edo-spots-keyword` / `codh-edo-shops-keyword`（名称は impl 時確定）。**preset JSON `notes` は出典のみ** — import / repair 時に `canonical_preset_source_notes` が keyword 行へ **`桜` を注入**（旧 sakura preset のサンプル役） |
-| 廃止 | `codh-edo-spots-sakura` — 同梱から外す（§7 K2） |
-
-
-`repair_preset_source_notes` は **keyword 行を消さない**（ユーザー上書きを尊重）。preset 再 import 時のマージ方針は gate で確定。
+| 項目 | 契約 |
+| --- | --- |
+| キー | `codh_keyword`（`sources_remote.CODH_KEYWORD_SETTINGS_KEY`） |
+| 値 | UTF-8 文字列。前後空白は strip。**空は無効**（sync 時は default `桜`） |
+| 長さ上限 | **16 文字**（`len()` 基準） |
+| preset JSON / source `notes` | **書かない**（出典・`harite-preset` / `harite-min-interval` のみ） |
+| 初期値 | **`桜`**（settings 未設定時） |
+| 廃止 | `codh-edo-spots-sakura`、notes 内 `harite-codh-keyword:`（migrate で settings へ移行後 strip） |
 
 ---
 
@@ -99,7 +91,7 @@ harite-codh-keyword:桜
 | ラベル | **`keyword(CODH)`** — CODH 側もメタデータ名は「キーワード」だが UI ラベルはこれで統一 |
 | 控件 | `QLineEdit`、**初期値 `桜`**、`maxLength=16` |
 | 表示 | **常設**（選択 source に関わらず行は表示。非対応 source 時は **disabled** 推奨 — spec で固定） |
-| 保存 | **Refresh 前** および **Close 時** — 対応 source の `notes` へ `harite-codh-keyword:` を read/write |
+| 保存 | **Refresh 前** および **Close 時** — `harite-settings.json` の `codh_keyword` を read/write（source 共通） |
 
 ### 4.2 理想配置（P-05 — 本波では触らない）
 
@@ -118,7 +110,7 @@ Sources を **ALL なし**で二面板に分ける（[P-05](20260518-2047-featur
 
 ```
 _codh_sync (keyword preset)
-  1. notes から harite-codh-keyword を parse
+  1. settings から codh_keyword を読む（default 桜）
   2. preset の indexer に応じて label を選択:
        edo-spots → where_metadata_label=キーワード
        edo-shops → where_metadata_label=備考

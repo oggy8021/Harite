@@ -22,16 +22,12 @@ from harite.sources import (
     list_sources,
 )
 from harite.sources_remote import (
-    CODH_KEYWORD_DEFAULT,
     CODH_KEYWORD_NOTE_PREFIX,
     PRESET_MARKER_PREFIX,
     add_remote_source,
-    codh_keyword_from_notes,
-    is_codh_keyword_preset,
     is_remote_kind,
     preset_id_from_notes,
     sync_remote_source,
-    upsert_codh_keyword_in_notes,
 )
 
 PRESET_SCHEMA_VERSION = 1
@@ -95,8 +91,6 @@ def _format_preset_notes(
     body = _strip_managed_preset_note_lines(template.notes)
     if body:
         lines.append(body)
-    if is_codh_keyword_preset(template.preset_id):
-        lines.append(f"{CODH_KEYWORD_NOTE_PREFIX}{CODH_KEYWORD_DEFAULT}")
     if template.min_slideshow_interval_seconds is not None:
         lines.append(f"{MIN_INTERVAL_NOTE_PREFIX}{template.min_slideshow_interval_seconds}")
     return "\n".join(lines)
@@ -157,10 +151,6 @@ def repair_preset_source_notes(
         if entry is None:
             continue
         canonical = canonical_preset_source_notes(template)
-        if is_codh_keyword_preset(template.preset_id):
-            user_keyword = codh_keyword_from_notes(entry.notes)
-            if user_keyword:
-                canonical = upsert_codh_keyword_in_notes(canonical, user_keyword)
         if entry.notes != canonical:
             entry.notes = canonical
             changed = True

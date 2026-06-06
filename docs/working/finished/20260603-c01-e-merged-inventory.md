@@ -33,7 +33,7 @@
 | `codh-edo-spots-random` | 江戸観光（おまかせ） | `remote-codh-edo` |
 | `codh-edo-shops-random` | 江戸買物（おまかせ） | `remote-codh-edo` |
 
-**C-01-E-KW（2026-06-05）:** `codh-edo-spots-sakura` を廃止し keyword preset 2 種へ。KW は `harite-codh-keyword:`（Manage `keyword(CODH)`、最大 16 文字、初期 `桜`）。
+**C-01-E-KW（2026-06-05）:** `codh-edo-spots-sakura` を廃止し keyword preset 2 種へ。KW は `harite-settings.json` の `codh_keyword`（Manage `keyword(CODH)`、観光・買物共通、最大 16 文字、初期 `桜`）。
 
 Interval 下限 **600 s**（JMA と同型）。江戸マップ・座標連携は **見送り**。
 

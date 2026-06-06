@@ -1,4 +1,4 @@
-"""C-01-E-KW: CODH user keyword in notes and sync."""
+"""C-01-E-KW: CODH user keyword in settings and sync."""
 
 from __future__ import annotations
 
@@ -9,16 +9,26 @@ from urllib.request import Request
 
 import pytest
 
-from harite.sources import empty_catalog, import_preset_source
+from harite.sources import empty_catalog, import_preset_source, update_source
 from harite.sources_preset import canonical_preset_source_notes, load_source_presets, repair_preset_source_notes
 from harite.sources_remote import (
     CODH_KEYWORD_DEFAULT,
     CODH_KEYWORD_NOTE_PREFIX,
+    CODH_KEYWORD_SETTINGS_KEY,
+    apply_codh_keyword_to_settings,
     codh_keyword_from_notes,
+    codh_keyword_from_settings,
+    migrate_codh_keyword_notes_to_settings,
+    resolve_codh_keyword,
+    strip_codh_keyword_from_notes,
     sync_remote_source,
-    upsert_codh_keyword_in_notes,
     validate_codh_keyword,
 )
+from harite.settings_file import save_settings
+
+def _legacy_notes_with_keyword(notes: str, keyword: str) -> str:
+    return f"{notes}\n{CODH_KEYWORD_NOTE_PREFIX}{keyword}"
+
 
 _JPEG_BYTES = b"\xff\xd8\xff" + b"\x00" * 16
 _CODH_RESULTS = {
@@ -35,13 +45,6 @@ def test_validate_codh_keyword_rejects_empty_and_long() -> None:
         validate_codh_keyword("a" * 17)
 
 
-def test_upsert_codh_keyword_in_notes_replaces_line() -> None:
-    notes = "harite-preset:codh-edo-spots-keyword\n出典：CODH\nharite-codh-keyword:桜"
-    updated = upsert_codh_keyword_in_notes(notes, "花火")
-    assert codh_keyword_from_notes(updated) == "花火"
-    assert updated.count(CODH_KEYWORD_NOTE_PREFIX) == 1
-
-
 def test_bundled_keyword_preset_json_has_no_machine_keyword_line() -> None:
     presets = load_source_presets()
     for preset_id in ("codh-edo-spots-keyword", "codh-edo-shops-keyword"):
@@ -49,28 +52,40 @@ def test_bundled_keyword_preset_json_has_no_machine_keyword_line() -> None:
         assert CODH_KEYWORD_NOTE_PREFIX not in template.notes
 
 
-def test_canonical_preset_notes_injects_default_keyword() -> None:
+def test_canonical_preset_notes_exclude_keyword_line() -> None:
     presets = load_source_presets()
     template = next(item for item in presets.sources if item.preset_id == "codh-edo-spots-keyword")
-    assert codh_keyword_from_notes(canonical_preset_source_notes(template)) == CODH_KEYWORD_DEFAULT
+    assert CODH_KEYWORD_NOTE_PREFIX not in canonical_preset_source_notes(template)
 
 
-def test_keyword_preset_import_includes_default_keyword(tmp_path: Path) -> None:
+def test_keyword_preset_import_does_not_store_keyword_in_notes(tmp_path: Path) -> None:
     catalog = empty_catalog()
     entry = import_preset_source(catalog, "codh-edo-spots-keyword", cache_root=tmp_path / "cache")
-    assert codh_keyword_from_notes(entry.notes) == CODH_KEYWORD_DEFAULT
+    assert CODH_KEYWORD_NOTE_PREFIX not in entry.notes
 
 
-def test_repair_preset_source_notes_preserves_user_keyword(tmp_path: Path) -> None:
+def test_migrate_codh_keyword_notes_to_settings(tmp_path: Path) -> None:
     catalog = empty_catalog()
     entry = import_preset_source(catalog, "codh-edo-spots-keyword", cache_root=tmp_path / "cache")
-    entry.notes = upsert_codh_keyword_in_notes(entry.notes, "梅")
+    entry.notes = _legacy_notes_with_keyword(entry.notes, "飛鳥山")
+    settings: dict[str, Any] = {}
+    settings, catalog_changed, settings_changed = migrate_codh_keyword_notes_to_settings(catalog, settings)
+    assert catalog_changed is True
+    assert settings_changed is True
+    assert settings[CODH_KEYWORD_SETTINGS_KEY] == "飛鳥山"
+    assert codh_keyword_from_notes(entry.notes) is None
+
+
+def test_repair_preset_source_notes_strips_legacy_keyword_line(tmp_path: Path) -> None:
+    catalog = empty_catalog()
+    entry = import_preset_source(catalog, "codh-edo-spots-keyword", cache_root=tmp_path / "cache")
+    entry.notes = _legacy_notes_with_keyword(entry.notes, "梅")
     presets = load_source_presets()
-    assert repair_preset_source_notes(catalog, preset_catalog=presets) is False
-    assert codh_keyword_from_notes(entry.notes) == "梅"
+    assert repair_preset_source_notes(catalog, preset_catalog=presets) is True
+    assert CODH_KEYWORD_NOTE_PREFIX not in entry.notes
 
 
-def test_codh_spots_keyword_sync_uses_metadata_in_url(
+def test_codh_spots_keyword_sync_reads_settings(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -107,12 +122,14 @@ def test_codh_spots_keyword_sync_uses_metadata_in_url(
             return _Img()
         raise AssertionError(target)
 
+    settings_path = tmp_path / "harite-settings.json"
+    save_settings(settings_path, apply_codh_keyword_to_settings({}, "花火"))
     monkeypatch.setattr("harite.sources_remote.urlopen", fake_urlopen)
     monkeypatch.setattr("harite.sources_remote.random.randint", lambda _a, _b: 1)
+    monkeypatch.setattr("harite.settings_file.resolve_default_settings_path", lambda: settings_path)
 
     catalog = empty_catalog()
     entry = import_preset_source(catalog, "codh-edo-spots-keyword", cache_root=tmp_path / "cache")
-    entry.notes = upsert_codh_keyword_in_notes(entry.notes, "花火")
     sync_remote_source(catalog, entry.id, cache_root=tmp_path / "cache")
 
     search_urls = [u for u in seen if "edo-spots/search" in u]
@@ -120,3 +137,22 @@ def test_codh_spots_keyword_sync_uses_metadata_in_url(
     assert "where_metadata_label" in search_urls[-1]
     assert "where_metadata_value" in search_urls[-1]
     assert (Path(entry.path) / "latest.jpg").is_file()
+
+
+def test_resolve_codh_keyword_defaults_without_settings(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    missing = tmp_path / "missing-settings.json"
+    monkeypatch.setattr("harite.settings_file.resolve_default_settings_path", lambda: missing)
+    assert resolve_codh_keyword() == CODH_KEYWORD_DEFAULT
+
+
+def test_codh_keyword_from_settings() -> None:
+    assert codh_keyword_from_settings({}) == CODH_KEYWORD_DEFAULT
+    assert codh_keyword_from_settings({CODH_KEYWORD_SETTINGS_KEY: "飛鳥山"}) == "飛鳥山"
+
+
+def test_strip_codh_keyword_from_notes() -> None:
+    notes = "harite-preset:x\n出典：CODH\nharite-codh-keyword:桜"
+    assert strip_codh_keyword_from_notes(notes) == "harite-preset:x\n出典：CODH"

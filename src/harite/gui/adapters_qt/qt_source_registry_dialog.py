@@ -18,15 +18,14 @@ from harite.sources import (
     save_catalog,
     update_profile,
 )
-from harite.sources import update_source
 from harite.sources_remote import (
-    CODH_KEYWORD_DEFAULT,
     CODH_KEYWORD_MAX_LEN,
-    codh_keyword_from_notes,
+    apply_codh_keyword_to_settings,
+    codh_keyword_from_settings,
     is_remote_kind,
+    load_codh_keyword_settings,
     source_supports_codh_keyword,
     sync_remote_source,
-    upsert_codh_keyword_in_notes,
     validate_codh_keyword,
 )
 
@@ -114,7 +113,12 @@ def apply_profile_slot_combos(
             loading_state["profile_slots_loading"] = False
 
 
-def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
+def run_source_registry_dialog(
+    parent: Any,
+    *,
+    catalog_path: Path,
+    settings_path: Path | None = None,
+) -> bool:
     """Show sources/profiles editor. Returns True if catalog was saved."""
     from PyQt6.QtWidgets import (
         QComboBox,
@@ -132,9 +136,14 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
     )
 
     from harite.gui.adapters_qt.qt_source_catalog import materialize_source_catalog_at_path
+    from harite.settings_file import resolve_default_settings_path, save_settings
 
+    resolved_settings_path = settings_path or resolve_default_settings_path()
     catalog = materialize_source_catalog_at_path(catalog_path)
+    settings_data = load_codh_keyword_settings(resolved_settings_path)
     changed = False
+    settings_changed = False
+    persisted_keyword = {"value": codh_keyword_from_settings(settings_data)}
 
     dialog = QDialog(parent)
     dialog.setWindowTitle("Manage sources and profiles")
@@ -149,7 +158,7 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
     keyword_row_layout = QHBoxLayout(keyword_row)
     keyword_row_layout.setContentsMargins(0, 0, 0, 0)
     keyword_label = QLabel("keyword(CODH)")
-    keyword_entry = QLineEdit(CODH_KEYWORD_DEFAULT)
+    keyword_entry = QLineEdit(persisted_keyword["value"])
     keyword_entry.setMaxLength(CODH_KEYWORD_MAX_LEN)
     keyword_row_layout.addWidget(keyword_label)
     keyword_row_layout.addWidget(keyword_entry, 1)
@@ -239,23 +248,18 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
 
     def _sync_keyword_field_from_selection() -> None:
         entry = _selected_source_entry()
-        if entry is not None and source_supports_codh_keyword(entry):
-            keyword_entry.setEnabled(True)
-            stored = codh_keyword_from_notes(entry.notes)
-            keyword_entry.setText(stored if stored else CODH_KEYWORD_DEFAULT)
-            return
-        keyword_entry.setEnabled(False)
-        keyword_entry.setText(CODH_KEYWORD_DEFAULT)
+        keyword_entry.setEnabled(entry is not None and source_supports_codh_keyword(entry))
+        keyword_entry.setText(persisted_keyword["value"])
 
-    def _flush_keyword_to_selected_source() -> None:
-        entry = _selected_source_entry()
-        if entry is None or not source_supports_codh_keyword(entry):
-            return
+    def _flush_keyword_to_settings() -> None:
+        nonlocal settings_data, settings_changed
         keyword = validate_codh_keyword(keyword_entry.text())
-        new_notes = upsert_codh_keyword_in_notes(entry.notes, keyword)
-        if new_notes != entry.notes:
-            update_source(catalog, entry.id, notes=new_notes)
-            _persist()
+        if keyword == persisted_keyword["value"]:
+            return
+        settings_data = apply_codh_keyword_to_settings(settings_data, keyword)
+        save_settings(resolved_settings_path, settings_data)
+        persisted_keyword["value"] = keyword
+        settings_changed = True
 
     def _on_refresh_source() -> None:
         entry = _selected_source_entry()
@@ -267,7 +271,7 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
             return
         try:
             if source_supports_codh_keyword(entry):
-                _flush_keyword_to_selected_source()
+                _flush_keyword_to_settings()
             sync_remote_source(catalog, entry.id)
             _persist()
             _refresh_source_list()
@@ -429,7 +433,7 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
             except ValueError:
                 pass
         try:
-            _flush_keyword_to_selected_source()
+            _flush_keyword_to_settings()
         except ValueError:
             pass
         dialog.reject()
@@ -437,4 +441,4 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
     buttons.rejected.connect(_close_dialog)
 
     dialog.exec()
-    return changed
+    return changed or settings_changed
