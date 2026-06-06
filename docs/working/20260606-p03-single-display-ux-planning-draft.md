@@ -110,6 +110,20 @@ python -c "from harite.workspace import detect_displays; print(len(detect_displa
 
 復帰: `xrandr --output <名> --auto` またはケーブル再接続 → 再び 2 枚。
 
+#### 4.2.1 実機ラボ構成 — `linux-xfce`（Windows とは別世界）
+
+**共有ディスプレイ:** モニター操作パネルで入力（HDMI / DP 等）を切り替え、**同一物理画面を Windows 機と XFCE 機で共有**する。観測時は **モニター入力を Linux 側に合わせてから** one-liner を取る（Windows の §4.3.2・§5 は **流用しない**）。
+
+**端子対応は Windows と逆:** `win-cursor-dev` では設定 **1＝DP（主）・2＝HDMI** だったが、XFCE 実機では **主副・左右の DP/HDMI の割当が逆**になりうる。Linux では **`xrandr --query` の出力名（`DP-1` / `HDMI-1` 等）＋ primary ＋ 座標**だけを正本に記録する。
+
+| 層 | `win-cursor-dev`（参考・Linux に持ち込まない） | `linux-xfce` 実機 |
+| --- | --- | --- |
+| 設定 UI の番号 | 1＝DP、2＝HDMI | XFCE ディスプレイ設定は **実機で都度確認** |
+| Harite / OS の識別子 | `DISPLAYn`（信用しない） | **`xrandr` 先頭列**（`DP-1` 等 — Harite `Display.name` と一致） |
+| 観測の見え方 | 2 画面同時 | **入力切替で 1 画面ずつ見える**が、`xrandr` / Harite は **接続中の出力を列挙**（見えている入力と無関係） |
+
+**P3-1 の前提:** Linux 側でも **2 出力が `connected`** のベースラインが必要（副次は別モニターでもダミーでもよいが、`xrandr` が 2 行返すこと）。共有モニター 1 台だけでは `len==1` 固定になりうる — その場合は **2 本目の接続**を確認してから観測開始。
+
 #### XFCE で見る UI（観測メモ用）
 
 - Slideshow / Main の **R 側 widget が有効か**
@@ -261,6 +275,25 @@ GDI `DISPLAYn` は設定番号・端子と無関係（下記 2 枚 dump は参�
 
 **pass 判定（P3-1）:** 各 OS で、Harite `len==1` になる操作が **文書化済み**で、かつ **電源 off のみでは再現しない**ことがログで確認できる。**Windows（`win-cursor-dev`）は pass・観測終了**（Linux 待ち）。
 
+### 5.5 Linux（XFCE）— `linux-xfce`（記入中）
+
+| フィールド | 値 |
+| --- | --- |
+| ラベル | `linux-xfce`（仮） |
+| OS | Linux / XFCE / X11 |
+| ラボ | モニター入力切替で Windows と画面共有。**端子対応は Windows と逆**（§4.2.1） |
+| Harite backend | CLI one-liner（`harite.workspace`） |
+
+**状態 A — ベースライン（2 枚）:** （未記入 — `xrandr` + one-liner を貼る）
+
+**状態 B — 1 枚再現:** （未記入 — L1 / L4 / L3 順）
+
+### 5.6 P3-1 進捗（Linux `linux-xfce`）
+
+| 項目 | 状態 |
+| --- | --- |
+| 観測 | **着手**（共有ディスプレイ・逆接続前提で §4.2.1 参照） |
+
 ---
 
 ## 6. 実装フェーズ案（観測後）
@@ -292,3 +325,4 @@ GDI `DISPLAYn` は設定番号・端子と無関係（下記 2 枚 dump は参�
 | 2026-06-06 | §4.3.2 — 設定対応正本化：**1＝DP（主）、2＝HDMI**（従来メモの逆転を訂正） |
 | 2026-06-06 | 設定対応修正 — **1＝DP（主）、2＝HDMI**。W2′-HDMI「2のみ」・DP 電源 off→`len==1` |
 | 2026-06-06 | Windows 観測クローズ — 再起動後もケーブル維持可。`DISPLAYn` は実装・記録の同定に使わない |
+| 2026-06-06 | §4.2.1 — XFCE 実機は共有モニター・端子逆。Windows §4.3.2 を Linux に持ち込まない |
