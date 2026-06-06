@@ -20,7 +20,6 @@ from harite.sources_preset import (
     canonical_preset_source_notes,
     find_catalog_profile_for_preset,
     find_catalog_source_for_preset,
-    min_interval_from_notes,
     preset_catalog_from_dict,
     repair_preset_profile_members,
     repair_preset_source_notes,
@@ -44,7 +43,8 @@ _BUNDLED_SOURCE_PRESET_IDS = {
     "ndl-random-indoor",
     "ndl-random-landmark",
     "ndl-random-outdoor",
-    "codh-edo-spots-sakura",
+    "codh-edo-spots-keyword",
+    "codh-edo-shops-keyword",
     "codh-edo-spots-random",
     "codh-edo-shops-random",
 }
@@ -60,7 +60,7 @@ def test_load_bundled_presets() -> None:
     kind_by_id = {template.preset_id: template.kind for template in presets.sources}
     assert kind_by_id["jma-near-color"] == KIND_JMA_WEATHER_MAP
     assert kind_by_id["ndl-random-illust"] == KIND_NDL_TSUGIDIGI
-    assert kind_by_id["codh-edo-spots-sakura"] == KIND_CODH_EDO
+    assert kind_by_id["codh-edo-spots-keyword"] == KIND_CODH_EDO
     for template in presets.sources:
         assert is_remote_kind(template.kind)
         assert template.min_slideshow_interval_seconds == 600
@@ -71,7 +71,7 @@ def test_format_preset_notes_does_not_duplicate_harite_preset_marker() -> None:
     template = next(t for t in presets.sources if t.preset_id == "jma-near-color")
     notes = canonical_preset_source_notes(template)
     assert notes.count("harite-preset:jma-near-color") == 1
-    assert notes.count("harite-min-interval:600") == 1
+    assert "harite-min-interval:" not in notes
     assert "出典" in notes
 
 
@@ -97,7 +97,9 @@ def test_repair_preset_source_notes_fixes_duplicated_markers(tmp_path: Path) -> 
     assert entry.notes == canonical_preset_source_notes(template)
 
 
-def test_import_preset_source_writes_marker_and_interval(tmp_path: Path) -> None:
+def test_import_preset_source_writes_marker_without_interval_in_notes(tmp_path: Path) -> None:
+    from harite.sources_preset import catalog_slideshow_interval_floor
+
     cache_root = tmp_path / "cache"
     catalog = empty_catalog()
     presets = load_source_presets()
@@ -111,9 +113,29 @@ def test_import_preset_source_writes_marker_and_interval(tmp_path: Path) -> None
 
     assert entry.kind == KIND_JMA_WEATHER_MAP
     assert preset_id_from_notes(entry.notes) == "jma-near-color"
-    assert min_interval_from_notes(entry.notes) == 600
+    assert "harite-min-interval:" not in entry.notes
+    assert catalog_slideshow_interval_floor(catalog, source_id_l=entry.id, preset_catalog=presets) == 600
     assert "出典" in entry.notes
     assert Path(entry.path).parent == cache_root
+
+
+def test_ndl_and_codh_random_interval_floor_from_preset_not_notes(tmp_path: Path) -> None:
+    from harite.sources_preset import catalog_slideshow_interval_floor
+
+    cache_root = tmp_path / "cache"
+    catalog = empty_catalog()
+    presets = load_source_presets()
+    for preset_id in ("ndl-random-illust", "codh-edo-spots-random", "codh-edo-shops-random"):
+        entry = import_preset_source(
+            catalog,
+            preset_id,
+            preset_catalog=presets,
+            cache_root=cache_root,
+        )
+        assert "harite-min-interval:" not in entry.notes
+        assert (
+            catalog_slideshow_interval_floor(catalog, source_id_l=entry.id, preset_catalog=presets) == 600
+        )
 
 
 def test_import_preset_profile_resolves_member_presets(tmp_path: Path) -> None:

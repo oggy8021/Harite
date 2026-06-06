@@ -36,3 +36,11 @@ def save_settings(path: Path, settings: dict[str, Any]) -> Path:
         json.dump(settings, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
     return p
+
+
+def patch_settings_value(path: Path, key: str, value: Any) -> Path:
+    """Merge a single key into the on-disk settings file without dropping other keys."""
+    p = Path(path)
+    data: dict[str, Any] = load_settings(p) if p.exists() else {}
+    data[key] = value
+    return save_settings(p, data)

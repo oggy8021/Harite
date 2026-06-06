@@ -28,9 +28,12 @@
 | `ndl-random-indoor` | NDL 図版（写真・屋内） | `remote-ndl-tsugidigi` |
 | `ndl-random-landmark` | NDL 図版（写真・ランドマーク） | `remote-ndl-tsugidigi` |
 | `ndl-random-outdoor` | NDL 図版（写真・屋外） | `remote-ndl-tsugidigi` |
-| `codh-edo-spots-sakura` | 江戸観光（桜） | `remote-codh-edo` |
+| `codh-edo-spots-keyword` | 江戸観光（キーワード） | `remote-codh-edo` |
+| `codh-edo-shops-keyword` | 江戸買物（キーワード） | `remote-codh-edo` |
 | `codh-edo-spots-random` | 江戸観光（おまかせ） | `remote-codh-edo` |
 | `codh-edo-shops-random` | 江戸買物（おまかせ） | `remote-codh-edo` |
+
+**C-01-E-KW（2026-06-05）:** `codh-edo-spots-sakura` を廃止し keyword preset 2 種へ。KW は `harite-settings.json` の `codh_keyword`（Manage `keyword(CODH)`、観光・買物共通、最大 16 文字、初期 `桜`）。
 
 Interval 下限 **600 s**（JMA と同型）。江戸マップ・座標連携は **見送り**。
 

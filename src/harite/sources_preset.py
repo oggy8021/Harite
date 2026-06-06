@@ -22,6 +22,7 @@ from harite.sources import (
     list_sources,
 )
 from harite.sources_remote import (
+    CODH_KEYWORD_NOTE_PREFIX,
     PRESET_MARKER_PREFIX,
     add_remote_source,
     is_remote_kind,
@@ -67,13 +68,17 @@ def _validate_preset_id(preset_id: str) -> str:
 
 
 def _strip_managed_preset_note_lines(text: str) -> str:
-    """Remove harite-preset / harite-min-interval lines (re-built by _format_preset_notes)."""
+    """Remove machine lines re-built by _format_preset_notes (preset marker, keyword, min interval)."""
     kept: list[str] = []
     for line in text.splitlines():
         stripped = line.strip()
         if not stripped:
             continue
-        if stripped.startswith(PRESET_MARKER_PREFIX) or stripped.startswith(MIN_INTERVAL_NOTE_PREFIX):
+        if (
+            stripped.startswith(PRESET_MARKER_PREFIX)
+            or stripped.startswith(MIN_INTERVAL_NOTE_PREFIX)
+            or stripped.startswith(CODH_KEYWORD_NOTE_PREFIX)
+        ):
             continue
         kept.append(stripped)
     return "\n".join(kept)
@@ -86,8 +91,6 @@ def _format_preset_notes(
     body = _strip_managed_preset_note_lines(template.notes)
     if body:
         lines.append(body)
-    if template.min_slideshow_interval_seconds is not None:
-        lines.append(f"{MIN_INTERVAL_NOTE_PREFIX}{template.min_slideshow_interval_seconds}")
     return "\n".join(lines)
 
 
@@ -381,14 +384,31 @@ def preset_min_slideshow_interval(
     raise ValueError(f"unknown preset id: {preset_id}")
 
 
+def source_slideshow_interval_floor(
+    entry: SourceEntry,
+    *,
+    preset_catalog: PresetCatalog | None = None,
+) -> int | None:
+    preset_id = preset_id_from_notes(entry.notes)
+    if preset_id:
+        templates = preset_catalog or load_source_presets()
+        try:
+            return preset_min_slideshow_interval(templates, preset_id)
+        except ValueError:
+            pass
+    return min_interval_from_notes(entry.notes)
+
+
 def catalog_slideshow_interval_floor(
     catalog: Catalog,
     *,
     source_id_l: str | None = None,
     source_id_r: str | None = None,
     profile_id: str | None = None,
+    preset_catalog: PresetCatalog | None = None,
 ) -> int | None:
     floors: list[int] = []
+    templates = preset_catalog or load_source_presets()
 
     if profile_id:
         profile = get_profile(catalog, profile_id)
@@ -399,7 +419,7 @@ def catalog_slideshow_interval_floor(
             if source_id:
                 entry = get_source(catalog, source_id)
                 if entry is not None:
-                    floor = min_interval_from_notes(entry.notes)
+                    floor = source_slideshow_interval_floor(entry, preset_catalog=templates)
                     if floor is not None:
                         floors.append(floor)
         return max(floors) if floors else None
@@ -410,7 +430,7 @@ def catalog_slideshow_interval_floor(
         entry = get_source(catalog, source_id)
         if entry is None:
             continue
-        floor = min_interval_from_notes(entry.notes)
+        floor = source_slideshow_interval_floor(entry, preset_catalog=templates)
         if floor is not None:
             floors.append(floor)
     return max(floors) if floors else None

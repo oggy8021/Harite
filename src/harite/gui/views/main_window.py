@@ -1224,38 +1224,47 @@ class MainWindow:
             self._stop_slideshow_for_catalog_change()
         return True
 
-    def _remote_source_ids_for_slideshow_start(self, catalog: Catalog) -> list[str]:
+    def _remote_slideshow_sync_targets(self, catalog: Catalog) -> list[tuple[str, str]]:
         from harite.sources_remote import is_remote_kind
 
-        ids: list[str] = []
+        targets: list[tuple[str, str]] = []
         profile_id = (self.slideshow_profile_id or "").strip()
         if profile_id:
             profile = get_profile(catalog, profile_id)
             if profile is None:
-                return ids
+                return targets
             for side in ("L", "R"):
                 source_id = getattr(profile.members, side)
                 if not source_id:
                     continue
                 entry = get_source(catalog, source_id)
                 if entry is not None and is_remote_kind(entry.kind):
-                    ids.append(source_id)
-            return ids
+                    targets.append((side, source_id))
+            return targets
 
-        for source_id in (self.slideshow_source_id_l, self.slideshow_source_id_r):
-            selected = (source_id or "").strip()
+        for side, raw_id in (
+            ("L", self.slideshow_source_id_l),
+            ("R", self.slideshow_source_id_r),
+        ):
+            selected = (raw_id or "").strip()
             if not selected:
                 continue
             entry = get_source(catalog, selected)
             if entry is not None and is_remote_kind(entry.kind):
-                ids.append(selected)
-        return ids
+                targets.append((side, selected))
+        return targets
 
     def _sync_remote_sources_for_slideshow_start(self, catalog: Catalog) -> None:
-        from harite.sources_remote import sync_remote_source
+        from harite.sources_remote import format_remote_sync_error, sync_remote_source
 
-        for source_id in self._remote_source_ids_for_slideshow_start(catalog):
-            sync_remote_source(catalog, source_id)
+        for side, source_id in self._remote_slideshow_sync_targets(catalog):
+            entry = get_source(catalog, source_id)
+            if entry is None:
+                continue
+            try:
+                sync_remote_source(catalog, source_id)
+            except ValueError as exc:
+                raise format_remote_sync_error(side, entry.name, exc) from exc
 
     def _resolve_slideshow_srcdirs_for_start(self) -> bool:
         catalog = self.load_source_catalog()

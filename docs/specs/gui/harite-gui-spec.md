@@ -256,9 +256,12 @@ design 合意: [20260601-c02-slideshow-source-registry-slice.html](../../working
 **Manage dialog:**
 
 - Sources: 一覧、Add（name + directory browse）、Delete（profile 参照中は [source-spec §7.5](../source/harite-source-spec.md) に従い拒否）。
+- **keyword(CODH)**（C-01-E-KW）: source リスト直下・Refresh 行の **直上**に **常設** `QLineEdit`（ラベル `keyword(CODH)`、初期値 `桜`、`maxLength=16`）。`codh-edo-spots-keyword` / `codh-edo-shops-keyword` 選択時のみ **enabled**；他 source 選択時は disabled（表示は settings の共通値のまま）。Refresh 前および Close 時に `harite-settings.json` の `codh_keyword` へ反映（[source-spec §15.7](../source/harite-source-spec.md)）。配置は **暫定** — 理想像は [P-05](../../working/20260518-2047-feature-overview.md) preset 面板。
 - Profiles: 一覧、L/R slot combo（source id または empty）、Add / Delete profile。
 - 保存は `harite-sources.json` へ即 write。settings dialog とは別 surface。
 - dialog Close 後、Slideshow tab の profile / saved source combo を reload する。
+
+design 合意: [20260605-c01-e-kw-manage-keyword-slice-memo.md](../../working/design/20260605-c01-e-kw-manage-keyword-slice-memo.md)
 
 **§4.1 との関係:**
 
@@ -378,7 +381,7 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 | --- | --- |
 | saved source / profile 選択変更 | `catalog_slideshow_interval_floor`（[source-spec §13.3](../source/harite-source-spec.md)）を求め、戻り値があれば `slideshow_interval_seconds` と spin を **その秒数以上**へ引き上げ |
 | profile 選択 | profile テンプレートに `min_slideshow_interval_seconds` があればそれを使う。無ければ members の各 source preset 下限の **最大値** |
-| 側別 source 選択 | 当該 source の `notes` の `harite-min-interval:{秒}`（import 時に preset から複写）または preset 定義を参照 |
+| 側別 source 選択 | 当該 source の `harite-preset:{id}` から同梱 preset の `min_slideshow_interval_seconds` を参照（`notes` に interval 行は書かない） |
 
 **`remote-jma-weather-map` 実行（Start 直前 Sync）:**
 
@@ -390,7 +393,8 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 
 | 項目 | 契約 |
 | --- | --- |
-| remote source 行の Refresh | `sync_remote_source` |
+| remote source 行の Refresh | `sync_remote_source`。失敗時は `remote sync failed ({source名}): …` |
+| Start 直前 sync | L/R それぞれで `sync_remote_source`。失敗時は `remote sync failed ({L\|R} — {source名}): …` |
 | Profile 行 icon | Lucide `bookmark` / `star` / `folder-heart` のいずれか（package resource） |
 | Manage 行 icon | Lucide `archive`（package resource） |
 
