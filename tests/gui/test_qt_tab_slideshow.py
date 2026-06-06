@@ -221,7 +221,10 @@ def test_options_drawer_toggle_applies_p07_open_state_styles(qapp):
     assert "background-color:" in top_border.styleSheet()
     assert drawer.objectName() == f"{QT_DRAWER_OBJECT_NAME}Expanded"
     assert trigger.objectName() == f"{QT_TRIGGER_OBJECT_NAME}Expanded"
-    assert "background-color:" in trigger.styleSheet()
+    trigger_sheet = trigger.styleSheet()
+    assert "background-color:" in trigger_sheet
+    assert trigger_sheet.endswith("}")
+    assert not trigger_sheet.endswith("}}")
 
     toggle_slideshow_options_drawer(backend)
     assert not getattr(backend, "_slideshow_options_drawer_expanded", True)

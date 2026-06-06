@@ -134,19 +134,36 @@ def _qt_widget_palette(widget: Any | None) -> Any:
     return QApplication.palette()
 
 
+def _qt_chrome_tint_color(palette: Any, *, ratio: float = 0.06) -> Any:
+    """GTK drawer chrome mix(theme_bg, theme_fg, ratio) for Qt."""
+    from PyQt6.QtGui import QColor, QPalette
+
+    bg = palette.color(QPalette.ColorRole.Window)
+    fg = palette.color(QPalette.ColorRole.WindowText)
+
+    def _mix(channel: str) -> int:
+        b = getattr(bg, channel)()
+        f = getattr(fg, channel)()
+        return max(0, min(255, round(b * (1.0 - ratio) + f * ratio)))
+
+    return QColor(_mix("red"), _mix("green"), _mix("blue"))
+
+
 def _qt_trigger_expanded_stylesheet(trigger: Any | None) -> str:
     from PyQt6.QtGui import QPalette
 
     palette = _qt_widget_palette(trigger)
-    alternate = palette.color(QPalette.ColorRole.AlternateBase).name()
+    chrome = _qt_chrome_tint_color(palette).name()
     mid = palette.color(QPalette.ColorRole.Mid).name()
     return (
         f"QPushButton#{QT_TRIGGER_OBJECT_NAME}Expanded {{"
-        f"background-color: {alternate};"
-        f"border: 1px solid {mid};"
-        "border-bottom: none;"
+        f"background-color: {chrome};"
+        f"border-top: 1px solid {mid};"
+        f"border-left: 1px solid {mid};"
+        f"border-right: 1px solid {mid};"
+        "border-bottom-width: 0px;"
         "padding: 4px 12px;"
-        "}}"
+        "}"
     )
 
 
@@ -159,8 +176,8 @@ def _qt_set_drawer_panel_palette(drawer: Any, *, expanded: bool) -> None:
         return
     if expanded:
         palette = drawer.palette()
-        alternate = palette.color(QPalette.ColorRole.AlternateBase)
-        palette.setColor(QPalette.ColorRole.Window, alternate)
+        chrome = _qt_chrome_tint_color(palette)
+        palette.setColor(QPalette.ColorRole.Window, chrome)
         drawer.setPalette(palette)
         drawer.setAutoFillBackground(True)
         return
