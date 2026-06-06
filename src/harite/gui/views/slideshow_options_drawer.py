@@ -10,23 +10,6 @@ FEWER_LABEL = "Fewer slideshow options…"
 QT_DRAWER_OBJECT_NAME = "hariteSlideshowOptionsDrawer"
 QT_TRIGGER_OBJECT_NAME = "hariteSlideshowOptionsTrigger"
 
-QT_DRAWER_EXPANDED_STYLESHEET = (
-    f"QWidget#{QT_DRAWER_OBJECT_NAME}Expanded {{"
-    " background-color: palette(alternate-base);"
-    " border-top: 1px solid palette(mid);"
-    " padding-left: 8px;"
-    " padding-right: 8px;"
-    " }}"
-)
-QT_TRIGGER_EXPANDED_STYLESHEET = (
-    f"QPushButton#{QT_TRIGGER_OBJECT_NAME}Expanded {{"
-    " background-color: palette(alternate-base);"
-    " border: 1px solid palette(mid);"
-    " border-bottom: none;"
-    " padding: 4px 12px;"
-    " }}"
-)
-
 GTK_DRAWER_STYLE_CLASS = "harite-slideshow-options-drawer-expanded"
 GTK_TRIGGER_STYLE_CLASS = "harite-slideshow-options-trigger-expanded"
 
@@ -143,11 +126,42 @@ def _gtk_toggle_class(widget: Any, class_name: str, *, enabled: bool) -> None:
         remove_class(class_name)
 
 
+def _qt_palette_color_names(widget: Any | None) -> tuple[str, str]:
+    """Resolve AlternateBase / Mid from a widget palette (theme-aware)."""
+    from PyQt6.QtGui import QPalette
+    from PyQt6.QtWidgets import QApplication
+
+    palette = widget.palette() if widget is not None else QApplication.palette()
+    alternate = palette.color(QPalette.ColorRole.AlternateBase).name()
+    mid = palette.color(QPalette.ColorRole.Mid).name()
+    return alternate, mid
+
+
+def _qt_drawer_expanded_stylesheet(drawer: Any | None) -> str:
+    alternate, mid = _qt_palette_color_names(drawer)
+    return (
+        f"background-color: {alternate};"
+        f"border-top: 1px solid {mid};"
+        "padding-left: 8px;"
+        "padding-right: 8px;"
+    )
+
+
+def _qt_trigger_expanded_stylesheet(trigger: Any | None) -> str:
+    alternate, mid = _qt_palette_color_names(trigger)
+    return (
+        f"background-color: {alternate};"
+        f"border: 1px solid {mid};"
+        "border-bottom: none;"
+        "padding: 4px 12px;"
+    )
+
+
 def _apply_qt_drawer_open_state(drawer: Any | None, trigger: Any | None, *, expanded: bool) -> None:
     if drawer is not None and hasattr(drawer, "setStyleSheet"):
         if expanded:
             drawer.setObjectName(f"{QT_DRAWER_OBJECT_NAME}Expanded")
-            drawer.setStyleSheet(QT_DRAWER_EXPANDED_STYLESHEET)
+            drawer.setStyleSheet(_qt_drawer_expanded_stylesheet(drawer))
             if hasattr(drawer, "setAutoFillBackground"):
                 drawer.setAutoFillBackground(True)
         else:
@@ -156,7 +170,7 @@ def _apply_qt_drawer_open_state(drawer: Any | None, trigger: Any | None, *, expa
     if trigger is not None and hasattr(trigger, "setStyleSheet"):
         if expanded:
             trigger.setObjectName(f"{QT_TRIGGER_OBJECT_NAME}Expanded")
-            trigger.setStyleSheet(QT_TRIGGER_EXPANDED_STYLESHEET)
+            trigger.setStyleSheet(_qt_trigger_expanded_stylesheet(trigger))
         else:
             trigger.setObjectName(QT_TRIGGER_OBJECT_NAME)
             trigger.setStyleSheet("")

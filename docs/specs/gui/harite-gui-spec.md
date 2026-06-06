@@ -151,7 +151,7 @@ Slideshow tab:
   - 将来の C-01-E-KW 入力は **Manage dialog 内**（Drawer 経由）を前提とする
 - registry / remote の **Refresh** 注意は既存どおり OK ダイアログ（C-04 パターン）。
 - C-04 Wave b 以降、補助面は **options drawer**（`More slideshow options…`）内に置き、正面は中核のみとする。
-- **Drawer 開閉視認性（P-07）:** 開時は drawer 面板に `palette(alternate-base)` 背景 + 上辺 `palette(mid)` 1px、トリガは同系背景・chevron up（閉=down）。`Fewer…` / `More…` ラベル反転は維持。入口: `slideshow_options_drawer.apply_slideshow_options_drawer_open_state`。
+- **Drawer 開閉視認性（P-07）:** 開時は drawer 面板に `QPalette.AlternateBase` / `Mid` を **実行時に解決した色**で背景 + 上辺 1px、トリガは同系背景・chevron up（閉=down）。`Fewer…` / `More…` ラベル反転は維持。入口: `slideshow_options_drawer.apply_slideshow_options_drawer_open_state`。
 
 Dialogs:
 
