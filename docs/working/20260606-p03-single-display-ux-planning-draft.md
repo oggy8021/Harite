@@ -144,9 +144,30 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 | 項目 | 説明 |
 | --- | --- |
 | 設定アプリの「1 画面」 | ユーザーには 1 枚に見えても **Harite が 2 と数える**ことがある（切断前の幽霊モニタ等）。**必ず one-liner** |
-| `\\.\DISPLAY1` / `DISPLAY2` | 物理端子名（HDMI/DP）と **一致しない**。順序は `EnumDisplayMonitors` 列挙順 |
+| **3 種類の番号はずれる** | 下記 §4.3.1。**設定の「ディスプレイ 1」≠ `DISPLAY1` ≠ Python の `0`** |
 | Span / 拡張 | slideshow dual-source は **2 枚検出**前提の経路が多い（[gui-spec §6](../specs/gui/harite-gui-spec.md)）。1 枚時の Span 意味は P3-2 と別 |
 | DPI / スケール | `scale_percent` が付くが P-03 の 1 枚判定には **使わない**（枚数のみ） |
+
+#### 4.3.1 Windows の「ディスプレイ 1/2」と Harite `DISPLAYn` / Python index
+
+**ずれています。** 3 層を混同しないこと。
+
+| 層 | 例 | 意味 |
+| --- | --- | --- |
+| **Windows 設定 UI** | 「ディスプレイ **1**」「ディスプレイ **2**」 | 設定アプリの 1 始まりラベル。しばしば **主ディスプレイ = 1** |
+| **Win32 / Harite `name`** | `\\.\DISPLAY**1**`, `DISPLAY**2**` | GDI デバイス名。**設定の番号と無関係**（`DISPLAY1` が「1 番目」とは限らない） |
+| **Python one-liner の index** | `0`, `1` | `detect_displays()` リストの添字 = `EnumDisplayMonitors` の列挙順 |
+
+**`win-cursor-dev` 実測（2026-06-06・Cursor を HDMI2 側へ移動後）:**
+
+| Python index | Harite `name` | primary | 位置 | 物理端子 |
+| --- | --- | --- | --- | --- |
+| `0` | `DISPLAY2` | Yes | 左 (0,0) | **HDMI2** |
+| `1` | `DISPLAY1` | No | 右 (3840,0) | **DisplayPort** |
+
+→ 設定で「**ディスプレイ 1**」と表示されるのは多くの場合 **主＝HDMI2＝Harite `DISPLAY2`**。一方 **DP 物理端子**は Harite では **`DISPLAY1`**（index `1`）。**「Windows の 1」と「DISPLAY1」は逆に感じることがある。**
+
+**観測記録のルール:** 設定 UI では **「ディスプレイ N」だけ書かない**。必ず **端子（HDMI/DP）・左右・主/副・one-liner 生 dump** をセットで残す。
 
 ### 4.4 DisplayPort / HDMI の観測メモ（P3-5）
 
@@ -226,3 +247,4 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 | 2026-06-06 | §4 Linux xrandr / Windows / DP・HDMI、§5 観測テンプレ、§1.1 現行 product 整理 |
 | 2026-06-06 | Windows 実機観測 — W2′（1 のみに表示）で `len==1`（HDMI 副次） |
 | 2026-06-06 | Windows 続き — 復帰 `len==2`、W4 HDMI 電源 off は `len==2`、qt R 側未無効化確認 |
+| 2026-06-06 | §4.3.1 — 設定「ディスプレイ 1/2」と `DISPLAYn` / Python index のずれを明記 |
