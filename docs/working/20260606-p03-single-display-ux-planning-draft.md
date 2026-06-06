@@ -1,7 +1,7 @@
 # P-03 — 単 display / monitor まわり UX（計画 draft）
 
 最終更新: 2026-06-06  
-ステータス: **planning draft**（P3-1 観測・再現手順の肉付け中）
+ステータス: **planning draft**（P3-1 観測完了 — P3-2 gate 待ち）
 
 ## 位置づけ
 
@@ -105,8 +105,8 @@ python -c "from harite.workspace import detect_displays; print(len(detect_displa
 | --- | --- | --- | --- |
 | L1 | `xrandr --output <副次出力名> --off` | 画面は 1 枚だが **`connected` 行は残りうる** → Harite **`len==2` のまま**（§4.2.2 実測） | xrandr / XFCE GUI の論理 off。**P-03 単 display 判定には使えない**可能性が高い |
 | L2 | XFCE **設定 → ディスプレイ** で副次を無効化 | L1 と同型 | GUI 操作の実機メモ用 |
-| L3 | 副次モニターの **ケーブル物理抜き**（DP または HDMI） | `connected` が `disconnected` に変わり `len==1` | **推奨の実機再現**（[#359](../online-issues/issue-359.md)） |
-| L4 | 副次モニターの **電源 off のみ**（ケーブル接続のまま） | 多くの環境で **2 枚のまま** | **再現に使わない**（負例として記録） |
+| L3 | 副次モニターの **ケーブル物理抜き**（DP または HDMI） | `connected` が `disconnected` に変わり `len==1` | `linux-xfce` では **未実施**（L4 で `disconnected` 確認済み・§5.6） |
+| L4 | 副次モニターの **電源 off のみ**（ケーブル接続のまま） | 環境依存 — **幽霊のまま**または **`disconnected`** | `linux-xfce` 実測: R/DP 電源 off → **`len==1`**（§4.2.2） |
 
 復帰: ケーブル再接続、または **明示レイアウト**（§4.2.3）。`--auto` 単体は **縮小解像度の拡張配置を復元しない**ことがある。
 
@@ -133,7 +133,19 @@ python -c "from harite.workspace import detect_displays; print(len(detect_displa
 | ベースライン | `HDMI-1` primary 2048×1280 + `DP-1` 2048×1280 | `len==2` |
 | **L1** `xrandr --output DP-1 --off` | `HDMI-1` は従来どおり。**`DP-1 connected`（モード行なし）が残る** | **`len==2`** — `DP-1` は `0x0` @ (0,0) |
 
-→ **論理 off だけでは「ユーザーには 1 画面」でも Harite は 2 枚**。Windows の設定「○のみに表示」（`len==1`）とは **非対称**。P3-1 の正手は **L3（ケーブル抜き → `disconnected`）** を優先。L2（XFCE GUI off）は L1 と同型の見込み。
+→ **論理 off（L1/L2）だけでは「ユーザーには 1 画面」でも Harite は 2 枚**（`0x0` 幽霊）。Windows の設定「○のみに表示」（`len==1`）とは **非対称**。
+
+**`linux-xfce` まとめ（P3-1）:**
+
+| 区分 | 操作 | Harite |
+| --- | --- | --- |
+| **正例** `len==1` | L4（R モニター DP 電源 off） | `DP-1 disconnected` |
+| **負例** `len==2` | L1（`xrandr --off`・主/副とも） | `connected` 幽霊維持 |
+| **スキップ** | L3 ケーブル抜き | L4 で `disconnected` 経路は確認済み。物理 1 台運用も別枠で想定済み（§4.2.4） |
+
+#### 4.2.4 物理モニター 1 台のユーザー（P-03 の本丸）
+
+**ケーブル 1 本・出力 1 つ**だけ接続している環境では、最初から `xrandr` / Harite とも **`len==1`**。2 枚観測ラボ（`linux-xfce`）は **「論理 off が効かない」負例**と **「電源 off / 論理切断の差」**のための補助実験。product 上の単 display UX は **この 1 台構成が主**で、P-03 の `len < 2` 判定は素直に効く。
 
 #### 4.2.3 復帰 — `--auto` の罠（`linux-xfce` 実測）
 
@@ -301,11 +313,18 @@ GDI `DISPLAYn` は設定番号・端子と無関係（下記 2 枚 dump は参�
 | GDI 名 | **信用不可確定**（再起動/サインアウト/復帰で変動） |
 | 2 枚復帰 | **復帰2 確認**（`len==2`） |
 | 観測クローズ | **2026-06-06 完了** — 再起動後もケーブル抜き不要。以降の作業は **設定 1/2＋端子**のみ記録し **`DISPLAYn` に同定しない** |
-| Linux 観測 | **進行中**（`linux-xfce` — L1 負例まで） |
+| Linux 観測 | **完了**（`linux-xfce` — §5.6） |
 
-**pass 判定（P3-1）:** 各 OS で、Harite `len==1` になる操作が **文書化済み**で、かつ **電源 off のみでは再現しない**ことがログで確認できる。**Windows（`win-cursor-dev`）は pass・観測終了**（Linux 待ち）。
+**pass 判定（P3-1）:** 各 OS で Harite `len==1` / `len==2` 維持の **場合分けが文書化済み**であること。
 
-### 5.5 Linux（XFCE）— `linux-xfce`（記入中）
+| OS | `len==1` の例 | `len==2` 維持の負例 | 状態 |
+| --- | --- | --- | --- |
+| Windows | W2′（設定「○のみ」）、DP 電源 off | W4-HDMI（HDMI 電源 off 幽霊） | **pass** |
+| Linux | L4（DP 電源 off）、物理 1 台（§4.2.4） | L1（`xrandr --off` 幽霊） | **pass** |
+
+※ 「電源 off のみは常に負例」ではない — **OS・端子で非対称**。再現手順の正本は OS ごとに §5 に記載。
+
+### 5.5 Linux（XFCE）— `linux-xfce`
 
 | フィールド | 値 |
 | --- | --- |
@@ -342,7 +361,10 @@ Harite: `len==2`（名前・座標は xrandr と一致）
 | ベースライン | **確定** `len==2`（HDMI-1 主左 / DP-1 副右） |
 | L1 論理 off | **負例確定** — `DP-1` / `HDMI-1` とも `len==2` 維持（§4.2.2） |
 | L4 電源 off | **実施** — R モニター DP 側 off → `len==1`。**復帰確認済み** → `len==2` |
-| L3 ケーブル抜き | **未実施** |
+| L3 ケーブル抜き | **スキップ** — L4 で `disconnected` 確認済み。物理 1 台想定で十分（§4.2.4） |
+| L2 XFCE GUI | **未実施**（L1 と同型の見込み） |
+| `harite-gtk` R UI | **未実施**（P-03 未実装・任意） |
+| 観測クローズ | **2026-06-06 完了** |
 
 ---
 
@@ -382,3 +404,4 @@ Harite: `len==2`（名前・座標は xrandr と一致）
 | 2026-06-06 | L4 復帰 — 電源 on でベースライン復帰（2048×1280 拡張・`len==2`） |
 | 2026-06-06 | L1-HDMI — `HDMI-1 --off` でも `connected` 残存・`primary` 維持 → `len==2` |
 | 2026-06-06 | L1-HDMI 復帰 — 明示 xrandr でベースライン復帰（`len==2`） |
+| 2026-06-06 | L3 スキップ・Linux 観測クローズ — §4.2.4 物理 1 台想定。P3-1 pass（両 OS） |
