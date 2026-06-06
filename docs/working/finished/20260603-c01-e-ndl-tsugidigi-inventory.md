@@ -8,11 +8,10 @@
 | --- | --- |
 | 親 | [feature-overview §C-01-E](20260518-2047-feature-overview.md) |
 | 関連 planning | [C-01 外部壁紙 planning](20260603-1400-c01-external-wallpaper-source-planning.md) |
-| ステータス | **調査のみ**（Harite `remote-ndl` / 同梱 preset は未実装） |
+| ステータス | **調査記録**（実装完了 — 契約正本は [harite-source-spec §15.6](../../specs/source/harite-source-spec.md)） |
 | 目的 | 次世代デジタルライブラリー API（図版・ランダム取得・IIIF）の棚卸と **Harite 採用可否**の整理 |
 | スコープ外（現時点） | Book / Page 全文検索、OCR ダウンロード、ギャラリー UI、`searchbytext` キーワード探索 |
-| 正本性 | 本 inventory + OpenAPI live 検証（**公式タグ enum は Swagger に無い**） |
-| 実装正本（将来） | [harite-source-spec §15](../specs/source/harite-source-spec.md) + 同梱 `harite-source-presets.json` |
+| 正本性 | API 調査は本 inventory。product / 実装契約は **source-spec §15.6**（OpenAPI live 検証 — 公式タグ enum は Swagger に無い） |
 
 **観測日時:** 2026-06-03（`lab.ndl.go.jp` / `dl.ndl.go.jp` への live 呼び出し）
 

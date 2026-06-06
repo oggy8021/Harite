@@ -365,8 +365,8 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 
 | 順序 | 処理 |
 | --- | --- |
-| 1 | `bootstrap_preset_sources(catalog)` — 変更時は `save_catalog` |
-| 2 | preset 由来の各 remote source に `sync_remote_source`（失敗は message history、起動は継続） |
+| 1 | `materialize_source_catalog_at_path` — preset bootstrap（`sync=False`）、孤児 cache 削除、CODH keyword migrate |
+| 2 | **ネットワーク sync は行わない**（[source-spec §12.4.1](../source/harite-source-spec.md) — 再起動のみでは `latest.*` は変わらない） |
 | 3 | §4.2 の profile / saved source combo を再構築 |
 
 `combo_slideshow_profile` / `combo_slideshow_source_l` / `combo_slideshow_source_r` は、同梱 preset 由来の source / profile を user 追加分とあわせて列挙する。
@@ -399,8 +399,8 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 
 | 項目 | 契約 |
 | --- | --- |
-| remote source 行の Refresh | `sync_remote_source`。失敗時は `remote sync failed ({source名}): …` |
-| Start 直前 sync | L/R それぞれで `sync_remote_source`。失敗時は `remote sync failed ({L\|R} — {source名}): …` |
+| remote source 行の Refresh | 選択中 `remote-*` に `sync_remote_source`（CODH keyword preset は flush 後）。意味は [source-spec §12.4.2](../source/harite-source-spec.md) — JMA=鮮度更新、NDL/CODH=表示候補の再抽選（Start 直前 sync と重複しうる） |
+| Start 直前 sync | L/R それぞれで `sync_remote_source`。失敗時は `remote sync failed ({L\|R} — {source名}): …`。**再起動 + Start** で日次の絵替え入口になりうる（§12.4.1） |
 | Profile 行 icon | Lucide `bookmark` / `star` / `folder-heart` のいずれか（package resource） |
 | Manage 行 icon | Lucide `archive`（package resource） |
 

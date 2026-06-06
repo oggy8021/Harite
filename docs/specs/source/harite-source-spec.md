@@ -1,6 +1,6 @@
 # Harite source registry 仕様 (Source Spec)
 
-最終更新: 2026-06-03 (C-01 — §12–16、§15 気象庁 provider)
+最終更新: 2026-06-06（remote provider 契約の正本集約 — §12.4.1 Refresh、§12.5、§15.6–15.7）
 
 ## 1. 責務
 
@@ -310,9 +310,10 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 
 **保持（オンデマンド）:**
 
-- 1 回の `sync_remote_source` は **必要な PNG を都度 GET** し、cache へ **上書き** する。世代蓄積は **しない**。
-- 気象庁（§15）: cache 内の採用ファイルは **`latest.png` 1 件**。Sync 成功時、当該 directory の他 `*.png` は削除してよい。
-- slideshow **実行中**の Sync は、当該 run が参照中の `latest.png` を置き換えない（実行中は Sync を拒否、または stop 後に Refresh）。
+- 1 回の `sync_remote_source` は **必要な画像 1 枚を都度 GET** し、cache へ **上書き** する。世代蓄積・所蔵リストのローカル複製は **しない**（§12.5）。
+- 採用ファイル名は provider 共通ヘルパで **`latest.jpg`**（JPEG）または **`latest.png`**（PNG）。Sync 成功時、当該 directory の他 `*.png` / `*.jpg` / `*.jpeg` は削除してよい。
+- 気象庁（§15.1–15.2）は常に **`latest.png` 1 件**。NDL / CODH は URL に応じて §上記のいずれか 1 件。
+- slideshow **実行中**の Sync は、当該 run が参照中の `latest.*` を置き換えない（実行中は Sync を拒否、または stop 後に Refresh）。
 
 **初回 import 時:** cache directory は **未作成でもよい**。`path` は `{cache_root}/{source_id}` を **予約**として catalog に書く。初回 Sync 成功で directory と画像が出現する。
 
@@ -331,11 +332,85 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 | **Catalog materialize** | GUI 起動・combo 更新時 — preset 追加・修復、**孤児 cache directory 削除**（§12.3）。**ネットワーク sync は行わない**（UI ブロック防止） |
 | **Refresh** | Manage dialog の Refresh — 選択中 remote に `sync_remote_source` |
 | **slideshow Start 直前** | 実行予定の L/R が参照する **すべての `remote-*`** source に `sync_remote_source`（[gui-spec §6.5](../gui/harite-gui-spec.md)） |
-| **slideshow tick** | network fetch しない（表示更新は cache の `latest.png`） |
+| **slideshow tick** | network fetch しない。各 tick は cache directory を `local-dir` と同型に再スキャンし、§12.5 の `latest.*` 1 枚を apply 対象とする |
 | **resolve** | `remote-*` は cache directory が無ければ **作成してから** §4 と同型の `normalize_directory_path` を満たす。`local-dir` は既存 directory 必須。空 directory や画像 0 件は **resolve 時には成功しうる**が、slideshow start の画像収集は [slideshow-spec](../slideshow/harite-slideshow-spec.md) で失敗しうる |
 | **実行中** | cache 削除・Sync による参照不能 → §7.5 / §7.6 と同型（stop / start failure） |
 
 network エラー・HTTP 4xx/5xx は Sync 時に `ValueError`（またはラップした `OSError` を `ValueError` に変換してよい）。
+
+**tick 毎の再 Sync（C-01-F）:** 現行 product では **採用しない**（据え置き）。interval ごとに別候補へ切り替えたい場合は、現行では Stop → Start または Manage **Refresh** で sync を走らせる。
+
+#### 12.4.1 再起動・Refresh・Start — cache が変わる条件（正本）
+
+ユーザーが「毎日アプリを開き直せば絵が変わるか」と読むときの契約。**sync が走らない操作では `latest.*` は前回のまま**残る。
+
+| 操作の組み合わせ | network sync | `latest.*` の中身 |
+| --- | --- | --- |
+| **アプリ再起動のみ** | **しない**（materialize は `bootstrap_preset_sources(..., sync=False)`） | **変わらない** — 前セッションの cache をそのまま読む |
+| 再起動 → **Slideshow Start** | **する**（実行 L/R の全 `remote-*`） | **変わりうる** — 層 A で候補を引き直す（§12.5） |
+| 再起動 → Manage **Refresh** → Close | **する**（選択中 remote **1 件**） | 当該 source だけ変わりうる。Slideshow はまだ Start していなければ壁紙 apply は起きない |
+| 実行中の **tick** のみ | しない | 変わらない |
+| **Stop** → **Start**（再起動なし） | Start 直前で sync | 変わりうる（再起動 + Start と同型の sync 入口） |
+
+**日常運用の読み方:** 「日々違う絵にしたい」なら **その日の最初の Slideshow Start**（前日 Stop 済み、または起動直後）が自然な入口。**再起動だけでは足りない**。前日と同じ cache を載せたまま Start すれば、sync 後に別候補へ変わりうる（NDL/CODH はランダム再抽選、JMA は list の最新 filename）。
+
+#### 12.4.2 Manage Refresh の product 意味（provider 別）
+
+Refresh はいずれも `sync_remote_source` 1 回だが、**ユーザーにとっての意味は provider で異なる**。
+
+| provider 群 | Refresh が意味すること | 必須か |
+| --- | --- | --- |
+| **JMA**（`remote-jma-weather-map`） | 気象庁 `list.json` から **最新の実況天気図**を取り直す（コンテンツ自体が時系列で更新される） | 鮮度が要るなら **Start 直前 sync でも足りる**。Refresh は Start 前の明示的プレビュー／手動更新 |
+| **NDL / CODH**（所蔵アーカイブ系） | 母集合（所蔵コーパス）は **滅多に変わらない**前提のまま、**「どの 1 枚を見せるか」だけ**を引き直す（NDL=サーバー random、CODH=`total`+random `start`） | **必須ではない**。同じことは **Slideshow Start 直前 sync** でも起きる（L/R 全 remote） |
+| **CODH keyword preset** | Refresh 前に Manage の `keyword(CODH)` を `harite-settings.json` へ flush してから sync — **keyword 変更後の再抽選** | keyword を変えた直後は Refresh または次回 Start で反映 |
+
+**Refresh が Start と重複しうる理由（NDL/CODH）:** Start は slideshow 実行の副作用として sync する。Refresh は **slideshow を開始せず**、または **選択中の 1 source だけ** cache を更新したいときの入口。所蔵更新ではなく **表示候補の再抽選**である点は §12.5 層 A と同じ。
+
+**取りづらさの整理:** 所蔵ライブラリの更新を追うための Refresh ではない。アーカイブ系では「もう一度ランダムに引く」操作に近く、**毎日の変化は再起動 + Start** で足りる設計（Start で必ず sync するため）。
+
+### 12.5 Remote cache と slideshow Mode（正本）
+
+NDL / CODH を含む **すべての `remote-*`** に共通する契約。実装・product 説明の **一次参照は本節と §15** とする（`docs/working/finished/*inventory*` は API 調査の背景資料）。
+
+#### 設計前提
+
+| 前提 | 契約 |
+| --- | --- |
+| 所蔵の更新頻度 | 国立機関コレクションは **滅多に変わらない**前提でよい |
+| ローカルコーパス | Harite は **所蔵リスト全体を cache に持たない**。sync ごとに **画像 1 枚**を取得し `latest.*` で上書き |
+| 鮮度 | **Start 直前 Sync** と **Refresh** が画像入れ替えの入口。tick 毎の network fetch は §12.4 のとおり **しない** |
+
+#### cache の slideshow 入力としての意味
+
+- `resolve` 後の remote `path`（`{cache_root}/{source_id}/`）は **`local-dir` と同型**の slideshow 入力 directory（[slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md)）。
+- 各 tick で `collect_slideshow_input_images` が directory を再スキャンするが、正常運用では **画像は 1 枚**（`latest.jpg` または `latest.png`）のみ。
+- **ローカル所蔵リストの中を sequential / random で回す**方式ではない。
+
+#### 2 層の「選び方」（混同しない）
+
+| 層 | いつ | 何を決めるか | 正本 |
+| --- | --- | --- | --- |
+| **A. Sync 時の候補選択** | Start 直前・Refresh | リモートコーパス（または keyword 絞り込み後）から **どの 1 キャンバス／図版**を画像化するか | §15.6（NDL）、§15.7（CODH）、§15.2（JMA） |
+| **B. Slideshow Mode** | 各 tick | **すでに cache にあるファイル列**から次に apply する path（`sequential` / `random`） | [slideshow-spec](../slideshow/harite-slideshow-spec.md) |
+
+層 A と層 B は **直列につながらない**。remote のみの side では cache が 1 枚のため、**層 B（Mode）は実質ノーオペ** — `sequential` も `random` も毎 tick 同一ファイルを選ぶ。
+
+#### L/R と Mode
+
+- L / R は **独立**に `collect_slideshow_input_images` → cycle する（L/R 別 `SlideshowCycleState`）。
+- Mode 設定は run 全体で 1 つだが、**各 side の `images` リスト長**に対して適用される。
+- 例: L = CODH（1 枚）・R = `local-dir`（多数）→ **R 側だけ** Mode が効く。L/R 両方 remote なら **両方とも Mode 無効**（各 1 枚）。
+
+#### 絵が変わるタイミング（現行）
+
+| 操作 | 層 A（新しい候補の取得） | 層 B（Mode による切替） |
+| --- | --- | --- |
+| アプリ **再起動のみ** | **しない**（§12.4.1） | — |
+| 再起動 → Slideshow **Start** | 実行 L/R の全 `remote-*` で sync → 候補が変わりうる | 開始 |
+| Slideshow **Start**（再起動なし） | 同上 | 開始 |
+| Manage **Refresh** | 選択中 remote で sync（Start せず再抽選） | — |
+| Slideshow **tick** | **しない** | cache 1 枚なら変化なし |
+| Mode を sequential ↔ random に変更 | — | remote 1 枚 side では見た目変化なし |
 
 ## 13. Source preset（C-01 段 1a）
 
@@ -505,33 +580,73 @@ harite-preset:{preset_id}
 出典：気象庁ホームページ（https://www.jma.go.jp/）
 ```
 
-### 15.5 デュアル slideshow L/R
+### 15.5 Remote source と slideshow L/R（共通）
+
+すべての `remote-*`（JMA / NDL / CODH 含む）に共通:
+
+| 項目 | 契約 |
+| --- | --- |
+| 入力形状 | 各 source の cache は **画像 1 枚**（`latest.*`）。§12.5 |
+| start 前 | [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md) — 実行 L/R の全 `remote-*` で sync → resolve → `slideshow_srcdir_*` |
+| tick | network 再取得 **しない**。Mode は cache 1 枚の side では **実質無効**（§12.5） |
+| 鮮度 | Start 直前 Sync / Manage Refresh のみ |
+
+**気象庁デュアル profile 例:**
 
 | 項目 | 契約 |
 | --- | --- |
 | 既定 profile | 同梱 `jma-dual-lr` — L = `jma-near-color`、R = `jma-asia-color` |
-| start 前 resolve | [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md) — 各 side の cache を `slideshow_srcdir_*` に展開 |
-| 画像収集 | 各 cache の `latest.png`（1 枚）。tick 毎の再取得は **しない**（鮮度は Start 直前 Sync / Refresh） |
 | Interval 下限 | 同梱 preset の `min_slideshow_interval_seconds`（気象庁: **600**）— [gui-spec §6.5](../gui/harite-gui-spec.md) |
 
 ## 15.6 Provider 実装 — NDL 次世代デジタルライブラリー（C-01-E）
 
-`kind`: **`remote-ndl-tsugidigi`**。API key は用いない。調査正本: [NDL inventory](../../working/finished/20260603-c01-e-ndl-tsugidigi-inventory.md)。
+`kind`: **`remote-ndl-tsugidigi`**。API key は用いない。
 
-| `preset_id` | 取得 |
+**実装契約の正本は本節。** OpenAPI 調査の背景は [NDL inventory](../../working/finished/20260603-c01-e-ndl-tsugidigi-inventory.md)（**任意** — 本節と矛盾したら本節を優先）。
+
+### 15.6.1 データ源
+
+| 層 | URL / 役割 |
 | --- | --- |
-| `ndl-random-map` | `GET .../illustration/randomwithfacet?size=1&f-graphictags.tagname=graphic_map` |
-| `ndl-random-illust` | `...&f-graphictags.tagname=graphic_illust` |
-| `ndl-random-illustcolor` | `...&f-graphictags.tagname=graphic_illustcolor` |
-| `ndl-random-indoor` | `...&f-graphictags.tagname=picture_indoor` |
-| `ndl-random-landmark` | `...&f-graphictags.tagname=picture_landmark` |
-| `ndl-random-outdoor` | `...&f-graphictags.tagname=picture_outdoor` |
+| Illustration API | `https://lab.ndl.go.jp/dl/api/illustration/randomwithfacet` — **サーバー側ランダム**（`size=1` 必須） |
+| IIIF 画像 | `https://dl.ndl.go.jp/api/iiif/{pid}/{page}/pct:{x},{y},{w},{h}/max/0/default.jpg` |
+
+### 15.6.2 同梱 preset
+
+| `preset_id` | facet タグ（`f-graphictags.tagname`） |
+| --- | --- |
+| `ndl-random-map` | `graphic_map` |
+| `ndl-random-illust` | `graphic_illust` |
+| `ndl-random-illustcolor` | `graphic_illustcolor` |
+| `ndl-random-indoor` | `picture_indoor` |
+| `ndl-random-landmark` | `picture_landmark` |
+| `ndl-random-outdoor` | `picture_outdoor` |
 
 plain `/illustration/random`（旧 `ndl-random`）は **同梱しない**。
 
-Sync: 返却 `Illustration` から IIIF URL（`dl.ndl.go.jp/api/iiif/{pid}/{page}/pct:.../max/0/default.jpg`）を GET。IIIF **404** のときは **同一 URL を再試行せず** Illustration API を再呼び出して別候補を試す（最大 **5** 回、**試行間の待ち時間なし**）。cache は **`latest.jpg`**（JPEG）または **`latest.png`**（URL に応じて §14 共通ヘルパ）。
+### 15.6.3 Sync 手順
 
-帰属（preset `notes`）:
+`harite-preset:{preset_id}` で facet を解決し、次を行う。
+
+1. `GET randomwithfacet?size=1&f-graphictags.tagname={facet}` → JSON 配列 1 件（`Illustration`）。
+2. 返却から `pid`, `page`, `x`, `y`, `w`, `h` を読み IIIF URL を組み立てる。
+3. IIIF URL を GET し画像 bytes を取得する。
+4. §12.3 の共通ヘルパで **`latest.jpg`**（または URL に応じた `latest.png`）として cache へ上書き保存する。
+
+**IIIF 404:** 同一 IIIF URL は **再試行しない**。手順 1 から Illustration API を **再呼び出し**して別候補を試す（最大 **5** 回、試行間の待ち時間なし）。5 回とも失敗なら `ValueError`。
+
+### 15.6.4 候補選択と保持しないもの
+
+| 項目 | 契約 |
+| --- | --- |
+| ランダムの主体 | **NDL サーバー**（`randomwithfacet`）。Harite はローカルコーパスを持たず、sync ごとに API を 1 回（404 時は再呼び出し） |
+| ローカルリスト巡回 | **しない** — cache は常に **1 枚**（§12.5） |
+| Illustration メタデータ | IIIF URL 生成に使ったら **永続化しない**（`pid` / 切り出し矩形 / 書誌情報等は cache に残さない） |
+| Slideshow Mode | §12.5 — remote のみの side では **実質無効** |
+
+### 15.6.5 帰属
+
+preset `notes` および Manage 表示（`harite-preset:` 行の次行）:
 
 ```text
 出典：国立国会図書館デジタルコレクション・次世代デジタルライブラリー（https://dl.ndl.go.jp/）
@@ -539,24 +654,60 @@ Sync: 返却 `Illustration` から IIIF URL（`dl.ndl.go.jp/api/iiif/{pid}/{page
 
 ## 15.7 Provider 実装 — CODH 江戸 ICP（C-01-E）
 
-`kind`: **`remote-codh-edo`**。Canvas Indexer API（`mp.ex.nii.ac.jp`）。調査正本: [CODH inventory](../../working/finished/20260603-c01-e-codh-icp-inventory.md)。
+`kind`: **`remote-codh-edo`**。Canvas Indexer search API（`https://mp.ex.nii.ac.jp/api/{indexer}/search`）。
 
-| `preset_id` | 検索 |
-| --- | --- |
-| `codh-edo-spots-keyword` | `edo-spots` — `where={codh_keyword}`（部分一致。地名・題材を横断）。`total` → random `start` |
-| `codh-edo-shops-keyword` | `edo-shops` — 同一 `where={codh_keyword}`。random `start` |
-| `codh-edo-spots-random` | `edo-spots` — `total` 取得後 `start` 乱数 + `limit=1` |
-| `codh-edo-shops-random` | `edo-shops` — 同上 |
+**実装契約の正本は本節。** API フィールド調査の背景は [CODH inventory](../../working/finished/20260603-c01-e-codh-icp-inventory.md)（**任意**）。
+
+### 15.7.1 データ源
+
+| indexer | データセット | 用途 |
+| --- | --- | --- |
+| `edo-spots` | 江戸観光案内 | 観光 preset |
+| `edo-shops` | 江戸買物案内 | 買物 preset |
+
+Harite は **Curation JSON 全体や所蔵リストのローカル複製を取得しない**。search API で **1 件ずつ** `canvasThumbnail`（IIIF Image API URL）を取得する。
+
+### 15.7.2 同梱 preset
+
+| `preset_id` | indexer | 検索条件 |
+| --- | --- | --- |
+| `codh-edo-spots-keyword` | `edo-spots` | `where={codh_keyword}`（部分一致）+ §15.7.3 の random `start` |
+| `codh-edo-shops-keyword` | `edo-shops` | 同上 |
+| `codh-edo-spots-random` | `edo-spots` | 絞り込みなし + random `start` |
+| `codh-edo-shops-random` | `edo-shops` | 同上 |
 
 plain `codh-edo-spots-sakura`（固定 `桜`）は **同梱しない**。
 
-**`codh_keyword`（C-01-E-KW）:** `harite-settings.json` トップレベル。観光・買物 keyword preset **共通**（K1）。最大 **16** 文字（`len` 基準）。初期値 **`桜`**。source `notes` / 同梱 preset JSON には **書かない**（旧 `harite-codh-keyword:` 行は起動時 migrate で settings へ移し notes から除去）。
+**`codh_keyword`（C-01-E-KW）:** `harite-settings.json` トップレベル。観光・買物 keyword preset **共通**。最大 **16** 文字（`len` 基準）。初期値 **`桜`**。source `notes` / 同梱 preset JSON には **書かない**（旧 `harite-codh-keyword:` 行は起動時 migrate で settings へ移し notes から除去）。
 
-Sync: `results[0].canvasThumbnail` の `/200,/` を `/max/` に置換して GET。cache ファイル名は §15.6 と同様。
+### 15.7.3 Sync 手順（random `start`）
 
-帰属（preset `notes`）: 江戸観光案内 / 江戸買物案内の各 URL（同梱 preset JSON 参照）。
+共通クエリ: `select=canvas`, `from=canvas,curation`, `limit=1`。keyword preset は `where={codh_keyword}` を追加。
 
-**スコープ外:** 江戸マップ ID・緯度経度・GIS。
+1. **probe:** `start=0&limit=1` で search を GET → 応答の `total`（件数）を読む。`total < 1` は `ValueError`。
+2. **pick:** `start = uniform_random(0 .. total-1)` を生成し、同一条件で再 GET → `results[0]` を 1 件得る。
+3. `results[0].canvasThumbnail`（文字列）の `/200,/` を `/max/` に置換した URL を GET する。
+4. §12.3 の共通ヘルパで **`latest.jpg`** または **`latest.png`** として cache へ上書き保存する。
+
+**注意:** `limit` 省略は **禁止**（全コーパス JSON を返しうる）。常に `limit=1`。
+
+### 15.7.4 候補選択と保持しないもの
+
+| 項目 | 契約 |
+| --- | --- |
+| ランダムの主体 | **Harite クライアント**（`total` 取得後の `start` 乱数）。CODH 側の dedicated random API には依存しない |
+| ローカルリスト巡回 | **しない** — コーパス全体は download せず、sync ごとに **1 件**だけ取得して `latest.*` に上書き |
+| 捨てる応答フィールド | `manifestLabel`, `manifestUrl`, `canvasId`, `fragment`（`xywh`）等 — **画像 URL 生成以外は永続化しない** |
+| 帰属の正本 | API 応答ではなく **preset `notes` の固定 URL**（同梱 `harite-source-presets.json`） |
+| Slideshow Mode | §12.5 — `start` 乱数は **sync 時（層 A）** のみ。Mode（層 B）は cache 1 枚のため **実質無効** |
+
+### 15.7.5 帰属
+
+江戸観光案内 / 江戸買物案内の各 URL — 同梱 preset JSON の `notes` を正とする。
+
+### 15.7.6 スコープ外
+
+江戸マップ ID・緯度経度・GIS・Curation JSON の自前パース。
 
 ## 16. GUI / CLI（C-01）
 
