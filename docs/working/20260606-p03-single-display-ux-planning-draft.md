@@ -131,8 +131,9 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 
 | 順 | 操作 | 記録すること | 備考 |
 | --- | --- | --- | --- |
-| W1 | **設定 → ディスプレイ → 副次 → 「このディスプレイを切断」**（Win11 文言） | 設定上 1 枚になったか + Harite `len` | OS 論理切断。ケーブルは刺さったままのことが多い |
-| W2 | `Win + P` → **PC 画面のみ** | 同上 | ノート + 外付けでよく使う。外付けが消えるかは機種依存 |
+| W1 | **設定 → ディスプレイ → 副次 → 「このディスプレイを切断」**（Win11 一部環境） | 設定上 1 枚になったか + Harite `len` | UI に無い環境あり → W2′ へ |
+| W2 | `Win + P` → **PC 画面のみ** | 同上 | ノート + 外付けでよく使う |
+| W2′ | **設定 → ディスプレイ → 「1 のみに表示する」**（日本語 Win11 実機 2026-06-06） | 同上 | W1 代替。**HDMI 副次を論理 off → Harite `len==1` 確認済み**（§5.2–5.3） |
 | W3 | 副次の **ケーブル物理抜き**（DP / HDMI） | 同上 | **推奨の実機再現** |
 | W4 | 副次モニター **電源 off のみ** | Harite `len` が 2 のままか | **負例**（HDMI/DP とも EDID 残存しうる） |
 
@@ -167,28 +168,28 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 
 ### 5.1 マシン識別
 
-| フィールド | 例 |
+| フィールド | 値（win-cursor-dev） |
 | --- | --- |
-| ラベル | `linux-xfce-laptop` / `win-desktop` |
-| OS | Linux Mint XFCE / Windows 11 |
-| Harite backend | `harite-qt`（観測時のコマンド） |
-| 構成 | 内蔵 + 外付け / デスクトップ 2 枚 等 |
+| ラベル | `win-cursor-dev` |
+| OS | Windows（26200 系） |
+| Harite backend | CLI one-liner（`harite.workspace`） |
+| 構成 | デスクトップ 2 枚・横並び拡張。副次=右・**HDMI** |
 
 ### 5.2 状態 A — ベースライン（2 枚）
 
 | 項目 | 記入 |
 | --- | --- |
-| 物理接続 | 例: 内蔵 HDMI + 外付け DP |
-| `xrandr --query` 要約（Linux） | `connected` 行 2 つ（名前） |
+| 物理接続 | 左 primary + 右 **HDMI** |
+| `xrandr --query` 要約（Linux） | — |
 | 設定アプリ（Windows） | ディスプレイ 2 |
-| `len(detect_displays())` | |
-| `detect_displays()` 生 dump | §4.1 one-liner 出力を貼付 |
+| `len(detect_displays())` | **2** |
+| `detect_displays()` 生 dump | `DISPLAY1` 3840×2160 primary (0,0); `DISPLAY2` 3840×2160 (3840,0); scale 150% |
 
 ### 5.3 状態 B — 1 枚再現（操作ごとに 1 行）
 
-| 操作 ID | L1–L4 / W1–W4 | 端子 | `len` | R 側 UI（Slideshow） | メモ |
+| 操作 ID | 操作 | 端子 | `len` | R 側 UI（Slideshow） | メモ |
 | --- | --- | --- | --- | --- | --- |
-| | | DP / HDMI | | 有効のまま? | |
+| W2′ | 設定 → **「1 のみに表示する」** | HDMI（副次） | **1** | （未確認） | `DISPLAY1` のみ残存。切断メニュー無し環境の正手 |
 | | | | | | |
 
 **pass 判定（P3-1）:** 各 OS で、Harite `len==1` になる操作が **文書化済み**で、かつ **電源 off のみでは再現しない**ことがログで確認できる。
@@ -213,3 +214,4 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 | --- | --- |
 | 2026-06-06 | 初版 — C-01-E-KW 完了後のストック着手として起票 |
 | 2026-06-06 | §4 Linux xrandr / Windows / DP・HDMI、§5 観測テンプレ、§1.1 現行 product 整理 |
+| 2026-06-06 | Windows 実機観測 — W2′（1 のみに表示）で `len==1`（HDMI 副次） |
