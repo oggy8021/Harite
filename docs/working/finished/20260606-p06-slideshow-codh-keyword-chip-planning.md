@@ -1,16 +1,16 @@
-# P-06 — Slideshow CODH キーワード read-only 露出（計画 draft）
+# P-06 — Slideshow CODH キーワード read-only 露出（計画正本）
 
 最終更新: 2026-06-06  
-ステータス: **impl 完了**（Qt — gate pass、gui-spec 改訂済み）
+ステータス: **完了**（Qt — gate pass、gui-spec 改訂済み）
 
 ## 位置づけ
 
 | 文書 | 役割 |
 | --- | --- |
-| [feature-overview §P-06](20260518-2047-feature-overview.md) | inventory 入口 |
-| **本書** | Slideshow タブ内の CODH キーワード **読み取り専用**露出 — 計画正本 |
-| [C-01-E-KW 完了](finished/20260605-c01-e-kw-codh-keyword-planning.md) | 編集は Manage `keyword(CODH)` |
-| [P-05 planning](20260606-p05-manage-sources-panel-planning-draft.md) | Manage 内の編集面整理（本書とは別） |
+| [feature-overview §P-06](../20260518-2047-feature-overview.md) | inventory 入口 |
+| **本書** | Slideshow タブ内の CODH キーワード **読み取り専用**露出 — 計画正本（完了記録） |
+| [C-01-E-KW 完了](20260605-c01-e-kw-codh-keyword-planning.md) | 編集は Manage `keyword(CODH)` |
+| [P-05 planning](20260606-p05-manage-sources-panel-planning.md) | Manage 内の編集面整理（本書とは別） |
 
 **きっかけ（2026-06-06）:** キーワード preset 運用中に「いま何で回しているか」を見るには Manage が遠い。編集は Manage のまま、**確認だけ Slideshow タブ**に置く。
 

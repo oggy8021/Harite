@@ -1,17 +1,17 @@
-# P-05 — Manage sources リスト整理（計画 draft）
+# P-05 — Manage sources リスト整理（計画正本）
 
 最終更新: 2026-06-06  
-ステータス: **impl 完了**（Qt — gate pass、gui-spec 改訂済み）
+ステータス: **完了**（Qt — gate pass、gui-spec 改訂済み）
 
 ## 位置づけ
 
 
 | 文書                                                                          | 役割                                    |
 | --------------------------------------------------------------------------- | ------------------------------------- |
-| [feature-overview §P-05](20260518-2047-feature-overview.md)                 | inventory 入口                          |
+| [feature-overview §P-05](../20260518-2047-feature-overview.md)                 | inventory 入口                          |
 | **本書**                                                                      | Manage dialog の source 一覧・面板分割 — 計画正本 |
 | [C-01-E-KW 完了](finished/20260605-c01-e-kw-codh-keyword-planning.md)         | `keyword(CODH)` 暫定行の移設先               |
-| [keyword slice-memo](design/20260605-c01-e-kw-manage-keyword-slice-memo.md) | 暫定 vs 理想の合意                           |
+| [keyword slice-memo](../design/20260605-c01-e-kw-manage-keyword-slice-memo.md) | 暫定 vs 理想の合意                           |
 
 
 **きっかけ:** C-01-E-KW で Refresh 直上に keyword 行を暫定配置。理想は **local / preset 二面板**。
@@ -46,7 +46,7 @@
 | 含む（v1 案）                | 含まない                  |
 | ----------------------- | --------------------- |
 | Qt Manage dialog 面板分割   | GTK parity（Qt 先行後に最小） |
-| keyword 行の preset 側への移設 | Slideshow read-only 露出 — **[P-06](20260606-p06-slideshow-codh-keyword-chip-planning-draft.md)** |
+| keyword 行の preset 側への移設 | Slideshow read-only 露出 — **[P-06](20260606-p06-slideshow-codh-keyword-chip-planning.md)** |
 | 自動ソート・見出し               | ユーザー手動並べ替え            |
 | C-01-E-KW 暫定行の撤去        | profile 編集 UI の大幅変更   |
 

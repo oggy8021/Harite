@@ -11,7 +11,7 @@
 | **本書** | CODH キーワード UI — 計画正本（完了記録） |
 | [CODH inventory](20260603-c01-e-codh-icp-inventory.md) | API・メタデータ棚卸 |
 | [C-01-F planning](../20260604-c01-f-remote-sync-on-tick-planning-draft.md) | **据え置き** — tick sync（CODH 負荷懸念含む） |
-| [P-05 planning](../20260606-p05-manage-sources-panel-planning-draft.md) | keyword 行の理想配置（面板分割） |
+| [P-05 planning](20260606-p05-manage-sources-panel-planning.md) | keyword 行の理想配置（面板分割） |
 | [harite-source-spec §15.7](../../specs/source/harite-source-spec.md) | provider 正本 |
 | [harite-gui-spec §4.2](../../specs/gui/harite-gui-spec.md) | Manage dialog 契約 |
 
@@ -30,7 +30,7 @@
 | 設定ファイル責務 | preset JSON / `harite-sources.json` の `notes` に KW・interval 機械行は **書かない** |
 | エラー | `remote sync failed (L\|R — {source名}): …`（Start 時）。0 件はエラーのみ（K4） |
 | オーナー判断 | 機能 **一旦 OK**。KW 共有のまま。CODH 負荷のため **C-01-F は据え置き** |
-| 残課題 | Manage 暫定配置 → [P-05](../20260606-p05-manage-sources-panel-planning-draft.md)。運用中の read-only 露出 → [P-06](../20260606-p06-slideshow-codh-keyword-chip-planning-draft.md) |
+| 残課題 | Manage 暫定配置 → [P-05](20260606-p05-manage-sources-panel-planning.md)（完了）。運用中の read-only 露出 → [P-06](20260606-p06-slideshow-codh-keyword-chip-planning.md)（完了） |
 
 ---
 

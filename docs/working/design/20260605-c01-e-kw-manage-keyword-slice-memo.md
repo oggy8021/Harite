@@ -49,7 +49,7 @@ Sources を **ALL なし**で二系統に分ける想定（impl は P-05 時）:
 1. ~~slice 合意~~ → **完了**。
 2. ~~gui-spec §4.2 + source-spec §15.7 改訂 PR~~ → **完了**（#413）。
 3. ~~core tests → impl（Qt Manage dialog）~~ → **完了**（#413）。
-4. keyword 行の **preset 面板への移設** — [P-05](../20260606-p05-manage-sources-panel-planning-draft.md)。運用中 read-only — [P-06](../20260606-p06-slideshow-codh-keyword-chip-planning-draft.md)。
+4. keyword 行の **preset 面板への移設** — [P-05](../finished/20260606-p05-manage-sources-panel-planning.md)。運用中 read-only — [P-06](../finished/20260606-p06-slideshow-codh-keyword-chip-planning.md)。
 
 ## 変更履歴
 
