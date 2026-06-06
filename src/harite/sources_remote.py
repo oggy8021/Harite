@@ -362,6 +362,16 @@ def add_remote_source(
     return entry
 
 
+def format_remote_sync_error(
+    side: str | None,
+    source_name: str,
+    cause: BaseException,
+) -> ValueError:
+    """Build a ValueError that names the slideshow side and source when sync fails."""
+    label = f"{side} — {source_name}" if side else source_name
+    return ValueError(f"remote sync failed ({label}): {cause}")
+
+
 def sync_remote_source(
     catalog: Catalog,
     source_id: str,

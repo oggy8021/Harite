@@ -393,7 +393,8 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 
 | 項目 | 契約 |
 | --- | --- |
-| remote source 行の Refresh | `sync_remote_source` |
+| remote source 行の Refresh | `sync_remote_source`。失敗時は `remote sync failed ({source名}): …` |
+| Start 直前 sync | L/R それぞれで `sync_remote_source`。失敗時は `remote sync failed ({L\|R} — {source名}): …` |
 | Profile 行 icon | Lucide `bookmark` / `star` / `folder-heart` のいずれか（package resource） |
 | Manage 行 icon | Lucide `archive`（package resource） |
 

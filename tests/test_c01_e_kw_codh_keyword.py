@@ -19,6 +19,7 @@ from harite.sources_remote import (
     codh_keyword_from_notes,
     codh_keyword_from_settings,
     migrate_codh_keyword_notes_to_settings,
+    format_remote_sync_error,
     resolve_codh_keyword,
     strip_codh_keyword_from_notes,
     sync_remote_source,
@@ -151,6 +152,18 @@ def test_resolve_codh_keyword_defaults_without_settings(
 def test_codh_keyword_from_settings() -> None:
     assert codh_keyword_from_settings({}) == CODH_KEYWORD_DEFAULT
     assert codh_keyword_from_settings({CODH_KEYWORD_SETTINGS_KEY: "飛鳥山"}) == "飛鳥山"
+
+
+def test_format_remote_sync_error_includes_side_and_source_name() -> None:
+    cause = ValueError("CODH search returned no canvases")
+    err = format_remote_sync_error("R", "江戸買物（キーワード）", cause)
+    assert str(err) == "remote sync failed (R — 江戸買物（キーワード）): CODH search returned no canvases"
+
+
+def test_format_remote_sync_error_without_side() -> None:
+    cause = ValueError("CODH search returned no canvases")
+    err = format_remote_sync_error(None, "江戸観光（キーワード）", cause)
+    assert str(err) == "remote sync failed (江戸観光（キーワード）): CODH search returned no canvases"
 
 
 def test_strip_codh_keyword_from_notes() -> None:

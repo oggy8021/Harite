@@ -25,6 +25,7 @@ from harite.sources_remote import (
     load_codh_keyword_settings,
     save_codh_keyword_settings,
     source_supports_codh_keyword,
+    format_remote_sync_error,
     sync_remote_source,
     validate_codh_keyword,
 )
@@ -275,7 +276,7 @@ def run_source_registry_dialog(
             _persist()
             _refresh_source_list()
         except ValueError as exc:
-            QMessageBox.warning(dialog, "Refresh", str(exc))
+            QMessageBox.warning(dialog, "Refresh", str(format_remote_sync_error(None, entry.name, exc)))
 
     def _on_source_selection_changed() -> None:
         _sync_keyword_field_from_selection()
