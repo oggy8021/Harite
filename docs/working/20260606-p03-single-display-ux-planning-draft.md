@@ -103,7 +103,7 @@ python -c "from harite.workspace import detect_displays; print(len(detect_displa
 
 | 順 | 操作 | 期待 | 備考 |
 | --- | --- | --- | --- |
-| L1 | `xrandr --output <副次出力名> --off` | `connected` 行が 1、Harite `len==1` | **CI / 開発再現の第一候補**。出力名は `xrandr --query` 先頭列（例: `DP-1`, `HDMI-1`） |
+| L1 | `xrandr --output <副次出力名> --off` | 画面は 1 枚だが **`connected` 行は残りうる** → Harite **`len==2` のまま**（§4.2.2 実測） | xrandr / XFCE GUI の論理 off。**P-03 単 display 判定には使えない**可能性が高い |
 | L2 | XFCE **設定 → ディスプレイ** で副次を無効化 | L1 と同型 | GUI 操作の実機メモ用 |
 | L3 | 副次モニターの **ケーブル物理抜き**（DP または HDMI） | `connected` が `disconnected` に変わり `len==1` | **推奨の実機再現**（[#359](../online-issues/issue-359.md)） |
 | L4 | 副次モニターの **電源 off のみ**（ケーブル接続のまま） | 多くの環境で **2 枚のまま** | **再現に使わない**（負例として記録） |
@@ -123,6 +123,17 @@ python -c "from harite.workspace import detect_displays; print(len(detect_displa
 | 観測の見え方 | 2 画面同時 | **入力切替で 1 画面ずつ見える**が、`xrandr` / Harite は **接続中の出力を列挙**（見えている入力と無関係） |
 
 **P3-1 の前提:** Linux 側でも **2 出力が `connected`** のベースラインが必要（副次は別モニターでもダミーでもよいが、`xrandr` が 2 行返すこと）。共有モニター 1 台だけでは `len==1` 固定になりうる — その場合は **2 本目の接続**を確認してから観測開始。
+
+#### 4.2.2 Harite `_detect_linux` の癖（`linux-xfce` 実測 2026-06-06）
+
+`workspace._detect_linux` は `xrandr --query` の **` connected ` を含む行をすべて数える**。解像度が無い（`--off` 後の `DP-1 connected (normal …)` のみ）出力も **1 枚として列挙**する。
+
+| 操作 | xrandr | Harite |
+| --- | --- | --- |
+| ベースライン | `HDMI-1` primary 2048×1280 + `DP-1` 2048×1280 | `len==2` |
+| **L1** `xrandr --output DP-1 --off` | `HDMI-1` は従来どおり。**`DP-1 connected`（モード行なし）が残る** | **`len==2`** — `DP-1` は `0x0` @ (0,0) |
+
+→ **論理 off だけでは「ユーザーには 1 画面」でも Harite は 2 枚**。Windows の設定「○のみに表示」（`len==1`）とは **非対称**。P3-1 の正手は **L3（ケーブル抜き → `disconnected`）** を優先。L2（XFCE GUI off）は L1 と同型の見込み。
 
 #### XFCE で見る UI（観測メモ用）
 
@@ -271,7 +282,7 @@ GDI `DISPLAYn` は設定番号・端子と無関係（下記 2 枚 dump は参�
 | GDI 名 | **信用不可確定**（再起動/サインアウト/復帰で変動） |
 | 2 枚復帰 | **復帰2 確認**（`len==2`） |
 | 観測クローズ | **2026-06-06 完了** — 再起動後もケーブル抜き不要。以降の作業は **設定 1/2＋端子**のみ記録し **`DISPLAYn` に同定しない** |
-| Linux 観測 | **未実施**（保留） |
+| Linux 観測 | **進行中**（`linux-xfce` — L1 負例まで） |
 
 **pass 判定（P3-1）:** 各 OS で、Harite `len==1` になる操作が **文書化済み**で、かつ **電源 off のみでは再現しない**ことがログで確認できる。**Windows（`win-cursor-dev`）は pass・観測終了**（Linux 待ち）。
 
@@ -284,15 +295,29 @@ GDI `DISPLAYn` は設定番号・端子と無関係（下記 2 枚 dump は参�
 | ラボ | モニター入力切替で Windows と画面共有。**端子対応は Windows と逆**（§4.2.1） |
 | Harite backend | CLI one-liner（`harite.workspace`） |
 
-**状態 A — ベースライン（2 枚）:** （未記入 — `xrandr` + one-liner を貼る）
+**状態 A — ベースライン（2 枚）:**
 
-**状態 B — 1 枚再現:** （未記入 — L1 / L4 / L3 順）
+| 出力 | primary | 位置 | 備考 |
+| --- | --- | --- | --- |
+| `HDMI-1` | Yes | 左 (0,0) 2048×1280 | **主** — Windows 実機と逆（§4.2.1） |
+| `DP-1` | No | 右 (2048,0) 2048×1280 | 副次 |
+
+Harite: `len==2`（名前・座標は xrandr と一致）
+
+**状態 B — 1 枚再現:**
+
+| 操作 ID | 操作 | `xrandr connected` 行数 | Harite `len` | メモ |
+| --- | --- | --- | --- | --- |
+| L1 | `xrandr --output DP-1 --off` | **2**（`DP-1 connected` モードなしで残存） | **2** | `DP-1` は `0x0`。**負例** — 論理 off では P-03 閾値に届かない |
 
 ### 5.6 P3-1 進捗（Linux `linux-xfce`）
 
 | 項目 | 状態 |
 | --- | --- |
-| 観測 | **着手**（共有ディスプレイ・逆接続前提で §4.2.1 参照） |
+| ベースライン | **確定** `len==2`（HDMI-1 主左 / DP-1 副右） |
+| L1 論理 off | **負例確定** — `len==2` 維持（§4.2.2） |
+| 正手候補 | **L3**（DP ケーブル抜き）— 未実施 |
+| L4 電源 off | 未実施 |
 
 ---
 
@@ -326,3 +351,4 @@ GDI `DISPLAYn` は設定番号・端子と無関係（下記 2 枚 dump は参�
 | 2026-06-06 | 設定対応修正 — **1＝DP（主）、2＝HDMI**。W2′-HDMI「2のみ」・DP 電源 off→`len==1` |
 | 2026-06-06 | Windows 観測クローズ — 再起動後もケーブル維持可。`DISPLAYn` は実装・記録の同定に使わない |
 | 2026-06-06 | §4.2.1 — XFCE 実機は共有モニター・端子逆。Windows §4.3.2 を Linux に持ち込まない |
+| 2026-06-06 | §4.2.2 — L1 `DP-1 --off` でも `connected` 残存 → Harite `len==2`（`0x0` 幽霊） |
