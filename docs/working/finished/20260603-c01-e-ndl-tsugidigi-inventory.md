@@ -113,6 +113,7 @@ https://dl.ndl.go.jp/api/iiif/{pid}/{page}/pct:{x},{y},{w},{h}/max/0/default.jpg
 | 縦横比 | 切り出し矩形依存（壁紙向けに letterbox / crop は Harite 側ポリシー次第） |
 | 極小矩形 | `w`/`h` が数 % の図版あり（スタンプ等）— 壁紙として見づらい可能性 |
 | PID 不在 | 収録同期のずれで IIIF 404 の可能性（apiinfo「PID リストと DL 提供の不一致」注記と同種） |
+| IIIF 404 時 | **同一 URL の再試行はしない**。Illustration API を再呼び出し（最大 5 回、**間隔 0**）して **別候補**を試す（`sources_remote._ndl_sync`） |
 
 ---
 
@@ -168,19 +169,23 @@ Swagger に enum は無い。下表は **NDL-ImageLabel 公開ラベル + モデ
 
 **応答の `graphictags`:** 1 図版に複数タグ＋信頼度が付く。facet で `graphic_map` を指定しても、返却に `graphic_illust` 等が **併記** されることがある（多ラベル推定）。
 
-### 3.4 preset 分類のたたき台（未決定）
+### 3.4 preset 分類（オーナー方針）
 
-| Harite combo 案（例） | facet `f-graphictags.tagname` |
-| --- | --- |
-| おまかせランダム | （なし）→ `/random?size=1` |
-| 地図 | `graphic_map` |
-| グラフ・表 | `graphic_graph` |
-| イラスト | `graphic_illust` |
-| 着色挿絵 | `graphic_illustcolor` |
-| 写真（屋外） | `picture_outdoor` |
-| 印影 | `stamp` |
+**方針（2026-06）:** `/illustration/random`（おまかせ）は **採用しない**。`randomwithfacet` **主体**でタグ別 preset を同梱する。
 
-オーナー判断待ち: **単一 preset のみ** vs **タグ別複数 preset** vs **上位タグ `graphic` / `picture` のみ**.
+| Harite combo 案（例） | facet `f-graphictags.tagname` | 状態 |
+| --- | --- | --- |
+| ~~おまかせランダム~~ | ~~（なし）→ `/random?size=1`~~ | **廃止**（`ndl-random` は同梱から外す） |
+| 地図 | `graphic_map` | **採用** — `ndl-random-map` |
+| イラスト | `graphic_illust` | **採用** — `ndl-random-illust` |
+| 着色挿絵 | `graphic_illustcolor` | **採用** — `ndl-random-illustcolor` |
+| 写真（屋内） | `picture_indoor` | **採用** — `ndl-random-indoor` |
+| 写真（ランドマーク） | `picture_landmark` | **採用** — `ndl-random-landmark` |
+| 写真（屋外） | `picture_outdoor` | **採用** — `ndl-random-outdoor` |
+| グラフ・表 | `graphic_graph` | 見送り |
+| 印影 | `stamp` | 見送り（極小切り出しが多い） |
+
+**同梱 6 preset**（いずれも `randomwithfacet`）。オーナー確定（2026-06-04）。
 
 ---
 
@@ -287,7 +292,7 @@ https://dl.ndl.go.jp/api/iiif/{pid}/{page}/pct:{x},{y},{w},{h}/max/0/default.jpg
 
 | 論点 | 調査結果 / 推奨 |
 | --- | --- |
-| preset 本数 | 単一 `ndl-random` vs §3.4 タグ別 — **オーナー決定** |
+| preset 本数 | **6 preset**（§3.4）— `ndl-random` 廃止、facet 主体で確定 |
 | `notes` 文言 | 「国立国会図書館デジタルコレクション」「次世代デジタルライブラリー」等の定型 — §15.4 に合わせて確定 |
 | 画像後処理 | 極小 crop の最小サイズ閾値を入れるか |
 | 失敗時 | 400（`random` で `size` 忘れ）、404 IIIF — `ValueError` / sync ログ方針は JMA と揃える |
@@ -301,3 +306,5 @@ https://dl.ndl.go.jp/api/iiif/{pid}/{page}/pct:{x},{y},{w},{h}/max/0/default.jpg
 | --- | --- |
 | 2026-06-03 | 初版 — 入口 URL、Swagger 正本、random / randomwithfacet / IIIF、タグ一覧 live 検証、Harite 適合性 |
 | 2026-06-03 | §6 — Windows curl `(35)` / `--ssl-no-revoke` / PowerShell の `&` 注意、代替コマンド |
+| 2026-06-04 | §3.4 — オーナー方針: `ndl-random` 廃止、`randomwithfacet` 主体 |
+| 2026-06-04 | §3.4 — 同梱 6 preset 確定（map + illust / illustcolor / indoor / landmark / outdoor） |

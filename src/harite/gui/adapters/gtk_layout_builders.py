@@ -178,9 +178,12 @@ def build_footer_section(gtk_module: Any, root: Any) -> dict[str, Any]:
 
     message_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
     footer_col.pack_start(message_row, False, False, 0)
+    from harite.gui.views.footer_feedback import configure_footer_error_label_gtk
+
     error_label = gtk_module.Label(label="Error: none")
     set_xalign_if_supported(error_label)
-    message_row.pack_start(error_label, False, False, 0)
+    configure_footer_error_label_gtk(error_label)
+    message_row.pack_start(error_label, True, True, 0)
 
     return {
         "footer_col": footer_col,

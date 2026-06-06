@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-04（C-04 計画正本を [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md) へ分離）
+最終更新: 2026-06-04（C-01-F remote tick sync 計画 draft 起票）
 
 ## 位置づけ
 
@@ -47,7 +47,7 @@
 | C-05 | slideshow source 強化 | slideshow の source を単発 directory から、複数 source・source profile・将来の外部 source へ広げる。 | **完了** — [planning](finished/20260602-1400-c05-slideshow-source-enhancement-planning.md) / [audit](finished/20260602-c05-3layer-audit.md) |
 | C-01 | 外部壁紙サイト連携 | 外部 API から **都度取得** し remote cache 経由で slideshow に載せる。第1 provider=気象庁。 | **完了** — [planning](finished/20260603-1400-c01-external-wallpaper-source-planning.md) / [audit](finished/20260603-c01-3layer-audit.md) |
 | C-01-J | JMA 天気図 list.json カタログ | list.json 棚卸・preset 選定（カラー 2 + モノクロ実況 2）。全 12 葉のギャラリー UI は **スコープ外**。 | **完了**（2026-06-03 実機確認）— [調査・完了記録](finished/20260603-jma-weather-map-list-inventory.md) |
-| C-01-E | 外部 source 探索拡張 | NDL / CODH preset + provider（実現性検証スコープ）。 | **完了**（#400）— [統合索引](finished/20260603-c01-e-merged-inventory.md) / [軽量 audit](finished/20260603-c01-e-3layer-audit.md)。拡張（キーワードユーザー指定等）は §2 |
+| C-01-E | 外部 source 探索拡張 | NDL / CODH preset + provider（実現性検証スコープ）。 | **完了**（#400）— [統合索引](finished/20260603-c01-e-merged-inventory.md) / [軽量 audit](finished/20260603-c01-e-3layer-audit.md)。第 2 段は **C-01-F** → **C-01-E-KW**（§2） |
 
 ### 1b. 近端 backlog（Qt 完了後・2026-06-01）
 
@@ -68,10 +68,12 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | ID | 項目 | 概要 | 保持理由 / 採用条件 |
 | --- | --- | --- | --- |
 | C-03 | plugin capability 可視化 | plugin ごとに受理 target や OS 制約を可視化し、apply / slideshow / GUI での分岐を分かりやすくする。 | **保留・縮小** — 詳細は [C-04 計画正本](20260604-c04-gui-surface-planning-draft.md) §6（独立パネルは出さず help 整理に吸収可） |
-| C-04 | GUI surface / 利用導線 | 3 tab 骨格は維持。Slideshow/Margins の密度整理、feedback・Error 視覚、Drawer、preset 余地。 | **planning 着手** — 計画正本: [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md)。採用条件は同書 §8 |
+| C-01-F | remote live sync on slideshow tick | C-01 第 2 段。remote をライブ feed 化 — **provider 別に tick/interval で `sync_remote_source`**。§12.4「tick は network しない」を改訂。 | **planning draft** — [20260604-c01-f-remote-sync-on-tick-planning-draft.md](20260604-c01-f-remote-sync-on-tick-planning-draft.md)。**C-01-E-KW の前提** |
+| C-04 | GUI surface / 利用導線 | 3 tab 骨格は維持。Slideshow/Margins の密度整理、feedback・Error 視覚、Drawer、preset 余地。 | **完了**（#406–409, waves 0/b/a/c）— 計画正本: [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md) |
 | K-04 | plugin 拡張パック | Linux 以外や追加 desktop 向け plugin を外付け拡張として扱えるようにする。 | capability model と packaging 方針が先に必要 |
 | P-03 | 単 display / monitor まわり UX | 検出 1 枚のとき -R 側（path / srcdir / direction 等）を disabled にする案。**display 検出・枚数に依存する操作の整理**はここで扱う（旧 K-01 の「monitor 監視」含む）。 | **採用条件**: 単 display 再現手順、disabled 範囲の spec、GTK/Qt テスト方針が揃ったとき（[#359](../online-issues/issue-359.md)） |
-| C-01-E-KW | CODH キーワード検索のユーザー指定 | 現状 **「桜」はコード固定**（`codh-edo-spots-sakura` → `_CODH_PRESET_SEARCH`）。任意文字列は `where_metadata_value` へ。近い代替は **同梱 preset を増やす**（梅・花火など）。 | **先送り（2026-06-03）** — **Manage sources and profiles…** 周りの UI が既に込み入っているため、専用入力・notes 機械行は今回やらない。採用時は indexer allowlist 固定 + `urlencode` + キーワード長上限でリスク低め（[CODH inventory](finished/20260603-c01-e-codh-icp-inventory.md)）。GUI 明示の「キャッシュ掃除」ボタンも同様に見送り（materialize 時の孤児削除で足りる — [source-spec §12.3](../specs/source/harite-source-spec.md)） |
+| P-05 | Manage sources リスト整理 | Manage dialog の source 一覧を **自動ソート + グループ見出し**（preset / remote / local）。 | **ストック**（2026-06-04 オーナー合意）。schema 変更・手動並べ替えは対象外 |
+| C-01-E-KW | CODH キーワード検索のユーザー指定 | 現状 **「桜」はコード固定**（`codh-edo-spots-sakura` → `_CODH_PRESET_SEARCH`）。任意文字列は `where_metadata_value` へ。近い代替は **同梱 preset を増やす**（梅・花火など）。 | **先送り — C-01-F 後**（2026-06-04）。tick で取りに行かないと KW は意味が薄い。**前提:** [C-01-F](20260604-c01-f-remote-sync-on-tick-planning-draft.md)。採用時は indexer allowlist 固定 + `urlencode` + キーワード長上限（[CODH inventory](finished/20260603-c01-e-codh-icp-inventory.md)） |
 
 C-04 の rough ideas・採択表・widget 切り分けは [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md) を参照（本 overview では重複しない）。
 
@@ -161,13 +163,19 @@ C-04 の rough ideas・採択表・widget 切り分けは [20260604-c04-gui-surf
          ↓
         C-01  外部壁紙サイト連携   ← 完了 #392–393 + audit
         C-01-J  JMA list / preset 選定   ← 完了（調査 + モノクロ 2 preset、実機確認）
-        C-01-E  他 source 探索   ← 実現性検証完了（PR/audit 続き）
+        C-01-E  他 source 探索   ← 完了（#400）
+        C-04   GUI surface      ← 完了（#406–409）
+         ↓
+[次の土台] C-01-F  remote tick sync  ← planning: [20260604-c01-f-remote-sync-on-tick-planning-draft.md](20260604-c01-f-remote-sync-on-tick-planning-draft.md)
+         ↓
+        C-01-E-KW（CODH キーワード UI）
 
 [着手順序外・構想保持] P-03 #359（単 display / -R 無効化 — 急がない）
 ```
 
 - Qt 移行の詳細は [docs/working/finished/20260530-2201-pyqt6-migration-plan.md](finished/20260530-2201-pyqt6-migration-plan.md) を参照する。
-- C-04 は [計画正本](20260604-c04-gui-surface-planning-draft.md) で具体化中。合意後に spec / Wave 0 へ。
+- C-04 は [計画正本](20260604-c04-gui-surface-planning-draft.md) — waves 0/b/a/c 完了（#406–409）。
+- **次の土台:** C-01-F（[planning draft](20260604-c01-f-remote-sync-on-tick-planning-draft.md)）→ C-01-E-KW。
 - F-01 は Windows **`%APPDATA%\harite\harite-settings.json`**（Roaming）。**旧 path 互換・移行なし**。
 - P-01–02 は §9 GUI 合意工程の最初の実践。**2026-06-01 完了**（3 層 audit は [closed/issue-353](../online-issues/closed/issue-353.md) / [issue-358](../online-issues/closed/issue-358.md)）。
 
@@ -216,6 +224,8 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 2026-06-04: **第4波 C-02/C-05/C-01/C-01-J/C-01-E** の planning・inventory を `working/finished/` へ移動（本 overview のみ `working/` に残す）
 - 2026-06-04: **K-01 破棄（H-08）** — slideshow 再構成は C-02/C-05 済み。display / monitor 縁は P-03 に集約。legacy「Watch」表記の docs 掃除を開始
 - 2026-06-04: **C-04 計画正本** — [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md)（GUI surface / オーナー観測・採択表・Slideshow/Margins 切り分け）
+- 2026-06-04: **C-04 impl 完了** — #406–409（footer / Slideshow drawer / Margins slim / icon tooltips）
+- 2026-06-04: **C-01-F planning draft** — remote をライブ feed 化（tick 毎 sync・provider 別）。[20260604-c01-f-remote-sync-on-tick-planning-draft.md](20260604-c01-f-remote-sync-on-tick-planning-draft.md)。C-01-E-KW は本件後
 
 ### K-05（scheduler）— 残しうるストーリーと見送り理由
 

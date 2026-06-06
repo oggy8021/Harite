@@ -32,8 +32,8 @@ KIND_NDL_TSUGIDIGI = "remote-ndl-tsugidigi"
 KIND_CODH_EDO = "remote-codh-edo"
 
 JMA_LIST_URL = "https://www.jma.go.jp/bosai/weather_map/data/list.json"
-NDL_RANDOM_URL = "https://lab.ndl.go.jp/dl/api/illustration/random"
 NDL_RANDOM_FACET_URL = "https://lab.ndl.go.jp/dl/api/illustration/randomwithfacet"
+NDL_IIIF_FETCH_MAX_ATTEMPTS = 5
 NDL_IIIF_TEMPLATE = (
     "https://dl.ndl.go.jp/api/iiif/{pid}/{page}/pct:{x},{y},{w},{h}/max/0/default.jpg"
 )
@@ -56,9 +56,13 @@ _JMA_PRESET_FILENAME_TAG: dict[str, str] = {
     "jma-asia-monochrome": "JRjmahp",
 }
 
-_NDL_PRESET_FACET_TAG: dict[str, str | None] = {
-    "ndl-random": None,
+_NDL_PRESET_FACET_TAG: dict[str, str] = {
     "ndl-random-map": "graphic_map",
+    "ndl-random-illust": "graphic_illust",
+    "ndl-random-illustcolor": "graphic_illustcolor",
+    "ndl-random-indoor": "picture_indoor",
+    "ndl-random-landmark": "picture_landmark",
+    "ndl-random-outdoor": "picture_outdoor",
 }
 
 @dataclass(frozen=True)
@@ -255,10 +259,19 @@ def sync_remote_source(
 
 
 def _http_get_bytes(url: str) -> bytes:
+    payload = _http_get_bytes_or_none_on_404(url)
+    if payload is None:
+        raise ValueError(f"remote fetch failed: HTTP 404 for {url}")
+    return payload
+
+
+def _http_get_bytes_or_none_on_404(url: str) -> bytes | None:
     try:
         with urlopen(url, timeout=30) as response:
             return response.read()
     except HTTPError as exc:
+        if exc.code == 404:
+            return None
         raise ValueError(f"remote fetch failed: HTTP {exc.code} for {url}") from exc
     except URLError as exc:
         raise ValueError(f"remote fetch failed: {exc}") from exc
@@ -339,12 +352,10 @@ def _jma_sync(catalog: Catalog, source_id: str) -> None:
 
 def _ndl_illustration_url(preset_id: str) -> str:
     facet = _NDL_PRESET_FACET_TAG.get(preset_id)
-    if facet is None and preset_id not in _NDL_PRESET_FACET_TAG:
+    if not facet:
         raise ValueError(f"unsupported NDL preset for sync: {preset_id}")
-    if facet:
-        query = urlencode([("size", "1"), ("f-graphictags.tagname", facet)])
-        return f"{NDL_RANDOM_FACET_URL}?{query}"
-    return f"{NDL_RANDOM_URL}?size=1"
+    query = urlencode([("size", "1"), ("f-graphictags.tagname", facet)])
+    return f"{NDL_RANDOM_FACET_URL}?{query}"
 
 
 def _ndl_iiif_url(illustration: dict[str, Any]) -> str:
@@ -369,12 +380,22 @@ def _ndl_sync(catalog: Catalog, source_id: str) -> None:
         raise ValueError("NDL sync requires harite-preset marker in notes")
 
     meta_url = _ndl_illustration_url(preset_id)
-    payload = _http_get_json(meta_url)
-    if not isinstance(payload, list) or not payload:
-        raise ValueError("NDL illustration API returned no results")
-    iiif_url = _ndl_iiif_url(payload[0])
-    image_bytes = _http_get_bytes(iiif_url)
-    _write_latest_cache(Path(entry.path), image_bytes, url=iiif_url)
+    last_404_url: str | None = None
+    for _attempt in range(NDL_IIIF_FETCH_MAX_ATTEMPTS):
+        payload = _http_get_json(meta_url)
+        if not isinstance(payload, list) or not payload:
+            raise ValueError("NDL illustration API returned no results")
+        iiif_url = _ndl_iiif_url(payload[0])
+        image_bytes = _http_get_bytes_or_none_on_404(iiif_url)
+        if image_bytes is not None:
+            _write_latest_cache(Path(entry.path), image_bytes, url=iiif_url)
+            return
+        last_404_url = iiif_url
+    suffix = f" (last: HTTP 404 for {last_404_url})" if last_404_url else ""
+    raise ValueError(
+        "remote fetch failed: NDL IIIF unavailable after "
+        f"{NDL_IIIF_FETCH_MAX_ATTEMPTS} illustration attempts{suffix}"
+    )
 
 
 def _codh_search_query(spec: _CodhSearchSpec, *, start: int | None = None) -> str:

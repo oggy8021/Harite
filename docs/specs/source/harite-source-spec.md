@@ -520,10 +520,16 @@ harite-preset:{preset_id}
 
 | `preset_id` | 取得 |
 | --- | --- |
-| `ndl-random` | `GET .../illustration/random?size=1` |
 | `ndl-random-map` | `GET .../illustration/randomwithfacet?size=1&f-graphictags.tagname=graphic_map` |
+| `ndl-random-illust` | `...&f-graphictags.tagname=graphic_illust` |
+| `ndl-random-illustcolor` | `...&f-graphictags.tagname=graphic_illustcolor` |
+| `ndl-random-indoor` | `...&f-graphictags.tagname=picture_indoor` |
+| `ndl-random-landmark` | `...&f-graphictags.tagname=picture_landmark` |
+| `ndl-random-outdoor` | `...&f-graphictags.tagname=picture_outdoor` |
 
-Sync: 返却 `Illustration` から IIIF URL（`dl.ndl.go.jp/api/iiif/{pid}/{page}/pct:.../max/0/default.jpg`）を GET。cache は **`latest.jpg`**（JPEG）または **`latest.png`**（URL に応じて §14 共通ヘルパ）。
+plain `/illustration/random`（旧 `ndl-random`）は **同梱しない**。
+
+Sync: 返却 `Illustration` から IIIF URL（`dl.ndl.go.jp/api/iiif/{pid}/{page}/pct:.../max/0/default.jpg`）を GET。IIIF **404** のときは **同一 URL を再試行せず** Illustration API を再呼び出して別候補を試す（最大 **5** 回、**試行間の待ち時間なし**）。cache は **`latest.jpg`**（JPEG）または **`latest.png`**（URL に応じて §14 共通ヘルパ）。
 
 帰属（preset `notes`）:
 

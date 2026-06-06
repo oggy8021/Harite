@@ -38,8 +38,12 @@ _BUNDLED_SOURCE_PRESET_IDS = {
     "jma-asia-color",
     "jma-near-monochrome",
     "jma-asia-monochrome",
-    "ndl-random",
     "ndl-random-map",
+    "ndl-random-illust",
+    "ndl-random-illustcolor",
+    "ndl-random-indoor",
+    "ndl-random-landmark",
+    "ndl-random-outdoor",
     "codh-edo-spots-sakura",
     "codh-edo-spots-random",
     "codh-edo-shops-random",
@@ -55,7 +59,7 @@ def test_load_bundled_presets() -> None:
     assert profile_ids == {"jma-dual-lr"}
     kind_by_id = {template.preset_id: template.kind for template in presets.sources}
     assert kind_by_id["jma-near-color"] == KIND_JMA_WEATHER_MAP
-    assert kind_by_id["ndl-random"] == KIND_NDL_TSUGIDIGI
+    assert kind_by_id["ndl-random-illust"] == KIND_NDL_TSUGIDIGI
     assert kind_by_id["codh-edo-spots-sakura"] == KIND_CODH_EDO
     for template in presets.sources:
         assert is_remote_kind(template.kind)
