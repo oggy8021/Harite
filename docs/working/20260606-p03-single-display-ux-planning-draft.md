@@ -280,11 +280,13 @@ GDI `DISPLAYn` は設定番号・端子と無関係（下記 2 枚 dump は参�
 | --- | --- |
 | 2026-06-06 | 初版 — C-01-E-KW 完了後のストック着手として起票 |
 | 2026-06-06 | §4 Linux xrandr / Windows / DP・HDMI、§5 観測テンプレ、§1.1 現行 product 整理 |
-| 2026-06-06 | Windows 実機観測 — W2′（1 のみに表示）で `len==1`（HDMI 副次） |
-| 2026-06-06 | Windows 続き — 復帰 `len==2`、W4 HDMI 電源 off は `len==2`、qt R 側未無効化確認 |
+| 2026-06-06 | Windows 実機観測 — W2′-DP（「1 のみ」＝DP 残し）で `len==1` |
+| 2026-06-06 | Windows 続き — 復帰 `len==2`、W4-HDMI（設定2 電源 off）は `len==2`、qt R 未無効化 |
 | 2026-06-06 | §4.3.1 — 設定「ディスプレイ 1/2」と `DISPLAYn` / Python index のずれを明記 |
 | 2026-06-06 | §4.3.1 改訂 — GDI `DISPLAYn` は電源 on 順で信用不可。P-03 は `len` + `primary`/座標のみ |
 | 2026-06-06 | DP-only 実験 — サインアウト=`DISPLAY2`、再起動=`DISPLAY1`（いずれも `len==1`） |
 | 2026-06-06 | 拡張復帰2 — `len==2`、`DISPLAY1`=主左（GDI 名は初回 2 枚時と入替） |
-| 2026-06-06 | W2′-DP「2のみ」— `len==1` だが `primary=True`（単独昇格）。primary で止めた側は判定不可 |
+| 2026-06-06 | W2′-HDMI「2のみ」— `len==1`、`DISPLAY2` 残存・`primary=True`（単独昇格） |
+| 2026-06-06 | DP-off（設定1 電源 off）— `len==1`、HDMI 残存。DP は枚数維持しない（≠ W4-HDMI） |
+| 2026-06-06 | §4.3.2 — 設定対応正本化：**1＝DP（主）、2＝HDMI**（従来メモの逆転を訂正） |
 | 2026-06-06 | 設定対応修正 — **1＝DP（主）、2＝HDMI**。W2′-HDMI「2のみ」・DP 電源 off→`len==1` |
