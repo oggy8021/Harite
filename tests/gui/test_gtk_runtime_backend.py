@@ -139,9 +139,17 @@ class _Label(_WidgetBase):
     def __init__(self, label=""):
         super().__init__()
         self.text = label
+        self.selectable = False
+        self.wrap = False
 
     def set_xalign(self, _value):
         return None
+
+    def set_selectable(self, value: bool) -> None:
+        self.selectable = bool(value)
+
+    def set_wrap(self, value: bool) -> None:
+        self.wrap = bool(value)
 
     def set_text(self, text):
         self.text = text

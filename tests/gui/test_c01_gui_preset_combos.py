@@ -75,7 +75,7 @@ def test_refresh_registry_combos_shows_preset_star_labels(qapp, tmp_path: Path) 
     labels = [source_l.itemText(i) for i in range(source_l.count())]
     assert "*気象庁（日本付近）" in labels
     assert "*気象庁（アジア域）" in labels
-    assert "*NDL 図版（おまかせ）" in labels
+    assert "*NDL 図版（イラスト）" in labels
 
     profile_combo = backend._objects["combo_slideshow_profile"]
     profile_labels = [profile_combo.itemText(i) for i in range(profile_combo.count())]

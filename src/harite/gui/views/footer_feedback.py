@@ -131,7 +131,8 @@ def configure_footer_error_label_qt(label: Any) -> None:
 
 def configure_footer_error_label_gtk(label: Any) -> None:
     """Footer error row: selectable text + wrap on GTK."""
-    label.set_selectable(True)
+    if hasattr(label, "set_selectable"):
+        label.set_selectable(True)
     if hasattr(label, "set_wrap"):
         label.set_wrap(True)
     if hasattr(label, "set_wrap_mode"):
