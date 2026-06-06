@@ -117,6 +117,9 @@ def sync_action_availability_from_owner(backend: Any, owner: Any) -> None:
     backend._set_button_enabled("btnOptimize", bool(getattr(owner, "can_optimize", False)))
     backend._set_button_enabled("btnSetWall", bool(getattr(owner, "can_apply", False)))
     backend._set_button_enabled("btnDaemonize", bool(getattr(owner, "can_start_slideshow", False)))
+    from harite.gui.dual_display_ui import sync_dual_display_slot_availability_from_owner
+
+    sync_dual_display_slot_availability_from_owner(backend, owner)
 
 
 def sync_input_state_from_owner(backend: Any, owner: Any) -> None:

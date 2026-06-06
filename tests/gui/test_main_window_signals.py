@@ -1299,8 +1299,11 @@ def test_slideshow_single_source_tick_stops_when_plugin_apply_fails(monkeypatch,
             return self.calls == 1
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+    monkeypatch.setattr("harite.gui.views.main_window.dual_display_detected", lambda: False)
 
     window = MainWindow()
+    window.slideshow_srcdir_r = ""
+    window.slideshow_source_id_r = ""
     left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
@@ -1310,7 +1313,8 @@ def test_slideshow_single_source_tick_stops_when_plugin_apply_fails(monkeypatch,
     assert window.on_slideshow_start() is True
     assert window.on_slideshow_tick() is False
     assert window.slideshow_running is False
-    assert window.can_start_slideshow is False
+    # P-03: single display allows restart with L-only srcdir after stop.
+    assert window.can_start_slideshow is True
     assert window.status_level == "error"
     assert window.status_phase == "slideshow"
     assert window.status_message == "slideshow cycle single-file apply failed"

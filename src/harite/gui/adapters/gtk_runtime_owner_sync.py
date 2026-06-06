@@ -9,6 +9,9 @@ def sync_non_preview_state_from_owner(backend: Any, owner: Any) -> None:
     backend._sync_margins_state_from_owner(owner)
     backend._sync_slideshow_state_from_owner(owner)
     backend._sync_feedback_from_owner(owner)
+    from harite.gui.dual_display_ui import sync_dual_display_slot_availability_from_owner
+
+    sync_dual_display_slot_availability_from_owner(backend, owner)
 
 
 def sync_preview_state_from_owner(

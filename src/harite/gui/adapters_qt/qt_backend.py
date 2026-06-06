@@ -218,6 +218,10 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         from harite.gui.adapters_qt.qt_widget_helpers import set_widget_enabled
         set_widget_enabled(self, name, enabled)
 
+    def _set_widget_slot_blocked(self, name: str, *, blocked: bool) -> None:
+        from harite.gui.adapters_qt.qt_widget_helpers import set_widget_slot_blocked
+        set_widget_slot_blocked(self, name, blocked=blocked)
+
     def _set_toggle_active(self, name: str, active: bool) -> None:
         from harite.gui.adapters_qt.qt_widget_helpers import set_toggle_active
         set_toggle_active(self, name, active)
