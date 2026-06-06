@@ -80,7 +80,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | C-03   | plugin capability 可視化              | plugin ごとに受理 target や OS 制約を可視化し、apply / slideshow / GUI での分岐を分かりやすくする。 | **保留・縮小** — 詳細は [C-04 計画正本](20260604-c04-gui-surface-planning-draft.md) §6（独立パネルは出さず help 整理に吸収可）                                          |
 | C-04   | GUI surface / 利用導線                 | 3 tab 骨格は維持。Slideshow/Margins の密度整理、feedback・Error 視覚、Drawer、preset 余地。 | **完了**（#406–409, waves 0/b/a/c）— 計画正本: [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md)            |
 | K-04   | plugin 拡張パック                       | Linux 以外や追加 desktop 向け plugin を外付け拡張として扱えるようにする。                        | capability model と packaging 方針が先に必要                                                                                                       |
-| C-01-F | remote live sync on slideshow tick | remote をライブ feed 化 — provider 別 tick sync。§12.4 改訂。                     | **据え置き**（2026-06-06）— [planning draft](20260604-c01-f-remote-sync-on-tick-planning-draft.md)。CODH 負荷・gate F1–F3 未記入。C-01-E-KW 完了済みのため前提は解消 |
+| C-01-F | remote live sync on slideshow tick | remote をライブ feed 化 — provider 別 tick sync。§12.4 改訂。                     | **planning 合意**（2026-06-07）— [planning draft](20260604-c01-f-remote-sync-on-tick-planning-draft.md)。CODH index+cursor、§7 gate F1–F4 pass。impl 未着手 |
 
 
 C-04 の rough ideas・採択表・widget 切り分けは [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md) を参照（本 overview では重複しない）。
@@ -185,7 +185,7 @@ C-04 の rough ideas・採択表・widget 切り分けは [20260604-c04-gui-surf
 
 [完了] P-07 Drawer 開閉視認性（#417）← [planning](finished/20260606-p07-slideshow-drawer-open-state-planning.md)
 
-[据え置き] C-01-F remote tick sync  ← [planning draft](20260604-c01-f-remote-sync-on-tick-planning-draft.md)（CODH 負荷・gate 未記入）
+[planning 合意] C-01-F remote tick sync  ← [planning draft](20260604-c01-f-remote-sync-on-tick-planning-draft.md)（CODH index+cursor、gate 通過・impl 未着手）
 ```
 
 - Qt 移行の詳細は [docs/working/finished/20260530-2201-pyqt6-migration-plan.md](finished/20260530-2201-pyqt6-migration-plan.md) を参照する。
@@ -194,7 +194,7 @@ C-04 の rough ideas・採択表・widget 切り分けは [20260604-c04-gui-surf
 - **完了:** P-05 Manage Local/Presets タブ — [planning](finished/20260606-p05-manage-sources-panel-planning.md)。P-06 Slideshow CODH chip（Qt）— [planning](finished/20260606-p06-slideshow-codh-keyword-chip-planning.md)。
 - **完了:** P-07 Drawer 開閉視認性（#417、#412 close）— [planning](finished/20260606-p07-slideshow-drawer-open-state-planning.md)。
 - **完了:** P-03 単 display UX（#420、#359 close）— [planning](finished/20260606-p03-single-display-ux-planning.md) / [audit](finished/20260606-p03-3layer-audit.md)。
-- **据え置き:** C-01-F（tick sync — 2026-06-06 オーナー判断）。
+- **planning 合意:** C-01-F（CODH index+cursor、JMA interval sync — §7 gate 通過、impl 未着手）。
 - F-01 は Windows `**%APPDATA%\harite\harite-settings.json`**（Roaming）。**旧 path 互換・移行なし**。
 - P-01–02 は §9 GUI 合意工程の最初の実践。**2026-06-01 完了**（3 層 audit は [closed/issue-353](../online-issues/closed/issue-353.md) / [issue-358](../online-issues/closed/issue-358.md)）。
 
@@ -250,6 +250,7 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 2026-06-05: **C-01-E-KW planning draft** — CODH キーワード UI 起票
 - 2026-06-06: **C-01-E-KW 完了** — #413。[planning](finished/20260605-c01-e-kw-codh-keyword-planning.md)
 - 2026-06-06: **C-01-F 据え置き** — CODH 負荷懸念。gate F1–F3 未記入のまま保留
+- 2026-06-07: **C-01-F planning 合意** — CODH §3.1 index+cursor（B 案）、cursor 永続化。§7 F1–F4 pass。impl 着手可
 - 2026-06-06: **P-05 / P-03 planning draft** 起票 — 次着手候補
 - 2026-06-06: **P-06 planning draft** — Slideshow 右上角 CODH keyword read-only（Footer 不採用、P-05 と分離）
 - 2026-06-06: **P-05 完了**（Qt）— Manage dialog Local/Presets タブ、preset グループ見出し、keyword 移設
