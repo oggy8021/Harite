@@ -543,9 +543,14 @@ Sync: 返却 `Illustration` から IIIF URL（`dl.ndl.go.jp/api/iiif/{pid}/{page
 
 | `preset_id` | 検索 |
 | --- | --- |
-| `codh-edo-spots-sakura` | `edo-spots` — `キーワード` = `桜` |
+| `codh-edo-spots-keyword` | `edo-spots` — `where_metadata_label=キーワード` + `harite-codh-keyword:` 値。`total` → random `start` |
+| `codh-edo-shops-keyword` | `edo-shops` — `where_metadata_label=備考` + 同一 KW 文字列。random `start` |
 | `codh-edo-spots-random` | `edo-spots` — `total` 取得後 `start` 乱数 + `limit=1` |
 | `codh-edo-shops-random` | `edo-shops` — 同上 |
+
+plain `codh-edo-spots-sakura`（固定 `桜`）は **同梱しない**。
+
+**`harite-codh-keyword:`（C-01-E-KW）:** source `notes` の機械行。最大 **16** 文字（`len` 基準）。import 時の初期値は **`桜`**。`repair_preset_source_notes` はユーザー上書きを保持する。
 
 Sync: `results[0].canvasThumbnail` の `/200,/` を `/max/` に置換して GET。cache ファイル名は §15.6 と同様。
 

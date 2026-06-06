@@ -18,7 +18,17 @@ from harite.sources import (
     save_catalog,
     update_profile,
 )
-from harite.sources_remote import is_remote_kind, sync_remote_source
+from harite.sources import update_source
+from harite.sources_remote import (
+    CODH_KEYWORD_DEFAULT,
+    CODH_KEYWORD_MAX_LEN,
+    codh_keyword_from_notes,
+    is_remote_kind,
+    source_supports_codh_keyword,
+    sync_remote_source,
+    upsert_codh_keyword_in_notes,
+    validate_codh_keyword,
+)
 
 
 def _normalize_id(value: object) -> str | None:
@@ -135,6 +145,16 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
     layout.addWidget(QLabel("Sources"))
     layout.addWidget(source_list)
 
+    keyword_row = QWidget()
+    keyword_row_layout = QHBoxLayout(keyword_row)
+    keyword_row_layout.setContentsMargins(0, 0, 0, 0)
+    keyword_label = QLabel("keyword(CODH)")
+    keyword_entry = QLineEdit(CODH_KEYWORD_DEFAULT)
+    keyword_entry.setMaxLength(CODH_KEYWORD_MAX_LEN)
+    keyword_row_layout.addWidget(keyword_label)
+    keyword_row_layout.addWidget(keyword_entry, 1)
+    layout.addWidget(keyword_row)
+
     source_actions = QWidget()
     source_actions_layout = QHBoxLayout(source_actions)
     source_actions_layout.setContentsMargins(0, 0, 0, 0)
@@ -217,6 +237,26 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
             kind_hint = entry.kind if is_remote_kind(entry.kind) else "local-dir"
             source_list.addItem(f"{entry.name} [{kind_hint}] — {entry.path}")
 
+    def _sync_keyword_field_from_selection() -> None:
+        entry = _selected_source_entry()
+        if entry is not None and source_supports_codh_keyword(entry):
+            keyword_entry.setEnabled(True)
+            stored = codh_keyword_from_notes(entry.notes)
+            keyword_entry.setText(stored if stored else CODH_KEYWORD_DEFAULT)
+            return
+        keyword_entry.setEnabled(False)
+        keyword_entry.setText(CODH_KEYWORD_DEFAULT)
+
+    def _flush_keyword_to_selected_source() -> None:
+        entry = _selected_source_entry()
+        if entry is None or not source_supports_codh_keyword(entry):
+            return
+        keyword = validate_codh_keyword(keyword_entry.text())
+        new_notes = upsert_codh_keyword_in_notes(entry.notes, keyword)
+        if new_notes != entry.notes:
+            update_source(catalog, entry.id, notes=new_notes)
+            _persist()
+
     def _on_refresh_source() -> None:
         entry = _selected_source_entry()
         if entry is None:
@@ -226,11 +266,16 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
             QMessageBox.information(dialog, "Refresh", "Refresh applies to remote sources only.")
             return
         try:
+            if source_supports_codh_keyword(entry):
+                _flush_keyword_to_selected_source()
             sync_remote_source(catalog, entry.id)
             _persist()
             _refresh_source_list()
         except ValueError as exc:
             QMessageBox.warning(dialog, "Refresh", str(exc))
+
+    def _on_source_selection_changed() -> None:
+        _sync_keyword_field_from_selection()
 
     def _source_slot_items() -> list[tuple[str, str]]:
         return source_slot_items(catalog)
@@ -366,6 +411,7 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
 
     browse_btn.clicked.connect(_on_browse)
     add_btn.clicked.connect(_on_add_source)
+    source_list.currentRowChanged.connect(lambda *_args: _on_source_selection_changed())
     refresh_source_btn.clicked.connect(_on_refresh_source)
     delete_btn.clicked.connect(_on_delete_source)
     profile_combo.currentIndexChanged.connect(_on_profile_changed)
@@ -374,6 +420,7 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
 
     _refresh_source_list()
     _refresh_profile_combo()
+    _sync_keyword_field_from_selection()
 
     def _close_dialog() -> None:
         if not editor_state.get("profile_slots_loading"):
@@ -381,6 +428,10 @@ def run_source_registry_dialog(parent: Any, *, catalog_path: Path) -> bool:
                 _flush_profile_slots(active_profile_id["value"])
             except ValueError:
                 pass
+        try:
+            _flush_keyword_to_selected_source()
+        except ValueError:
+            pass
         dialog.reject()
 
     buttons.rejected.connect(_close_dialog)

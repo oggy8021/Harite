@@ -44,7 +44,8 @@ _BUNDLED_SOURCE_PRESET_IDS = {
     "ndl-random-indoor",
     "ndl-random-landmark",
     "ndl-random-outdoor",
-    "codh-edo-spots-sakura",
+    "codh-edo-spots-keyword",
+    "codh-edo-shops-keyword",
     "codh-edo-spots-random",
     "codh-edo-shops-random",
 }
@@ -60,7 +61,7 @@ def test_load_bundled_presets() -> None:
     kind_by_id = {template.preset_id: template.kind for template in presets.sources}
     assert kind_by_id["jma-near-color"] == KIND_JMA_WEATHER_MAP
     assert kind_by_id["ndl-random-illust"] == KIND_NDL_TSUGIDIGI
-    assert kind_by_id["codh-edo-spots-sakura"] == KIND_CODH_EDO
+    assert kind_by_id["codh-edo-spots-keyword"] == KIND_CODH_EDO
     for template in presets.sources:
         assert is_remote_kind(template.kind)
         assert template.min_slideshow_interval_seconds == 600

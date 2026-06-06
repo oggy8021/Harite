@@ -222,14 +222,14 @@ def test_ndl_random_map_uses_facet_url(
     assert any(u.startswith(NDL_RANDOM_FACET_URL) for u in seen)
 
 
-def test_codh_edo_spots_sakura_sync(
+def test_codh_edo_spots_keyword_sync(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     _install_ndl_codh_urlopen_mock(monkeypatch)
     cache_root = tmp_path / "remote-cache"
     catalog = empty_catalog()
-    entry = import_preset_source(catalog, "codh-edo-spots-sakura", cache_root=cache_root)
+    entry = import_preset_source(catalog, "codh-edo-spots-keyword", cache_root=cache_root)
 
     sync_remote_source(catalog, entry.id, cache_root=cache_root)
 

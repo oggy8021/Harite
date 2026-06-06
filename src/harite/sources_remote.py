@@ -41,6 +41,15 @@ CODH_SEARCH_URL_TEMPLATE = "https://mp.ex.nii.ac.jp/api/{indexer}/search"
 JMA_PNG_URL = "https://www.jma.go.jp/bosai/weather_map/data/png/{filename}"
 
 PRESET_MARKER_PREFIX = "harite-preset:"
+CODH_KEYWORD_NOTE_PREFIX = "harite-codh-keyword:"
+CODH_KEYWORD_MAX_LEN = 16
+CODH_KEYWORD_DEFAULT = "桜"
+CODH_KEYWORD_PRESET_IDS = frozenset(
+    {
+        "codh-edo-spots-keyword",
+        "codh-edo-shops-keyword",
+    }
+)
 
 _JMA_PRESET_LIST_KEYS: dict[str, tuple[str, ...]] = {
     "jma-near-color": ("near", "now"),
@@ -71,13 +80,21 @@ class _CodhSearchSpec:
     metadata_label: str | None = None
     metadata_value: str | None = None
     random_pick: bool = False
+    keyword_from_notes: bool = False
 
 
 _CODH_PRESET_SEARCH: dict[str, _CodhSearchSpec] = {
-    "codh-edo-spots-sakura": _CodhSearchSpec(
+    "codh-edo-spots-keyword": _CodhSearchSpec(
         indexer="edo-spots",
         metadata_label="キーワード",
-        metadata_value="桜",
+        random_pick=True,
+        keyword_from_notes=True,
+    ),
+    "codh-edo-shops-keyword": _CodhSearchSpec(
+        indexer="edo-shops",
+        metadata_label="備考",
+        random_pick=True,
+        keyword_from_notes=True,
     ),
     "codh-edo-spots-random": _CodhSearchSpec(indexer="edo-spots", random_pick=True),
     "codh-edo-shops-random": _CodhSearchSpec(indexer="edo-shops", random_pick=True),
@@ -204,6 +221,54 @@ def preset_id_from_notes(notes: str) -> str | None:
         if stripped.startswith(PRESET_MARKER_PREFIX):
             return stripped[len(PRESET_MARKER_PREFIX) :].strip()
     return None
+
+
+def is_codh_keyword_preset(preset_id: str | None) -> bool:
+    return preset_id in CODH_KEYWORD_PRESET_IDS if preset_id else False
+
+
+def codh_keyword_from_notes(notes: str) -> str | None:
+    for line in notes.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(CODH_KEYWORD_NOTE_PREFIX):
+            value = stripped[len(CODH_KEYWORD_NOTE_PREFIX) :].strip()
+            return value or None
+    return None
+
+
+def validate_codh_keyword(keyword: str) -> str:
+    value = str(keyword).strip()
+    if not value:
+        raise ValueError("CODH keyword cannot be empty")
+    if len(value) > CODH_KEYWORD_MAX_LEN:
+        raise ValueError(f"CODH keyword exceeds {CODH_KEYWORD_MAX_LEN} characters")
+    if "\n" in value or "\r" in value:
+        raise ValueError("CODH keyword cannot contain newlines")
+    return value
+
+
+def upsert_codh_keyword_in_notes(notes: str, keyword: str) -> str:
+    validated = validate_codh_keyword(keyword)
+    kept: list[str] = []
+    replaced = False
+    for line in notes.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(CODH_KEYWORD_NOTE_PREFIX):
+            if not replaced:
+                kept.append(f"{CODH_KEYWORD_NOTE_PREFIX}{validated}")
+                replaced = True
+            continue
+        if stripped:
+            kept.append(stripped)
+    if not replaced:
+        kept.append(f"{CODH_KEYWORD_NOTE_PREFIX}{validated}")
+    return "\n".join(kept)
+
+
+def source_supports_codh_keyword(entry: SourceEntry) -> bool:
+    if entry.kind != KIND_CODH_EDO:
+        return False
+    return is_codh_keyword_preset(preset_id_from_notes(entry.notes))
 
 
 def add_remote_source(
@@ -398,7 +463,12 @@ def _ndl_sync(catalog: Catalog, source_id: str) -> None:
     )
 
 
-def _codh_search_query(spec: _CodhSearchSpec, *, start: int | None = None) -> str:
+def _codh_search_query(
+    spec: _CodhSearchSpec,
+    *,
+    start: int | None = None,
+    metadata_value: str | None = None,
+) -> str:
     params: list[tuple[str, str]] = [
         ("select", "canvas"),
         ("from", "canvas,curation"),
@@ -406,17 +476,22 @@ def _codh_search_query(spec: _CodhSearchSpec, *, start: int | None = None) -> st
     ]
     if start is not None:
         params.append(("start", str(start)))
-    if spec.metadata_label and spec.metadata_value:
+    effective_value = metadata_value if metadata_value is not None else spec.metadata_value
+    if spec.metadata_label and effective_value:
         params.append(("where_metadata_label", spec.metadata_label))
-        params.append(("where_metadata_value", spec.metadata_value))
+        params.append(("where_metadata_value", effective_value))
     return urlencode(params)
 
 
-def _codh_pick_thumbnail_url(spec: _CodhSearchSpec) -> str:
+def _codh_pick_thumbnail_url(
+    spec: _CodhSearchSpec,
+    *,
+    metadata_value: str | None = None,
+) -> str:
     base = CODH_SEARCH_URL_TEMPLATE.format(indexer=spec.indexer)
     if spec.random_pick:
         # Must pass limit=1: omitting limit returns the full corpus (~1300+ canvases, multi-MB JSON).
-        probe_url = f"{base}?{_codh_search_query(spec, start=0)}"
+        probe_url = f"{base}?{_codh_search_query(spec, start=0, metadata_value=metadata_value)}"
         probe = _http_get_json(probe_url)
         if not isinstance(probe, dict):
             raise ValueError("invalid CODH search response")
@@ -424,9 +499,9 @@ def _codh_pick_thumbnail_url(spec: _CodhSearchSpec) -> str:
         if total < 1:
             raise ValueError("CODH search returned no canvases")
         start = random.randint(0, total - 1)
-        search_url = f"{base}?{_codh_search_query(spec, start=start)}"
+        search_url = f"{base}?{_codh_search_query(spec, start=start, metadata_value=metadata_value)}"
     else:
-        search_url = f"{base}?{_codh_search_query(spec)}"
+        search_url = f"{base}?{_codh_search_query(spec, metadata_value=metadata_value)}"
     payload = _http_get_json(search_url)
     if not isinstance(payload, dict):
         raise ValueError("invalid CODH search response")
@@ -453,7 +528,14 @@ def _codh_sync(catalog: Catalog, source_id: str) -> None:
     if spec is None:
         raise ValueError(f"unsupported CODH preset for sync: {preset_id}")
 
-    image_url = _codh_pick_thumbnail_url(spec)
+    metadata_value: str | None = spec.metadata_value
+    if spec.keyword_from_notes:
+        keyword = codh_keyword_from_notes(entry.notes)
+        if keyword is None:
+            raise ValueError("CODH keyword sync requires harite-codh-keyword in notes")
+        metadata_value = validate_codh_keyword(keyword)
+
+    image_url = _codh_pick_thumbnail_url(spec, metadata_value=metadata_value)
     image_bytes = _http_get_bytes(image_url)
     _write_latest_cache(Path(entry.path), image_bytes, url=image_url)
 

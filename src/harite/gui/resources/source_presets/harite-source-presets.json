@@ -146,15 +146,29 @@
 
     {
 
-      "preset_id": "codh-edo-spots-sakura",
+      "preset_id": "codh-edo-spots-keyword",
 
-      "name": "江戸観光（桜）",
+      "name": "江戸観光（キーワード）",
 
       "kind": "remote-codh-edo",
 
       "min_slideshow_interval_seconds": 600,
 
-      "notes": "出典：人文学オープンデータ共同利用センター（CODH）江戸観光案内（https://codh.rois.ac.jp/edo-spots/）"
+      "notes": "出典：人文学オープンデータ共同利用センター（CODH）江戸観光案内（https://codh.rois.ac.jp/edo-spots/）\nharite-codh-keyword:桜"
+
+    },
+
+    {
+
+      "preset_id": "codh-edo-shops-keyword",
+
+      "name": "江戸買物（キーワード）",
+
+      "kind": "remote-codh-edo",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：人文学オープンデータ共同利用センター（CODH）江戸買物案内（https://codh.rois.ac.jp/edo-shops/）\nharite-codh-keyword:桜"
 
     },
 

@@ -24,9 +24,12 @@ from harite.sources import (
 from harite.sources_remote import (
     PRESET_MARKER_PREFIX,
     add_remote_source,
+    codh_keyword_from_notes,
+    is_codh_keyword_preset,
     is_remote_kind,
     preset_id_from_notes,
     sync_remote_source,
+    upsert_codh_keyword_in_notes,
 )
 
 PRESET_SCHEMA_VERSION = 1
@@ -146,6 +149,10 @@ def repair_preset_source_notes(
         if entry is None:
             continue
         canonical = canonical_preset_source_notes(template)
+        if is_codh_keyword_preset(template.preset_id):
+            user_keyword = codh_keyword_from_notes(entry.notes)
+            if user_keyword:
+                canonical = upsert_codh_keyword_in_notes(canonical, user_keyword)
         if entry.notes != canonical:
             entry.notes = canonical
             changed = True

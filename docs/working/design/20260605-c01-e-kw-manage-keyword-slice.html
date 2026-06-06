@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C-01-E-KW — Manage keyword row slice</title>
+  <style>
+    :root {
+      --bg: #f0ebe3;
+      --panel: #faf7f2;
+      --line: #8a8070;
+      --text: #2a261e;
+      --muted: #6a6254;
+      --new: #d7e8df;
+      --new-border: #3f6a57;
+      --font: "Yu Gothic UI", "Hiragino Sans", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); font-family: var(--font); color: var(--text); }
+    .page { max-width: 960px; margin: 24px auto 40px; padding: 0 16px; }
+    h1 { font-size: 22px; margin: 0 0 8px; }
+    .sub { color: var(--muted); font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 720px) { .cols { grid-template-columns: 1fr; } }
+    .col h2 { font-size: 15px; margin: 0 0 10px; }
+    .dialog {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 14px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .dlg-title { font-weight: 600; margin-bottom: 12px; }
+    .block { margin-bottom: 10px; }
+    .list {
+      border: 1px solid var(--line);
+      height: 120px;
+      background: #fff;
+      padding: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .row { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+    .kw-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 8px 0;
+      padding: 6px 8px;
+      border: 2px dashed var(--new-border);
+      background: var(--new);
+    }
+    .kw-row label { font-size: 12px; white-space: nowrap; }
+    .kw-row input {
+      flex: 1;
+      min-width: 120px;
+      border: 1px solid var(--line);
+      padding: 4px 8px;
+      font-size: 13px;
+    }
+    .add-row input { flex: 1; border: 1px solid var(--line); padding: 4px; font-size: 12px; }
+    .note { margin-top: 16px; font-size: 12px; color: var(--muted); line-height: 1.55; }
+    .tag { display: inline-block; background: #e8dfd0; padding: 2px 6px; border-radius: 3px; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>C-01-E-KW — Manage dialog keyword 行</h1>
+    <p class="sub">
+      左: 現行（Refresh 行のみ）。右: <strong>暫定案</strong> — Refresh 直上に
+      <code>keyword(CODH)</code> 常設、初期値 <code>桜</code>。面板分割は P-05 理想像（memo 参照）。
+    </p>
+    <div class="cols">
+      <div class="col">
+        <h2>現行</h2>
+        <div class="dialog">
+          <div class="dlg-title">Manage sources and profiles</div>
+          <div class="block"><strong>Sources</strong></div>
+          <div class="list">*気象庁（日本付近）<br>*NDL 図版（イラスト）<br>…</div>
+          <div class="row">
+            <span class="btn">Refresh</span>
+            <span style="flex:1"></span>
+            <span class="btn">Delete</span>
+          </div>
+          <div class="row add-row">
+            <input placeholder="Local directory name" readonly>
+            <input placeholder="Directory path" readonly>
+            <span class="btn">Browse…</span>
+            <span class="btn">Add local</span>
+          </div>
+          <div class="block" style="margin-top:12px"><strong>Profiles (L/R preset)</strong></div>
+        </div>
+      </div>
+      <div class="col">
+        <h2>暫定案 <span class="tag">K6 pass</span></h2>
+        <div class="dialog">
+          <div class="dlg-title">Manage sources and profiles</div>
+          <div class="block"><strong>Sources</strong></div>
+          <div class="list">*江戸観光（キーワード）<br>…</div>
+          <div class="kw-row">
+            <label for="kw">keyword(CODH)</label>
+            <input id="kw" type="text" value="桜" maxlength="16">
+          </div>
+          <div class="row">
+            <span class="btn">Refresh</span>
+            <span style="flex:1"></span>
+            <span class="btn">Delete</span>
+          </div>
+          <div class="row add-row">
+            <input placeholder="Local directory name" readonly>
+            <input placeholder="Directory path" readonly>
+            <span class="btn">Browse…</span>
+            <span class="btn">Add local</span>
+          </div>
+          <div class="block" style="margin-top:12px"><strong>Profiles (L/R preset)</strong></div>
+        </div>
+      </div>
+    </div>
+    <p class="note">
+      P-05 理想: preset 面板に Refresh + keyword(CODH) をまとめ、local 面板に Add local 系を分離（ALL タブなし）。
+      本 HTML は暫定案のみ。memo: 20260605-c01-e-kw-manage-keyword-slice-memo.md
+    </p>
+  </div>
+</body>
+</html>
