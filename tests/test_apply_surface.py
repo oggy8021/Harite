@@ -28,3 +28,13 @@ def test_apply_mode_help_windows_span_opt_in(monkeypatch):
     text = apply_surface.apply_mode_help_text("per-monitor-auto-split", windows_apply_span=True)
     assert "Span" in text
     assert "Harite will switch" in text
+
+
+def test_dual_display_detected_true_when_two_or_more(monkeypatch):
+    monkeypatch.setattr(apply_surface, "count_detected_displays", lambda: 2)
+    assert apply_surface.dual_display_detected() is True
+
+
+def test_dual_display_detected_false_when_single(monkeypatch):
+    monkeypatch.setattr(apply_surface, "count_detected_displays", lambda: 1)
+    assert apply_surface.dual_display_detected() is False

@@ -50,6 +50,35 @@ def test_can_start_slideshow_dual_requires_both(monkeypatch, window: MainWindow)
     assert window._can_start_slideshow_now() is False
 
 
+def test_pick_input_blocked_for_r_when_single_display(monkeypatch, window: MainWindow):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.dual_display_detected",
+        lambda: False,
+    )
+    window.input_path_r = "keep"
+    window.on_pick_input("new-right.jpg", "R")
+    assert window.input_path_r == "keep"
+
+
+def test_pick_slideshow_srcdir_blocked_for_r_when_single_display(monkeypatch, window: MainWindow):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.dual_display_detected",
+        lambda: False,
+    )
+    window.slideshow_srcdir_r = "keep"
+    assert window.on_pick_slideshow_srcdir("/new/r", "R") is False
+    assert window.slideshow_srcdir_r == "keep"
+
+
+def test_select_slideshow_source_blocked_for_r_when_single_display(monkeypatch, window: MainWindow):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.dual_display_detected",
+        lambda: False,
+    )
+    window.slideshow_source_id_r = "keep-id"
+    assert window.on_select_slideshow_source("R", "src-r") is False
+
+
 def test_second_slot_handlers_blocked_when_single_display(monkeypatch, window: MainWindow):
     monkeypatch.setattr(
         "harite.gui.views.main_window.dual_display_detected",
