@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextvars import ContextVar
 from dataclasses import dataclass
 import json
 import os
@@ -10,7 +11,7 @@ import shutil
 import random
 import re
 import sys
-from typing import Any, Callable, Protocol
+from typing import Any, Callable, Literal, Protocol
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen
@@ -87,6 +88,9 @@ class _CodhSearchSpec:
     # place names (飛鳥山) stored under 名所（統一地名）.
     keyword_where: bool = False
 
+
+CodhSyncPick = Literal["refresh", "resume"]
+_CODH_SYNC_PICK: ContextVar[CodhSyncPick] = ContextVar("codh_sync_pick", default="refresh")
 
 _CODH_PRESET_SEARCH: dict[str, _CodhSearchSpec] = {
     "codh-edo-spots-keyword": _CodhSearchSpec(
@@ -377,6 +381,7 @@ def sync_remote_source(
     source_id: str,
     *,
     cache_root: Path | None = None,
+    codh_sync_pick: CodhSyncPick = "refresh",
 ) -> None:
     entry = get_source(catalog, source_id)
     if entry is None:
@@ -387,7 +392,11 @@ def sync_remote_source(
     if effective_root is None and entry.path.strip():
         effective_root = Path(entry.path).parent
     provider = get_remote_provider(entry.kind)
-    provider.sync(catalog, source_id)
+    token = _CODH_SYNC_PICK.set(codh_sync_pick)
+    try:
+        provider.sync(catalog, source_id)
+    finally:
+        _CODH_SYNC_PICK.reset(token)
     expected = remote_cache_dir_for_source(source_id, cache_root=effective_root)
     entry.path = str(expected.resolve())
 
@@ -505,6 +514,19 @@ def _ndl_iiif_url(illustration: dict[str, Any]) -> str:
     return NDL_IIIF_TEMPLATE.format(pid=pid, page=page, x=x, y=y, w=w, h=h)
 
 
+def _ndl_fetch_iiif_image_bytes(url: str) -> bytes | None:
+    """Return image bytes, or None when NDL IIIF rejects the candidate (404/400)."""
+    try:
+        with urlopen(url, timeout=30) as response:
+            return response.read()
+    except HTTPError as exc:
+        if exc.code in (404, 400):
+            return None
+        raise ValueError(f"remote fetch failed: HTTP {exc.code} for {url}") from exc
+    except URLError as exc:
+        raise ValueError(f"remote fetch failed: {exc}") from exc
+
+
 def _ndl_sync(catalog: Catalog, source_id: str) -> None:
     entry = get_source(catalog, source_id)
     if entry is None:
@@ -514,18 +536,22 @@ def _ndl_sync(catalog: Catalog, source_id: str) -> None:
         raise ValueError("NDL sync requires harite-preset marker in notes")
 
     meta_url = _ndl_illustration_url(preset_id)
-    last_404_url: str | None = None
+    last_skipped_url: str | None = None
     for _attempt in range(NDL_IIIF_FETCH_MAX_ATTEMPTS):
         payload = _http_get_json(meta_url)
         if not isinstance(payload, list) or not payload:
             raise ValueError("NDL illustration API returned no results")
         iiif_url = _ndl_iiif_url(payload[0])
-        image_bytes = _http_get_bytes_or_none_on_404(iiif_url)
+        image_bytes = _ndl_fetch_iiif_image_bytes(iiif_url)
         if image_bytes is not None:
             _write_latest_cache(Path(entry.path), image_bytes, url=iiif_url)
             return
-        last_404_url = iiif_url
-    suffix = f" (last: HTTP 404 for {last_404_url})" if last_404_url else ""
+        last_skipped_url = iiif_url
+    suffix = (
+        f" (last skipped IIIF: {last_skipped_url})"
+        if last_skipped_url
+        else ""
+    )
     raise ValueError(
         "remote fetch failed: NDL IIIF unavailable after "
         f"{NDL_IIIF_FETCH_MAX_ATTEMPTS} illustration attempts{suffix}"
@@ -589,23 +615,21 @@ def _codh_pick_thumbnail_url(
 
 
 def _codh_sync(catalog: Catalog, source_id: str) -> None:
+    from harite.sources_remote_codh import (
+        CODH_SYNC_REFRESH,
+        CODH_SYNC_RESUME,
+        codh_sync_with_pick,
+        resolve_codh_sync_context,
+    )
+
     entry = get_source(catalog, source_id)
     if entry is None:
         raise ValueError(f"unknown source id: {source_id}")
-    preset_id = preset_id_from_notes(entry.notes)
-    if preset_id is None:
-        raise ValueError("CODH sync requires harite-preset marker in notes")
-    spec = _CODH_PRESET_SEARCH.get(preset_id)
-    if spec is None:
-        raise ValueError(f"unsupported CODH preset for sync: {preset_id}")
-
-    metadata_value: str | None = spec.metadata_value
-    if spec.keyword_from_settings:
-        metadata_value = resolve_codh_keyword()
-
-    image_url = _codh_pick_thumbnail_url(spec, metadata_value=metadata_value)
-    image_bytes = _http_get_bytes(image_url)
-    _write_latest_cache(Path(entry.path), image_bytes, url=image_url)
+    pick = _CODH_SYNC_PICK.get()
+    codh_sync_with_pick(
+        resolve_codh_sync_context(entry),
+        CODH_SYNC_REFRESH if pick == "refresh" else CODH_SYNC_RESUME,
+    )
 
 
 register_remote_provider(

@@ -96,10 +96,15 @@ def test_codh_spots_keyword_sync_reads_settings(
         target = url if isinstance(url, str) else url.full_url
         seen.append(target)
         if "mp.ex.nii.ac.jp/api/edo-spots/search" in target:
+            payload = (
+                {"total": _CODH_RESULTS["total"]}
+                if "limit=1" in target
+                else _CODH_RESULTS
+            )
 
             class _Codh:
                 def read(self) -> bytes:
-                    return json.dumps(_CODH_RESULTS).encode("utf-8")
+                    return json.dumps(payload).encode("utf-8")
 
                 def __enter__(self) -> "_Codh":
                     return self
@@ -126,7 +131,7 @@ def test_codh_spots_keyword_sync_reads_settings(
     settings_path = tmp_path / "harite-settings.json"
     save_settings(settings_path, apply_codh_keyword_to_settings({}, "花火"))
     monkeypatch.setattr("harite.sources_remote.urlopen", fake_urlopen)
-    monkeypatch.setattr("harite.sources_remote.random.randint", lambda _a, _b: 1)
+    monkeypatch.setattr("harite.sources_remote_codh.random.randint", lambda _a, _b: 0)
     monkeypatch.setattr("harite.settings_file.resolve_default_settings_path", lambda: settings_path)
 
     catalog = empty_catalog()
