@@ -180,6 +180,10 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 
 → **同じ 1 枚・同じ端子でも `DISPLAYn` は安定しない。** P-03 は **`len` のみ**でよい。
 
+**`len==1` 時の `primary`（観測メモ用・impl 判定は不要）:** 残存 1 枚が `primary=True` なら **非 primary 側が止められた**（例: W2′ で主のみ残す）。`primary=False` なら **主が止められ副次のみ残存**。
+
+**2 枚復帰後も GDI 名は入れ替わる:** DP-only 再起動→拡張復帰後、同一物理でも以前の 2 枚観測（`DISPLAY2`=主左）から **`DISPLAY1`=主左 / `DISPLAY2`=右** に変化（§5.2 後半）。**名前でモニターを追跡しない。**
+
 **観測記録のルール:** 設定は **「ディスプレイ N（主/副）」+ 端子（HDMI/DP）+ 左右**。one-liner は **`len` / `primary` / 座標**を貼る。`DISPLAYn` は参考脚注程度。
 
 ### 4.4 DisplayPort / HDMI の観測メモ（P3-5）
@@ -207,24 +211,27 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 | ラベル | `win-cursor-dev` |
 | OS | Windows（26200 系） |
 | Harite backend | CLI one-liner（`harite.workspace`） |
-| 構成 | デスクトップ 2 枚・横並び拡張。副次=右・**HDMI** |
+| 構成 | 2 枚・拡張。設定 **ディスプレイ 1＝主（HDMI2・弄らない）** + ディスプレイ 2＝**DP** |
 
 ### 5.2 状態 A — ベースライン（2 枚）
 
-| 項目 | 記入 |
-| --- | --- |
-| 物理接続 | 左 primary + 右 **HDMI** |
-| `xrandr --query` 要約（Linux） | — |
-| 設定アプリ（Windows） | ディスプレイ 2 |
-| `len(detect_displays())` | **2** |
-| `detect_displays()` 生 dump | `DISPLAY1` 3840×2160 primary (0,0); `DISPLAY2` 3840×2160 (3840,0); scale 150% |
+| 項目 | 初回（2 枚） | 復帰（DP-only 再起動後・拡張に戻す） |
+| --- | --- | --- |
+| 物理接続 | 主 HDMI2 左 + 副 DP 右 | 同左（設定で拡張に復帰） |
+| 設定アプリ | ディスプレイ 2 | ディスプレイ 2 |
+| `len` | **2** | **2** |
+| `primary` 左 | Yes（`DISPLAY2` ※名のみ） | Yes（`DISPLAY1` ※名のみ） |
+| 生 dump（参考） | `0: DISPLAY2 primary (0,0)`; `1: DISPLAY1 (3840,0)` | `0: DISPLAY1 primary (0,0)`; `1: DISPLAY2 (3840,0)` |
+
+→ **GDI 名はセッションで入れ替わる。`len`/`primary`/座標は 2 枚復帰として一致。**
 
 ### 5.3 状態 B — 1 枚再現（操作ごとに 1 行）
 
 | 操作 ID | 操作 | 端子 | `len` | R 側 UI（Slideshow） | メモ |
 | --- | --- | --- | --- | --- | --- |
 | W2′ | 設定 → **「1 のみに表示する」** | HDMI（副次） | **1** | **有効のまま** | `DISPLAY1` のみ残存。切断メニュー無し環境の正手 |
-| 復帰 | 拡張（2 画面）に戻す | HDMI | **2** | — | W2′ の逆操作。ベースライン再確認 |
+| 復帰 | 拡張（2 画面）に戻す | HDMI+DP | **2** | — | W2′ 後の復帰 |
+| 復帰2 | DP-only 再起動後・拡張に戻す | HDMI+DP | **2** | — | GDI 名が初回 2 枚時と **入れ替わり**（§5.2） |
 | W4 | 副次 **HDMI 電源 off のみ**（ケーブル接続維持） | HDMI | **2** | **有効のまま** | **負例確定** — EDID 残存で `EnumDisplayMonitors` も 2。単 display 再現に使わない |
 | — | `harite-qt` Slideshow（P-03 未実装） | — | — | **R 一式まだ操作可** | `len==1` でも無効化なし。§2 の問題どおり |
 | DP-only | **サインアウト → ログイン**（DP のみ接続） | DP | **1** | — | `name=DISPLAY2` primary — GDI 名は信用不可の決定打 |
@@ -236,9 +243,11 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 | --- | --- |
 | 1 枚再現の正手 | **W2′ 確定** |
 | 電源 off のみ（負例） | **W4 確定**（HDMI・`len==2` 維持） |
+| GDI 名 | **信用不可確定**（再起動/サインアウト/復帰で変動） |
+| 2 枚復帰 | **復帰2 確認**（`len==2`） |
 | Linux 観測 | **未実施**（保留） |
 
-**pass 判定（P3-1）:** 各 OS で、Harite `len==1` になる操作が **文書化済み**で、かつ **電源 off のみでは再現しない**ことがログで確認できる。**Windows は上表で半分 pass**（Linux 待ち）。
+**pass 判定（P3-1）:** 各 OS で、Harite `len==1` になる操作が **文書化済み**で、かつ **電源 off のみでは再現しない**ことがログで確認できる。**Windows（`win-cursor-dev`）は pass**（Linux 待ち）。
 
 ---
 
@@ -265,3 +274,4 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 | 2026-06-06 | §4.3.1 — 設定「ディスプレイ 1/2」と `DISPLAYn` / Python index のずれを明記 |
 | 2026-06-06 | §4.3.1 改訂 — GDI `DISPLAYn` は電源 on 順で信用不可。P-03 は `len` + `primary`/座標のみ |
 | 2026-06-06 | DP-only 実験 — サインアウト=`DISPLAY2`、再起動=`DISPLAY1`（いずれも `len==1`） |
+| 2026-06-06 | 拡張復帰2 — `len==2`、`DISPLAY1`=主左（GDI 名は初回 2 枚時と入替） |
