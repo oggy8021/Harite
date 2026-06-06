@@ -1,16 +1,16 @@
-# P-03 — 単 display / monitor まわり UX（計画 draft）
+# P-03 — 単 display / monitor まわり UX（計画正本）
 
 最終更新: 2026-06-06  
-ステータス: **impl 着手**（P3-1/P3-2 完了 — GTK/Qt 配線済み）
+ステータス: **完了**（#420 merge、#359 close、オーナー実機 OK — [3層比較](20260606-p03-3layer-audit.md)）
 
 ## 位置づけ
 
 | 文書 | 役割 |
 | --- | --- |
-| [feature-overview §P-03](20260518-2047-feature-overview.md) | inventory 入口 |
-| [issue #359](../online-issues/issue-359.md) | 起票メモ |
-| [gui-spec § Main / Slideshow](../specs/gui/harite-gui-spec.md) | dual-display 前提 UI |
-| [slideshow-spec §6](../specs/slideshow/harite-slideshow-spec.md) | Linux per-monitor / pause |
+| [feature-overview §P-03](../20260518-2047-feature-overview.md) | inventory 入口 |
+| [issue #359](../../online-issues/closed/issue-359.md) | 起票メモ（クローズ済み） |
+| [gui-spec § Main / Slideshow](../../specs/gui/harite-gui-spec.md) | dual-display 前提 UI + §4.3 P-03 |
+| [slideshow-spec §2 / §6](../../specs/slideshow/harite-slideshow-spec.md) | start 条件 / per-monitor / pause |
 | `src/harite/workspace.py` | **`detect_displays()`** 実装（本 issue の検出正本） |
 | **本書** | 単 display 時の -R 無効化等 — 計画正本 |
 
@@ -21,7 +21,7 @@
 ## 1. 問題
 
 - dual-display 前提の UI が、**1 枚検出**環境でも R 側が有効のまま。
-- 単 display の **再現手順が未確立**（モニター電源 off だけでは枚数が減らない等 — [#359](../online-issues/issue-359.md)）。
+- 単 display の **再現手順が未確立**（モニター電源 off だけでは枚数が減らない等 — [#359](../../online-issues/closed/issue-359.md)）。
 - disabled 範囲・spec・GTK/Qt テスト方針が未合意。
 - **Linux（XFCE / xrandr）と Windows（EnumDisplayMonitors）で「1 枚」の作り方と product 影響が異なる**が、planning に未整理だった。
 
@@ -31,8 +31,8 @@
 | --- | --- | --- |
 | **検出** | `harite.workspace.detect_displays()` — Linux=`xrandr --query`、Windows=`EnumDisplayMonitors` | OS が 2 枚と数える限り Harite も 2 枚 |
 | **Main tab** | L/R 各 panel（path / direction / picker） | R も操作可能のまま |
-| **Slideshow** | **L/R 両方 srcdir 必須**で Start 可（[gui-spec](../specs/gui/harite-gui-spec.md)） | 1 枚でも dual-source 前提は維持 |
-| **Linux slideshow** | dual-source 時 **per-monitor-auto-split** + `xfconf-query` path（[slideshow-spec](../specs/slideshow/harite-slideshow-spec.md)） | 実行中 2→1 枚は **pause**（別問題） |
+| **Slideshow** | **L/R 両方 srcdir 必須**で Start 可（[gui-spec](../../specs/gui/harite-gui-spec.md)） | 1 枚でも dual-source 前提は維持 |
+| **Linux slideshow** | dual-source 時 **per-monitor-auto-split** + `xfconf-query` path（[slideshow-spec](../../specs/slideshow/harite-slideshow-spec.md)） | 実行中 2→1 枚は **pause**（別問題） |
 | **Windows slideshow** | dual-source 時 **Span**（composite 1 枚） | 2 枚検出が前提の整理が多い |
 
 P-03 の主眼は **「検出 1 枚のとき R 側 UI を誤操作不能にする」**。Slideshow の L/R 両方必須を緩めるかは **P3-2 gate**（本波のスコープ外にできる）。
@@ -79,7 +79,7 @@ P-03 の主眼は **「検出 1 枚のとき R 側 UI を誤操作不能にす�
 
 ### 2.1 用語 — 「R 無効化」の意味（P3-2 向け）
 
-issue [#359](../online-issues/issue-359.md) は **「右パネル」** と書いているが、これは **2 枚運用時の UI 配置**（Main / Slideshow の **右カラム＝第二スロット**）に由来する。**物理の左右や OS の「ディスプレイ 1/2」とは一致しない**（観測: Windows 設定番号 ≠ Harite 順序 ≠ `DISPLAYn` / `xrandr` 名）。
+issue [#359](../../online-issues/closed/issue-359.md) は **「右パネル」** と書いているが、これは **2 枚運用時の UI 配置**（Main / Slideshow の **右カラム＝第二スロット**）に由来する。**物理の左右や OS の「ディスプレイ 1/2」とは一致しない**（観測: Windows 設定番号 ≠ Harite 順序 ≠ `DISPLAYn` / `xrandr` 名）。
 
 | 文脈 | 正確な読み |
 | --- | --- |
@@ -239,7 +239,7 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 | --- | --- |
 | 設定アプリの「1 画面」 | ユーザーには 1 枚に見えても **Harite が 2 と数える**ことがある（切断前の幽霊モニタ等）。**必ず one-liner** |
 | **3 種類の番号はずれる** | 下記 §4.3.1。**設定の「ディスプレイ 1」≠ `DISPLAY1` ≠ Python の `0`** |
-| Span / 拡張 | slideshow dual-source は **2 枚検出**前提の経路が多い（[gui-spec §6](../specs/gui/harite-gui-spec.md)）。1 枚時の Span 意味は P3-2 と別 |
+| Span / 拡張 | slideshow dual-source は **2 枚検出**前提の経路が多い（[gui-spec §6](../../specs/gui/harite-gui-spec.md)）。1 枚時の Span 意味は P3-2 と別 |
 | DPI / スケール | `scale_percent` が付くが P-03 の 1 枚判定には **使わない**（枚数のみ） |
 
 #### 4.3.1 Windows — 設定 UI・GDI 名・列挙 index（信用できるものの切り分け）
@@ -272,7 +272,7 @@ GDI `DISPLAYn` は設定番号・端子と無関係（下記 2 枚 dump は参�
 
 **2 枚・拡張復帰後の dump 例（2026-06-06）:** `0: DISPLAY1 primary (0,0)` + `1: DISPLAY2 (3840,0)` — **左＝設定1＝DP、右＝設定2＝HDMI** と座標で同定（`name` は信用しない）。
 
-**P-03 impl 契約（案）:** Windows では `len(detect_displays()) < 2` のみで R 無効化を判定。`Display.name` によるマッチングは **行わない**（Linux の per-monitor ファイル名用途とは切り離す — [slideshow-spec §6](../specs/slideshow/harite-slideshow-spec.md) は Linux `HDMI-1` 等が正本）。
+**P-03 impl 契約（案）:** Windows では `len(detect_displays()) < 2` のみで R 無効化を判定。`Display.name` によるマッチングは **行わない**（Linux の per-monitor ファイル名用途とは切り離す — [slideshow-spec §6](../../specs/slideshow/harite-slideshow-spec.md) は Linux `HDMI-1` 等が正本）。
 
 **DP 単独接続・`len==1` の GDI 名比較（物理 DP のみ・HDMI 未接続）:**
 

@@ -27,6 +27,8 @@
 | ファイル | 内容 |
 | --- | --- |
 | [20260606-p07-slideshow-drawer-open-state-planning.md](20260606-p07-slideshow-drawer-open-state-planning.md) | P-07 Drawer 開閉視認性（#417 完了） |
+| [20260606-p03-single-display-ux-planning.md](20260606-p03-single-display-ux-planning.md) | P-03 単 display 第二スロット UX（#420 完了） |
+| [20260606-p03-3layer-audit.md](20260606-p03-3layer-audit.md) | P-03 3層 audit（#420） |
 
 ## Qt / Windows / 横断
 

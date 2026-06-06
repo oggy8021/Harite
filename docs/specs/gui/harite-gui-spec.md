@@ -281,7 +281,7 @@ design 合意: [20260605-c01-e-kw-manage-keyword-slice-memo.md](../../working/de
 
 ### 4.3 単 display（P-03）— 第二スロット disabled
 
-検出は `len(detect_displays()) < 2` のみ（[planning draft](../../working/20260606-p03-single-display-ux-planning-draft.md) §2）。
+検出は `len(detect_displays()) < 2` のみ（[planning](../../working/finished/20260606-p03-single-display-ux-planning.md) §2）。
 
 | Tab | `len < 2` で disabled にする widget（第二スロット＝現 UI ラベル R） |
 | --- | --- |
