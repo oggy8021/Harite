@@ -1,6 +1,6 @@
 # Harite source registry 仕様 (Source Spec)
 
-最終更新: 2026-06-06（remote provider 契約の正本集約 — §12.5、§15.6–15.7 拡充）
+最終更新: 2026-06-06（remote provider 契約の正本集約 — §12.4.1 Refresh、§12.5、§15.6–15.7）
 
 ## 1. 責務
 
@@ -340,6 +340,34 @@ network エラー・HTTP 4xx/5xx は Sync 時に `ValueError`（またはラッ�
 
 **tick 毎の再 Sync（C-01-F）:** 現行 product では **採用しない**（据え置き）。interval ごとに別候補へ切り替えたい場合は、現行では Stop → Start または Manage **Refresh** で sync を走らせる。
 
+#### 12.4.1 再起動・Refresh・Start — cache が変わる条件（正本）
+
+ユーザーが「毎日アプリを開き直せば絵が変わるか」と読むときの契約。**sync が走らない操作では `latest.*` は前回のまま**残る。
+
+| 操作の組み合わせ | network sync | `latest.*` の中身 |
+| --- | --- | --- |
+| **アプリ再起動のみ** | **しない**（materialize は `bootstrap_preset_sources(..., sync=False)`） | **変わらない** — 前セッションの cache をそのまま読む |
+| 再起動 → **Slideshow Start** | **する**（実行 L/R の全 `remote-*`） | **変わりうる** — 層 A で候補を引き直す（§12.5） |
+| 再起動 → Manage **Refresh** → Close | **する**（選択中 remote **1 件**） | 当該 source だけ変わりうる。Slideshow はまだ Start していなければ壁紙 apply は起きない |
+| 実行中の **tick** のみ | しない | 変わらない |
+| **Stop** → **Start**（再起動なし） | Start 直前で sync | 変わりうる（再起動 + Start と同型の sync 入口） |
+
+**日常運用の読み方:** 「日々違う絵にしたい」なら **その日の最初の Slideshow Start**（前日 Stop 済み、または起動直後）が自然な入口。**再起動だけでは足りない**。前日と同じ cache を載せたまま Start すれば、sync 後に別候補へ変わりうる（NDL/CODH はランダム再抽選、JMA は list の最新 filename）。
+
+#### 12.4.2 Manage Refresh の product 意味（provider 別）
+
+Refresh はいずれも `sync_remote_source` 1 回だが、**ユーザーにとっての意味は provider で異なる**。
+
+| provider 群 | Refresh が意味すること | 必須か |
+| --- | --- | --- |
+| **JMA**（`remote-jma-weather-map`） | 気象庁 `list.json` から **最新の実況天気図**を取り直す（コンテンツ自体が時系列で更新される） | 鮮度が要るなら **Start 直前 sync でも足りる**。Refresh は Start 前の明示的プレビュー／手動更新 |
+| **NDL / CODH**（所蔵アーカイブ系） | 母集合（所蔵コーパス）は **滅多に変わらない**前提のまま、**「どの 1 枚を見せるか」だけ**を引き直す（NDL=サーバー random、CODH=`total`+random `start`） | **必須ではない**。同じことは **Slideshow Start 直前 sync** でも起きる（L/R 全 remote） |
+| **CODH keyword preset** | Refresh 前に Manage の `keyword(CODH)` を `harite-settings.json` へ flush してから sync — **keyword 変更後の再抽選** | keyword を変えた直後は Refresh または次回 Start で反映 |
+
+**Refresh が Start と重複しうる理由（NDL/CODH）:** Start は slideshow 実行の副作用として sync する。Refresh は **slideshow を開始せず**、または **選択中の 1 source だけ** cache を更新したいときの入口。所蔵更新ではなく **表示候補の再抽選**である点は §12.5 層 A と同じ。
+
+**取りづらさの整理:** 所蔵ライブラリの更新を追うための Refresh ではない。アーカイブ系では「もう一度ランダムに引く」操作に近く、**毎日の変化は再起動 + Start** で足りる設計（Start で必ず sync するため）。
+
 ### 12.5 Remote cache と slideshow Mode（正本）
 
 NDL / CODH を含む **すべての `remote-*`** に共通する契約。実装・product 説明の **一次参照は本節と §15** とする（`docs/working/finished/*inventory*` は API 調査の背景資料）。
@@ -377,8 +405,10 @@ NDL / CODH を含む **すべての `remote-*`** に共通する契約。実装�
 
 | 操作 | 層 A（新しい候補の取得） | 層 B（Mode による切替） |
 | --- | --- | --- |
-| Slideshow **Start** | 実行 L/R の全 `remote-*` で sync → 候補が変わりうる | 開始 |
-| Manage **Refresh** | 選択中 remote で sync | — |
+| アプリ **再起動のみ** | **しない**（§12.4.1） | — |
+| 再起動 → Slideshow **Start** | 実行 L/R の全 `remote-*` で sync → 候補が変わりうる | 開始 |
+| Slideshow **Start**（再起動なし） | 同上 | 開始 |
+| Manage **Refresh** | 選択中 remote で sync（Start せず再抽選） | — |
 | Slideshow **tick** | **しない** | cache 1 枚なら変化なし |
 | Mode を sequential ↔ random に変更 | — | remote 1 枚 side では見た目変化なし |
 
