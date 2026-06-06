@@ -50,17 +50,31 @@ P-03 の主眼は **「検出 1 枚のとき R 側 UI を誤操作不能にす�
 
 ---
 
-## 2. 目標（案）
+## 2. 目標（`len==1` 時）
 
-**検出ディスプレイが 1 枚のとき、R 側に関わる操作を無効化または誤操作不能にする。**
+**検出 1 枚のとき、UI 第二スロット（現ラベル **R** 側）を誤操作不能にする**（§2.1）。判定は `len(detect_displays()) < 2` のみ。
 
-| 対象（案） | 操作 |
+### 2.2 無効化（塞ぐ）対象 — P3-2 合意（2026-06-06）
+
+**Surface（widget）で `disabled` にするもの:**
+
+| Tab | 第二スロット（R 側）で塞ぐもの |
 | --- | --- |
-| Slideshow | R saved source combo、R srcdir、direction の R 寄り |
-| Main | R path / direction / picker（要 P3-2） |
-| Optimize / Apply | two-screen / per-monitor の R 寄り（**本波は対象外候補**） |
+| **Main** | 十字 **寄せ direction 群**（R 列）。**`Open-R` / `Clear-R` / `Preview-R`**。可能なら中央 **`Swap L/R`** |
+| **Margins** | **Position** 行の **Right 列**（`Top` / `Bottom` radio 一式） |
+| **Slideshow** | **R に対応する操作群** — `combo_slideshow_source_r`、`Srcdir-R`、`Clear-R`、path 表示まわり。中央 **`Swap L/R`** |
 
-※ 詳細範囲は gate で確定。
+**Surface は弄らない（棚卸し時に再評価可）:**
+
+| 領域 | 方針 |
+| --- | --- |
+| **`combo_slideshow_profile`**（profile row） | widget はそのまま。**profile に R slot があっても実行時に無視** |
+| **`More slideshow options…`（Drawer 内）** | Surface 変更なし。第二スロット向けの指定が残っていても **owner 側で無視** |
+| **Manage sources and profiles…（dialog）** | 本波では dialog 内の L/R slot 編集は **塞がない**（設定は残せるが `len==1` 実行では効かない） |
+
+**本波対象外（塞がない）:** Main の **`Optimize` / `Apply`** ボタン群、CODH chip、interval/start/stop、Drawer の mode/help 等。細部は実装棚卸しで追記可。
+
+**実行時の無視（UI 以外）:** Start / optimize / apply 経路で第二スロット相当の path・source id・profile の R メンバーは **参照しない**（単一出力として L スロットのみ）。既存の「両 srcdir 必須」は `len==1` では緩和（L のみで Start 可にするかは impl 時に gui-spec 追記）。
 
 ### 2.1 用語 — 「R 無効化」の意味（P3-2 向け）
 
@@ -89,7 +103,7 @@ issue [#359](../online-issues/issue-359.md) は **「右パネル」** と書い
 | # | 論点 | 提案 | オーナー |
 | --- | --- | --- | --- |
 | P3-1 | 再現手順 | §4.1–4.3 の観測を **2 台×2 枚環境**で実施し、§5 テンプレに記録。pass = Harite が **1 枚**と数える操作が **OS ごとに 1 つ以上**確定 | |
-| P3-2 | disabled 範囲 | **`len==1` 時: UI 第二スロット（現ラベル R 一式）のみ**（§2.1）。Main R / Optimize は対象外 | |
+| P3-2 | disabled 範囲 | **合意済み** — §2.2。Profile / More options は Surface 据え置き・実行時無視 | |
 | P3-3 | 検出タイミング | 起動時 + Slideshow/Main タブ表示時 +（可能なら）display 変更後の再評価 | |
 | P3-4 | 1 枚でも dual 意図 | 将来「論理 L/R のみ」ニーズはスコープ外と明記 | |
 | P3-5 | DP / HDMI | §4.4 の癖を観測メモに 1 行以上残す（同じ操作でも端子で差が出うる） | |
