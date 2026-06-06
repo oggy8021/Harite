@@ -1,8 +1,8 @@
 # C-01-E-KW — Manage dialog keyword 行 slice 評価メモ
 
-最終更新: 2026-06-05（オーナー K6 記入 → 合意確定）  
+最終更新: 2026-06-06（#413 完了）  
 mock: [20260605-c01-e-kw-manage-keyword-slice.html](20260605-c01-e-kw-manage-keyword-slice.html)  
-計画正本: [20260605-c01-e-kw-codh-keyword-planning-draft.md](../20260605-c01-e-kw-codh-keyword-planning-draft.md) §4 / §7
+計画正本: [20260605-c01-e-kw-codh-keyword-planning.md](../finished/20260605-c01-e-kw-codh-keyword-planning.md) §4 / §7
 
 ## 目的
 
@@ -47,11 +47,13 @@ Sources を **ALL なし**で二系統に分ける想定（impl は P-05 時）:
 ## 次の段階
 
 1. ~~slice 合意~~ → **完了**。
-2. gui-spec §4.2 + source-spec §15.7 改訂 PR。
-3. core tests → impl（Qt Manage dialog）。
+2. ~~gui-spec §4.2 + source-spec §15.7 改訂 PR~~ → **完了**（#413）。
+3. ~~core tests → impl（Qt Manage dialog）~~ → **完了**（#413）。
+4. keyword 行の **preset 面板への移設** — [P-05](../20260606-p05-manage-sources-panel-planning-draft.md)。運用中 read-only — [P-06](../20260606-p06-slideshow-codh-keyword-chip-planning-draft.md)。
 
 ## 変更履歴
 
 | 日付 | 内容 |
 | --- | --- |
 | 2026-06-05 | 初版 — オーナー K6 pass。暫定配置 + P-05 理想像を分離記載 |
+| 2026-06-06 | #413 完了。計画正本を `finished/` へ |

@@ -1,6 +1,6 @@
 # C-01-E: 外部 provider 調査 — 統合索引
 
-最終更新: 2026-06-04（**完了** — #400 merge、`finished/` へ移動）
+最終更新: 2026-06-06（C-01-E-KW #413 完了反映）
 
 ## 位置づけ
 
@@ -63,7 +63,7 @@ Interval 下限 **600 s**（JMA と同型）。江戸マップ・座標連携は
 | --- | --- |
 | NDL タグ別 preset 大量追加 | まず 2 種で検証。`randomwithfacet` 拡張は任意 |
 | CODH キーワード・職種の網羅 | 桜 + おまかせ random のみ。季節・昼夜メタデータなし |
-| CODH キーワードのユーザー指定 | **先送り** — [feature-overview §2 C-01-E-KW](20260518-2047-feature-overview.md)。当面は同梱 preset 追加で代替 |
+| CODH キーワードのユーザー指定 | **完了**（#413）— [C-01-E-KW planning](20260605-c01-e-kw-codh-keyword-planning.md) |
 | 江戸マップ / GIS | オーナー方針でパス |
 | 日付・時刻・緯度経度検索 | データ側にフィールドなし |
 
@@ -78,3 +78,4 @@ curl の Schannel `(35)` / PowerShell の `&` `|` — [NDL inventory §6](202606
 | 2026-06-03 | 統合索引 + 実装 preset 一覧 |
 | 2026-06-03 | 実現性検証クローズ + 開発プロセス続き（PR / 軽量 audit） |
 | 2026-06-04 | #400 merge、[軽量 audit](20260603-c01-e-3layer-audit.md)、`finished/` へ移動 |
+| 2026-06-06 | C-01-E-KW #413 — keyword preset、`codh_keyword`、Manage `keyword(CODH)` |

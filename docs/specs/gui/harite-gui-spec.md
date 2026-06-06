@@ -139,7 +139,8 @@ Margins tab:
 
 Slideshow tab:
 
-- `Slideshow` tab の **正面（中核）** は外周を縦積みで組み、top spacer、**profile row**、srcdir row、**interval/start/stop row**、（任意）**More slideshow options…** トリガ、bottom spacer の順とする（C-02 骨格 + C-04 — [surface slice](../../working/design/20260604-c04-slideshow-margins-surface-slice.html) / [memo](../../working/design/20260604-c04-slideshow-margins-surface-slice-memo.md)）。
+- `Slideshow` tab の **正面（中核）** は外周を縦積みで組み、**CODH keyword chip**（P-06）、top spacer、**profile row**、srcdir row、**interval/start/stop row**、（任意）**More slideshow options…** トリガ、bottom spacer の順とする（C-02 骨格 + C-04 — [surface slice](../../working/design/20260604-c04-slideshow-margins-surface-slice.html) / [memo](../../working/design/20260604-c04-slideshow-margins-surface-slice-memo.md)）。
+- **CODH keyword chip**（P-06）: タブ内容 **右上角**に read-only muted label（`CODH: {keyword}`）。L/R いずれか（または profile 経由）が `codh-edo-spots-keyword` / `codh-edo-shops-keyword` のときのみ表示。データは `harite-settings.json` の `codh_keyword`。編集は Manage Presets タブ。Footer / 他タブには出さない。
 - **profile row** は tab 幅中央に `combo_slideshow_profile`（`— none —` + profile 名一覧）を 1 本置く。常設の「選択で L/R を一括反映」類の補助 label は **持たない**（tooltip で足りる）。
 - srcdir row は **Main tab compose grid と同型**の左・中央・右 3 列とする。左右 panel は上から **`combo_slideshow_source_l/r`（Saved source）**、`Srcdir-L/R` button、`L:` / `R:` path label、右下に `Clear-L/R` を持つ。中央 panel には **`Swap L/R`** button のみを置く（§4.1 / §4.2）。
 - **interval/start/stop row** は正面に `Interval`、spin、`Slideshow Start`、`Slideshow Stop` を 1 行にまとめ、視線の終点とする。
@@ -253,10 +254,14 @@ design 合意: [20260601-c02-slideshow-source-registry-slice.html](../../working
 - registry 外 path（ブラウズのみ）も **許容**する。Saved combo が `— none —` でも path label に basename 省略表示があれば Start ガードは従来どおり評価する。
 - profile / source の **ordered list 化・profile 周回**は行わない。
 
-**Manage dialog:**
+**Manage dialog（P-05 — Local / Presets タブ）:**
 
-- Sources: 一覧、Add（name + directory browse）、Delete（profile 参照中は [source-spec §7.5](../source/harite-source-spec.md) に従い拒否）。
-- **keyword(CODH)**（C-01-E-KW）: source リスト直下・Refresh 行の **直上**に **常設** `QLineEdit`（ラベル `keyword(CODH)`、初期値 `桜`、`maxLength=16`）。`codh-edo-spots-keyword` / `codh-edo-shops-keyword` 選択時のみ **enabled**；他 source 選択時は disabled（表示は settings の共通値のまま）。Refresh 前および Close 時に `harite-settings.json` の `codh_keyword` へ反映（[source-spec §15.7](../source/harite-source-spec.md)）。配置は **暫定** — 理想像は [P-05](../../working/20260518-2047-feature-overview.md) preset 面板。
+- **Sources** は `QTabWidget` で **Local** と **Presets** に分離（ALL タブなし）。Profiles セクションはタブの下に共通配置。
+- **Local タブ:** local-dir 一覧（名前昇順）、Delete、Add local（name + Browse + path）。
+- **Presets タブ:** remote/preset 一覧（provider グループ見出し + 名前昇順）、**keyword(CODH)**、Refresh。
+  - グループ見出し: `JMA 天気図` / `NDL 図版` / `CODH 江戸` / `その他`（`harite-preset:` の preset_id 接頭辞で分類）。
+  - Delete は **Local タブのみ**（preset は materialize で再出現しうる）。
+- **keyword(CODH)**（C-01-E-KW）: **Presets タブ内**に常設 `QLineEdit`（ラベル `keyword(CODH)`、初期値 `桜`、`maxLength=16`）。`codh-edo-spots-keyword` / `codh-edo-shops-keyword` 選択時のみ **enabled**；他 preset 選択時は disabled（表示は settings の共通値のまま）。Refresh 前および Close 時に `harite-settings.json` の `codh_keyword` へ反映（[source-spec §15.7](../source/harite-source-spec.md)）。
 - Profiles: 一覧、L/R slot combo（source id または empty）、Add / Delete profile。
 - 保存は `harite-sources.json` へ即 write。settings dialog とは別 surface。
 - dialog Close 後、Slideshow tab の profile / saved source combo を reload する。

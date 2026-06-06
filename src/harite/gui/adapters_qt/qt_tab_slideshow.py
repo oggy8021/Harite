@@ -136,6 +136,31 @@ def _build_srcdir_row() -> dict[str, Any]:
     }
 
 
+def _build_codh_keyword_chip_row() -> dict[str, Any]:
+    """Read-only CODH keyword chip — top-right of Slideshow tab (P-06)."""
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtGui import QPalette
+    from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
+
+    row = QWidget()
+    layout = QHBoxLayout(row)
+    layout.setContentsMargins(0, 4, 0, 0)
+    layout.addStretch()
+
+    chip = QLabel("")
+    chip.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+    chip.setVisible(False)
+    muted = chip.palette().color(QPalette.ColorRole.PlaceholderText)
+    chip.setStyleSheet(f"color: {muted.name()};")
+
+    layout.addWidget(chip)
+
+    return {
+        "slideshow_codh_keyword_chip_row": row,
+        "slideshow_codh_keyword_chip": chip,
+    }
+
+
 def _build_profile_row() -> dict[str, Any]:
     """Profile preset combo centred above srcdir grid."""
     from PyQt6.QtCore import Qt
@@ -431,6 +456,7 @@ def build_slideshow_tab() -> dict[str, Any]:
     """Build the complete Slideshow tab widget and return the widget registry.
 
     Layout (top → bottom, with vertical stretch around content):
+        codh_keyword_chip_row   (top-right, hidden unless keyword preset active)
         [stretch]
         profile_row
         srcdir_row          (L/R source grid + Swap)
@@ -455,12 +481,14 @@ def build_slideshow_tab() -> dict[str, Any]:
     # Dynamic tab title label (adapter can update text via this reference)
     slideshow_tab_title = QLabel("Slideshow (stopped)")
 
+    chip_widgets = _build_codh_keyword_chip_row()
     profile_widgets = _build_profile_row()
     srcdir_widgets = _build_srcdir_row()
     controls_widgets = _build_interval_controls_section()
     trigger_widgets = _build_options_drawer_trigger()
     drawer_widgets = _build_options_drawer()
 
+    tab_layout.addWidget(chip_widgets["slideshow_codh_keyword_chip_row"])
     tab_layout.addStretch()
     tab_layout.addWidget(profile_widgets["slideshow_profile_row"])
     tab_layout.addSpacing(12)
@@ -476,6 +504,7 @@ def build_slideshow_tab() -> dict[str, Any]:
         "slideshow_tab_box": slideshow_tab_box,
         "slideshow_label": slideshow_label,
         "slideshow_tab_title": slideshow_tab_title,
+        **chip_widgets,
         **profile_widgets,
         **srcdir_widgets,
         **controls_widgets,
