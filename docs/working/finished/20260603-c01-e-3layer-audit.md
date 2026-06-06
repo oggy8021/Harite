@@ -1,6 +1,6 @@
 # C-01-E — 軽量 3-layer audit（NDL / CODH）
 
-最終更新: 2026-06-04
+最終更新: 2026-06-06
 
 ## 位置づけ
 
@@ -28,10 +28,10 @@
 
 | 項目 | 扱い |
 | --- | --- |
-| CODH キーワードユーザー指定 | [feature-overview §2 C-01-E-KW](../20260518-2047-feature-overview.md) — 先送り |
+| CODH キーワードユーザー指定 | **完了**（#413）— [C-01-E-KW planning](20260605-c01-e-kw-codh-keyword-planning.md) |
 | NDL 地図 facet の見た目 | ML タグのため文字中心もありうる（inventory 記載） |
 | 専用「キャッシュ掃除」GUI | 不要 — materialize 時 `prune_orphan_remote_cache_dirs` |
 
 ## 結論
 
-**C-01-E（V1）は完了** — spec / tests / impl / 実現性検証が一致。第4波の次の inventory 入口は [feature-overview](../20260518-2047-feature-overview.md) §2（構想保持）または新規 C-xx。
+**C-01-E（V1）は完了** — spec / tests / impl / 実現性検証が一致。**C-01-E-KW**（#413）も完了。次の inventory 入口は [feature-overview](../20260518-2047-feature-overview.md) §1（P-05 / P-03）。

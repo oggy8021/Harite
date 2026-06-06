@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-05（C-01-E-KW 計画 draft 起票）
+最終更新: 2026-06-06（P-06 Slideshow CODH chip 起票）
 
 ## 位置づけ
 
@@ -47,7 +47,10 @@
 | C-05 | slideshow source 強化 | slideshow の source を単発 directory から、複数 source・source profile・将来の外部 source へ広げる。 | **完了** — [planning](finished/20260602-1400-c05-slideshow-source-enhancement-planning.md) / [audit](finished/20260602-c05-3layer-audit.md) |
 | C-01 | 外部壁紙サイト連携 | 外部 API から **都度取得** し remote cache 経由で slideshow に載せる。第1 provider=気象庁。 | **完了** — [planning](finished/20260603-1400-c01-external-wallpaper-source-planning.md) / [audit](finished/20260603-c01-3layer-audit.md) |
 | C-01-J | JMA 天気図 list.json カタログ | list.json 棚卸・preset 選定（カラー 2 + モノクロ実況 2）。全 12 葉のギャラリー UI は **スコープ外**。 | **完了**（2026-06-03 実機確認）— [調査・完了記録](finished/20260603-jma-weather-map-list-inventory.md) |
-| C-01-E | 外部 source 探索拡張 | NDL / CODH preset + provider（実現性検証スコープ）。 | **完了**（#400）— [統合索引](finished/20260603-c01-e-merged-inventory.md) / [軽量 audit](finished/20260603-c01-e-3layer-audit.md)。第 2 段は **C-01-F** → **C-01-E-KW**（§2） |
+| C-01-E | 外部 source 探索拡張 | NDL / CODH preset + provider（実現性検証スコープ）。 | **完了**（#400）— [統合索引](finished/20260603-c01-e-merged-inventory.md) / [軽量 audit](finished/20260603-c01-e-3layer-audit.md) |
+| C-01-E-KW | CODH キーワード検索のユーザー指定 | `harite-settings.json` の `codh_keyword`、Manage `keyword(CODH)`。 | **完了**（#413）— [planning](finished/20260605-c01-e-kw-codh-keyword-planning.md) |
+| P-05 | Manage sources リスト整理 | local / preset 二面板、自動ソート、keyword 行移設。 | **完了**（Qt）— [planning](20260606-p05-manage-sources-panel-planning-draft.md) |
+| P-03 | 単 display / monitor まわり UX | 1 枚検出時の -R 無効化等。 | **planning draft** — [20260606-p03-single-display-ux-planning-draft.md](20260606-p03-single-display-ux-planning-draft.md)（[#359](../online-issues/issue-359.md)） |
 
 ### 1b. 近端 backlog（Qt 完了後・2026-06-01）
 
@@ -58,7 +61,8 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | F-01 | Windows 設定ファイル path | [#354](../online-issues/closed/issue-354.md) | foundation | **完了**（#365–367, 2026-06-01 Windows 実機確認） |
 | P-01 | 左右 path / srcdir の swap | [#353](../online-issues/closed/issue-353.md) | GUI polish | **完了**（#369–371, 2026-06-01 オーナー確認） |
 | P-02 | Slideshow srcdir クリア | [#358](../online-issues/closed/issue-358.md) | GUI polish | **完了**（#369–371, 個別 clear 採用） |
-| P-03 | 単 display / monitor まわり UX | [#359](../online-issues/issue-359.md) | edge case UX | **構想保持（着手順序外）** — display 検出に依存する -R 無効化等。旧 K-01 monitor 縁 |
+| P-03 | 単 display / monitor まわり UX | [#359](../online-issues/issue-359.md) | edge case UX | **planning draft** — [20260606-p03-single-display-ux-planning-draft.md](20260606-p03-single-display-ux-planning-draft.md) |
+| P-06 | Slideshow CODH キーワード chip | Slideshow タブ右上角 read-only（`codh_keyword` 確認）。編集は Manage。 | **完了**（Qt）— [planning](20260606-p06-slideshow-codh-keyword-chip-planning-draft.md) |
 
 ### 2. 構想保持
 
@@ -68,12 +72,9 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | ID | 項目 | 概要 | 保持理由 / 採用条件 |
 | --- | --- | --- | --- |
 | C-03 | plugin capability 可視化 | plugin ごとに受理 target や OS 制約を可視化し、apply / slideshow / GUI での分岐を分かりやすくする。 | **保留・縮小** — 詳細は [C-04 計画正本](20260604-c04-gui-surface-planning-draft.md) §6（独立パネルは出さず help 整理に吸収可） |
-| C-01-F | remote live sync on slideshow tick | C-01 第 2 段。remote をライブ feed 化 — **provider 別に tick/interval で `sync_remote_source`**。§12.4「tick は network しない」を改訂。 | **planning draft** — [20260604-c01-f-remote-sync-on-tick-planning-draft.md](20260604-c01-f-remote-sync-on-tick-planning-draft.md)。**C-01-E-KW の前提** |
 | C-04 | GUI surface / 利用導線 | 3 tab 骨格は維持。Slideshow/Margins の密度整理、feedback・Error 視覚、Drawer、preset 余地。 | **完了**（#406–409, waves 0/b/a/c）— 計画正本: [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md) |
 | K-04 | plugin 拡張パック | Linux 以外や追加 desktop 向け plugin を外付け拡張として扱えるようにする。 | capability model と packaging 方針が先に必要 |
-| P-03 | 単 display / monitor まわり UX | 検出 1 枚のとき -R 側（path / srcdir / direction 等）を disabled にする案。**display 検出・枚数に依存する操作の整理**はここで扱う（旧 K-01 の「monitor 監視」含む）。 | **採用条件**: 単 display 再現手順、disabled 範囲の spec、GTK/Qt テスト方針が揃ったとき（[#359](../online-issues/issue-359.md)） |
-| P-05 | Manage sources リスト整理 | **自動ソート + グループ見出し**。理想: Sources を **ALL なし**で **local 面板**（Delete/name/path/Browse/Add local）と **preset 面板**（Refresh + keyword(CODH)）に分離。C-01-E-KW の暫定 keyword 行は preset 側へ移設する想定。 | **ストック**（2026-06-05 理想像追記）。本波 C-01-E-KW では面板分割に **触らない** |
-| C-01-E-KW | CODH キーワード検索のユーザー指定 | 江戸観光・買物で共通の 1 語を Manage dialog で指定。`harite-settings.json` の `codh_keyword`。 | **planning draft** — [20260605-c01-e-kw-codh-keyword-planning-draft.md](20260605-c01-e-kw-codh-keyword-planning-draft.md)。C-01-F と並行可（tick なしでは体感薄い） |
+| C-01-F | remote live sync on slideshow tick | remote をライブ feed 化 — provider 別 tick sync。§12.4 改訂。 | **据え置き**（2026-06-06）— [planning draft](20260604-c01-f-remote-sync-on-tick-planning-draft.md)。CODH 負荷・gate F1–F3 未記入。C-01-E-KW 完了済みのため前提は解消 |
 
 C-04 の rough ideas・採択表・widget 切り分けは [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md) を参照（本 overview では重複しない）。
 
@@ -166,16 +167,22 @@ C-04 の rough ideas・採択表・widget 切り分けは [20260604-c04-gui-surf
         C-01-E  他 source 探索   ← 完了（#400）
         C-04   GUI surface      ← 完了（#406–409）
          ↓
-[次の土台] C-01-F  remote tick sync  ← planning: [20260604-c01-f-remote-sync-on-tick-planning-draft.md](20260604-c01-f-remote-sync-on-tick-planning-draft.md)
+[完了] C-01-E-KW（CODH キーワード UI）← #413
          ↓
-        C-01-E-KW（CODH キーワード UI）
+[完了] P-05 Manage 面板分割（Qt）← [planning](20260606-p05-manage-sources-panel-planning-draft.md)
+         ↓
+[次の着手候補] P-03 単 display UX     ← [planning draft](20260606-p03-single-display-ux-planning-draft.md)
+[完了] P-06 CODH keyword chip（Qt）
 
-[着手順序外・構想保持] P-03 #359（単 display / -R 無効化 — 急がない）
+[据え置き] C-01-F remote tick sync  ← [planning draft](20260604-c01-f-remote-sync-on-tick-planning-draft.md)（CODH 負荷・gate 未記入）
 ```
 
 - Qt 移行の詳細は [docs/working/finished/20260530-2201-pyqt6-migration-plan.md](finished/20260530-2201-pyqt6-migration-plan.md) を参照する。
 - C-04 は [計画正本](20260604-c04-gui-surface-planning-draft.md) — waves 0/b/a/c 完了（#406–409）。
-- **進行中:** C-01-F（[planning draft](20260604-c01-f-remote-sync-on-tick-planning-draft.md)）、C-01-E-KW（[planning draft](20260605-c01-e-kw-codh-keyword-planning-draft.md)）。
+- **完了:** C-01-E-KW（#413）— [planning](finished/20260605-c01-e-kw-codh-keyword-planning.md)。
+- **完了:** P-05 Manage Local/Presets タブ、P-06 Slideshow CODH chip（Qt）。
+- **次:** P-03 planning draft（§1 着手候補）。
+- **据え置き:** C-01-F（tick sync — 2026-06-06 オーナー判断）。
 - F-01 は Windows **`%APPDATA%\harite\harite-settings.json`**（Roaming）。**旧 path 互換・移行なし**。
 - P-01–02 は §9 GUI 合意工程の最初の実践。**2026-06-01 完了**（3 層 audit は [closed/issue-353](../online-issues/closed/issue-353.md) / [issue-358](../online-issues/closed/issue-358.md)）。
 
@@ -226,7 +233,13 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 2026-06-04: **C-04 計画正本** — [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md)（GUI surface / オーナー観測・採択表・Slideshow/Margins 切り分け）
 - 2026-06-04: **C-04 impl 完了** — #406–409（footer / Slideshow drawer / Margins slim / icon tooltips）
 - 2026-06-04: **C-01-F planning draft** — remote をライブ feed 化（tick 毎 sync・provider 別）。[20260604-c01-f-remote-sync-on-tick-planning-draft.md](20260604-c01-f-remote-sync-on-tick-planning-draft.md)
-- 2026-06-05: **C-01-E-KW planning draft** — CODH 江戸観光キーワード UI。[20260605-c01-e-kw-codh-keyword-planning-draft.md](20260605-c01-e-kw-codh-keyword-planning-draft.md)
+- 2026-06-05: **C-01-E-KW planning draft** — CODH キーワード UI 起票
+- 2026-06-06: **C-01-E-KW 完了** — #413。[planning](finished/20260605-c01-e-kw-codh-keyword-planning.md)
+- 2026-06-06: **C-01-F 据え置き** — CODH 負荷懸念。gate F1–F3 未記入のまま保留
+- 2026-06-06: **P-05 / P-03 planning draft** 起票 — 次着手候補
+- 2026-06-06: **P-06 planning draft** — Slideshow 右上角 CODH keyword read-only（Footer 不採用、P-05 と分離）
+- 2026-06-06: **P-05 完了**（Qt）— Manage dialog Local/Presets タブ、preset グループ見出し、keyword 移設
+- 2026-06-06: **P-06 完了**（Qt）— Slideshow 右上角 `CODH: {keyword}` read-only chip
 
 ### K-05（scheduler）— 残しうるストーリーと見送り理由
 

@@ -59,6 +59,8 @@ def sync_slideshow_state_from_owner(backend: Any, owner: Any) -> None:
         backend._refresh_slideshow_source_labels()
     if hasattr(backend, "_refresh_slideshow_registry_combos"):
         backend._refresh_slideshow_registry_combos(owner)
+    if hasattr(backend, "_refresh_slideshow_codh_keyword_chip"):
+        backend._refresh_slideshow_codh_keyword_chip(owner)
     backend._refresh_slideshow_summary_label()
     backend._refresh_slideshow_current_label()
     from harite.gui.adapters_qt.qt_widget_helpers import slideshow_output_dir_from_owner

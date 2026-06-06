@@ -1,7 +1,7 @@
 # C-01-F — Remote live sync on slideshow tick（計画 draft）
 
-最終更新: 2026-06-04  
-ステータス: **planning draft**（spec 改訂前。impl は本書合意後）
+最終更新: 2026-06-06  
+ステータス: **据え置き**（2026-06-06 オーナー判断 — CODH 負荷懸念・gate F1–F3 未記入。impl しない）
 
 ## 位置づけ
 
@@ -17,7 +17,9 @@
 
 **前提（完了済み）:** C-02 / C-05 / C-01 / C-01-E / C-04（Slideshow Drawer 等）。
 
-**後続（本書の後）:** [C-01-E-KW](20260518-2047-feature-overview.md)（CODH キーワード UI）— **C-01-F なしでは product 価値が薄い**。
+**後続（完了済み）:** [C-01-E-KW](finished/20260605-c01-e-kw-codh-keyword-planning.md)（#413）— tick sync なしでも Refresh / Start 前 sync で運用。
+
+**据え置き理由（2026-06-06）:** CODH への tick 毎リクエストは負荷・迷惑になりうる。gate §7 の F1–F3 が未記入のまま保留。再開時は overview §2 から着手候補へ再分類する。
 
 **着手前:** [§7 着手 gate checklist](#7-着手-gate-checklist) の 3 項目をオーナーが pass するまで impl しない。
 

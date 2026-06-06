@@ -462,6 +462,49 @@ def _set_combo_current_data(combo: Any, value: str) -> None:
     combo.setCurrentIndex(0)
 
 
+def refresh_slideshow_codh_keyword_chip(backend: Any, owner: Any) -> None:
+    from harite.gui.adapters_qt.qt_source_catalog import prepare_owner_source_catalog
+    from harite.gui.views.slideshow_codh_keyword_chip import (
+        format_slideshow_codh_keyword_chip,
+        slideshow_uses_codh_keyword_preset,
+    )
+    from harite.settings_file import resolve_default_settings_path
+    from harite.sources_remote import codh_keyword_from_settings, load_codh_keyword_settings
+
+    widget = _get(backend, "lblSlideshowCodhKeyword")
+    if widget is None:
+        return
+
+    try:
+        catalog = prepare_owner_source_catalog(owner)
+    except Exception:
+        widget.setVisible(False)
+        return
+
+    visible = slideshow_uses_codh_keyword_preset(
+        catalog=catalog,
+        source_id_l=str(getattr(owner, "slideshow_source_id_l", "") or ""),
+        source_id_r=str(getattr(owner, "slideshow_source_id_r", "") or ""),
+        profile_id=str(getattr(owner, "slideshow_profile_id", "") or ""),
+    )
+    if not visible:
+        widget.setVisible(False)
+        widget.setText("")
+        return
+
+    settings_path = getattr(owner, "_settings_path", None) or resolve_default_settings_path()
+    settings_data = load_codh_keyword_settings(settings_path)
+    keyword = codh_keyword_from_settings(settings_data)
+    text = format_slideshow_codh_keyword_chip(keyword)
+    if not text:
+        widget.setVisible(False)
+        widget.setText("")
+        return
+
+    widget.setText(text)
+    widget.setVisible(True)
+
+
 def refresh_slideshow_registry_combos(backend: Any, owner: Any) -> None:
     from harite.gui.adapters_qt.qt_source_catalog import (
         prepare_owner_source_catalog,

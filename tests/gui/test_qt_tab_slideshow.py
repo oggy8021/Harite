@@ -43,6 +43,8 @@ def test_slideshow_tab_required_widgets(qapp):
         "slideshow_tab_box",
         "slideshow_label",
         "slideshow_tab_title",
+        "slideshow_codh_keyword_chip_row",
+        "slideshow_codh_keyword_chip",
         "slideshow_profile_row",
         "combo_slideshow_profile",
         "left_source_block",

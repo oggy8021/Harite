@@ -20,6 +20,7 @@
 | [20260603-c01-e-ndl-tsugidigi-inventory.md](20260603-c01-e-ndl-tsugidigi-inventory.md) | NDL 調査 |
 | [20260603-c01-e-codh-icp-inventory.md](20260603-c01-e-codh-icp-inventory.md) | CODH 調査 |
 | [20260603-c01-e-3layer-audit.md](20260603-c01-e-3layer-audit.md) | C-01-E 軽量 audit |
+| [20260605-c01-e-kw-codh-keyword-planning.md](20260605-c01-e-kw-codh-keyword-planning.md) | C-01-E-KW planning（#413 完了） |
 
 ## Qt / Windows / 横断
 
