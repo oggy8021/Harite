@@ -50,7 +50,7 @@
 | C-01-E | 外部 source 探索拡張 | NDL / CODH preset + provider（実現性検証スコープ）。 | **完了**（#400）— [統合索引](finished/20260603-c01-e-merged-inventory.md) / [軽量 audit](finished/20260603-c01-e-3layer-audit.md) |
 | C-01-E-KW | CODH キーワード検索のユーザー指定 | `harite-settings.json` の `codh_keyword`、Manage `keyword(CODH)`。 | **完了**（#413）— [planning](finished/20260605-c01-e-kw-codh-keyword-planning.md) |
 | P-05 | Manage sources リスト整理 | local / preset 二面板、自動ソート、keyword 行移設。 | **完了**（Qt）— [planning](20260606-p05-manage-sources-panel-planning-draft.md) |
-| P-03 | 単 display / monitor まわり UX | 1 枚検出時の -R 無効化等。 | **planning draft** — [20260606-p03-single-display-ux-planning-draft.md](20260606-p03-single-display-ux-planning-draft.md)（[#359](../online-issues/issue-359.md)） |
+| P-03 | 単 display / monitor まわり UX | 1 枚検出時の -R 無効化等。 | **完了**（#420）— [planning](finished/20260606-p03-single-display-ux-planning.md) / [audit](finished/20260606-p03-3layer-audit.md)（[#359](../online-issues/closed/issue-359.md)） |
 
 ### 1b. 近端 backlog（Qt 完了後・2026-06-01）
 
@@ -61,7 +61,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | F-01 | Windows 設定ファイル path | [#354](../online-issues/closed/issue-354.md) | foundation | **完了**（#365–367, 2026-06-01 Windows 実機確認） |
 | P-01 | 左右 path / srcdir の swap | [#353](../online-issues/closed/issue-353.md) | GUI polish | **完了**（#369–371, 2026-06-01 オーナー確認） |
 | P-02 | Slideshow srcdir クリア | [#358](../online-issues/closed/issue-358.md) | GUI polish | **完了**（#369–371, 個別 clear 採用） |
-| P-03 | 単 display / monitor まわり UX | [#359](../online-issues/issue-359.md) | edge case UX | **planning draft** — [20260606-p03-single-display-ux-planning-draft.md](20260606-p03-single-display-ux-planning-draft.md) |
+| P-03 | 単 display / monitor まわり UX | [#359](../online-issues/closed/issue-359.md) | edge case UX | **完了**（#420）— [planning](finished/20260606-p03-single-display-ux-planning.md) / [audit](finished/20260606-p03-3layer-audit.md) |
 | P-06 | Slideshow CODH キーワード chip | Slideshow タブ右上角 read-only（`codh_keyword` 確認）。編集は Manage。 | **完了**（Qt）— [planning](20260606-p06-slideshow-codh-keyword-chip-planning-draft.md) |
 | P-07 | Slideshow Drawer 開閉視認性 | 背景ずらし・上辺線・chevron 回転。palette 優先（#412）。 | **完了**（#417）— [planning](finished/20260606-p07-slideshow-drawer-open-state-planning.md) |
 
@@ -93,7 +93,7 @@ C-04 の rough ideas・採択表・widget 切り分けは [20260604-c04-gui-surf
 | H-05 | K-03 favorites / history | 過去の生成・適用壁紙や source の振り返り・再利用。 | **オーナー棚卸: 不要**（2026-06-03）。保存スコープと product 焦点がずれる |
 | H-06 | K-06 import / export profiles | optimize / apply / slideshow 設定の profile 単位の持ち運び。 | **オーナー棚卸: 不要・やめる**（2026-06-03）。registry + preset で運用し、別途 export は負債になりやすい |
 | H-07 | K-05 scheduler / timed automation | 時刻・曜日・条件で optimize / apply / slideshow を起動。 | **オーナー棚卸: 不要に近い**（2026-06-03）。下記 §K-05 残ストーリー参照。明示ニーズが出るまで採らない |
-| H-08 | K-01 ~~watch~~ slideshow 再構成 | 旧 inventory「Watch」= 現 **Slideshow** タブ。slideshow 再構成は **C-02 / C-05 で充足**。 | **オーナー棚卸: 破棄**（2026-06-04）。monitor / 単 display の操作整理は **P-03**（[#359](../online-issues/issue-359.md)）。Phase10 mock 等の「Watch」表記は legacy 掃除対象（product 名ではない） |
+| H-08 | K-01 ~~watch~~ slideshow 再構成 | 旧 inventory「Watch」= 現 **Slideshow** タブ。slideshow 再構成は **C-02 / C-05 で充足**。 | **オーナー棚卸: 破棄**（2026-06-04）。monitor / 単 display の操作整理は **P-03 完了**（[#359](../online-issues/closed/issue-359.md)）。Phase10 mock 等の「Watch」表記は legacy 掃除対象（product 名ではない） |
 
 ## planning 入口カテゴリ
 
@@ -172,7 +172,7 @@ C-04 の rough ideas・採択表・widget 切り分けは [20260604-c04-gui-surf
          ↓
 [完了] P-05 Manage 面板分割（Qt）← [planning](20260606-p05-manage-sources-panel-planning-draft.md)
          ↓
-[次の着手候補] P-03 単 display UX     ← [planning draft](20260606-p03-single-display-ux-planning-draft.md)
+[完了] P-03 単 display UX（#420）    ← [planning](finished/20260606-p03-single-display-ux-planning.md)
 [完了] P-06 CODH keyword chip（Qt）
 
 [完了] P-07 Drawer 開閉視認性（#417）← [planning](finished/20260606-p07-slideshow-drawer-open-state-planning.md)
@@ -185,7 +185,7 @@ C-04 の rough ideas・採択表・widget 切り分けは [20260604-c04-gui-surf
 - **完了:** C-01-E-KW（#413）— [planning](finished/20260605-c01-e-kw-codh-keyword-planning.md)。
 - **完了:** P-05 Manage Local/Presets タブ、P-06 Slideshow CODH chip（Qt）。
 - **完了:** P-07 Drawer 開閉視認性（#417、#412 close）— [planning](finished/20260606-p07-slideshow-drawer-open-state-planning.md)。
-- **次:** P-03 planning draft（§1 着手候補）。
+- **完了:** P-03 単 display UX（#420、#359 close）— [planning](finished/20260606-p03-single-display-ux-planning.md) / [audit](finished/20260606-p03-3layer-audit.md)。
 - **据え置き:** C-01-F（tick sync — 2026-06-06 オーナー判断）。
 - F-01 は Windows **`%APPDATA%\harite\harite-settings.json`**（Roaming）。**旧 path 互換・移行なし**。
 - P-01–02 は §9 GUI 合意工程の最初の実践。**2026-06-01 完了**（3 層 audit は [closed/issue-353](../online-issues/closed/issue-353.md) / [issue-358](../online-issues/closed/issue-358.md)）。
@@ -246,6 +246,7 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 2026-06-06: **P-06 完了**（Qt）— Slideshow 右上角 `CODH: {keyword}` read-only chip
 - 2026-06-06: **P-07 planning draft** — Slideshow Drawer 開閉視認性（背景+縁取り+chevron、palette 優先）— [#412](https://github.com/oggy8021/Harite/issues/412)
 - 2026-06-06: **P-07 完了** — #417 merge、#412 close。Drawer 開閉スタイル（Qt/GTK）、planning を [finished/](finished/20260606-p07-slideshow-drawer-open-state-planning.md) へ
+- 2026-06-06: **P-03 完了** — #420 merge、#359 close。第二スロット disabled + L-only slideshow。planning / audit を [finished/](finished/20260606-p03-single-display-ux-planning.md) へ
 
 ### K-05（scheduler）— 残しうるストーリーと見送り理由
 

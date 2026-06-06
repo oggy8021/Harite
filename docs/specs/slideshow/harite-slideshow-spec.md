@@ -1,6 +1,6 @@
 # Harite スライドショー仕様 (Slideshow Spec)
 
-最終更新: 2026-06-06（remote source と Mode の関係 — §6.6 追補）
+最終更新: 2026-06-06（P-03 単 display start 条件 — §2 追補）
 
 ## 1. スライドショー機能の責務
 
@@ -36,7 +36,8 @@ GUI 側では、これに加えて現在の画面状態、設定、スライド�
 GUI の registry 連動（C-05）:
 
 - Start 前に [source-spec §6.4](../source/harite-source-spec.md) に従い、tracking `source_id` / `profile_id` から **再 resolve** して `slideshow_srcdir_l/r` を更新する（§6.6）。
-- **Srcdir-L と Srcdir-R の両方**が非空であること（現行維持）。どちらか空なら start 前に拒否。
+- **検出 2 枚以上**（`len(detect_displays()) >= 2`）: **Srcdir-L と Srcdir-R の両方**が非空であること。どちらか空なら start 前に拒否。
+- **検出 1 枚**（P-03 — [gui-spec §6](../gui/harite-gui-spec.md)）: **Srcdir-L のみ**非空で start 可。第二スロット UI は disabled。profile / saved source の R 指定は実行時に無視。start は L source のみで single-file apply。
 - 手動 Srcdir のみ（tracking key なし）の side は、既存 path をそのまま検証する。
 - CLI は registry tracking を使わず、従来どおり `--input` directory path のみ。
 
