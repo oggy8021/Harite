@@ -37,21 +37,16 @@
 
 P-03 の主眼は **「検出 1 枚のとき R 側 UI を誤操作不能にする」**。Slideshow の L/R 両方必須を緩めるかは **P3-2 gate**（本波のスコープ外にできる）。
 
-### 1.2 観測で見えた穴 — `len==2` 幽霊と auto-split（P-03 本波の外）
+### 1.2 観測メモ — 活線・幽霊 `len==2` と auto-split（**現状維持**）
 
-**Win / XFCE 共通:** ケーブル活線のまま OS が **2 枚と数える**（Linux L1 の `connected` 幽霊、Windows W4-HDMI 等）とき、Harite は **`len==2` のまま** → P-03 の `len < 2` だけでは **R 無効化も Start ブロックもかからない**。
+**Win / XFCE 共通:** ケーブル活線のまま OS が **2 枚と数える**（Linux L1 の `connected` 幽霊、Windows W4-HDMI 等）とき、Harite も **`len==2`**。現行 product は **OS 列挙をそのまま信じる**（`0x0` 幽霊も 1 枚として数える）— **意図どおり・変更不要**。
 
-さらに現行 product は **枚数のみ**で 2 枚判定する（`build_two_screen_optimize_context` / `resolve_apply_settings` — 解像度 `0x0` の出力を除外しない）:
-
-| 観測例 | Harite `len` | auto-split / dual slideshow |
+| 観測例 | Harite `len` | dual-source / auto-split |
 | --- | --- | --- |
-| Linux L1-HDMI（`HDMI-1` 幽霊 `0x0` + `DP-1` 実出力） | **2** | **開始しうる**（左=幽霊・右=実出力など誤分割のリスク） |
-| Linux L1-DP（`DP-1` 幽霊 + `HDMI-1` 実出力） | **2** | 同上 |
-| Windows W4-HDMI（EDID 幽霊で `len==2`） | **2** | Windows は **Span** 経路だが dual-source は **2 枚前提**のまま |
+| Linux L1（論理 off・幽霊 `0x0` + 実出力） | **2** | **動きうる** |
+| Windows W4-HDMI（EDID 幽霊） | **2** | 2 枚前提の経路のまま |
 
-→ **「ユーザーには 1 画面」≠「Harite は 1 枚」** のとき、**auto-split が動いてしまう**のは P-03 の R-disabled だけでは防げない。**GTK / Qt 共通**（core の `detect_displays` 正本）。`harite-gtk` の目視は未実施だが、backend 差はない想定でよい。
-
-**follow-up 候補（P3-2 以降・別 issue 可）:** 「アクティブ出力」の定義（例: `width>0 && height>0`）で枚数判定するか、幽霊検出時も dual-source / auto-split を止めるか。
+→ P-03 は **素直に `len==1` のときだけ** R 無効化する。**「見た目 1 画面だが OS は 2 枚」** は観測で把握済みだが、product 方針として **そのまま**（幽霊対策・`width>0` フィルタ等は本 issue のスコープ外）。**GTK / Qt 共通**（core 正本）。
 
 ---
 
@@ -421,4 +416,4 @@ Harite: `len==2`（名前・座標は xrandr と一致）
 | 2026-06-06 | L1-HDMI — `HDMI-1 --off` でも `connected` 残存・`primary` 維持 → `len==2` |
 | 2026-06-06 | L1-HDMI 復帰 — 明示 xrandr でベースライン復帰（`len==2`） |
 | 2026-06-06 | L3 スキップ・Linux 観測クローズ — §4.2.4 物理 1 台想定。P3-1 pass（両 OS） |
-| 2026-06-06 | §1.2 — 活線幽霊 `len==2` 時は auto-split も通りうる（P-03 本波の外） |
+| 2026-06-06 | §1.2 — 活線幽霊 `len==2` でも auto-split 動きうる。**現状維持**（変更不要） |
