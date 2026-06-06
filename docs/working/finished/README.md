@@ -22,6 +22,12 @@
 | [20260603-c01-e-3layer-audit.md](20260603-c01-e-3layer-audit.md) | C-01-E 軽量 audit |
 | [20260605-c01-e-kw-codh-keyword-planning.md](20260605-c01-e-kw-codh-keyword-planning.md) | C-01-E-KW planning（#413 完了） |
 
+## Polish（P-xx）— 2026-06-06
+
+| ファイル | 内容 |
+| --- | --- |
+| [20260606-p07-slideshow-drawer-open-state-planning.md](20260606-p07-slideshow-drawer-open-state-planning.md) | P-07 Drawer 開閉視認性（#417 完了） |
+
 ## Qt / Windows / 横断
 
 | ファイル | 内容 |
