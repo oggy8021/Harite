@@ -192,9 +192,10 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 
 | 端子 | よくある癖 | 観測で確認すること |
 | --- | --- | --- |
-| **HDMI** | 電源 off でも `connected` / `EnumDisplayMonitors` が 2 のまま | L4 / W4 の負例として記録 |
-| **DisplayPort** | 上に加え **DP MST ハブ・ドッキング**で出力名と物理モニタの対応が分かりにくい | `--off` した出力名がどの物理端子かメモ |
-| **DP** | ノート内蔵 + 外付け DP で、内蔵を off にしないと 2 枚のまま | `xrandr` / 設定で **どちらを off したか** |
+| **HDMI（副次）** | 電源 off のみでも `EnumDisplayMonitors` が **2 のまま**（EDID 幽霊） | W4 負例 — **単 display 再現に使わない** |
+| **HDMI（主・設定 1）** | **1 側電源 off** で `len==1` になりうる（2026-06-06） | 副次 HDMI off とは **非対称** — 操作対象を明記 |
+| **DisplayPort** | 電源 off で **枚数が減る**（ケーブル接続でも維持されない — HDMI 副次 off と異なる） | DP off は **W4 負例にならない**（`len==1` になりうる） |
+| **DP** | MST ハブ・ドックで出力名と物理の対応が分かりにくい | 操作は **設定ディスプレイ N + 端子**で記録 |
 
 **実務:** 「1 枚再現」の正手は **OS 論理切断（L1/L2/W1/W2）または物理抜き（L3/W3）**。電源 off のみは **単 display UX の再現手段としては不採用**（負例記録のみ）。
 
@@ -237,6 +238,8 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 | DP-only | **サインアウト → ログイン**（DP のみ接続） | DP | **1** | — | `name=DISPLAY2` primary — GDI 名は信用不可の決定打 |
 | DP-only | **再起動**（DP のみ接続） | DP | **1** | — | `name=DISPLAY1` primary — **同一 1 枚で名が変わる** |
 | W2′-DP | 設定 **「2 のみに表示する」**（ディスプレイ 2＝DP） | DP | **1** | — | 残存 `DISPLAY2`・`primary=True`（**単独化で昇格**）・(0,0) |
+| W4? | **設定ディスプレイ 1 側 電源 off**（主＝HDMI2） | HDMI（1） | **1** | — | 残存 `DISPLAY2` (0,0) primary — **副次 HDMI off（旧 W4）とは非対称** |
+| — | （ユーザー所見）**DP 電源 off** | DP | **1** 想定 | — | **ケーブル接続でも枚数維持しない**（HDMI 副次 ghost と対照）。別途 DP off 単独ログがあれば追記 |
 
 ### 5.4 P3-1 進捗（Windows `win-cursor-dev`）
 
@@ -277,3 +280,4 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 | 2026-06-06 | DP-only 実験 — サインアウト=`DISPLAY2`、再起動=`DISPLAY1`（いずれも `len==1`） |
 | 2026-06-06 | 拡張復帰2 — `len==2`、`DISPLAY1`=主左（GDI 名は初回 2 枚時と入替） |
 | 2026-06-06 | W2′-DP「2のみ」— `len==1` だが `primary=True`（単独昇格）。primary で止めた側は判定不可 |
+| 2026-06-06 | 1 側（設定1・HDMI）電源 off → `len==1`。DP は電源 off で枚数維持しない所見（HDMI 副次 W4 と非対称） |
