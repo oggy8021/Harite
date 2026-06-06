@@ -312,6 +312,7 @@ GDI `DISPLAYn` は設定番号・端子と無関係（下記 2 枚 dump は参�
 | ラベル | `linux-xfce`（仮） |
 | OS | Linux / XFCE / X11 |
 | ラボ | モニター入力切替で Windows と画面共有。**端子対応は Windows と逆**（§4.2.1） |
+| 物理 | **L**＝`HDMI-1`。**R** モニターは **3 端子**（Linux は `DP-1` 使用。`HDMI-2` は未使用で常時 `disconnected`） |
 | Harite backend | CLI one-liner（`harite.workspace`） |
 
 **状態 A — ベースライン（2 枚）:**
@@ -329,6 +330,7 @@ Harite: `len==2`（名前・座標は xrandr と一致）
 | --- | --- | --- | --- | --- |
 | L1 | `xrandr --output DP-1 --off` | **2**（`DP-1 connected` モードなしで残存） | **2** | `DP-1` は `0x0`。**負例** — 論理 off では P-03 閾値に届かない |
 | L1復帰 | `xrandr --output DP-1 --auto` | 2 | **2** | **レイアウト崩れ** — DP が 3840×2160@(0,0) に。§4.2.3 の明示復帰を使う |
+| L4 | **R モニター DP 側のみ電源 off**（`DP-1` ケーブル維持） | **1**（`DP-1 disconnected`） | **1** | `HDMI-1` のみ残存。L1（論理 off）とは **対照** — 電源 off で `disconnected` 化 |
 
 ### 5.6 P3-1 進捗（Linux `linux-xfce`）
 
@@ -336,8 +338,8 @@ Harite: `len==2`（名前・座標は xrandr と一致）
 | --- | --- |
 | ベースライン | **確定** `len==2`（HDMI-1 主左 / DP-1 副右） |
 | L1 論理 off | **負例確定** — `len==2` 維持（§4.2.2） |
-| 正手候補 | **L3**（DP ケーブル抜き）— 未実施 |
-| L4 電源 off | 未実施 |
+| L4 電源 off | **実施** — R モニター DP 側 off → `DP-1 disconnected`、`len==1` |
+| L3 ケーブル抜き | **未実施** |
 
 ---
 
@@ -373,3 +375,4 @@ Harite: `len==2`（名前・座標は xrandr と一致）
 | 2026-06-06 | §4.2.1 — XFCE 実機は共有モニター・端子逆。Windows §4.3.2 を Linux に持ち込まない |
 | 2026-06-06 | §4.2.2 — L1 `DP-1 --off` でも `connected` 残存 → Harite `len==2`（`0x0` 幽霊） |
 | 2026-06-06 | §4.2.3 — `--auto` 復帰で縮小解像度・拡張レイアウトが崩れる（DP 4K@(0,0)） |
+| 2026-06-06 | L4 — R モニター DP 電源 off → `DP-1 disconnected`、`len==1`（L1 負例と対照） |
