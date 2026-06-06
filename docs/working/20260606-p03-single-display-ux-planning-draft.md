@@ -180,7 +180,7 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 
 → **同じ 1 枚・同じ端子でも `DISPLAYn` は安定しない。** P-03 は **`len` のみ**でよい。
 
-**`len==1` 時の `primary`（観測メモ用・impl 判定は不要）:** 残存 1 枚が `primary=True` なら **非 primary 側が止められた**（例: W2′ で主のみ残す）。`primary=False` なら **主が止められ副次のみ残存**。
+**`len==1` 時の `primary`:** **どちらが止められたかの判定には使えない**（2026-06-06 DP「2のみ」実測）。残存 1 枚だけになると Windows が **その出力を primary に昇格**させる（`2のみ` でも `primary=True`）。**止めた側は操作メモ（「1のみ」「2のみ」）で記録**する。
 
 **2 枚復帰後も GDI 名は入れ替わる:** DP-only 再起動→拡張復帰後、同一物理でも以前の 2 枚観測（`DISPLAY2`=主左）から **`DISPLAY1`=主左 / `DISPLAY2`=右** に変化（§5.2 後半）。**名前でモニターを追跡しない。**
 
@@ -236,6 +236,7 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 | — | `harite-qt` Slideshow（P-03 未実装） | — | — | **R 一式まだ操作可** | `len==1` でも無効化なし。§2 の問題どおり |
 | DP-only | **サインアウト → ログイン**（DP のみ接続） | DP | **1** | — | `name=DISPLAY2` primary — GDI 名は信用不可の決定打 |
 | DP-only | **再起動**（DP のみ接続） | DP | **1** | — | `name=DISPLAY1` primary — **同一 1 枚で名が変わる** |
+| W2′-DP | 設定 **「2 のみに表示する」**（ディスプレイ 2＝DP） | DP | **1** | — | 残存 `DISPLAY2`・`primary=True`（**単独化で昇格**）・(0,0) |
 
 ### 5.4 P3-1 進捗（Windows `win-cursor-dev`）
 
@@ -275,3 +276,4 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 | 2026-06-06 | §4.3.1 改訂 — GDI `DISPLAYn` は電源 on 順で信用不可。P-03 は `len` + `primary`/座標のみ |
 | 2026-06-06 | DP-only 実験 — サインアウト=`DISPLAY2`、再起動=`DISPLAY1`（いずれも `len==1`） |
 | 2026-06-06 | 拡張復帰2 — `len==2`、`DISPLAY1`=主左（GDI 名は初回 2 枚時と入替） |
+| 2026-06-06 | W2′-DP「2のみ」— `len==1` だが `primary=True`（単独昇格）。primary で止めた側は判定不可 |
