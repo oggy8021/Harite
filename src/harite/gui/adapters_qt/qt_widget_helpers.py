@@ -187,6 +187,40 @@ def set_widget_enabled(backend: Any, name: str, enabled: bool) -> None:
     set_button_enabled(backend, name, enabled)
 
 
+# Slightly more faded than Qt's default disabled tone; P-03 second-slot only.
+_SECOND_SLOT_BLOCKED_OPACITY = 0.58
+
+
+def _apply_second_slot_opacity(widget: Any, *, blocked: bool) -> None:
+    if widget is None or not hasattr(widget, "setGraphicsEffect"):
+        return
+    try:
+        from PyQt6.QtWidgets import QGraphicsOpacityEffect
+    except Exception:
+        return
+    if blocked:
+        effect = getattr(widget, "_harite_slot_opacity_effect", None)
+        if effect is None:
+            effect = QGraphicsOpacityEffect(widget)
+            widget._harite_slot_opacity_effect = effect
+        effect.setOpacity(_SECOND_SLOT_BLOCKED_OPACITY)
+        widget.setGraphicsEffect(effect)
+        return
+    widget.setGraphicsEffect(None)
+    if hasattr(widget, "_harite_slot_opacity_effect"):
+        delattr(widget, "_harite_slot_opacity_effect")
+
+
+def set_widget_slot_blocked(backend: Any, name: str, *, blocked: bool) -> None:
+    """Disable a P-03 second-slot widget with a light opacity fade (no face repaint)."""
+    w = _get(backend, name)
+    if w is None:
+        return
+    if hasattr(w, "setEnabled"):
+        w.setEnabled(not blocked)
+    _apply_second_slot_opacity(w, blocked=blocked)
+
+
 def set_toggle_active(backend: Any, name: str, active: bool) -> None:
     """Set checked state of QPushButton (checkable) or QRadioButton."""
     w = _get(backend, name)

@@ -146,6 +146,17 @@ def set_widget_enabled(backend: Any, object_name: str, enabled: bool) -> None:
         widget.set_sensitive(bool(enabled))
 
 
+def set_widget_slot_blocked(backend: Any, object_name: str, *, blocked: bool) -> None:
+    """Disable a widget and fade it for P-03 blocked second-slot controls."""
+    widget = backend._objects.get(object_name)
+    if widget is None:
+        return
+    if hasattr(widget, "set_sensitive"):
+        widget.set_sensitive(not blocked)
+    if hasattr(widget, "set_opacity"):
+        widget.set_opacity(0.58 if blocked else 1.0)
+
+
 def set_notebook_page(backend: Any, object_name: str, page_index: int) -> None:
     notebook = backend._objects.get(object_name)
     if notebook is not None and hasattr(notebook, "set_current_page"):

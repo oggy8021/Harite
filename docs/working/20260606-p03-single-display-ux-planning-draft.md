@@ -1,7 +1,7 @@
 # P-03 — 単 display / monitor まわり UX（計画 draft）
 
 最終更新: 2026-06-06  
-ステータス: **planning draft**（P3-1 観測完了 — P3-2 gate 待ち）
+ステータス: **impl 着手**（P3-1/P3-2 完了 — GTK/Qt 配線済み）
 
 ## 位置づけ
 
@@ -61,8 +61,9 @@ P-03 の主眼は **「検出 1 枚のとき R 側 UI を誤操作不能にす�
 | Tab | 第二スロット（R 側）で塞ぐもの |
 | --- | --- |
 | **Main** | 十字 **寄せ direction 群**（R 列）。**`Open-R` / `Clear-R` / `Preview-R`**。可能なら中央 **`Swap L/R`** |
-| **Margins** | **Position** 行の **Right 列**（`Top` / `Bottom` radio 一式） |
 | **Slideshow** | **R に対応する操作群** — `combo_slideshow_source_r`、`Srcdir-R`、`Clear-R`、path 表示まわり。中央 **`Swap L/R`** |
+
+**訂正（impl）:** Margins の **Position** 行（Left/Right × Top/Bottom）は **合成画像の埋め込み角** であり第二スロットではない。単 display でも **4 角すべて有効**（P-03 初版で Right 列を誤って disabled にしていたのを撤回）。
 
 **Surface は弄らない（棚卸し時に再評価可）:**
 
@@ -444,3 +445,4 @@ Harite: `len==2`（名前・座標は xrandr と一致）
 | 2026-06-06 | L3 スキップ・Linux 観測クローズ — §4.2.4 物理 1 台想定。P3-1 pass（両 OS） |
 | 2026-06-06 | §1.2 — 活線幽霊 `len==2` でも auto-split 動きうる。**現状維持**（変更不要） |
 | 2026-06-06 | §2.1 — 「R 無効化」＝第二出力 UI スロット。物理左右・OS 1/2 とは無関係 |
+| 2026-06-06 | §2.2 — P3-2 塞ぐ対象列挙。Profile / Drawer は Surface 不変・実行時無視 |

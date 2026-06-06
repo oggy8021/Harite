@@ -20,6 +20,7 @@ from harite.core import is_background_color_literal
 from harite.core import normalize_background_color
 from harite.core import resolve_embed_margin_region as resolve_margin_text_region
 from harite.apply_settings import resolve_apply_settings
+from harite.apply_surface import dual_display_detected
 from harite.settings_file import load_settings, resolve_default_settings_path, save_settings
 from harite.display_context import build_two_screen_optimize_context
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
@@ -280,6 +281,9 @@ class MainWindow:
             return
 
         normalized_side = side.strip().upper()
+        if self._second_slot_blocked(normalized_side):
+            self._log("Pick input ignored: second slot unavailable (single display)")
+            return
         if normalized_side == "L":
             self.input_path_l = value
         elif normalized_side == "R":
@@ -298,6 +302,9 @@ class MainWindow:
         if not value:
             self.last_error = "slideshow srcdir is empty"
             self._log("Slideshow srcdir ignored: empty path")
+            return False
+        if self._second_slot_blocked(normalized_side):
+            self._log("Slideshow srcdir ignored: second slot unavailable (single display)")
             return False
         if normalized_side == "L":
             self.slideshow_srcdir_l = value
@@ -445,6 +452,8 @@ class MainWindow:
         side = self._toggle_side(widget_name)
         if side is None:
             return
+        if self._second_slot_blocked(side):
+            return
 
         if "PushLeft" in widget_name:
             self.form_state.align = update_position_pair(self.form_state.align, side, "left", axis="align")
@@ -465,6 +474,8 @@ class MainWindow:
     def on_toggle_position_reset(self, widget_name: str) -> None:
         side = self._toggle_side(widget_name)
         if side is None:
+            return
+        if self._second_slot_blocked(side):
             return
         if "Push" in widget_name:
             self.form_state.align = reset_position_pair(self.form_state.align, side, axis="align")
@@ -489,6 +500,13 @@ class MainWindow:
         right = self.slideshow_srcdir_r or "-"
         self.slideshow_source_display = f"Slideshow srcdirs: L={left} | R={right}"
 
+    @property
+    def dual_display_available(self) -> bool:
+        return dual_display_detected()
+
+    def _second_slot_blocked(self, side: str) -> bool:
+        return side.strip().upper() == "R" and not self.dual_display_available
+
     def _can_optimize_now(self) -> bool:
         if not self.form_state.input_value:
             return False
@@ -510,9 +528,14 @@ class MainWindow:
             return False
 
     def _can_start_slideshow_now(self) -> bool:
+        has_l = bool(self.slideshow_srcdir_l.strip())
+        has_r = bool(self.slideshow_srcdir_r.strip())
+        if self.dual_display_available:
+            src_ok = has_l and has_r
+        else:
+            src_ok = has_l
         return (
-            bool(self.slideshow_srcdir_l.strip())
-            and bool(self.slideshow_srcdir_r.strip())
+            src_ok
             and int(self.slideshow_interval_seconds) > 0
             and not self.slideshow_running
         )
@@ -1028,6 +1051,8 @@ class MainWindow:
 
     def on_clear_input(self, side: str) -> bool:
         normalized_side = side.strip().upper()
+        if self._second_slot_blocked(normalized_side):
+            return False
         if normalized_side == "L":
             self.input_path_l = ""
         elif normalized_side == "R":
@@ -1042,12 +1067,16 @@ class MainWindow:
         return True
 
     def on_swap_input_paths(self) -> bool:
+        if not self.dual_display_available:
+            return False
         self.input_path_l, self.input_path_r = self.input_path_r, self.input_path_l
         self._apply_input_paths()
         self._log("Input paths swapped (L/R)")
         return True
 
     def on_swap_slideshow_srcdirs(self) -> bool:
+        if not self.dual_display_available:
+            return False
         self.slideshow_srcdir_l, self.slideshow_srcdir_r = (
             self.slideshow_srcdir_r,
             self.slideshow_srcdir_l,
@@ -1064,6 +1093,8 @@ class MainWindow:
 
     def on_clear_slideshow_srcdir(self, side: str) -> bool:
         normalized_side = side.strip().upper()
+        if self._second_slot_blocked(normalized_side):
+            return False
         if normalized_side == "L":
             self.slideshow_srcdir_l = ""
             self.slideshow_source_id_l = ""
@@ -1141,6 +1172,8 @@ class MainWindow:
         normalized_side = side.strip().upper()
         if normalized_side not in {"L", "R"}:
             self.last_error = "slideshow source side is required"
+            return False
+        if self._second_slot_blocked(normalized_side):
             return False
 
         selected_id = (source_id or "").strip()
@@ -1280,6 +1313,8 @@ class MainWindow:
                     ("L", "slideshow_source_id_l", "slideshow_srcdir_l"),
                     ("R", "slideshow_source_id_r", "slideshow_srcdir_r"),
                 ):
+                    if side_key == "R" and not self.dual_display_available:
+                        continue
                     member_id = getattr(profile.members, side_key)
                     path = members[side_key]
                     setattr(self, id_attr, member_id or "")
@@ -1289,10 +1324,15 @@ class MainWindow:
                     ("slideshow_source_id_l", "slideshow_srcdir_l"),
                     ("slideshow_source_id_r", "slideshow_srcdir_r"),
                 ):
+                    if path_attr == "slideshow_srcdir_r" and not self.dual_display_available:
+                        continue
                     source_id = (getattr(self, id_attr) or "").strip()
                     if source_id:
                         resolved = resolve_source(catalog, source_id)
                         setattr(self, path_attr, str(resolved))
+            if not self.dual_display_available:
+                self.slideshow_source_id_r = ""
+                self.slideshow_srcdir_r = ""
             self._update_slideshow_source_display()
             self._refresh_action_availability()
             return True

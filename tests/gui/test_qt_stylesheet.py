@@ -47,6 +47,33 @@ def test_build_qt_stylesheet_contains_qpushbutton_rule():
     assert "QPushButton" in css
 
 
+def test_build_qt_stylesheet_does_not_override_global_disabled_rules():
+    from harite.gui.adapters_qt.qt_stylesheet import build_qt_stylesheet
+
+    css = build_qt_stylesheet()
+    assert "QPushButton:disabled" not in css
+    assert 'hariteSlotBlocked="true"' not in css
+
+
+def test_set_widget_slot_blocked_applies_opacity_effect(qapp):
+    from PyQt6.QtWidgets import QPushButton, QWidget
+
+    from harite.gui.adapters_qt.qt_widget_helpers import set_widget_slot_blocked
+
+    host = QWidget()
+    btn = QPushButton("R", host)
+    backend = type("B", (), {"_objects": {"btnR": btn}})()
+
+    set_widget_slot_blocked(backend, "btnR", blocked=True)
+    assert btn.isEnabled() is False
+    assert btn.graphicsEffect() is not None
+    assert abs(btn.graphicsEffect().opacity() - 0.58) < 0.01
+
+    set_widget_slot_blocked(backend, "btnR", blocked=False)
+    assert btn.isEnabled() is True
+    assert btn.graphicsEffect() is None
+
+
 # ---------------------------------------------------------------------------
 # apply_qt_stylesheet
 # ---------------------------------------------------------------------------

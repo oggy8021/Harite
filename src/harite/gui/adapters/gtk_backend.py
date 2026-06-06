@@ -128,7 +128,7 @@ from harite.gui.adapters.gtk_runtime_widget_access import set_notebook_page
 from harite.gui.adapters.gtk_runtime_widget_access import set_spin_value
 from harite.gui.adapters.gtk_runtime_widget_access import set_status
 from harite.gui.adapters.gtk_runtime_widget_access import set_toggle_active
-from harite.gui.adapters.gtk_runtime_widget_access import set_widget_enabled
+from harite.gui.adapters.gtk_runtime_widget_access import set_widget_enabled, set_widget_slot_blocked
 from harite.gui.adapters.gtk_runtime_slideshow_ui import on_slideshow_interval_changed
 from harite.gui.adapters.gtk_runtime_slideshow_ui import on_slideshow_start_clicked
 from harite.gui.adapters.gtk_runtime_slideshow_ui import on_slideshow_stop_clicked
@@ -561,6 +561,9 @@ class GtkRuntimeSignalBackend:
 
     def _set_widget_enabled(self, object_name: str, enabled: bool) -> None:
         set_widget_enabled(self, object_name, enabled)
+
+    def _set_widget_slot_blocked(self, object_name: str, *, blocked: bool) -> None:
+        set_widget_slot_blocked(self, object_name, blocked=blocked)
 
     def _set_notebook_page(self, object_name: str, page_index: int) -> None:
         set_notebook_page(self, object_name, page_index)

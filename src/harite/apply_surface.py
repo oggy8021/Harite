@@ -18,6 +18,11 @@ def count_detected_displays() -> int:
         return 0
 
 
+def dual_display_detected() -> bool:
+    """True when Harite sees two or more connected displays (P-03 threshold)."""
+    return count_detected_displays() >= 2
+
+
 def windows_multi_monitor() -> bool:
     return is_windows_host() and count_detected_displays() >= 2
 

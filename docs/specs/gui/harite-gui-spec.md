@@ -279,6 +279,21 @@ design 合意: [20260605-c01-e-kw-manage-keyword-slice-memo.md](../../working/de
 - 第4波 impl は **Qt backend** 先行。GTK は maintenance mode だが widget / handler は **parity 対象**。
 - core API は `harite.sources` のみ使用。CLI surface は追加しない。
 
+### 4.3 単 display（P-03）— 第二スロット disabled
+
+検出は `len(detect_displays()) < 2` のみ（[planning draft](../../working/20260606-p03-single-display-ux-planning-draft.md) §2）。
+
+| Tab | `len < 2` で disabled にする widget（第二スロット＝現 UI ラベル R） |
+| --- | --- |
+| Main | R 十字 direction、`Open-R` / `Clear-R`、Preview 右列、`Swap L/R` |
+| Slideshow | `combo_slideshow_source_r`、`Srcdir-R`、`Clear-R`、R path 表示、`Swap L/R` |
+
+Margins tab の `Position` 行（Left/Right × Top/Bottom）は **合成画像上の埋め込み角** を指し、第二スロット（モニタ R）ではない。単 display でも 4 角すべて選択可能とする。
+
+据え置き（実行時無視）: `combo_slideshow_profile`、`More slideshow options…` Drawer 内。profile の R slot や saved R は start 直前 resolve で参照しない。
+
+GTK / Qt は `harite.gui.dual_display_ui` 経由で同一 widget 名を同期する。
+
 ## 5. 設定 (settings) 保存と再読込
 
 - startup 時に既定の設定ファイル (settings file) を読む。
@@ -408,8 +423,10 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 
 ### slideshow start / tick / stop
 
-- GUI の slideshow source は `Srcdir-L` と `Srcdir-R` の 2 面で固定する。Start ボタンは **両方が非空のときのみ有効**になる。どちらか一方だけ設定された状態では slideshow を開始できない（`can_start_slideshow = False`）。
-- start では Srcdir-L と Srcdir-R の両 source から画像を収集する。どちらかが空なら開始前に `slideshow srcdir is required` として止める。
+- GUI の slideshow source は `Srcdir-L` と `Srcdir-R` の 2 面で固定する。
+- **検出 2 枚以上**（`len(detect_displays()) >= 2`）: Start は **両方非空** のときのみ有効（従来どおり）。
+- **検出 1 枚**（P-03）: Start は **Srcdir-L のみ非空** で有効。第二スロット（R）UI は disabled。profile / saved source の R 指定は **実行時に無視**（Surface は据え置き）。start は L source のみで single-file apply。
+- start では有効な source 面から画像を収集する。有効面がすべて空なら `slideshow srcdir is required` で止める。
 - start 時点では slideshow tab 上の mode 選択値を採用する。
 - start 時点で各 source から初回選択を行い、現在表示を更新してから apply を試みる。
 - tick では次画像を選び直し、現在表示を更新したうえで apply を行う。
