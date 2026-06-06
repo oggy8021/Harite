@@ -381,7 +381,7 @@ def _build_options_drawer_trigger() -> dict[str, Any]:
 
 def _build_options_drawer() -> dict[str, Any]:
     """Collapsible panel: mode, manage registry, current/output detail."""
-    from PyQt6.QtWidgets import QVBoxLayout, QWidget
+    from PyQt6.QtWidgets import QFrame, QVBoxLayout, QWidget
 
     mode_widgets = _build_mode_section()
     manage_widgets = _build_manage_registry_row()
@@ -395,12 +395,17 @@ def _build_options_drawer() -> dict[str, Any]:
     drawer_layout = QVBoxLayout(drawer)
     drawer_layout.setContentsMargins(0, 8, 0, 0)
     drawer_layout.setSpacing(10)
+    drawer_top_border = QFrame()
+    drawer_top_border.setVisible(False)
+    drawer_top_border.setFixedHeight(1)
+    drawer_layout.addWidget(drawer_top_border)
     drawer_layout.addWidget(mode_widgets["slideshow_mode_group"])
     drawer_layout.addWidget(manage_widgets["slideshow_manage_registry_row"])
     drawer_layout.addWidget(detail_widgets["slideshow_detail_shell"])
 
     return {
         "slideshow_options_drawer": drawer,
+        "slideshow_options_drawer_top_border": drawer_top_border,
         **mode_widgets,
         **manage_widgets,
         **detail_widgets,

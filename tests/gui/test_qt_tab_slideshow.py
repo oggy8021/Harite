@@ -59,6 +59,7 @@ def test_slideshow_tab_required_widgets(qapp):
         "slideshow_manage_registry_row",
         "btn_slideshow_options_more",
         "slideshow_options_drawer",
+        "slideshow_options_drawer_top_border",
         "slideshow_options_trigger_row",
         "interval_label",
         "interval_spin",
@@ -211,17 +212,21 @@ def test_options_drawer_toggle_applies_p07_open_state_styles(qapp):
     assert drawer.objectName() == QT_DRAWER_OBJECT_NAME
     assert drawer.styleSheet() == ""
 
+    top_border = w["slideshow_options_drawer_top_border"]
+
     toggle_slideshow_options_drawer(backend)
     assert getattr(backend, "_slideshow_options_drawer_expanded", False)
-    assert "background-color:" in drawer.styleSheet()
-    assert "border-top: 1px solid" in drawer.styleSheet()
+    assert drawer.styleSheet() == ""
+    assert drawer.autoFillBackground()
+    assert "background-color:" in top_border.styleSheet()
     assert drawer.objectName() == f"{QT_DRAWER_OBJECT_NAME}Expanded"
     assert trigger.objectName() == f"{QT_TRIGGER_OBJECT_NAME}Expanded"
     assert "background-color:" in trigger.styleSheet()
-    assert "border: 1px solid" in trigger.styleSheet()
 
     toggle_slideshow_options_drawer(backend)
     assert not getattr(backend, "_slideshow_options_drawer_expanded", True)
+    assert not drawer.autoFillBackground()
+    assert top_border.styleSheet() == ""
     assert drawer.styleSheet() == ""
     assert drawer.objectName() == QT_DRAWER_OBJECT_NAME
     assert trigger.objectName() == QT_TRIGGER_OBJECT_NAME

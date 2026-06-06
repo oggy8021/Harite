@@ -126,47 +126,93 @@ def _gtk_toggle_class(widget: Any, class_name: str, *, enabled: bool) -> None:
         remove_class(class_name)
 
 
-def _qt_palette_color_names(widget: Any | None) -> tuple[str, str]:
-    """Resolve AlternateBase / Mid from a widget palette (theme-aware)."""
-    from PyQt6.QtGui import QPalette
+def _qt_widget_palette(widget: Any | None) -> Any:
     from PyQt6.QtWidgets import QApplication
 
-    palette = widget.palette() if widget is not None else QApplication.palette()
-    alternate = palette.color(QPalette.ColorRole.AlternateBase).name()
-    mid = palette.color(QPalette.ColorRole.Mid).name()
-    return alternate, mid
-
-
-def _qt_drawer_expanded_stylesheet(drawer: Any | None) -> str:
-    alternate, mid = _qt_palette_color_names(drawer)
-    return (
-        f"background-color: {alternate};"
-        f"border-top: 1px solid {mid};"
-        "padding-left: 8px;"
-        "padding-right: 8px;"
-    )
+    if widget is not None:
+        return widget.palette()
+    return QApplication.palette()
 
 
 def _qt_trigger_expanded_stylesheet(trigger: Any | None) -> str:
-    alternate, mid = _qt_palette_color_names(trigger)
+    from PyQt6.QtGui import QPalette
+
+    palette = _qt_widget_palette(trigger)
+    alternate = palette.color(QPalette.ColorRole.AlternateBase).name()
+    mid = palette.color(QPalette.ColorRole.Mid).name()
     return (
+        f"QPushButton#{QT_TRIGGER_OBJECT_NAME}Expanded {{"
         f"background-color: {alternate};"
         f"border: 1px solid {mid};"
         "border-bottom: none;"
         "padding: 4px 12px;"
+        "}}"
     )
 
 
-def _apply_qt_drawer_open_state(drawer: Any | None, trigger: Any | None, *, expanded: bool) -> None:
+def _qt_set_drawer_panel_palette(drawer: Any, *, expanded: bool) -> None:
+    """Paint drawer chrome via QPalette only — avoids QSS cascading to children."""
+    from PyQt6.QtGui import QPalette
+    from PyQt6.QtWidgets import QApplication
+
+    if not hasattr(drawer, "setAutoFillBackground"):
+        return
+    if expanded:
+        palette = drawer.palette()
+        alternate = palette.color(QPalette.ColorRole.AlternateBase)
+        palette.setColor(QPalette.ColorRole.Window, alternate)
+        drawer.setPalette(palette)
+        drawer.setAutoFillBackground(True)
+        return
+
+    drawer.setAutoFillBackground(False)
+    parent = drawer.parent() if hasattr(drawer, "parent") else None
+    if parent is not None:
+        drawer.setPalette(parent.palette())
+    else:
+        drawer.setPalette(QApplication.palette())
+
+
+def _qt_set_drawer_layout_margins(drawer: Any, *, expanded: bool) -> None:
+    layout = drawer.layout() if hasattr(drawer, "layout") else None
+    if layout is None or not hasattr(layout, "setContentsMargins"):
+        return
+    if expanded:
+        layout.setContentsMargins(8, 4, 8, 0)
+    else:
+        layout.setContentsMargins(0, 8, 0, 0)
+
+
+def _qt_set_drawer_top_border(top_border: Any | None, drawer: Any | None, *, expanded: bool) -> None:
+    if top_border is None:
+        return
+    if hasattr(top_border, "setVisible"):
+        top_border.setVisible(expanded)
+    if not expanded:
+        if hasattr(top_border, "setStyleSheet"):
+            top_border.setStyleSheet("")
+        return
+    from PyQt6.QtGui import QPalette
+
+    palette = _qt_widget_palette(drawer)
+    mid = palette.color(QPalette.ColorRole.Mid).name()
+    if hasattr(top_border, "setStyleSheet"):
+        top_border.setStyleSheet(f"background-color: {mid}; border: none; min-height: 1px; max-height: 1px;")
+
+
+def _apply_qt_drawer_open_state(
+    drawer: Any | None,
+    trigger: Any | None,
+    *,
+    expanded: bool,
+    top_border: Any | None = None,
+) -> None:
     if drawer is not None and hasattr(drawer, "setStyleSheet"):
-        if expanded:
-            drawer.setObjectName(f"{QT_DRAWER_OBJECT_NAME}Expanded")
-            drawer.setStyleSheet(_qt_drawer_expanded_stylesheet(drawer))
-            if hasattr(drawer, "setAutoFillBackground"):
-                drawer.setAutoFillBackground(True)
-        else:
-            drawer.setObjectName(QT_DRAWER_OBJECT_NAME)
-            drawer.setStyleSheet("")
+        drawer.setObjectName(f"{QT_DRAWER_OBJECT_NAME}Expanded" if expanded else QT_DRAWER_OBJECT_NAME)
+        drawer.setStyleSheet("")
+        _qt_set_drawer_panel_palette(drawer, expanded=expanded)
+        _qt_set_drawer_layout_margins(drawer, expanded=expanded)
+        _qt_set_drawer_top_border(top_border, drawer, expanded=expanded)
     if trigger is not None and hasattr(trigger, "setStyleSheet"):
         if expanded:
             trigger.setObjectName(f"{QT_TRIGGER_OBJECT_NAME}Expanded")
@@ -192,8 +238,9 @@ def apply_slideshow_options_drawer_open_state(backend: Any, *, expanded: bool) -
     """Update drawer/trigger visuals for expanded or collapsed state (Qt + GTK)."""
     drawer = backend._objects.get("slideshow_options_drawer")
     trigger = backend._objects.get("btn_slideshow_options_more")
+    top_border = backend._objects.get("slideshow_options_drawer_top_border")
     _set_trigger_label(trigger, expanded=expanded)
-    _apply_qt_drawer_open_state(drawer, trigger, expanded=expanded)
+    _apply_qt_drawer_open_state(drawer, trigger, expanded=expanded, top_border=top_border)
     _apply_gtk_drawer_open_state(drawer, trigger, expanded=expanded)
 
 
