@@ -108,7 +108,7 @@ python -c "from harite.workspace import detect_displays; print(len(detect_displa
 | L3 | 副次モニターの **ケーブル物理抜き**（DP または HDMI） | `connected` が `disconnected` に変わり `len==1` | **推奨の実機再現**（[#359](../online-issues/issue-359.md)） |
 | L4 | 副次モニターの **電源 off のみ**（ケーブル接続のまま） | 多くの環境で **2 枚のまま** | **再現に使わない**（負例として記録） |
 
-復帰: `xrandr --output <名> --auto` またはケーブル再接続 → 再び 2 枚。
+復帰: ケーブル再接続、または **明示レイアウト**（§4.2.3）。`--auto` 単体は **縮小解像度の拡張配置を復元しない**ことがある。
 
 #### 4.2.1 実機ラボ構成 — `linux-xfce`（Windows とは別世界）
 
@@ -134,6 +134,25 @@ python -c "from harite.workspace import detect_displays; print(len(detect_displa
 | **L1** `xrandr --output DP-1 --off` | `HDMI-1` は従来どおり。**`DP-1 connected`（モード行なし）が残る** | **`len==2`** — `DP-1` は `0x0` @ (0,0) |
 
 → **論理 off だけでは「ユーザーには 1 画面」でも Harite は 2 枚**。Windows の設定「○のみに表示」（`len==1`）とは **非対称**。P3-1 の正手は **L3（ケーブル抜き → `disconnected`）** を優先。L2（XFCE GUI off）は L1 と同型の見込み。
+
+#### 4.2.3 復帰 — `--auto` の罠（`linux-xfce` 実測）
+
+ローパワー用途で **縮小解像度（2048×1280）・拡張（DP 右）** で運用している環境では、L1 後の `xrandr --output DP-1 --auto` が **以前のレイアウトに戻らない**ことがある。
+
+| 項目 | ベースライン（観測前） | `--auto` 復帰後（実測） |
+| --- | --- | --- |
+| `HDMI-1` | primary 2048×1280 @ (0,0) | 同左 |
+| `DP-1` | 2048×1280 @ (2048,0) | **3840×2160 @ (0,0)** — ネイティブ解像度・**主と座標重複** |
+| Harite `len` | 2 | **2**（枚数は変わらず、幾何だけ壊れる） |
+
+**観測後の復帰（本マシン向け）:** モードが存在すれば明示指定する。
+
+```bash
+xrandr --output HDMI-1 --mode 2048x1280 --pos 0x0 --primary
+xrandr --output DP-1 --mode 2048x1280 --pos 2048x0
+```
+
+`2048x1280` が `DP-1` のモード一覧に無い場合は `xrandr --query` で利用可能モードを確認。P-03 の `len` 判定には座標重複は **影響しない**（枚数のみ）。
 
 #### XFCE で見る UI（観測メモ用）
 
@@ -309,6 +328,7 @@ Harite: `len==2`（名前・座標は xrandr と一致）
 | 操作 ID | 操作 | `xrandr connected` 行数 | Harite `len` | メモ |
 | --- | --- | --- | --- | --- |
 | L1 | `xrandr --output DP-1 --off` | **2**（`DP-1 connected` モードなしで残存） | **2** | `DP-1` は `0x0`。**負例** — 論理 off では P-03 閾値に届かない |
+| L1復帰 | `xrandr --output DP-1 --auto` | 2 | **2** | **レイアウト崩れ** — DP が 3840×2160@(0,0) に。§4.2.3 の明示復帰を使う |
 
 ### 5.6 P3-1 進捗（Linux `linux-xfce`）
 
@@ -352,3 +372,4 @@ Harite: `len==2`（名前・座標は xrandr と一致）
 | 2026-06-06 | Windows 観測クローズ — 再起動後もケーブル維持可。`DISPLAYn` は実装・記録の同定に使わない |
 | 2026-06-06 | §4.2.1 — XFCE 実機は共有モニター・端子逆。Windows §4.3.2 を Linux に持ち込まない |
 | 2026-06-06 | §4.2.2 — L1 `DP-1 --off` でも `connected` 残存 → Harite `len==2`（`0x0` 幽霊） |
+| 2026-06-06 | §4.2.3 — `--auto` 復帰で縮小解像度・拡張レイアウトが崩れる（DP 4K@(0,0)） |
