@@ -330,6 +330,7 @@ Harite: `len==2`（名前・座標は xrandr と一致）
 | --- | --- | --- | --- | --- |
 | L1-DP | `xrandr --output DP-1 --off` | **2**（`DP-1 connected` モードなしで残存） | **2** | `DP-1` は `0x0`。**負例** — 論理 off では P-03 閾値に届かない |
 | L1-HDMI | `xrandr --output HDMI-1 --off` | **2**（`HDMI-1 connected` モードなしで残存） | **2** | `HDMI-1` は `0x0`・`primary=True` のまま。DP のみ 2048×1280。**副次/主を問わず負例** |
+| L1-HDMI復帰 | L 側復帰（明示 xrandr） | **2** | **2** | ベースラインどおり — `HDMI-1` 主左 / `DP-1` @(2048,0) |
 | L1復帰 | `xrandr --output DP-1 --auto` | 2 | **2** | **レイアウト崩れ** — DP が 3840×2160@(0,0) に。§4.2.3 の明示復帰を使う |
 | L4 | **R モニター DP 側のみ電源 off**（`DP-1` ケーブル維持） | **1**（`DP-1 disconnected`） | **1** | `HDMI-1` のみ残存。L1（論理 off）とは **対照** — 電源 off で `disconnected` 化 |
 | L4復帰 | R モニター電源 on | **2** | **2** | ベースラインどおり — `HDMI-1` 主左 / `DP-1` 2048×1280@(2048,0) |
@@ -380,3 +381,4 @@ Harite: `len==2`（名前・座標は xrandr と一致）
 | 2026-06-06 | L4 — R モニター DP 電源 off → `DP-1 disconnected`、`len==1`（L1 負例と対照） |
 | 2026-06-06 | L4 復帰 — 電源 on でベースライン復帰（2048×1280 拡張・`len==2`） |
 | 2026-06-06 | L1-HDMI — `HDMI-1 --off` でも `connected` 残存・`primary` 維持 → `len==2` |
+| 2026-06-06 | L1-HDMI 復帰 — 明示 xrandr でベースライン復帰（`len==2`） |
