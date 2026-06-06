@@ -42,6 +42,19 @@ def test_upsert_codh_keyword_in_notes_replaces_line() -> None:
     assert updated.count(CODH_KEYWORD_NOTE_PREFIX) == 1
 
 
+def test_bundled_keyword_preset_json_has_no_machine_keyword_line() -> None:
+    presets = load_source_presets()
+    for preset_id in ("codh-edo-spots-keyword", "codh-edo-shops-keyword"):
+        template = next(item for item in presets.sources if item.preset_id == preset_id)
+        assert CODH_KEYWORD_NOTE_PREFIX not in template.notes
+
+
+def test_canonical_preset_notes_injects_default_keyword() -> None:
+    presets = load_source_presets()
+    template = next(item for item in presets.sources if item.preset_id == "codh-edo-spots-keyword")
+    assert codh_keyword_from_notes(canonical_preset_source_notes(template)) == CODH_KEYWORD_DEFAULT
+
+
 def test_keyword_preset_import_includes_default_keyword(tmp_path: Path) -> None:
     catalog = empty_catalog()
     entry = import_preset_source(catalog, "codh-edo-spots-keyword", cache_root=tmp_path / "cache")

@@ -78,7 +78,7 @@ harite-codh-keyword:桜
 | 値           | UTF-8 文字列。前後空白は strip。**空は無効**（sync 拒否）                                                             |
 | 長さ上限 | **16 文字**（マルチバイトも 1 文字として数える。Python `len()` 相当） |
 | 許可文字 | **制御文字・改行なし**。印字可能 Unicode（`urlencode`） |
-| preset | `harite-preset:codh-edo-spots-keyword` / `codh-edo-shops-keyword`（名称は impl 時確定）。import 時に keyword 行へ **`桜` を初期投入**（旧 sakura preset のサンプル役） |
+| preset | `harite-preset:codh-edo-spots-keyword` / `codh-edo-shops-keyword`（名称は impl 時確定）。**preset JSON `notes` は出典のみ** — import / repair 時に `canonical_preset_source_notes` が keyword 行へ **`桜` を注入**（旧 sakura preset のサンプル役） |
 | 廃止 | `codh-edo-spots-sakura` — 同梱から外す（§7 K2） |
 
 

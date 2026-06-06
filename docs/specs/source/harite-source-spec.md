@@ -550,7 +550,7 @@ Sync: 返却 `Illustration` から IIIF URL（`dl.ndl.go.jp/api/iiif/{pid}/{page
 
 plain `codh-edo-spots-sakura`（固定 `桜`）は **同梱しない**。
 
-**`harite-codh-keyword:`（C-01-E-KW）:** source `notes` の機械行。最大 **16** 文字（`len` 基準）。import 時の初期値は **`桜`**。`repair_preset_source_notes` はユーザー上書きを保持する。
+**`harite-codh-keyword:`（C-01-E-KW）:** source `notes` の機械行（**同梱 preset JSON の `notes` には書かない** — `canonical_preset_source_notes` が import / repair 時に注入）。最大 **16** 文字（`len` 基準）。初期値 **`桜`**。`repair_preset_source_notes` はユーザー上書きを保持する。
 
 Sync: `results[0].canvasThumbnail` の `/200,/` を `/max/` に置換して GET。cache ファイル名は §15.6 と同様。
 

@@ -22,6 +22,8 @@ from harite.sources import (
     list_sources,
 )
 from harite.sources_remote import (
+    CODH_KEYWORD_DEFAULT,
+    CODH_KEYWORD_NOTE_PREFIX,
     PRESET_MARKER_PREFIX,
     add_remote_source,
     codh_keyword_from_notes,
@@ -70,13 +72,17 @@ def _validate_preset_id(preset_id: str) -> str:
 
 
 def _strip_managed_preset_note_lines(text: str) -> str:
-    """Remove harite-preset / harite-min-interval lines (re-built by _format_preset_notes)."""
+    """Remove machine lines re-built by _format_preset_notes (preset marker, keyword, min interval)."""
     kept: list[str] = []
     for line in text.splitlines():
         stripped = line.strip()
         if not stripped:
             continue
-        if stripped.startswith(PRESET_MARKER_PREFIX) or stripped.startswith(MIN_INTERVAL_NOTE_PREFIX):
+        if (
+            stripped.startswith(PRESET_MARKER_PREFIX)
+            or stripped.startswith(MIN_INTERVAL_NOTE_PREFIX)
+            or stripped.startswith(CODH_KEYWORD_NOTE_PREFIX)
+        ):
             continue
         kept.append(stripped)
     return "\n".join(kept)
@@ -89,6 +95,8 @@ def _format_preset_notes(
     body = _strip_managed_preset_note_lines(template.notes)
     if body:
         lines.append(body)
+    if is_codh_keyword_preset(template.preset_id):
+        lines.append(f"{CODH_KEYWORD_NOTE_PREFIX}{CODH_KEYWORD_DEFAULT}")
     if template.min_slideshow_interval_seconds is not None:
         lines.append(f"{MIN_INTERVAL_NOTE_PREFIX}{template.min_slideshow_interval_seconds}")
     return "\n".join(lines)
