@@ -150,12 +150,12 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 
 #### 4.3.1 Windows — 設定 UI・GDI 名・列挙 index（信用できるものの切り分け）
 
-**結論（2026-06-06 実機）:** `Display.name`（`\\.\DISPLAYn`）は **product / 観測の対応づけに使わない**。起動時の電源投入順などで振られ、**設定の「ディスプレイ 1/2」でも primary でもない**。
+**結論（2026-06-06 実機）:** `Display.name`（`\\.\DISPLAYn`）は **product / 観測の対応づけに使わない**。GDI 名は **再起動 vs サインアウトで同じ物理 1 枚でも変わる**（下記 DP-only 実験）。設定の「ディスプレイ 1/2」や primary の印とも無関係。
 
 | 層 | 信用 | 説明 |
 | --- | --- | --- |
 | **Windows 設定 UI**「ディスプレイ 1/2」 | ○（ユーザー操作の記録用） | **主ディスプレイは弄らない**方針で観測（設定 1 ＝ 主＝HDMI2） |
-| **`Display.name` / `DISPLAYn`** | **×** | Win32 `MONITORINFOEX.szDevice` の GDI 名。**起動時電源 on 順で決まる様子**。`DISPLAY1` は「1 番目」「設定 1」「primary」のいずれでもない |
+| **`Display.name` / `DISPLAYn`** | **×** | Win32 `MONITORINFOEX.szDevice`。**再起動で `DISPLAY1`、サインアウトのみでは `DISPLAY2`**（同一 DP 単独接続でも不一致）。識別子として使えない |
 | **Python list index `0`,`1`** | △ | `EnumDisplayMonitors` の**その回の**列挙順。セッション内の同定には `primary` + 座標の方がマシ |
 | **`primary` + `x_offset`/`y_offset` + 解像度** | ○ | P-03 実装・観測で使う Harite 側の安定した信号 |
 | **`len(detect_displays())`** | ○ | **単 display 判定の正本**（`< 2`） |
@@ -170,6 +170,15 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 → **`DISPLAY1` が DP 側**など、数字と現実が逆転する。**名前で L/R や -R disabled を紐づけない。**
 
 **P-03 impl 契約（案）:** Windows では `len(detect_displays()) < 2` のみで R 無効化を判定。`Display.name` によるマッチングは **行わない**（Linux の per-monitor ファイル名用途とは切り離す — [slideshow-spec §6](../specs/slideshow/harite-slideshow-spec.md) は Linux `HDMI-1` 等が正本）。
+
+**DP 単独接続・`len==1` の GDI 名比較（物理 DP のみ・HDMI 未接続）:**
+
+| セッション操作 | `name` | `primary` | 解釈 |
+| --- | --- | --- | --- |
+| **サインアウト → ログイン**（電源落とさず） | `DISPLAY2` | True | 前セッションの列挙/アダプタ状態が残る様子 |
+| **再起動後** | `DISPLAY1` | True | 起動時に見えていた出力に別番号が振られる |
+
+→ **同じ 1 枚・同じ端子でも `DISPLAYn` は安定しない。** P-03 は **`len` のみ**でよい。
 
 **観測記録のルール:** 設定は **「ディスプレイ N（主/副）」+ 端子（HDMI/DP）+ 左右**。one-liner は **`len` / `primary` / 座標**を貼る。`DISPLAYn` は参考脚注程度。
 
@@ -218,6 +227,8 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 | 復帰 | 拡張（2 画面）に戻す | HDMI | **2** | — | W2′ の逆操作。ベースライン再確認 |
 | W4 | 副次 **HDMI 電源 off のみ**（ケーブル接続維持） | HDMI | **2** | **有効のまま** | **負例確定** — EDID 残存で `EnumDisplayMonitors` も 2。単 display 再現に使わない |
 | — | `harite-qt` Slideshow（P-03 未実装） | — | — | **R 一式まだ操作可** | `len==1` でも無効化なし。§2 の問題どおり |
+| DP-only | **サインアウト → ログイン**（DP のみ接続） | DP | **1** | — | `name=DISPLAY2` primary — GDI 名は信用不可の決定打 |
+| DP-only | **再起動**（DP のみ接続） | DP | **1** | — | `name=DISPLAY1` primary — **同一 1 枚で名が変わる** |
 
 ### 5.4 P3-1 進捗（Windows `win-cursor-dev`）
 
@@ -253,3 +264,4 @@ Windows は Linux より **「設定 UI で見える世界」**と Harite の対
 | 2026-06-06 | Windows 続き — 復帰 `len==2`、W4 HDMI 電源 off は `len==2`、qt R 側未無効化確認 |
 | 2026-06-06 | §4.3.1 — 設定「ディスプレイ 1/2」と `DISPLAYn` / Python index のずれを明記 |
 | 2026-06-06 | §4.3.1 改訂 — GDI `DISPLAYn` は電源 on 順で信用不可。P-03 は `len` + `primary`/座標のみ |
+| 2026-06-06 | DP-only 実験 — サインアウト=`DISPLAY2`、再起動=`DISPLAY1`（いずれも `len==1`） |
