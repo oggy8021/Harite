@@ -62,9 +62,9 @@
 
     {
 
-      "preset_id": "ndl-random",
+      "preset_id": "ndl-random-map",
 
-      "name": "NDL 図版（おまかせ）",
+      "name": "NDL 図版（地図）",
 
       "kind": "remote-ndl-tsugidigi",
 
@@ -76,9 +76,65 @@
 
     {
 
-      "preset_id": "ndl-random-map",
+      "preset_id": "ndl-random-illust",
 
-      "name": "NDL 図版（地図）",
+      "name": "NDL 図版（イラスト）",
+
+      "kind": "remote-ndl-tsugidigi",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション・次世代デジタルライブラリー（https://dl.ndl.go.jp/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-random-illustcolor",
+
+      "name": "NDL 図版（着色挿絵）",
+
+      "kind": "remote-ndl-tsugidigi",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション・次世代デジタルライブラリー（https://dl.ndl.go.jp/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-random-indoor",
+
+      "name": "NDL 図版（写真・屋内）",
+
+      "kind": "remote-ndl-tsugidigi",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション・次世代デジタルライブラリー（https://dl.ndl.go.jp/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-random-landmark",
+
+      "name": "NDL 図版（写真・ランドマーク）",
+
+      "kind": "remote-ndl-tsugidigi",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション・次世代デジタルライブラリー（https://dl.ndl.go.jp/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-random-outdoor",
+
+      "name": "NDL 図版（写真・屋外）",
 
       "kind": "remote-ndl-tsugidigi",
 

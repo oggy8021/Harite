@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
+from io import BytesIO
+from urllib.error import HTTPError
 from urllib.request import Request
 
 import pytest
@@ -15,7 +17,6 @@ from harite.sources_remote import (
     CODH_SEARCH_URL_TEMPLATE,
     NDL_IIIF_TEMPLATE,
     NDL_RANDOM_FACET_URL,
-    NDL_RANDOM_URL,
     sync_remote_source,
 )
 
@@ -44,7 +45,7 @@ def _install_ndl_codh_urlopen_mock(monkeypatch: pytest.MonkeyPatch) -> None:
 
     def fake_urlopen(url: str | Request, *args: Any, **kwargs: Any) -> Any:
         target = url if isinstance(url, str) else url.full_url
-        if target.startswith(NDL_RANDOM_URL) or target.startswith(NDL_RANDOM_FACET_URL):
+        if target.startswith(NDL_RANDOM_FACET_URL):
 
             class _Json:
                 def read(self) -> bytes:
@@ -103,20 +104,74 @@ def _ndl_iiif_url_from_sample() -> str:
     )
 
 
-def test_ndl_random_sync_writes_latest_jpg(
+def test_ndl_facet_sync_writes_latest_jpg(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     _install_ndl_codh_urlopen_mock(monkeypatch)
     cache_root = tmp_path / "remote-cache"
     catalog = empty_catalog()
-    entry = import_preset_source(catalog, "ndl-random", cache_root=cache_root)
+    entry = import_preset_source(catalog, "ndl-random-illust", cache_root=cache_root)
 
     sync_remote_source(catalog, entry.id, cache_root=cache_root)
 
     latest = Path(entry.path) / "latest.jpg"
     assert latest.is_file()
     assert latest.read_bytes() == _JPEG_BYTES
+
+
+def test_ndl_iiif_404_retries_next_illustration(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    iiif_url = _ndl_iiif_url_from_sample()
+    facet_calls = {"count": 0}
+    iiif_calls = {"count": 0}
+
+    def fake_urlopen(url: str | Request, *args: Any, **kwargs: Any) -> Any:
+        target = url if isinstance(url, str) else url.full_url
+        if target.startswith(NDL_RANDOM_FACET_URL):
+            facet_calls["count"] += 1
+
+            class _Json:
+                def read(self) -> bytes:
+                    return json.dumps(_NDL_ILLUSTRATION).encode("utf-8")
+
+                def __enter__(self) -> "_Json":
+                    return self
+
+                def __exit__(self, *exc: object) -> None:
+                    return None
+
+            return _Json()
+        if target == iiif_url:
+            iiif_calls["count"] += 1
+            if iiif_calls["count"] == 1:
+                raise HTTPError(target, 404, "Not Found", hdrs=None, fp=BytesIO())
+
+            class _Img:
+                def read(self) -> bytes:
+                    return _JPEG_BYTES
+
+                def __enter__(self) -> "_Img":
+                    return self
+
+                def __exit__(self, *exc: object) -> None:
+                    return None
+
+            return _Img()
+        raise AssertionError(target)
+
+    monkeypatch.setattr("harite.sources_remote.urlopen", fake_urlopen)
+    cache_root = tmp_path / "remote-cache"
+    catalog = empty_catalog()
+    entry = import_preset_source(catalog, "ndl-random-illust", cache_root=cache_root)
+    sync_remote_source(catalog, entry.id, cache_root=cache_root)
+
+    assert facet_calls["count"] == 2
+    assert iiif_calls["count"] == 2
+    latest = Path(entry.path) / "latest.jpg"
+    assert latest.is_file()
 
 
 def test_ndl_random_map_uses_facet_url(

@@ -73,7 +73,7 @@ def test_materialize_prunes_orphans(
 
     catalog_path = tmp_path / "harite-sources.json"
     catalog = empty_catalog()
-    entry = import_preset_source(catalog, "ndl-random", cache_root=cache_root)
+    entry = import_preset_source(catalog, "ndl-random-illust", cache_root=cache_root)
     save_catalog(catalog, catalog_path)
 
     orphan = cache_root / "orphan-id-not-in-catalog"

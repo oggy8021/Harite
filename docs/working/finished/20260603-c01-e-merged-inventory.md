@@ -22,8 +22,12 @@
 
 | `preset_id` | 表示名 | `kind` |
 | --- | --- | --- |
-| `ndl-random` | NDL 図版（おまかせ） | `remote-ndl-tsugidigi` |
 | `ndl-random-map` | NDL 図版（地図） | `remote-ndl-tsugidigi` |
+| `ndl-random-illust` | NDL 図版（イラスト） | `remote-ndl-tsugidigi` |
+| `ndl-random-illustcolor` | NDL 図版（着色挿絵） | `remote-ndl-tsugidigi` |
+| `ndl-random-indoor` | NDL 図版（写真・屋内） | `remote-ndl-tsugidigi` |
+| `ndl-random-landmark` | NDL 図版（写真・ランドマーク） | `remote-ndl-tsugidigi` |
+| `ndl-random-outdoor` | NDL 図版（写真・屋外） | `remote-ndl-tsugidigi` |
 | `codh-edo-spots-sakura` | 江戸観光（桜） | `remote-codh-edo` |
 | `codh-edo-spots-random` | 江戸観光（おまかせ） | `remote-codh-edo` |
 | `codh-edo-shops-random` | 江戸買物（おまかせ） | `remote-codh-edo` |
@@ -32,7 +36,7 @@ Interval 下限 **600 s**（JMA と同型）。江戸マップ・座標連携は
 
 **起動時:** `load_source_catalog` は preset 追加のみ（**ネットワーク sync なし**）。画像取得は Manage の **Refresh** または Slideshow **Start** 直前。
 
-**実機（2026-06）:** NDL 2 preset OK。CODH「おまかせ」Start 無応答 → random の search が `limit` 無しで全 1309 件取得していたため修正。手動 Sync は **Manage sources and profiles…** 内 **Refresh** のみ（Slideshow タブに Sync ボタンなし）。`remote-cache` 内 UUID フォルダの手動削除後は Saved source 選択で空フォルダが再作成され、画像は Start/Refresh で再取得（[source-spec §12.3](../specs/source/harite-source-spec.md)）。
+**実機（2026-06）:** NDL facet preset OK（2026-06-04 より同梱 6 種、`ndl-random` 廃止）。CODH「おまかせ」Start 無応答 → random の search が `limit` 無しで全 1309 件取得していたため修正。手動 Sync は **Manage sources and profiles…** 内 **Refresh** のみ（Slideshow タブに Sync ボタンなし）。`remote-cache` 内 UUID フォルダの手動削除後は Saved source 選択で空フォルダが再作成され、画像は Start/Refresh で再取得（[source-spec §12.3](../specs/source/harite-source-spec.md)）。
 
 **remote-cache 掃除（C-01 追補）:** catalog materialize 時に、catalog に無い UUID subdirectory を自動削除（`prune_orphan_remote_cache_dirs`）。ユーザー向け GUI ボタンは置かない。
 

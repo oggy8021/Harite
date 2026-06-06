@@ -13,6 +13,7 @@ from typing import Any
 
 
 from harite.gui.resource_access import set_qt_button_icon as _set_button_icon
+from harite.gui.views.footer_feedback import configure_footer_error_label_qt
 
 
 # ---------------------------------------------------------------------------
@@ -202,7 +203,8 @@ def build_footer_section() -> dict[str, Any]:
 
     error_label = QLabel("Error: none")
     error_label.setObjectName("errorLabel")
-    message_row_layout.addWidget(error_label)
+    configure_footer_error_label_qt(error_label)
+    message_row_layout.addWidget(error_label, 1)
 
     footer_layout.addWidget(message_row)
 

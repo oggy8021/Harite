@@ -137,6 +137,18 @@ def test_footer_default_label_texts(qapp):
     assert w["error_label"].text() == "Error: none"
 
 
+def test_footer_error_label_is_selectable_and_wraps(qapp):
+    from PyQt6.QtCore import Qt
+
+    from harite.gui.adapters_qt.qt_layout_builders import build_footer_section
+
+    widgets = build_footer_section()
+    error_label = widgets["error_label"]
+    assert widgets["footer_widget"] is not None
+    assert error_label.wordWrap() is True
+    assert error_label.textInteractionFlags() == Qt.TextInteractionFlag.TextSelectableByMouse
+
+
 # ---------------------------------------------------------------------------
 # Full layout assembly (build_main_layout)
 # ---------------------------------------------------------------------------

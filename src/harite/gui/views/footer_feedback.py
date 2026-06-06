@@ -6,6 +6,8 @@ footer labels.  Shared by GTK and Qt widget helpers.
 
 from __future__ import annotations
 
+from typing import Any
+
 STATUS_READY = "Status: ready"
 ERROR_NONE = "Error: none"
 
@@ -115,3 +117,22 @@ def format_footer_error(
 
 def footer_error_is_active(error_text: str) -> bool:
     return _normalized(error_text) not in {"", ERROR_NONE}
+
+
+def configure_footer_error_label_qt(label: Any) -> None:
+    """Footer error row: selectable text + wrap (~2 lines) on Qt."""
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QSizePolicy
+
+    label.setWordWrap(True)
+    label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+    label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+
+
+def configure_footer_error_label_gtk(label: Any) -> None:
+    """Footer error row: selectable text + wrap on GTK."""
+    label.set_selectable(True)
+    if hasattr(label, "set_wrap"):
+        label.set_wrap(True)
+    if hasattr(label, "set_wrap_mode"):
+        label.set_wrap_mode(2)  # Pango.WrapMode.WORD
