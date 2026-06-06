@@ -8,15 +8,15 @@
 | --- | --- |
 | 親 | [feature-overview §C-01-E](20260518-2047-feature-overview.md) |
 | 実装 | ブランチ `feature/c01-e-ndl-codh` — `remote-ndl-tsugidigi` / `remote-codh-edo` + 同梱 preset |
-| spec | [harite-source-spec §15.6–15.7](../specs/source/harite-source-spec.md) |
+| **実装契約（正本）** | [harite-source-spec §12.5 / §15.6–15.7](../specs/source/harite-source-spec.md) — sync・cache・slideshow Mode の関係を含む |
 | 状態 | **完了**（#400）— 本書 §実現性検証。[軽量 audit](20260603-c01-e-3layer-audit.md) |
 
-## 調査ドキュメント
+## 調査ドキュメント（背景資料 — 実装は source-spec を優先）
 
 | Provider | inventory | 要点 |
 | --- | --- | --- |
-| **NDL** 次世代 DL | [20260603-c01-e-ndl-tsugidigi-inventory.md](20260603-c01-e-ndl-tsugidigi-inventory.md) | `random?size=1` / `randomwithfacet` → IIIF 切り出し |
-| **CODH** 江戸 ICP | [20260603-c01-e-codh-icp-inventory.md](20260603-c01-e-codh-icp-inventory.md) | Canvas Indexer search → `canvasThumbnail` |
+| **NDL** 次世代 DL | [20260603-c01-e-ndl-tsugidigi-inventory.md](20260603-c01-e-ndl-tsugidigi-inventory.md) | OpenAPI / IIIF 調査。契約は [§15.6](../specs/source/harite-source-spec.md) |
+| **CODH** 江戸 ICP | [20260603-c01-e-codh-icp-inventory.md](20260603-c01-e-codh-icp-inventory.md) | Indexer フィールド調査。契約は [§15.7](../specs/source/harite-source-spec.md) |
 
 ## 第 1 実装で採用した preset（2026-06-03）
 

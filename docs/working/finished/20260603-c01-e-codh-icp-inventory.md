@@ -8,7 +8,7 @@
 | --- | --- |
 | 親 | [feature-overview §C-01-E](20260518-2047-feature-overview.md) |
 | 関連 | [C-01 planning](20260603-1400-c01-external-wallpaper-source-planning.md) / [NDL inventory](20260603-c01-e-ndl-tsugidigi-inventory.md) |
-| ステータス | **調査のみ**（Harite `remote-codh` / 同梱 preset は未実装） |
+| ステータス | **調査記録**（実装完了 — 契約正本は [harite-source-spec §15.7](../../specs/source/harite-source-spec.md)） |
 | 目的 | オーナー関心の **江戸観光案内・江戸買物案内** を、Harite の interval sync で載せられるか整理する |
 | スコープ外（オーナー方針） | **江戸マップ**（緯度経度・GIS・地図タイル連携）、位置情報の採取・利用 |
 | 正本性 | 本 inventory + Canvas Indexer API live 検証（2026-06-03） |
