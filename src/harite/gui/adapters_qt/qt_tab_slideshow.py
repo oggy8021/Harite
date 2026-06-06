@@ -361,7 +361,7 @@ def _build_options_drawer_trigger() -> dict[str, Any]:
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
 
-    from harite.gui.views.slideshow_options_drawer import MORE_LABEL
+    from harite.gui.views.slideshow_options_drawer import MORE_LABEL, QT_TRIGGER_OBJECT_NAME
 
     row = QWidget()
     layout = QHBoxLayout(row)
@@ -369,6 +369,7 @@ def _build_options_drawer_trigger() -> dict[str, Any]:
     layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
     btn_slideshow_options_more = QPushButton(MORE_LABEL)
+    btn_slideshow_options_more.setObjectName(QT_TRIGGER_OBJECT_NAME)
     _set_button_icon(btn_slideshow_options_more, "icons", "lucide", "arrow-down.svg")
     layout.addWidget(btn_slideshow_options_more)
 
@@ -380,23 +381,31 @@ def _build_options_drawer_trigger() -> dict[str, Any]:
 
 def _build_options_drawer() -> dict[str, Any]:
     """Collapsible panel: mode, manage registry, current/output detail."""
-    from PyQt6.QtWidgets import QVBoxLayout, QWidget
+    from PyQt6.QtWidgets import QFrame, QVBoxLayout, QWidget
 
     mode_widgets = _build_mode_section()
     manage_widgets = _build_manage_registry_row()
     detail_widgets = _build_detail_row()
 
+    from harite.gui.views.slideshow_options_drawer import QT_DRAWER_OBJECT_NAME
+
     drawer = QWidget()
+    drawer.setObjectName(QT_DRAWER_OBJECT_NAME)
     drawer.setVisible(False)
     drawer_layout = QVBoxLayout(drawer)
     drawer_layout.setContentsMargins(0, 8, 0, 0)
     drawer_layout.setSpacing(10)
+    drawer_top_border = QFrame()
+    drawer_top_border.setVisible(False)
+    drawer_top_border.setFixedHeight(1)
+    drawer_layout.addWidget(drawer_top_border)
     drawer_layout.addWidget(mode_widgets["slideshow_mode_group"])
     drawer_layout.addWidget(manage_widgets["slideshow_manage_registry_row"])
     drawer_layout.addWidget(detail_widgets["slideshow_detail_shell"])
 
     return {
         "slideshow_options_drawer": drawer,
+        "slideshow_options_drawer_top_border": drawer_top_border,
         **mode_widgets,
         **manage_widgets,
         **detail_widgets,

@@ -63,7 +63,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | P-02 | Slideshow srcdir クリア | [#358](../online-issues/closed/issue-358.md) | GUI polish | **完了**（#369–371, 個別 clear 採用） |
 | P-03 | 単 display / monitor まわり UX | [#359](../online-issues/issue-359.md) | edge case UX | **planning draft** — [20260606-p03-single-display-ux-planning-draft.md](20260606-p03-single-display-ux-planning-draft.md) |
 | P-06 | Slideshow CODH キーワード chip | Slideshow タブ右上角 read-only（`codh_keyword` 確認）。編集は Manage。 | **完了**（Qt）— [planning](20260606-p06-slideshow-codh-keyword-chip-planning-draft.md) |
-| P-07 | Slideshow Drawer 開閉視認性 | 背景ずらし・上辺線・chevron 回転。palette 優先（#412）。 | **planning draft** — [20260606-p07-slideshow-drawer-open-state-planning-draft.md](20260606-p07-slideshow-drawer-open-state-planning-draft.md) |
+| P-07 | Slideshow Drawer 開閉視認性 | 背景ずらし・上辺線・chevron 回転。palette 優先（#412）。 | **完了**（Qt/GTK）— [planning](20260606-p07-slideshow-drawer-open-state-planning-draft.md) |
 
 ### 2. 構想保持
 
@@ -175,7 +175,7 @@ C-04 の rough ideas・採択表・widget 切り分けは [20260604-c04-gui-surf
 [次の着手候補] P-03 単 display UX     ← [planning draft](20260606-p03-single-display-ux-planning-draft.md)
 [完了] P-06 CODH keyword chip（Qt）
 
-[ストック] P-07 Drawer 開閉視認性  ← [planning draft](20260606-p07-slideshow-drawer-open-state-planning-draft.md)（[#412](https://github.com/oggy8021/Harite/issues/412)）
+[完了] P-07 Drawer 開閉視認性（Qt/GTK）← [#412](https://github.com/oggy8021/Harite/issues/412)
 
 [据え置き] C-01-F remote tick sync  ← [planning draft](20260604-c01-f-remote-sync-on-tick-planning-draft.md)（CODH 負荷・gate 未記入）
 ```
@@ -184,7 +184,8 @@ C-04 の rough ideas・採択表・widget 切り分けは [20260604-c04-gui-surf
 - C-04 は [計画正本](20260604-c04-gui-surface-planning-draft.md) — waves 0/b/a/c 完了（#406–409）。
 - **完了:** C-01-E-KW（#413）— [planning](finished/20260605-c01-e-kw-codh-keyword-planning.md)。
 - **完了:** P-05 Manage Local/Presets タブ、P-06 Slideshow CODH chip（Qt）。
-- **次:** P-03 planning draft（§1 着手候補）。**ストック:** P-07 Drawer 視認性（#412）。
+- **完了:** P-07 Drawer 開閉視認性（#412）。
+- **次:** P-03 planning draft（§1 着手候補）。
 - **据え置き:** C-01-F（tick sync — 2026-06-06 オーナー判断）。
 - F-01 は Windows **`%APPDATA%\harite\harite-settings.json`**（Roaming）。**旧 path 互換・移行なし**。
 - P-01–02 は §9 GUI 合意工程の最初の実践。**2026-06-01 完了**（3 層 audit は [closed/issue-353](../online-issues/closed/issue-353.md) / [issue-358](../online-issues/closed/issue-358.md)）。
@@ -244,6 +245,7 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 2026-06-06: **P-05 完了**（Qt）— Manage dialog Local/Presets タブ、preset グループ見出し、keyword 移設
 - 2026-06-06: **P-06 完了**（Qt）— Slideshow 右上角 `CODH: {keyword}` read-only chip
 - 2026-06-06: **P-07 planning draft** — Slideshow Drawer 開閉視認性（背景+縁取り+chevron、palette 優先）— [#412](https://github.com/oggy8021/Harite/issues/412)
+- 2026-06-06: **P-07 完了** — Drawer 開閉スタイル（Qt/GTK）、chevron 切替、開閉状態を backend に保持
 
 ### K-05（scheduler）— 残しうるストーリーと見送り理由
 
