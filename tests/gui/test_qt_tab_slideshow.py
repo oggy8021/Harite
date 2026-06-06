@@ -196,6 +196,37 @@ def test_options_drawer_toggle_updates_trigger_label(qapp):
     assert w["btn_slideshow_options_more"].text() == "More slideshow options…"
 
 
+def test_options_drawer_toggle_applies_p07_open_state_styles(qapp):
+    from harite.gui.views.slideshow_options_drawer import (
+        QT_DRAWER_OBJECT_NAME,
+        QT_TRIGGER_OBJECT_NAME,
+        toggle_slideshow_options_drawer,
+    )
+
+    w = _make_slideshow_tab(qapp)
+    drawer = w["slideshow_options_drawer"]
+    trigger = w["btn_slideshow_options_more"]
+    backend = type("B", (), {"_objects": w})()
+
+    assert drawer.objectName() == QT_DRAWER_OBJECT_NAME
+    assert drawer.styleSheet() == ""
+
+    toggle_slideshow_options_drawer(backend)
+    assert getattr(backend, "_slideshow_options_drawer_expanded", False)
+    assert "palette(alternate-base)" in drawer.styleSheet()
+    assert "palette(mid)" in drawer.styleSheet()
+    assert drawer.objectName() == f"{QT_DRAWER_OBJECT_NAME}Expanded"
+    assert trigger.objectName() == f"{QT_TRIGGER_OBJECT_NAME}Expanded"
+    assert "palette(alternate-base)" in trigger.styleSheet()
+
+    toggle_slideshow_options_drawer(backend)
+    assert not getattr(backend, "_slideshow_options_drawer_expanded", True)
+    assert drawer.styleSheet() == ""
+    assert drawer.objectName() == QT_DRAWER_OBJECT_NAME
+    assert trigger.objectName() == QT_TRIGGER_OBJECT_NAME
+    assert trigger.styleSheet() == ""
+
+
 def test_profile_row_has_no_applies_lr_label(qapp):
     w = _make_slideshow_tab(qapp)
     profile_row = w["slideshow_profile_row"]

@@ -361,7 +361,7 @@ def _build_options_drawer_trigger() -> dict[str, Any]:
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
 
-    from harite.gui.views.slideshow_options_drawer import MORE_LABEL
+    from harite.gui.views.slideshow_options_drawer import MORE_LABEL, QT_TRIGGER_OBJECT_NAME
 
     row = QWidget()
     layout = QHBoxLayout(row)
@@ -369,6 +369,7 @@ def _build_options_drawer_trigger() -> dict[str, Any]:
     layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
     btn_slideshow_options_more = QPushButton(MORE_LABEL)
+    btn_slideshow_options_more.setObjectName(QT_TRIGGER_OBJECT_NAME)
     _set_button_icon(btn_slideshow_options_more, "icons", "lucide", "arrow-down.svg")
     layout.addWidget(btn_slideshow_options_more)
 
@@ -386,7 +387,10 @@ def _build_options_drawer() -> dict[str, Any]:
     manage_widgets = _build_manage_registry_row()
     detail_widgets = _build_detail_row()
 
+    from harite.gui.views.slideshow_options_drawer import QT_DRAWER_OBJECT_NAME
+
     drawer = QWidget()
+    drawer.setObjectName(QT_DRAWER_OBJECT_NAME)
     drawer.setVisible(False)
     drawer_layout = QVBoxLayout(drawer)
     drawer_layout.setContentsMargins(0, 8, 0, 0)

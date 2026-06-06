@@ -1,7 +1,7 @@
 # P-07 — Slideshow options Drawer 開閉の視認性（計画 draft）
 
 最終更新: 2026-06-06  
-ステータス: **planning draft**（方針確定・gate 前）
+ステータス: **impl 完了**（Qt + GTK toggle スタイル、gui-spec 改訂済み）
 
 ## 位置づけ
 
@@ -91,3 +91,4 @@
 | 日付 | 内容 |
 | --- | --- |
 | 2026-06-06 | 初版 — #412 由来。背景+縁取り+chevron。ダークモードは palette 優先 |
+| 2026-06-06 | Qt/GTK impl — `slideshow_options_drawer` 開閉スタイル、chevron 切替 |
