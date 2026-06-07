@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-08（P-04 棚卸し・#430 remote-cache テスト隔離）
+最終更新: 2026-06-08（P-08 Main+Margins Drawer planning 着手）
 
 ## 位置づけ
 
@@ -69,6 +69,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | P-06 | Slideshow CODH キーワード chip  | --                                           | Slideshow タブ右上角 read-only（`codh_keyword` 確認）。編集は Manage。 | **完了**（Qt）— [planning](finished/20260606-p06-slideshow-codh-keyword-chip-planning.md)                                             |
 | P-07 | Slideshow Drawer 開閉視認性     | --                                           | 背景ずらし・上辺線・chevron 回転。palette 優先（#412）。                   | **完了**（#417）— [planning](finished/20260606-p07-slideshow-drawer-open-state-planning.md)                                                                                                         |
 | P-04 | Main action cluster 整理        | --                                           | Preview/Optimize/Apply の常設 label 削減。C-04 後続 polish。              | **完了**（#429）— [planning](finished/20260607-p04-main-action-cluster-planning-draft.md)                                                                                  |
+| P-08 | Main + Margins Drawer（案 B）   | --                                           | Margins 専用 tab 廃止。4 spin 常設 + embed/text/position は Drawer。C-04 §7.2。 | **planning 着手** — [planning draft](20260608-p08-main-margins-drawer-planning-draft.md) / [slice-memo](design/20260608-p08-main-margins-drawer-slice-memo.md) |
 
 
 ### 2. 構想保持
@@ -189,6 +190,8 @@ C-04 の rough ideas・採択表・widget 切り分けは [finished/20260604-c04
 [完了] C-01-F remote tick sync  ← #425–426 + spec #427。[planning](finished/20260604-c01-f-remote-sync-on-tick-planning-draft.md)
 
 [完了] P-04 Main action cluster  ← #429。[planning](finished/20260607-p04-main-action-cluster-planning-draft.md)
+
+[planning] P-08 Main + Margins Drawer（C-04 案 B）  ← [draft](20260608-p08-main-margins-drawer-planning-draft.md)
 ```
 
 - Qt 移行の詳細は [docs/working/finished/20260530-2201-pyqt6-migration-plan.md](finished/20260530-2201-pyqt6-migration-plan.md) を参照する。
@@ -266,6 +269,7 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 2026-06-07: **C-01-F / C-04 棚卸し** — impl + spec 改訂完了。planning を [finished/](finished/20260604-c01-f-remote-sync-on-tick-planning-draft.md) / [finished/](finished/20260604-c04-gui-surface-planning-draft.md) へ。`working/` 直下は overview のみ active
 - 2026-06-08: **P-04 完了** — #429 merge。Main Preview/Optimize/Apply の label 削減（result/target→footer、mode help→tooltip、見出し廃止、idle 文言廃止）。planning を [finished/](finished/20260607-p04-main-action-cluster-planning-draft.md) へ。
 - 2026-06-08: **remote-cache pytest 隔離** — #430 merge。`HARITE_REMOTE_CACHE_ROOT`・materialize の catalog 由来 cache root・全テスト autouse 隔離（本番 APPDATA 汚染防止）。
+- 2026-06-08: **P-08 planning 着手** — C-04 案 B（Main + Margins Drawer、2 tab）。 [planning draft](20260608-p08-main-margins-drawer-planning-draft.md) / [slice-memo](design/20260608-p08-main-margins-drawer-slice-memo.md)。
 - 2026-06-07: **P-04 planning 合意** — [planning draft](finished/20260607-p04-main-action-cluster-planning-draft.md)
 
 ### K-05（scheduler）— 残しうるストーリーと見送り理由

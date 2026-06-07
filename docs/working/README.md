@@ -19,8 +19,9 @@ docs/working/
 | ファイル | 内容 |
 | --- | --- |
 | [20260518-2047-feature-overview.md](20260518-2047-feature-overview.md) | post-1.0.0 機能 inventory（C-xx / W-xx / P-xx）。**継続更新する唯一の planning 入口** |
+| [20260608-p08-main-margins-drawer-planning-draft.md](20260608-p08-main-margins-drawer-planning-draft.md) | P-08 Main + Margins Drawer（C-04 案 B）— planning 着手 |
 
-**2026-06-08 棚卸:** P-04 planning（#429）を [finished/](finished/20260607-p04-main-action-cluster-planning-draft.md) へ移動。`working/` 直下は overview のみ。
+**2026-06-08:** P-04 は [finished/](finished/20260607-p04-main-action-cluster-planning-draft.md) へ移動済み。active は overview + P-08 draft。
 
 ## design（GUI 合意 artifact）
 
