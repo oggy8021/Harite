@@ -167,7 +167,7 @@ Main tab — Margins options Drawer（P-08）:
 | cross-grid、各辺 margin label | `Current behavior: margins are global to the composite canvas.` |
 | center stack 全体（任意） | 上記 3 文を連結した tooltip |
 
-- **footer `Status`**（§9）: margin text preflight の成否と寸法要約（§8 `margin text preflight の現行規則`）。挙動は旧 Margins tab と同一。
+- **footer `Status`**（§9）: margin text preflight の成否と寸法要約（§8 `margin text preflight の現行規則`）。
 - **Drawer 開閉視認性:** Slideshow options Drawer（P-07）と **同型** — 開時は drawer 面板を theme chrome tint、上辺 1px `mid`、トリガ chevron up（閉=down）、`More…` / `Fewer…` ラベル反転。実装は `slideshow_options_drawer` と同パターンを margins 用に再利用または共通化する。
 
 Slideshow tab:
