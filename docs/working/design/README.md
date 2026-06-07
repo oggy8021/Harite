@@ -25,7 +25,7 @@ GUI の見た目合意形成用 artifact を置く（spec 正本の前段）。
 | [20260604-glade2-legacy-interpretation-memo.md](20260604-glade2-legacy-interpretation-memo.md) | 母体 `wallpositapplet.glade` 読解・A12/A13 推奨（C-04） | 参照用 |
 | [20260604-c04-slideshow-margins-surface-slice.html](20260604-c04-slideshow-margins-surface-slice.html) | C-04 §4 Slideshow + §5 Margins 将来像（現行 vs 提案 / Drawer） | 参照用（#406–409 完了） |
 | [20260604-c04-slideshow-margins-surface-slice-memo.md](20260604-c04-slideshow-margins-surface-slice-memo.md) | 上記 slice の合意 checklist | 参照用 |
-| [20260608-p08-main-margins-drawer-slice-memo.md](20260608-p08-main-margins-drawer-slice-memo.md) | P-08 案 B — Main 正面 spin + Margins Drawer gate checklist | **合意済み**（P8-1〜P8-7 pass） |
+| [20260608-p08-main-margins-drawer-slice-memo.md](20260608-p08-main-margins-drawer-slice-memo.md) | P-08 案 B — Main 正面 spin + Margins Drawer gate checklist | 参照用（P8 pass、gui-spec #433 反映） |
 | [20260605-c01-e-kw-manage-keyword-slice.html](20260605-c01-e-kw-manage-keyword-slice.html) | C-01-E-KW — Manage dialog keyword 行（暫定: Refresh 直上） | 参照用（#413 完了） |
 | [20260605-c01-e-kw-manage-keyword-slice-memo.md](20260605-c01-e-kw-manage-keyword-slice-memo.md) | 上記 slice の K6 checklist + P-05 理想像 | 参照用 |
 | [20260601-c02-slideshow-source-registry-slice.html](20260601-c02-slideshow-source-registry-slice.html) | C-02 Manage registry slice | 参照用（#373–378 完了） |

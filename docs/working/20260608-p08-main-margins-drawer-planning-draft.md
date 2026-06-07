@@ -1,7 +1,7 @@
 # P-08 — Main + Margins Drawer（C-04 案 B）（計画 draft）
 
 最終更新: 2026-06-08  
-ステータス: **gate 通過**（#432 merge。gui-spec §3 改訂 → テスト → impl）
+ステータス: **gui-spec 改訂完了**（#432 planning、#433 gui-spec §3。次: テスト → impl）
 
 ## 位置づけ
 
@@ -148,7 +148,7 @@ tooltip 契約は現 gui-spec §3 Margins と **同一**（line limits / Rule / 
 
 **gate 通過:** P8-1〜P8-7 すべて **pass**（2026-06-08。C-04 案 B 先行合意を含む）。
 
-**次:** gui-spec §3 改訂 PR → テスト → impl（GTK/Qt）。
+**次:** テスト → impl（GTK/Qt）。gui-spec §3 は #433 反映済み（#434 は L170 文言 follow-up）。
 
 ---
 

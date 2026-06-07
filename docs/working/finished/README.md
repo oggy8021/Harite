@@ -31,6 +31,8 @@
 
 ## Polish（P-xx）— 2026-06-06〜08
 
+進行中の P-08 planning は親 [../20260608-p08-main-margins-drawer-planning-draft.md](../20260608-p08-main-margins-drawer-planning-draft.md)（gui-spec #433 反映済、impl 待ち）。
+
 | ファイル | 内容 |
 | --- | --- |
 | [20260607-p04-main-action-cluster-planning-draft.md](20260607-p04-main-action-cluster-planning-draft.md) | P-04 Main action cluster 整理（#429 完了） |

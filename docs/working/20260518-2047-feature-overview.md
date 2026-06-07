@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-08（P-08 Main+Margins Drawer planning 着手）
+最終更新: 2026-06-08（P-08 gui-spec 反映・working 棚卸し）
 
 ## 位置づけ
 
@@ -69,7 +69,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | P-06 | Slideshow CODH キーワード chip  | --                                           | Slideshow タブ右上角 read-only（`codh_keyword` 確認）。編集は Manage。 | **完了**（Qt）— [planning](finished/20260606-p06-slideshow-codh-keyword-chip-planning.md)                                             |
 | P-07 | Slideshow Drawer 開閉視認性     | --                                           | 背景ずらし・上辺線・chevron 回転。palette 優先（#412）。                   | **完了**（#417）— [planning](finished/20260606-p07-slideshow-drawer-open-state-planning.md)                                                                                                         |
 | P-04 | Main action cluster 整理        | --                                           | Preview/Optimize/Apply の常設 label 削減。C-04 後続 polish。              | **完了**（#429）— [planning](finished/20260607-p04-main-action-cluster-planning-draft.md)                                                                                  |
-| P-08 | Main + Margins Drawer（案 B）   | --                                           | Margins 専用 tab 廃止。4 spin 常設 + embed/text/position は Drawer。C-04 §7.2。 | **gate 通過** — [planning draft](20260608-p08-main-margins-drawer-planning-draft.md) / [slice-memo](design/20260608-p08-main-margins-drawer-slice-memo.md)（gui-spec §3 改訂中） |
+| P-08 | Main + Margins Drawer（案 B）   | --                                           | 2 tab + Main 正面 4 spin + Margins Drawer。C-04 §7.2 案 B。                    | **gui-spec 反映済**（#433）— [planning](20260608-p08-main-margins-drawer-planning-draft.md) / [slice-memo](design/20260608-p08-main-margins-drawer-slice-memo.md)。次: テスト → impl |
 
 
 ### 2. 構想保持
@@ -191,7 +191,7 @@ C-04 の rough ideas・採択表・widget 切り分けは [finished/20260604-c04
 
 [完了] P-04 Main action cluster  ← #429。[planning](finished/20260607-p04-main-action-cluster-planning-draft.md)
 
-[planning] P-08 Main + Margins Drawer（C-04 案 B）  ← [draft](20260608-p08-main-margins-drawer-planning-draft.md)
+[gui-spec 反映済] P-08 Main + Margins Drawer  ← #433。[planning](20260608-p08-main-margins-drawer-planning-draft.md)（impl 待ち）
 ```
 
 - Qt 移行の詳細は [docs/working/finished/20260530-2201-pyqt6-migration-plan.md](finished/20260530-2201-pyqt6-migration-plan.md) を参照する。
@@ -202,6 +202,7 @@ C-04 の rough ideas・採択表・widget 切り分けは [finished/20260604-c04
 - **完了:** P-03 単 display UX（#420、#359 close）— [planning](finished/20260606-p03-single-display-ux-planning.md) / [audit](finished/20260606-p03-3layer-audit.md)。
 - **完了:** C-01-F（#425–426 CODH/JMA tick sync、spec #427）— [planning](finished/20260604-c01-f-remote-sync-on-tick-planning-draft.md)。
 - **完了:** P-04 Main action cluster（#429）— [planning](finished/20260607-p04-main-action-cluster-planning-draft.md)。
+- **gui-spec 反映済:** P-08 Main + Margins Drawer（#433）— [planning](20260608-p08-main-margins-drawer-planning-draft.md)。次はテスト → impl。
 - F-01 は Windows `**%APPDATA%\harite\harite-settings.json`**（Roaming）。**旧 path 互換・移行なし**。
 - P-01–02 は §9 GUI 合意工程の最初の実践。**2026-06-01 完了**（3 層 audit は [closed/issue-353](../online-issues/closed/issue-353.md) / [issue-358](../online-issues/closed/issue-358.md)）。
 
@@ -269,7 +270,9 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 2026-06-07: **C-01-F / C-04 棚卸し** — impl + spec 改訂完了。planning を [finished/](finished/20260604-c01-f-remote-sync-on-tick-planning-draft.md) / [finished/](finished/20260604-c04-gui-surface-planning-draft.md) へ。`working/` 直下は overview のみ active
 - 2026-06-08: **P-04 完了** — #429 merge。Main Preview/Optimize/Apply の label 削減（result/target→footer、mode help→tooltip、見出し廃止、idle 文言廃止）。planning を [finished/](finished/20260607-p04-main-action-cluster-planning-draft.md) へ。
 - 2026-06-08: **remote-cache pytest 隔離** — #430 merge。`HARITE_REMOTE_CACHE_ROOT`・materialize の catalog 由来 cache root・全テスト autouse 隔離（本番 APPDATA 汚染防止）。
-- 2026-06-08: **P-08 planning 着手** — C-04 案 B（Main + Margins Drawer、2 tab）。 [planning draft](20260608-p08-main-margins-drawer-planning-draft.md) / [slice-memo](design/20260608-p08-main-margins-drawer-slice-memo.md)。
+- 2026-06-08: **P-08 gui-spec 反映** — #433 merge（§3 2-tab + Main Margins Drawer）。gate P8-1〜P8-7 pass。planning は impl 完了まで [working/](20260608-p08-main-margins-drawer-planning-draft.md) に残す。
+- 2026-06-08: **working 棚卸し** — 直下 active は overview + P-08 planning のみ（P-04 以降と同型）。
+- 2026-06-08: **P-08 planning 着手** — #432。C-04 案 B。[slice-memo](design/20260608-p08-main-margins-drawer-slice-memo.md)。
 - 2026-06-07: **P-04 planning 合意** — [planning draft](finished/20260607-p04-main-action-cluster-planning-draft.md)
 
 ### K-05（scheduler）— 残しうるストーリーと見送り理由
