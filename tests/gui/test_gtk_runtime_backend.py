@@ -735,9 +735,8 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("imgPreviewR") is not None
     assert backend.get_object("radApplySingle") is not None
     assert backend.get_object("radApplyPerMonitor") is not None
-    assert backend.get_object("marginsTab") is not None
-    assert backend.get_object("lblMarginsTabTitle") is not None
-    assert backend.get_object("lblMarginsSection") is not None
+    assert backend.get_object("btnMarginsOptionsMore") is not None
+    assert backend.get_object("marginsOptionsDrawer") is not None
     assert backend.get_object("lblMarginTextSection") is not None
     assert backend.get_object("radMarginTextModeOff") is not None
     assert backend.get_object("radMarginTextModeSettings") is not None
@@ -782,7 +781,7 @@ def test_runtime_backend_wires_required_runtime_widget_signals():
     assert "changed" in margin_text.get_buffer()._signals
 
 
-def test_runtime_backend_adds_margins_tab_and_syncs_owner_state():
+def test_runtime_backend_adds_main_margins_drawer_and_syncs_owner_state():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
     window.form_state.embed_info = "combo"
@@ -802,11 +801,10 @@ def test_runtime_backend_adds_margins_tab_and_syncs_owner_state():
     backend.connect_signals(dispatch)
 
     notebook = backend.get_object("commandTabs")
-    assert len(notebook.pages) == 3
+    assert len(notebook.pages) == 2
     assert notebook.pages[0][1].text == "Main"
-    assert notebook.pages[1][1].text == "Margins (for each display)"
-    assert notebook.pages[2][1].text == "Slideshow (stopped)"
-    assert backend.get_object("lblMarginsTabTitle").text == "Margins (for each display)"
+    assert notebook.pages[1][1].text == "Slideshow (stopped)"
+    assert backend.get_object("btnMarginsOptionsMore").label == "More margin options…"
     assert backend.get_object("radMarginTextModeBoth").get_active() is True
     assert backend.get_object("txtMarginText").get_text() == "margin-note"
     assert backend.get_object("radMarginTextPositionRightBottom").get_active() is True

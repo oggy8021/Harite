@@ -112,7 +112,6 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
         compose_grid.set_row_spacing(12)
     if hasattr(compose_grid, "set_column_homogeneous"):
         compose_grid.set_column_homogeneous(True)
-    main_col.pack_start(compose_grid, False, False, 0)
 
     left_display_grid = gtk_module.Grid()
     right_display_grid = gtk_module.Grid()
@@ -351,21 +350,12 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
     slideshow_label = gtk_module.Label(label="")
     slideshow_tab_title = gtk_module.Label(label="Slideshow (stopped)")
     set_xalign_if_supported(slideshow_tab_title)
-    slideshow_top_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     slideshow_srcdir_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     slideshow_controls_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     slideshow_options_trigger_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     slideshow_options_drawer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
-    slideshow_bottom_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    if hasattr(slideshow_top_row, "set_size_request"):
-        slideshow_top_row.set_size_request(-1, 16)
-    if hasattr(slideshow_bottom_row, "set_size_request"):
-        slideshow_bottom_row.set_size_request(-1, 16)
-    if hasattr(slideshow_top_row, "set_vexpand"):
-        slideshow_top_row.set_vexpand(True)
-    if hasattr(slideshow_bottom_row, "set_vexpand"):
-        slideshow_bottom_row.set_vexpand(True)
-    slideshow_tab_box.pack_start(slideshow_top_row, True, True, 0)
+    if hasattr(slideshow_tab_box, "set_vexpand"):
+        slideshow_tab_box.set_vexpand(False)
     slideshow_tab_box.pack_start(slideshow_srcdir_row, False, False, 0)
     slideshow_tab_box.pack_start(slideshow_controls_shell, False, False, 0)
     slideshow_tab_box.pack_start(slideshow_options_trigger_row, False, False, 0)
@@ -382,7 +372,6 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
         if hasattr(slideshow_options_drawer, "hide"):
             slideshow_options_drawer.hide()
         slideshow_tab_box.pack_start(slideshow_options_drawer, False, False, 0)
-    slideshow_tab_box.pack_start(slideshow_bottom_row, True, True, 0)
 
     left_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     right_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
@@ -526,103 +515,12 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
     }
 
 
-def build_margins_tab_section(
+def _build_margins_center_stack_gtk(
     gtk_module: Any,
     *,
-    top_margin_label: Any,
-    top_margin_spin: Any,
-    left_margin_label: Any,
-    left_margin_spin: Any,
-    priority_note_label: Any,
-    style_legend_label: Any,
-    current_state_section_label: Any,
-    current_margins_label: Any,
-    current_left_label: Any,
-    current_right_label: Any,
     configure_spin_button: Any,
     apply_margin_text_widget_style: Any,
 ) -> dict[str, Any]:
-    margins_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
-    if hasattr(margins_tab_box, "set_border_width"):
-        margins_tab_box.set_border_width(0)
-    margins_section_label = gtk_module.Label(label="")
-    set_xalign_if_supported(margins_section_label)
-
-    margins_layout_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
-    if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(margins_layout_col, gtk_module.Align.FILL)
-    if hasattr(margins_layout_col, "set_hexpand"):
-        margins_layout_col.set_hexpand(True)
-    if hasattr(margins_layout_col, "set_vexpand"):
-        margins_layout_col.set_vexpand(True)
-    margins_tab_box.pack_start(margins_layout_col, True, True, 0)
-
-    _ = (current_state_section_label, current_margins_label, current_left_label, current_right_label)
-
-    top_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-    top_margin_box.pack_start(top_margin_label, False, False, 0)
-    top_margin_box.pack_start(top_margin_spin, False, False, 0)
-    top_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(top_margin_shell, gtk_module.Align.CENTER)
-        set_halign_if_supported(top_margin_box, gtk_module.Align.CENTER)
-    top_margin_shell.pack_start(top_margin_box, False, False, 0)
-
-    left_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-    left_margin_box.pack_start(left_margin_label, False, False, 0)
-    left_margin_box.pack_start(left_margin_spin, False, False, 0)
-    left_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    left_margin_top_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    left_margin_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    left_margin_bottom_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    if hasattr(left_margin_top_spacer, "set_vexpand"):
-        left_margin_top_spacer.set_vexpand(True)
-    if hasattr(left_margin_bottom_spacer, "set_vexpand"):
-        left_margin_bottom_spacer.set_vexpand(True)
-    if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(left_margin_center_row, gtk_module.Align.CENTER)
-    left_margin_center_row.pack_start(left_margin_box, False, False, 0)
-    left_margin_shell.pack_start(left_margin_top_spacer, True, True, 0)
-    left_margin_shell.pack_start(left_margin_center_row, False, False, 0)
-    left_margin_shell.pack_start(left_margin_bottom_spacer, True, True, 0)
-
-    right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-    right_margin_label = gtk_module.Label(label="Right margin (px)")
-    set_xalign_if_supported(right_margin_label)
-    right_margin_spin = gtk_module.SpinButton()
-    configure_spin_button(right_margin_spin, minimum=0, maximum=500, step=1, page=10)
-    right_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
-    right_margin_box.pack_start(right_margin_label, False, False, 0)
-    right_margin_box.pack_start(right_margin_spin, False, False, 0)
-    right_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    right_margin_top_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    right_margin_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    right_margin_bottom_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    if hasattr(right_margin_top_spacer, "set_vexpand"):
-        right_margin_top_spacer.set_vexpand(True)
-    if hasattr(right_margin_bottom_spacer, "set_vexpand"):
-        right_margin_bottom_spacer.set_vexpand(True)
-    if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(right_margin_center_row, gtk_module.Align.CENTER)
-    right_margin_center_row.pack_start(right_margin_box, False, False, 0)
-    right_margin_shell.pack_start(right_margin_top_spacer, True, True, 0)
-    right_margin_shell.pack_start(right_margin_center_row, False, False, 0)
-    right_margin_shell.pack_start(right_margin_bottom_spacer, True, True, 0)
-
-    bottom_margin_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
-    bottom_margin_label = gtk_module.Label(label="Bottom margin (px)")
-    set_xalign_if_supported(bottom_margin_label)
-    bottom_margin_spin = gtk_module.SpinButton()
-    configure_spin_button(bottom_margin_spin, minimum=0, maximum=250, step=1, page=10)
-    bottom_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-    bottom_margin_box.pack_start(bottom_margin_label, False, False, 0)
-    bottom_margin_box.pack_start(bottom_margin_spin, False, False, 0)
-    bottom_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
-    if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(bottom_margin_shell, gtk_module.Align.CENTER)
-        set_halign_if_supported(bottom_margin_box, gtk_module.Align.CENTER)
-    bottom_margin_shell.pack_start(bottom_margin_box, False, False, 0)
-
     center_stack = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
 
     margin_text_mode_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
@@ -739,46 +637,9 @@ def build_margins_tab_section(
     if hasattr(margin_text_max_lines_spin, "hide"):
         margin_text_max_lines_spin.hide()
 
-    _ = (priority_note_label, style_legend_label)
-
     center_stack.pack_start(margin_position_shell, False, False, 0)
 
-    margins_cross_grid = gtk_module.Grid()
-    if hasattr(margins_cross_grid, "set_column_spacing"):
-        margins_cross_grid.set_column_spacing(24)
-    if hasattr(margins_cross_grid, "set_row_spacing"):
-        margins_cross_grid.set_row_spacing(12)
-    if hasattr(margins_cross_grid, "set_column_homogeneous"):
-        margins_cross_grid.set_column_homogeneous(False)
-    if hasattr(margins_cross_grid, "set_row_homogeneous"):
-        margins_cross_grid.set_row_homogeneous(False)
-    if hasattr(margins_cross_grid, "set_hexpand"):
-        margins_cross_grid.set_hexpand(True)
-    if hasattr(gtk_module, "Align"):
-        set_halign_if_supported(margins_cross_grid, gtk_module.Align.FILL)
-        set_halign_if_supported(left_margin_shell, gtk_module.Align.FILL)
-        set_halign_if_supported(center_stack, gtk_module.Align.FILL)
-        set_halign_if_supported(right_margin_shell, gtk_module.Align.FILL)
-        set_halign_if_supported(top_margin_shell, gtk_module.Align.CENTER)
-        set_halign_if_supported(bottom_margin_shell, gtk_module.Align.CENTER)
-    if hasattr(margins_cross_grid, "set_vexpand"):
-        margins_cross_grid.set_vexpand(True)
-    if hasattr(center_stack, "set_hexpand"):
-        center_stack.set_hexpand(True)
-    if hasattr(center_stack, "set_vexpand"):
-        center_stack.set_vexpand(True)
-
-    if hasattr(margins_cross_grid, "attach"):
-        margins_cross_grid.attach(top_margin_shell, 1, 0, 1, 1)
-        margins_cross_grid.attach(left_margin_shell, 0, 1, 1, 1)
-        margins_cross_grid.attach(center_stack, 1, 1, 1, 1)
-        margins_cross_grid.attach(right_margin_shell, 2, 1, 1, 1)
-        margins_cross_grid.attach(bottom_margin_shell, 1, 2, 1, 1)
-
-    margins_layout_col.pack_start(margins_cross_grid, True, True, 0)
-
     from harite.gui.views.margins_surface import (
-        MARGIN_BEHAVIOR_TOOLTIP,
         MARGIN_CROSS_GRID_TOOLTIP,
         MARGIN_PRIORITY_RULE_TOOLTIP,
         MARGIN_TEXT_LINE_LIMITS_TOOLTIP,
@@ -789,23 +650,9 @@ def build_margins_tab_section(
     apply_widget_tooltip(margin_text_entry, MARGIN_TEXT_LINE_LIMITS_TOOLTIP)
     apply_widget_tooltip(margin_position_shell, MARGIN_PRIORITY_RULE_TOOLTIP)
     apply_widget_tooltip(center_stack, MARGIN_CROSS_GRID_TOOLTIP)
-    apply_widget_tooltip(margins_cross_grid, MARGIN_BEHAVIOR_TOOLTIP)
-    for edge_label in (top_margin_label, left_margin_label, right_margin_label, bottom_margin_label):
-        apply_widget_tooltip(edge_label, MARGIN_BEHAVIOR_TOOLTIP)
-
-    margins_tab_title = gtk_module.Label(label="Margins (for each display)")
-    set_xalign_if_supported(margins_tab_title)
 
     return {
-        "margins_tab_box": margins_tab_box,
-        "margins_section_label": margins_section_label,
-        "right_margin_col": right_margin_col,
-        "right_margin_label": right_margin_label,
-        "right_margin_spin": right_margin_spin,
-        "bottom_margin_row": bottom_margin_row,
-        "bottom_margin_label": bottom_margin_label,
-        "bottom_margin_spin": bottom_margin_spin,
-        "margins_tab_title": margins_tab_title,
+        "center_stack": center_stack,
         "margin_text_tabs": margin_text_tabs,
         "margin_settings_page": margin_settings_page,
         "margin_text_page": margin_text_page,
@@ -817,9 +664,231 @@ def build_margins_tab_section(
         "margin_text_mode_text": margin_text_mode_text,
         "margin_text_mode_both": margin_text_mode_both,
         "margin_text_entry": margin_text_entry,
+        "margin_position_shell": margin_position_shell,
         "margin_position_left_top": margin_position_left_top,
         "margin_position_right_bottom": margin_position_right_bottom,
         "margin_position_left_bottom": margin_position_left_bottom,
         "margin_position_right_top": margin_position_right_top,
         "margin_text_max_lines_spin": margin_text_max_lines_spin,
+    }
+
+
+def build_margin_cross_grid_section(
+    gtk_module: Any,
+    *,
+    compose_center: Any,
+    top_margin_label: Any,
+    top_margin_spin: Any,
+    left_margin_label: Any,
+    left_margin_spin: Any,
+    configure_spin_button: Any,
+) -> dict[str, Any]:
+    top_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+    top_margin_box.pack_start(top_margin_label, False, False, 0)
+    top_margin_box.pack_start(top_margin_spin, False, False, 0)
+    top_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(top_margin_shell, gtk_module.Align.CENTER)
+        set_halign_if_supported(top_margin_box, gtk_module.Align.CENTER)
+    top_margin_shell.pack_start(top_margin_box, False, False, 0)
+
+    left_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+    left_margin_box.pack_start(left_margin_label, False, False, 0)
+    left_margin_box.pack_start(left_margin_spin, False, False, 0)
+    left_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    left_margin_top_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    left_margin_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    left_margin_bottom_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(left_margin_top_spacer, "set_vexpand"):
+        left_margin_top_spacer.set_vexpand(True)
+    if hasattr(left_margin_bottom_spacer, "set_vexpand"):
+        left_margin_bottom_spacer.set_vexpand(True)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(left_margin_center_row, gtk_module.Align.CENTER)
+    left_margin_center_row.pack_start(left_margin_box, False, False, 0)
+    left_margin_shell.pack_start(left_margin_top_spacer, True, True, 0)
+    left_margin_shell.pack_start(left_margin_center_row, False, False, 0)
+    left_margin_shell.pack_start(left_margin_bottom_spacer, True, True, 0)
+
+    right_margin_col = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+    right_margin_label = gtk_module.Label(label="Right margin (px)")
+    set_xalign_if_supported(right_margin_label)
+    right_margin_spin = gtk_module.SpinButton()
+    configure_spin_button(right_margin_spin, minimum=0, maximum=500, step=1, page=10)
+    right_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+    right_margin_box.pack_start(right_margin_label, False, False, 0)
+    right_margin_box.pack_start(right_margin_spin, False, False, 0)
+    right_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    right_margin_top_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    right_margin_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    right_margin_bottom_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(right_margin_top_spacer, "set_vexpand"):
+        right_margin_top_spacer.set_vexpand(True)
+    if hasattr(right_margin_bottom_spacer, "set_vexpand"):
+        right_margin_bottom_spacer.set_vexpand(True)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(right_margin_center_row, gtk_module.Align.CENTER)
+    right_margin_center_row.pack_start(right_margin_box, False, False, 0)
+    right_margin_shell.pack_start(right_margin_top_spacer, True, True, 0)
+    right_margin_shell.pack_start(right_margin_center_row, False, False, 0)
+    right_margin_shell.pack_start(right_margin_bottom_spacer, True, True, 0)
+
+    bottom_margin_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
+    bottom_margin_label = gtk_module.Label(label="Bottom margin (px)")
+    set_xalign_if_supported(bottom_margin_label)
+    bottom_margin_spin = gtk_module.SpinButton()
+    configure_spin_button(bottom_margin_spin, minimum=0, maximum=250, step=1, page=10)
+    bottom_margin_box = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+    bottom_margin_box.pack_start(bottom_margin_label, False, False, 0)
+    bottom_margin_box.pack_start(bottom_margin_spin, False, False, 0)
+    bottom_margin_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(bottom_margin_shell, gtk_module.Align.CENTER)
+        set_halign_if_supported(bottom_margin_box, gtk_module.Align.CENTER)
+    bottom_margin_shell.pack_start(bottom_margin_box, False, False, 0)
+
+    margin_cross_grid = gtk_module.Grid()
+    if hasattr(margin_cross_grid, "set_column_spacing"):
+        margin_cross_grid.set_column_spacing(24)
+    if hasattr(margin_cross_grid, "set_row_spacing"):
+        margin_cross_grid.set_row_spacing(12)
+    if hasattr(margin_cross_grid, "set_hexpand"):
+        margin_cross_grid.set_hexpand(True)
+    if hasattr(margin_cross_grid, "set_vexpand"):
+        margin_cross_grid.set_vexpand(True)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(margin_cross_grid, gtk_module.Align.FILL)
+        set_halign_if_supported(left_margin_shell, gtk_module.Align.FILL)
+        set_halign_if_supported(compose_center, gtk_module.Align.FILL)
+        set_halign_if_supported(right_margin_shell, gtk_module.Align.FILL)
+        set_halign_if_supported(top_margin_shell, gtk_module.Align.CENTER)
+        set_halign_if_supported(bottom_margin_shell, gtk_module.Align.CENTER)
+
+    if hasattr(margin_cross_grid, "attach"):
+        margin_cross_grid.attach(top_margin_shell, 1, 0, 1, 1)
+        margin_cross_grid.attach(left_margin_shell, 0, 1, 1, 1)
+        margin_cross_grid.attach(compose_center, 1, 1, 1, 1)
+        margin_cross_grid.attach(right_margin_shell, 2, 1, 1, 1)
+        margin_cross_grid.attach(bottom_margin_shell, 1, 2, 1, 1)
+
+    from harite.gui.views.margins_surface import MARGIN_BEHAVIOR_TOOLTIP, apply_widget_tooltip
+
+    apply_widget_tooltip(margin_cross_grid, MARGIN_BEHAVIOR_TOOLTIP)
+    for edge_label in (top_margin_label, left_margin_label, right_margin_label, bottom_margin_label):
+        apply_widget_tooltip(edge_label, MARGIN_BEHAVIOR_TOOLTIP)
+
+    return {
+        "margin_cross_grid": margin_cross_grid,
+        "right_margin_col": right_margin_col,
+        "right_margin_label": right_margin_label,
+        "right_margin_spin": right_margin_spin,
+        "bottom_margin_row": bottom_margin_row,
+        "bottom_margin_label": bottom_margin_label,
+        "bottom_margin_spin": bottom_margin_spin,
+    }
+
+
+def build_margins_options_drawer_section(
+    gtk_module: Any,
+    *,
+    configure_spin_button: Any,
+    apply_margin_text_widget_style: Any,
+) -> dict[str, Any]:
+    from harite.gui.views.margins_options_drawer import MORE_LABEL
+
+    margins_options_trigger_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    margins_options_drawer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
+    margins_options_revealer = None
+    revealer_cls = getattr(gtk_module, "Revealer", None)
+    if revealer_cls is not None:
+        margins_options_revealer = revealer_cls()
+        if hasattr(margins_options_revealer, "set_reveal_child"):
+            margins_options_revealer.set_reveal_child(False)
+        if hasattr(margins_options_revealer, "add"):
+            margins_options_revealer.add(margins_options_drawer)
+    elif hasattr(margins_options_drawer, "hide"):
+        margins_options_drawer.hide()
+
+    center_widgets = _build_margins_center_stack_gtk(
+        gtk_module,
+        configure_spin_button=configure_spin_button,
+        apply_margin_text_widget_style=apply_margin_text_widget_style,
+    )
+    margins_options_drawer.pack_start(center_widgets["center_stack"], True, True, 0)
+
+    btn_margins_options_more = gtk_module.Button(label=MORE_LABEL)
+    set_button_icon_if_supported(gtk_module, btn_margins_options_more, "icons", "lucide", "arrow-down.svg")
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(margins_options_trigger_row, gtk_module.Align.CENTER)
+    trigger_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    trigger_right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(trigger_left_gap, "set_hexpand"):
+        trigger_left_gap.set_hexpand(True)
+    if hasattr(trigger_right_gap, "set_hexpand"):
+        trigger_right_gap.set_hexpand(True)
+    margins_options_trigger_row.pack_start(trigger_left_gap, True, True, 0)
+    margins_options_trigger_row.pack_start(btn_margins_options_more, False, False, 0)
+    margins_options_trigger_row.pack_start(trigger_right_gap, True, True, 0)
+
+    return {
+        "margins_options_trigger_row": margins_options_trigger_row,
+        "margins_options_drawer": margins_options_drawer,
+        "margins_options_revealer": margins_options_revealer,
+        "btn_margins_options_more": btn_margins_options_more,
+        **center_widgets,
+    }
+
+
+def build_margins_tab_section(
+    gtk_module: Any,
+    *,
+    top_margin_label: Any,
+    top_margin_spin: Any,
+    left_margin_label: Any,
+    left_margin_spin: Any,
+    priority_note_label: Any,
+    style_legend_label: Any,
+    current_state_section_label: Any,
+    current_margins_label: Any,
+    current_left_label: Any,
+    current_right_label: Any,
+    configure_spin_button: Any,
+    apply_margin_text_widget_style: Any,
+) -> dict[str, Any]:
+    _ = (
+        priority_note_label,
+        style_legend_label,
+        current_state_section_label,
+        current_margins_label,
+        current_left_label,
+        current_right_label,
+    )
+    compose_placeholder = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    cross_widgets = build_margin_cross_grid_section(
+        gtk_module,
+        compose_center=compose_placeholder,
+        top_margin_label=top_margin_label,
+        top_margin_spin=top_margin_spin,
+        left_margin_label=left_margin_label,
+        left_margin_spin=left_margin_spin,
+        configure_spin_button=configure_spin_button,
+    )
+    drawer_widgets = build_margins_options_drawer_section(
+        gtk_module,
+        configure_spin_button=configure_spin_button,
+        apply_margin_text_widget_style=apply_margin_text_widget_style,
+    )
+    margins_tab_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=12)
+    margins_section_label = gtk_module.Label(label="")
+    set_xalign_if_supported(margins_section_label)
+    margins_tab_box.pack_start(cross_widgets["margin_cross_grid"], True, True, 0)
+    margins_tab_title = gtk_module.Label(label="Margins (for each display)")
+    set_xalign_if_supported(margins_tab_title)
+
+    return {
+        "margins_tab_box": margins_tab_box,
+        "margins_section_label": margins_section_label,
+        "margins_tab_title": margins_tab_title,
+        **cross_widgets,
+        **drawer_widgets,
     }

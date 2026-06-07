@@ -250,11 +250,36 @@ def test_build_main_tab_includes_compose_and_action_widgets(qapp):
     compose_keys = {"compose_grid", "tgl_upper_l", "btn_get_img_l", "input_display_l"}
     action_keys = {"optimize_modern_btn", "apply_btn", "rad_apply_single"}
     state_keys = {"do_it_plan_label", "save_path_state_label", "save_target_label"}
+    margin_keys = {
+        "margin_cross_grid",
+        "top_margin_spin",
+        "btn_margins_options_more",
+        "margins_options_drawer",
+    }
 
     assert compose_keys <= set(w)
     assert action_keys <= set(w)
     assert state_keys <= set(w)
+    assert margin_keys <= set(w)
     assert w["main_col"] is not None
+
+
+def test_main_tab_vertical_order_margin_action_drawer(qapp):
+    from harite.gui.adapters_qt.qt_tab_main import build_main_tab
+
+    w = build_main_tab()
+    layout = w["main_col"].layout()
+
+    margin_index = layout.indexOf(w["margin_cross_grid"])
+    action_index = layout.indexOf(w["action_cluster_row"])
+    trigger_index = layout.indexOf(w["margins_options_trigger_row"])
+    drawer_index = layout.indexOf(w["margins_options_drawer"])
+
+    assert margin_index >= 0
+    assert action_index > margin_index
+    assert trigger_index > action_index
+    assert drawer_index > trigger_index
+    assert w["margin_cross_grid"].isAncestorOf(w["compose_grid"])
 
 
 def test_full_layout_main_tab_integrated(qapp):

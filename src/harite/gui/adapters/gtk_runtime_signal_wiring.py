@@ -90,6 +90,13 @@ def _connect_slideshow_widgets(backend: Any, widgets: dict[str, Any]) -> None:
             "clicked",
             lambda *_args: toggle_slideshow_options_drawer(backend),
         )
+    if "btn_margins_options_more" in widgets:
+        from harite.gui.views.margins_options_drawer import toggle_margins_options_drawer
+
+        widgets["btn_margins_options_more"].connect(
+            "clicked",
+            lambda *_args: toggle_margins_options_drawer(backend),
+        )
 
 
 def _connect_margin_text_widgets(backend: Any, widgets: dict[str, Any]) -> None:

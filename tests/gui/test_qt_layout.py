@@ -75,18 +75,17 @@ def test_header_export_image_button_disabled_by_default(qapp):
 # ---------------------------------------------------------------------------
 
 
-def test_center_body_has_three_tabs(qapp):
+def test_center_body_has_two_tabs(qapp):
     from harite.gui.adapters_qt.qt_layout_builders import build_center_body_section
 
     w = build_center_body_section()
     tabs = w["command_tabs"]
-    assert tabs.count() == 3
+    assert tabs.count() == 2
 
 
 def test_center_body_tab_labels(qapp):
     from harite.gui.adapters_qt.qt_layout_builders import (
         _TAB_MAIN,
-        _TAB_MARGINS,
         _TAB_SLIDESHOW,
         build_center_body_section,
     )
@@ -94,19 +93,17 @@ def test_center_body_tab_labels(qapp):
     w = build_center_body_section()
     tabs = w["command_tabs"]
     assert tabs.tabText(0) == _TAB_MAIN
-    assert tabs.tabText(1) == _TAB_MARGINS
-    assert tabs.tabText(2) == _TAB_SLIDESHOW
+    assert tabs.tabText(1) == _TAB_SLIDESHOW
 
 
 def test_center_body_tab_labels_match_spec(qapp):
-    """Tab labels must match the spec-defined values exactly."""
+    """Tab labels must match the spec-defined values exactly (P-08: 2 tabs)."""
     from harite.gui.adapters_qt.qt_layout_builders import build_center_body_section
 
     w = build_center_body_section()
     tabs = w["command_tabs"]
     assert tabs.tabText(0) == "Main"
-    assert tabs.tabText(1) == "Margins (for each display)"
-    assert tabs.tabText(2) == "Slideshow (stopped)"
+    assert tabs.tabText(1) == "Slideshow (stopped)"
 
 
 # ---------------------------------------------------------------------------
@@ -182,9 +179,9 @@ def test_build_main_layout_registry_contains_key_widgets(qapp):
     assert expected_keys <= set(reg)
 
 
-def test_build_main_layout_command_tabs_has_three_tabs(qapp):
+def test_build_main_layout_command_tabs_has_two_tabs(qapp):
     from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
 
     backend = load_qt_runtime_signal_backend()
     tabs = backend.objects["command_tabs"]
-    assert tabs.count() == 3
+    assert tabs.count() == 2

@@ -1,28 +1,28 @@
-"""Slideshow options drawer toggle (C-04 Wave b, P-07 open-state styling)."""
+"""Margins options drawer toggle (P-08, P-07 open-state styling parity)."""
 
 from __future__ import annotations
 
 from typing import Any
 
-MORE_LABEL = "More slideshow options…"
-FEWER_LABEL = "Fewer slideshow options…"
+MORE_LABEL = "More margin options…"
+FEWER_LABEL = "Fewer margin options…"
 
-QT_DRAWER_OBJECT_NAME = "hariteSlideshowOptionsDrawer"
-QT_TRIGGER_OBJECT_NAME = "hariteSlideshowOptionsTrigger"
+QT_DRAWER_OBJECT_NAME = "hariteMarginsOptionsDrawer"
+QT_TRIGGER_OBJECT_NAME = "hariteMarginsOptionsTrigger"
 
-GTK_DRAWER_STYLE_CLASS = "harite-slideshow-options-drawer-expanded"
-GTK_TRIGGER_STYLE_CLASS = "harite-slideshow-options-trigger-expanded"
+GTK_DRAWER_STYLE_CLASS = "harite-margins-options-drawer-expanded"
+GTK_TRIGGER_STYLE_CLASS = "harite-margins-options-trigger-expanded"
 
-_SLIDESHOW_DRAWER_SAVED_WINDOW_HEIGHT = "_slideshow_options_drawer_saved_window_height"
+_MARGINS_DRAWER_SAVED_WINDOW_HEIGHT = "_margins_options_drawer_saved_window_height"
 
 _GTK_DRAWER_CSS = b"""
-.harite-slideshow-options-drawer-expanded {
+.harite-margins-options-drawer-expanded {
   background-color: mix(@theme_bg_color, @theme_fg_color, 0.06);
   border-top: 1px solid @borders;
   padding-left: 8px;
   padding-right: 8px;
 }
-button.harite-slideshow-options-trigger-expanded {
+button.harite-margins-options-trigger-expanded {
   background-color: mix(@theme_bg_color, @theme_fg_color, 0.06);
   border: 1px solid @borders;
   border-bottom: none;
@@ -137,7 +137,6 @@ def _qt_widget_palette(widget: Any | None) -> Any:
 
 
 def _qt_chrome_tint_color(palette: Any, *, ratio: float = 0.06) -> Any:
-    """GTK drawer chrome mix(theme_bg, theme_fg, ratio) for Qt."""
     from PyQt6.QtGui import QColor, QPalette
 
     bg = palette.color(QPalette.ColorRole.Window)
@@ -170,7 +169,6 @@ def _qt_trigger_expanded_stylesheet(trigger: Any | None) -> str:
 
 
 def _qt_set_drawer_panel_palette(drawer: Any, *, expanded: bool) -> None:
-    """Paint drawer chrome via QPalette only — avoids QSS cascading to children."""
     from PyQt6.QtGui import QPalette
     from PyQt6.QtWidgets import QApplication
 
@@ -253,17 +251,17 @@ def _apply_gtk_drawer_open_state(drawer: Any | None, trigger: Any | None, *, exp
         _set_trigger_chevron(trigger, expanded=expanded)
 
 
-def apply_slideshow_options_drawer_open_state(backend: Any, *, expanded: bool) -> None:
+def apply_margins_options_drawer_open_state(backend: Any, *, expanded: bool) -> None:
     """Update drawer/trigger visuals for expanded or collapsed state (Qt + GTK)."""
-    drawer = backend._objects.get("slideshow_options_drawer")
-    trigger = backend._objects.get("btn_slideshow_options_more")
-    top_border = backend._objects.get("slideshow_options_drawer_top_border")
+    drawer = backend._objects.get("margins_options_drawer")
+    trigger = backend._objects.get("btn_margins_options_more")
+    top_border = backend._objects.get("margins_options_drawer_top_border")
     _set_trigger_label(trigger, expanded=expanded)
     _apply_qt_drawer_open_state(drawer, trigger, expanded=expanded, top_border=top_border)
     _apply_gtk_drawer_open_state(drawer, trigger, expanded=expanded)
 
 
-def _sync_slideshow_drawer_window_frame(backend: Any, *, expanded: bool) -> None:
+def _sync_margins_drawer_window_frame(backend: Any, *, expanded: bool) -> None:
     from harite.gui.views.drawer_window_resize import (
         grow_window_after_drawer_expand,
         shrink_window_after_drawer_collapse,
@@ -272,14 +270,14 @@ def _sync_slideshow_drawer_window_frame(backend: Any, *, expanded: bool) -> None
     if expanded:
         grow_window_after_drawer_expand(
             backend,
-            state_attr=_SLIDESHOW_DRAWER_SAVED_WINDOW_HEIGHT,
-            tab_attr="slideshow_tab_box",
+            state_attr=_MARGINS_DRAWER_SAVED_WINDOW_HEIGHT,
+            tab_attr="main_col",
         )
         return
     shrink_window_after_drawer_collapse(
         backend,
-        state_attr=_SLIDESHOW_DRAWER_SAVED_WINDOW_HEIGHT,
-        tab_attr="slideshow_tab_box",
+        state_attr=_MARGINS_DRAWER_SAVED_WINDOW_HEIGHT,
+        tab_attr="main_col",
     )
 
 
@@ -287,38 +285,38 @@ def _set_drawer_expanded(backend: Any, *, expanded: bool) -> None:
     if expanded:
         from harite.gui.views.drawer_window_resize import save_tab_compact_hint_before_expand
 
-        save_tab_compact_hint_before_expand(backend, tab_attr="slideshow_tab_box")
-    setattr(backend, "_slideshow_options_drawer_expanded", expanded)
-    revealer = backend._objects.get("slideshow_options_revealer")
+        save_tab_compact_hint_before_expand(backend, tab_attr="main_col")
+    setattr(backend, "_margins_options_drawer_expanded", expanded)
+    revealer = backend._objects.get("margins_options_revealer")
     if revealer is not None and hasattr(revealer, "set_reveal_child"):
         revealer.set_reveal_child(expanded)
-        apply_slideshow_options_drawer_open_state(backend, expanded=expanded)
-        _sync_slideshow_drawer_window_frame(backend, expanded=expanded)
+        apply_margins_options_drawer_open_state(backend, expanded=expanded)
+        _sync_margins_drawer_window_frame(backend, expanded=expanded)
         return
 
-    drawer = backend._objects.get("slideshow_options_drawer")
+    drawer = backend._objects.get("margins_options_drawer")
     if drawer is None:
         return
     if hasattr(drawer, "setVisible"):
         drawer.setVisible(expanded)
-        apply_slideshow_options_drawer_open_state(backend, expanded=expanded)
-        _sync_slideshow_drawer_window_frame(backend, expanded=expanded)
+        apply_margins_options_drawer_open_state(backend, expanded=expanded)
+        _sync_margins_drawer_window_frame(backend, expanded=expanded)
         return
     if hasattr(drawer, "set_visible"):
         drawer.set_visible(expanded)
-        apply_slideshow_options_drawer_open_state(backend, expanded=expanded)
-        _sync_slideshow_drawer_window_frame(backend, expanded=expanded)
+        apply_margins_options_drawer_open_state(backend, expanded=expanded)
+        _sync_margins_drawer_window_frame(backend, expanded=expanded)
 
 
 def _is_drawer_expanded(backend: Any) -> bool:
-    if hasattr(backend, "_slideshow_options_drawer_expanded"):
-        return bool(getattr(backend, "_slideshow_options_drawer_expanded"))
+    if hasattr(backend, "_margins_options_drawer_expanded"):
+        return bool(getattr(backend, "_margins_options_drawer_expanded"))
 
-    revealer = backend._objects.get("slideshow_options_revealer")
+    revealer = backend._objects.get("margins_options_revealer")
     if revealer is not None and hasattr(revealer, "get_reveal_child"):
         return bool(revealer.get_reveal_child())
 
-    drawer = backend._objects.get("slideshow_options_drawer")
+    drawer = backend._objects.get("margins_options_drawer")
     if drawer is None:
         return False
     if hasattr(drawer, "isVisible"):
@@ -328,6 +326,6 @@ def _is_drawer_expanded(backend: Any) -> bool:
     return False
 
 
-def toggle_slideshow_options_drawer(backend: Any) -> None:
-    """Show or hide the Slideshow tab auxiliary drawer (Qt + GTK)."""
+def toggle_margins_options_drawer(backend: Any) -> None:
+    """Show or hide the Main tab margins options drawer (Qt + GTK)."""
     _set_drawer_expanded(backend, expanded=not _is_drawer_expanded(backend))

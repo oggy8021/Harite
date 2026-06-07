@@ -93,7 +93,7 @@ def test_phase5_mainwindow_blueprint_smoke_matches_visual_checklist_scope():
     assert [name for name, _ in bp["sections"]] == [
         "title_menu_flow",
         "compose_input",
-        "margins_tab",
+        "main_margins",
         "action_cluster",
         "slideshow_tab",
         "status_footer",

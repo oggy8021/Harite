@@ -154,11 +154,10 @@ def _build_dialog_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, A
 def _build_tab_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, Any]:
     return {
         "slideshowTab": widgets["slideshow_tab_box"],
-        "marginsTab": widgets["margins_tab_box"],
+        "btnMarginsOptionsMore": widgets["btn_margins_options_more"],
+        "marginsOptionsDrawer": widgets["margins_options_drawer"],
         "slideshowControlsRow": widgets["slideshow_controls_row"],
         "slideshowDetailRow": widgets["slideshow_detail_row"],
-        "lblMarginsTabTitle": widgets["margins_tab_title"],
-        "lblMarginsSection": widgets["margins_section_label"],
         "marginTextTabs": widgets["margin_text_tabs"],
         "marginSettingsPage": widgets["margin_settings_page"],
         "marginTextPage": widgets["margin_text_page"],

@@ -24,7 +24,7 @@ def test_phase4_a_layout_structure_sections_are_stable():
     assert section_names == [
         "title_menu_flow",
         "compose_input",
-        "margins_tab",
+        "main_margins",
         "action_cluster",
         "slideshow_tab",
         "status_footer",
@@ -35,8 +35,8 @@ def test_phase4_a_layout_structure_sections_are_stable():
     assert "menu" in section_items["title_menu_flow"]
     assert "input_value" in section_items["compose_input"]
     assert "cross_layout" in section_items["compose_input"]
-    assert "margins" in section_items["margins_tab"]
-    assert "margin_text" in section_items["margins_tab"]
+    assert "margins" in section_items["main_margins"]
+    assert "margin_text" in section_items["main_margins"]
     assert "apply" in section_items["action_cluster"]
 
 

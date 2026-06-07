@@ -381,7 +381,7 @@ def _build_options_drawer_trigger() -> dict[str, Any]:
 
 def _build_options_drawer() -> dict[str, Any]:
     """Collapsible panel: mode, manage registry, current/output detail."""
-    from PyQt6.QtWidgets import QFrame, QVBoxLayout, QWidget
+    from PyQt6.QtWidgets import QFrame, QSizePolicy, QVBoxLayout, QWidget
 
     mode_widgets = _build_mode_section()
     manage_widgets = _build_manage_registry_row()
@@ -392,6 +392,7 @@ def _build_options_drawer() -> dict[str, Any]:
     drawer = QWidget()
     drawer.setObjectName(QT_DRAWER_OBJECT_NAME)
     drawer.setVisible(False)
+    drawer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
     drawer_layout = QVBoxLayout(drawer)
     drawer_layout.setContentsMargins(0, 8, 0, 0)
     drawer_layout.setSpacing(10)
@@ -464,22 +465,21 @@ def _build_detail_row() -> dict[str, Any]:
 def build_slideshow_tab() -> dict[str, Any]:
     """Build the complete Slideshow tab widget and return the widget registry.
 
-    Layout (top → bottom, with vertical stretch around content):
+    Layout (top → bottom, Option B frame-resize parity with Main):
         codh_keyword_chip_row   (top-right, hidden unless keyword preset active)
-        [stretch]
         profile_row
         srcdir_row          (L/R source grid + Swap)
         controls_shell      (Interval + Start/Stop centred)
         options trigger     ("More slideshow options…")
         options drawer      (Mode, Manage, current/output — hidden by default)
-        [stretch]
 
     The tab title label ``slideshow_tab_title`` is kept in the registry so
     signal-wiring code can update it (e.g. "Slideshow (running)").
     """
-    from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
+    from PyQt6.QtWidgets import QLabel, QSizePolicy, QVBoxLayout, QWidget
 
     slideshow_tab_box = QWidget()
+    slideshow_tab_box.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
     tab_layout = QVBoxLayout(slideshow_tab_box)
     tab_layout.setContentsMargins(8, 0, 8, 0)
     tab_layout.setSpacing(0)
@@ -497,17 +497,15 @@ def build_slideshow_tab() -> dict[str, Any]:
     trigger_widgets = _build_options_drawer_trigger()
     drawer_widgets = _build_options_drawer()
 
-    tab_layout.addWidget(chip_widgets["slideshow_codh_keyword_chip_row"])
-    tab_layout.addStretch()
-    tab_layout.addWidget(profile_widgets["slideshow_profile_row"])
+    tab_layout.addWidget(chip_widgets["slideshow_codh_keyword_chip_row"], stretch=0)
+    tab_layout.addWidget(profile_widgets["slideshow_profile_row"], stretch=0)
     tab_layout.addSpacing(12)
-    tab_layout.addWidget(srcdir_widgets["srcdir_row"])
+    tab_layout.addWidget(srcdir_widgets["srcdir_row"], stretch=0)
     tab_layout.addSpacing(12)
-    tab_layout.addWidget(controls_widgets["slideshow_controls_shell"])
+    tab_layout.addWidget(controls_widgets["slideshow_controls_shell"], stretch=0)
     tab_layout.addSpacing(8)
-    tab_layout.addWidget(trigger_widgets["slideshow_options_trigger_row"])
-    tab_layout.addWidget(drawer_widgets["slideshow_options_drawer"])
-    tab_layout.addStretch()
+    tab_layout.addWidget(trigger_widgets["slideshow_options_trigger_row"], stretch=0)
+    tab_layout.addWidget(drawer_widgets["slideshow_options_drawer"], stretch=0)
 
     return {
         "slideshow_tab_box": slideshow_tab_box,

@@ -163,7 +163,8 @@ def _tab_aliases(w: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "slideshowTab": _get("slideshow_tab_box"),
-        "marginsTab": _get("margins_tab_box"),
+        "btnMarginsOptionsMore": _get("btn_margins_options_more"),
+        "marginsOptionsDrawer": _get("margins_options_drawer"),
         "slideshowControlsRow": _get("slideshow_controls_row"),
         "slideshowDetailRow": _get("slideshow_detail_row"),
         "marginTextTabs": _get("margin_text_tabs"),

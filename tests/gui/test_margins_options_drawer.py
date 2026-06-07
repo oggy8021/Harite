@@ -1,8 +1,4 @@
-from harite.gui.views.slideshow_options_drawer import (
-    FEWER_LABEL,
-    MORE_LABEL,
-    toggle_slideshow_options_drawer,
-)
+"""Margins options drawer toggle (P-08, P-07 open-state styling parity)."""
 
 
 class _Drawer:
@@ -18,6 +14,8 @@ class _Drawer:
 
 class _Trigger:
     def __init__(self):
+        from harite.gui.views.margins_options_drawer import MORE_LABEL
+
         self.text = MORE_LABEL
 
     def setText(self, value):
@@ -25,15 +23,21 @@ class _Trigger:
 
 
 def test_toggle_qt_style_drawer():
+    from harite.gui.views.margins_options_drawer import (
+        FEWER_LABEL,
+        MORE_LABEL,
+        toggle_margins_options_drawer,
+    )
+
     drawer = _Drawer()
     trigger = _Trigger()
-    backend = type("B", (), {"_objects": {"slideshow_options_drawer": drawer, "btn_slideshow_options_more": trigger}})()
+    backend = type("B", (), {"_objects": {"margins_options_drawer": drawer, "btn_margins_options_more": trigger}})()
 
-    toggle_slideshow_options_drawer(backend)
+    toggle_margins_options_drawer(backend)
     assert drawer.isVisible()
     assert trigger.text == FEWER_LABEL
 
-    toggle_slideshow_options_drawer(backend)
+    toggle_margins_options_drawer(backend)
     assert not drawer.isVisible()
     assert trigger.text == MORE_LABEL
 
@@ -50,21 +54,26 @@ class _Revealer:
 
 
 def test_toggle_gtk_revealer():
+    from harite.gui.views.margins_options_drawer import (
+        FEWER_LABEL,
+        toggle_margins_options_drawer,
+    )
+
     revealer = _Revealer()
     trigger = _Trigger()
     backend = type(
         "B",
         (),
-        {"_objects": {"slideshow_options_revealer": revealer, "btn_slideshow_options_more": trigger}},
+        {"_objects": {"margins_options_revealer": revealer, "btn_margins_options_more": trigger}},
     )()
 
-    toggle_slideshow_options_drawer(backend)
+    toggle_margins_options_drawer(backend)
     assert revealer.get_reveal_child()
     assert trigger.text == FEWER_LABEL
 
 
 def test_toggle_restores_window_height_on_close():
-    from harite.gui.views.slideshow_options_drawer import toggle_slideshow_options_drawer
+    from harite.gui.views.margins_options_drawer import toggle_margins_options_drawer
 
     class _Window:
         def __init__(self, *, height: int, compact_height: int):
@@ -110,30 +119,30 @@ def test_toggle_restores_window_height_on_close():
         {
             "_objects": {
                 "main_window": window,
-                "slideshow_options_drawer": drawer,
-                "btn_slideshow_options_more": trigger,
+                "margins_options_drawer": drawer,
+                "btn_margins_options_more": trigger,
             }
         },
     )()
 
-    toggle_slideshow_options_drawer(backend)
-    toggle_slideshow_options_drawer(backend)
+    toggle_margins_options_drawer(backend)
+    toggle_margins_options_drawer(backend)
     assert not drawer.isVisible()
     assert window.height() == 860
 
-    compact_window = _Window(height=640, compact_height=820)
+    compact_window = _Window(height=640, compact_height=980)
     compact_backend = type(
         "B",
         (),
         {
             "_objects": {
                 "main_window": compact_window,
-                "slideshow_options_drawer": drawer,
-                "btn_slideshow_options_more": trigger,
+                "margins_options_drawer": drawer,
+                "btn_margins_options_more": trigger,
             }
         },
     )()
-    toggle_slideshow_options_drawer(compact_backend)
-    assert compact_window.height() == 820
-    toggle_slideshow_options_drawer(compact_backend)
+    toggle_margins_options_drawer(compact_backend)
+    assert compact_window.height() == 980
+    toggle_margins_options_drawer(compact_backend)
     assert compact_window.height() == 640

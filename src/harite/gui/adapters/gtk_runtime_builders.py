@@ -9,6 +9,8 @@ from harite.gui.adapters.gtk_layout_builders import build_footer_section
 from harite.gui.adapters.gtk_layout_builders import build_header_section
 from harite.gui.adapters.gtk_tab_builders import build_action_cluster_section
 from harite.gui.adapters.gtk_tab_builders import build_main_tab_section
+from harite.gui.adapters.gtk_tab_builders import build_margin_cross_grid_section
+from harite.gui.adapters.gtk_tab_builders import build_margins_options_drawer_section
 from harite.gui.adapters.gtk_tab_builders import build_margins_tab_section
 from harite.gui.adapters.gtk_tab_builders import build_primary_margin_controls
 from harite.gui.adapters.gtk_tab_builders import build_runtime_state_labels
@@ -24,6 +26,8 @@ __all__ = [
     "build_footer_section",
     "build_header_section",
     "build_main_tab_section",
+    "build_margin_cross_grid_section",
+    "build_margins_options_drawer_section",
     "build_margins_tab_section",
     "build_primary_margin_controls",
     "build_runtime_state_labels",
