@@ -6,6 +6,7 @@ from pathlib import Path
 
 from harite.gui.adapters_qt.qt_source_registry_dialog import (
     _LIST_HEADER_MARKER,
+    catalog_sources_for_selection_combo,
     local_sources_for_manage_dialog,
     preset_list_rows_for_manage_dialog,
     preset_provider_group,
@@ -51,3 +52,26 @@ def test_preset_list_rows_group_and_sort(tmp_path: Path) -> None:
     assert preset_provider_group(jma) == "JMA 天気図"
     assert preset_provider_group(ndl) == "NDL 図版"
     assert preset_provider_group(codh) == "CODH 江戸"
+
+
+def test_catalog_sources_for_selection_combo_orders_local_then_presets(tmp_path: Path) -> None:
+    catalog = empty_catalog()
+    cache = tmp_path / "cache"
+    codh = import_preset_source(catalog, "codh-edo-shops-keyword", cache_root=cache)
+    jma = import_preset_source(catalog, "jma-near-color", cache_root=cache)
+    ndl = import_preset_source(catalog, "ndl-random-map", cache_root=cache)
+    zebra = tmp_path / "z"
+    alpha = tmp_path / "a"
+    zebra.mkdir()
+    alpha.mkdir()
+    local_z = add_source(catalog, name="Zebra", path=zebra)
+    local_a = add_source(catalog, name="alpha", path=alpha)
+
+    ordered = catalog_sources_for_selection_combo(catalog)
+    assert [entry.id for entry in ordered] == [
+        local_a.id,
+        local_z.id,
+        jma.id,
+        ndl.id,
+        codh.id,
+    ]

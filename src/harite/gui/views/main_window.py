@@ -1295,9 +1295,28 @@ class MainWindow:
             if entry is None:
                 continue
             try:
-                sync_remote_source(catalog, source_id)
+                sync_remote_source(catalog, source_id, codh_sync_pick="resume")
             except ValueError as exc:
                 raise format_remote_sync_error(side, entry.name, exc) from exc
+
+    def _codh_slideshow_tick_for_side(self, catalog: Catalog, side: str, source_dir: Path) -> None:
+        from harite.sources_remote import KIND_CODH_EDO
+        from harite.sources_remote_codh import codh_slideshow_tick, resolve_codh_source_id_for_path
+
+        source_id = (
+            (self.slideshow_source_id_l or "").strip()
+            if side == "L"
+            else (self.slideshow_source_id_r or "").strip()
+        )
+        if not source_id:
+            source_id = resolve_codh_source_id_for_path(catalog, source_dir) or ""
+        if not source_id:
+            return
+        entry = get_source(catalog, source_id)
+        if entry is None or entry.kind != KIND_CODH_EDO:
+            return
+        mode = self._slideshow_active_mode if self._slideshow_active_mode else self.slideshow_mode
+        codh_slideshow_tick(catalog, source_id, mode)
 
     def _resolve_slideshow_srcdirs_for_start(self) -> bool:
         catalog = self.load_source_catalog()
@@ -1760,8 +1779,10 @@ class MainWindow:
         if self.slideshow_srcdir_r.strip():
             sources.append(("R", Path(self.slideshow_srcdir_r.strip())))
 
+        catalog = self.load_source_catalog()
         for side, source_dir in sources:
             try:
+                self._codh_slideshow_tick_for_side(catalog, side, source_dir)
                 selected = self._run_slideshow_cycle_for_side(side, source_dir)
             except ValueError as exc:
                 self._set_status("error", "slideshow", f"slideshow srcdir {side} invalid", error=str(exc))

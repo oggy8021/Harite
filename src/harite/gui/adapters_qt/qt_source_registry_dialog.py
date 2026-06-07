@@ -72,12 +72,28 @@ def local_sources_for_manage_dialog(catalog: Catalog) -> list[SourceEntry]:
     )
 
 
-def preset_list_rows_for_manage_dialog(catalog: Catalog) -> list[ManageSourceListRow]:
+def _preset_sources_grouped(catalog: Catalog) -> dict[str, list[SourceEntry]]:
     grouped: dict[str, list[SourceEntry]] = {label: [] for label in _PRESET_GROUP_ORDER}
     for entry in list_sources(catalog):
         if not is_preset_catalog_source(entry):
             continue
         grouped[preset_provider_group(entry)].append(entry)
+    return grouped
+
+
+def catalog_sources_for_selection_combo(catalog: Catalog) -> list[SourceEntry]:
+    """Local sources (name), then preset groups (JMA → NDL → CODH → その他), each name-sorted."""
+    ordered = list(local_sources_for_manage_dialog(catalog))
+    grouped = _preset_sources_grouped(catalog)
+    for group_label in _PRESET_GROUP_ORDER:
+        ordered.extend(
+            sorted(grouped[group_label], key=lambda entry: entry.name.casefold())
+        )
+    return ordered
+
+
+def preset_list_rows_for_manage_dialog(catalog: Catalog) -> list[ManageSourceListRow]:
+    grouped = _preset_sources_grouped(catalog)
 
     rows: list[ManageSourceListRow] = []
     for group_label in _PRESET_GROUP_ORDER:
@@ -125,7 +141,7 @@ def source_slot_items(catalog: Catalog) -> list[tuple[str, str]]:
     from harite.gui.adapters_qt.qt_source_catalog import slideshow_source_combo_label
 
     items = [("— empty —", "")]
-    for entry in list_sources(catalog):
+    for entry in catalog_sources_for_selection_combo(catalog):
         items.append((slideshow_source_combo_label(entry), entry.id))
     return items
 

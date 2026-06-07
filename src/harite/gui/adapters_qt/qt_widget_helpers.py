@@ -545,7 +545,10 @@ def refresh_slideshow_registry_combos(backend: Any, owner: Any) -> None:
         slideshow_profile_combo_label,
         slideshow_source_combo_label,
     )
-    from harite.sources import list_profiles, list_sources
+    from harite.gui.adapters_qt.qt_source_registry_dialog import (
+        catalog_sources_for_selection_combo,
+    )
+    from harite.sources import list_profiles
 
     setattr(backend, "_slideshow_registry_combo_refresh", True)
     try:
@@ -572,7 +575,7 @@ def refresh_slideshow_registry_combos(backend: Any, owner: Any) -> None:
             combo.blockSignals(True)
             combo.clear()
             combo.addItem(REGISTRY_NONE_LABEL, "")
-            for entry in list_sources(catalog):
+            for entry in catalog_sources_for_selection_combo(catalog):
                 combo.addItem(slideshow_source_combo_label(entry), entry.id)
             source_id = _normalize_combo_data(getattr(owner, id_attr, ""))
             _set_combo_current_data(combo, source_id)
