@@ -313,7 +313,119 @@ def _build_center_stack() -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Full Margins tab assembly
+# P-08: Main-tab margin cross-grid + options drawer
+# ---------------------------------------------------------------------------
+
+
+def build_margin_cross_grid(*, compose_center: Any) -> dict[str, Any]:
+    """Build the 4-edge margin cross-grid with *compose_center* in the middle cell."""
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QGridLayout, QHBoxLayout, QSizePolicy, QWidget
+
+    top = _build_margin_spin_block("Top margin (px)", maximum=250)
+    left = _build_margin_spin_block("Left margin (px)", maximum=500)
+    right = _build_margin_spin_block("Right margin (px)", maximum=500)
+    bottom = _build_margin_spin_block("Bottom margin (px)", maximum=250)
+
+    def _hcenter(block: Any) -> Any:
+        shell = QWidget()
+        layout = QHBoxLayout(shell)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addStretch()
+        layout.addWidget(block)
+        layout.addStretch()
+        return shell
+
+    top_shell = _hcenter(top["block"])
+    bottom_shell = _hcenter(bottom["block"])
+    left_shell = _vcenter_widget(left["block"])
+    right_shell = _vcenter_widget(right["block"])
+
+    margin_cross_grid = QWidget()
+    margin_cross_grid.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+    cross_grid = QGridLayout(margin_cross_grid)
+    cross_grid.setColumnStretch(1, 1)
+    cross_grid.setRowStretch(1, 1)
+    cross_grid.setSpacing(24)
+    cross_grid.setContentsMargins(0, 0, 0, 0)
+
+    cross_grid.addWidget(top_shell, 0, 1, Qt.AlignmentFlag.AlignHCenter)
+    cross_grid.addWidget(left_shell, 1, 0)
+    cross_grid.addWidget(compose_center, 1, 1)
+    cross_grid.addWidget(right_shell, 1, 2)
+    cross_grid.addWidget(bottom_shell, 2, 1, Qt.AlignmentFlag.AlignHCenter)
+
+    from harite.gui.views.margins_surface import MARGIN_BEHAVIOR_TOOLTIP, apply_widget_tooltip
+
+    apply_widget_tooltip(margin_cross_grid, MARGIN_BEHAVIOR_TOOLTIP)
+    for edge in (top["label"], left["label"], right["label"], bottom["label"]):
+        apply_widget_tooltip(edge, MARGIN_BEHAVIOR_TOOLTIP)
+
+    return {
+        "margin_cross_grid": margin_cross_grid,
+        "top_margin_label": top["label"],
+        "top_margin_spin": top["spin"],
+        "left_margin_label": left["label"],
+        "left_margin_spin": left["spin"],
+        "right_margin_label": right["label"],
+        "right_margin_spin": right["spin"],
+        "bottom_margin_label": bottom["label"],
+        "bottom_margin_spin": bottom["spin"],
+    }
+
+
+def _build_margins_options_drawer_trigger() -> dict[str, Any]:
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
+
+    from harite.gui.resource_access import set_qt_button_icon as _set_button_icon
+    from harite.gui.views.margins_options_drawer import MORE_LABEL, QT_TRIGGER_OBJECT_NAME
+
+    row = QWidget()
+    layout = QHBoxLayout(row)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+    btn_margins_options_more = QPushButton(MORE_LABEL)
+    btn_margins_options_more.setObjectName(QT_TRIGGER_OBJECT_NAME)
+    _set_button_icon(btn_margins_options_more, "icons", "lucide", "arrow-down.svg")
+    layout.addWidget(btn_margins_options_more)
+
+    return {
+        "margins_options_trigger_row": row,
+        "btn_margins_options_more": btn_margins_options_more,
+    }
+
+
+def build_margins_options_drawer() -> dict[str, Any]:
+    """Collapsible panel: embed pattern, margin text notebook, position selector."""
+    from PyQt6.QtWidgets import QFrame, QVBoxLayout, QWidget
+
+    from harite.gui.views.margins_options_drawer import QT_DRAWER_OBJECT_NAME
+
+    center_widgets = _build_center_stack()
+
+    drawer = QWidget()
+    drawer.setObjectName(QT_DRAWER_OBJECT_NAME)
+    drawer.setVisible(False)
+    drawer_layout = QVBoxLayout(drawer)
+    drawer_layout.setContentsMargins(0, 8, 0, 0)
+    drawer_layout.setSpacing(10)
+    drawer_top_border = QFrame()
+    drawer_top_border.setVisible(False)
+    drawer_top_border.setFixedHeight(1)
+    drawer_layout.addWidget(drawer_top_border)
+    drawer_layout.addWidget(center_widgets["center_stack"])
+
+    return {
+        "margins_options_drawer": drawer,
+        "margins_options_drawer_top_border": drawer_top_border,
+        **center_widgets,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Legacy Margins tab assembly (superseded by P-08 Main + drawer)
 # ---------------------------------------------------------------------------
 
 

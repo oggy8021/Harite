@@ -100,51 +100,36 @@ def build_header_section() -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Center body section (QTabWidget + 3 stub tabs)
+# Center body section (QTabWidget — Main + Slideshow, P-08)
 # ---------------------------------------------------------------------------
 
 _TAB_MAIN = "Main"
-_TAB_MARGINS = "Margins (for each display)"
 _TAB_SLIDESHOW = "Slideshow (stopped)"
 
 
 def build_center_body_section() -> dict[str, Any]:
-    """Build the center body: QTabWidget with Main tab + 2 stub tabs.
+    """Build the center body: QTabWidget with Main and Slideshow tabs.
 
-    Main tab is fully built (Phase 3).
-    Margins and Slideshow stubs will be replaced in Phase 4 and Phase 5.
+    Main tab includes margin cross-grid and options drawer (P-08).
 
     Returns a dict containing ``command_tabs`` and all tab-level widget dicts.
     """
-    from PyQt6.QtWidgets import QTabWidget, QWidget
+    from PyQt6.QtWidgets import QTabWidget
 
     from harite.gui.adapters_qt.qt_tab_main import build_main_tab
-    from harite.gui.adapters_qt.qt_tab_margins import build_margins_tab
     from harite.gui.adapters_qt.qt_tab_slideshow import build_slideshow_tab
 
     command_tabs = QTabWidget()
 
     main_tab_widgets = build_main_tab()
-
-    margins_tab_widgets = build_margins_tab(
-        priority_note_label=main_tab_widgets["priority_note_label"],
-        style_legend_label=main_tab_widgets["style_legend_label"],
-        current_state_section_label=main_tab_widgets["current_state_section_label"],
-        current_margins_label=main_tab_widgets["current_margins_label"],
-        current_left_label=main_tab_widgets["current_left_label"],
-        current_right_label=main_tab_widgets["current_right_label"],
-    )
-
     slideshow_tab_widgets = build_slideshow_tab()
 
     command_tabs.addTab(main_tab_widgets["main_col"], _TAB_MAIN)
-    command_tabs.addTab(margins_tab_widgets["margins_tab_box"], _TAB_MARGINS)
     command_tabs.addTab(slideshow_tab_widgets["slideshow_tab_box"], _TAB_SLIDESHOW)
 
     return {
         "command_tabs": command_tabs,
         **main_tab_widgets,
-        **margins_tab_widgets,
         **slideshow_tab_widgets,
     }
 

@@ -484,10 +484,17 @@ def build_main_tab() -> dict[str, Any]:
     """Build the complete Main tab widget and return the widget registry.
 
     Structure (top to bottom inside main_col):
-        compose_grid  – 3-column panel (L / center / R)
-        action_cluster – Preview | Optimize | Apply
+        margin_cross_grid – 4-edge spins around compose grid
+        action_cluster    – Preview | Optimize | Apply
+        margins drawer trigger + collapsible options drawer
     """
     from PyQt6.QtWidgets import QVBoxLayout, QWidget
+
+    from harite.gui.adapters_qt.qt_tab_margins import (
+        _build_margins_options_drawer_trigger,
+        build_margin_cross_grid,
+        build_margins_options_drawer,
+    )
 
     main_col = QWidget()
     layout = QVBoxLayout(main_col)
@@ -495,10 +502,16 @@ def build_main_tab() -> dict[str, Any]:
     layout.setSpacing(12)
 
     compose_widgets = build_compose_grid_section()
-    layout.addWidget(compose_widgets["compose_grid"])
+    margin_widgets = build_margin_cross_grid(compose_center=compose_widgets["compose_grid"])
+    layout.addWidget(margin_widgets["margin_cross_grid"])
 
     action_widgets = build_action_cluster_section(_default_apply_mode())
     layout.addWidget(action_widgets["action_cluster_row"])
+
+    drawer_trigger = _build_margins_options_drawer_trigger()
+    drawer_widgets = build_margins_options_drawer()
+    layout.addWidget(drawer_trigger["margins_options_trigger_row"])
+    layout.addWidget(drawer_widgets["margins_options_drawer"])
     layout.addStretch()
 
     state_labels = build_runtime_state_labels()
@@ -506,6 +519,9 @@ def build_main_tab() -> dict[str, Any]:
     return {
         "main_col": main_col,
         **compose_widgets,
+        **margin_widgets,
         **action_widgets,
+        **drawer_trigger,
+        **drawer_widgets,
         **state_labels,
     }

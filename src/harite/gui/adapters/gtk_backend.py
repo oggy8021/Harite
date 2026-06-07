@@ -21,7 +21,10 @@ from harite.gui.adapters.gtk_runtime_builders import build_color_dialog_section
 from harite.gui.adapters.gtk_runtime_builders import build_footer_section
 from harite.gui.adapters.gtk_runtime_builders import build_header_section
 from harite.gui.adapters.gtk_runtime_builders import build_main_tab_section
-from harite.gui.adapters.gtk_runtime_builders import build_margins_tab_section
+from harite.gui.adapters.gtk_runtime_builders import (
+    build_margin_cross_grid_section,
+    build_margins_options_drawer_section,
+)
 from harite.gui.adapters.gtk_runtime_builders import build_primary_margin_controls
 from harite.gui.adapters.gtk_runtime_builders import build_runtime_state_labels
 from harite.gui.adapters.gtk_runtime_builders import build_settings_section
@@ -179,32 +182,12 @@ class GtkRuntimeSignalBackend:
         if hasattr(gtk_module, "Box") and hasattr(gtk_module, "Label"):
             main_runtime = self._build_main_runtime_widgets(gtk_module)
             root = main_runtime["root"]
-            top_margin_label = main_runtime["top_margin_label"]
-            top_margin_spin = main_runtime["top_margin_spin"]
-            left_margin_label = main_runtime["left_margin_label"]
-            left_margin_spin = main_runtime["left_margin_spin"]
             command_tabs = main_runtime["command_tabs"]
-            priority_note_label = main_runtime["priority_note_label"]
-            style_legend_label = main_runtime["style_legend_label"]
-            current_state_section_label = main_runtime["current_state_section_label"]
-            current_margins_label = main_runtime["current_margins_label"]
-            current_left_label = main_runtime["current_left_label"]
-            current_right_label = main_runtime["current_right_label"]
 
             dialog_runtime = self._build_dialog_runtime_widgets(gtk_module=gtk_module, window=window)
             tab_runtime = self._build_secondary_tab_runtime_widgets(
                 gtk_module,
                 command_tabs=command_tabs,
-                top_margin_label=top_margin_label,
-                top_margin_spin=top_margin_spin,
-                left_margin_label=left_margin_label,
-                left_margin_spin=left_margin_spin,
-                priority_note_label=priority_note_label,
-                style_legend_label=style_legend_label,
-                current_state_section_label=current_state_section_label,
-                current_margins_label=current_margins_label,
-                current_left_label=current_left_label,
-                current_right_label=current_right_label,
             )
             self._current_state_summary_display = tab_runtime.get("current_state_summary_display")
 
@@ -292,12 +275,36 @@ class GtkRuntimeSignalBackend:
         )
         center_body_widgets = build_center_body_section(gtk_module, root)
         main_widgets = build_main_tab_section(gtk_module)
-        main_page_shell = build_centered_page_shell(gtk_module, main_widgets["main_col"])
+        margin_cross_widgets = build_margin_cross_grid_section(
+            gtk_module,
+            compose_center=main_widgets["compose_grid"],
+            top_margin_label=primary_margin_controls["top_margin_label"],
+            top_margin_spin=primary_margin_controls["top_margin_spin"],
+            left_margin_label=primary_margin_controls["left_margin_label"],
+            left_margin_spin=primary_margin_controls["left_margin_spin"],
+            configure_spin_button=self._configure_spin_button,
+        )
+        main_widgets["main_col"].pack_start(margin_cross_widgets["margin_cross_grid"], False, False, 0)
+        if hasattr(main_widgets["main_col"], "reorder_child"):
+            main_widgets["main_col"].reorder_child(margin_cross_widgets["margin_cross_grid"], 0)
+
         action_widgets = build_action_cluster_section(
             gtk_module,
             main_widgets["main_col"],
             default_apply_mode=_default_apply_mode(),
         )
+        margins_drawer_widgets = build_margins_options_drawer_section(
+            gtk_module,
+            configure_spin_button=self._configure_spin_button,
+            apply_margin_text_widget_style=self._apply_margin_text_widget_style,
+        )
+        main_widgets["main_col"].pack_start(margins_drawer_widgets["margins_options_trigger_row"], False, False, 0)
+        if margins_drawer_widgets.get("margins_options_revealer") is not None:
+            main_widgets["main_col"].pack_start(margins_drawer_widgets["margins_options_revealer"], False, False, 0)
+        else:
+            main_widgets["main_col"].pack_start(margins_drawer_widgets["margins_options_drawer"], False, False, 0)
+
+        main_page_shell = build_centered_page_shell(gtk_module, main_widgets["main_col"])
         state_labels = build_runtime_state_labels(gtk_module)
 
         center_body_widgets["command_tabs"].append_page(main_page_shell, main_widgets["main_section_label"])
@@ -308,7 +315,9 @@ class GtkRuntimeSignalBackend:
             **primary_margin_controls,
             **center_body_widgets,
             **main_widgets,
+            **margin_cross_widgets,
             **action_widgets,
+            **margins_drawer_widgets,
             **state_labels,
         }
 
@@ -317,42 +326,10 @@ class GtkRuntimeSignalBackend:
         gtk_module: Any,
         *,
         command_tabs: Any,
-        top_margin_label: Any,
-        top_margin_spin: Any,
-        left_margin_label: Any,
-        left_margin_spin: Any,
-        priority_note_label: Any,
-        style_legend_label: Any,
-        current_state_section_label: Any,
-        current_margins_label: Any,
-        current_left_label: Any,
-        current_right_label: Any,
     ) -> dict[str, Any]:
         slideshow_widgets = build_slideshow_tab_section(gtk_module, configure_spin_button=self._configure_spin_button)
-        margins_widgets = build_margins_tab_section(
-            gtk_module,
-            top_margin_label=top_margin_label,
-            top_margin_spin=top_margin_spin,
-            left_margin_label=left_margin_label,
-            left_margin_spin=left_margin_spin,
-            priority_note_label=priority_note_label,
-            style_legend_label=style_legend_label,
-            current_state_section_label=current_state_section_label,
-            current_margins_label=current_margins_label,
-            current_left_label=current_left_label,
-            current_right_label=current_right_label,
-            configure_spin_button=self._configure_spin_button,
-            apply_margin_text_widget_style=self._apply_margin_text_widget_style,
-        )
-
-        command_tabs.append_page(margins_widgets["margins_tab_box"], margins_widgets["margins_tab_title"])
-
         command_tabs.append_page(slideshow_widgets["slideshow_tab_box"], slideshow_widgets["slideshow_tab_title"])
-
-        return {
-            **slideshow_widgets,
-            **margins_widgets,
-        }
+        return slideshow_widgets
 
     def _build_footer_runtime_widgets(self, gtk_module: Any, *, window: Any, root: Any) -> dict[str, Any]:
         footer_widgets = build_footer_section(gtk_module, root)

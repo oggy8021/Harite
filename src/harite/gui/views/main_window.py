@@ -119,7 +119,7 @@ class MainWindow:
         self.layout_sections: tuple[tuple[str, tuple[str, ...]], ...] = (
             ("title_menu_flow", ("title", "menu", "flow", "save_as")),
             ("compose_input", ("input_value", "cross_layout", "align", "valign")),
-            ("margins_tab", ("margins", "margin_text", "margin_area")),
+            ("main_margins", ("margins", "margin_text", "margin_area", "margins_drawer")),
             ("action_cluster", ("optimize", "apply", "saved_files")),
             ("slideshow_tab", ("slideshow_summary", "slideshow_srcdirs", "slideshow_interval", "slideshow_controls", "slideshow_details")),
             ("status_footer", ("status_message", "slideshow_summary")),

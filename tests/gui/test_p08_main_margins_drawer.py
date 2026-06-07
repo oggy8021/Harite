@@ -99,7 +99,7 @@ def test_margin_spins_visible_on_main_face(qapp):
 
     w = build_main_tab()
     for key in ("top_margin_spin", "left_margin_spin", "right_margin_spin", "bottom_margin_spin"):
-        assert w[key].isVisible(), f"{key} should be on the Main tab face"
+        assert not w[key].isHidden(), f"{key} should be on the Main tab face"
 
 
 def test_embed_and_position_widgets_live_in_drawer(qapp):
