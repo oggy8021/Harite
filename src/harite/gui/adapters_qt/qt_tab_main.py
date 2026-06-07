@@ -488,7 +488,7 @@ def build_main_tab() -> dict[str, Any]:
         action_cluster    – Preview | Optimize | Apply
         margins drawer trigger + collapsible options drawer
     """
-    from PyQt6.QtWidgets import QVBoxLayout, QWidget
+    from PyQt6.QtWidgets import QSizePolicy, QVBoxLayout, QWidget
 
     from harite.gui.adapters_qt.qt_tab_margins import (
         _build_margins_options_drawer_trigger,
@@ -497,22 +497,22 @@ def build_main_tab() -> dict[str, Any]:
     )
 
     main_col = QWidget()
+    main_col.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
     layout = QVBoxLayout(main_col)
     layout.setContentsMargins(8, 8, 8, 8)
     layout.setSpacing(12)
 
     compose_widgets = build_compose_grid_section()
     margin_widgets = build_margin_cross_grid(compose_center=compose_widgets["compose_grid"])
-    layout.addWidget(margin_widgets["margin_cross_grid"])
+    layout.addWidget(margin_widgets["margin_cross_grid"], stretch=0)
 
     action_widgets = build_action_cluster_section(_default_apply_mode())
-    layout.addWidget(action_widgets["action_cluster_row"])
+    layout.addWidget(action_widgets["action_cluster_row"], stretch=0)
 
     drawer_trigger = _build_margins_options_drawer_trigger()
     drawer_widgets = build_margins_options_drawer()
-    layout.addWidget(drawer_trigger["margins_options_trigger_row"])
-    layout.addWidget(drawer_widgets["margins_options_drawer"])
-    layout.addStretch()
+    layout.addWidget(drawer_trigger["margins_options_trigger_row"], stretch=0)
+    layout.addWidget(drawer_widgets["margins_options_drawer"], stretch=0)
 
     state_labels = build_runtime_state_labels()
 

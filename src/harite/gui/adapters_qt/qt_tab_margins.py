@@ -272,7 +272,7 @@ def _build_center_stack() -> dict[str, Any]:
     )
 
     stack = QWidget()
-    stack.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+    stack.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
     stack_layout = QVBoxLayout(stack)
     stack_layout.setContentsMargins(0, 0, 0, 0)
     stack_layout.setSpacing(8)
@@ -342,7 +342,7 @@ def build_margin_cross_grid(*, compose_center: Any) -> dict[str, Any]:
     right_shell = _vcenter_widget(right["block"])
 
     margin_cross_grid = QWidget()
-    margin_cross_grid.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+    margin_cross_grid.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
     cross_grid = QGridLayout(margin_cross_grid)
     cross_grid.setColumnStretch(1, 1)
     cross_grid.setRowStretch(1, 1)
@@ -405,9 +405,12 @@ def build_margins_options_drawer() -> dict[str, Any]:
 
     center_widgets = _build_center_stack()
 
+    from PyQt6.QtWidgets import QSizePolicy
+
     drawer = QWidget()
     drawer.setObjectName(QT_DRAWER_OBJECT_NAME)
     drawer.setVisible(False)
+    drawer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
     drawer_layout = QVBoxLayout(drawer)
     drawer_layout.setContentsMargins(0, 8, 0, 0)
     drawer_layout.setSpacing(10)

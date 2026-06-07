@@ -350,21 +350,12 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
     slideshow_label = gtk_module.Label(label="")
     slideshow_tab_title = gtk_module.Label(label="Slideshow (stopped)")
     set_xalign_if_supported(slideshow_tab_title)
-    slideshow_top_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     slideshow_srcdir_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     slideshow_controls_shell = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     slideshow_options_trigger_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
     slideshow_options_drawer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=8)
-    slideshow_bottom_row = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
-    if hasattr(slideshow_top_row, "set_size_request"):
-        slideshow_top_row.set_size_request(-1, 16)
-    if hasattr(slideshow_bottom_row, "set_size_request"):
-        slideshow_bottom_row.set_size_request(-1, 16)
-    if hasattr(slideshow_top_row, "set_vexpand"):
-        slideshow_top_row.set_vexpand(True)
-    if hasattr(slideshow_bottom_row, "set_vexpand"):
-        slideshow_bottom_row.set_vexpand(True)
-    slideshow_tab_box.pack_start(slideshow_top_row, True, True, 0)
+    if hasattr(slideshow_tab_box, "set_vexpand"):
+        slideshow_tab_box.set_vexpand(False)
     slideshow_tab_box.pack_start(slideshow_srcdir_row, False, False, 0)
     slideshow_tab_box.pack_start(slideshow_controls_shell, False, False, 0)
     slideshow_tab_box.pack_start(slideshow_options_trigger_row, False, False, 0)
@@ -381,7 +372,6 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
         if hasattr(slideshow_options_drawer, "hide"):
             slideshow_options_drawer.hide()
         slideshow_tab_box.pack_start(slideshow_options_drawer, False, False, 0)
-    slideshow_tab_box.pack_start(slideshow_bottom_row, True, True, 0)
 
     left_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     right_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)

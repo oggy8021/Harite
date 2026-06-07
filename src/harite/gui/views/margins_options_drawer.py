@@ -13,6 +13,8 @@ QT_TRIGGER_OBJECT_NAME = "hariteMarginsOptionsTrigger"
 GTK_DRAWER_STYLE_CLASS = "harite-margins-options-drawer-expanded"
 GTK_TRIGGER_STYLE_CLASS = "harite-margins-options-trigger-expanded"
 
+_MARGINS_DRAWER_SAVED_WINDOW_HEIGHT = "_margins_options_drawer_saved_window_height"
+
 _GTK_DRAWER_CSS = b"""
 .harite-margins-options-drawer-expanded {
   background-color: mix(@theme_bg_color, @theme_fg_color, 0.06);
@@ -259,12 +261,37 @@ def apply_margins_options_drawer_open_state(backend: Any, *, expanded: bool) -> 
     _apply_gtk_drawer_open_state(drawer, trigger, expanded=expanded)
 
 
+def _sync_margins_drawer_window_frame(backend: Any, *, expanded: bool) -> None:
+    from harite.gui.views.drawer_window_resize import (
+        grow_window_after_drawer_expand,
+        shrink_window_after_drawer_collapse,
+    )
+
+    if expanded:
+        grow_window_after_drawer_expand(
+            backend,
+            state_attr=_MARGINS_DRAWER_SAVED_WINDOW_HEIGHT,
+            tab_attr="main_col",
+        )
+        return
+    shrink_window_after_drawer_collapse(
+        backend,
+        state_attr=_MARGINS_DRAWER_SAVED_WINDOW_HEIGHT,
+        tab_attr="main_col",
+    )
+
+
 def _set_drawer_expanded(backend: Any, *, expanded: bool) -> None:
+    if expanded:
+        from harite.gui.views.drawer_window_resize import save_tab_compact_hint_before_expand
+
+        save_tab_compact_hint_before_expand(backend, tab_attr="main_col")
     setattr(backend, "_margins_options_drawer_expanded", expanded)
     revealer = backend._objects.get("margins_options_revealer")
     if revealer is not None and hasattr(revealer, "set_reveal_child"):
         revealer.set_reveal_child(expanded)
         apply_margins_options_drawer_open_state(backend, expanded=expanded)
+        _sync_margins_drawer_window_frame(backend, expanded=expanded)
         return
 
     drawer = backend._objects.get("margins_options_drawer")
@@ -273,10 +300,12 @@ def _set_drawer_expanded(backend: Any, *, expanded: bool) -> None:
     if hasattr(drawer, "setVisible"):
         drawer.setVisible(expanded)
         apply_margins_options_drawer_open_state(backend, expanded=expanded)
+        _sync_margins_drawer_window_frame(backend, expanded=expanded)
         return
     if hasattr(drawer, "set_visible"):
         drawer.set_visible(expanded)
         apply_margins_options_drawer_open_state(backend, expanded=expanded)
+        _sync_margins_drawer_window_frame(backend, expanded=expanded)
 
 
 def _is_drawer_expanded(backend: Any) -> bool:

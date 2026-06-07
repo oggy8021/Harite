@@ -236,6 +236,51 @@ def test_options_drawer_toggle_applies_p07_open_state_styles(qapp):
     assert trigger.styleSheet() == ""
 
 
+def test_slideshow_tab_has_no_vertical_stretch_spacers(qapp):
+    from PyQt6.QtWidgets import QSizePolicy
+
+    w = _make_slideshow_tab(qapp)
+    layout = w["slideshow_tab_box"].layout()
+
+    for index in range(layout.count()):
+        spacer = layout.itemAt(index).spacerItem()
+        if spacer is None:
+            continue
+        assert spacer.sizePolicy().verticalPolicy() != QSizePolicy.Policy.Expanding
+
+
+def test_slideshow_drawer_grows_window_without_shifting_core(qapp):
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.slideshow_options_drawer import toggle_slideshow_options_drawer
+
+    backend = load_qt_runtime_signal_backend()
+    win = backend.qwindow
+    backend._objects["command_tabs"].setCurrentIndex(1)
+    win.show()
+    qapp.processEvents()
+
+    anchor = backend._objects["slideshow_controls_shell"]
+    anchor_y = anchor.mapTo(win, anchor.rect().topLeft()).y()
+    start_height = win.height()
+
+    toggle_slideshow_options_drawer(backend)
+    for _ in range(8):
+        qapp.processEvents()
+
+    assert backend._objects["slideshow_options_drawer"].isVisible()
+    drawer_height = backend._objects["slideshow_options_drawer"].minimumSizeHint().height()
+    assert win.height() >= start_height + drawer_height
+    assert abs(anchor.mapTo(win, anchor.rect().topLeft()).y() - anchor_y) <= 1
+
+    toggle_slideshow_options_drawer(backend)
+    for _ in range(20):
+        qapp.processEvents()
+
+    assert not backend._objects["slideshow_options_drawer"].isVisible()
+    assert win.height() == start_height
+    assert abs(anchor.mapTo(win, anchor.rect().topLeft()).y() - anchor_y) <= 1
+
+
 def test_profile_row_has_no_applies_lr_label(qapp):
     w = _make_slideshow_tab(qapp)
     profile_row = w["slideshow_profile_row"]
