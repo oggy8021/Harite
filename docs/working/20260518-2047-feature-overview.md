@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-08（P-08 gui-spec 反映・working 棚卸し）
+最終更新: 2026-05-31（P-08 完了・3層 audit 反映）
 
 ## 位置づけ
 
@@ -69,7 +69,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | P-06 | Slideshow CODH キーワード chip  | --                                           | Slideshow タブ右上角 read-only（`codh_keyword` 確認）。編集は Manage。 | **完了**（Qt）— [planning](finished/20260606-p06-slideshow-codh-keyword-chip-planning.md)                                             |
 | P-07 | Slideshow Drawer 開閉視認性     | --                                           | 背景ずらし・上辺線・chevron 回転。palette 優先（#412）。                   | **完了**（#417）— [planning](finished/20260606-p07-slideshow-drawer-open-state-planning.md)                                                                                                         |
 | P-04 | Main action cluster 整理        | --                                           | Preview/Optimize/Apply の常設 label 削減。C-04 後続 polish。              | **完了**（#429）— [planning](finished/20260607-p04-main-action-cluster-planning-draft.md)                                                                                  |
-| P-08 | Main + Margins Drawer（案 B）   | --                                           | 2 tab + Main 正面 4 spin + Margins Drawer。C-04 §7.2 案 B。                    | **gui-spec 反映済**（#433）— [planning](20260608-p08-main-margins-drawer-planning-draft.md) / [slice-memo](design/20260608-p08-main-margins-drawer-slice-memo.md)。次: テスト → impl |
+| P-08 | Main + Margins Drawer（案 B）   | --                                           | 2 tab + Main 正面 4 spin + Margins Drawer。C-04 §7.2 案 B。options drawer 枠伸縮（Option B）。 | **完了**（#436）— [planning](finished/20260608-p08-main-margins-drawer-planning-draft.md) / [audit](../../specs/gui/audit/p08-3layer-audit.md) / [slice-memo](design/20260608-p08-main-margins-drawer-slice-memo.md) |
 
 
 ### 2. 構想保持

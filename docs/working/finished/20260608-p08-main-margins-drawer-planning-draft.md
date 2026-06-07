@@ -1,7 +1,7 @@
 # P-08 — Main + Margins Drawer（C-04 案 B）（計画 draft）
 
-最終更新: 2026-06-08  
-ステータス: **gui-spec 改訂完了**（#432 planning、#433 gui-spec §3。次: テスト → impl）
+最終更新: 2026-05-31  
+ステータス: **完了**（#433 gui-spec、#436 impl、[3層 audit](../../specs/gui/audit/p08-3layer-audit.md)）
 
 ## 位置づけ
 

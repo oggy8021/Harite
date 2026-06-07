@@ -31,10 +31,10 @@
 
 ## Polish（P-xx）— 2026-06-06〜08
 
-進行中の P-08 planning は親 [../20260608-p08-main-margins-drawer-planning-draft.md](../20260608-p08-main-margins-drawer-planning-draft.md)（gui-spec #433 反映済、impl 待ち）。
-
 | ファイル | 内容 |
 | --- | --- |
+| [20260608-p08-main-margins-drawer-planning-draft.md](20260608-p08-main-margins-drawer-planning-draft.md) | P-08 Main + Margins Drawer 案 B（#436 完了） |
+| [20260608-p08-3layer-audit.md](20260608-p08-3layer-audit.md) | P-08 3層 audit（working コピー。正本: [gui/audit/p08-3layer-audit.md](../../specs/gui/audit/p08-3layer-audit.md)） |
 | [20260607-p04-main-action-cluster-planning-draft.md](20260607-p04-main-action-cluster-planning-draft.md) | P-04 Main action cluster 整理（#429 完了） |
 | [20260606-p05-manage-sources-panel-planning.md](20260606-p05-manage-sources-panel-planning.md) | P-05 Manage sources Local/Presets タブ（Qt 完了） |
 | [20260606-p06-slideshow-codh-keyword-chip-planning.md](20260606-p06-slideshow-codh-keyword-chip-planning.md) | P-06 Slideshow CODH keyword chip（Qt 完了） |
