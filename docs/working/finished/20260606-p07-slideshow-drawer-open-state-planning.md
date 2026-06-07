@@ -9,7 +9,7 @@
 | --- | --- |
 | [feature-overview §P-07](../20260518-2047-feature-overview.md) | inventory 入口 |
 | **本書** | Slideshow options Drawer の **開いている／閉じている** 視認性 — 計画正本（完了記録） |
-| [C-04 計画正本](../20260604-c04-gui-surface-planning-draft.md) | Drawer 導入（Wave b） |
+| [C-04 計画正本](20260604-c04-gui-surface-planning-draft.md) | Drawer 導入（Wave b） |
 | [surface slice-memo](../design/20260604-c04-slideshow-margins-surface-slice-memo.md) | S2–S5 合意（Manage / Mode は Drawer 内） |
 | GitHub [#412](https://github.com/oggy8021/Harite/issues/412) | 起票（online-issues への md 転記は **不要**、クローズ済み） |
 

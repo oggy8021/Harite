@@ -103,12 +103,9 @@ def sync_apply_mode_from_owner(backend: Any, owner: Any) -> None:
     backend._set_toggle_active("radApplyPerMonitor", is_span)
     backend._set_toggle_active("radApplySingle", not is_span)
 
-    span_opt_in = False
-    prefs = getattr(owner, "preferences", None)
-    apply_prefs = getattr(prefs, "apply", None) if prefs is not None else None
-    if apply_prefs is not None:
-        span_opt_in = bool(getattr(apply_prefs, "windows_apply_span", False))
-    backend._set_label_text("lblApplyMode", apply_mode_help_text(mode, windows_apply_span=span_opt_in))
+    from harite.gui.views.main_action_surface import sync_apply_mode_tooltips
+
+    sync_apply_mode_tooltips(backend, owner, mode=mode)
 
 
 def sync_action_availability_from_owner(backend: Any, owner: Any) -> None:
@@ -120,6 +117,14 @@ def sync_action_availability_from_owner(backend: Any, owner: Any) -> None:
     from harite.gui.dual_display_ui import sync_dual_display_slot_availability_from_owner
 
     sync_dual_display_slot_availability_from_owner(backend, owner)
+    sync_flow_legend_from_owner(backend, owner)
+
+
+def sync_flow_legend_from_owner(backend: Any, owner: Any | None) -> None:
+    from harite.gui.views.flow_legend_surface import apply_flow_legend_markup
+
+    widget = backend._objects.get("lblFlowLegend")
+    apply_flow_legend_markup(widget, owner=owner)
 
 
 def sync_input_state_from_owner(backend: Any, owner: Any) -> None:
@@ -134,8 +139,6 @@ def sync_input_state_from_owner(backend: Any, owner: Any) -> None:
 
     sync_action_availability_from_owner(backend, owner)
     backend._set_save_path_dialog_open_state(bool(getattr(owner, "save_path_dialog_open", False)))
-    backend._set_label_text("lblOptimizeResult", "Optimize result: not-run")
-    backend._set_label_text("lblApplyTarget", "Apply target: not-ready")
 
 
 def build_margin_settings_preview(backend: Any, owner: Any | None = None) -> str:
@@ -229,3 +232,4 @@ def sync_feedback_from_owner(backend: Any, owner: Any) -> None:
         error=error,
         status_level=level or None,
     )
+    sync_flow_legend_from_owner(backend, owner)

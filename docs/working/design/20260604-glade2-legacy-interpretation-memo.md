@@ -2,7 +2,7 @@
 
 最終更新: 2026-06-04  
 入力: `wallpositapplet.glade`（Glade2 / Gtk+ 2.6、2026-06-04 に `out/` へ一時配置・**読解後オーナー削除**）。以下は読解時点の記録。  
-計画正本: [20260604-c04-gui-surface-planning-draft.md](../20260604-c04-gui-surface-planning-draft.md) §7.1
+計画正本: [20260604-c04-gui-surface-planning-draft.md](../finished/20260604-c04-gui-surface-planning-draft.md) §7.1
 
 ---
 
@@ -148,7 +148,7 @@
 
 - [x] 底辺 hbox14・margin 十字・認識 — **相違なし**
 - [x] 全面 tab 統合は出しにくい — **維持**
-- [x] Margins は **Main Drawer 等もあり** — 専用 tab は永久ではない（[計画正本 §7.2](../20260604-c04-gui-surface-planning-draft.md)）
+- [x] Margins は **Main Drawer 等もあり** — 専用 tab は永久ではない（[計画正本 §7.2](../finished/20260604-c04-gui-surface-planning-draft.md)）
 - [x] 生 glade — **再参照しない**。原本はオーナー手元、`out/` から削除
 
 ---

@@ -1,23 +1,23 @@
 # C-01-F — Remote live sync on slideshow tick（計画 draft）
 
 最終更新: 2026-06-07  
-ステータス: **planning 合意**（§3 CODH index+cursor、§7 gate 記入済み。**impl は gate 通過後**）
+ステータス: **完了**（#425 CODH index+cursor、#426 JMA interval sync、spec 改訂 #427）
 
 ## 位置づけ
 
 
 | 文書                                                                                | 役割                                                        |
 | --------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| [feature-overview](20260518-2047-feature-overview.md) §C-01-F                     | inventory 入口（1 行）                                         |
+| [feature-overview](../20260518-2047-feature-overview.md) §C-01-F                     | inventory 入口（1 行）                                         |
 | **本書**                                                                            | C-01 第 2 段の **計画正本** — remote を「ライブ壁紙 feed」として tick と結線する |
-| [C-01 planning](finished/20260603-1400-c01-external-wallpaper-source-planning.md) | 第 1 段（cache-first staging + Start/Refresh sync）— **完了**   |
-| [C-01-E 統合索引](finished/20260603-c01-e-merged-inventory.md)                        | NDL/CODH 実現性検証 — **完了**（本書の素材）                            |
-| [harite-source-spec §12.4](../specs/source/harite-source-spec.md)                 | 現行正本（tick は network しない）— **改訂対象**                        |
+| [C-01 planning](20260603-1400-c01-external-wallpaper-source-planning.md) | 第 1 段（cache-first staging + Start/Refresh sync）— **完了**   |
+| [C-01-E 統合索引](20260603-c01-e-merged-inventory.md)                        | NDL/CODH 実現性検証 — **完了**（本書の素材）                            |
+| [harite-source-spec §12.4](../../specs/source/harite-source-spec.md)                 | 正本 — tick sync 契約 **反映済み**（#427）                        |
 
 
 **前提（完了済み）:** C-02 / C-05 / C-01 / C-01-E / C-04（Slideshow Drawer 等）。
 
-**後続（完了済み）:** [C-01-E-KW](finished/20260605-c01-e-kw-codh-keyword-planning.md)（#413）— tick sync なしでも Refresh / Start 前 sync で運用。
+**後続（完了済み）:** [C-01-E-KW](20260605-c01-e-kw-codh-keyword-planning.md)（#413）— tick sync なしでも Refresh / Start 前 sync で運用。
 
 **据え置き経緯（2026-06-06）:** 初版は CODH への tick 毎 **search probe**（`total` + random `start`）が負荷懸念で gate 未記入のまま保留。
 
@@ -59,7 +59,7 @@
 
 ### 1.2 なぜこうなったか（要約）
 
-C-01 第 1 段の決定（[planning §Open questions](finished/20260603-1400-c01-external-wallpaper-source-planning.md)）:
+C-01 第 1 段の決定（[planning §Open questions](20260603-1400-c01-external-wallpaper-source-planning.md)）:
 
 - cache は **最新 1 枚 staging**（#3b）
 - **K-05 定期 auto-sync は対象外**
@@ -102,7 +102,7 @@ NDL/CODH（C-01-E）は **同じ枠** に載ったが、ランダム源には **
 | --- | --- | --- |
 | **JMA** `remote-jma-weather-map` | **Interval 境界で sync** | `list.json` → filename 変化時のみ画像 GET（同一なら **skip** — F3 案 A）。`min_interval 600` と公式更新周期を配線 |
 | **CODH**（random / keyword 含む全 preset） | **index + cursor で 1 件選び → 画像 GET → `latest.*`** | 詳細は [§3.1](#31-codh--index--cursorb-案確定）。tick 毎の search probe は **しない** |
-| **NDL** `ndl-random-*` | **本波は据え置き** | tick sync で価値は出やすいがオーナー判断まで保留。[inventory §3.4](finished/20260603-c01-e-ndl-tsugidigi-inventory.md) 参照 |
+| **NDL** `ndl-random-*` | **本波は据え置き** | tick sync で価値は出やすいがオーナー判断まで保留。[inventory §3.4](20260603-c01-e-ndl-tsugidigi-inventory.md) 参照 |
 | **local-dir** | **変更なし** | 従来どおりフォルダ内 cycle のみ |
 
 **実行中の Refresh（Manage）** — 現行どおり実行中 run との競合に注意（§12.3）。CODH は Refresh で **index 再構築**（§3.1）。
@@ -126,7 +126,7 @@ NDL/CODH（C-01-E）は **同じ枠** に載ったが、ランダム源には **
 | **構築手順** | `probe`（`start=0&limit=1` → `total`）→ `start` を増やしながら `limit=L`（例 50–100）で **ページング** → 各 `results[].canvasThumbnail` を `/200,/` → `/max/` に正規化 |
 | **保存先** | `{cache_root}/{source_id}/codh-index.json` |
 | **中身（最小）** | `version`, `query_key`（indexer + 検索条件 + keyword の fingerprint）, `total`, `built_at`, `entries[]`（各 `{image_url}`） |
-| **サイズ感** | 全件でも URL のみなら **~1 MB 未満**（[inventory](finished/20260603-c01-e-codh-icp-inventory.md) の全件 JSON ≈3MB より軽い） |
+| **サイズ感** | 全件でも URL のみなら **~1 MB 未満**（[inventory](20260603-c01-e-codh-icp-inventory.md) の全件 JSON ≈3MB より軽い） |
 | **書き込み** | `codh-index.json.tmp` → rename（途中失敗で壊れた index を読まない） |
 
 `limit` 省略は **禁止**（inventory 既知 — UI フリーズ）。
@@ -169,10 +169,10 @@ API ページングの `start=` ではなく、**候補リスト上の cursor**�
 
 | 文書                                                                 | 変更                                                     |
 | ------------------------------------------------------------------ | ------------------------------------------------------ |
-| [source-spec §12.4](../specs/source/harite-source-spec.md)         | `slideshow tick` 行を **provider 別**に書き換え                |
-| [source-spec §15.5](../specs/source/harite-source-spec.md)         | JMA: tick/interval sync 契約                             |
-| [source-spec §15.6–15.7](../specs/source/harite-source-spec.md)    | NDL/CODH tick 方針                                       |
-| [slideshow-spec §6.6](../specs/slideshow/harite-slideshow-spec.md) | tick 前 remote sync の順序（sync → collect → cycle → apply） |
+| [source-spec §12.4](../../specs/source/harite-source-spec.md)         | `slideshow tick` 行を **provider 別**に書き換え — **完了**（#427） |
+| [source-spec §15.1.3](../../specs/source/harite-source-spec.md)         | JMA: tick/interval sync 契約 — **完了**                             |
+| [source-spec §15.3–15.4](../../specs/source/harite-source-spec.md)    | NDL/CODH tick 方針 — **完了**                                       |
+| [slideshow-spec §6.6](../../specs/slideshow/harite-slideshow-spec.md) | tick 前 remote sync の順序 — **完了**（#427） |
 
 
 ### 4.2 コード（想定）
@@ -228,7 +228,7 @@ API ページングの `start=` ではなく、**候補リスト上の cursor**�
 
 ## 7. 着手 gate checklist
 
-impl 着手前にオーナーが下表に **pass** / **revise** / **reject** を記入する（[C-04 slice-memo](design/20260604-c04-slideshow-margins-surface-slice-memo.md) と同形式）。
+impl 着手前にオーナーが下表に **pass** / **revise** / **reject** を記入する（[C-04 slice-memo](../design/20260604-c04-slideshow-margins-surface-slice-memo.md) と同形式）。
 
 
 | # | 論点 | 現状 / 提案 | オーナー |

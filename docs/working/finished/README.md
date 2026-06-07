@@ -22,6 +22,13 @@
 | [20260603-c01-e-3layer-audit.md](20260603-c01-e-3layer-audit.md) | C-01-E 軽量 audit |
 | [20260605-c01-e-kw-codh-keyword-planning.md](20260605-c01-e-kw-codh-keyword-planning.md) | C-01-E-KW planning（#413 完了） |
 
+## C-01-F / C-04 — 2026-06-07
+
+| ファイル | 内容 |
+| --- | --- |
+| [20260604-c01-f-remote-sync-on-tick-planning-draft.md](20260604-c01-f-remote-sync-on-tick-planning-draft.md) | C-01-F planning（#425–426、spec #427） |
+| [20260604-c04-gui-surface-planning-draft.md](20260604-c04-gui-surface-planning-draft.md) | C-04 planning（#406–409、spec #427） |
+
 ## Polish（P-xx）— 2026-06-06
 
 | ファイル | 内容 |

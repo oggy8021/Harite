@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-07
+最終更新: 2026-06-08
 
 ## 1. GUI の責務
 
@@ -98,7 +98,7 @@ layout 戦略:
 - GUI の常設補助説明面は以下である。
   - header の flow legend
   - footer の status / slideshow summary / error
-  - Main tab の `apply mode help row`
+  - Main tab の apply mode radio tooltip（§3 action cluster）
   - Margins tab の widget tooltip（line limit / 優先規則 / behavior。§3 Margins tab 参照）
   - Slideshow tab の mode help（Drawer 内）
   - settings dialog の state/notice
@@ -112,7 +112,11 @@ Main Window:
 - command bar には `Color`、`Settings`、`About` を右寄せで並べる。
 - 2 行目の flow row では左に `Compose -> Optimize -> Apply` を置き、右に `Export Image` を置く。
 - flow row の `Export Image` は optimize 結果画像の書き出し導線であり、設定ファイル保存とは別面である。
-- flow row の左端には導線説明として flow legend を常設する。
+- flow row の左端には導線説明として flow legend を常設する。進行段階に応じて **現在段階のみ Bold**（GTK markup / Qt RichText）とする。
+  - input 準備完了〜optimize 前: **Compose**
+  - optimize 完了〜apply 前（`can_apply`）: **Optimize**
+  - apply 完了（`status_phase=apply` かつ `status_message` に completed）: **Apply**
+  - 判定は `flow_legend_surface.flow_legend_active_step(owner)`。runtime は `sync_flow_legend_from_owner` で `lblFlowLegend` を更新する。
 - footer も 2 行構成で、1 行目は左に `Status`、右に `Slideshow summary` を置く。
 - footer 2 行目は separator の下に `Error` を置き、status と error を縦 2 段で分離する。
 - footer の `Status`、`Slideshow summary`、`Error` は実行状態と失敗面を読むための常設説明面である。
@@ -126,15 +130,23 @@ Main tab:
 - 中央 panel は direction toggle 群と **同型 3 行**とし、上段に pick state label、**中段**（Left-L … Right-L / Left-R … Right-R と同高）に **`Swap L/R`** button を置く（§4.1）。
 - 左右 panel は同型で、上段に十字配置の direction toggle と `Open-L/R`、下段に選択 path 表示と `Clear-L/R` を置く。
 - Main tab の選択 path 表示（`entPathL` / `entPathR`）は full path をそのまま出さず、共通 helper `format_input_display(...)` で **basename の省略表示** にする（§6.1 参照）。
-- direction toggle 群は `Top/Bottom/Left/Right` を display ごとに十字状へ配置し、画像 picker button を中央に置く。
-- action cluster は横 3 群構成で、左から `Preview`、`Optimize`、`Apply` を置く。
-- action cluster の 3 群は **上端揃え** とする。群の高さ差（Apply 群の mode row 等）によって section label や button 行が縦方向にずれないこと。
-- `Optimize` 群は button と result label を 1 行にまとめる（GTK backend の現行レイアウト）。
-- Qt backend では、`Optimize` 群の result label（`Optimize result: ...`）を button の **直下** に置いてもよい。button は icon + 文字列を維持する。
-- `Apply` 群は button と target label の行に加え、`apply mode row` と `apply mode help row` を別行で持つ（GTK backend の現行レイアウト）。
-- Qt backend では、`Apply` 群の target label（`Apply target: ...`）を button の **直下** に置き、mode row 以降は現行どおり残り領域へ並べてよい。
-- `apply mode row` は `No Split` / `Auto-Split` の radio を置き、`apply mode help row` は選択意味の説明 label を置く。
-- `Preview` 群は左右 preview box を横並びに置き、その上下に assignment、画像 preview、result、state/source/assist を縦積みする。
+- direction toggle 群は `Top/Bottom/Left/Right` を display ごとに十字状へ配置し、画像 picker button を中央に置く。toggle tooltip は `{Direction} alignment-{L|R}`（例: `Top alignment-L`）。
+- action cluster は横 3 群構成で、左から preview サムネ群、`Optimize` button 群、`Apply` button 群を置く（P-04）。**セクション見出し label は持たない**（`Preview` / `Optimize` / `Apply` の見出し行なし）。
+- action cluster の 3 群は **上端揃え** とする。
+- `Apply` button は **自然幅**（列いっぱいに伸ばさない）。`No Split` / `Auto-Split`（Windows: `Span`）radio 行は Apply button の直下で **水平センタリング** する。
+- `Optimize` 群は **`Optimize` button のみ**（icon + 文字列）。結果は **footer `Status` / `Error`** に出す。`Optimize result:` 常設 label は持たない。
+- `Apply` 群は **`Apply` button** と **`apply mode row`**（`No Split` / `Span|Auto-Split` radio）のみ。`Apply target:` 常設 label と `apply mode help row` は持たない。
+- apply mode の意味説明は **radio 群（および `Apply` button）の tooltip** に載せる（`apply_mode_help_text(...)` の全文。mode 切替で tooltip を更新する）。
+- `Preview` 群は **左右サムネ 2 枚のみ**（横並び）。idle 時は空枠（中央に `not-ready` 等の文言を出さない）。optimize 後は画像を表示する。
+- Preview 群に **常設しない**: assignment / result / `Preview:` / `Preview source:` / `Assist:` 行。
+- Main action cluster の補助説明の載せ先:
+
+| 旧常設 | 載せ先 |
+| --- | --- |
+| `Optimize result:` | footer `Status`（成功）/ `Error`（失敗） |
+| `Apply target:` | footer `Status`（apply 直後） |
+| apply mode help | apply mode radio 群 tooltip |
+| Preview 補助 label 群 | 原則なし（サムネと enable/disable で足りる） |
 
 Margins tab:
 
@@ -205,13 +217,14 @@ flowchart TD
 
 - GUI は日常操作面として apply や slideshow を直接起動するが、内部では core / plugin / slideshow helper の経路を利用する。
 
-Optimize / Apply クリック後の action cluster ラベル（GTK / Qt 共通）:
+Optimize / Apply クリック後の feedback（GTK / Qt 共通、P-04）:
 
-- `Optimize` クリック成功時: `lblOptimizeResult` = `Optimize result: success`、`lblApplyTarget` = `Apply target: ready`、`btnSetWall` を有効化する。
-- `Optimize` クリック失敗時: `lblOptimizeResult` = `Optimize result: failed`、`lblApplyTarget` = `Apply target: not-ready`、`btnSetWall` を無効化する。
-- handler 未接続時: `Optimize result: handler-missing`。
-- 成功 / 失敗後の owner 同期は **`_sync_preview_state_from_owner` と `_sync_action_availability_from_owner` のみ** とし、`sync_input_state_from_owner`（`Optimize result: not-run` へ戻す）を走らせてはならない。
-- `Apply` クリック成功時: `lblApplyTarget` = `Apply target: last applied`。
+- action cluster に **result / target 常設 label は置かない**。成否は **footer `Status` / `Error`**（owner の `status_message` / `last_error` を `_sync_feedback_from_owner` で反映）と **preview サムネ** で読む。
+- `Optimize` クリック成功時: `btnSetWall` を有効化し、preview を更新、footer に `optimize completed` 等の人間語を出す。
+- `Optimize` クリック失敗時: `btnSetWall` を無効化し、footer `Error` に失敗理由を出す。
+- handler 未接続時: footer `Error` に `handler not connected`。
+- 成功 / 失敗後の owner 同期は **`_sync_preview_state_from_owner`、`_sync_action_availability_from_owner`、`_sync_feedback_from_owner`** とし、input 変更時の `sync_input_state_from_owner` で action cluster へ `not-run` 系文言を復元してはならない。
+- `Apply` クリック成功時: footer `Status` に apply 完了メッセージ（owner `status_message`）。
 
 apply mode の user-facing 意味:
 
@@ -221,8 +234,7 @@ apply mode の user-facing 意味:
 - Windows の **`Span`** も内部値は `per-monitor-auto-split` だが、Apply target は **合成 1 ファイル**（Windows plugin）。OS **Span 表示** と組み合わせて左右見え方を揃える。per-monitor map は約束しない。
 - Windows で display が 2 枚以上検出された場合、Main タブの既定選択は **Span** とする。No Split も選択可能。
 - Settings の **`windows_apply_span`**（bool、既定 `false`）が有効なときだけ、Span モード Apply 前に HKCU `WallpaperStyle=22` を best-effort 設定する（B-lite）。Span 選択は Apply 時 Span 切替への同意とみなす。
-- 補助ラベルとプレビュー文言は `apply_surface.py` が platform 別に生成する（Windows では auto-split / crop 等の Linux 用語を出さない）。
-- apply mode の補助ラベル（Linux 従来）: `No Split` → single file、`Auto-Split` → per display split。
+- apply mode の全文説明は `apply_surface.apply_mode_help_text(...)` を **radio 群 tooltip** へ載せる（platform 別文言。常設 help row は持たない）。
 - CLI にある `per-monitor-explicit` は expert 向け escape hatch として残るが、GUI 主導線には露出しない。
 - GUI は plugin 名を settings から保持するが、target 解決規則は core に従う。
 - `_default_apply_mode` は XFCE セッション時 `per-monitor-auto-split`、Windows plugin かつ display 2 枚以上時も `per-monitor-auto-split`（UI 上 Span）、それ以外は `single-file`。

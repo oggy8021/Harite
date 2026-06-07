@@ -975,18 +975,13 @@ class GtkRuntimeSignalBackend:
             is_active = bool(widget.get_active())
 
         owner = self._get_handler_owner("on_change_apply_mode")
-        span_opt_in = False
-        if owner is not None:
-            prefs = getattr(owner, "preferences", None)
-            apply_prefs = getattr(prefs, "apply", None) if prefs is not None else None
-            span_opt_in = bool(getattr(apply_prefs, "windows_apply_span", False))
-        from harite.apply_surface import apply_mode_help_text as build_apply_mode_help
+        from harite.gui.views.main_action_surface import sync_apply_mode_tooltips
 
-        label = build_apply_mode_help(
-            mode if is_active else "single-file",
-            windows_apply_span=span_opt_in,
+        sync_apply_mode_tooltips(
+            self,
+            owner,
+            mode=mode if is_active else "single-file",
         )
-        self._set_label_text("lblApplyMode", label)
 
         if not is_active:
             return

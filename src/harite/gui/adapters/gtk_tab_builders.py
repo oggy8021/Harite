@@ -10,151 +10,92 @@ from harite.gui.adapters.gtk_layout_builders import (
 
 
 def build_action_cluster_section(gtk_module: Any, main_col: Any, *, default_apply_mode: str) -> dict[str, Any]:
+    from harite.apply_surface import per_monitor_mode_radio_label, single_file_mode_radio_label
+    from harite.gui.views.main_action_surface import apply_apply_mode_tooltips
+
     action_cluster_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=24)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(action_cluster_row, gtk_module.Align.CENTER)
     optimize_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     apply_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(apply_group, gtk_module.Align.CENTER)
     main_col.pack_start(action_cluster_row, False, False, 0)
 
-    optimize_section_label = gtk_module.Label(label="Optimize")
-    set_xalign_if_supported(optimize_section_label)
-
-    optimize_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-    optimize_group.pack_start(optimize_row, False, False, 0)
     optimize_modern_btn = gtk_module.Button(label="Optimize")
     if hasattr(optimize_modern_btn, "set_sensitive"):
         optimize_modern_btn.set_sensitive(False)
     set_button_icon_if_supported(gtk_module, optimize_modern_btn, "icons", "lucide", "image.svg")
-    optimize_row.pack_start(optimize_modern_btn, False, False, 0)
-    optimize_result = gtk_module.Label(label="Optimize result: not-run")
-    set_xalign_if_supported(optimize_result)
-    optimize_row.pack_start(optimize_result, True, True, 0)
+    optimize_group.pack_start(optimize_modern_btn, False, False, 0)
 
-    apply_section_label = gtk_module.Label(label="Apply")
-    set_xalign_if_supported(apply_section_label)
-
-    apply_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-    apply_group.pack_start(apply_row, False, False, 0)
     apply_btn = gtk_module.Button(label="Apply")
     if hasattr(apply_btn, "set_sensitive"):
         apply_btn.set_sensitive(False)
     set_button_icon_if_supported(gtk_module, apply_btn, "icons", "lucide", "wallpaper.svg")
-    apply_row.pack_start(apply_btn, False, False, 0)
-    apply_target = gtk_module.Label(label="Apply target: not-ready")
-    set_xalign_if_supported(apply_target)
-    apply_row.pack_start(apply_target, True, True, 0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(apply_btn, gtk_module.Align.CENTER)
+    apply_btn_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    apply_btn_row.pack_start(apply_btn, False, False, 0)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(apply_btn_row, gtk_module.Align.CENTER)
+    apply_group.pack_start(apply_btn_row, False, False, 0)
 
     apply_mode_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(apply_mode_row, gtk_module.Align.CENTER)
     apply_group.pack_start(apply_mode_row, False, False, 0)
-    apply_mode_help_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
-    apply_group.pack_start(apply_mode_help_row, False, False, 0)
-    from harite.apply_surface import (
-        apply_mode_help_text as build_apply_mode_help,
-        per_monitor_mode_radio_label,
-        single_file_mode_radio_label,
-    )
 
     rad_apply_single = gtk_module.RadioButton.new_with_label(None, single_file_mode_radio_label())
     rad_apply_per_monitor = gtk_module.RadioButton.new_with_label_from_widget(
         rad_apply_single,
         per_monitor_mode_radio_label(),
     )
-    if default_apply_mode == "per-monitor-auto-split":
+    initial_mode = (
+        "per-monitor-auto-split" if default_apply_mode == "per-monitor-auto-split" else "single-file"
+    )
+    if initial_mode == "per-monitor-auto-split":
         if hasattr(rad_apply_per_monitor, "set_active"):
             rad_apply_per_monitor.set_active(True)
-        apply_mode_help_text = build_apply_mode_help("per-monitor-auto-split")
-    else:
-        if hasattr(rad_apply_single, "set_active"):
-            rad_apply_single.set_active(True)
-        apply_mode_help_text = build_apply_mode_help("single-file")
-    apply_mode_label = gtk_module.Label(label=apply_mode_help_text)
-    set_xalign_if_supported(apply_mode_label)
+    elif hasattr(rad_apply_single, "set_active"):
+        rad_apply_single.set_active(True)
     apply_mode_row.pack_start(rad_apply_per_monitor, False, False, 0)
     apply_mode_row.pack_start(rad_apply_single, False, False, 0)
-    apply_mode_help_row.pack_start(apply_mode_label, True, True, 0)
+    apply_apply_mode_tooltips(
+        rad_single=rad_apply_single,
+        rad_per_monitor=rad_apply_per_monitor,
+        apply_btn=apply_btn,
+        mode=initial_mode,
+    )
 
     preview_group = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     action_cluster_row.pack_start(preview_group, False, False, 0)
     action_cluster_row.pack_start(optimize_group, False, False, 0)
     action_cluster_row.pack_start(apply_group, False, False, 0)
 
-    preview_section_label = gtk_module.Label(label="Preview")
-    set_xalign_if_supported(preview_section_label)
-    preview_group.pack_start(preview_section_label, False, False, 0)
-
     preview_images_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=6)
     preview_group.pack_start(preview_images_row, False, False, 0)
 
-    preview_left_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
-    preview_right_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=4)
-    preview_images_row.pack_start(preview_left_box, False, False, 0)
-    preview_images_row.pack_start(preview_right_box, False, False, 0)
-
-    preview_left_assignment = gtk_module.Label(label="L display <- -")
-    set_xalign_if_supported(preview_left_assignment)
-    preview_left_box.pack_start(preview_left_assignment, False, False, 0)
-
-    preview_right_assignment = gtk_module.Label(label="R display <- -")
-    set_xalign_if_supported(preview_right_assignment)
-    preview_right_box.pack_start(preview_right_assignment, False, False, 0)
-
-    preview_left = gtk_module.Image() if hasattr(gtk_module, "Image") else gtk_module.Label(label="Preview L: not-ready")
-    preview_right = gtk_module.Image() if hasattr(gtk_module, "Image") else gtk_module.Label(label="Preview R: not-ready")
+    preview_left = gtk_module.Image() if hasattr(gtk_module, "Image") else gtk_module.Label(label="")
+    preview_right = gtk_module.Image() if hasattr(gtk_module, "Image") else gtk_module.Label(label="")
     if hasattr(preview_left, "set_size_request"):
         preview_left.set_size_request(160, 90)
     if hasattr(preview_right, "set_size_request"):
         preview_right.set_size_request(160, 90)
-    preview_left_box.pack_start(preview_left, False, False, 0)
-    preview_right_box.pack_start(preview_right, False, False, 0)
-
-    preview_left_result = gtk_module.Label(label="Result: not-ready")
-    set_xalign_if_supported(preview_left_result)
-    preview_left_box.pack_start(preview_left_result, False, False, 0)
-
-    preview_right_result = gtk_module.Label(label="Result: not-ready")
-    set_xalign_if_supported(preview_right_result)
-    preview_right_box.pack_start(preview_right_result, False, False, 0)
-
-    preview_state_label = gtk_module.Label(label="Preview: not-ready")
-    set_xalign_if_supported(preview_state_label)
-    preview_group.pack_start(preview_state_label, False, False, 0)
-
-    preview_source_label = gtk_module.Label(label="Preview source: -")
-    set_xalign_if_supported(preview_source_label)
-    preview_group.pack_start(preview_source_label, False, False, 0)
-
-    preview_assist_label = gtk_module.Label(label="Assist: not-ready")
-    set_xalign_if_supported(preview_assist_label)
-    preview_group.pack_start(preview_assist_label, False, False, 0)
+    preview_images_row.pack_start(preview_left, False, False, 0)
+    preview_images_row.pack_start(preview_right, False, False, 0)
 
     return {
         "action_cluster_row": action_cluster_row,
         "optimize_group": optimize_group,
-        "optimize_section_label": optimize_section_label,
-        "optimize_row": optimize_row,
         "optimize_modern_btn": optimize_modern_btn,
-        "optimize_result": optimize_result,
         "apply_group": apply_group,
-        "apply_section_label": apply_section_label,
-        "apply_row": apply_row,
         "apply_btn": apply_btn,
-        "apply_target": apply_target,
         "rad_apply_single": rad_apply_single,
         "rad_apply_per_monitor": rad_apply_per_monitor,
-        "apply_mode_label": apply_mode_label,
         "preview_group": preview_group,
         "preview_images_row": preview_images_row,
         "preview_left": preview_left,
         "preview_right": preview_right,
-        "preview_left_assignment": preview_left_assignment,
-        "preview_right_assignment": preview_right_assignment,
-        "preview_left_result": preview_left_result,
-        "preview_right_result": preview_right_result,
-        "preview_state_label": preview_state_label,
-        "preview_source_label": preview_source_label,
-        "preview_assist_label": preview_assist_label,
-        "preview_section_label": preview_section_label,
     }
 
 
@@ -195,6 +136,7 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     if hasattr(right_display_grid, "set_row_spacing"):
         right_display_grid.set_row_spacing(8)
 
+    from harite.gui.views.compose_surface import direction_alignment_tooltip
     from harite.gui.views.icon_button_surface import apply_icon_only_button
 
     tgl_upper_l = gtk_module.ToggleButton(label="")
@@ -220,14 +162,14 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     set_button_icon_if_supported(gtk_module, btn_get_img_r, "icons", "lucide", "folder-open.svg")
 
     for widget, tooltip in (
-        (tgl_upper_l, "Top-L"),
-        (tgl_upper_r, "Top-R"),
-        (tgl_lower_l, "Bottom-L"),
-        (tgl_lower_r, "Bottom-R"),
-        (tgl_push_left_l, "Left-L"),
-        (tgl_push_right_l, "Right-L"),
-        (tgl_push_left_r, "Left-R"),
-        (tgl_push_right_r, "Right-R"),
+        (tgl_upper_l, direction_alignment_tooltip("Top", "l")),
+        (tgl_upper_r, direction_alignment_tooltip("Top", "r")),
+        (tgl_lower_l, direction_alignment_tooltip("Bottom", "l")),
+        (tgl_lower_r, direction_alignment_tooltip("Bottom", "r")),
+        (tgl_push_left_l, direction_alignment_tooltip("Left", "l")),
+        (tgl_push_right_l, direction_alignment_tooltip("Right", "l")),
+        (tgl_push_left_r, direction_alignment_tooltip("Left", "r")),
+        (tgl_push_right_r, direction_alignment_tooltip("Right", "r")),
         (btn_get_img_l, "Open-L"),
         (btn_get_img_r, "Open-R"),
     ):

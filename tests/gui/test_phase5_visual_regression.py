@@ -9,11 +9,23 @@ from test_gtk_runtime_backend import _FakeGtk
 def test_phase5_visual_tokens_snapshot_is_stable():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
+    from harite.apply_surface import apply_mode_help_text
+
+    rad_per_monitor = backend.get_object("radApplyPerMonitor")
+    initial_mode = (
+        "per-monitor-auto-split"
+        if rad_per_monitor.get_active()
+        else "single-file"
+    )
+    active_radio = (
+        backend.get_object("radApplyPerMonitor")
+        if initial_mode == "per-monitor-auto-split"
+        else backend.get_object("radApplySingle")
+    )
+
     snapshot = {
         "main_section": backend.get_object("lblMainSection").text,
-        "optimize_section": backend.get_object("lblOptimizeSection").text,
-        "apply_section": backend.get_object("lblApplySection").text,
-        "apply_mode": backend.get_object("lblApplyMode").text,
+        "apply_mode_tooltip": active_radio.tooltip_text,
         "flow": backend.get_object("lblFlowLegend").text,
         "save": backend.get_object("btnSave").label,
         "optimize": backend.get_object("btnOptimize").label,
@@ -26,9 +38,7 @@ def test_phase5_visual_tokens_snapshot_is_stable():
 
     assert snapshot == {
         "main_section": "Main",
-        "optimize_section": "Optimize",
-        "apply_section": "Apply",
-        "apply_mode": "Apply the optimized image as a single file.",
+        "apply_mode_tooltip": apply_mode_help_text(initial_mode),
         "flow": "Compose -> Optimize -> Apply",
         "save": "Export Image",
         "optimize": "Optimize",
@@ -47,9 +57,8 @@ def test_phase5_runtime_smoke_optimize_then_apply_updates_visual_states():
     save_btn = backend.get_object("btnSave")
     optimize_btn = backend.get_object("btnOptimize")
     apply_btn = backend.get_object("btnSetWall")
-    optimize_result = backend.get_object("lblOptimizeResult")
-    apply_target = backend.get_object("lblApplyTarget")
     status = backend.get_object("lblStatus")
+    error = backend.get_object("lblError")
 
     backend.connect_signals({"on_change_input_text": lambda _text: None})
     backend.connect_signals({"on_optimize": lambda: True})
@@ -68,13 +77,12 @@ def test_phase5_runtime_smoke_optimize_then_apply_updates_visual_states():
     optimize_btn.click()
 
     assert apply_btn.sensitive is True
-    assert optimize_result.text == "Optimize result: success"
-    assert apply_target.text == "Apply target: ready"
+    assert error.text == "Error: none"
 
     apply_btn.click()
 
-    assert status.text == "Status: ready"
-    assert apply_target.text == "Apply target: last applied"
+    assert status.text == "Status: wallpaper applied"
+    assert error.text == "Error: none"
 
 
 def test_phase5_mainwindow_blueprint_smoke_matches_visual_checklist_scope():

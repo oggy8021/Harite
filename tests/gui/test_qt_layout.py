@@ -57,9 +57,10 @@ def test_header_command_bar_button_labels(qapp):
 
 def test_header_flow_legend_text(qapp):
     from harite.gui.adapters_qt.qt_layout_builders import build_header_section
+    from harite.gui.views.flow_legend_surface import format_flow_legend_markup
 
     w = build_header_section()
-    assert w["flow_legend_label"].text() == "Compose -> Optimize -> Apply"
+    assert w["flow_legend_label"].text() == format_flow_legend_markup(active_step="compose")
 
 
 def test_header_export_image_button_disabled_by_default(qapp):

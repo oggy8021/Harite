@@ -18,9 +18,10 @@ docs/working/
 
 | ファイル | 内容 |
 | --- | --- |
-| [20260518-2047-feature-overview.md](20260518-2047-feature-overview.md) | post-1.0.0 機能 inventory（C-xx / W-xx）。**継続更新する唯一の planning 入口** |
+| [20260518-2047-feature-overview.md](20260518-2047-feature-overview.md) | post-1.0.0 機能 inventory（C-xx / W-xx / P-xx）。**継続更新する唯一の planning 入口** |
+| [20260607-p04-main-action-cluster-planning-draft.md](20260607-p04-main-action-cluster-planning-draft.md) | P-04 Main action cluster 整理（planning 合意・gate pass） |
 
-第4波（C-02 / C-05 / C-01 / C-01-J / C-01-E）の planning・調査・audit は **2026-06-04 に [finished/](finished/) へ移動済み**。
+**2026-06-07 棚卸:** C-01-F / C-04 の planning 正本は [finished/](finished/) へ移動済み（impl + spec #427 完了）。
 
 ## design（GUI 合意 artifact）
 
@@ -28,4 +29,4 @@ icon board / widget slice 等は [design/README.md](design/README.md) を参照�
 
 ## finished アーカイブ
 
-[finished/README.md](finished/README.md) — Qt 移行、Windows backlog、第4波 planning / inventory / audit。
+[finished/README.md](finished/README.md) — Qt 移行、Windows backlog、第4波 planning / inventory / audit、C-01-F / C-04。

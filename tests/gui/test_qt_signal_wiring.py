@@ -549,7 +549,7 @@ def test_on_optimize_clicked_does_not_recurse_on_margin_sync(qapp):
 
 
 def test_qt_optimize_result_controls_apply_button_state(qapp, tmp_path):
-    """Qt optimize click must mirror GTK: success label + apply enabled (issue #343)."""
+    """Qt optimize click must mirror GTK: apply enabled + footer feedback (P-04)."""
     from harite.gui.adapters.ui_adapter import connect_signal_dispatch, create_mainwindow_signal_dispatch
     from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
     from harite.gui.views.main_window import MainWindow
@@ -561,6 +561,7 @@ def test_qt_optimize_result_controls_apply_button_state(qapp, tmp_path):
     def _fake_optimize() -> bool:
         window.can_apply = True
         window.last_saved_files = [str(tmp_path / "optimized.jpg")]
+        window.status_message = "optimize completed"
         return True
 
     window.on_optimize = _fake_optimize  # type: ignore[method-assign]
@@ -569,17 +570,14 @@ def test_qt_optimize_result_controls_apply_button_state(qapp, tmp_path):
 
     optimize_btn = backend._objects["btnOptimize"]
     apply_btn = backend._objects["btnSetWall"]
-    optimize_result = backend._objects["lblOptimizeResult"]
-    apply_target = backend._objects["lblApplyTarget"]
+    status = backend._objects["lblStatus"]
 
     optimize_btn.setEnabled(True)
     backend._on_optimize_clicked()
 
     assert apply_btn.isEnabled() is True
     assert optimize_btn.isEnabled() is True
-    assert optimize_result.text() == "Optimize result: success"
-    assert apply_target.text() == "Apply target: ready"
-    assert "not-run" not in optimize_result.text()
+    assert "optimize completed" in status.text()
 
 
 def test_qt_runtime_syncs_result_preview_image(qapp, tmp_path):
@@ -610,7 +608,6 @@ def test_qt_runtime_syncs_result_preview_image(qapp, tmp_path):
     preview_r = backend._objects["imgPreviewR"]
     assert not preview_l.pixmap().isNull()
     assert not preview_r.pixmap().isNull()
-    assert backend._objects["lblPreviewSource"].text() == "Preview source: preview.jpg"
 
 
 def test_on_pick_input_enables_optimize_button(qapp):
@@ -826,30 +823,28 @@ def test_on_save_clicked_always_calls_close_dialog(qapp):
 # ---------------------------------------------------------------------------
 
 
-def test_apply_mode_toggled_updates_lblApplyMode_single_file(qapp):
-    """Toggling to single-file mode must update lblApplyMode with spec text."""
-    from PyQt6.QtWidgets import QLabel
-
+def test_apply_mode_toggled_updates_radio_tooltips_single_file(qapp):
+    """Toggling to single-file mode must update apply mode tooltips (P-04)."""
+    from harite.apply_surface import apply_mode_help_text
     from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
 
     backend = load_qt_runtime_signal_backend()
-    lbl = QLabel()
-    backend._objects["lblApplyMode"] = lbl
     backend._on_apply_mode_toggled(None, "single-file")
-    assert lbl.text() == "Apply the optimized image as a single file."
+    expected = apply_mode_help_text("single-file")
+    assert backend._objects["radApplySingle"].toolTip() == expected
+    assert backend._objects["radApplyPerMonitor"].toolTip() == expected
 
 
-def test_apply_mode_toggled_updates_lblApplyMode_auto_split(qapp):
-    """Toggling to per-monitor-auto-split mode must update lblApplyMode with spec text."""
-    from PyQt6.QtWidgets import QLabel
-
+def test_apply_mode_toggled_updates_radio_tooltips_auto_split(qapp):
+    """Toggling to per-monitor-auto-split mode must update apply mode tooltips (P-04)."""
+    from harite.apply_surface import apply_mode_help_text
     from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
 
     backend = load_qt_runtime_signal_backend()
-    lbl = QLabel()
-    backend._objects["lblApplyMode"] = lbl
     backend._on_apply_mode_toggled(None, "per-monitor-auto-split")
-    assert lbl.text() == "Split the optimized image and apply per display."
+    expected = apply_mode_help_text("per-monitor-auto-split")
+    assert backend._objects["radApplyPerMonitor"].toolTip() == expected
+    assert backend._objects["radApplySingle"].toolTip() == expected
 
 
 def test_slideshow_mode_toggled_updates_lblSlideshowModeHelp_sequential(qapp):

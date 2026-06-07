@@ -1,19 +1,19 @@
 # C-04 GUI Surface Planning Draft（計画正本）
 
-最終更新: 2026-06-04  
-ステータス: **planning draft**（採択・非採択の熟読用。gui-spec §3 は 2026-06-04 合意反映済み。impl は Wave 0 → b → a）
+最終更新: 2026-06-07  
+ステータス: **完了**（#406–409 waves 0/b/a/c、spec 改訂 #427）
 
 ## 位置づけ
 
 | 文書 | 役割 |
 | --- | --- |
-| [20260518-2047-feature-overview.md](20260518-2047-feature-overview.md) | WS10 **inventory 入口**（ID の置き場・優先順のみ） |
+| [feature-overview](../20260518-2047-feature-overview.md) | WS10 **inventory 入口**（ID の置き場・優先順のみ） |
 | **本書** | **C-04 + 近接 polish の計画正本**（オーナー気づきのダンプ、採択表、widget 切り分け、波分け） |
-| [harite-gui-spec.md](../specs/gui/harite-gui-spec.md) | 実装正本（本書合意後に差分 PR で更新） |
+| [harite-gui-spec.md](../../specs/gui/harite-gui-spec.md) | 実装正本 — **反映済み**（#427） |
 
 **C-03（plugin capability 可視化）** は本書の主題から外す。必要なら C-04 内の「短い環境 help」に吸収する（§6 参照）。
 
-**関連 inventory:** [C-01-E-KW](20260518-2047-feature-overview.md)（CODH キーワード UI）は **Slideshow / Manage 面の余白** が本書の成果指標の一つ。
+**関連 inventory:** [C-01-E-KW](../20260518-2047-feature-overview.md)（CODH キーワード UI）は **Slideshow / Manage 面の余白** が本書の成果指標の一つ。
 
 ---
 
@@ -23,7 +23,7 @@
 
 ### 1.1 密度・導線
 
-- **Slideshow タブ**とその配下ダイアログ（Manage sources and profiles…）が混み合い、キーワード検索などを載せる余裕がない（[C-01-E-KW](20260518-2047-feature-overview.md) の先送りと直結）。
+- **Slideshow タブ**とその配下ダイアログ（Manage sources and profiles…）が混み合い、キーワード検索などを載せる余裕がない（[C-01-E-KW](../20260518-2047-feature-overview.md) の先送りと直結）。
 - Slideshow では **中核操作**（source 選定 → Start）と **補助操作**（registry 管理、preset 体験、mode help、output 表示）の流れが悪い。§4 の切り分けで整理したい。
 - 補助・付帯操作は **Drawer**（側面／下段の開閉パネル等）に追い出す案がある。
 - **Margin タブ**は Copilot 時代に分離したが、**永久の 3 tab 構成ではない**。意味論（margin 十字）が伝わりやすければ **Main から Drawer 等で開く**案もある（§7.2）。
@@ -49,7 +49,7 @@
 
 ### 1.5 維持・強化
 
-- **ボタン enable/disable** は効果的で好印象 → 拡張（[P-03](20260518-2047-feature-overview.md) / #359 と同系）。
+- **ボタン enable/disable** は効果的で好印象 → 拡張（[P-03](../20260518-2047-feature-overview.md) / #359 と同系）。
 - **hoobar / Tooltip** はうまい手 → 情報逃がし先として拡張。
 
 ### 1.6 ゴール（product）
@@ -74,7 +74,7 @@
 | A10 | Margins 冗長 state 削除 | **採択** | C-04a | §5 |
 | A11 | embed pattern / Position 再配置 | **採択** | C-04a | design slice 後 |
 | A12 | Margins の載せ方（専用 tab vs Main+Drawer） | **再検討可** | C-04a | §7.2。glade 解釈後: **全面 tab 統合は非推奨**のまま。Drawer で margin 意味論を Main に寄せる案は採択余地あり |
-| A13 | 母体 glade2 の扱い | **完了（参照のみ）** | — | [解釈メモ](design/20260604-glade2-legacy-interpretation-memo.md) で足りる。`out/*.glade` はオーナー削除可 |
+| A13 | 母体 glade2 の扱い | **完了（参照のみ）** | — | [解釈メモ](../design/20260604-glade2-legacy-interpretation-memo.md) で足りる。`out/*.glade` はオーナー削除可 |
 | A14 | C-03 独立パネル（capability 一覧） | **保留→縮小** | — | §6。本波では出さない |
 | A15 | C-01-E-KW UI | **依存** | C-04b 後 | Manage 面の余白が前提 |
 | A16 | 色だけの状態通知 | **非採択（単独）** | — | 色+文言+disable |
@@ -87,7 +87,7 @@
 | --- | --- |
 | 現行（plugin 実質 1 択、Settings に Plugin 文字列） | **日常 UI に plugin  identity を出さない** — A4 非採択 |
 | plugin が細分化・複数化し、ユーザーが **選ぶ・切り替える** | そのとき初めて「どれが active か」の表示を再検討 |
-| [K-04](20260518-2047-feature-overview.md) plugin 拡張パック + コミュニティ MR 受け入れ | **再検討のゲート**。それまでは capability パネルも「何者か」常設も不要 |
+| [K-04](../20260518-2047-feature-overview.md) plugin 拡張パック + コミュニティ MR 受け入れ | **再検討のゲート**。それまでは capability パネルも「何者か」常設も不要 |
 | C-03 型の capability 可視化パネル | 上記ゲートなしでは **出さない**（§6） |
 
 **残してよいもの:** Settings の `Plugin` 行（設定ファイル・上級者向け）。Apply mode help の Span/Auto-Split 説明（plugin 名ではなく **挙動**の説明）。
@@ -141,7 +141,7 @@
 
 ### 4.2 目標配置（**確定** 2026-06-04）
 
-mock: [surface-slice.html](design/20260604-c04-slideshow-margins-surface-slice.html) §4 — 合意: [slice-memo](design/20260604-c04-slideshow-margins-surface-slice-memo.md)（S1–S6 pass）。
+mock: [surface-slice.html](../design/20260604-c04-slideshow-margins-surface-slice.html) §4 — 合意: [slice-memo](../design/20260604-c04-slideshow-margins-surface-slice-memo.md)（S1–S6 pass）。
 
 **Slideshow tab — 正面（中核）**
 
@@ -162,7 +162,7 @@ mock: [surface-slice.html](design/20260604-c04-slideshow-margins-surface-slice.h
 
 ### 4.3 C-01-E-KW との関係
 
-[C-01-E-KW](20260518-2047-feature-overview.md) 先送り理由は「Manage 周りが込み入り」。**C-04b で Manage を Drawer 化または tab 正面の行数削減**できれば、KW 入力は dialog 内 1 フィールド追加で再評価可能。
+[C-01-E-KW](../20260518-2047-feature-overview.md) 先送り理由は「Manage 周りが込み入り」。**C-04b で Manage を Drawer 化または tab 正面の行数削減**できれば、KW 入力は dialog 内 1 フィールド追加で再評価可能。
 
 ---
 
@@ -206,14 +206,14 @@ mock: [surface-slice.html](design/20260604-c04-slideshow-margins-surface-slice.h
 
 | 項目 | 方針 |
 | --- | --- |
-| 配置 | 解釈済み — [20260604-glade2-legacy-interpretation-memo.md](design/20260604-glade2-legacy-interpretation-memo.md)。生 XML（`out/wallpositapplet.glade`）はオーナー原本保持のため **repo から削除可** |
+| 配置 | 解釈済み — [20260604-glade2-legacy-interpretation-memo.md](../design/20260604-glade2-legacy-interpretation-memo.md)。生 XML（`out/wallpositapplet.glade`）はオーナー原本保持のため **repo から削除可** |
 | 用途 | Main+Margins 同一 surface だった頃の **操作密度・近接関係**の参照 |
 | 非用途 | レイアウトのコピー元、glade2 を Harite 正本に戻すこと |
 | design 成果物 | 解釈後: `docs/working/design/` に **解釈メモ 1 枚**（screenshot 可）。glade 本体の repo 取り込みは必須ではない |
 
 ### 7.1 A12 / A13 — glade2 レビュー（2026-06-04 実施）
 
-**解釈メモ:** [design/20260604-glade2-legacy-interpretation-memo.md](design/20260604-glade2-legacy-interpretation-memo.md)（2026-06-04 読了・オーナー **認識相違なし**）
+**解釈メモ:** [design/20260604-glade2-legacy-interpretation-memo.md](../design/20260604-glade2-legacy-interpretation-memo.md)（2026-06-04 読了・オーナー **認識相違なし**）
 
 **ステータス:** **クローズ**（生 glade は再参照しない。原本はオーナー手元）
 
@@ -245,7 +245,7 @@ mock: [surface-slice.html](design/20260604-c04-slideshow-margins-surface-slice.h
 | 4 | **c** | icon/tooltip 整理（A5/A8） | 任意で b/a と同 PR でも可 |
 | — | **並行** | P-03 単 display -R | #359 |
 
-**採用条件:** ~~§4–§5 mock 合意~~ **達成**（[slice-memo](design/20260604-c04-slideshow-margins-surface-slice-memo.md)）。次は gui-spec 差分 PR。
+**採用条件:** ~~§4–§5 mock 合意~~ **達成**（[slice-memo](../design/20260604-c04-slideshow-margins-surface-slice-memo.md)）。gui-spec 改訂 **完了**（#427）。
 
 ---
 
