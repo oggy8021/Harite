@@ -1,6 +1,6 @@
 # Harite Project Initial Build Reformation WS10 Feature Overview
 
-最終更新: 2026-06-08（P-04 Main cluster impl 完了）
+最終更新: 2026-06-08（P-04 棚卸し・#430 remote-cache テスト隔離）
 
 ## 位置づけ
 
@@ -68,7 +68,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | P-03 | 単 display / monitor まわり UX | [#359](../online-issues/closed/issue-359.md) | edge case UX                                             | **完了**（#420）— [planning](finished/20260606-p03-single-display-ux-planning.md) / [audit](finished/20260606-p03-3layer-audit.md) |
 | P-06 | Slideshow CODH キーワード chip  | --                                           | Slideshow タブ右上角 read-only（`codh_keyword` 確認）。編集は Manage。 | **完了**（Qt）— [planning](finished/20260606-p06-slideshow-codh-keyword-chip-planning.md)                                             |
 | P-07 | Slideshow Drawer 開閉視認性     | --                                           | 背景ずらし・上辺線・chevron 回転。palette 優先（#412）。                   | **完了**（#417）— [planning](finished/20260606-p07-slideshow-drawer-open-state-planning.md)                                                                                                         |
-| P-04 | Main action cluster 整理        | --                                           | Preview/Optimize/Apply の常設 label 削減。C-04 後続 polish。              | **impl 完了** — [planning draft](20260607-p04-main-action-cluster-planning-draft.md)（gui-spec + GTK/Qt + tests）                                                                                  |
+| P-04 | Main action cluster 整理        | --                                           | Preview/Optimize/Apply の常設 label 削減。C-04 後続 polish。              | **完了**（#429）— [planning](finished/20260607-p04-main-action-cluster-planning-draft.md)                                                                                  |
 
 
 ### 2. 構想保持
@@ -188,7 +188,7 @@ C-04 の rough ideas・採択表・widget 切り分けは [finished/20260604-c04
 
 [完了] C-01-F remote tick sync  ← #425–426 + spec #427。[planning](finished/20260604-c01-f-remote-sync-on-tick-planning-draft.md)
 
-[impl 完了] P-04 Main action cluster  ← [planning draft](20260607-p04-main-action-cluster-planning-draft.md)
+[完了] P-04 Main action cluster  ← #429。[planning](finished/20260607-p04-main-action-cluster-planning-draft.md)
 ```
 
 - Qt 移行の詳細は [docs/working/finished/20260530-2201-pyqt6-migration-plan.md](finished/20260530-2201-pyqt6-migration-plan.md) を参照する。
@@ -198,6 +198,7 @@ C-04 の rough ideas・採択表・widget 切り分けは [finished/20260604-c04
 - **完了:** P-07 Drawer 開閉視認性（#417、#412 close）— [planning](finished/20260606-p07-slideshow-drawer-open-state-planning.md)。
 - **完了:** P-03 単 display UX（#420、#359 close）— [planning](finished/20260606-p03-single-display-ux-planning.md) / [audit](finished/20260606-p03-3layer-audit.md)。
 - **完了:** C-01-F（#425–426 CODH/JMA tick sync、spec #427）— [planning](finished/20260604-c01-f-remote-sync-on-tick-planning-draft.md)。
+- **完了:** P-04 Main action cluster（#429）— [planning](finished/20260607-p04-main-action-cluster-planning-draft.md)。
 - F-01 は Windows `**%APPDATA%\harite\harite-settings.json`**（Roaming）。**旧 path 互換・移行なし**。
 - P-01–02 は §9 GUI 合意工程の最初の実践。**2026-06-01 完了**（3 層 audit は [closed/issue-353](../online-issues/closed/issue-353.md) / [issue-358](../online-issues/closed/issue-358.md)）。
 
@@ -263,8 +264,9 @@ C-xx（新機能 inventory）とは別軸。`harite-qt` 実機検証で表面化
 - 2026-06-06: **P-03 完了** — #420 merge、#359 close。第二スロット disabled + L-only slideshow。planning / audit を [finished/](finished/20260606-p03-single-display-ux-planning.md) へ
 - 2026-06-07: **P-05 / P-06 棚卸し** — 完了済み planning を [finished/](finished/20260606-p05-manage-sources-panel-planning.md) / [finished/](finished/20260606-p06-slideshow-codh-keyword-chip-planning.md) へ（overview リンク整合）
 - 2026-06-07: **C-01-F / C-04 棚卸し** — impl + spec 改訂完了。planning を [finished/](finished/20260604-c01-f-remote-sync-on-tick-planning-draft.md) / [finished/](finished/20260604-c04-gui-surface-planning-draft.md) へ。`working/` 直下は overview のみ active
-- 2026-06-08: **P-04 impl 完了** — Main Preview/Optimize/Apply の label 削減（result/target→footer、mode help→tooltip、見出し廃止、idle 文言廃止）。gui-spec §3/§4 + GTK/Qt + tests。
-- 2026-06-07: **P-04 planning 合意** — [planning draft](20260607-p04-main-action-cluster-planning-draft.md)
+- 2026-06-08: **P-04 完了** — #429 merge。Main Preview/Optimize/Apply の label 削減（result/target→footer、mode help→tooltip、見出し廃止、idle 文言廃止）。planning を [finished/](finished/20260607-p04-main-action-cluster-planning-draft.md) へ。
+- 2026-06-08: **remote-cache pytest 隔離** — #430 merge。`HARITE_REMOTE_CACHE_ROOT`・materialize の catalog 由来 cache root・全テスト autouse 隔離（本番 APPDATA 汚染防止）。
+- 2026-06-07: **P-04 planning 合意** — [planning draft](finished/20260607-p04-main-action-cluster-planning-draft.md)
 
 ### K-05（scheduler）— 残しうるストーリーと見送り理由
 

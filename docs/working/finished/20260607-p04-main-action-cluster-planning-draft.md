@@ -1,16 +1,16 @@
 # P-04 — Main action cluster 整理（計画 draft）
 
 最終更新: 2026-06-08  
-ステータス: **impl 完了**（gui-spec §3/§4 改訂、GTK/Qt layout・sync・テスト更新済）
+ステータス: **完了**（#429 — gui-spec §3/§4 改訂、GTK/Qt layout・sync・テスト）
 
 ## 位置づけ
 
 | 文書 | 役割 |
 | --- | --- |
-| [feature-overview §P-04](20260518-2047-feature-overview.md) | inventory 入口 |
+| [feature-overview §P-04](../20260518-2047-feature-overview.md) | inventory 入口 |
 | **本書** | Main tab **action cluster**（Preview / Optimize / Apply）の密度整理 |
-| [C-04 計画正本](finished/20260604-c04-gui-surface-planning-draft.md) | Slideshow/Margins/footer は完了。**Main cluster はスコープ外のまま残存** |
-| [harite-gui-spec.md](../specs/gui/harite-gui-spec.md) | 実装正本（本書合意後に §3 Main tab を改訂） |
+| [C-04 計画正本](20260604-c04-gui-surface-planning-draft.md) | Slideshow/Margins/footer は完了。**Main cluster はスコープ外のまま残存** |
+| [harite-gui-spec.md](../../specs/gui/harite-gui-spec.md) | 実装正本（本書合意後に §3 Main tab を改訂） |
 
 **きっかけ:** C-04 後も Main の Preview 群が idle 時から文字だらけ。enable/disable とサムネで誘導は足りる。
 
@@ -112,9 +112,9 @@ Qt `qt_tab_main.py` 基準。compose 十字は C-04c で icon-only 済み。
 
 | 正本 | 変更 |
 | --- | --- |
-| [gui-spec §3 Main tab](../specs/gui/harite-gui-spec.md) | action cluster からセクション見出し・result/target/help 常設を削除 |
+| [gui-spec §3 Main tab](../../specs/gui/harite-gui-spec.md) | action cluster からセクション見出し・result/target/help 常設を削除 |
 | gui-spec §3 補助説明面一覧 | Main tab tooltip / footer へ追記（Margins 表と同型でよい） |
-| [gui-spec §9 footer](../specs/gui/harite-gui-spec.md) | optimize / apply 結果の読み面として明記（既存を補強） |
+| [gui-spec §9 footer](../../specs/gui/harite-gui-spec.md) | optimize / apply 結果の読み面として明記（既存を補強） |
 
 ---
 

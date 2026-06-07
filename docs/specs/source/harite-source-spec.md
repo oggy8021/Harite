@@ -298,6 +298,8 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 
 設定・catalog と **別ディレクトリ**に置く。`resolve_default_remote_cache_root()` が返す path。
 
+**開発・テスト用 override:** 環境変数 `HARITE_REMOTE_CACHE_ROOT` が非空なら、その path を root として `mkdir(parents=True)` したうえで一貫利用する（pytest は `tests/conftest.py` で `tmp_path` へ向ける）。
+
 | プラットフォーム | 第 1 候補 | 契約 |
 | --- | --- | --- |
 | Linux（`XDG_CACHE_HOME` 設定時） | `$XDG_CACHE_HOME/harite/remote-cache` | 親を `mkdir(parents=True)` してよい |
@@ -327,7 +329,7 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 
 **初回 import 時:** cache directory は **未作成でもよい**。`path` は `{cache_root}/{source_id}` を **予約**として catalog に書く。初回 Sync 成功で directory と画像が出現する。
 
-**Refresh等操作前の directory の掃除:** `prune_orphan_remote_cache_dirs` は `{cache_root}` 直下の subdirectory のうち、**現在の catalog に存在する `remote-*` source の `id` と一致しない名前**の directory を削除する。GUI の **catalog materialize**（起動・combo 更新・Manage 保存後の再読込）のたびに best-effort で実行する。専用の「キャッシュ掃除」ボタンは置かない。
+**Refresh等操作前の directory の掃除:** `prune_orphan_remote_cache_dirs` は `{cache_root}` 直下の subdirectory のうち、**現在の catalog に存在する `remote-*` source の `id` と一致しない名前**の directory を削除する。`cache_root` は（明示引数が無いとき）**catalog 内の remote `path` が単一の親 directory に揃う場合はそれを推定**し、そうでなければ `resolve_default_remote_cache_root()` を用いる。GUI の **catalog materialize**（起動・combo 更新・Manage 保存後の再読込）では、bootstrap 等で catalog が更新された場合は **保存後に** best-effort で prune する。専用の「キャッシュ掃除」ボタンは置かない。
 
 **ユーザーによる手動削除:**
 
