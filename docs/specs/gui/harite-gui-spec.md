@@ -13,7 +13,7 @@
 
 | 層 | 節 | 内容 |
 | --- | --- | --- |
-| **本編** | §2–5 | 起動、Main/Margins/Slideshow 骨格、settings |
+| **本編** | §2–5 | 起動、Main（+ Margins Drawer）/ Slideshow 骨格、settings |
 | **本編** | §6 | slideshow 接続（registry・remote・start/tick） |
 | **付録** | §7 以降 | tray、icon、backend 差分 |
 
@@ -92,14 +92,14 @@ Qt 起動時の実際の流れ:
 layout 戦略:
 
 - GUI は top-level window の直下を単一の縦積み root container とし、header、center body、footer の 3 層で構成する。
-- center body は notebook を 1 つ持ち、tab 順は `Main`、`Margins (for each display)`、`Slideshow (...)` とする。
-- `Main` は日常操作の主導線、`Margins` は配置と margin text の詳細調整、`Slideshow` は継続実行面という役割分担を持つ。
+- center body は notebook を 1 つ持ち、tab 順は `Main`、`Slideshow (...)` の **2 枚**とする（P-08）。
+- `Main` は日常操作の主導線（compose / optimize / apply）と **margin 調整**（4 辺 spin 常設 + 補助 Drawer）を担う。`Slideshow` は継続実行面。
 - page ごとの内容は page shell や spacer を使って中央寄せしつつ、各 page 内では必要に応じて fill と center を切り替える。
 - GUI の常設補助説明面は以下である。
   - header の flow legend
   - footer の status / slideshow summary / error
   - Main tab の apply mode radio tooltip（§3 action cluster）
-  - Margins tab の widget tooltip（line limit / 優先規則 / behavior。§3 Margins tab 参照）
+  - Main tab の margin widget tooltip（line limit / 優先規則 / behavior。§3 Main tab — Margins Drawer 参照）
   - Slideshow tab の mode help（Drawer 内）
   - settings dialog の state/notice
   - color dialog の state/notice
@@ -125,7 +125,8 @@ Main Window:
 
 Main tab:
 
-- `Main` tab は縦積みの `main_col` を持ち、その上段に compose grid、下段に action cluster を置く。
+- `Main` tab は縦積みの `main_col` を持ち、上から **margin cross-grid（外周 4 spin）**、**compose grid**、**action cluster**、**Margins options Drawer トリガ**、（開時）**Margins options Drawer** の順とする（P-08）。
+- margin cross-grid は top / left / right / bottom の 4 辺 margin spin を compose grid を囲む配置とする（上段 top、中段は left | compose | right、下段 bottom）。**embed pattern / margin text / position は Drawer 内**（正面常設は 4 spin のみ）。
 - compose grid は左・中央・右の 3 列構成で、左 panel と右 panel は display ごとの入力・方向操作面、中央 panel は pick state と swap 操作面とする。
 - 中央 panel は direction toggle 群と **同型 3 行**とし、上段に pick state label、**中段**（Left-L … Right-L / Left-R … Right-R と同高）に **`Swap L/R`** button を置く（§4.1）。
 - 左右 panel は同型で、上段に十字配置の direction toggle と `Open-L/R`、下段に選択 path 表示と `Clear-L/R` を置く。
@@ -148,14 +149,14 @@ Main tab:
 | apply mode help | apply mode radio 群 tooltip |
 | Preview 補助 label 群 | 原則なし（サムネと enable/disable で足りる） |
 
-Margins tab:
+Main tab — Margins options Drawer（P-08）:
 
-- `Margins` tab は notebook 2 番目の page で、タブ title は `Margins (for each display)` とする（tab 順は §3 layout 戦略）。
-- `Margins` tab は単一の縦積み column を持ち、**cross-grid editor を主役**とする（4 辺 margin spin + 中央 stack）。
-- cross-grid editor は上に top margin、左に left margin、右に right margin、下に bottom margin を置き、中央に詳細編集 stack を置く。
-- 中央 stack は上から `embed pattern`、`margin text notebook`、`position selector` を縦積みする。
-- 中央 stack に **常設 label は置かない**: `Main Window Current alignment:` 見出し、`align=...` / `margins=...` の状態列挙、line limit / 優先規則 / behavior の 3 行 notes block。
-- 上記の補助説明は次の面へ載せる。
+- 補助面は **options drawer**（トリガ label は `More margin options…`、rename 可）内に置く。Slideshow の `More slideshow options…` と対称。
+- Drawer 内:
+  - `embed pattern` — `Off` / `Settings` / `Text only` / `Both` の radio row
+  - `margin text notebook` — `Settings` page と `Text` page の 2 page 構成。`Settings` page は preview label 中心、`Text` page は margin text entry
+  - `position selector` — `Left` / `Right` 列 × `Top` / `Bottom` radio。Main tab の direction toggle 十字（画像の push 方向）とは **独立**（§8 `margin text position`）
+- Drawer 内に **常設 label は置かない**: `Main Window Current alignment:` 見出し、`align=...` / `margins=...` の状態列挙、line limit / 優先規則 / behavior の 3 行 notes block（C-04a 済みと同型）。
 - **widget tooltip** — 載せ先と文の対応:
 
 | 載せ先 widget | tooltip 文 |
@@ -166,11 +167,8 @@ Margins tab:
 | cross-grid、各辺 margin label | `Current behavior: margins are global to the composite canvas.` |
 | center stack 全体（任意） | 上記 3 文を連結した tooltip |
 
-- **footer `Status`**（§9）: margin text preflight の成否と寸法要約（§8 `margin text preflight の現行規則`）。
-- `embed pattern` は `Off` / `Settings` / `Text only` / `Both` の radio row を持つ。
-- `margin text notebook` は `Settings` page と `Text` page の 2 page 構成とする。
-- `Settings` page は preview label を中心とした状態確認面、`Text` page は margin text entry 面とする。
-- `position selector` は `Left` 列と `Right` 列を横並びに置き、それぞれ `Top` / `Bottom` radio を持つ。Main tab の direction toggle 十字（画像の push 方向）とは独立した widget 群とする（§8 `margin text position` 参照）。
+- **footer `Status`**（§9）: margin text preflight の成否と寸法要約（§8 `margin text preflight の現行規則`）。挙動は旧 Margins tab と同一。
+- **Drawer 開閉視認性:** Slideshow options Drawer（P-07）と **同型** — 開時は drawer 面板を theme chrome tint、上辺 1px `mid`、トリガ chevron up（閉=down）、`More…` / `Fewer…` ラベル反転。実装は `slideshow_options_drawer` と同パターンを margins 用に再利用または共通化する。
 
 Slideshow tab:
 
@@ -317,7 +315,7 @@ catalog 契約は [source-spec §7](../source/harite-source-spec.md)。
 | Main | R 十字 direction、`Open-R` / `Clear-R`、Preview 右列、`Swap L/R` |
 | Slideshow | `combo_slideshow_source_r`、`Srcdir-R`、`Clear-R`、R path 表示、`Swap L/R` |
 
-Margins tab の `Position` 行（Left/Right × Top/Bottom）は **合成画像上の埋め込み角** を指し、第二スロット（モニタ R）ではない。単 display でも 4 角すべて選択可能とする。
+Main tab Margins Drawer の `position selector`（Left/Right × Top/Bottom）は **合成画像上の埋め込み角** を指し、第二スロット（モニタ R）ではない。単 display でも 4 角すべて選択可能とする。
 
 据え置き（実行時無視）: `combo_slideshow_profile`、`More slideshow options…` Drawer 内。profile の R slot や saved R は start 直前 resolve で参照しない。
 
@@ -577,7 +575,7 @@ Qt backend:   app_qt.py -> views/main_window -> controllers/services -> adapters
 
 margin text position の visible semantics:
 
-- `Margins` 面は margin text position を 4 つの radio で見せる: `Left Top`, `Left Bottom`, `Right Top`, `Right Bottom`。
+- Main tab の Margins Drawer は margin text position を 4 つの radio で見せる: `Left Top`, `Left Bottom`, `Right Top`, `Right Bottom`。
 - GUI state / Settings / CLI / core の `embed_position` は `left-top|left-bottom|right-top|right-bottom` で統一する。
 - GUI の margin text position 変更 handler はこの 4 値だけを受け付ける。
 - radio 表示と内部値は 1 対 1 に対応し、`Left Top=left-top`, `Left Bottom=left-bottom`, `Right Top=right-top`, `Right Bottom=right-bottom` である。
