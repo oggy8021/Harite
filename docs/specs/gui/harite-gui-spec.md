@@ -92,7 +92,7 @@ Qt 起動時の実際の流れ:
 layout 戦略:
 
 - GUI は top-level window の直下を単一の縦積み root container とし、header、center body、footer の 3 層で構成する。
-- center body は notebook を 1 つ持ち、tab 順は `Main`、`Slideshow (...)` の **2 枚**とする（P-08）。旧 `Margins (for each display)` 専用 page は **廃止**し、margin 操作は Main tab へ載せ替える。
+- center body は notebook を 1 つ持ち、tab 順は `Main`、`Slideshow (...)` の **2 枚**とする（P-08）。
 - `Main` は日常操作の主導線（compose / optimize / apply）と **margin 調整**（4 辺 spin 常設 + 補助 Drawer）を担う。`Slideshow` は継続実行面。
 - page ごとの内容は page shell や spacer を使って中央寄せしつつ、各 page 内では必要に応じて fill と center を切り替える。
 - GUI の常設補助説明面は以下である。
@@ -152,7 +152,7 @@ Main tab:
 Main tab — Margins options Drawer（P-08）:
 
 - 補助面は **options drawer**（トリガ label は `More margin options…`、rename 可）内に置く。Slideshow の `More slideshow options…` と対称。
-- Drawer 内（旧 Margins tab の center stack をそのまま移設）:
+- Drawer 内:
   - `embed pattern` — `Off` / `Settings` / `Text only` / `Both` の radio row
   - `margin text notebook` — `Settings` page と `Text` page の 2 page 構成。`Settings` page は preview label 中心、`Text` page は margin text entry
   - `position selector` — `Left` / `Right` 列 × `Top` / `Bottom` radio。Main tab の direction toggle 十字（画像の push 方向）とは **独立**（§8 `margin text position`）
