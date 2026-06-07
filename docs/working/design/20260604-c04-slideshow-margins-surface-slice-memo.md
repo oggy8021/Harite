@@ -2,7 +2,7 @@
 
 最終更新: 2026-06-04（オーナー checklist 記入 → 合意確定）  
 mock: [20260604-c04-slideshow-margins-surface-slice.html](20260604-c04-slideshow-margins-surface-slice.html)  
-計画正本: [20260604-c04-gui-surface-planning-draft.md](../20260604-c04-gui-surface-planning-draft.md) §4–§5
+計画正本: [20260604-c04-gui-surface-planning-draft.md](../finished/20260604-c04-gui-surface-planning-draft.md) §4–§5
 
 ## 目的
 

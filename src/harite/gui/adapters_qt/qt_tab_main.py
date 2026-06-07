@@ -67,11 +67,13 @@ def _build_display_direction_grid(side: str) -> dict[str, Any]:
         apply_icon_only_button(btn, tooltip)
         return btn
 
+    from harite.gui.views.compose_surface import direction_alignment_tooltip
+
+    tgl_upper = _tgl(direction_alignment_tooltip("Top", side), "arrow-up.svg")
+    tgl_lower = _tgl(direction_alignment_tooltip("Bottom", side), "arrow-down.svg")
+    tgl_push_left = _tgl(direction_alignment_tooltip("Left", side), "arrow-left.svg")
+    tgl_push_right = _tgl(direction_alignment_tooltip("Right", side), "arrow-right.svg")
     side_tag = side.upper()
-    tgl_upper = _tgl(f"Top-{side_tag}", "arrow-up.svg")
-    tgl_lower = _tgl(f"Bottom-{side_tag}", "arrow-down.svg")
-    tgl_push_left = _tgl(f"Left-{side_tag}", "arrow-left.svg")
-    tgl_push_right = _tgl(f"Right-{side_tag}", "arrow-right.svg")
     btn_get_img = QPushButton("")
     _set_button_icon(btn_get_img, "icons", "lucide", "folder-open.svg")
     apply_icon_only_button(btn_get_img, f"Open-{side_tag}")
@@ -275,7 +277,7 @@ def build_compose_grid_section() -> dict[str, Any]:
 
 
 def _build_preview_group() -> dict[str, Any]:
-    """Build the Preview group (preview boxes + assignment / result / state labels)."""
+    """Build the Preview group — thumbnails only (P-04)."""
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (
         QHBoxLayout,
@@ -290,156 +292,94 @@ def _build_preview_group() -> dict[str, Any]:
     group_layout.setContentsMargins(0, 0, 0, 0)
     group_layout.setSpacing(4)
 
-    preview_section_label = QLabel("Preview")
-    group_layout.addWidget(preview_section_label)
-
     images_row = QWidget()
     images_row_layout = QHBoxLayout(images_row)
     images_row_layout.setContentsMargins(0, 0, 0, 0)
     images_row_layout.setSpacing(6)
 
-    def _make_preview_side(name: str) -> dict[str, Any]:
-        box = QWidget()
-        box_layout = QVBoxLayout(box)
-        box_layout.setContentsMargins(0, 0, 0, 0)
-        box_layout.setSpacing(4)
-
-        assignment = QLabel(f"{name.upper()} display <- -")
-        assignment.setAlignment(Qt.AlignmentFlag.AlignLeft)
-
-        preview_lbl = QLabel(f"Preview {name.upper()}: not-ready")
+    def _make_preview_thumb() -> QLabel:
+        preview_lbl = QLabel("")
         preview_lbl.setFixedSize(160, 90)
         preview_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         preview_lbl.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        preview_lbl.setStyleSheet("background: #222; color: #888; border: 1px solid #555;")
+        preview_lbl.setStyleSheet("background: #222; border: 1px solid #555;")
+        return preview_lbl
 
-        result = QLabel("Result: not-ready")
-        result.setAlignment(Qt.AlignmentFlag.AlignLeft)
-
-        box_layout.addWidget(assignment)
-        box_layout.addWidget(preview_lbl)
-        box_layout.addWidget(result)
-        return {"box": box, "assignment": assignment, "preview": preview_lbl, "result": result}
-
-    left_side = _make_preview_side("l")
-    right_side = _make_preview_side("r")
-    images_row_layout.addWidget(left_side["box"])
-    images_row_layout.addWidget(right_side["box"])
+    preview_left = _make_preview_thumb()
+    preview_right = _make_preview_thumb()
+    images_row_layout.addWidget(preview_left)
+    images_row_layout.addWidget(preview_right)
     group_layout.addWidget(images_row)
-
-    preview_state_label = QLabel("Preview: not-ready")
-    preview_source_label = QLabel("Preview source: -")
-    preview_assist_label = QLabel("Assist: not-ready")
-    for lbl in (preview_state_label, preview_source_label, preview_assist_label):
-        lbl.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        group_layout.addWidget(lbl)
 
     return {
         "preview_group": group,
-        "preview_section_label": preview_section_label,
-        "preview_left": left_side["preview"],
-        "preview_right": right_side["preview"],
-        "preview_left_assignment": left_side["assignment"],
-        "preview_right_assignment": right_side["assignment"],
-        "preview_left_result": left_side["result"],
-        "preview_right_result": right_side["result"],
-        "preview_state_label": preview_state_label,
-        "preview_source_label": preview_source_label,
-        "preview_assist_label": preview_assist_label,
+        "preview_images_row": images_row,
+        "preview_left": preview_left,
+        "preview_right": preview_right,
     }
 
 
 def _build_optimize_group() -> dict[str, Any]:
-    """Build the Optimize group (button + result label)."""
-    from PyQt6.QtCore import Qt
-    from PyQt6.QtWidgets import (
-        QHBoxLayout,
-        QLabel,
-        QPushButton,
-        QVBoxLayout,
-        QWidget,
-    )
+    """Build the Optimize group — button only (P-04)."""
+    from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
     group = QWidget()
     group_layout = QVBoxLayout(group)
     group_layout.setContentsMargins(0, 0, 0, 0)
     group_layout.setSpacing(6)
-
-    optimize_section_label = QLabel("Optimize")
-    group_layout.addWidget(optimize_section_label)
 
     optimize_modern_btn = QPushButton("Optimize")
     optimize_modern_btn.setEnabled(False)
     _set_button_icon(optimize_modern_btn, "icons", "lucide", "image.svg")
-
-    btn_row = QWidget()
-    btn_row_layout = QHBoxLayout(btn_row)
-    btn_row_layout.setContentsMargins(0, 0, 0, 0)
-    btn_row_layout.addWidget(optimize_modern_btn)
-    btn_row_layout.addStretch()
-    group_layout.addWidget(btn_row)
-
-    optimize_result = QLabel("Optimize result: not-run")
-    optimize_result.setAlignment(Qt.AlignmentFlag.AlignLeft)
-    optimize_result.setWordWrap(True)
-    group_layout.addWidget(optimize_result)
+    group_layout.addWidget(optimize_modern_btn)
 
     return {
         "optimize_group": group,
-        "optimize_section_label": optimize_section_label,
         "optimize_modern_btn": optimize_modern_btn,
-        "optimize_result": optimize_result,
     }
 
 
 def _build_apply_group(default_apply_mode: str) -> dict[str, Any]:
-    """Build the Apply group (button + target + apply mode radio + help text)."""
+    """Build the Apply group — button + mode radios; help via tooltip (P-04)."""
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (
         QButtonGroup,
         QHBoxLayout,
-        QLabel,
         QPushButton,
         QRadioButton,
+        QSizePolicy,
         QVBoxLayout,
         QWidget,
     )
 
+    from harite.apply_surface import per_monitor_mode_radio_label, single_file_mode_radio_label
+    from harite.gui.views.main_action_surface import apply_apply_mode_tooltips
+
     group = QWidget()
+    group.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred)
     group_layout = QVBoxLayout(group)
     group_layout.setContentsMargins(0, 0, 0, 0)
     group_layout.setSpacing(6)
-
-    apply_section_label = QLabel("Apply")
-    group_layout.addWidget(apply_section_label)
+    group_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
     apply_btn = QPushButton("Apply")
     apply_btn.setEnabled(False)
+    apply_btn.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
     _set_button_icon(apply_btn, "icons", "lucide", "wallpaper.svg")
 
     apply_btn_row = QWidget()
     apply_btn_row_layout = QHBoxLayout(apply_btn_row)
     apply_btn_row_layout.setContentsMargins(0, 0, 0, 0)
+    apply_btn_row_layout.addStretch()
     apply_btn_row_layout.addWidget(apply_btn)
     apply_btn_row_layout.addStretch()
     group_layout.addWidget(apply_btn_row)
 
-    apply_target = QLabel("Apply target: not-ready")
-    apply_target.setAlignment(Qt.AlignmentFlag.AlignLeft)
-    apply_target.setWordWrap(True)
-    group_layout.addWidget(apply_target)
-
-    # Apply mode radio row
     apply_mode_row_widget = QWidget()
     apply_mode_row_layout = QHBoxLayout(apply_mode_row_widget)
     apply_mode_row_layout.setContentsMargins(0, 0, 0, 0)
     apply_mode_row_layout.setSpacing(6)
-
-    from harite.apply_surface import (
-        apply_mode_help_text as build_apply_mode_help,
-        per_monitor_mode_radio_label,
-        single_file_mode_radio_label,
-    )
+    apply_mode_row_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
     rad_apply_per_monitor = QRadioButton(per_monitor_mode_radio_label())
     rad_apply_single = QRadioButton(single_file_mode_radio_label())
@@ -448,37 +388,32 @@ def _build_apply_group(default_apply_mode: str) -> dict[str, Any]:
     apply_mode_group.addButton(rad_apply_per_monitor)
     apply_mode_group.addButton(rad_apply_single)
 
-    if default_apply_mode == "per-monitor-auto-split":
+    initial_mode = (
+        "per-monitor-auto-split" if default_apply_mode == "per-monitor-auto-split" else "single-file"
+    )
+    if initial_mode == "per-monitor-auto-split":
         rad_apply_per_monitor.setChecked(True)
-        apply_mode_help_text = build_apply_mode_help("per-monitor-auto-split")
     else:
         rad_apply_single.setChecked(True)
-        apply_mode_help_text = build_apply_mode_help("single-file")
 
+    apply_mode_row_layout.addStretch()
     apply_mode_row_layout.addWidget(rad_apply_per_monitor)
     apply_mode_row_layout.addWidget(rad_apply_single)
     apply_mode_row_layout.addStretch()
-    group_layout.addWidget(apply_mode_row_widget)
+    group_layout.addWidget(apply_mode_row_widget, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-    # Apply mode help row
-    apply_mode_help_row_widget = QWidget()
-    apply_mode_help_row_layout = QHBoxLayout(apply_mode_help_row_widget)
-    apply_mode_help_row_layout.setContentsMargins(0, 0, 0, 0)
-
-    apply_mode_label = QLabel(apply_mode_help_text)
-    apply_mode_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
-    apply_mode_label.setWordWrap(True)
-    apply_mode_help_row_layout.addWidget(apply_mode_label, stretch=1)
-    group_layout.addWidget(apply_mode_help_row_widget)
+    apply_apply_mode_tooltips(
+        rad_single=rad_apply_single,
+        rad_per_monitor=rad_apply_per_monitor,
+        apply_btn=apply_btn,
+        mode=initial_mode,
+    )
 
     return {
         "apply_group": group,
-        "apply_section_label": apply_section_label,
         "apply_btn": apply_btn,
-        "apply_target": apply_target,
         "rad_apply_single": rad_apply_single,
         "rad_apply_per_monitor": rad_apply_per_monitor,
-        "apply_mode_label": apply_mode_label,
         "_apply_mode_button_group": apply_mode_group,
     }
 

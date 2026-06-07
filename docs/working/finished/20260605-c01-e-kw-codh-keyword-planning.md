@@ -10,7 +10,7 @@
 | [feature-overview §C-01-E-KW](../20260518-2047-feature-overview.md) | inventory 入口（1 行） |
 | **本書** | CODH キーワード UI — 計画正本（完了記録） |
 | [CODH inventory](20260603-c01-e-codh-icp-inventory.md) | API・メタデータ棚卸 |
-| [C-01-F planning](../20260604-c01-f-remote-sync-on-tick-planning-draft.md) | **据え置き** — tick sync（CODH 負荷懸念含む） |
+| [C-01-F planning](20260604-c01-f-remote-sync-on-tick-planning-draft.md) | **完了**（#425–426）— 当時は据え置き。後続で tick sync 実装 |
 | [P-05 planning](20260606-p05-manage-sources-panel-planning.md) | keyword 行の理想配置（面板分割） |
 | [harite-source-spec §15.7](../../specs/source/harite-source-spec.md) | provider 正本 |
 | [harite-gui-spec §4.2](../../specs/gui/harite-gui-spec.md) | Manage dialog 契約 |

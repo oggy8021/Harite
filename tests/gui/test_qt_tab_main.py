@@ -90,7 +90,7 @@ def test_compose_icon_only_buttons_use_tooltips(qapp):
     assert w["btn_clr_path_r"].text() == ""
     assert w["btn_get_img_l"].toolTip() == "Open-L"
     assert w["btn_clr_path_l"].toolTip() == "Clear-L"
-    assert w["tgl_upper_l"].toolTip() == "Top-L"
+    assert w["tgl_upper_l"].toolTip() == "Top alignment-L"
     assert w["btn_swap_input_paths"].toolTip() == "Swap L/R"
 
 
@@ -114,14 +114,11 @@ def test_action_cluster_required_widgets(qapp):
 
     expected = {
         "action_cluster_row",
-        "optimize_modern_btn", "optimize_result",
-        "apply_btn", "apply_target",
+        "preview_group", "optimize_group", "apply_group",
+        "optimize_modern_btn",
+        "apply_btn",
         "rad_apply_single", "rad_apply_per_monitor",
-        "apply_mode_label",
         "preview_left", "preview_right",
-        "preview_left_assignment", "preview_right_assignment",
-        "preview_left_result", "preview_right_result",
-        "preview_state_label", "preview_source_label", "preview_assist_label",
     }
     assert expected <= set(w)
 
@@ -178,17 +175,17 @@ def test_preview_boxes_fixed_size(qapp):
     assert w["preview_right"].height() == 90
 
 
-def test_preview_default_labels(qapp):
+def test_preview_thumbnails_idle_without_overlay_text(qapp):
     from harite.gui.adapters_qt.qt_tab_main import build_action_cluster_section
 
     w = build_action_cluster_section("single-file")
-    assert "L display" in w["preview_left_assignment"].text()
-    assert "R display" in w["preview_right_assignment"].text()
-    assert w["preview_state_label"].text() == "Preview: not-ready"
+    assert w["preview_left"].text() == ""
+    assert w["preview_right"].text() == ""
+    assert w["preview_left"].pixmap() is None or w["preview_left"].pixmap().isNull()
 
 
 def test_action_cluster_groups_top_aligned(qapp):
-    """Action cluster columns align at top so Optimize/Apply section labels line up."""
+    """Action cluster columns align at top across Preview / Optimize / Apply."""
     from PyQt6.QtCore import Qt
     from harite.gui.adapters_qt.qt_tab_main import build_action_cluster_section
 
@@ -199,29 +196,45 @@ def test_action_cluster_groups_top_aligned(qapp):
         assert item.alignment() & Qt.AlignmentFlag.AlignTop
 
 
-def test_optimize_result_below_button(qapp):
-    """Optimize result label sits below the button, not beside it (Qt / issue-342)."""
+def test_optimize_group_contains_button_only(qapp):
     from harite.gui.adapters_qt.qt_tab_main import build_action_cluster_section
 
     w = build_action_cluster_section("single-file")
     group_layout = w["optimize_group"].layout()
-    btn_row_index = group_layout.indexOf(w["optimize_modern_btn"].parentWidget())
-    result_index = group_layout.indexOf(w["optimize_result"])
-    assert btn_row_index >= 0 and result_index > btn_row_index
-    assert w["optimize_result"].parentWidget() is w["optimize_group"]
+    assert group_layout.count() == 1
+    assert group_layout.itemAt(0).widget() is w["optimize_modern_btn"]
 
 
-def test_apply_target_below_button(qapp):
-    """Apply target label sits below the button; mode rows follow (Qt / issue-342)."""
+def test_apply_group_button_then_mode_radios(qapp):
     from harite.gui.adapters_qt.qt_tab_main import build_action_cluster_section
 
     w = build_action_cluster_section("single-file")
     group_layout = w["apply_group"].layout()
-    btn_row_index = group_layout.indexOf(w["apply_btn"].parentWidget())
-    target_index = group_layout.indexOf(w["apply_target"])
-    mode_row_index = group_layout.indexOf(w["rad_apply_single"].parentWidget())
-    assert btn_row_index >= 0 and target_index > btn_row_index and mode_row_index > target_index
-    assert w["apply_target"].parentWidget() is w["apply_group"]
+    btn_row = w["apply_btn"].parentWidget()
+    mode_row = w["rad_apply_single"].parentWidget()
+    btn_index = group_layout.indexOf(btn_row)
+    mode_row_index = group_layout.indexOf(mode_row)
+    assert btn_index >= 0 and mode_row_index > btn_index
+
+
+def test_apply_button_uses_natural_width(qapp):
+    from PyQt6.QtWidgets import QSizePolicy
+    from harite.gui.adapters_qt.qt_tab_main import build_action_cluster_section
+
+    w = build_action_cluster_section("single-file")
+    assert w["apply_btn"].sizePolicy().horizontalPolicy() == QSizePolicy.Policy.Minimum
+    assert w["apply_group"].sizePolicy().horizontalPolicy() == QSizePolicy.Policy.Minimum
+
+
+def test_apply_mode_radios_have_tooltips(qapp):
+    from harite.apply_surface import apply_mode_help_text
+    from harite.gui.adapters_qt.qt_tab_main import build_action_cluster_section
+
+    w = build_action_cluster_section("single-file")
+    expected = apply_mode_help_text("single-file")
+    assert w["rad_apply_single"].toolTip() == expected
+    assert w["rad_apply_per_monitor"].toolTip() == expected
+    assert w["apply_btn"].toolTip() == expected
 
 
 # ---------------------------------------------------------------------------

@@ -100,8 +100,11 @@ def build_header_section(gtk_module: Any, root: Any) -> dict[str, Any]:
     flow_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=8)
     header_col.pack_start(flow_row, False, False, 0)
 
-    flow_legend_label = gtk_module.Label(label="Compose -> Optimize -> Apply")
+    flow_legend_label = gtk_module.Label(label="")
     set_xalign_if_supported(flow_legend_label)
+    from harite.gui.views.flow_legend_surface import apply_flow_legend_markup
+
+    apply_flow_legend_markup(flow_legend_label, active_step="compose")
     flow_row.pack_start(flow_legend_label, False, False, 0)
 
     flow_spacer = gtk_module.Label(label="")

@@ -15,8 +15,6 @@ SECOND_SLOT_WIDGET_NAMES: tuple[str, ...] = (
     "btnClrPathR",
     "entPathR",
     "imgPreviewR",
-    "lblPreviewAssignR",
-    "lblPreviewResultR",
     "btnSwapInputPaths",
     "btn_swap_input_paths",
     # Slideshow — R source block (profile combo intentionally omitted)

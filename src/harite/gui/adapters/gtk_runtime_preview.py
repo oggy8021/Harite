@@ -4,8 +4,6 @@ import importlib
 from pathlib import Path
 from typing import Any
 
-from harite.apply_surface import preview_state_label
-
 
 def get_gdkpixbuf_module(backend: Any) -> Any | None:
     try:
@@ -16,18 +14,23 @@ def get_gdkpixbuf_module(backend: Any) -> Any | None:
         return None
 
 
-def clear_preview_widget_gtk(backend: Any, object_name: str, message: str) -> None:
+def clear_preview_widget_gtk(backend: Any, object_name: str, message: str = "") -> None:
     widget = backend._objects.get(object_name)
     if widget is None:
+        return
+    if hasattr(widget, "set_from_pixbuf"):
+        widget.set_from_pixbuf(None)
         return
     if hasattr(widget, "set_text"):
         widget.set_text(message)
         return
-    if hasattr(widget, "set_from_pixbuf"):
-        widget.set_from_pixbuf(None)
+    if hasattr(widget, "clear"):
+        widget.clear()
+        if message and hasattr(widget, "setText"):
+            widget.setText(message)
 
 
-def clear_preview_widget(backend: Any, object_name: str, message: str) -> None:
+def clear_preview_widget(backend: Any, object_name: str, message: str = "") -> None:
     clearer = getattr(backend, "_clear_preview_widget", None)
     if callable(clearer):
         clearer(object_name, message)
@@ -72,11 +75,11 @@ def set_preview_widget_gtk(
     if widget is None:
         return
     if source_path is None:
-        clear_preview_widget_gtk(backend, object_name, f"{object_name}: not-ready")
+        clear_preview_widget_gtk(backend, object_name)
         return
 
     if hasattr(widget, "set_text"):
-        widget.set_text(str(source_path.name))
+        widget.set_text("")
         return
 
     target_width, target_height = preview_target_size(backend)
@@ -146,52 +149,31 @@ def build_preview_crop_boxes(
 
 
 def sync_result_preview_from_owner(backend: Any, owner: Any) -> None:
+    """Sync preview thumbnails only (P-04 — no assignment/result/state labels)."""
     builder = getattr(owner, "build_result_preview_state", None)
     if not callable(builder):
-        clear_preview_widget(backend, "imgPreviewL", "Preview L: not-ready")
-        clear_preview_widget(backend, "imgPreviewR", "Preview R: not-ready")
-        backend._set_label_text("lblPreviewAssignL", "L display <- -")
-        backend._set_label_text("lblPreviewAssignR", "R display <- -")
-        backend._set_label_text("lblPreviewResultL", "Result: not-ready")
-        backend._set_label_text("lblPreviewResultR", "Result: not-ready")
-        backend._set_label_text("lblPreviewState", "Preview: not-ready")
-        backend._set_label_text("lblPreviewSource", "Preview source: -")
-        backend._set_label_text("lblPreviewAssist", "Assist: not-ready")
+        clear_preview_widget(backend, "imgPreviewL")
+        clear_preview_widget(backend, "imgPreviewR")
         return
 
     state = builder()
     source_path = getattr(state, "source_file", None)
     if source_path is None:
-        clear_preview_widget(backend, "imgPreviewL", "Preview L: not-ready")
-        clear_preview_widget(backend, "imgPreviewR", "Preview R: not-ready")
-        backend._set_label_text("lblPreviewAssignL", "L display <- -")
-        backend._set_label_text("lblPreviewAssignR", "R display <- -")
-        backend._set_label_text("lblPreviewResultL", "Result: not-ready")
-        backend._set_label_text("lblPreviewResultR", "Result: not-ready")
-        backend._set_label_text("lblPreviewState", "Preview: not-ready")
-        backend._set_label_text("lblPreviewSource", "Preview source: -")
-        backend._set_label_text("lblPreviewAssist", "Assist: not-ready")
+        clear_preview_widget(backend, "imgPreviewL")
+        clear_preview_widget(backend, "imgPreviewR")
         return
 
     mode = str(getattr(state, "apply_mode", "single-file") or "single-file").strip().lower()
-    backend._set_label_text("lblPreviewAssignL", str(getattr(state, "l_assignment", "") or "L display <- -"))
-    backend._set_label_text("lblPreviewAssignR", str(getattr(state, "r_assignment", "") or "R display <- -"))
-    backend._set_label_text("lblPreviewResultL", str(getattr(state, "l_result_note", "") or "Result: not-ready"))
-    backend._set_label_text("lblPreviewResultR", str(getattr(state, "r_result_note", "") or "Result: not-ready"))
-    backend._set_label_text("lblPreviewSource", f"Preview source: {Path(source_path).name}")
-    backend._set_label_text("lblPreviewAssist", str(getattr(state, "assist_summary", "") or "Assist: not-ready"))
     if mode == "per-monitor-auto-split":
         boxes = build_preview_crop_boxes(
             Path(source_path),
             l_display=getattr(state, "l_display", None),
             r_display=getattr(state, "r_display", None),
         )
-        backend._set_label_text("lblPreviewState", preview_state_label(mode))
         if boxes is not None:
             set_preview_widget(backend, "imgPreviewL", Path(source_path), crop_box=boxes[0])
             set_preview_widget(backend, "imgPreviewR", Path(source_path), crop_box=boxes[1])
             return
 
-    backend._set_label_text("lblPreviewState", preview_state_label(mode))
     set_preview_widget(backend, "imgPreviewL", Path(source_path))
     set_preview_widget(backend, "imgPreviewR", Path(source_path))

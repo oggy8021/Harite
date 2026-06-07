@@ -71,7 +71,10 @@ def build_header_section() -> dict[str, Any]:
     flow_row_layout.setContentsMargins(0, 0, 0, 0)
     flow_row_layout.setSpacing(8)
 
-    flow_legend_label = QLabel("Compose -> Optimize -> Apply")
+    flow_legend_label = QLabel("")
+    from harite.gui.views.flow_legend_surface import apply_flow_legend_markup
+
+    apply_flow_legend_markup(flow_legend_label, active_step="compose")
     flow_row_layout.addWidget(flow_legend_label)
 
     flow_spacer = QWidget()

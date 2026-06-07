@@ -54,8 +54,6 @@ def on_input_changed(backend: Any, entry: Any) -> None:
     backend._set_button_enabled("btnSetWall", False)
     if not has_input:
         set_save_path_dialog_open_state(backend, False, state_text="Export path: reset")
-    backend._set_label_text("lblOptimizeResult", "Optimize result: not-run")
-    backend._set_label_text("lblApplyTarget", "Apply target: not-ready")
 
     if callback is None:
         return

@@ -139,6 +139,7 @@ class _Label(_WidgetBase):
     def __init__(self, label=""):
         super().__init__()
         self.text = label
+        self.markup = label
         self.selectable = False
         self.wrap = False
 
@@ -153,6 +154,11 @@ class _Label(_WidgetBase):
 
     def set_text(self, text):
         self.text = text
+        self.markup = text
+
+    def set_markup(self, markup):
+        self.markup = markup
+        self.text = markup.replace("<b>", "").replace("</b>", "")
 
     def get_text(self):
         return self.text
@@ -687,17 +693,12 @@ def test_runtime_backend_optimize_result_controls_apply_button_state():
     apply_btn = backend.get_object("btnSetWall")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
-    optimize_result = backend.get_object("lblOptimizeResult")
-    apply_target = backend.get_object("lblApplyTarget")
-
     backend.connect_signals({"on_optimize": lambda: True})
     optimize_btn.click()
 
     assert apply_btn.sensitive is True
-    assert status.text == "Status: ready"
+    assert status.text == "Status: optimize completed"
     assert error.text == "Error: none"
-    assert optimize_result.text == "Optimize result: success"
-    assert apply_target.text == "Apply target: ready"
 
     backend.connect_signals({"on_optimize": lambda: False})
     optimize_btn.click()
@@ -705,8 +706,6 @@ def test_runtime_backend_optimize_result_controls_apply_button_state():
     assert apply_btn.sensitive is False
     assert status.text == "Status: ready"
     assert error.text == "Error: optimize returned false"
-    assert optimize_result.text == "Optimize result: failed"
-    assert apply_target.text == "Apply target: not-ready"
 
 
 def test_runtime_backend_exposes_main_optimize_apply_sections():
@@ -727,24 +726,15 @@ def test_runtime_backend_exposes_main_optimize_apply_sections():
     assert backend.get_object("btnGetImgR") is not None
     assert backend.get_object("entPathL") is not None
     assert backend.get_object("entPathR") is not None
-    assert backend.get_object("lblOptimizeSection") is not None
     assert backend.get_object("boxOptimizeSection") is not None
     assert backend.get_object("btnOptimize") is not None
-    assert backend.get_object("lblOptimizeResult") is not None
-    assert backend.get_object("lblApplySection") is not None
     assert backend.get_object("boxApplySection") is not None
-    assert backend.get_object("lblApplyTarget") is not None
-    assert backend.get_object("lblPreviewSection") is not None
+    assert backend.get_object("btnSetWall") is not None
     assert backend.get_object("boxPreviewSection") is not None
     assert backend.get_object("imgPreviewL") is not None
     assert backend.get_object("imgPreviewR") is not None
-    assert backend.get_object("lblPreviewAssignL") is not None
-    assert backend.get_object("lblPreviewAssignR") is not None
-    assert backend.get_object("lblPreviewResultL") is not None
-    assert backend.get_object("lblPreviewResultR") is not None
-    assert backend.get_object("lblPreviewState") is not None
-    assert backend.get_object("lblPreviewSource") is not None
-    assert backend.get_object("lblPreviewAssist") is not None
+    assert backend.get_object("radApplySingle") is not None
+    assert backend.get_object("radApplyPerMonitor") is not None
     assert backend.get_object("marginsTab") is not None
     assert backend.get_object("lblMarginsTabTitle") is not None
     assert backend.get_object("lblMarginsSection") is not None
@@ -1052,13 +1042,6 @@ def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path, monkeypa
     backend.get_object("entPathL").emit("changed", backend.get_object("entPathL"))
     backend.get_object("btnOptimize").click()
 
-    assert backend.get_object("lblPreviewAssignL").text == "L display <- left.jpg"
-    assert backend.get_object("lblPreviewAssignR").text == "R display <- left.jpg"
-    assert backend.get_object("lblPreviewResultL").text == "Result: full optimized image"
-    assert backend.get_object("lblPreviewResultR").text == "Result: full optimized image"
-    assert backend.get_object("lblPreviewState").text == "Preview: same image on both displays"
-    assert backend.get_object("lblPreviewSource").text == "Preview source: preview.jpg"
-    assert backend.get_object("lblPreviewAssist").text == "Assist: same optimized image will be applied to both displays"
     assert Path(backend.get_object("imgPreviewL").file_path).name == "preview.jpg"
     assert Path(backend.get_object("imgPreviewR").file_path).name == "preview.jpg"
 
@@ -1067,12 +1050,6 @@ def test_runtime_backend_syncs_result_preview_from_mainwindow(tmp_path, monkeypa
 
     backend.get_object("radApplyPerMonitor").click()
 
-    assert backend.get_object("lblPreviewAssignL").text == "L display <- left.jpg"
-    assert backend.get_object("lblPreviewAssignR").text == "R display <- right.jpg"
-    assert backend.get_object("lblPreviewResultL").text == "Result: auto-split left crop"
-    assert backend.get_object("lblPreviewResultR").text == "Result: auto-split right crop"
-    assert backend.get_object("lblPreviewState").text == "Preview: pseudo auto-split by display widths"
-    assert backend.get_object("lblPreviewAssist").text == "Assist: auto-split by current left/right display widths"
     assert backend.get_object("lblCurrentMargins").text == "margins=0,0,0,0"
     assert backend.get_object("lblCurrentStateL").text == "L: align=center valign=center"
     assert backend.get_object("lblCurrentStateR").text == "R: align=center valign=center"
@@ -1151,7 +1128,7 @@ def test_runtime_backend_shows_current_labels_and_controls():
     assert tgl_push_left_r.label == ""
     assert tgl_push_right_r.label == ""
     assert tgl_lower_r.label == ""
-    assert tgl_upper_l.tooltip_text == "Top-L"
+    assert tgl_upper_l.tooltip_text == "Top alignment-L"
     assert btn_get_img_l.label == ""
     assert btn_get_img_l.tooltip_text == "Open-L"
 
@@ -2843,12 +2820,11 @@ def test_runtime_backend_color_close_callback_exception_propagates():
         backend._on_color_dialog_cancel_clicked()
 
 
-def test_runtime_backend_apply_success_updates_apply_target():
+def test_runtime_backend_apply_success_updates_footer():
     backend = GtkRuntimeSignalBackend(_FakeGtk)
 
     optimize_btn = backend.get_object("btnOptimize")
     apply_btn = backend.get_object("btnSetWall")
-    apply_target = backend.get_object("lblApplyTarget")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
 
@@ -2858,9 +2834,8 @@ def test_runtime_backend_apply_success_updates_apply_target():
     optimize_btn.click()
     apply_btn.click()
 
-    assert status.text == "Status: ready"
+    assert status.text == "Status: wallpaper applied"
     assert error.text == "Error: none"
-    assert apply_target.text == "Apply target: last applied"
 
 
 def test_runtime_backend_apply_mode_defaults_to_single_file(monkeypatch):
@@ -2874,9 +2849,11 @@ def test_runtime_backend_apply_mode_defaults_to_single_file(monkeypatch):
 
     assert backend.get_object("radApplySingle").label == "No Split"
     assert backend.get_object("radApplyPerMonitor").label == "Auto-Split"
+    from harite.apply_surface import apply_mode_help_text
+
     assert backend.get_object("radApplySingle").get_active() is True
     assert backend.get_object("radApplyPerMonitor").get_active() is False
-    assert backend.get_object("lblApplyMode").text == "Apply the optimized image as a single file."
+    assert backend.get_object("radApplySingle").tooltip_text == apply_mode_help_text("single-file")
 
 
 def test_runtime_backend_apply_mode_toggle_dispatches_and_updates_label(monkeypatch):
@@ -2888,8 +2865,12 @@ def test_runtime_backend_apply_mode_toggle_dispatches_and_updates_label(monkeypa
 
     backend.get_object("radApplyPerMonitor").click()
 
+    from harite.apply_surface import apply_mode_help_text
+
     assert observed["mode"] == "per-monitor-auto-split"
-    assert backend.get_object("lblApplyMode").text == "Split the optimized image and apply per display."
+    assert backend.get_object("radApplyPerMonitor").tooltip_text == apply_mode_help_text(
+        "per-monitor-auto-split"
+    )
     assert backend.get_object("lblStatus").text == "Status: ready"
 
 
@@ -2927,8 +2908,10 @@ def test_runtime_backend_apply_mode_can_return_to_default_from_per_monitor(monke
     backend.get_object("radApplyPerMonitor").click()
     backend.get_object("radApplySingle").click()
 
+    from harite.apply_surface import apply_mode_help_text
+
     assert observed == ["per-monitor-auto-split", "single-file"]
-    assert backend.get_object("lblApplyMode").text == "Apply the optimized image as a single file."
+    assert backend.get_object("radApplySingle").tooltip_text == apply_mode_help_text("single-file")
 
 
 def test_runtime_backend_cross_layout_places_top_and_bottom_per_side():
@@ -3272,7 +3255,6 @@ def test_runtime_backend_optimize_reports_legacy_handler_signature_error():
 
     assert backend.get_object("lblStatus").text == "Status: ready"
     assert "required positional argument" in backend.get_object("lblError").text or "positional arguments" in backend.get_object("lblError").text
-    assert backend.get_object("lblOptimizeResult").text == "Optimize result: error"
 
 
 def test_runtime_backend_optimize_propagates_unexpected_runtime_error():
@@ -3331,15 +3313,10 @@ def test_runtime_backend_optimize_handler_missing_sets_status_and_error():
     optimize_btn = backend.get_object("btnOptimize")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
-    optimize_result = backend.get_object("lblOptimizeResult")
-    apply_target = backend.get_object("lblApplyTarget")
-
     optimize_btn.click()
 
     assert status.text == "Status: ready"
     assert error.text == "Error: handler not connected"
-    assert optimize_result.text == "Optimize result: handler-missing"
-    assert apply_target.text == "Apply target: not-ready"
 
 
 def test_runtime_backend_save_button_skips_optimize_handler_and_reports_missing_path_handler():
@@ -3370,8 +3347,6 @@ def test_runtime_backend_optimize_button_does_not_fallback_to_save_handler():
     optimize_btn = backend.get_object("btnOptimize")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
-    optimize_result = backend.get_object("lblOptimizeResult")
-    apply_target = backend.get_object("lblApplyTarget")
     calls = []
 
     backend.connect_signals({
@@ -3383,8 +3358,6 @@ def test_runtime_backend_optimize_button_does_not_fallback_to_save_handler():
     assert calls == []
     assert status.text == "Status: ready"
     assert error.text == "Error: handler not connected"
-    assert optimize_result.text == "Optimize result: handler-missing"
-    assert apply_target.text == "Apply target: not-ready"
 
 
 def test_runtime_backend_save_button_does_not_use_legacy_save_alias():
@@ -3410,13 +3383,10 @@ def test_runtime_backend_apply_handler_missing_sets_status_and_error():
     apply_btn = backend.get_object("btnSetWall")
     status = backend.get_object("lblStatus")
     error = backend.get_object("lblError")
-    apply_target = backend.get_object("lblApplyTarget")
-
     apply_btn.click()
 
     assert status.text == "Status: ready"
     assert error.text == "Error: handler not connected"
-    assert apply_target.text == "Apply target: handler-missing"
 
 
 def test_runtime_backend_toggle_exclusivity_for_left_vertical_direction():
