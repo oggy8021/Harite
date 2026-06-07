@@ -1,12 +1,12 @@
 # Harite 基本仕様 (Foundation Spec)
 
-最終更新: 2026-06-03 (C-01 source spec 段 1a — remote / preset 骨格)
+最終更新: 2026-06-07
 
 ## 1. 文書の目的と適用範囲
 
 - 本書は Harite の常設仕様書群の入口である。
 - 主題は、現行 Harite が何を目的とし、どの環境で、どの操作面を持ち、どの分冊へ読むべきかを示すことにある。
-- planning 履歴、過去判断の時系列、没案の説明は対象外とする。
+- planning 履歴、過去判断の時系列、没案の説明は対象外とする（`docs/working/` に残す。正本からは参照しない）。
 
 本書の読み方:
 
@@ -105,7 +105,7 @@ flowchart TD
 | 入力検証 | CLI / GUI | core は受け取った値の基底正規化を行う（不正値に対して例外ではなくフォールバック値を返す場合がある。例: `background_color` 不正 → `#1E1E1E`、margins 変換失敗 → `(0,0,0,0)`） | plugin |
 | optimize 条件解決 | core | CLI / GUI は入力採用値を決めて渡す | plugin |
 | 設定ファイル path 解決と JSON 入出力 | settings_file | CLI / GUI は load/save の契機を持つ | plugin |
-| source registry catalog CRUD / resolve | sources（`harite.sources`） | GUI Slideshow picker（Qt #378）、settings へ path 展開 | CLI（C-02 打ち止め） |
+| source registry catalog CRUD / resolve | sources（`harite.sources`） | GUI Slideshow picker、settings へ path 展開 | CLI（catalog 非露出） |
 | apply target 解決 | core | CLI / GUI / slideshow は apply_mode と file 条件を渡す | plugin |
 | plugin 名の選択 | CLI / GUI / 設定 | plugin registry は解決を補助する | core |
 | plugin registry 解決 | plugins registry | CLI / GUI が名前を与える | core |
@@ -137,7 +137,7 @@ flowchart TD
 
 plugin 分冊:
 
-- plugin 実装の正本は [docs/specs/plugins/harite-plugin-spec.md](docs/specs/plugins/harite-plugin-spec.md)
+- plugin 実装の正本は [plugin-spec](plugins/harite-plugin-spec.md)
 
 ## 8. README と仕様書の役割分担
 
@@ -167,8 +167,8 @@ src/harite/
   cli.py                  CLI entrypoint と command surface
   settings_file.py        設定ファイル (harite-settings.json) の path 解決と JSON load/save
   settings.py             設定モデルと JSON との相互変換
-  sources.py              source registry catalog CRUD / resolve（C-02 — #375）
-  sources_file.py         harite-sources.json path 解決と load/save（C-02 — #375）
+  sources.py              source registry catalog CRUD / resolve
+  sources_file.py         harite-sources.json path 解決と load/save
   core.py                 optimize の基底ロジック（配置計算・embed・auto-split）
   optimize_settings.py    display 設定の解決（入力値と two-screen context から optimize パラメータを確定）
   display_context.py      接続中 display 群の検出と two-screen context の生成
@@ -250,13 +250,21 @@ GUI 配下の file / module を読むときは、次の配置規則を前提に�
 - `harite-gtk` は旧 `harite-gui` エントリーポイントの後継であり、GTK backend に対応する。
 - `harite-qt` は Qt backend の新エントリーポイントであり、Qt migration の実装が完了した段階で `pyproject.toml` に追加する。
 
-## 11. 分冊導線
+## 11. 正本の書き方
 
-- core 詳細は [docs/specs/core/harite-core-spec.md](docs/specs/core/harite-core-spec.md)
-- source registry 詳細は [docs/specs/source/harite-source-spec.md](docs/specs/source/harite-source-spec.md)
-- CLI 詳細は [docs/specs/cli/harite-cli-spec.md](docs/specs/cli/harite-cli-spec.md)
-- GUI 詳細は [docs/specs/gui/harite-gui-spec.md](docs/specs/gui/harite-gui-spec.md)
-- スライドショー詳細は [docs/specs/slideshow/harite-slideshow-spec.md](docs/specs/slideshow/harite-slideshow-spec.md)
+各 `harite-*-spec.md` は **現行 product の契約**だけを書く。時制はフラットで、読者が planning や audit を開かなくても判断できること。
+
+- 実装変更で確定した事実は、正本の該当節へ **吸収**する（参照リンクで逃がさない）。
+- 正本内の階層は **本編 + 付録**程度に留める（例: source-spec の §12 本編と §15 provider 付録）。
+- feature ID（C-xx / P-xx）、PR 番号、3 層 audit 表は正本に載せない。
+
+## 12. 分冊導線
+
+- core 詳細は [core-spec](core/harite-core-spec.md)
+- source registry 詳細は [source-spec](source/harite-source-spec.md)
+- CLI 詳細は [cli-spec](cli/harite-cli-spec.md)
+- GUI 詳細は [gui-spec](gui/harite-gui-spec.md)
+- スライドショー詳細は [slideshow-spec](slideshow/harite-slideshow-spec.md)
 
 推奨読順:
 

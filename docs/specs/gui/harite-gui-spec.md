@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-04 (C-04 Wave c — icon/tooltip surface)
+最終更新: 2026-06-07
 
 ## 1. GUI の責務
 
@@ -8,6 +8,16 @@
 - framework-neutral な状態モデル（`views/`）と runtime（`adapters/` または `adapters_qt/`）を分離し、保守可能性を確保する。
 - GUI は `MainWindow` を中心に、設定、スライドショー、status、message history を一貫した状態として保持する。
 - エントリーポイントは GTK backend（`harite-gtk` / `app.py`）と Qt backend（`harite-qt` / `app_qt.py`）の 2 系統を持つ。いずれも同じ `MainWindow` を生成し、framework 固有の処理は各 adapters 側が担う。
+
+### 1.1 本書の読み方
+
+| 層 | 節 | 内容 |
+| --- | --- | --- |
+| **本編** | §2–5 | 起動、Main/Margins/Slideshow 骨格、settings |
+| **本編** | §6 | slideshow 接続（registry・remote・start/tick） |
+| **付録** | §7 以降 | tray、icon、backend 差分 |
+
+catalog / remote の契約詳細は [source-spec](../source/harite-source-spec.md)。tick 算法は [slideshow-spec](../slideshow/harite-slideshow-spec.md)。
 
 ## 2. GUI 起動導線
 
@@ -89,8 +99,8 @@ layout 戦略:
   - header の flow legend
   - footer の status / slideshow summary / error
   - Main tab の `apply mode help row`
-  - Margins tab の embed / margin text まわり（line limit 等は tooltip）
-  - Slideshow tab の mode help（**Drawer 内** — C-04）
+  - Margins tab の widget tooltip（line limit / 優先規則 / behavior。§3 Margins tab 参照）
+  - Slideshow tab の mode help（Drawer 内）
   - settings dialog の state/notice
   - color dialog の state/notice
 - これらの補助説明面は、操作 widget と同一 row に埋め込まず、対応する操作面の近傍に独立 row または独立 block として置く。
@@ -106,8 +116,8 @@ Main Window:
 - footer も 2 行構成で、1 行目は左に `Status`、右に `Slideshow summary` を置く。
 - footer 2 行目は separator の下に `Error` を置き、status と error を縦 2 段で分離する。
 - footer の `Status`、`Slideshow summary`、`Error` は実行状態と失敗面を読むための常設説明面である。
-- footer の `Error` は `Status` / `Slideshow summary` と **視覚的に区別**する（例: 赤系 foreground）。同一の muted 色で status と error を並べない（C-04 Wave 0 — [planning draft](../../working/20260604-c04-gui-surface-planning-draft.md) §3）。
-- footer の `Status` 行に **`{Phase}: {state}`** 形式（例: `Slideshow: planned`, `Margins: updated`）を常設しない。ユーザー向けは短い人間語または空とし、進行中の slideshow 状態は 1 行目右の `Slideshow summary` に寄せる。内部の `status_phase` は保持してよい（C-04 — 同上 §3.2）。
+- footer の `Error` は `Status` / `Slideshow summary` と **視覚的に区別**する（例: 赤系 foreground）。同一の muted 色で status と error を並べない。
+- footer の `Status` 行に `{Phase}: {state}` 形式を常設しない。進行中の slideshow 状態は `Slideshow summary` に寄せる。内部の `status_phase` は保持してよい。
 
 Main tab:
 
@@ -128,19 +138,32 @@ Main tab:
 
 Margins tab:
 
-- `Margins` tab は **専用 tab として維持**する（C-04 案 A）。Main tab への全面統合や permanent 3-tab 廃止は行わない。将来の Main+Margins Drawer（案 B）は操作削減なしの載せ替えオプションとして [planning draft](../../working/20260604-c04-gui-surface-planning-draft.md) §7.2 に記す。
+- `Margins` tab は notebook 2 番目の page で、タブ title は `Margins (for each display)` とする（tab 順は §3 layout 戦略）。
 - `Margins` tab は単一の縦積み column を持ち、**cross-grid editor を主役**とする（4 辺 margin spin + 中央 stack）。
 - cross-grid editor は上に top margin、左に left margin、右に right margin、下に bottom margin を置き、中央に詳細編集 stack を置く。
-- 中央 stack は上から `embed pattern`、`margin text notebook`、`position selector` を縦積みする。**`current alignment summary`（`align=...` 長文）と `notes`（3 行 legend）は持たない** — ルール・制限は tooltip / hoobar へ逃がす（C-04 Wave a 実装済 — [surface slice memo](../../working/design/20260604-c04-slideshow-margins-surface-slice-memo.md) §5）。
+- 中央 stack は上から `embed pattern`、`margin text notebook`、`position selector` を縦積みする。
+- 中央 stack に **常設 label は置かない**: `Main Window Current alignment:` 見出し、`align=...` / `margins=...` の状態列挙、line limit / 優先規則 / behavior の 3 行 notes block。
+- 上記の補助説明は次の面へ載せる。
+- **widget tooltip** — 載せ先と文の対応:
+
+| 載せ先 widget | tooltip 文 |
+| --- | --- |
+| `embed pattern` の mode label | `Line limits are chosen automatically for the selected margin text mode.` |
+| `Text` page の margin text entry | 同上 |
+| `position selector` | `Rule: margins define area; align/valign act inside it.` |
+| cross-grid、各辺 margin label | `Current behavior: margins are global to the composite canvas.` |
+| center stack 全体（任意） | 上記 3 文を連結した tooltip |
+
+- **footer `Status`**（§9）: margin text preflight の成否と寸法要約（§8 `margin text preflight の現行規則`）。
 - `embed pattern` は `Off` / `Settings` / `Text only` / `Both` の radio row を持つ。
 - `margin text notebook` は `Settings` page と `Text` page の 2 page 構成とする。
 - `Settings` page は preview label を中心とした状態確認面、`Text` page は margin text entry 面とする。
-- `position selector` は `Left` 列と `Right` 列を横並びに置き、それぞれ `Top` / `Bottom` radio を持つ（Main の direction 十字とは別物のまま維持する）。
+- `position selector` は `Left` 列と `Right` 列を横並びに置き、それぞれ `Top` / `Bottom` radio を持つ。Main tab の direction toggle 十字（画像の push 方向）とは独立した widget 群とする（§8 `margin text position` 参照）。
 
 Slideshow tab:
 
-- `Slideshow` tab の **正面（中核）** は外周を縦積みで組み、**CODH keyword chip**（P-06）、top spacer、**profile row**、srcdir row、**interval/start/stop row**、（任意）**More slideshow options…** トリガ、bottom spacer の順とする（C-02 骨格 + C-04 — [surface slice](../../working/design/20260604-c04-slideshow-margins-surface-slice.html) / [memo](../../working/design/20260604-c04-slideshow-margins-surface-slice-memo.md)）。
-- **CODH keyword chip**（P-06）: タブ内容 **右上角**に read-only muted label（`CODH: {keyword}`）。L/R いずれか（または profile 経由）が `codh-edo-spots-keyword` / `codh-edo-shops-keyword` のときのみ表示。データは `harite-settings.json` の `codh_keyword`。編集は Manage Presets タブ。Footer / 他タブには出さない。
+- `Slideshow` tab の正面（中核）は縦積みで、CODH keyword chip、top spacer、profile row、srcdir row、interval/start/stop row、（任意）More slideshow options… トリガ、bottom spacer の順とする。
+- **CODH keyword chip**: タブ右上角に read-only muted label（`CODH: {keyword}`）。L/R いずれか（または profile 経由）が CODH keyword preset のときのみ表示。編集は Manage Presets タブ。
 - **profile row** は tab 幅中央に `combo_slideshow_profile`（`— none —` + profile 名一覧）を 1 本置く。常設の「選択で L/R を一括反映」類の補助 label は **持たない**（tooltip で足りる）。
 - srcdir row は **Main tab compose grid と同型**の左・中央・右 3 列とする。左右 panel は上から **`combo_slideshow_source_l/r`（Saved source）**、`Srcdir-L/R` button、`L:` / `R:` path label、右下に `Clear-L/R` を持つ。中央 panel には **`Swap L/R`** button のみを置く（§4.1 / §4.2）。
 - **interval/start/stop row** は正面に `Interval`、spin、`Slideshow Start`、`Slideshow Stop` を 1 行にまとめ、視線の終点とする。
@@ -148,10 +171,10 @@ Slideshow tab:
   - `Mode` + sequential/random + 短い mode help（1 行まで）
   - `btn_manage_source_registry`（`Manage sources and profiles…`）— 専用 Sources タブは **作らない**
   - `Slideshow current` / output 表示（path は tooltip または footer 要約で足りる場合は常設 label を省略してよい）
-  - 将来の C-01-E-KW 入力は **Manage dialog 内**（Drawer 経由）を前提とする
-- registry / remote の **Refresh** 注意は既存どおり OK ダイアログ（C-04 パターン）。
-- C-04 Wave b 以降、補助面は **options drawer**（`More slideshow options…`）内に置き、正面は中核のみとする。
-- **Drawer 開閉視認性（P-07）:** 開時は drawer 面板を **theme chrome tint**（`Window` と `WindowText` を 6% 混合 → `QPalette.Window` + `autoFillBackground`、子 widget へ QSS を当てない）、上辺は 1px `QFrame`（`palette(mid)`）、トリガのみ scoped QSS（chrome 背景・上左右枠）+ chevron up（閉=down）。`Fewer…` / `More…` ラベル反転は維持。入口: `slideshow_options_drawer.apply_slideshow_options_drawer_open_state`。
+  - CODH keyword 入力は Manage dialog Presets タブ内
+- registry / remote の Refresh 前は確認ダイアログを出す。
+- 補助面は **options drawer**（`More slideshow options…`）内に置き、Slideshow tab 正面は中核のみとする。
+- **Drawer 開閉視認性:** 開時は drawer 面板を **theme chrome tint**（`Window` と `WindowText` を 6% 混合 → `QPalette.Window` + `autoFillBackground`、子 widget へ QSS を当てない）、上辺は 1px `QFrame`（`palette(mid)`）、トリガのみ scoped QSS（chrome 背景・上左右枠）+ chevron up（閉=down）。`Fewer…` / `More…` ラベル反転は維持。入口: `slideshow_options_drawer.apply_slideshow_options_drawer_open_state`。
 
 Dialogs:
 
@@ -205,9 +228,7 @@ apply mode の user-facing 意味:
 - `_default_apply_mode` は XFCE セッション時 `per-monitor-auto-split`、Windows plugin かつ display 2 枚以上時も `per-monitor-auto-split`（UI 上 Span）、それ以外は `single-file`。
 - `_default_plugin_name` はプラットフォームマップ（`linux`→`linux`、`win32`→`windows`、`darwin`→`macos`）から初期値を決定する。マップに該当しないプラットフォームでは `linux` を既定とし、その値が `available_plugins` に存在しない場合は先頭の利用可能 plugin を使う。
 
-### 4.1 L/R swap と Slideshow srcdir clear（P-01 / P-02）
-
-design 合意: [20260601-p01-p02-lr-swap-clear-slice.html](../../working/design/20260601-p01-p02-lr-swap-clear-slice.html)
+### 4.1 L/R swap と Slideshow srcdir clear
 
 | Handler | 呼び出し元 | Owner 操作 | Widget 同期 |
 | --- | --- | --- | --- |
@@ -222,11 +243,11 @@ design 合意: [20260601-p01-p02-lr-swap-clear-slice.html](../../working/design/
 - **Clear-L/R**（Slideshow）は Main の `on_clear_input` と同型の per-side clear とする。**Clear both（同時クリア）は提供しない**。
 - srcdir clear 後、両方非空でなければ `can_start_slideshow` は `False` となり Start を無効化する（§6 既存ガード）。実行中 slideshow を **自動 stop しない**（Main path clear と同様、owner 値と widget 表示の更新のみ）。
 - swap / clear 後は `_sync_action_availability_from_owner`（または同等）で Start / Apply 等の有効状態を再評価する。
-- 第2波 impl は **Qt backend** を先行。GTK backend は maintenance mode だが、上記 handler と widget 配置は spec 上 **parity 対象**とする。
+- Qt backend が development focus。GTK backend は maintenance mode だが、上記 handler と widget 配置は同一契約とする。
 
-### 4.2 Slideshow source registry（C-02）
+### 4.2 Slideshow source registry
 
-design 合意: [20260601-c02-slideshow-source-registry-slice.html](../../working/design/20260601-c02-slideshow-source-registry-slice.html)（#376 マージ済）。catalog 契約は [source-spec §7](../source/harite-source-spec.md)。
+catalog 契約は [source-spec §7](../source/harite-source-spec.md)。
 
 | Widget / Handler | 用途 |
 | --- | --- |
@@ -239,7 +260,7 @@ design 合意: [20260601-c02-slideshow-source-registry-slice.html](../../working
 | `on_manage_source_registry()` | dialog 表示。Close 後に tab 上 combo を catalog から再構築 |
 | `bootstrap_preset_sources` | startup および Manage dialog Close 後（[source-spec §13.4](../source/harite-source-spec.md)） |
 
-**Saved source と Srcdir ブラウズの併存（オーナー合意 2026-06-01）:**
+**Saved source と Srcdir ブラウズの併存:**
 
 | 操作 | owner path | registry tracking（`slideshow_source_id_*` / `slideshow_profile_id`） | combo 表示 |
 | --- | --- | --- | --- |
@@ -250,38 +271,34 @@ design 合意: [20260601-c02-slideshow-source-registry-slice.html](../../working
 | Clear-L/R（§4.1 拡張） | 当該 side path を `""` | 当該 side source id + **`slideshow_profile_id` をクリア** | 当該 side saved combo → `— none —`。**Profile combo → `— none —`** |
 | Swap L/R（§4.1 拡張） | `slideshow_srcdir_l/r` swap | `slideshow_source_id_l/r` swap。`slideshow_profile_id` は **クリア**（L/R 対応が崩れるため） |
 
-- slideshow **tick 中**は `slideshow_srcdir_l/r` の path のみ参照する（C-05 — [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md)）。
+- slideshow tick 中は `slideshow_srcdir_l/r` の path のみ参照する（[slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md)）。
 - **Start 直前**に tracking `source_id` / `profile_id` から [source-spec §6.4](../source/harite-source-spec.md) に従い再 resolve し、`slideshow_srcdir_*` を上書きしてから画像収集する。
 - registry 外 path（ブラウズのみ）も **許容**する。Saved combo が `— none —` でも path label に basename 省略表示があれば Start ガードは従来どおり評価する。
 - profile / source の **ordered list 化・profile 周回**は行わない。
 
-**Manage dialog（P-05 — Local / Presets タブ）:**
+**Manage dialog（Local / Presets タブ）:**
 
 - **Sources** は `QTabWidget` で **Local** と **Presets** に分離（ALL タブなし）。Profiles セクションはタブの下に共通配置。
 - **Local タブ:** local-dir 一覧（名前昇順）、Delete、Add local（name + Browse + path）。
 - **Presets タブ:** remote/preset 一覧（provider グループ見出し + 名前昇順）、**keyword(CODH)**、Refresh。
   - グループ見出し: `JMA 天気図` / `NDL 図版` / `CODH 江戸` / `その他`（`harite-preset:` の preset_id 接頭辞で分類）。
   - Delete は **Local タブのみ**（preset は materialize で再出現しうる）。
-- **keyword(CODH)**（C-01-E-KW）: **Presets タブ内**に常設 `QLineEdit`（ラベル `keyword(CODH)`、初期値 `桜`、`maxLength=16`）。`codh-edo-spots-keyword` / `codh-edo-shops-keyword` 選択時のみ **enabled**；他 preset 選択時は disabled（表示は settings の共通値のまま）。Refresh 前および Close 時に `harite-settings.json` の `codh_keyword` へ反映（[source-spec §15.7](../source/harite-source-spec.md)）。
+- **keyword(CODH)**: Presets タブ内に常設 `QLineEdit`（ラベル `keyword(CODH)`、初期値 `桜`、`maxLength=16`）。`codh-edo-spots-keyword` / `codh-edo-shops-keyword` 選択時のみ enabled。Refresh 前および Close 時に `harite-settings.json` の `codh_keyword` へ反映（[source-spec §15.4.2](../source/harite-source-spec.md)）。
 - Profiles: 一覧、L/R slot combo（source id または empty）、Add / Delete profile。
 - 保存は `harite-sources.json` へ即 write。settings dialog とは別 surface。
 - dialog Close 後、Slideshow tab の profile / saved source combo を reload する。
-
-design 合意: [20260605-c01-e-kw-manage-keyword-slice-memo.md](../../working/design/20260605-c01-e-kw-manage-keyword-slice-memo.md)
 
 **§4.1 との関係:**
 
 - `on_swap_slideshow_srcdirs()` は §4.1 に加え、上表の tracking swap / profile id クリアを行う。
 - `on_clear_slideshow_srcdir(side)` は path に加え、当該 side の source id tracking と saved combo を `— none —` に同期する。
 
-**実装:**
-
-- 第4波 impl は **Qt backend** 先行。GTK は maintenance mode だが widget / handler は **parity 対象**。
+- Qt backend が development focus。GTK は maintenance mode だが widget / handler は同一契約とする。
 - core API は `harite.sources` のみ使用。CLI surface は追加しない。
 
-### 4.3 単 display（P-03）— 第二スロット disabled
+### 4.3 単 display — 第二スロット disabled
 
-検出は `len(detect_displays()) < 2` のみ（[planning](../../working/finished/20260606-p03-single-display-ux-planning.md) §2）。
+検出は `len(detect_displays()) < 2` のみ。
 
 | Tab | `len < 2` で disabled にする widget（第二スロット＝現 UI ラベル R） |
 | --- | --- |
@@ -361,18 +378,18 @@ GTK / Qt 両 backend で、次の user-facing surface は **同じ省略規則**
 
 実装参照: `commit_slideshow_interval_from_spin(...)`（`gtk_runtime_slideshow_ui.py`）、各 backend の `_on_slideshow_start_clicked(...)`。
 
-### 6.3 source registry 接続（C-02）
+### 6.3 source registry 接続
 
 - Slideshow tab の registry UI は §4.2 の layout / handler に従う。catalog 永続化は [source-spec](../source/harite-source-spec.md) が正本。
 - startup / settings load 後、backend は catalog を load し、[source-spec §13.4](../source/harite-source-spec.md) `bootstrap_preset_sources` のち tab 上 combo を構築する（§6.5）。settings の任意 key `slideshow_source_id_l/r` / `slideshow_profile_id` があれば、対応 combo 選択を復元してよい（path は従来どおり `slideshow_srcdir_*` が実行値）。
 - Saved / Profile 選択および Srcdir ブラウズの優先関係は §4.2 の併存表が正本。**`— none —` は source id のみクリアし path は維持**、**Srcdir ブラウズは registry 外 path として combo を `— none —` に戻す**。
 
-### 6.4 Registry resolve at start（C-05）
+### 6.4 Registry resolve at start
 
 - `on_slideshow_start`（tray Start 含む）の画像収集前に §4.2 / [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md) の resolve を行う。
 - Manage dialog Close で catalog を保存したとき、実行中 slideshow が [source-spec §7.6](../source/harite-source-spec.md) の「影響あり」変更を含めば **stop** する。
 
-### 6.5 Remote source と preset（C-01）
+### 6.5 Remote source と preset
 
 catalog / cache / provider の契約は [source-spec §12–16](../source/harite-source-spec.md)。
 
@@ -419,13 +436,13 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 | Profile 行 icon | Lucide `bookmark` / `star` / `folder-heart` のいずれか（package resource） |
 | Manage 行 icon | Lucide `archive`（package resource） |
 
-**Backend:** 第 4 波 GUI impl は Qt 先行。GTK は maintenance mode（parity 対象）。
+**Backend:** Qt が development focus。GTK は maintenance mode（同一契約）。
 
 ### slideshow start / tick / stop
 
 - GUI の slideshow source は `Srcdir-L` と `Srcdir-R` の 2 面で固定する。
 - **検出 2 枚以上**（`len(detect_displays()) >= 2`）: Start は **両方非空** のときのみ有効（従来どおり）。
-- **検出 1 枚**（P-03）: Start は **Srcdir-L のみ非空** で有効。第二スロット（R）UI は disabled。profile / saved source の R 指定は **実行時に無視**（Surface は据え置き）。start は L source のみで single-file apply。
+- **検出 1 枚**: Start は Srcdir-L のみ非空で有効。第二スロット（R）UI は disabled。profile / saved source の R 指定は実行時に無視。start は L source のみで single-file apply。
 - start では有効な source 面から画像を収集する。有効面がすべて空なら `slideshow srcdir is required` で止める。
 - start 時点では slideshow tab 上の mode 選択値を採用する。
 - start 時点で各 source から初回選択を行い、現在表示を更新してから apply を試みる。
@@ -433,21 +450,20 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 - apply に失敗した場合はスライドショー実行を停止し、status と message history に failure を残す。
 - monitor 検出欠落のような一部条件では stop ではなく pause として扱い、状態表示を `paused` へ更新する。
 - 実行中に mode 選択値を変えても進行中の run には反映しない。新しい mode を使うには stop 後に start し直す。
-- dual-source auto-split 実行中の optimize 出力管理（差し替え・純増ギャップ）は [docs/specs/slideshow/harite-slideshow-spec.md §6.2–6.3](docs/specs/slideshow/harite-slideshow-spec.md) を参照する。
+- dual-source auto-split 実行中の optimize 出力管理（差し替え・純増ギャップ）は [slideshow-spec §6.2–6.3](../slideshow/harite-slideshow-spec.md) を参照する。
 
-### Windows dual-source slideshow（W-02）
+### Windows dual-source slideshow
 
 - plugin が `windows` かつ **display 2 枚以上** 検出時、Srcdir-L / Srcdir-R の dual-source slideshow を **開始できる**。
 - 各 start / tick では GUI apply mode 設定にかかわらず `per-monitor-auto-split` 相当の optimize → composite を行い、core が **single-file + `windows_span`** に解決してから windows plugin へ apply する（Span 表示は OS 設定 + opt-in registry）。
 - per-monitor 分割ファイルは slideshow 作業ディレクトリに **生成しない**（composite スロット `harite_slideshow.jpg` のみ）。
 - `windows_apply_span`（Settings）が有効なとき、tick apply 前に `ensure_span_style()` を best-effort 呼び出す（Main タブ Apply B-lite と同型）。
-- registry 自動復元は **実装しない**（slideshow 中の書き戻しは表示崩れリスク — [#343](../online-issues/closed/issue-343.md)）。
+- registry 自動復元は **実装しない**（slideshow 中の書き戻しは表示崩れリスク）。
 
-### GUI single-srcdir slideshow（W-02-B — 見送り）
+### GUI single-srcdir slideshow
 
-- Start は **Srcdir-L と Srcdir-R の両方非空** のときのみ有効（現行どおり）。片方のみの Start は **採用しない**（2026-05-31）。
-- 理由: source 1 件は display 1 枚が通例。GUI で single-source を許すと apply モード（No Split 等）との整理が別途必要。single display × single source は **将来の横断整理** とする。
-- 代替: CLI `harite slideshow --input <directory>`（1 件入力 = single-source、選んだ画像を `plugin.apply` — [cli-spec §6](../cli/harite-cli-spec.md)）。
+- Start は **Srcdir-L と Srcdir-R の両方非空** のときのみ有効。片方のみの Start は採用しない。
+- 代替: CLI `harite slideshow --input <directory>`（[cli-spec §6](../cli/harite-cli-spec.md)）。
 
 ### 出力ディレクトリ（手動 Optimize と slideshow）
 
@@ -458,8 +474,8 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 
 - slideshow 作業ディレクトリは **ピクチャ配下** とし、`XDG_CACHE_HOME` は使わない。XFCE 系 plugin が `xfconf-query` で参照する壁紙 path の実体が、キャッシュ削除等で消えないようにするため。
 - slideshow tab の `Slideshow output` は作業ディレクトリを示す。Main 導線の出力先表示とは別である。
-- issue #317 の要件 R1–R5 は **いずれも対応する**（[slideshow spec §6.3](docs/specs/slideshow/harite-slideshow-spec.md)）。現行実装は過渡状態。
-- R4 確定: `on_slideshow_stop` 時は作業ディレクトリのスロットファイルを削除せず、追跡 state のみクリア（xfconf path 維持）。
+- dual-source 作業ディレクトリの整理は [slideshow-spec §6.2–6.3](../slideshow/harite-slideshow-spec.md)（R1–R5）。
+- `on_slideshow_stop` 時は作業ディレクトリのスロットファイルを削除せず、追跡 state のみクリアする。
 
 ### エッジケース
 
@@ -521,11 +537,11 @@ button と icon の対応:
 - header command では `Color` に `palette.svg`、`Settings` に `settings.svg`、`About` に `info.svg` を割り当てる。
 - flow row の `Export Image` には `image-down.svg` を割り当てる。
 - action cluster の `Optimize` には `image.svg`、`Apply` には `wallpaper.svg` を割り当てる。
-- input 面の direction toggle は `Top-*` に `arrow-up.svg`、`Bottom-*` に `arrow-down.svg`、`Left-*` に `arrow-left.svg`、`Right-*` に `arrow-right.svg` を割り当てる。C-04 Wave c 以降、これらは **icon-only + tooltip**（例: tooltip `Top-L`）とし、icon と重複する on-face label は持たない。
-- input 面の `Open-L` / `Open-R` と slideshow 面の `Srcdir-L` / `Srcdir-R` には `folder-open.svg` を割り当てる（C-04 Wave c: **icon-only + tooltip**）。
-- input 面の `Clear-L` / `Clear-R` には `folder-x.svg` を割り当てる（C-04 Wave c: **icon-only + tooltip**）。
+- input 面の direction toggle は `Top-*` に `arrow-up.svg`、`Bottom-*` に `arrow-down.svg`、`Left-*` に `arrow-left.svg`、`Right-*` に `arrow-right.svg` を割り当てる。これらは **icon-only + tooltip**（例: tooltip `Top-L`）とし、on-face label は持たない。
+- input 面の `Open-L` / `Open-R` と slideshow 面の `Srcdir-L` / `Srcdir-R` には `folder-open.svg` を割り当てる（icon-only + tooltip）。
+- input 面の `Clear-L` / `Clear-R` には `folder-x.svg` を割り当てる（icon-only + tooltip）。
 - compose grid 中央および slideshow srcdir row 中央の **`Swap L/R`** には `arrow-left-right.svg` を割り当てる（Lucide resource を package に追加する）。
-- slideshow srcdir 面の `Clear-L` / `Clear-R` には `folder-x.svg` を割り当てる（Main Clear-L/R と同型；C-04 Wave c: **icon-only + tooltip**）。
+- slideshow srcdir 面の `Clear-L` / `Clear-R` には `folder-x.svg` を割り当てる（Main Clear-L/R と同型、icon-only + tooltip）。
 - slideshow 面の `Slideshow Start` と `Slideshow Stop` にはそれぞれ `play.svg` と `pause.svg` を割り当てる。
 - settings dialog では header の `Save Settings` に `save.svg` を割り当てる。
 - 一方で settings dialog の `OK` / `Cancel` には現行実装で専用 icon 割当てはない。
@@ -622,9 +638,9 @@ status 更新の原則:
 
 ## 11. CLI / core / slideshow との境界
 
-- core 挙動は [docs/specs/core/harite-core-spec.md](docs/specs/core/harite-core-spec.md)
-- CLI command surface は [docs/specs/cli/harite-cli-spec.md](docs/specs/cli/harite-cli-spec.md)
-- slideshow 詳細は [docs/specs/slideshow/harite-slideshow-spec.md](docs/specs/slideshow/harite-slideshow-spec.md)
+- core 挙動は [core-spec](../core/harite-core-spec.md)
+- CLI command surface は [cli-spec](../cli/harite-cli-spec.md)
+- slideshow 詳細は [slideshow-spec](../slideshow/harite-slideshow-spec.md)
 
 境界整理:
 

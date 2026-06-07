@@ -1,6 +1,6 @@
 # Harite CLI 仕様 (CLI Spec)
 
-最終更新: 2026-05-30
+最終更新: 2026-06-07
 
 ## 1. CLI の責務
 
@@ -306,8 +306,8 @@ Harite 固有の stdout 実行メッセージは、言語に応じた自然な u
 
 ## 10. core / GUI / packaging との境界
 
-- core 挙動の正本は [docs/specs/core/harite-core-spec.md](docs/specs/core/harite-core-spec.md)
-- GUI 側の状態や tray は [docs/specs/gui/harite-gui-spec.md](docs/specs/gui/harite-gui-spec.md)
+- core 挙動の正本は [core-spec](../core/harite-core-spec.md)
+- GUI 側の状態や tray は [gui-spec](../gui/harite-gui-spec.md)
 
 境界整理:
 

@@ -13,5 +13,5 @@
 5. コード変更を含む PR は、対応する仕様 PR が先にマージされていることを前提とする
 6. gap analysis など作業メモ（docs/working/）および GUI 合意 artifact（docs/working/design/）は正本修正 PR より先にマージする
 7. docs/working/ のファイル名は `YYYYMMDD-HHMM-説明.md` 形式とする（HHMM は生成時刻。git 初回追加時刻など）
-8. GitHub Issue の観測・調査は docs/online-issues/issue-{番号}.md に残す。解決後は docs/online-issues/closed/ へ移動する。複数 Issue の横断テーマは docs/working/ に backlog 化し、完了した working メモは docs/working/finished/ へ移動してから specs 正本へ昇格する（docs/online-issues/README.md 参照）
+8. GitHub Issue の観測・調査は docs/online-issues/issue-{番号}.md に残す。解決後は docs/online-issues/closed/ へ移動する。複数 Issue の横断テーマは docs/working/ に backlog 化する。永続化すべき事実は docs/specs/ の正本へ吸収する（正本から docs/working/ を参照しない。参照リンクで逃がさない）
 9. GUI surface の追加・変更では、仕様書正本（docs/specs/）改定の前に docs/working/design/ で見た目合意を行う。全体 mock は作らず、次の 3 層に分ける。(1) 振る舞い・情報設計は working / online-issues で整理、(2) 新 widget 1 塊は widget slice mock または実機スクショ注釈、(3) icon 選定・tone のみ icon board（例: gui-phase10-icon-mock.html）。合意結果を gui-spec 等の正本へ昇格する（docs/working/design/README.md 参照）

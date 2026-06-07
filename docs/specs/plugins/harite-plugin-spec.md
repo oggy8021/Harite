@@ -1,6 +1,6 @@
 # Harite Plugin 仕様 (Plugin Spec)
 
-最終更新: 2026-05-31
+最終更新: 2026-06-07
 
 ## 1. plugin の責務
 
@@ -65,7 +65,7 @@ monitor map interface:
 - monitor map が渡された場合は失敗する。
 - GUI の Windows **Span**（内部値 `per-monitor-auto-split`）は、core の `resolve_apply_settings` が **合成 1 ファイル**（`single-file` target）へ解決してから Windows plugin に渡す（B-lite）。plugin は monitor map を受け取らない。
 - OS 背景の **Span 表示**（HKCU `WallpaperStyle=22`）は plugin 責務外。Settings の `windows_apply_span` が有効なとき、GUI / core が Apply 前に best-effort で設定する（[gui-spec](../gui/harite-gui-spec.md) 参照）。
-- OS デスクトップ **背景色**（Windows「背景」設定等）は Harite **管轄外**。壁紙 file path の差し替えのみ行い、背景色との重畳はユーザー / OS 設定に委ねる（[#343](../../online-issues/closed/issue-343.md) resolution）。
+- OS デスクトップ **背景色**（Windows「背景」設定等）は Harite **管轄外**。壁紙 file path の差し替えのみ行い、背景色との重畳はユーザー / OS 設定に委ねる。
 - Fit / Fill / Stretch / Tile / Center を Harite が全面制御する案（B-full）は **不採用**。Span opt-in（B-lite）のみ。
 - 実適用では `SystemParametersInfoW` を使う。
 - 実適用の戻り値は `SystemParametersInfoW(...)` の真偽値をそのまま成功判定に使う。
@@ -160,7 +160,7 @@ monitor map interface:
 
 ## 6. 他分冊との境界
 
-- apply target の解決は [docs/specs/core/harite-core-spec.md](docs/specs/core/harite-core-spec.md) が扱う。
-- CLI の plugin option と終了コードは [docs/specs/cli/harite-cli-spec.md](docs/specs/cli/harite-cli-spec.md) が扱う。
-- GUI からの apply / slideshow 起動導線は [docs/specs/gui/harite-gui-spec.md](docs/specs/gui/harite-gui-spec.md) が扱う。
-- slideshow 中の plugin 呼び出しと失敗集計は [docs/specs/slideshow/harite-slideshow-spec.md](docs/specs/slideshow/harite-slideshow-spec.md) が扱う。
+- apply target の解決は [core-spec](../core/harite-core-spec.md) が扱う。
+- CLI の plugin option と終了コードは [cli-spec](../cli/harite-cli-spec.md) が扱う。
+- GUI からの apply / slideshow 起動導線は [gui-spec](../gui/harite-gui-spec.md) が扱う。
+- slideshow 中の plugin 呼び出しと失敗集計は [slideshow-spec](../slideshow/harite-slideshow-spec.md) が扱う。

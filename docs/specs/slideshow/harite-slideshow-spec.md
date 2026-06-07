@@ -1,6 +1,6 @@
 # Harite スライドショー仕様 (Slideshow Spec)
 
-最終更新: 2026-06-06（P-03 単 display start 条件 — §2 追補）
+最終更新: 2026-06-07
 
 ## 1. スライドショー機能の責務
 
@@ -8,6 +8,16 @@
 - CLI と GUI の両面で、スライドショー機能としての継続実行を説明する。
 
 public surface では、この機能を `スライドショー` と呼ぶ。画像候補集合を一定間隔で巡回し、次に適用する画像を選ぶ継続実行面を指す。
+
+### 1.1 本書の読み方
+
+| 層 | 節 | 内容 |
+| --- | --- | --- |
+| **本編** | §2–5 | 起動条件、cycle、pause/stop |
+| **本編** | §6 | GUI 連動（作業ディレクトリ・registry・remote tick） |
+| **付録** | §7 以降 | CLI command、失敗分類 |
+
+source catalog / remote sync は [source-spec](../source/harite-source-spec.md)。GUI 操作面は [gui-spec](../gui/harite-gui-spec.md)。
 
 ## 2. 起動条件
 
@@ -33,11 +43,11 @@ CLI 側の入力正規化:
 
 GUI 側では、これに加えて現在の画面状態、設定、スライドショー source directory の整合が必要になる。
 
-GUI の registry 連動（C-05）:
+GUI の source registry 連動:
 
 - Start 前に [source-spec §6.4](../source/harite-source-spec.md) に従い、tracking `source_id` / `profile_id` から **再 resolve** して `slideshow_srcdir_l/r` を更新する（§6.6）。
 - **検出 2 枚以上**（`len(detect_displays()) >= 2`）: **Srcdir-L と Srcdir-R の両方**が非空であること。どちらか空なら start 前に拒否。
-- **検出 1 枚**（P-03 — [gui-spec §6](../gui/harite-gui-spec.md)）: **Srcdir-L のみ**非空で start 可。第二スロット UI は disabled。profile / saved source の R 指定は実行時に無視。start は L source のみで single-file apply。
+- **検出 1 枚**（[gui-spec §6](../gui/harite-gui-spec.md)）: **Srcdir-L のみ**非空で start 可。第二スロット UI は disabled。profile / saved source の R 指定は実行時に無視。start は L source のみで single-file apply。
 - 手動 Srcdir のみ（tracking key なし）の side は、既存 path をそのまま検証する。
 - CLI は registry tracking を使わず、従来どおり `--input` directory path のみ。
 
@@ -52,7 +62,7 @@ sequenceDiagram
     participant Plugin as plugin impl
 
     User->>GUI: start slideshow
-    GUI->>GUI: resolve registry ids to srcdir paths (C-05)
+    GUI->>GUI: resolve registry ids to srcdir paths
     GUI->>GUI: validate srcdir / plugin / apply mode
     GUI->>Slideshow: collect or select next image(s)
     alt single source
@@ -154,7 +164,7 @@ pause / stop 判定の境界:
 GUI timer / side state の現行規則:
 
 - GUI runtime timer は `interval_ms = max(1, int(interval_seconds)) * 1000` で作る。したがって現行 GUI は秒未満を扱わず、秒整数へ量子化して GLib / Qt timer に渡す。
-- **Start 直前**に Interval spin の現値を owner `slideshow_interval_seconds` へ commit する。timer は commit 後の owner 値で起動する。settings ファイルに保存された値より、Start 時点の spin 表示が優先される（詳細は [GUI spec §6.2](docs/specs/gui/harite-gui-spec.md)）。
+- **Start 直前**に Interval spin の現値を owner `slideshow_interval_seconds` へ commit する。timer は commit 後の owner 値で起動する。settings ファイルに保存された値より、Start 時点の spin 表示が優先される（詳細は [gui-spec §6.2](../gui/harite-gui-spec.md)）。
 - dual-source 実行では L/R で独立した slideshow state を持ち、それぞれ `run_slideshow_cycle(images, backend.slideshow_mode, backend._slideshow_state_l|r)` で更新する。
 - したがって GUI dual-source の左右選択は、同じ tick の中でも 1 本の共有 index ではなく、L side state と R side state を別々に進める。
 - signal handler 経由の slideshow tick が使える場合は owner 側 callback を優先し、callback が `False` を返した時点で timer を止める。signal handler がない fallback 経路のときだけ GUI runtime 自身が L/R 選択を進める。
@@ -175,7 +185,7 @@ GUI は単なるタイマー処理ではなく、状態表示の責務を強く�
 
 ### 6.0 GUI 表示面（current / output）
 
-- **`Slideshow current`**: 現在 tick（または start 直後）で選ばれた L/R 画像 path を示す。user-facing label では full path をそのまま出さず、[GUI spec §6.1](docs/specs/gui/harite-gui-spec.md) の basename 省略規則（`format_slideshow_path_display`）を使う。長いマウント path（例: クラウド同期 drive 配下）でもファイル名中心で読めること。
+- **`Slideshow current`**: 現在 tick（または start 直後）で選ばれた L/R 画像 path を示す。user-facing label では full path をそのまま出さず、[gui-spec §6.1](../gui/harite-gui-spec.md) の basename 省略規則（`format_slideshow_path_display`）を使う。長いマウント path（例: クラウド同期 drive 配下）でもファイル名中心で読めること。
 - **`Slideshow output`**: §6.1（slideshow 作業ディレクトリ）の path を示す（省略規則の対象外。directory path をそのまま表示してよい）。
 - owner の `slideshow_current_display` も、上記と同じ整形済み L/R を含める。
 
@@ -204,11 +214,7 @@ GUI slideshow が生成する optimize 成果物（composite と per-monitor 分
 - slideshow tab の `Slideshow output` は **slideshow 作業ディレクトリ** の path を示す。
 - Main 導線の手動 Optimize / Export の出力先（`form_state.output_dir`、既定はピクチャ根）とは別 surface とする。
 
-#### 実装方針
-
-- §6.3 の要件 **R1–R5 はいずれも対応する**（issue #317 の解消条件）。現行コードは R1–R5 未達の過渡状態である。
-
-### 6.2 GUI dual-source auto-split 時の optimize 出力ファイル管理（目標挙動）
+### 6.2 GUI dual-source auto-split 時の optimize 出力ファイル管理
 
 GUI が dual-source slideshow を `per-monitor-auto-split` で実行するとき、各 tick で `optimize` と auto-split により §6.1 の作業ディレクトリへ出力する。R1–R3 により、継続実行中に作業ディレクトリへ **追跡スロット以外のファイルが残らない** ことを保証する。
 
@@ -243,7 +249,7 @@ single-source:
 - R1–R3 は **GUI dual-source auto-split** が optimize を呼ぶ経路に適用する。
 - **CLI `slideshow` command** は optimize 出力を生成しないため対象外（§8）。
 
-ライフサイクル（目標・R1–R5 適用後）:
+ライフサイクル:
 
 | タイミング | 挙動 |
 | --- | --- |
@@ -253,36 +259,26 @@ single-source:
 | single-source / apply 成功 | 作業ディレクトリのスロットファイル削除、追跡を空に |
 | `on_slideshow_stop` | スロットファイルは残す。追跡 state のみクリア（§6.3 R4） |
 
-実装参照（目標）:
+### 6.3 dual-source 作業ディレクトリの整理要件（R1–R5）
 
-- 作業ディレクトリ: `MainWindow._resolve_slideshow_work_dir`
-- tick 生成追跡: `_slideshow_tick_generated_files`
-- スロット apply 成功追跡: `_slideshow_active_generated_files`
-- dual-source サイクル: `MainWindow._apply_slideshow_selection`
-- optimize 呼び出し: `OptimizeController.run_slideshow_optimize`（スロット path 固定）
+以下を満たす。
 
-### 6.3 要件 R1–R5（issue #317 — 対応方針: すべて実装）
+| ID | 要件 |
+| --- | --- |
+| R5 | 手動 Optimize はピクチャ根（`form_state.output_dir`）。slideshow 作業は `{ピクチャ根}/Harite/slideshow/`。`XDG_CACHE_HOME` は使わない（§6.1） |
+| R2 | 作業ディレクトリ内は §6.2 の固定スロットのみ。`harite_output_{NNNN}.jpg` 採番は slideshow 経路で使わない |
+| R3 | pause / apply 失敗 / prepare 失敗 tick で、当該 tick の `_slideshow_tick_generated_files` を rollback 削除する |
+| R1 | dual-source 継続実行中、各 tick 終了時に作業ディレクトリへスロット外ファイルを残さない（§6.2 の掃除） |
+| R4 | `on_slideshow_stop` 時の作業ディレクトリと追跡 state の扱い（下記） |
 
-product 方針として **R1–R5 をすべて満たす**。以下は実装仕様である。
+禁止される挙動（R1–R3 / R5 で防止）:
 
-| ID | 要件 | 状態 |
-| --- | --- | --- |
-| R5 | 手動 Optimize はピクチャ根（`form_state.output_dir`）。slideshow 作業は `{ピクチャ根}/Harite/slideshow/`。`XDG_CACHE_HOME` は使わない（xfconf 壁紙実体の非揮発性）。 | **対応する**（§6.1） |
-| R2 | 作業ディレクトリ内は §6.2 の固定スロットのみ。`harite_output_{NNNN}.jpg` 採番は slideshow 経路で使わない。 | **対応する** |
-| R3 | pause / apply 失敗 / prepare 失敗 tick で、当該 tick の `_slideshow_tick_generated_files` を rollback 削除する。 | **対応する** |
-| R1 | dual-source 継続実行中、各 tick 終了時に作業ディレクトリへスロット外ファイルを残さない（§6.2 の掃除）。 | **対応する** |
-| R4 | `on_slideshow_stop` 時の作業ディレクトリと追跡 state の扱い（下記確定）。 | **対応する** |
+- pause tick で optimize のみ成功し rollback しない
+- apply 失敗で生成ファイルを残す
+- ピクチャ根と作業ディレクトリ未分離で手動 Optimize と採番競合
+- 存在ベース採番で orphan が次 tick の番号を押し上げる
 
-#### issue #317 での観測と対応（完了）
-
-issue #317 では次の純増パターンを観測した。R1–R5 の実装完了（[issue #317](../../online-issues/closed/issue-317.md) 参照）により解消済みである。
-
-1. pause tick で optimize のみ成功し rollback しない（R3 対応済み）
-2. apply 失敗で生成ファイルを残す（R3 対応済み）
-3. ピクチャ根と作業ディレクトリ未分離で手動 Optimize と採番競合（R5 対応済み）
-4. 存在ベース採番で orphan が次 tick の番号を押し上げる（R2 対応済み）
-
-#### R4（`on_slideshow_stop`）— 確定
+#### R4（`on_slideshow_stop`）
 
 stop 時は作業ディレクトリ内のスロットファイル **を削除しない**。
 
@@ -290,7 +286,7 @@ stop 時は作業ディレクトリ内のスロットファイル **を削除し
 - stop 時に `_slideshow_active_generated_files` と `_slideshow_tick_generated_files` は **クリア**する（次回 start で古い追跡を引き継がない）。
 - 次回 `on_slideshow_start` では、R2 スロット path へ上書きする前提で作業ディレクトリを用意する（必要なら `mkdir -p`）。R1 掃除は各 tick 終了時に継続する。
 
-### 6.6 Registry 連動実行（C-05）
+### 6.6 Registry 連動実行
 
 [source-spec](../source/harite-source-spec.md) の catalog と GUI slideshow 実行の接続。
 
@@ -298,29 +294,40 @@ stop 時は作業ディレクトリ内のスロットファイル **を削除し
 
 `on_slideshow_start`（および tray からの start が同経路の場合）の **画像収集より前**に次を行う。
 
-1. in-memory catalog を参照する（**この時点で disk からの再 load は必須ではない** — 起動時 / Manage dialog Close 済み catalog でよい）。
+1. in-memory catalog を参照する（この時点で disk からの再 load は必須ではない）。
 2. 実行 L/R が参照する **すべての `remote-*`** source について `sync_remote_source`（[source-spec §12.4](../source/harite-source-spec.md)）。
 3. `slideshow_profile_id` が設定されていれば `resolve_profile_members` で L/R path と tracking id を揃える。
-4. 各 side で `slideshow_source_id_l` / `slideshow_source_id_r` が設定されていれば `resolve_source` で当該 side の `slideshow_srcdir_*` を上書きする（profile 展開と矛盾する場合は **profile 優先** — 実装は start 直前の単一パスで L/R を確定すること）。
-5. `resolve_*` が `ValueError`（inaccessible / 未知 id）なら **start failure** とし、slideshow は開始しない（transient / pause 扱いにしない）。
+4. 各 side で `slideshow_source_id_l` / `slideshow_source_id_r` が設定されていれば `resolve_source` で当該 side の `slideshow_srcdir_*` を上書きする（profile 展開と矛盾する場合は **profile 優先**）。
+5. `resolve_*` が `ValueError` なら **start failure** とし、slideshow は開始しない。
 6. 確定した `slideshow_srcdir_l/r` で §2 の directory 検証と `collect_slideshow_input_images` を行う。
 
-`remote-*` source の cache directory は `local-dir` と同型の slideshow 入力 directory として扱う（[source-spec §12.5 / §15.5](../source/harite-source-spec.md)）。
+`remote-*` の cache directory は `local-dir` と同型の slideshow 入力 directory として扱う（[source-spec §12.5 / §15.2](../source/harite-source-spec.md)）。
 
-手動 Srcdir のみの side（tracking key 空）は、手順 2–3 をスキップし、既存 `slideshow_srcdir_*` を検証する。
+手動 Srcdir のみの side（tracking key 空）は、手順 2 をスキップし、既存 `slideshow_srcdir_*` を検証する。
 
-#### remote source と Mode（sequential / random）
+#### remote source と Mode
 
 [source-spec §12.5](../source/harite-source-spec.md) が正本。要約:
 
-- **Sync 時**（Start / Refresh）に provider がリモートから **1 枚**を選び `latest.*` へ上書きする（NDL はサーバー random、CODH は `total` + random `start` 等 — §15.6–15.7）。
-- **tick 時**の Mode は、各 side の cache をスキャンした **ファイル列**に対して `select_next_image` を適用する。
-- remote cache は通常 **1 枚**のため、**remote のみの side では Mode を変えても表示は変わらない**。Mode が効くのは **複数枚ある `local-dir`**（または手動で cache に複数置いた例外）を参照する side。
-- L/R は独立 cycle。片側だけ `local-dir` なら **その side だけ** Mode が意味を持つ。
+- **CODH**: tick 前に cursor で次 URL を選び画像 GET → `latest.*` 上書き。cache は 1 枚だが Slideshow Mode（sequential / random）が有効。
+- **JMA**: tick 前に `list.json` で filename を確認し、変化時のみ PNG 等画像ファイルを取得する。Slideshow Mode は **作用しない** — cache は `latest.*` 1 枚のため `sequential` / `random` 切替で見た目は変わらない。
+- **NDL 他**: tick では network 再取得しない。Slideshow Mode は **作用しない** — cache は `latest.*` 1 枚のため `sequential` / `random` 切替で見た目は変わらない。
+- **`local-dir`（複数枚）**: 従来どおりファイル列に Mode を適用。L/R は独立 cycle。
 
-#### tick 中
+#### tick 前の remote sync
 
-- **catalog の再 load も、id からの再 resolve も行わない**。start 時に確定した path で `collect_slideshow_input_images` / cycle を継続する。
+各 tick の **画像収集より前**に、当該 side の `remote-*` について [source-spec §12.4](../source/harite-source-spec.md) の provider 別 tick sync を行う。順序:
+
+1. remote tick sync（JMA: §15.1.3、CODH: §15.4.5）
+2. `collect_slideshow_input_images`
+3. `select_next_image`（Mode）
+4. optimize / apply
+
+tick 中の画像 GET 失敗（CODH 等）は前回 `latest.*` を維持して tick 継続する。
+
+#### tick 中（registry）
+
+- catalog の再 load も、id からの再 resolve も行わない。start 時に確定した path で directory を参照する。
 - directory がアクセス不能になった場合、または画像 0 件になった場合は、**新規取り決めを設けず** §9 および [source-spec §7.5](../source/harite-source-spec.md) / [core-spec §7](../core/harite-core-spec.md) の既存 failure 分類に従い **stop / failure** とする（display loss による **pause** とは別軸）。
 - start 条件（L/R 両方必須）・dual-source cycle 算法・L/R 独立 `SlideshowCycleState` は **変更しない**。
 
@@ -366,7 +373,7 @@ GUI feedback の補足:
 - GUI runtime は `status_message` を 1 行目、`last_error` を 2 行目へ同期する。
 - ただし `last_error == status_message` のときは 2 行目を抑止し、同一内容を二重表示しない。
 - 状態表示 / tab title は `running|paused|stopped` の 3 状態を共有する。
-- `Slideshow current`（label / owner `slideshow_current_display`）は §6.0 および [GUI spec §6.1](docs/specs/gui/harite-gui-spec.md) の path 省略規則に従う。full path の生表示は観測面として採用しない。
+- `Slideshow current`（label / owner `slideshow_current_display`）は §6.0 および [gui-spec §6.1](../gui/harite-gui-spec.md) の path 省略規則に従う。full path の生表示は観測面として採用しない。
 
 CLI の主な観測値:
 
@@ -391,8 +398,8 @@ CLI の主な観測値:
 | `windows` | 2 枚以上検出 | wide composite + OS **Span**（single-file apply、`windows_span`） |
 | その他 | — | dual-source **非対応**（start 前に拒否） |
 
-- Windows では linux plugin を要求しない（W-02）。`resolve_apply_settings` が `per-monitor-auto-split` を single-file に解決する（[plugin-spec §4.1](../plugins/harite-plugin-spec.md)）。
-- Settings **`windows_apply_span`** が有効なとき、各 tick の apply 前に HKCU Span を best-effort 設定する（Main Apply B-lite と同型）。registry **自動復元は行わない**（[#343](../../online-issues/closed/issue-343.md)）。
+- Windows では linux plugin を要求しない。`resolve_apply_settings` が `per-monitor-auto-split` を single-file に解決する（[plugin-spec §4.1](../plugins/harite-plugin-spec.md)）。
+- Settings `windows_apply_span` が有効なとき、各 tick の apply 前に HKCU Span を best-effort 設定する。registry **自動復元は行わない**（slideshow 中の書き戻しは表示崩れリスク）。
 - plugin exception は apply_error 系として扱う。
 - input directory が空なら起動前に止める。
 
@@ -403,7 +410,7 @@ CLI の主な観測値:
 - `KeyboardInterrupt` は CLI では異常終了ではなく、ユーザー中断として `0` 扱いにする。
 - GUI dual-source auto-split では、display 条件喪失が一時的なら pause で吸収し、raw な `ValueError` をそのまま user-facing failure にしない。
 
-### registry / directory の実行時失敗（C-05）
+### registry / directory の実行時失敗
 
 | タイミング | 条件 | 扱い |
 | --- | --- | --- |
@@ -412,14 +419,14 @@ CLI の主な観測値:
 | tick 中 | start 時 path が inaccessible または画像 0 件 | stop / failure（source-spec §7.5 既存。pause ではない） |
 | tick 中 | catalog 変更が [source-spec §7.6](../source/harite-source-spec.md) に該当 | slideshow stop |
 
-片側のみ inaccessible になった場合の **可能 side のみ継続**は **採用しない**（現段階は現行どおり全体 stop）。
+片側のみ inaccessible になった場合の **可能 side のみ継続**は **採用しない**（全体 stop）。
 
 ## 10. core / GUI / CLI との境界
 
 - スライドショー helper の最小ループは `slideshow.py` にある。
 - GUI 実運用の状態管理は `MainWindow` と GTK runtime に跨る。
-- core / apply target 解決は [docs/specs/core/harite-core-spec.md](docs/specs/core/harite-core-spec.md) を参照する。
-- source registry / start 前 resolve / catalog 変更は [source-spec](docs/specs/source/harite-source-spec.md) §6.4, §7.6 および本書 §6.6。
+- core / apply target 解決は [core-spec](../core/harite-core-spec.md) を参照する。
+- source registry / start 前 resolve / catalog 変更は [source-spec](../source/harite-source-spec.md) §6.4, §7.6 および本書 §6.6。
 
 境界整理:
 
