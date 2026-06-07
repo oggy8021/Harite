@@ -19,9 +19,8 @@ docs/working/
 | ファイル | 内容 |
 | --- | --- |
 | [20260518-2047-feature-overview.md](20260518-2047-feature-overview.md) | post-1.0.0 機能 inventory（C-xx / W-xx / P-xx）。**継続更新する唯一の planning 入口** |
-| [20260608-p08-main-margins-drawer-planning-draft.md](20260608-p08-main-margins-drawer-planning-draft.md) | P-08 Main + Margins Drawer — gate pass、gui-spec #433 反映済。**impl 完了後**に `finished/` へ |
 
-**2026-06-08 棚卸:** 直下は **overview + P-08 planning** のみ。完了済み P-04〜P-07 / C-01-F / C-04 は [finished/](finished/)。design の P-08 slice は gate 記録として [design/](design/20260608-p08-main-margins-drawer-slice-memo.md) に残す。
+**2026-05-31 棚卸:** 直下は **overview のみ**。P-08 は #436 マージ・[3層 audit](../specs/gui/audit/p08-3layer-audit.md) 反映後 [finished/](finished/) へ。design の P-08 slice は gate 記録として [design/](design/20260608-p08-main-margins-drawer-slice-memo.md) に残す。
 
 ## design（GUI 合意 artifact）
 

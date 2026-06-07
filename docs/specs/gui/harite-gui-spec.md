@@ -94,7 +94,8 @@ layout 戦略:
 - GUI は top-level window の直下を単一の縦積み root container とし、header、center body、footer の 3 層で構成する。
 - center body は notebook を 1 つ持ち、tab 順は `Main`、`Slideshow (...)` の **2 枚**とする（P-08）。
 - `Main` は日常操作の主導線（compose / optimize / apply）と **margin 調整**（4 辺 spin 常設 + 補助 Drawer）を担う。`Slideshow` は継続実行面。
-- page ごとの内容は page shell や spacer を使って中央寄せしつつ、各 page 内では必要に応じて fill と center を切り替える。
+- page ごとの内容は page shell を使って中央寄せしつつ、各 page 内では必要に応じて fill と center を切り替える。
+- **options drawer の開閉**では、tab 正面の中核 widget を上下にシフトさせない（§3 *Options drawer — window frame resize*）。
 - GUI の常設補助説明面は以下である。
   - header の flow legend
   - footer の status / slideshow summary / error
@@ -125,8 +126,8 @@ Main Window:
 
 Main tab:
 
-- `Main` tab は縦積みの `main_col` を持ち、上から **margin cross-grid（外周 4 spin）**、**compose grid**、**action cluster**、**Margins options Drawer トリガ**、（開時）**Margins options Drawer** の順とする（P-08）。
-- margin cross-grid は top / left / right / bottom の 4 辺 margin spin を compose grid を囲む配置とする（上段 top、中段は left | compose | right、下段 bottom）。**embed pattern / margin text / position は Drawer 内**（正面常設は 4 spin のみ）。
+- `Main` tab は縦積みの `main_col` を持ち、上から **margin cross-grid（外周 4 spin、内包 compose grid）**、**action cluster**、**Margins options Drawer トリガ**、（開時）**Margins options Drawer** の順とする（P-08）。
+- margin cross-grid は top / left / right / bottom の 4 辺 margin spin を **compose grid を内包する** 外周配置とする（上段 top、中段は left | compose | right、下段 bottom）。**embed pattern / margin text / position は Drawer 内**（正面常設は 4 spin のみ）。
 - compose grid は左・中央・右の 3 列構成で、左 panel と右 panel は display ごとの入力・方向操作面、中央 panel は pick state と swap 操作面とする。
 - 中央 panel は direction toggle 群と **同型 3 行**とし、上段に pick state label、**中段**（Left-L … Right-L / Left-R … Right-R と同高）に **`Swap L/R`** button を置く（§4.1）。
 - 左右 panel は同型で、上段に十字配置の direction toggle と `Open-L/R`、下段に選択 path 表示と `Clear-L/R` を置く。
@@ -170,9 +171,16 @@ Main tab — Margins options Drawer（P-08）:
 - **footer `Status`**（§9）: margin text preflight の成否と寸法要約（§8 `margin text preflight の現行規則`）。
 - **Drawer 開閉視認性:** Slideshow options Drawer（P-07）と **同型** — 開時は drawer 面板を theme chrome tint、上辺 1px `mid`、トリガ chevron up（閉=down）、`More…` / `Fewer…` ラベル反転。実装は `slideshow_options_drawer` と同パターンを margins 用に再利用または共通化する。
 
+Options drawer — window frame resize（Main + Slideshow 共通）:
+
+- 開く: drawer 表示に必要な分だけ **top-level window の高さを増やす**。tab 正面の中核（Main: cross-grid / action cluster、Slideshow: profile / srcdir / interval 行）の **画面上位置は維持**する（tab 内 stretch サンドイッチで上寄せしない）。
+- 閉じる: **開く直前の window 高さに復元**する。
+- ウィンドウが既に `minimumSizeHint` より高い場合（手動リサイズなしの既定起動を含む）は、tab 内容の **高さ差分**（例: `main_col` / `slideshow_tab_box` の `minimumSizeHint` 増分）を window に加算して伸ばす。
+- 実装入口: `drawer_window_resize.py`。Main は `margins_options_drawer`、Slideshow は `slideshow_options_drawer` から呼ぶ。
+
 Slideshow tab:
 
-- `Slideshow` tab の正面（中核）は縦積みで、CODH keyword chip、top spacer、profile row、srcdir row、interval/start/stop row、（任意）More slideshow options… トリガ、bottom spacer の順とする。
+- `Slideshow` tab の正面（中核）は縦積みで、CODH keyword chip、profile row、srcdir row、interval/start/stop row、`More slideshow options…` トリガの順とする（**上下 expanding spacer は持たない** — 開閉時の余白吸収は window 枠伸縮に委ねる）。
 - **CODH keyword chip**: タブ右上角に read-only muted label（`CODH: {keyword}`）。L/R いずれか（または profile 経由）が CODH keyword preset のときのみ表示。編集は Manage Presets タブ。
 - **profile row** は tab 幅中央に `combo_slideshow_profile`（`— none —` + profile 名一覧）を 1 本置く。常設の「選択で L/R を一括反映」類の補助 label は **持たない**（tooltip で足りる）。
 - srcdir row は **Main tab compose grid と同型**の左・中央・右 3 列とする。左右 panel は上から **`combo_slideshow_source_l/r`（Saved source）**、`Srcdir-L/R` button、`L:` / `R:` path label、右下に `Clear-L/R` を持つ。中央 panel には **`Swap L/R`** button のみを置く（§4.1 / §4.2）。
