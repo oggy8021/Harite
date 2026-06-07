@@ -69,7 +69,7 @@ online-issues 由来。**着手順序（2026-06-01 確定）:** F-01 → P-01/P-
 | P-06 | Slideshow CODH キーワード chip  | --                                           | Slideshow タブ右上角 read-only（`codh_keyword` 確認）。編集は Manage。 | **完了**（Qt）— [planning](finished/20260606-p06-slideshow-codh-keyword-chip-planning.md)                                             |
 | P-07 | Slideshow Drawer 開閉視認性     | --                                           | 背景ずらし・上辺線・chevron 回転。palette 優先（#412）。                   | **完了**（#417）— [planning](finished/20260606-p07-slideshow-drawer-open-state-planning.md)                                                                                                         |
 | P-04 | Main action cluster 整理        | --                                           | Preview/Optimize/Apply の常設 label 削減。C-04 後続 polish。              | **完了**（#429）— [planning](finished/20260607-p04-main-action-cluster-planning-draft.md)                                                                                  |
-| P-08 | Main + Margins Drawer（案 B）   | --                                           | Margins 専用 tab 廃止。4 spin 常設 + embed/text/position は Drawer。C-04 §7.2。 | **planning 着手** — [planning draft](20260608-p08-main-margins-drawer-planning-draft.md) / [slice-memo](design/20260608-p08-main-margins-drawer-slice-memo.md) |
+| P-08 | Main + Margins Drawer（案 B）   | --                                           | Margins 専用 tab 廃止。4 spin 常設 + embed/text/position は Drawer。C-04 §7.2。 | **gate 通過** — [planning draft](20260608-p08-main-margins-drawer-planning-draft.md) / [slice-memo](design/20260608-p08-main-margins-drawer-slice-memo.md)（gui-spec §3 改訂中） |
 
 
 ### 2. 構想保持
