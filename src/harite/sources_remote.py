@@ -159,6 +159,15 @@ def get_remote_provider(kind: str) -> _RegisteredProvider:
 
 
 def resolve_default_remote_cache_root() -> Path:
+    override = os.environ.get("HARITE_REMOTE_CACHE_ROOT", "").strip()
+    if override:
+        root = Path(override)
+        try:
+            root.mkdir(parents=True, exist_ok=True)
+            return root
+        except OSError as exc:
+            raise ValueError("remote cache root is not accessible") from exc
+
     if sys.platform.startswith("linux"):
         cache_home = Path(os.environ.get("XDG_CACHE_HOME") or (Path.home() / ".cache"))
         root = cache_home / "harite" / "remote-cache"
@@ -187,6 +196,21 @@ def resolve_default_remote_cache_root() -> Path:
         raise ValueError("remote cache root is not accessible") from exc
 
 
+def infer_remote_cache_root_from_catalog(catalog: Catalog) -> Path | None:
+    """Return the sole parent directory of remote cache dirs when unambiguous."""
+    roots: set[Path] = set()
+    for entry in catalog.sources:
+        if not is_remote_kind(entry.kind):
+            continue
+        path_text = entry.path.strip()
+        if not path_text:
+            continue
+        roots.add(Path(path_text).expanduser().resolve().parent)
+    if len(roots) == 1:
+        return roots.pop()
+    return None
+
+
 def remote_cache_dir_for_source(source_id: str, *, cache_root: Path | None = None) -> Path:
     root = cache_root or resolve_default_remote_cache_root()
     return root / source_id
@@ -207,7 +231,11 @@ def prune_orphan_remote_cache_dirs(
     cache_root: Path | None = None,
 ) -> int:
     """Delete ``{cache_root}/{uuid}/`` directories not tied to a catalog remote source."""
-    root = cache_root or resolve_default_remote_cache_root()
+    root = (
+        cache_root
+        or infer_remote_cache_root_from_catalog(catalog)
+        or resolve_default_remote_cache_root()
+    )
     if not root.is_dir():
         return 0
 
