@@ -19,9 +19,8 @@ docs/working/
 | ファイル | 内容 |
 | --- | --- |
 | [20260518-2047-feature-overview.md](20260518-2047-feature-overview.md) | post-1.0.0 機能 inventory（C-xx / W-xx / P-xx）。**継続更新する唯一の planning 入口** |
-| [20260607-p04-main-action-cluster-planning-draft.md](20260607-p04-main-action-cluster-planning-draft.md) | P-04 Main action cluster 整理（planning 合意・gate pass） |
 
-**2026-06-07 棚卸:** C-01-F / C-04 の planning 正本は [finished/](finished/) へ移動済み（impl + spec #427 完了）。
+**2026-06-08 棚卸:** P-04 planning（#429）を [finished/](finished/20260607-p04-main-action-cluster-planning-draft.md) へ移動。`working/` 直下は overview のみ。
 
 ## design（GUI 合意 artifact）
 
