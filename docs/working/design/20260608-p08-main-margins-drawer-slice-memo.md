@@ -53,5 +53,5 @@
 ## 合意後の出口
 
 1. ~~checklist~~ → **完了**（planning 正本 §7 へ反映）。
-2. gui-spec §3 — notebook 2 tab、Main + Margins Drawer 節を新設。
+2. ~~gui-spec §3~~ → **完了**（#433）。
 3. impl — Qt → GTK → tests（§8 フェーズ）。
