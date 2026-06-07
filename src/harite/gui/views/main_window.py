@@ -1299,24 +1299,47 @@ class MainWindow:
             except ValueError as exc:
                 raise format_remote_sync_error(side, entry.name, exc) from exc
 
-    def _codh_slideshow_tick_for_side(self, catalog: Catalog, side: str, source_dir: Path) -> None:
-        from harite.sources_remote import KIND_CODH_EDO
-        from harite.sources_remote_codh import codh_slideshow_tick, resolve_codh_source_id_for_path
-
+    def _resolve_slideshow_source_id_for_side(
+        self,
+        catalog: Catalog,
+        side: str,
+        source_dir: Path,
+    ) -> str:
         source_id = (
             (self.slideshow_source_id_l or "").strip()
             if side == "L"
             else (self.slideshow_source_id_r or "").strip()
         )
-        if not source_id:
-            source_id = resolve_codh_source_id_for_path(catalog, source_dir) or ""
+        if source_id:
+            return source_id
+        try:
+            resolved = source_dir.resolve()
+        except OSError:
+            resolved = source_dir
+        for entry in catalog.sources:
+            try:
+                if Path(entry.path).resolve() == resolved:
+                    return entry.id
+            except OSError:
+                continue
+        return ""
+
+    def _remote_slideshow_tick_for_side(self, catalog: Catalog, side: str, source_dir: Path) -> None:
+        from harite.sources_remote import KIND_CODH_EDO, KIND_JMA_WEATHER_MAP
+        from harite.sources_remote_codh import codh_slideshow_tick
+        from harite.sources_remote_jma import jma_slideshow_tick
+
+        source_id = self._resolve_slideshow_source_id_for_side(catalog, side, source_dir)
         if not source_id:
             return
         entry = get_source(catalog, source_id)
-        if entry is None or entry.kind != KIND_CODH_EDO:
+        if entry is None:
             return
-        mode = self._slideshow_active_mode if self._slideshow_active_mode else self.slideshow_mode
-        codh_slideshow_tick(catalog, source_id, mode)
+        if entry.kind == KIND_CODH_EDO:
+            mode = self._slideshow_active_mode if self._slideshow_active_mode else self.slideshow_mode
+            codh_slideshow_tick(catalog, source_id, mode)
+        elif entry.kind == KIND_JMA_WEATHER_MAP:
+            jma_slideshow_tick(catalog, source_id)
 
     def _resolve_slideshow_srcdirs_for_start(self) -> bool:
         catalog = self.load_source_catalog()
@@ -1782,7 +1805,7 @@ class MainWindow:
         catalog = self.load_source_catalog()
         for side, source_dir in sources:
             try:
-                self._codh_slideshow_tick_for_side(catalog, side, source_dir)
+                self._remote_slideshow_tick_for_side(catalog, side, source_dir)
                 selected = self._run_slideshow_cycle_for_side(side, source_dir)
             except ValueError as exc:
                 self._set_status("error", "slideshow", f"slideshow srcdir {side} invalid", error=str(exc))
