@@ -267,4 +267,4 @@ def test_full_layout_slideshow_tab_integrated(qapp):
     assert "rad_slideshow_mode_random" in reg
     assert "slideshow_current_label" in reg
     assert "slideshow_output_label" in reg
-    assert backend.objects["command_tabs"].tabText(2) == "Slideshow (stopped)"
+    assert backend.objects["command_tabs"].tabText(1) == "Slideshow (stopped)"
