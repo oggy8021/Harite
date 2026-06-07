@@ -8,7 +8,11 @@ import pytest
 
 from harite.sources import empty_catalog, get_source
 from harite.sources_preset import import_preset_source
-from harite.sources_remote import prune_orphan_remote_cache_dirs
+from harite.sources_remote import (
+    infer_remote_cache_root_from_catalog,
+    prune_orphan_remote_cache_dirs,
+    resolve_default_remote_cache_root,
+)
 
 
 def test_prune_orphan_remote_cache_dirs_removes_unreferenced_uuid_dirs(
@@ -56,20 +60,12 @@ def test_prune_orphan_remote_cache_dirs_keeps_all_catalog_remote_ids(
     assert Path(right.path).is_dir()
 
 
-def test_materialize_prunes_orphans(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_materialize_prunes_orphans(tmp_path: Path) -> None:
     from harite.gui.adapters_qt.qt_source_catalog import materialize_source_catalog_at_path
     from harite.sources import load_catalog, save_catalog
-    from harite.sources_remote import resolve_default_remote_cache_root
 
     cache_root = tmp_path / "remote-cache"
     cache_root.mkdir()
-    monkeypatch.setattr(
-        "harite.sources_remote.resolve_default_remote_cache_root",
-        lambda: cache_root,
-    )
 
     catalog_path = tmp_path / "harite-sources.json"
     catalog = empty_catalog()
@@ -84,3 +80,31 @@ def test_materialize_prunes_orphans(
     reloaded = load_catalog(catalog_path)
     assert get_source(reloaded, entry.id) is not None
     assert not orphan.exists()
+
+
+def test_infer_remote_cache_root_from_catalog_single_root(tmp_path: Path) -> None:
+    cache_root = tmp_path / "remote-cache"
+    catalog = empty_catalog()
+    import_preset_source(catalog, "jma-near-color", cache_root=cache_root)
+    import_preset_source(catalog, "jma-asia-color", cache_root=cache_root)
+
+    assert infer_remote_cache_root_from_catalog(catalog) == cache_root.resolve()
+
+
+def test_infer_remote_cache_root_from_catalog_ambiguous_returns_none(tmp_path: Path) -> None:
+    catalog = empty_catalog()
+    import_preset_source(catalog, "jma-near-color", cache_root=tmp_path / "cache-a")
+    import_preset_source(catalog, "jma-asia-color", cache_root=tmp_path / "cache-b")
+
+    assert infer_remote_cache_root_from_catalog(catalog) is None
+
+
+def test_resolve_default_remote_cache_root_honors_env_override(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    override = tmp_path / "env-remote-cache"
+    monkeypatch.setenv("HARITE_REMOTE_CACHE_ROOT", str(override))
+
+    assert resolve_default_remote_cache_root() == override
+    assert override.is_dir()

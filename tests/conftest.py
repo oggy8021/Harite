@@ -1,5 +1,18 @@
+from __future__ import annotations
+
+from pathlib import Path
+
 import pytest
 from PIL import Image
+
+
+@pytest.fixture(autouse=True)
+def isolate_remote_cache_root(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Keep pytest from creating or pruning the developer's live remote-cache."""
+    monkeypatch.setenv("HARITE_REMOTE_CACHE_ROOT", str(tmp_path / "remote-cache"))
 
 
 @pytest.fixture
@@ -17,8 +30,9 @@ def make_image(tmp_path):
         return str(p)
 
     return _make
+
+
 import base64
-from pathlib import Path
 
 
 def pytest_sessionstart(session):

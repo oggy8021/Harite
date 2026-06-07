@@ -82,18 +82,9 @@ def test_refresh_registry_combos_shows_preset_star_labels(qapp, tmp_path: Path) 
     assert "*気象庁 L/R" in profile_labels
 
 
-def test_prepare_owner_source_catalog_materializes_presets(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    cache_root = tmp_path / "remote-cache"
+def test_prepare_owner_source_catalog_materializes_presets(tmp_path: Path) -> None:
     catalog_path = tmp_path / "harite-sources.json"
     save_catalog(empty_catalog(), catalog_path)
-
-    monkeypatch.setattr(
-        "harite.sources_remote.resolve_default_remote_cache_root",
-        lambda: cache_root,
-    )
 
     owner = MainWindow()
     owner._source_catalog_path = catalog_path

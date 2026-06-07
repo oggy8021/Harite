@@ -71,13 +71,18 @@ def materialize_source_catalog_at_path(
         from harite.sources_remote import CODH_KEYWORD_SETTINGS_KEY, save_codh_keyword_settings
 
         save_codh_keyword_settings(settings_path, str(settings[CODH_KEYWORD_SETTINGS_KEY]))
+    from harite.sources_remote import infer_remote_cache_root_from_catalog, prune_orphan_remote_cache_dirs
+
+    cache_root = infer_remote_cache_root_from_catalog(catalog)
     dirty = repair_preset_catalog_integrity(catalog) or dirty
-    dirty = bootstrap_preset_sources(catalog, sync=False) or dirty
+    dirty = bootstrap_preset_sources(catalog, sync=False, cache_root=cache_root) or dirty
     dirty = repair_preset_catalog_integrity(catalog) or dirty
 
-    from harite.sources_remote import prune_orphan_remote_cache_dirs
+    if dirty:
+        save_catalog(catalog, path)
 
-    prune_orphan_remote_cache_dirs(catalog)
+    cache_root = infer_remote_cache_root_from_catalog(catalog)
+    prune_orphan_remote_cache_dirs(catalog, cache_root=cache_root)
 
     if sync_remote:
         for entry in catalog.sources:
