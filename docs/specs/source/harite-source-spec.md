@@ -1,6 +1,6 @@
 # Harite source registry 仕様 (Source Spec)
 
-最終更新: 2026-06-06（remote provider 契約の正本集約 — §12.4.1 Refresh、§12.5、§15.6–15.7）
+最終更新: 2026-06-07（C-01-F JMA interval tick sync — §12.4、§15.2.1、§15.5）
 
 ## 1. 責務
 
@@ -332,13 +332,13 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 | **Catalog materialize** | GUI 起動・combo 更新時 — preset 追加・修復、**孤児 cache directory 削除**（§12.3）。**ネットワーク sync は行わない**（UI ブロック防止） |
 | **Refresh** | Manage dialog の Refresh — 選択中 remote に `sync_remote_source` |
 | **slideshow Start 直前** | 実行予定の L/R が参照する **すべての `remote-*`** source に `sync_remote_source`（[gui-spec §6.5](../gui/harite-gui-spec.md)） |
-| **slideshow tick** | network fetch しない。各 tick は cache directory を `local-dir` と同型に再スキャンし、§12.5 の `latest.*` 1 枚を apply 対象とする |
+| **slideshow tick** | **provider 別**（C-01-F）。**JMA**（`remote-jma-weather-map`）: §15.2.1 — `list.json` で filename 比較、**変化時のみ** PNG GET。NDL / その他 remote: **network fetch しない**（CODH は §15.7）。各 tick は cache を `local-dir` と同型に再スキャンし §12.5 の `latest.*` を apply |
 | **resolve** | `remote-*` は cache directory が無ければ **作成してから** §4 と同型の `normalize_directory_path` を満たす。`local-dir` は既存 directory 必須。空 directory や画像 0 件は **resolve 時には成功しうる**が、slideshow start の画像収集は [slideshow-spec](../slideshow/harite-slideshow-spec.md) で失敗しうる |
 | **実行中** | cache 削除・Sync による参照不能 → §7.5 / §7.6 と同型（stop / start failure） |
 
 network エラー・HTTP 4xx/5xx は Sync 時に `ValueError`（またはラップした `OSError` を `ValueError` に変換してよい）。
 
-**tick 毎の再 Sync（C-01-F）:** 現行 product では **採用しない**（据え置き）。interval ごとに別候補へ切り替えたい場合は、現行では Stop → Start または Manage **Refresh** で sync を走らせる。
+**tick 毎の再 Sync（C-01-F）:** **JMA** は slideshow running 中の tick で §15.2.1（filename 変化時のみ PNG 取得）。**CODH** は §15.7（index + cursor）。NDL 他は **据え置き**（Start / Refresh のみ）。
 
 #### 12.4.1 再起動・Refresh・Start — cache が変わる条件（正本）
 
@@ -349,7 +349,7 @@ network エラー・HTTP 4xx/5xx は Sync 時に `ValueError`（またはラッ�
 | **アプリ再起動のみ** | **しない**（materialize は `bootstrap_preset_sources(..., sync=False)`） | **変わらない** — 前セッションの cache をそのまま読む |
 | 再起動 → **Slideshow Start** | **する**（実行 L/R の全 `remote-*`） | **変わりうる** — 層 A で候補を引き直す（§12.5） |
 | 再起動 → Manage **Refresh** → Close | **する**（選択中 remote **1 件**） | 当該 source だけ変わりうる。Slideshow はまだ Start していなければ壁紙 apply は起きない |
-| 実行中の **tick** のみ | しない | 変わらない |
+| 実行中の **tick** のみ | **JMA**: §15.2.1（filename 変化時のみ PNG）。他 remote: しない | **JMA**: filename 更新時に変わりうる。他: 変わらない |
 | **Stop** → **Start**（再起動なし） | Start 直前で sync | 変わりうる（再起動 + Start と同型の sync 入口） |
 
 **日常運用の読み方:** 「日々違う絵にしたい」なら **その日の最初の Slideshow Start**（前日 Stop 済み、または起動直後）が自然な入口。**再起動だけでは足りない**。前日と同じ cache を載せたまま Start すれば、sync 後に別候補へ変わりうる（NDL/CODH はランダム再抽選、JMA は list の最新 filename）。
@@ -409,7 +409,7 @@ NDL / CODH を含む **すべての `remote-*`** に共通する契約。実装�
 | 再起動 → Slideshow **Start** | 実行 L/R の全 `remote-*` で sync → 候補が変わりうる | 開始 |
 | Slideshow **Start**（再起動なし） | 同上 | 開始 |
 | Manage **Refresh** | 選択中 remote で sync（Start せず再抽選） | — |
-| Slideshow **tick** | **しない** | cache 1 枚なら変化なし |
+| Slideshow **tick** | **JMA**: §15.2.1。他 remote: しない | **JMA**: filename 更新時に変化。他: cache 1 枚なら変化なし |
 | Mode を sequential ↔ random に変更 | — | remote 1 枚 side では見た目変化なし |
 
 ## 13. Source preset（C-01 段 1a）
@@ -555,6 +555,19 @@ load / save 時の catalog 検証では、`remote-*` の `path` は **存在し�
 
 `list.json` の公式 schema 文書は気象庁から公開されていない。カテゴリ一覧は [JMA weather map list inventory](../../working/finished/20260603-jma-weather-map-list-inventory.md)（別フェーズの選定参考）。
 
+Sync 完了後、`{cache_root}/{source_id}/jma-cycle.json` に `preset_id` と選んだ `filename` を保存する（§15.2.1）。
+
+### 15.2.1 Slideshow tick sync（C-01-F）
+
+slideshow **running 中**、当該 side が `remote-jma-weather-map` を参照するとき、各 **tick 前**に次を行う（[slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md)）。
+
+1. §15.2 手順 1–3 と同型で `list.json` から現行 `{filename}` を得る。
+2. `jma-cycle.json` の `filename` と **同一**なら **PNG GET を skip** する（F3 案 A — 同一図の再 decode しない）。
+3. **異なる**ときのみ §15.2 手順 4–5 で `latest.png` を上書きし、`jma-cycle.json` を更新する。
+4. **PNG GET 失敗時**は前回 `latest.png` を維持して tick を継続する（F2 案 B）。
+
+`jma-cycle.json`（最小）: `preset_id`, `filename`, `updated_at`。Start 直前 sync（§15.2）でも同ファイルを更新する。
+
 ### 15.3 同梱 preset
 
 package: `harite.gui` / `resources/source_presets/harite-source-presets.json`（§13.2）。
@@ -582,14 +595,12 @@ harite-preset:{preset_id}
 
 ### 15.5 Remote source と slideshow L/R（共通）
 
-すべての `remote-*`（JMA / NDL / CODH 含む）に共通:
-
 | 項目 | 契約 |
 | --- | --- |
 | 入力形状 | 各 source の cache は **画像 1 枚**（`latest.*`）。§12.5 |
 | start 前 | [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md) — 実行 L/R の全 `remote-*` で sync → resolve → `slideshow_srcdir_*` |
-| tick | network 再取得 **しない**。Mode は cache 1 枚の side では **実質無効**（§12.5） |
-| 鮮度 | Start 直前 Sync / Manage Refresh のみ |
+| tick | **JMA**: §15.2.1（interval 境界で `list.json` → filename 変化時のみ PNG）。**CODH**: §15.7。**NDL 他**: network 再取得しない。Mode は cache 1 枚の side では **実質無効**（§12.5） |
+| 鮮度 | Start 直前 Sync / Manage Refresh。JMA は **tick 中の filename 更新**でも `latest.png` が変わりうる |
 
 **気象庁デュアル profile 例:**
 

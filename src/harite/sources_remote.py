@@ -463,30 +463,12 @@ def _jma_pick_filename(
 
 
 def _jma_sync(catalog: Catalog, source_id: str) -> None:
+    from harite.sources_remote_jma import jma_sync_refresh, resolve_jma_sync_context
+
     entry = get_source(catalog, source_id)
     if entry is None:
         raise ValueError(f"unknown source id: {source_id}")
-    preset_id = preset_id_from_notes(entry.notes)
-    if preset_id is None:
-        raise ValueError("JMA sync requires harite-preset marker in notes")
-    list_path = _JMA_PRESET_LIST_KEYS.get(preset_id)
-    filename_tag = _JMA_PRESET_FILENAME_TAG.get(preset_id)
-    if list_path is None or filename_tag is None:
-        raise ValueError(f"unsupported JMA preset for sync: {preset_id}")
-
-    raw = _http_get_bytes(JMA_LIST_URL)
-    try:
-        list_payload = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ValueError("invalid list.json from JMA") from exc
-    if not isinstance(list_payload, dict):
-        raise ValueError("invalid list.json from JMA")
-
-    filename = _jma_pick_filename(list_payload, list_path, filename_tag=filename_tag)
-    png_url = JMA_PNG_URL.format(filename=filename)
-    png_bytes = _http_get_bytes(png_url)
-
-    _write_latest_cache(Path(entry.path), png_bytes, url=png_url)
+    jma_sync_refresh(resolve_jma_sync_context(entry))
 
     provider = _providers[KIND_JMA_WEATHER_MAP]
     if not entry.notes.strip() and provider.default_notes:

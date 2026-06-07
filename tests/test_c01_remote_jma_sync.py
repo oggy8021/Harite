@@ -86,6 +86,11 @@ def test_jma_sync_writes_latest_png(
     assert latest.is_file()
     assert latest.read_bytes() == _PNG_BYTES
     assert list(cache_dir.glob("*.png")) == [latest]
+    from harite.sources_remote_jma import load_jma_cycle
+
+    cycle = load_jma_cycle(cache_dir)
+    assert cycle is not None
+    assert cycle["filename"] == "fresh_JRcolor.png"
 
 
 def test_jma_sync_near_monochrome_preset_picks_jrjmahp_latest(
