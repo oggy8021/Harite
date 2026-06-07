@@ -1,6 +1,6 @@
 # Harite コア仕様 (Core Spec)
 
-最終更新: 2026-06-01 (C-02 source-spec 参照 — settings tracking key)
+最終更新: 2026-06-07
 
 ## 1. コア (core) の責務
 
@@ -99,7 +99,7 @@ two-screen 文脈で重要な点:
 | Windows | Win32 `EnumDisplayMonitors` + `GetMonitorInfoW` | デバイス名（例: `\\.\DISPLAY1`） | `MONITORINFOEX.rcMonitor` から physical pixel | `GetDpiForMonitor` の effective DPI から算出（例: 150） |
 | macOS | `system_profiler SPDisplaysDataType` | 空文字（現行） | width / height のみ | `None` |
 
-Windows の追加規則（W-03-C）:
+Windows の display 検出規則:
 
 - PowerShell / Qt / WMI 製品名は **使わない**。core は Win32 API のみで検出する。
 - プロセスを Per-Monitor DPI aware（`SetProcessDpiAwarenessContext(PMv2)`）に best-effort で昇格し、失敗時のみ `SetProcessDPIAware()` に fallback する。取得矩形は **physical pixel** ベースとする（Windows 設定の「拡大/縮小」150% 環境でも、壁紙 optimize は物理解像度を使う）。
@@ -267,7 +267,7 @@ monitor map 解決:
 Windows の補足:
 
 - `%APPDATA%` は環境変数 `APPDATA` を指す。未設定時は `Path.home() / "AppData" / "Roaming"` を Roaming 相当として使う。
-- 旧 `%USERPROFILE%\harite-settings.json`（ホーム直下）からの **読み取り互換・自動移行は行わない**（[#354](../../online-issues/closed/issue-354.md) / F-01）。
+- 旧 `%USERPROFILE%\harite-settings.json`（ホーム直下）からの **読み取り互換・自動移行は行わない**。
 - 初回 save 時に `harite/` ディレクトリを作成する（`save_settings` の `mkdir(parents=True)`）。
 
 ### 6.2 物理形式
@@ -349,7 +349,7 @@ flowchart TD
 
 ## 9. 他分冊との境界
 
-- command surface の詳細は [docs/specs/cli/harite-cli-spec.md](docs/specs/cli/harite-cli-spec.md)
-- GUI の状態遷移と画面責務は [docs/specs/gui/harite-gui-spec.md](docs/specs/gui/harite-gui-spec.md)
-- slideshow 実行面は [docs/specs/slideshow/harite-slideshow-spec.md](docs/specs/slideshow/harite-slideshow-spec.md)
-- source registry は [docs/specs/source/harite-source-spec.md](docs/specs/source/harite-source-spec.md)
+- command surface の詳細は [cli-spec](../cli/harite-cli-spec.md)
+- GUI の状態遷移と画面責務は [gui-spec](../gui/harite-gui-spec.md)
+- slideshow 実行面は [slideshow-spec](../slideshow/harite-slideshow-spec.md)
+- source registry は [source-spec](../source/harite-source-spec.md)
