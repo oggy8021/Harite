@@ -318,6 +318,30 @@ def test_qt_connect_signals_syncs_startup_settings_to_widgets(qapp, monkeypatch,
     assert backend._slideshow_srcdir_r == "/slideshow/right"
     assert backend._read_spin_int("spnLeftMargin") == 12
 
+def test_qt_backend_color_apply_updates_form_state(qapp):
+    from harite.gui.adapters.ui_adapter import RUNTIME_HANDLER_MAP, create_mainwindow_signal_dispatch
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+
+    window = MainWindow()
+    backend = load_qt_runtime_signal_backend()
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        ("on_set_color", "on_get_settings"),
+        handler_map=RUNTIME_HANDLER_MAP,
+        signal_backend=backend,
+    )
+    backend.connect_signals(dispatch)
+
+    backend._on_color_clicked()
+    backend._objects["entColorValue"].setText("#224466")
+    backend._on_color_dialog_apply_clicked()
+
+    assert window.form_state.background_color == "#224466"
+    assert backend._objects["lblColorState"].text() == "Color: #224466"
+    assert backend._objects["color_window"].isVisible() is False
+
+
 def test_qt_signal_backend_has_all_handler_stubs(qapp):
     """Verify all RUNTIME_HANDLER_MAP keys can be dispatched (no AttributeError)."""
     from harite.gui.adapters.ui_adapter import RUNTIME_HANDLER_MAP

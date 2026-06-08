@@ -863,8 +863,8 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
 
     def _on_color_pick_clicked(self, *_args: Any) -> None:
         proxy = self._objects.get("ColorDialog")
-        if proxy is not None and hasattr(proxy, "open_dialog"):
-            proxy.open_dialog()
+        if proxy is not None and hasattr(proxy, "pick_color"):
+            proxy.pick_color()
 
     def _on_color_clicked(self, *_args: Any) -> None:
         from harite.gui.adapters.gtk_runtime_settings_dialogs import on_color_clicked

@@ -262,59 +262,118 @@ def build_settings_dialog(parent: Any = None) -> dict[str, Any]:
 class QtColorDialogProxy:
     """Wraps a QDialog (manual color picker) and provides the ColorDialog API.
 
-    ``open_dialog()`` opens a native ``QColorDialog`` for color selection and
-    stores the picked color as ``pending_color``.  The caller must then call
-    ``get_pending_color()`` and apply it via the signal handler.
+    GTK ``ColorDialogProxy`` と同型: ``open_dialog()`` は手動 editor を表示し、
+    ``pick_color()`` が native chooser を開く。Apply は entry 値を ``get_pending_color()``
+    経由で読む。
     """
 
     def __init__(self, dialog: Any, *, default_color: str = "#000000") -> None:
         self._dialog = dialog
         self._color = default_color
-        self._pending_color = default_color
         self._notice_label: Any = None
+        self._color_preview: Any | None = None
 
     def attach_notice_label(self, label: Any) -> None:
         self._notice_label = label
 
+    def attach_picker_host(self, picker_host: Any, *, pick_button: Any | None = None) -> None:
+        """Show the current color in the picker host (Qt). Native chooser is ``pick_color()`` only."""
+        try:
+            from PyQt6.QtCore import Qt
+            from PyQt6.QtWidgets import QLabel, QVBoxLayout
+
+            layout = picker_host.layout()
+            if layout is None:
+                layout = QVBoxLayout(picker_host)
+                layout.setContentsMargins(8, 8, 8, 8)
+
+            caption = QLabel("Current background color")
+            caption.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+            preview = QLabel()
+            preview.setMinimumHeight(120)
+            preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self._color_preview = preview
+            self._update_color_preview(self._color)
+
+            layout.addWidget(caption)
+            layout.addWidget(preview, stretch=1)
+
+            entry = self._entry()
+            if entry is not None and hasattr(entry, "textChanged"):
+                entry.textChanged.connect(self._on_preview_entry_changed)
+        except Exception:
+            self._color_preview = None
+
+    def _update_color_preview(self, hex_color: str) -> None:
+        if self._color_preview is None:
+            return
+        from harite.core import is_background_color_literal, normalize_background_color
+
+        if is_background_color_literal(hex_color):
+            normalized = normalize_background_color(hex_color)
+            self._color_preview.setStyleSheet(
+                f"background-color: {normalized}; border: 1px solid palette(mid);"
+            )
+            self._color_preview.setText("")
+            return
+        self._color_preview.setStyleSheet(
+            "background-color: palette(window); border: 1px dashed palette(mid);"
+        )
+        self._color_preview.setText("Invalid color")
+
+    def _on_preview_entry_changed(self, text: str) -> None:
+        self._update_color_preview(str(text or "").strip())
+
+    def _entry(self) -> Any | None:
+        try:
+            from PyQt6.QtWidgets import QLineEdit
+
+            return self._dialog.findChild(QLineEdit)
+        except Exception:
+            return None
+
+    def _read_entry_text(self) -> str:
+        entry = self._entry()
+        if entry is not None and hasattr(entry, "text"):
+            return str(entry.text() or "").strip()
+        return self._color
+
     # --- Protocol API ---
 
     def get_color(self) -> str:
+        from harite.core import normalize_background_color
+
+        value = self._read_entry_text()
+        if value:
+            self._color = normalize_background_color(value)
         return self._color
 
     def set_color(self, hex_color: str) -> None:
         self._color = hex_color
-        self._pending_color = hex_color
-        try:
-            entry = self._dialog.findChild(
-                __import__("PyQt6.QtWidgets", fromlist=["QLineEdit"]).QLineEdit
-            )
-            if entry is not None:
-                entry.setText(hex_color)
-        except Exception:
-            pass
+        entry = self._entry()
+        if entry is not None:
+            entry.setText(hex_color)
+        self._update_color_preview(hex_color)
 
     def get_pending_color(self) -> str:
-        return self._pending_color
+        return self._read_entry_text() or self._color
 
     def open_dialog(self) -> None:
-        """Open native QColorDialog; sets pending_color on accept."""
+        """Show the manual color editor (GTK parity)."""
+        self.show()
+
+    def pick_color(self) -> None:
+        """Open native QColorDialog and sync the entry on accept."""
         try:
             from PyQt6.QtGui import QColor
             from PyQt6.QtWidgets import QColorDialog
 
-            initial = QColor(self._color)
+            initial = QColor(self.get_color())
             parent = getattr(self._dialog, "parent", lambda: None)()
             color = QColorDialog.getColor(initial, parent, "Background Color")
             if color.isValid():
-                self._pending_color = color.name().upper()
-                try:
-                    from PyQt6.QtWidgets import QLineEdit
-
-                    entry = self._dialog.findChild(QLineEdit)
-                    if entry is not None:
-                        entry.setText(self._pending_color)
-                except Exception:
-                    pass
+                self.set_color(color.name().upper())
         except Exception:
             pass
 
@@ -360,8 +419,8 @@ def build_color_dialog(parent: Any = None, *, default_color_hex: str = "#000000"
 
     color_picker_host = QFrame()
     color_picker_host.setFrameShape(QFrame.Shape.StyledPanel)
-    color_picker_host.setMinimumHeight(120)
-    editor_box.addWidget(color_picker_host, stretch=1)
+    color_picker_host.setMinimumHeight(140)
+    editor_box.addWidget(color_picker_host)
 
     color_value_entry = QLineEdit(default_color_hex)
     editor_box.addWidget(color_value_entry)
@@ -387,6 +446,7 @@ def build_color_dialog(parent: Any = None, *, default_color_hex: str = "#000000"
 
     proxy = QtColorDialogProxy(color_window, default_color=default_color_hex)
     proxy.attach_notice_label(color_notice_label)
+    proxy.attach_picker_host(color_picker_host, pick_button=color_pick_btn)
 
     return {
         "color_window": color_window,
