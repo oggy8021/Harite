@@ -364,6 +364,42 @@ def test_refresh_slideshow_output_label_sets_tooltip(qapp, backend) -> None:
     assert lbl.toolTip() == full
 
 
+def test_refresh_slideshow_summary_label_syncs_footer_and_tab_title(qapp, backend):
+    """MAT-02: Qt tab title must follow running/stopped like GTK."""
+    from PyQt6.QtWidgets import QLabel, QTabWidget, QWidget
+
+    from harite.gui.adapters_qt.qt_widget_helpers import refresh_slideshow_summary_label
+
+    summary = QLabel()
+    tab_title = QLabel()
+    backend._objects["lblSlideshowSummary"] = summary
+    backend._objects["lblSlideshowTabTitle"] = tab_title
+    tabs = QTabWidget()
+    slideshow_page = QWidget()
+    tabs.addTab(QWidget(), "Main")
+    tabs.addTab(slideshow_page, "Slideshow (stopped)")
+    backend._objects["command_tabs"] = tabs
+    backend._objects["slideshow_tab_box"] = slideshow_page
+    backend._slideshow_running = False
+    backend._slideshow_paused = False
+
+    refresh_slideshow_summary_label(backend)
+    assert summary.text() == "Slideshow: stopped"
+    assert tab_title.text() == "Slideshow (stopped)"
+    assert tabs.tabText(1) == "Slideshow (stopped)"
+
+    backend._slideshow_running = True
+    refresh_slideshow_summary_label(backend)
+    assert summary.text() == "Slideshow: running"
+    assert tab_title.text() == "Slideshow (running)"
+    assert tabs.tabText(1) == "Slideshow (running)"
+
+    backend._slideshow_paused = True
+    refresh_slideshow_summary_label(backend)
+    assert summary.text() == "Slideshow: paused"
+    assert tabs.tabText(1) == "Slideshow (paused)"
+
+
 def test_refresh_slideshow_source_labels_truncates_long_paths(qapp, backend):
     from PyQt6.QtWidgets import QLabel
 

@@ -53,9 +53,8 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- ~~現時点: **転記のみ**~~ → **改修着手**（初回 PR）
+- **完了** — #442 マージ。実機で align 体感 OK（オーナー確認 2026-06-09）。
 - スコープ: direction toggle → `form_state.align` / `valign` への反映
-- 次: optimize 出力での視覚確認（本件の handler 経路は修正済み）
 
 ### 調査メモ
 
@@ -108,9 +107,7 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- **改修着手** — 母体の **基底ロジックと貼り方は変えない**（回帰する）。
-- パイプライン: `contains` → 必要時のみ downsize → display 矩形へ align → merge/paste。
-- PR: **#444**（`fix/mat-01b-native-placement-retry` → `main`）。#442 マージ済み。#443 は誤 close。
+- **完了** — #444 マージ。実機で align 体感 OK（オーナー確認 2026-06-09）。
 - 詳細: [改修方針ドラフト](../working/design/20260609-mat-01b-native-placement-repair-draft.md)
 
 ### 調査メモ
@@ -118,6 +115,8 @@ GitHub Issue 起票前の観測転記。
 - memo（オーナー）: 「悲劇」— 母体は原寸・拡大なし。align は display 内限界寄せ / margins は収納・縮小制約。
 - **修正（2026-06-09）:** `core.py` — `_resolve_native_dimensions`, `_allocate_on_display`, `_resolve_display_slots`。spec §4.1 更新。テスト反転。
 - GUI 注釈 `margins define area; align/valign act inside it` は **旧 Harite 実装向け**。gui-spec 整合は follow-up。
+- **実機（オーナー・Windows）:** Preset ソースで顕著。**真の価値・見え方に戻った**（誤 upscale 時代のプロダクト誤解を解消）。天気図など **小画像は原寸のまま中央にポツン** — align では動かせない（余白があるから可能；画像が小さいと center 既定のまま）。→ **MAT-11**（Slideshow へ margin/align 浸透）と強く結びつく。
+- **製品線（別 planning）:** 高解像度ディスプレイ向けの **意図的 2x / 4x 等**は、MAT-01b の「拡大禁止」とは **別軸**（ユーザーが選ぶ display scale）。本改修で誤った「常時 fit 拡大」路線には進まなくてよかった。
 
 ---
 
@@ -151,13 +150,14 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
+- **改修着手** — Qt `refresh_slideshow_summary_label` が **タブ見出しを更新していなかった**（GTK は両方更新）。
 - スコープ: **表示整合のみ**（タブ title / footer / Start-Stop enable）。tick 失敗・remote sync は MAT-02b へ
-- 次: 再現 state のスナップショット（settings / srcdir / running フラグ）→ ラベル更新経路の照合
 
 ### 調査メモ
 
 - memo（オーナー）: 壁紙未切替・Error none だが Stop 有効。取得系は別枠
+- **原因（2026-06-09）:** Qt は footer のみ更新。`QTabWidget.setTabText` と `lblSlideshowTabTitle` が初期 `Slideshow (stopped)` のまま。GTK `refresh_slideshow_summary_label` は両方を `Slideshow ({state})` に同期。
+- **修正:** `qt_widget_helpers.refresh_slideshow_summary_label` — stopped/running/paused を GTK 同型で footer + tab に反映。
 
 ---
 
@@ -492,6 +492,8 @@ GitHub Issue 起票前の観測転記。
 ### 調査メモ
 
 - memo（オーナー）: Slideshow でも Main と同じ見た目制御を期待
+- **実機（オーナー・Windows・MAT-01b 後）:** Preset 天気図が **画面中央に原寸でポツン** — Main の xxAlign だけでは寄せられない／slideshow tick が margin・align を読んでいない疑い。**MAT-01b で見え方は正しくなったが、slideshow 側の「浸透」が次のボトルネック。**
+- 関連: 意図的 **2x/4x** 計画は MAT-11 とは別（高 DPI 向け product 判断）。原寸回帰と混同しない。
 
 ---
 
