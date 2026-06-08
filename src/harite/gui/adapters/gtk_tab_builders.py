@@ -3,8 +3,11 @@ from __future__ import annotations
 from typing import Any
 
 from harite.gui.adapters.gtk_layout_builders import (
+    build_centered_widget_row,
+    configure_path_label_for_display,
     set_button_icon_if_supported,
     set_halign_if_supported,
+    set_hexpand_if_supported,
     set_xalign_if_supported,
 )
 
@@ -375,6 +378,8 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
 
     left_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
     right_source_block = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+    set_hexpand_if_supported(left_source_block, False)
+    set_hexpand_if_supported(right_source_block, False)
     if hasattr(gtk_module, "Align"):
         set_halign_if_supported(left_source_block, gtk_module.Align.CENTER)
         set_halign_if_supported(right_source_block, gtk_module.Align.CENTER)
@@ -387,13 +392,17 @@ def build_slideshow_tab_section(gtk_module: Any, *, configure_spin_button: Any) 
 
     apply_icon_only_button(btn_open_srcdir_l, "Srcdir-L")
     apply_icon_only_button(btn_open_srcdir_r, "Srcdir-R")
+    set_hexpand_if_supported(btn_open_srcdir_l, False)
+    set_hexpand_if_supported(btn_open_srcdir_r, False)
     slideshow_source_label_l = gtk_module.Label(label="L: -")
     slideshow_source_label_r = gtk_module.Label(label="R: -")
     set_xalign_if_supported(slideshow_source_label_l, 0.5)
     set_xalign_if_supported(slideshow_source_label_r, 0.5)
-    left_source_block.pack_start(btn_open_srcdir_l, False, False, 0)
+    configure_path_label_for_display(slideshow_source_label_l)
+    configure_path_label_for_display(slideshow_source_label_r)
+    left_source_block.pack_start(build_centered_widget_row(gtk_module, btn_open_srcdir_l), False, False, 0)
     left_source_block.pack_start(slideshow_source_label_l, False, False, 0)
-    right_source_block.pack_start(btn_open_srcdir_r, False, False, 0)
+    right_source_block.pack_start(build_centered_widget_row(gtk_module, btn_open_srcdir_r), False, False, 0)
     right_source_block.pack_start(slideshow_source_label_r, False, False, 0)
     slideshow_srcdir_left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
     slideshow_srcdir_middle_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)

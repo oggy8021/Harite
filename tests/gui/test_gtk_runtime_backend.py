@@ -246,6 +246,9 @@ class _Button(_WidgetBase):
     def set_always_show_image(self, enabled):
         self.always_show_image = bool(enabled)
 
+    def set_label(self, label):
+        self.label = label
+
     def click(self):
         self.emit("clicked", self)
 
@@ -810,6 +813,67 @@ def test_runtime_backend_adds_main_margins_drawer_and_syncs_owner_state():
     assert backend.get_object("radMarginTextPositionRightBottom").get_active() is True
 
 
+def test_runtime_backend_options_drawer_objects_and_toggle():
+    from harite.gui.views.margins_options_drawer import FEWER_LABEL, MORE_LABEL, toggle_margins_options_drawer
+    from harite.gui.views.slideshow_options_drawer import toggle_slideshow_options_drawer
+
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+
+    margins_revealer = backend._objects["margins_options_revealer"]
+    slideshow_revealer = backend._objects["slideshow_options_revealer"]
+    margins_trigger = backend._objects["btn_margins_options_more"]
+    slideshow_trigger = backend._objects["btn_slideshow_options_more"]
+
+    assert margins_revealer is not None
+    assert slideshow_revealer is not None
+    assert not margins_revealer.get_reveal_child()
+    assert not slideshow_revealer.get_reveal_child()
+
+    toggle_margins_options_drawer(backend)
+    assert margins_revealer.get_reveal_child()
+    assert margins_trigger.label == FEWER_LABEL
+    toggle_margins_options_drawer(backend)
+    assert not margins_revealer.get_reveal_child()
+    assert margins_trigger.label == MORE_LABEL
+
+    toggle_slideshow_options_drawer(backend)
+    assert slideshow_revealer.get_reveal_child()
+    toggle_slideshow_options_drawer(backend)
+    assert not slideshow_revealer.get_reveal_child()
+
+
+def test_runtime_backend_slideshow_tab_uses_centered_page_shell():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    notebook = backend.get_object("commandTabs")
+    slideshow_page = notebook.pages[1][0]
+    slideshow_tab_box = backend._objects["slideshow_tab_box"]
+    assert slideshow_tab_box._parent is not None
+    assert slideshow_page is slideshow_tab_box._parent._parent
+
+
+def test_runtime_backend_slideshow_srcdir_buttons_are_centered_not_stretched():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    srcdir_row = backend._objects["slideshow_tab_box"].children[0]
+    left_block = srcdir_row.children[1]
+    right_block = srcdir_row.children[3]
+    left_btn_row, _left_label = left_block.children
+    right_btn_row, _right_label = right_block.children
+    assert left_btn_row.children[1] is backend.get_object("btnOpenSrcdirL")
+    assert right_btn_row.children[1] is backend.get_object("btnOpenSrcdirR")
+
+
+def test_runtime_backend_slideshow_srcdir_labels_abbreviate_long_paths():
+    from harite.gui.adapters.gtk_runtime_slideshow_ui import refresh_slideshow_source_labels
+
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    long_path = "/cache/" + ("segment/" * 12) + "very-long-album-name.jpg"
+    backend._slideshow_srcdir_l = long_path
+    refresh_slideshow_source_labels(backend)
+    label = backend.get_object("lblSlideshowSourceL")
+    assert label.text.startswith("L: ")
+    assert len(label.text) < len(long_path) + 3
+
+
 def test_runtime_backend_margins_tab_updates_owner_state_and_cli_preview(tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
@@ -1178,7 +1242,7 @@ def test_runtime_backend_slideshow_srcdir_selection_and_slideshow_cycle_updates_
     srcdir_dialog.set_current_folder(str(left_dir))
     srcdir_dialog.confirm()
 
-    assert slideshow_source_l.text == f"L: {left_dir}"
+    assert slideshow_source_l.text == f"L: {left_dir.name}"
     assert slideshow_source_r.text == "R: -"
     expected_output_label, _ = format_slideshow_output_label_text(str(work_dir))
     assert slideshow_output.text == expected_output_label

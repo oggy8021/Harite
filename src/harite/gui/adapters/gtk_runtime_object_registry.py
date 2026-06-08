@@ -22,7 +22,27 @@ def build_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, Any]:
         **_build_dialog_runtime_object_aliases(widgets),
         **_build_tab_runtime_object_aliases(widgets),
         **_build_footer_runtime_object_aliases(widgets),
+        **_build_drawer_runtime_object_aliases(widgets),
     }
+
+
+def _build_drawer_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, Any]:
+    """Snake_case keys used by options-drawer views and drawer_window_resize."""
+    aliases: dict[str, Any] = {}
+    for key in (
+        "btn_margins_options_more",
+        "btn_slideshow_options_more",
+        "margins_options_drawer",
+        "slideshow_options_drawer",
+        "margins_options_revealer",
+        "slideshow_options_revealer",
+        "main_col",
+        "slideshow_tab_box",
+    ):
+        widget = widgets.get(key)
+        if widget is not None:
+            aliases[key] = widget
+    return aliases
 
 
 def _build_main_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, Any]:

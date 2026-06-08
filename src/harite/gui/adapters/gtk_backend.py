@@ -328,7 +328,8 @@ class GtkRuntimeSignalBackend:
         command_tabs: Any,
     ) -> dict[str, Any]:
         slideshow_widgets = build_slideshow_tab_section(gtk_module, configure_spin_button=self._configure_spin_button)
-        command_tabs.append_page(slideshow_widgets["slideshow_tab_box"], slideshow_widgets["slideshow_tab_title"])
+        slideshow_page_shell = build_centered_page_shell(gtk_module, slideshow_widgets["slideshow_tab_box"])
+        command_tabs.append_page(slideshow_page_shell, slideshow_widgets["slideshow_tab_title"])
         return slideshow_widgets
 
     def _build_footer_runtime_widgets(self, gtk_module: Any, *, window: Any, root: Any) -> dict[str, Any]:
@@ -560,8 +561,11 @@ class GtkRuntimeSignalBackend:
     def _refresh_save_target_label(self, filename: str | None = None) -> None:
         refresh_save_target_label(self, filename)
 
-    def _refresh_slideshow_source_labels(self) -> None:
-        refresh_slideshow_source_labels(self)
+    def _refresh_slideshow_source_labels(self, owner: Any | None = None) -> None:
+        refresh_slideshow_source_labels(self, owner)
+
+    def _refresh_slideshow_mode_controls(self, owner: Any) -> None:
+        refresh_slideshow_source_labels(self, owner)
 
     def _refresh_slideshow_summary_label(self) -> None:
         refresh_slideshow_summary_label(self)
