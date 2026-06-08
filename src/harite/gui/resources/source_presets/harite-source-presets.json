@@ -160,20 +160,6 @@
 
     {
 
-      "preset_id": "codh-edo-shops-keyword",
-
-      "name": "江戸買物（キーワード）",
-
-      "kind": "remote-codh-edo",
-
-      "min_slideshow_interval_seconds": 600,
-
-      "notes": "出典：人文学オープンデータ共同利用センター（CODH）江戸買物案内（https://codh.rois.ac.jp/edo-shops/）"
-
-    },
-
-    {
-
       "preset_id": "codh-edo-spots-random",
 
       "name": "江戸観光（おまかせ）",
@@ -183,20 +169,6 @@
       "min_slideshow_interval_seconds": 600,
 
       "notes": "出典：人文学オープンデータ共同利用センター（CODH）江戸観光案内（https://codh.rois.ac.jp/edo-spots/）"
-
-    },
-
-    {
-
-      "preset_id": "codh-edo-shops-random",
-
-      "name": "江戸買物（おまかせ）",
-
-      "kind": "remote-codh-edo",
-
-      "min_slideshow_interval_seconds": 600,
-
-      "notes": "出典：人文学オープンデータ共同利用センター（CODH）江戸買物案内（https://codh.rois.ac.jp/edo-shops/）"
 
     }
 

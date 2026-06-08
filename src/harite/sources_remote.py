@@ -46,12 +46,7 @@ CODH_KEYWORD_NOTE_PREFIX = "harite-codh-keyword:"
 CODH_KEYWORD_SETTINGS_KEY = "codh_keyword"
 CODH_KEYWORD_MAX_LEN = 16
 CODH_KEYWORD_DEFAULT = "桜"
-CODH_KEYWORD_PRESET_IDS = frozenset(
-    {
-        "codh-edo-spots-keyword",
-        "codh-edo-shops-keyword",
-    }
-)
+CODH_KEYWORD_PRESET_IDS = frozenset({"codh-edo-spots-keyword"})
 
 _JMA_PRESET_LIST_KEYS: dict[str, tuple[str, ...]] = {
     "jma-near-color": ("near", "now"),
@@ -99,14 +94,7 @@ _CODH_PRESET_SEARCH: dict[str, _CodhSearchSpec] = {
         keyword_from_settings=True,
         keyword_where=True,
     ),
-    "codh-edo-shops-keyword": _CodhSearchSpec(
-        indexer="edo-shops",
-        random_pick=True,
-        keyword_from_settings=True,
-        keyword_where=True,
-    ),
     "codh-edo-spots-random": _CodhSearchSpec(indexer="edo-spots", random_pick=True),
-    "codh-edo-shops-random": _CodhSearchSpec(indexer="edo-shops", random_pick=True),
 }
 
 

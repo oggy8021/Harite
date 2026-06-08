@@ -43,7 +43,7 @@ def test_slideshow_uses_codh_keyword_preset_direct_selection(tmp_path: Path) -> 
 def test_slideshow_uses_codh_keyword_preset_via_profile(tmp_path: Path) -> None:
     catalog = empty_catalog()
     cache = tmp_path / "cache"
-    keyword_source = import_preset_source(catalog, "codh-edo-shops-keyword", cache_root=cache)
+    keyword_source = import_preset_source(catalog, "codh-edo-spots-keyword", cache_root=cache)
     local_dir = tmp_path / "local"
     local_dir.mkdir()
     local_source = add_source(catalog, name="Local", path=local_dir)

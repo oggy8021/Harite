@@ -225,7 +225,7 @@ def test_codh_random_sync_builds_paged_index(
         target = url if isinstance(url, str) else url.full_url
         seen.append(target)
         if target.startswith(
-            CODH_SEARCH_URL_TEMPLATE.format(indexer="edo-shops")
+            CODH_SEARCH_URL_TEMPLATE.format(indexer="edo-spots")
         ):
             assert "limit=" in target
             payload = (
@@ -263,7 +263,7 @@ def test_codh_random_sync_builds_paged_index(
     monkeypatch.setattr("harite.sources_remote.urlopen", fake_urlopen)
     cache_root = tmp_path / "remote-cache"
     catalog = empty_catalog()
-    entry = import_preset_source(catalog, "codh-edo-shops-random", cache_root=cache_root)
+    entry = import_preset_source(catalog, "codh-edo-spots-random", cache_root=cache_root)
     sync_remote_source(catalog, entry.id, cache_root=cache_root)
     assert any("limit=50" in u for u in seen)
     assert (Path(entry.path) / "codh-index.json").is_file()

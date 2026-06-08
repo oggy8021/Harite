@@ -695,7 +695,7 @@ preset `notes` および Manage 表示（`harite-preset:` 行の次行）:
 | indexer | データセット |
 | --- | --- |
 | `edo-spots` | 江戸観光案内 |
-| `edo-shops` | 江戸買物案内 |
+| `edo-shops` | 江戸買物案内（**同梱 preset なし** — MAT-04。文字図版中心のため product 見送り） |
 
 Curation JSON 全体のローカル複製は持たない。候補 URL は `codh-index.json`（§15.4.3）に集約する。
 
@@ -704,13 +704,13 @@ Curation JSON 全体のローカル複製は持たない。候補 URL は `codh-
 | `preset_id` | indexer | 検索条件 |
 | --- | --- | --- |
 | `codh-edo-spots-keyword` | `edo-spots` | `where={codh_keyword}`（部分一致） |
-| `codh-edo-shops-keyword` | `edo-shops` | 同上 |
 | `codh-edo-spots-random` | `edo-spots` | 絞り込みなし |
-| `codh-edo-shops-random` | `edo-shops` | 同上 |
+
+**MAT-04:** `codh-edo-shops-keyword` / `codh-edo-shops-random` は同梱から削除。既存 catalog に残った江戸買物由来 source は sync 非対応（`unsupported CODH preset`）— 手動削除を想定。
 
 固定 keyword preset（例: 固定 `桜`）は同梱しない。
 
-**`codh_keyword`:** `harite-settings.json` トップレベル。観光・買物 keyword preset 共通。最大 16 文字。初期値 `桜`。source `notes` / preset JSON には書かない。
+**`codh_keyword`:** `harite-settings.json` トップレベル。`codh-edo-spots-keyword` 用。最大 16 文字。初期値 `桜`。source `notes` / preset JSON には書かない。
 
 #### 15.4.3 候補リスト（`codh-index.json`）
 

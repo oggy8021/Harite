@@ -34,7 +34,7 @@ def test_sync_manage_dialog_keyword_field_disables_for_non_keyword_preset(qapp, 
 
     cache = tmp_path / "cache"
     catalog = empty_catalog()
-    random_source = import_preset_source(catalog, "codh-edo-shops-random", cache_root=cache)
+    random_source = import_preset_source(catalog, "codh-edo-spots-random", cache_root=cache)
 
     keyword_entry = QLineEdit("edited-draft")
     sync_manage_dialog_keyword_field(keyword_entry, selected_entry=random_source)

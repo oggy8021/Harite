@@ -48,7 +48,7 @@ def test_validate_codh_keyword_rejects_empty_and_long() -> None:
 
 def test_bundled_keyword_preset_json_has_no_machine_keyword_line() -> None:
     presets = load_source_presets()
-    for preset_id in ("codh-edo-spots-keyword", "codh-edo-shops-keyword"):
+    for preset_id in ("codh-edo-spots-keyword",):
         template = next(item for item in presets.sources if item.preset_id == preset_id)
         assert CODH_KEYWORD_NOTE_PREFIX not in template.notes
 

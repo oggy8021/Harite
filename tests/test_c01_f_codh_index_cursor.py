@@ -110,7 +110,7 @@ def test_build_codh_index_pages_and_normalizes_urls(
 ) -> None:
     seen = _install_codh_paging_mock(monkeypatch, total=5)
     catalog = empty_catalog()
-    entry = import_preset_source(catalog, "codh-edo-shops-random", cache_root=tmp_path / "cache")
+    entry = import_preset_source(catalog, "codh-edo-spots-random", cache_root=tmp_path / "cache")
     ctx = resolve_codh_sync_context(entry)
 
     index = build_codh_index(ctx)
@@ -149,7 +149,7 @@ def test_resume_sync_does_not_advance_cursor(
     _install_codh_paging_mock(monkeypatch, total=3)
     cache_root = tmp_path / "remote-cache"
     catalog = empty_catalog()
-    entry = import_preset_source(catalog, "codh-edo-shops-random", cache_root=cache_root)
+    entry = import_preset_source(catalog, "codh-edo-spots-random", cache_root=cache_root)
     ctx = resolve_codh_sync_context(entry)
     build_codh_index(ctx)
     cycle = reconcile_codh_cycle(None, load_codh_index(ctx.cache_dir) or {})
@@ -173,7 +173,7 @@ def test_codh_slideshow_tick_advances_sequential_cursor(
     monkeypatch.setattr("harite.sources_remote_codh.random.randint", lambda _a, _b: 0)
     cache_root = tmp_path / "remote-cache"
     catalog = empty_catalog()
-    entry = import_preset_source(catalog, "codh-edo-shops-random", cache_root=cache_root)
+    entry = import_preset_source(catalog, "codh-edo-spots-random", cache_root=cache_root)
     sync_remote_source(catalog, entry.id, cache_root=cache_root, codh_sync_pick="refresh")
     search_calls_before = sum(1 for url in seen if "/search" in url)
 
@@ -195,7 +195,7 @@ def test_codh_tick_image_failure_keeps_latest(
     monkeypatch.setattr("harite.sources_remote_codh.random.randint", lambda _a, _b: 0)
     cache_root = tmp_path / "remote-cache"
     catalog = empty_catalog()
-    entry = import_preset_source(catalog, "codh-edo-shops-random", cache_root=cache_root)
+    entry = import_preset_source(catalog, "codh-edo-spots-random", cache_root=cache_root)
     sync_remote_source(catalog, entry.id, cache_root=cache_root, codh_sync_pick="refresh")
     latest = Path(entry.path) / "latest.jpg"
     before = latest.read_bytes()
