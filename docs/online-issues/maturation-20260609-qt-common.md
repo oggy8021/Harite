@@ -492,13 +492,14 @@ GitHub Issue 起票前の観測転記。
 
 - MAT-03（Optimize で Color が効かない — 関連症状の可能性）
 - 正本: [harite-slideshow-spec.md §6](../specs/slideshow/harite-slideshow-spec.md)、[harite-gui-spec.md](../specs/gui/harite-gui-spec.md)
-- 現状: dual-source GUI slideshow は tick ごとに optimize 経路あり（§6.1 作業ディレクトリ）。単一 preset / remote の経路は要照合
+- 現状: dual-source のみ tick ごとに optimize（§6.1）。**single（1 ディスプレイ・片方指定）は直接 apply で margin/embed 未浸透** — MAT-12 で経路確定
+- MAT-12 接続: single 直接 apply は現行実装。product 上は **認めない**（オーナー 2026-06-09）
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
-- スコープ: 「浸透」の定義（毎 tick optimize に渡す / apply 前処理 / preset 専用）は棚卸で確定
-- 次: 現行 slideshow tick が margins / embed / background を読んでいるかコード照合
+- **次の改修候補** — single-source slideshow も Main と同型の optimize 経路へ（1 枚入力の optimize / 作業ディレクトリ or ピクチャ根スロットは棚卸）
+- スコープ: 毎 tick `form_state`（margin / embed / background / align）を optimize に渡す
+- 前提: MAT-12 §6.2.1 の「single＝直接 apply」は **暫定** と明記済み
 
 ### 調査メモ
 
@@ -537,10 +538,10 @@ GitHub Issue 起票前の観測転記。
 ### 取り込み方針
 
 - **改修着手** — コード + spec 照合で回答を正本化。表は [slideshow-spec §6.2.1](../specs/slideshow/harite-slideshow-spec.md)。
-- 結論: **Optimize は preset 種別ではなくソース構成（L+R 指定＝dual）で分岐。** Srcdir-L/R 両方指定時は dual → optimize。片方のみが single → optimize なし。tick の network（JMA/CODH）は L/R 独立で走り、optimize とは別軸（§6.2.1 改訂）。
+- 結論: **現行コード**はソース構成 dual → optimize、single（片方のみ）→ 直接 apply。tick network は別軸（§6.2.1）。**製品上** single の直接 apply は MAT-11 論旨で **認めない**（WallpaperOptimizer 意味が失われる）。
 - 副次修正: R1 孤児掃除に `harite_slideshow_*` を含める。single-source 成功時に未追跡スロットも削除。
 
 ### 調査メモ
 
 - memo（オーナー）: 壁紙が切り替わらない事象（MAT-02）の土台質問
-- **確定（2026-06-09）:** ソース構成 dual（L+R 指定）→ optimize + 作業ディレクトリ。single（片方のみ）→ optimize なし。tick network は dual でも L/R 各 side で独立（MAT-08 と整合）。オーナー指摘: 「L のみ典型」表現は誤解を招く — dual 指定時点でソースは dual。
+- **確定（2026-06-09）:** ソース構成 dual（L+R 指定）→ optimize + 作業ディレクトリ。single（片方のみ）→ **現行** optimize なし・直接 apply。オーナー指摘: dual 指定時点でソースは dual。single 直接 apply は **MAT-11 で廃止方向**（margin/embed 浸透の前提）。
