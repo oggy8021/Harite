@@ -137,6 +137,43 @@ def test_discover_system_fcitx_qt_plugins_ignores_qt5_path(tmp_path: Path):
     assert qt5_only == [qt5_dir / "libfcitxplatforminputcontextplugin.so"]
 
 
+def test_configure_linux_fcitx_dynamic_loader_prepends_paths(monkeypatch, tmp_path: Path):
+    from harite.gui.adapters_qt import qt_input_method
+
+    system_plugin_dir = tmp_path / "usr" / "lib" / "x86_64-linux-gnu" / "qt6" / "plugins" / "platforminputcontexts"
+    system_plugin_dir.mkdir(parents=True)
+    (system_plugin_dir / "libfcitx5platforminputcontextplugin.so").write_bytes(b"plugin")
+
+    pyqt_root = tmp_path / "site-packages" / "PyQt6"
+    pyqt_lib = pyqt_root / "Qt6" / "lib"
+    pyqt_lib.mkdir(parents=True)
+
+    monkeypatch.setattr(qt_input_method.sys, "platform", "linux")
+    monkeypatch.delenv("LD_LIBRARY_PATH", raising=False)
+    monkeypatch.setattr(qt_input_method, "_resolve_pyqt6_package_root", lambda: pyqt_root)
+    monkeypatch.setattr(qt_input_method, "_SYSTEM_PLUGIN_DIRS", (system_plugin_dir,))
+    monkeypatch.setattr(
+        qt_input_method,
+        "_SYSTEM_QT6_LIBRARY_DIRS",
+        (tmp_path / "usr" / "lib" / "x86_64-linux-gnu",),
+    )
+
+    assert qt_input_method.configure_linux_fcitx_dynamic_loader() is True
+    assert str(pyqt_lib) in qt_input_method.os.environ["LD_LIBRARY_PATH"]
+    assert "x86_64-linux-gnu" in qt_input_method.os.environ["LD_LIBRARY_PATH"]
+
+
+def test_configure_linux_fcitx_dynamic_loader_can_be_disabled(monkeypatch):
+    from harite.gui.adapters_qt import qt_input_method
+
+    monkeypatch.setattr(qt_input_method.sys, "platform", "linux")
+    monkeypatch.setenv("HARITE_QT_FCITX_SYSTEM_LIBS", "0")
+    monkeypatch.delenv("LD_LIBRARY_PATH", raising=False)
+
+    assert qt_input_method.configure_linux_fcitx_dynamic_loader() is False
+    assert "LD_LIBRARY_PATH" not in qt_input_method.os.environ
+
+
 def test_configure_text_input_widget_enables_input_method(qapp):
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import QLineEdit

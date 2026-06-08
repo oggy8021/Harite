@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import logging
 import os
 import sys
@@ -37,6 +38,21 @@ _FCITX_QT_PACKAGE_HINT = (
     "libfcitx5-qt6-1 is only the shared library and libfcitx5-qt-data has no .so). "
     "A Qt5-only plugin under .../qt5/plugins/... cannot be used with pip PyQt6. "
     "Then restart harite-qt so Harite can symlink the Qt6 plugin into the venv PyQt6."
+)
+
+_FCITX_ABI_MISMATCH_HINT = (
+    "If the fcitx plugin symlink exists but IME still fails, pip PyQt6 may be using a "
+    "different Qt6 build than the distro fcitx plugin. Try: "
+    "HARITE_QT_IM_DIAG=1 harite-qt; "
+    "QT_DEBUG_PLUGINS=1 harite-qt 2>&1 | grep -i fcitx; "
+    "or use distro PyQt6 (e.g. apt python3-pyqt6 with a --system-site-packages venv)."
+)
+
+_SYSTEM_QT6_LIBRARY_DIRS = (
+    Path("/usr/lib/x86_64-linux-gnu"),
+    Path("/usr/lib/aarch64-linux-gnu"),
+    Path("/usr/lib64"),
+    Path("/usr/lib"),
 )
 
 
@@ -101,6 +117,124 @@ def resolve_qt_im_module(
     return None
 
 
+def _resolve_pyqt6_package_root() -> Path | None:
+    spec = importlib.util.find_spec("PyQt6")
+    if spec is None or not spec.origin:
+        return None
+    return Path(spec.origin).resolve().parent
+
+
+def pyqt6_qt_library_dir() -> Path | None:
+    root = _resolve_pyqt6_package_root()
+    if root is None:
+        return None
+    lib_dir = root / "Qt6" / "lib"
+    return lib_dir if lib_dir.is_dir() else None
+
+
+def system_qt6_library_dirs() -> list[Path]:
+    return [path for path in _SYSTEM_QT6_LIBRARY_DIRS if path.is_dir()]
+
+
+def _prepend_ld_library_path(paths: list[Path]) -> None:
+    entries = [str(path) for path in paths if path.is_dir()]
+    if not entries:
+        return
+    prefix = ":".join(entries)
+    current = os.environ.get("LD_LIBRARY_PATH", "")
+    if current.startswith(prefix):
+        return
+    os.environ["LD_LIBRARY_PATH"] = f"{prefix}:{current}" if current else prefix
+
+
+def _fcitx_plugin_uses_system_origin(target_dir: Path) -> bool:
+    for name in _FCITX_PLUGIN_NAMES:
+        destination = target_dir / name
+        if not destination.exists():
+            continue
+        try:
+            resolved = destination.resolve()
+        except OSError:
+            continue
+        if resolved.as_posix().startswith("/usr/"):
+            return True
+    return False
+
+
+def _linux_fcitx_system_libs_enabled() -> bool:
+    raw = os.environ.get("HARITE_QT_FCITX_SYSTEM_LIBS", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+def _fcitx_loader_paths() -> list[Path]:
+    paths: list[Path] = []
+    pyqt_lib = pyqt6_qt_library_dir()
+    if pyqt_lib is not None:
+        paths.append(pyqt_lib)
+    paths.extend(system_qt6_library_dirs())
+    return paths
+
+
+def configure_linux_fcitx_dynamic_loader() -> bool:
+    """Prepend loader paths before PyQt6 import when a distro fcitx plugin exists."""
+    if not sys.platform.startswith("linux") or not _linux_fcitx_system_libs_enabled():
+        return False
+    if not discover_system_fcitx_qt_plugins() and not _fcitx_plugin_already_linked():
+        return False
+
+    _prepend_ld_library_path(_fcitx_loader_paths())
+    logger.info(
+        "Qt IM: prepended LD_LIBRARY_PATH for distro fcitx plugin compatibility"
+    )
+    return True
+
+
+def _fcitx_plugin_already_linked() -> bool:
+    root = _resolve_pyqt6_package_root()
+    if root is None:
+        return False
+    plugins_dir = root / "Qt6" / "plugins" / "platforminputcontexts"
+    if not plugins_dir.is_dir():
+        return False
+    return _fcitx_plugin_uses_system_origin(plugins_dir)
+
+
+def _should_log_qt_im_diagnostics() -> bool:
+    raw = os.environ.get("HARITE_QT_IM_DIAG", "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
+def log_qt_input_method_diagnostics(qapp: Any) -> None:
+    """Log Qt IM runtime details for Linux fcitx troubleshooting."""
+    if not sys.platform.startswith("linux"):
+        return
+
+    report = audit_qt_fcitx_input_method()
+    try:
+        from PyQt6.QtCore import QLibraryInfo
+        from PyQt6.QtGui import QGuiApplication
+
+        report["qt_runtime_version"] = QLibraryInfo.version().toString()
+        report["qt_plugin_path"] = QLibraryInfo.path(QLibraryInfo.LibraryPath.PluginsPath)
+        input_method = QGuiApplication.inputMethod()
+        report["input_method_available"] = input_method is not None
+        if input_method is not None:
+            report["input_method_locale"] = input_method.locale().name()
+    except Exception as exc:  # pragma: no cover - diagnostic only
+        report["runtime_probe_error"] = str(exc)
+
+    if report.get("fcitx_plugins_after_link") and report.get("qt_im_module") in {
+        _FCITX_QT_IM_MODULE,
+        "fcitx5",
+    }:
+        report["abi_mismatch_hint"] = _FCITX_ABI_MISMATCH_HINT
+
+    if _should_log_qt_im_diagnostics():
+        logger.info("Qt IM diagnostics: %s", report)
+    elif report.get("fcitx_plugins_after_link"):
+        logger.debug("Qt IM diagnostics: %s", report)
+
+
 def prepare_qt_input_method_env() -> str | None:
     """Apply best-effort Qt IM env vars before ``QApplication`` construction."""
     if not sys.platform.startswith("linux"):
@@ -115,6 +249,7 @@ def prepare_qt_input_method_env() -> str | None:
         os.environ["QT_IM_MODULE"] = resolved
 
     if os.environ.get("QT_IM_MODULE", "").strip().lower() in {_FCITX_QT_IM_MODULE, "fcitx5"}:
+        configure_linux_fcitx_dynamic_loader()
         linked = link_system_fcitx_qt_plugin_if_missing()
         if linked is None and not fcitx_input_context_plugin_names():
             candidates = discover_system_fcitx_qt_plugins()
@@ -200,7 +335,9 @@ def audit_qt_fcitx_input_method() -> dict[str, object]:
         "system_fcitx_qt5_plugins_ignored": [str(path) for path in discover_system_fcitx_qt5_plugins()],
         "linked_plugin": str(linked) if linked is not None else None,
         "fcitx_plugins_after_link": fcitx_input_context_plugin_names(target_dir),
+        "ld_library_path": os.environ.get("LD_LIBRARY_PATH"),
         "package_hint": _FCITX_QT_PACKAGE_HINT,
+        "abi_mismatch_hint": _FCITX_ABI_MISMATCH_HINT,
     }
 
 
