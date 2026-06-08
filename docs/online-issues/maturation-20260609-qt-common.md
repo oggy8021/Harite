@@ -259,13 +259,14 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
-- スコープ: keyword フィールドの **編集中ドラフト保持**（Enter / focus-out で revert しない）
-- 次: 確定トリガ（Close / OK / Apply）と field イベントの整理
+- **改修着手** — `_sync_keyword_field_from_selection` が preset 選択のたびに `persisted_keyword` で `setText` し、編集中ドラフトを破棄していた。
+- スコープ: keyword フィールドの **編集中ドラフト保持**（Enter / focus-out / 選択変更で revert しない）。disk 反映は従来どおり Close / Refresh
 
 ### 調査メモ
 
 - memo（オーナー）: Enter・フォーカス移動で `桜` に戻る。Close 必須
+- **原因（2026-06-09）:** `codh_keyword` は settings 全体で 1 値だが、選択 sync が毎回 persisted 値で field を上書き。リスト `currentRowChanged` はフォーカス移動・Enter 後にも発火しうる。
+- **修正:** `sync_manage_dialog_keyword_field` — enabled のみ更新。spec: gui-spec Manage dialog `keyword(CODH)`。テスト: `test_qt_source_registry_dialog.py`
 
 ---
 

@@ -174,6 +174,17 @@ def read_slot_members(slot_l: Any, slot_r: Any) -> dict[str, str | None]:
     }
 
 
+def sync_manage_dialog_keyword_field(
+    keyword_entry: Any,
+    *,
+    selected_entry: SourceEntry | None,
+) -> None:
+    """Enable/disable CODH keyword entry without clobbering in-dialog edits."""
+    keyword_entry.setEnabled(
+        selected_entry is not None and source_supports_codh_keyword(selected_entry)
+    )
+
+
 def apply_profile_slot_combos(
     slot_l: Any,
     slot_r: Any,
@@ -404,9 +415,10 @@ def run_source_registry_dialog(
         _refresh_preset_source_list(select_source_id=select_source_id)
 
     def _sync_keyword_field_from_selection() -> None:
-        entry = _selected_source_entry()
-        keyword_entry.setEnabled(entry is not None and source_supports_codh_keyword(entry))
-        keyword_entry.setText(persisted_keyword["value"])
+        sync_manage_dialog_keyword_field(
+            keyword_entry,
+            selected_entry=_selected_source_entry(),
+        )
 
     def _flush_keyword_to_settings() -> None:
         nonlocal settings_changed
