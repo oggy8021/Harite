@@ -273,17 +273,26 @@ def test_dual_source_success_removes_legacy_harite_output_from_work_dir(monkeypa
     assert _composite_path(work_dir).exists()
 
 
-def test_single_source_success_removes_untracked_work_dir_slot_files(monkeypatch, tmp_path):
-    """§6.2: single-source apply removes slot files even without prior tracking."""
+def _install_single_source_optimize_mock(monkeypatch, window: MainWindow, work_dir: Path) -> None:
+    def fake_run_slideshow_optimize(_state):
+        work_dir.mkdir(parents=True, exist_ok=True)
+        composite = _composite_path(work_dir)
+        composite.write_bytes(b"optimized")
+        return [composite], []
+
+    monkeypatch.setattr(window.controller, "run_slideshow_optimize", fake_run_slideshow_optimize)
+
+
+def test_single_source_success_r1_removes_untracked_split_slots(monkeypatch, tmp_path):
+    """MAT-11: single-source optimize keeps composite slot; R1 removes stale splits."""
     pictures_root, work_dir = _setup_linux_pictures_env(monkeypatch, tmp_path)
     work_dir.mkdir(parents=True)
-    composite = _composite_path(work_dir)
     split_hdmi = _slot_split_path(work_dir, "HDMI-1")
-    composite.write_bytes(b"old-composite")
     split_hdmi.write_bytes(b"old-split")
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummySlideshowPlugin())
 
     window = MainWindow()
+    _install_single_source_optimize_mock(monkeypatch, window, work_dir)
     left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
@@ -291,12 +300,12 @@ def test_single_source_success_removes_untracked_work_dir_slot_files(monkeypatch
     assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
     assert window.on_slideshow_start() is True
 
-    assert not composite.exists()
     assert not split_hdmi.exists()
-    assert window._slideshow_active_generated_files == ()
+    assert _composite_path(work_dir).exists()
+    assert window._slideshow_active_generated_files == (_composite_path(work_dir),)
 
 
-def test_single_source_success_removes_work_dir_slot_files(monkeypatch, tmp_path):
+def test_single_source_success_replaces_tracked_slot_files(monkeypatch, tmp_path):
     pictures_root, work_dir = _setup_linux_pictures_env(monkeypatch, tmp_path)
     work_dir.mkdir(parents=True)
     composite = _composite_path(work_dir)
@@ -307,6 +316,7 @@ def test_single_source_success_removes_work_dir_slot_files(monkeypatch, tmp_path
 
     window = MainWindow()
     window._slideshow_active_generated_files = (composite, split_hdmi)
+    _install_single_source_optimize_mock(monkeypatch, window, work_dir)
     left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
@@ -314,9 +324,9 @@ def test_single_source_success_removes_work_dir_slot_files(monkeypatch, tmp_path
     assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
     assert window.on_slideshow_start() is True
 
-    assert not composite.exists()
     assert not split_hdmi.exists()
-    assert window._slideshow_active_generated_files == ()
+    assert _composite_path(work_dir).read_bytes() == b"optimized"
+    assert window._slideshow_active_generated_files == (_composite_path(work_dir),)
 
 
 # --- R4: stop keeps files, clears tracking ---

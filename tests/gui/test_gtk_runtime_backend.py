@@ -1453,6 +1453,17 @@ def test_runtime_backend_slideshow_start_registers_timer_and_stop_removes_it(mon
     backend = GtkRuntimeSignalBackend(_TimerFakeGtk)
     window = MainWindow()
 
+    work_dir = tmp_path / "Pictures" / "Harite" / "slideshow"
+    composite = work_dir / "harite_slideshow.jpg"
+
+    def fake_run_slideshow_optimize(_state):
+        work_dir.mkdir(parents=True, exist_ok=True)
+        composite.write_bytes(b"optimized")
+        return [composite], []
+
+    monkeypatch.setattr(window.controller, "run_slideshow_optimize", fake_run_slideshow_optimize)
+    monkeypatch.setattr(window, "_resolve_slideshow_work_dir", lambda: work_dir)
+
     srcdir_dialog = backend.get_object("SrcdirDialog")
     srcdir_l = backend.get_object("btnOpenSrcdirL")
     interval = backend.get_object("spnInterval")
@@ -1489,12 +1500,12 @@ def test_runtime_backend_slideshow_start_registers_timer_and_stop_removes_it(mon
 
     assert backend._slideshow_timer_source_id == 1
     assert _FakeGLib.registered_sources[1]["interval_ms"] == 45000
-    assert plugin.calls == [str(left_dir / "left-1.jpg")]
+    assert plugin.calls == [str(composite)]
 
     timer_callback = _FakeGLib.registered_sources[1]["callback"]
     assert timer_callback() is True
     assert slideshow_current.text == "Slideshow current: L=left-2.jpg | R=-"
-    assert plugin.calls[-1] == str(left_dir / "left-2.jpg")
+    assert plugin.calls[-1] == str(composite)
 
     slideshow_stop.click()
 

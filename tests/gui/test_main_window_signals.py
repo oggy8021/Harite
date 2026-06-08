@@ -1126,8 +1126,20 @@ def test_slideshow_single_source_applies_on_start_and_tick(monkeypatch, tmp_path
     plugin = DummyPlugin()
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
 
+    work_dir = tmp_path / "Pictures" / "Harite" / "slideshow"
+    composite = work_dir / "harite_slideshow.jpg"
+
     window = MainWindow()
     window.slideshow_mode = "sequential"
+
+    def fake_run_slideshow_optimize(state):
+        work_dir.mkdir(parents=True, exist_ok=True)
+        composite.write_bytes(state.input_value.encode("utf-8"))
+        return [composite], []
+
+    monkeypatch.setattr(window.controller, "run_slideshow_optimize", fake_run_slideshow_optimize)
+    monkeypatch.setattr(window, "_resolve_slideshow_work_dir", lambda: work_dir)
+
     left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
@@ -1135,10 +1147,10 @@ def test_slideshow_single_source_applies_on_start_and_tick(monkeypatch, tmp_path
 
     assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
     assert window.on_slideshow_start() is True
-    assert plugin.calls == [str(left_dir / "left-1.jpg")]
+    assert plugin.calls == [str(composite)]
 
     assert window.on_slideshow_tick() is True
-    assert plugin.calls[-1] == str(left_dir / "left-2.jpg")
+    assert plugin.calls[-1] == str(composite)
 
     assert window.on_slideshow_stop() is True
 
@@ -1150,7 +1162,19 @@ def test_slideshow_single_source_start_fails_when_plugin_apply_fails(monkeypatch
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
 
+    work_dir = tmp_path / "Pictures" / "Harite" / "slideshow"
+    composite = work_dir / "harite_slideshow.jpg"
+
     window = MainWindow()
+
+    def fake_run_slideshow_optimize(_state):
+        work_dir.mkdir(parents=True, exist_ok=True)
+        composite.write_bytes(b"x")
+        return [composite], []
+
+    monkeypatch.setattr(window.controller, "run_slideshow_optimize", fake_run_slideshow_optimize)
+    monkeypatch.setattr(window, "_resolve_slideshow_work_dir", lambda: work_dir)
+
     left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
@@ -1181,6 +1205,17 @@ def test_slideshow_start_normalizes_empty_output_dir(monkeypatch, tmp_path):
 
     window = MainWindow()
     window.form_state.output_dir = ""
+
+    work_dir = home / "Pictures" / "Harite" / "slideshow"
+    composite = work_dir / "harite_slideshow.jpg"
+
+    def fake_run_slideshow_optimize(_state):
+        work_dir.mkdir(parents=True, exist_ok=True)
+        composite.write_bytes(b"x")
+        return [composite], []
+
+    monkeypatch.setattr(window.controller, "run_slideshow_optimize", fake_run_slideshow_optimize)
+
     left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")
@@ -1301,7 +1336,18 @@ def test_slideshow_single_source_tick_stops_when_plugin_apply_fails(monkeypatch,
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
     monkeypatch.setattr("harite.gui.views.main_window.dual_display_detected", lambda: False)
 
+    work_dir = tmp_path / "Pictures" / "Harite" / "slideshow"
+    composite = work_dir / "harite_slideshow.jpg"
+
     window = MainWindow()
+
+    def fake_run_slideshow_optimize(_state):
+        work_dir.mkdir(parents=True, exist_ok=True)
+        composite.write_bytes(b"x")
+        return [composite], []
+
+    monkeypatch.setattr(window.controller, "run_slideshow_optimize", fake_run_slideshow_optimize)
+    monkeypatch.setattr(window, "_resolve_slideshow_work_dir", lambda: work_dir)
     window.slideshow_srcdir_r = ""
     window.slideshow_source_id_r = ""
     left_dir = tmp_path / "slideshow-left"
@@ -1480,7 +1526,19 @@ def test_slideshow_single_source_success_cleans_previous_generated_files(monkeyp
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
 
+    work_dir = tmp_path / "Pictures" / "Harite" / "slideshow"
+    composite = work_dir / "harite_slideshow.jpg"
+
     window = MainWindow()
+
+    def fake_run_slideshow_optimize(_state):
+        work_dir.mkdir(parents=True, exist_ok=True)
+        composite.write_bytes(b"x")
+        return [composite], []
+
+    monkeypatch.setattr(window.controller, "run_slideshow_optimize", fake_run_slideshow_optimize)
+    monkeypatch.setattr(window, "_resolve_slideshow_work_dir", lambda: work_dir)
+
     left_dir = tmp_path / "slideshow-left"
     left_dir.mkdir()
     (left_dir / "left-1.jpg").write_bytes(b"left")

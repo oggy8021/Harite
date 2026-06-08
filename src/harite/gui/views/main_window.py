@@ -1636,15 +1636,6 @@ class MainWindow:
             except OSError as exc:
                 self._log(f"Slideshow cleanup failed: {path} ({exc})")
 
-    def _remove_work_dir_slot_files(self, work_dir: Path) -> None:
-        """§6.2 single-source: delete fixed slot files from the slideshow work dir."""
-        try:
-            for pattern in ("harite_slideshow.jpg", "harite_slideshow_*.jpg"):
-                for path in work_dir.glob(pattern):
-                    self._cleanup_slideshow_generated_files((path,))
-        except OSError:
-            pass
-
     def _cleanup_work_dir_orphans(self, work_dir: Path, keep: frozenset[Path]) -> None:
         """R1: remove slot-external files from work dir, keeping active slot files."""
         try:
@@ -1663,7 +1654,10 @@ class MainWindow:
         previous_paths = self._slideshow_active_generated_files
         self._slideshow_active_generated_files = paths
         if previous_paths and previous_paths != paths:
-            self._cleanup_slideshow_generated_files(previous_paths)
+            keep = frozenset(paths)
+            stale = tuple(path for path in previous_paths if path not in keep)
+            if stale:
+                self._cleanup_slideshow_generated_files(stale)
 
     def _apply_slideshow_target(self, target: object, *, cycle_phase: str, apply_mode: str) -> bool:
         if self._slideshow_plugin_impl is None:
@@ -1685,6 +1679,44 @@ class MainWindow:
     def _slideshow_user_cycle_label(self, cycle_phase: str) -> str:
         return "cycle" if cycle_phase == "tick" else cycle_phase
 
+    def _apply_slideshow_single_source(
+        self,
+        image_path: str,
+        *,
+        cycle_phase: str,
+        user_cycle_phase: str,
+    ) -> tuple[bool, str | None]:
+        work_dir = self._resolve_slideshow_work_dir()
+        tick_files: list[Path] = []
+
+        try:
+            slideshow_state = replace(self.form_state, input_value=image_path)
+            slideshow_state_for_work = replace(slideshow_state, output_dir=str(work_dir))
+            saved_files, _placements = self.controller.run_slideshow_optimize(slideshow_state_for_work)
+            composite_path = saved_files[-1]
+            tick_files.append(composite_path)
+        except ValueError as exc:
+            self._log(f"Slideshow {cycle_phase} single-source optimize failed: {exc}")
+            self._cleanup_slideshow_generated_files(tuple(tick_files))
+            self._slideshow_tick_generated_files = ()
+            return False, f"slideshow {user_cycle_phase} single-source optimize failed: {exc}"
+
+        self._slideshow_tick_generated_files = tuple(tick_files)
+
+        if self._apply_slideshow_target(
+            str(composite_path),
+            cycle_phase=cycle_phase,
+            apply_mode="single-file",
+        ):
+            self._cleanup_work_dir_orphans(work_dir, frozenset(tick_files))
+            self._set_slideshow_active_generated_files((composite_path,))
+            self._slideshow_tick_generated_files = ()
+            return True, None
+
+        self._cleanup_slideshow_generated_files(tuple(tick_files))
+        self._slideshow_tick_generated_files = ()
+        return False, f"slideshow {user_cycle_phase} single-file apply failed"
+
     def _apply_slideshow_selection(self, left: str, right: str, *, cycle_phase: str) -> tuple[bool, str | None]:
         selected_paths = [path for path in (left, right) if path != "-"]
         user_cycle_phase = self._slideshow_user_cycle_label(cycle_phase)
@@ -1694,11 +1726,11 @@ class MainWindow:
             return False, "slideshow plugin is not ready"
 
         if len(selected_paths) == 1:
-            if self._apply_slideshow_target(selected_paths[0], cycle_phase=cycle_phase, apply_mode="single-file"):
-                self._remove_work_dir_slot_files(self._resolve_slideshow_work_dir())
-                self._set_slideshow_active_generated_files(())
-                return True, None
-            return False, f"slideshow {user_cycle_phase} single-file apply failed"
+            return self._apply_slideshow_single_source(
+                selected_paths[0],
+                cycle_phase=cycle_phase,
+                user_cycle_phase=user_cycle_phase,
+            )
 
         if not self._slideshow_dual_auto_split_enabled:
             return False, "dual-source slideshow auto-split is not enabled"

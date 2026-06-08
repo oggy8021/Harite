@@ -115,7 +115,7 @@ GitHub Issue 起票前の観測転記。
 - memo（オーナー）: 「悲劇」— 母体は原寸・拡大なし。align は display 内限界寄せ / margins は収納・縮小制約。
 - **修正（2026-06-09）:** `core.py` — `_resolve_native_dimensions`, `_allocate_on_display`, `_resolve_display_slots`。spec §4.1 更新。テスト反転。
 - GUI 注釈 `margins define area; align/valign act inside it` は **旧 Harite 実装向け**。gui-spec 整合は follow-up。
-- **実機（オーナー・Windows）:** Preset ソースで顕著。**真の価値・見え方に戻った**（誤 upscale 時代のプロダクト誤解を解消）。天気図など **小画像は原寸のまま中央にポツン** — align では動かせない（余白があるから可能；画像が小さいと center 既定のまま）。→ **MAT-11**（Slideshow へ margin/align 浸透）と強く結びつく。
+- **実機（オーナー・Windows）:** Preset ソースで顕著。**真の価値・見え方に戻った**（誤 upscale 時代のプロダクト誤解を解消）。天気図など **小画像は原寸のまま中央にポツン** — align では動かせない（余白があるから可能；画像が小さいと center 既定のまま）。→ **MAT-11**（Slideshow でも Optimize）と強く結びつく。
 - **製品線（別 planning）:** 高解像度ディスプレイ向けの **意図的 2x / 4x 等**は、MAT-01b の「拡大禁止」とは **別軸**（ユーザーが選ぶ display scale）。本改修で誤った「常時 fit 拡大」路線には進まなくてよかった。
 
 ---
@@ -468,20 +468,18 @@ GitHub Issue 起票前の観測転記。
 
 ---
 
-## MAT-11 — Slideshow に Margin / embed / Color を浸透
+## MAT-11 — Slideshow でも Optimize を掛ける
 
 ### 管理情報
 
 - GitHub: **未起票**
 - 記録日: 2026-06-09
-- 仮タイトル: `Feature: apply Main Margin / embed / Color options to Slideshow path`
+- 仮タイトル: `Feature: run Optimize on Slideshow (same pipeline as Main)`
 
 ### 事象 / 要望
 
-- Slideshow 実行時にも、Main で設定している次のオプションを **浸透**（反映）させたい:
-  - **Margin**
-  - **embed**（margin text パターン）
-  - **Color**（背景色）
+- Slideshow 実行時にも **Main と同型の Optimize** を掛けたい（Harite＝WallpaperOptimizer としての本来の経路）。
+- margin / embed / Color / align 等は **個別オプションの列挙ではなく**、Optimize 未経由だと **Main の設定全体が slideshow に効かない** という症状の例。スコープは **オプション限定ではない**。
 
 ### 分類
 
@@ -492,19 +490,19 @@ GitHub Issue 起票前の観測転記。
 
 - MAT-03（Optimize で Color が効かない — 関連症状の可能性）
 - 正本: [harite-slideshow-spec.md §6](../specs/slideshow/harite-slideshow-spec.md)、[harite-gui-spec.md](../specs/gui/harite-gui-spec.md)
-- 現状: dual-source のみ tick ごとに optimize（§6.1）。**single（1 ディスプレイ・片方指定）は直接 apply で margin/embed 未浸透** — MAT-12 で経路確定
+- 現状: dual-source のみ tick ごとに optimize（§6.1）。**single（1 ディスプレイ・片方指定）は Optimize を迂回して直接 apply** — MAT-12 で経路確定
 - MAT-12 接続: single 直接 apply は現行実装。product 上は **認めない**（オーナー 2026-06-09）
 
 ### 取り込み方針
 
-- **次の改修候補** — single-source slideshow も Main と同型の optimize 経路へ（1 枚入力の optimize / 作業ディレクトリ or ピクチャ根スロットは棚卸）
-- スコープ: 毎 tick `form_state`（margin / embed / background / align）を optimize に渡す
-- 前提: MAT-12 §6.2.1 の「single＝直接 apply」は **暫定** と明記済み
+- **改修着手** — single-source も `run_slideshow_optimize` → `harite_slideshow.jpg` → apply（Main と同型 `form_state`）
+- スコープ: **Optimize 全体**（特定オプション列挙に限定しない）
+- 実装: `_apply_slideshow_single_source`、`main_window._set_slideshow_active_generated_files`（同一スロット再追跡時の誤削除防止）
 
 ### 調査メモ
 
-- memo（オーナー）: Slideshow でも Main と同じ見た目制御を期待
-- **実機（オーナー・Windows・MAT-01b 後）:** Preset 天気図が **画面中央に原寸でポツン** — Main の xxAlign だけでは寄せられない／slideshow tick が margin・align を読んでいない疑い。**MAT-01b で見え方は正しくなったが、slideshow 側の「浸透」が次のボトルネック。**
+- memo（オーナー）: Slideshow でも **ふつうに Optimize を掛ける**意図。オプション列挙にスコープを限定しない
+- **実機（オーナー・Windows・MAT-01b 後）:** Preset 天気図が **原寸中央にポツン** — single 経路が Optimize を通らないため。MAT-01b で Main 側は正しくなったが、slideshow が **Optimize 迂回**のままが次のボトルネック
 - 関連: 意図的 **2x/4x** 計画は MAT-11 とは別（高 DPI 向け product 判断）。原寸回帰と混同しない。
 
 ---
@@ -544,4 +542,5 @@ GitHub Issue 起票前の観測転記。
 ### 調査メモ
 
 - memo（オーナー）: 壁紙が切り替わらない事象（MAT-02）の土台質問
-- **確定（2026-06-09）:** ソース構成 dual（L+R 指定）→ optimize + 作業ディレクトリ。single（片方のみ）→ **現行** optimize なし・直接 apply。オーナー指摘: dual 指定時点でソースは dual。single 直接 apply は **MAT-11 で廃止方向**（margin/embed 浸透の前提）。
+- **確定（2026-06-09）:** ソース構成 dual（L+R 指定）→ optimize + 作業ディレクトリ。single（片方のみ）→ **現行** optimize なし・直接 apply。オーナー指摘: dual 指定時点でソースは dual。single の Optimize 迂回は **MAT-11 で廃止**（Main と同型の Optimize 経路へ）。
+- **完了:** #451 マージ済み（§6.2.1 正本化、R1 掃除・single スロット削除）。
