@@ -4,9 +4,9 @@ GitHub Issue 起票前の観測転記。
 
 - 親: [20260609 feature-overview](../working/20260609-1200-feature-overview.md)
 - 対象: **Qt 版**および **backend 共通**（GTK 専用は [GTK 熟成メモ](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) 参照）
-- **転記:** MAT-01〜12 完了。MAT-02b（NDL/CODH 取得）は後送予定。
+- **転記（中間整理 2026-05-31）:** 改修系・確かさ向上・**MAT-11** まで **完了**（#442〜#452）。**未着手:** MAT-04, MAT-09, MAT-10（機能要望）。MAT-02b（NDL/CODH 取得）は後送予定。
 - **熟成運転:** 2026-06-09 **打ち切り**（継続には改修が先決）。
-- **現フェーズ:** **改修着手** — 下記並びの **改修系から端から**（GitHub Issue 化なし）。
+- **現フェーズ:** maturation stream **一区切り** — 次は機能要望残（MAT-04/09/10）または [Q-01](../working/20260609-1200-feature-overview.md#1-着手候補)（GitHub Issue 化なし）。
 
 ## 着手順（オーナー方針）
 
@@ -20,7 +20,8 @@ GitHub Issue 起票前の観測転記。
 | --- | --- |
 | 改修系 | MAT-01, MAT-01b, MAT-02, MAT-03, MAT-05, MAT-06, MAT-07 |
 | 確かさ向上 | MAT-08, MAT-12 |
-| 機能要望系 | MAT-04, MAT-09, MAT-10, MAT-11 |
+| 機能要望系（未着手） | MAT-04, MAT-09, MAT-10 |
+| 機能要望系（完了） | MAT-11 |
 
 ※ MAT-02 の NDL/CODH 取得側は **MAT-02b** として別枠（未転記）。MAT-10 の具体 URL は例示のみ（[MAT-10](#mat-10--江戸切絵図を雰囲気絵ソースにできないか検討) 参照）。
 
@@ -490,19 +491,21 @@ GitHub Issue 起票前の観測転記。
 
 - MAT-03（Optimize で Color が効かない — 関連症状の可能性）
 - 正本: [harite-slideshow-spec.md §6](../specs/slideshow/harite-slideshow-spec.md)、[harite-gui-spec.md](../specs/gui/harite-gui-spec.md)
-- 現状: dual-source のみ tick ごとに optimize（§6.1）。**single（1 ディスプレイ・片方指定）は Optimize を迂回して直接 apply** — MAT-12 で経路確定
-- MAT-12 接続: single 直接 apply は現行実装。product 上は **認めない**（オーナー 2026-06-09）
+- MAT-12 接続: single 直接 apply は **#452 で廃止**（§6.2.1 正本化は #451）
+- CLI `slideshow` は optimize 非経由のまま（仕様どおり・対象外）
 
 ### 取り込み方針
 
-- **改修着手** — single-source も `run_slideshow_optimize` → `harite_slideshow.jpg` → apply（Main と同型 `form_state`）
+- **完了** — #452 マージ（2026-05-31）。single / dual とも Main と同型 `form_state` → `run_slideshow_optimize` → apply。
 - スコープ: **Optimize 全体**（特定オプション列挙に限定しない）
-- 実装: `_apply_slideshow_single_source`、`main_window._set_slideshow_active_generated_files`（同一スロット再追跡時の誤削除防止）
+- 実装: `_apply_slideshow_single_source`、`_set_slideshow_active_generated_files`（同一スロット再追跡時の誤削除防止）
 
 ### 調査メモ
 
 - memo（オーナー）: Slideshow でも **ふつうに Optimize を掛ける**意図。オプション列挙にスコープを限定しない
 - **実機（オーナー・Windows・MAT-01b 後）:** Preset 天気図が **原寸中央にポツン** — single 経路が Optimize を通らないため。MAT-01b で Main 側は正しくなったが、slideshow が **Optimize 迂回**のままが次のボトルネック
+- **実装（#452）:** spec §6.2 / §6.2.1 更新。テスト: `test_mat11_slideshow_single_optimize.py` 他。
+- **実機（オーナー・#452 後）:** おおまかには良好。細部は別途。
 - 関連: 意図的 **2x/4x** 計画は MAT-11 とは別（高 DPI 向け product 判断）。原寸回帰と混同しない。
 
 ---
