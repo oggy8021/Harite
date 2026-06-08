@@ -104,7 +104,7 @@ working メモも完了なら docs/working/finished/ へ移動
 
 | Issue | タイトル要約 | 分類 | overview ID |
 | --- | --- | --- | --- |
-| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | 熟成運転 Qt/共通（MAT-01〜12、転記一旦打ち止め） | bug / investigation / planning | 熟成運転 |
+| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜12（熟成運転打ち切り → **改修着手**） | bug / investigation / planning | 改修フェーズ |
 
 ### maturation-20260609-qt-common — 棚卸予定の並び
 

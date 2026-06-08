@@ -2,11 +2,13 @@
 
 GitHub Issue 起票前の観測転記。
 
-- 親: [20260609 feature-overview](../working/20260609-1200-feature-overview.md)（熟成運転期間）
+- 親: [20260609 feature-overview](../working/20260609-1200-feature-overview.md)
 - 対象: **Qt 版**および **backend 共通**（GTK 専用は [GTK 熟成メモ](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) 参照）
-- **転記:** 2026-06-09 時点で **一旦打ち止め**（MAT-01〜12）。MAT-02b（NDL/CODH 取得）は後送予定。
+- **転記:** MAT-01〜12 完了。MAT-02b（NDL/CODH 取得）は後送予定。
+- **熟成運転:** 2026-06-09 **打ち切り**（継続には改修が先決）。
+- **現フェーズ:** **改修着手** — 下記並びの **改修系から端から**（GitHub Issue 化なし）。
 
-## 棚卸予定の並び（オーナー方針）
+## 着手順（オーナー方針）
 
 着手・Issue 化の **おおよその優先**（確定順ではない）:
 
@@ -51,13 +53,15 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ** — 棚卸後に GitHub Issue 化・spec 照合
-- スコープ: direction toggle → optimize 結果への反映。margins / embed との切り分けは調査で確定
-- 次: 再現手順の固定 → spec 期待との diff → テスト or 修正
+- ~~現時点: **転記のみ**~~ → **改修着手**（初回 PR）
+- スコープ: direction toggle → `form_state.align` / `valign` への反映
+- 次: optimize 出力での視覚確認（本件の handler 経路は修正済み）
 
 ### 調査メモ
 
 - memo（オーナー）: margin ゼロ・embed 無関係で再現
+- **原因（2026-06-09）:** Qt `QtSignalBackend._on_direction_toggled` が GTK と異なり `on_toggle_position(widget_name, active)` の **`active` 引数を渡していなかった**（`TypeError` または state 未更新）。解除時の `on_toggle_position_reset` も未呼び出し。
+- **修正:** GTK 実装に合わせ `active` 渡し + 非 active 時 reset。テスト: `tests/gui/test_qt_signal_wiring.py`
 
 ---
 
