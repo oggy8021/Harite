@@ -365,6 +365,7 @@ catalog 契約は [source-spec §7](../source/harite-source-spec.md)。
   - グループ見出し: `JMA 天気図` / `NDL 図版` / `CODH 江戸` / `その他`（`harite-preset:` の preset_id 接頭辞で分類）。
   - Delete は **Local タブのみ**（preset は materialize で再出現しうる）。
 - **keyword(CODH)**: Presets タブ内に常設 `QLineEdit`（ラベル `keyword(CODH)`、初期値 `桜`、`maxLength=16`）。`codh-edo-spots-keyword` / `codh-edo-shops-keyword` 選択時のみ enabled。編集中のドラフトは **preset 選択変更・Enter・フォーカス移動では破棄しない**（Close / Refresh 確定まで field 上の最新文字列を保持）。Refresh 前および Close 時に `harite-settings.json` の `codh_keyword` へ反映（[source-spec §15.4.2](../source/harite-source-spec.md)）。
+- **Linux IME（Qt）:** `harite-qt` 起動時に `prepare_qt_input_method_env()` が `GTK_IM_MODULE` / `XMODIFIERS` から `QT_IM_MODULE` を補完し、pip 版 PyQt6 に fcitx 用 `platforminputcontexts` プラグインが無い場合は **システム Qt の fcitx プラグインを best-effort で symlink** する。`keyword(CODH)` は `configure_text_input_widget` で IME 有効化。Xfce + fcitx で Ctrl+Space が効かない事象は **PyQt6 同梱プラグイン不足**が典型原因（field 固有ではなく Qt 全体の IM 経路）。Windows は本節の対象外（別途観測があれば別 ID）。
 - Profiles: 一覧、L/R slot combo（source id または empty）、Add / Delete profile。
 - 保存は `harite-sources.json` へ即 write。settings dialog とは別 surface。
 - dialog Close 後、Slideshow tab の profile / saved source combo を reload する。

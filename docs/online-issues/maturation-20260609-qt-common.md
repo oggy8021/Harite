@@ -259,7 +259,7 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- **改修着手** — `_sync_keyword_field_from_selection` が preset 選択のたびに `persisted_keyword` で `setText` し、編集中ドラフトを破棄していた。
+- **完了** — #447 マージ。実機でドラフト保持 OK（オーナー確認）。
 - スコープ: keyword フィールドの **編集中ドラフト保持**（Enter / focus-out / 選択変更で revert しない）。disk 反映は従来どおり Close / Refresh
 
 ### 調査メモ
@@ -296,13 +296,14 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
-- スコープ: Xfce + Qt の IME。Windows 同一症状は別 ID で記録
-- 次: DE / IME フレームワークの特定 → Qt widget 設定の照合
+- **改修着手** — Linux / pip PyQt6 は fcitx 用 `platforminputcontexts` を同梱しないことが多く、Qt 全体で IME が無効化されうる（keyword field で顕在化）。
+- スコープ: `prepare_qt_input_method_env`（`QT_IM_MODULE` 補完 + システム fcitx プラグイン symlink）、`keyword(CODH)` の IME 有効化。Xfce 実機での効果は **要確認**（IME フレームワーク差あり）
 
 ### 調査メモ
 
 - memo（オーナー）: Xfce のみ。Ctrl+Space 無効
+- **仮説（2026-06-09）:** pip PyQt6 の `platforminputcontexts` に ibus のみで fcitx 欠落。`GTK_IM_MODULE=fcitx5` でも `QT_IM_MODULE` 未設定だと Qt が IM に繋がらない。Manage dialog の keyword は日本語入力の主導線のため同 surface で顕在化。
+- **修正:** `qt_input_method.py` — 起動前 env、システムプラグイン symlink、`configure_text_input_widget`。spec: gui-spec Manage dialog Linux IME。テスト: `test_qt_input_method.py`
 
 ---
 

@@ -292,6 +292,9 @@ def run_source_registry_dialog(
     keyword_label = QLabel("keyword(CODH)")
     keyword_entry = QLineEdit(persisted_keyword["value"])
     keyword_entry.setMaxLength(CODH_KEYWORD_MAX_LEN)
+    from harite.gui.adapters_qt.qt_input_method import configure_text_input_widget
+
+    configure_text_input_widget(keyword_entry)
     keyword_row_layout.addWidget(keyword_label)
     keyword_row_layout.addWidget(keyword_entry, 1)
     preset_tab_layout.addWidget(keyword_row)
