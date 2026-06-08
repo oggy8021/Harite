@@ -380,6 +380,20 @@ Refresh はいずれも `sync_remote_source` 1 回だが、**ユーザーにと�
 
 **取りづらさの整理:** 所蔵ライブラリの更新を追うための Refresh ではない。アーカイブ系では「もう一度ランダムに引く」操作に近く、**毎日の変化は再起動 + Start** で足りる設計（Start で必ず sync するため）。
 
+#### 12.4.3 Preset remote 操作ログ（開発者向け・MAT-08）
+
+CODH / NDL の実機切り分け用に、Preset `remote-*` の **sync / tick** について JSONL 形式の操作ログを出せる。
+
+| 項目 | 契約 |
+| --- | --- |
+| 有効化 | 環境変数 `HARITE_SLIDESHOW_OP_LOG` が非空のときのみ記録。未設定時は **no-op**（通常利用への影響なし） |
+| 出力先 | ファイル path（追記 JSONL）、または `stderr` / `1` / `true`（logger `harite.slideshow.remote` へ INFO） |
+| タイムスタンプ | 各レコードの `ts_jst` は JST（`+09:00` 固定オフセット） |
+| 対象 | slideshow **Start 直前 sync**、Manage **Refresh**、**CODH tick**、**JMA tick**（要約のみ）。手動 `local-dir` のみは対象外 |
+| 内容 | `step`（例: `REMOTE_SYNC_BEGIN`, `NDL_META_URL`, `NDL_IIIF_GET`, `CODH_INDEX_PROBE`, `CODH_TICK`）、`url`、`preset_id`、`ok`、`error` 等 |
+
+実装: `harite.slideshow_op_log.log_slideshow_op`。viper3 観測例: `export HARITE_SLIDESHOW_OP_LOG=~/.cache/harite/slideshow-op.jsonl`。
+
 ### 12.5 Remote cache と slideshow Mode（正本）
 
 すべての `remote-*` に共通する契約。サイト別手順は §15。

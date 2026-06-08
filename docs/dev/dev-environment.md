@@ -37,6 +37,15 @@ pip の `PyQt6` は distro fcitx プラグインと非互換のため、**Linux 
 
 venv は `--system-site-packages` で作成し、`pip install PyQt6` は **しない**。
 
+### Preset slideshow 操作ログ（MAT-08 / CODH・NDL 観測）
+
+```bash
+export HARITE_SLIDESHOW_OP_LOG=~/.cache/harite/slideshow-op.jsonl
+harite-qt
+```
+
+Slideshow Start / Manage Refresh / CODH tick 時に JSONL が追記される（未設定時は出力なし）。詳細: [source-spec §12.4.3](../specs/source/harite-source-spec.md)。
+
 ## 初期セットアップ手順（接続先で実行）
 
 ```

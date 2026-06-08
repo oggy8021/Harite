@@ -410,7 +410,11 @@ def sync_remote_source(
     *,
     cache_root: Path | None = None,
     codh_sync_pick: CodhSyncPick = "refresh",
+    slideshow_side: str | None = None,
+    slideshow_phase: str | None = None,
 ) -> None:
+    from harite.slideshow_op_log import log_slideshow_op
+
     entry = get_source(catalog, source_id)
     if entry is None:
         raise ValueError(f"unknown source id: {source_id}")
@@ -420,9 +424,42 @@ def sync_remote_source(
     if effective_root is None and entry.path.strip():
         effective_root = Path(entry.path).parent
     provider = get_remote_provider(entry.kind)
+    preset_id = preset_id_from_notes(entry.notes)
+    log_slideshow_op(
+        "REMOTE_SYNC_BEGIN",
+        source_id=source_id,
+        source_name=entry.name,
+        kind=entry.kind,
+        preset_id=preset_id,
+        codh_sync_pick=codh_sync_pick,
+        side=slideshow_side,
+        phase=slideshow_phase,
+    )
     token = _CODH_SYNC_PICK.set(codh_sync_pick)
     try:
         provider.sync(catalog, source_id)
+    except ValueError as exc:
+        log_slideshow_op(
+            "REMOTE_SYNC_END",
+            ok=False,
+            source_id=source_id,
+            kind=entry.kind,
+            preset_id=preset_id,
+            side=slideshow_side,
+            phase=slideshow_phase,
+            error=str(exc),
+        )
+        raise
+    else:
+        log_slideshow_op(
+            "REMOTE_SYNC_END",
+            ok=True,
+            source_id=source_id,
+            kind=entry.kind,
+            preset_id=preset_id,
+            side=slideshow_side,
+            phase=slideshow_phase,
+        )
     finally:
         _CODH_SYNC_PICK.reset(token)
     expected = remote_cache_dir_for_source(source_id, cache_root=effective_root)
@@ -538,6 +575,8 @@ def _ndl_fetch_iiif_image_bytes(url: str) -> bytes | None:
 
 
 def _ndl_sync(catalog: Catalog, source_id: str) -> None:
+    from harite.slideshow_op_log import log_slideshow_op
+
     entry = get_source(catalog, source_id)
     if entry is None:
         raise ValueError(f"unknown source id: {source_id}")
@@ -546,16 +585,55 @@ def _ndl_sync(catalog: Catalog, source_id: str) -> None:
         raise ValueError("NDL sync requires harite-preset marker in notes")
 
     meta_url = _ndl_illustration_url(preset_id)
+    log_slideshow_op(
+        "NDL_META_URL",
+        source_id=source_id,
+        preset_id=preset_id,
+        url=meta_url,
+    )
     last_skipped_url: str | None = None
-    for _attempt in range(NDL_IIIF_FETCH_MAX_ATTEMPTS):
+    for attempt in range(1, NDL_IIIF_FETCH_MAX_ATTEMPTS + 1):
         payload = _http_get_json(meta_url)
         if not isinstance(payload, list) or not payload:
             raise ValueError("NDL illustration API returned no results")
         iiif_url = _ndl_iiif_url(payload[0])
+        log_slideshow_op(
+            "NDL_IIIF_URL",
+            source_id=source_id,
+            preset_id=preset_id,
+            attempt=attempt,
+            url=iiif_url,
+        )
         image_bytes = _ndl_fetch_iiif_image_bytes(iiif_url)
         if image_bytes is not None:
-            _write_latest_cache(Path(entry.path), image_bytes, url=iiif_url)
+            log_slideshow_op(
+                "NDL_IIIF_GET",
+                ok=True,
+                source_id=source_id,
+                preset_id=preset_id,
+                attempt=attempt,
+                url=iiif_url,
+                bytes=len(image_bytes),
+            )
+            cache_dir = Path(entry.path)
+            _write_latest_cache(cache_dir, image_bytes, url=iiif_url)
+            log_slideshow_op(
+                "NDL_CACHE_WRITE",
+                ok=True,
+                source_id=source_id,
+                preset_id=preset_id,
+                path=str(cache_dir / "latest.jpg"),
+            )
             return
+        log_slideshow_op(
+            "NDL_IIIF_GET",
+            ok=False,
+            source_id=source_id,
+            preset_id=preset_id,
+            attempt=attempt,
+            url=iiif_url,
+            reason="HTTP 404/400",
+        )
         last_skipped_url = iiif_url
     suffix = (
         f" (last skipped IIIF: {last_skipped_url})"
@@ -639,6 +717,7 @@ def _codh_sync(catalog: Catalog, source_id: str) -> None:
     codh_sync_with_pick(
         resolve_codh_sync_context(entry),
         CODH_SYNC_REFRESH if pick == "refresh" else CODH_SYNC_RESUME,
+        source_id=source_id,
     )
 
 

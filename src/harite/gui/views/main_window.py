@@ -1295,7 +1295,13 @@ class MainWindow:
             if entry is None:
                 continue
             try:
-                sync_remote_source(catalog, source_id, codh_sync_pick="resume")
+                sync_remote_source(
+                    catalog,
+                    source_id,
+                    codh_sync_pick="resume",
+                    slideshow_side=side,
+                    slideshow_phase="start",
+                )
             except ValueError as exc:
                 raise format_remote_sync_error(side, entry.name, exc) from exc
 
@@ -1339,7 +1345,16 @@ class MainWindow:
             mode = self._slideshow_active_mode if self._slideshow_active_mode else self.slideshow_mode
             codh_slideshow_tick(catalog, source_id, mode)
         elif entry.kind == KIND_JMA_WEATHER_MAP:
-            jma_slideshow_tick(catalog, source_id)
+            from harite.slideshow_op_log import log_slideshow_op
+
+            tick_ok = jma_slideshow_tick(catalog, source_id)
+            log_slideshow_op(
+                "JMA_TICK",
+                ok=tick_ok,
+                side=side,
+                source_id=source_id,
+                phase="tick",
+            )
 
     def _resolve_slideshow_srcdirs_for_start(self) -> bool:
         catalog = self.load_source_catalog()

@@ -172,9 +172,17 @@ def reconcile_codh_cycle(cycle: dict[str, Any] | None, index: dict[str, Any]) ->
     return normalized
 
 
-def build_codh_index(ctx: CodhSyncContext) -> dict[str, Any]:
+def build_codh_index(ctx: CodhSyncContext, *, source_id: str | None = None) -> dict[str, Any]:
+    from harite.slideshow_op_log import log_slideshow_op
+
     base = CODH_SEARCH_URL_TEMPLATE.format(indexer=ctx.spec.indexer)
     probe_url = f"{base}?{_codh_search_query(ctx.spec, start=0, limit=1, metadata_value=ctx.metadata_value)}"
+    log_slideshow_op(
+        "CODH_INDEX_PROBE",
+        source_id=source_id,
+        query_key=ctx.query_key,
+        url=probe_url,
+    )
     probe = _http_get_json(probe_url)
     if not isinstance(probe, dict):
         raise ValueError("invalid CODH search response")
@@ -187,6 +195,13 @@ def build_codh_index(ctx: CodhSyncContext) -> dict[str, Any]:
     while start < total:
         page_url = (
             f"{base}?{_codh_search_query(ctx.spec, start=start, limit=CODH_PAGE_LIMIT, metadata_value=ctx.metadata_value)}"
+        )
+        log_slideshow_op(
+            "CODH_INDEX_PAGE",
+            source_id=source_id,
+            query_key=ctx.query_key,
+            start=start,
+            url=page_url,
         )
         payload = _http_get_json(page_url)
         if not isinstance(payload, dict):
@@ -214,15 +229,28 @@ def build_codh_index(ctx: CodhSyncContext) -> dict[str, Any]:
         "entries": entries,
     }
     _atomic_write_json(ctx.cache_dir / CODH_INDEX_FILENAME, index_payload)
+    log_slideshow_op(
+        "CODH_INDEX_BUILT",
+        ok=True,
+        source_id=source_id,
+        query_key=ctx.query_key,
+        total=total,
+        entries=len(entries),
+    )
     return index_payload
 
 
-def ensure_codh_index(ctx: CodhSyncContext, *, force_rebuild: bool) -> dict[str, Any]:
+def ensure_codh_index(
+    ctx: CodhSyncContext,
+    *,
+    force_rebuild: bool,
+    source_id: str | None = None,
+) -> dict[str, Any]:
     if not force_rebuild:
         existing = load_codh_index(ctx.cache_dir)
         if existing is not None and str(existing.get("query_key") or "") == ctx.query_key:
             return existing
-    return build_codh_index(ctx)
+    return build_codh_index(ctx, source_id=source_id)
 
 
 def _entry_urls(index: dict[str, Any]) -> list[str]:
@@ -300,18 +328,56 @@ def codh_random_refresh_cycle(index: dict[str, Any], cycle: dict[str, Any] | Non
     return refreshed
 
 
-def fetch_codh_image(cache_dir: Path, image_url: str) -> bool:
+def fetch_codh_image(
+    cache_dir: Path,
+    image_url: str,
+    *,
+    source_id: str | None = None,
+    phase: str | None = None,
+) -> bool:
+    from harite.slideshow_op_log import log_slideshow_op
+
     try:
         image_bytes = _http_get_bytes(image_url)
-    except ValueError:
+    except ValueError as exc:
+        log_slideshow_op(
+            "CODH_IMAGE_GET",
+            ok=False,
+            source_id=source_id,
+            phase=phase,
+            url=image_url,
+            error=str(exc),
+        )
         return False
     _write_latest_cache(cache_dir, image_bytes, url=image_url)
+    log_slideshow_op(
+        "CODH_IMAGE_GET",
+        ok=True,
+        source_id=source_id,
+        phase=phase,
+        url=image_url,
+        bytes=len(image_bytes),
+    )
     return True
 
 
-def codh_sync_with_pick(ctx: CodhSyncContext, pick: CodhSyncPick) -> None:
+def codh_sync_with_pick(
+    ctx: CodhSyncContext,
+    pick: CodhSyncPick,
+    *,
+    source_id: str | None = None,
+) -> None:
+    from harite.slideshow_op_log import log_slideshow_op
+
     force_rebuild = pick == CODH_SYNC_REFRESH
-    index = ensure_codh_index(ctx, force_rebuild=force_rebuild)
+    log_slideshow_op(
+        "CODH_SYNC_PICK",
+        source_id=source_id,
+        pick=pick,
+        query_key=ctx.query_key,
+        force_rebuild=force_rebuild,
+    )
+    index = ensure_codh_index(ctx, force_rebuild=force_rebuild, source_id=source_id)
     cycle = load_codh_cycle(ctx.cache_dir)
 
     if pick == CODH_SYNC_REFRESH:
@@ -321,27 +387,73 @@ def codh_sync_with_pick(ctx: CodhSyncContext, pick: CodhSyncPick) -> None:
         cycle = reconcile_codh_cycle(cycle, index)
         image_url, cycle = pick_codh_url_at_cursor(index, cycle)
 
-    if not fetch_codh_image(ctx.cache_dir, image_url):
+    log_slideshow_op(
+        "CODH_IMAGE_URL",
+        source_id=source_id,
+        pick=pick,
+        url=image_url,
+        cursor_index=cycle.get("index"),
+    )
+    if not fetch_codh_image(ctx.cache_dir, image_url, source_id=source_id, phase="sync"):
         raise ValueError(f"remote fetch failed for CODH image: {image_url}")
     save_codh_cycle(ctx.cache_dir, cycle)
 
 
 def codh_slideshow_tick(catalog: Catalog, source_id: str, mode: str) -> bool:
+    from harite.slideshow_op_log import log_slideshow_op
+
     entry = get_source(catalog, source_id)
     if entry is None or entry.kind != KIND_CODH_EDO:
+        log_slideshow_op(
+            "CODH_TICK",
+            ok=False,
+            source_id=source_id,
+            mode=mode,
+            reason="missing or non-CODH source",
+        )
         return False
 
     ctx = resolve_codh_sync_context(entry)
     index = load_codh_index(ctx.cache_dir)
     if index is None or str(index.get("query_key") or "") != ctx.query_key:
+        log_slideshow_op(
+            "CODH_TICK",
+            ok=False,
+            source_id=source_id,
+            mode=mode,
+            query_key=ctx.query_key,
+            reason="index missing or query_key mismatch",
+        )
         return False
 
     cycle = reconcile_codh_cycle(load_codh_cycle(ctx.cache_dir), index)
     image_url, cycle = advance_codh_cursor(index, cycle, mode)
-    if not fetch_codh_image(ctx.cache_dir, image_url):
+    log_slideshow_op(
+        "CODH_TICK_CURSOR",
+        source_id=source_id,
+        mode=mode,
+        url=image_url,
+        cursor_index=cycle.get("index"),
+    )
+    if not fetch_codh_image(ctx.cache_dir, image_url, source_id=source_id, phase="tick"):
+        log_slideshow_op(
+            "CODH_TICK",
+            ok=False,
+            source_id=source_id,
+            mode=mode,
+            url=image_url,
+            reason="image fetch failed",
+        )
         return False
     cycle["mode"] = mode.lower().strip()
     save_codh_cycle(ctx.cache_dir, cycle)
+    log_slideshow_op(
+        "CODH_TICK",
+        ok=True,
+        source_id=source_id,
+        mode=mode,
+        url=image_url,
+    )
     return True
 
 
