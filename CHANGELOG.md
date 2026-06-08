@@ -4,6 +4,19 @@
 
 - なし
 
+## 1.9.0 (2026-06-09)
+
+開発マイルストーン。**PyPI / GitHub Release は公開しない**（`v1.0.0` 期間の区切りとタグ付けのみ）。
+
+### Changed
+
+- Qt 6 GUI を主 runtime とし、post-`1.0.0` inventory（C-xx / P-xx 一次波）を完了。
+- feature overview を第2期 inventory（`20260609`）へ分割。熟成運転期間を開始。
+
+### Fixed
+
+- GTK: options drawer 開閉、Slideshow tab レイアウト、srcdir path 省略（#439）。
+
 ## 1.0.0 (2026-05-25)
 
 ### Added
