@@ -43,16 +43,16 @@ def test_optimize_wallpapers_large_image_resizes(tmp_path):
     assert all(getattr(p, "width", 1920) <= 1920 and getattr(p, "height", 1080) <= 1080 for p in placements)
 
 
-def test_compute_placement_upscales_if_allowed(tmp_path):
+def test_compute_placement_keeps_native_size_when_small(tmp_path):
     from harite.core import compute_placement
 
     small = tmp_path / "small.jpg"
     make_image(small, size=(100, 50))
 
     pr = compute_placement(small, (800, 600))
-    # ensure placement dimensions are positive and do not exceed target
-    assert pr.width > 0 and pr.height > 0
-    assert pr.width <= 800 and pr.height <= 600
+    assert pr.width == 100 and pr.height == 50
+    assert pr.scale == 1.0
+    assert pr.x == 350 and pr.y == 275
 
 
 def test_split_composite_with_offscreen_display(tmp_path):
