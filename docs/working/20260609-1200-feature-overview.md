@@ -1,7 +1,7 @@
 # Harite - Feature Overview（active）
 
-最終更新: 2026-06-09  
-ステータス: **現行 planning 入口**（熟成運転 **打ち切り** → 改修フェーズ）
+最終更新: 2026-05-31  
+ステータス: **現行 planning 入口**（熟成運転 **打ち切り** → 改修フェーズ・**maturation 一区切り**）
 
 ## 位置づけ
 
@@ -18,7 +18,7 @@
 ## 現在ステータス
 
 - **熟成運転:** 2026-06-09 宣言 → 同日 **打ち切り**（未改修のままでは継続不可のため）。
-- **現フェーズ:** **改修着手** — [maturation ログ](../online-issues/maturation-20260609-qt-common.md) の並びどおり **改修系（MAT-01〜）から端から**対処。GitHub Issue 化は行わない（リポジトリ内ログのまま）。
+- **現フェーズ:** maturation **一区切り** — [maturation ログ](../online-issues/maturation-20260609-qt-common.md) の改修系・確かさ向上・MAT-11 まで完了（#442〜#452）。**残:** MAT-04/09/10（機能要望）または **Q-01**。GitHub Issue 化は行わない（リポジトリ内ログのまま）。
 - 第1期 inventory は完了（上記 finished 参照）。
 - **次に確実に言える inventory:** GTK を辞める（Qt 一本化）。GTK 固有の粗さは Q-01 前に **記念碑的に片付ける**（下記 GTK メモ）。Qt/共通の改修が先。
 
@@ -33,7 +33,7 @@
 | Slideshow path label 省略なし | 長い path がそのまま表示 | GTK `refresh_slideshow_source_labels` が full path 固定 | basename 省略 + tooltip（#439 追記・要 Xfce 再確認） |
 | GTK に Preset/Profile UI がないのに設定が部分展開 | Slideshow で NDL 図版など preset 由来の表示に見える | **認識済み:** GTK 版は Slideshow の Preset / Profile **提供面がない**。一方 settings 読み込みは Qt 版と同型のため、`slideshow_source_id_*` / `slideshow_profile_id` 等が防ぎきれず **部分的に展開**する | **記載のみ** — 矛盾解消は **棚卸（Q-01 等）後**に実施。即時の GTK parity 拡張はしない |
 
-**Qt / 共通（v1.9.0 以降）:** [maturation-20260609-qt-common.md](../online-issues/maturation-20260609-qt-common.md)（MAT-01〜12）。**着手順:** 改修系 → 確かさ向上 → 機能要望系。完了: **MAT-01**（#442）、**MAT-01b**（#444）、**MAT-02**（#445）、**MAT-03**（#446）、**MAT-05**（#447）、**MAT-06**（#448）、**MAT-07**（#449）、**MAT-08**（#450）、**MAT-12**（#451）。**確かさ向上は完了。** 現行: **MAT-11**（Slideshow single でも Optimize — PR 予定）。
+**Qt / 共通（v1.9.0 以降）:** [maturation-20260609-qt-common.md](../online-issues/maturation-20260609-qt-common.md)（MAT-01〜12）。**着手順:** 改修系 → 確かさ向上 → 機能要望系。完了: **MAT-01**（#442）、**MAT-01b**（#444）、**MAT-02**（#445）、**MAT-03**（#446）、**MAT-05**（#447）、**MAT-06**（#448）、**MAT-07**（#449）、**MAT-08**（#450）、**MAT-12**（#451）、**MAT-11**（#452）。**maturation 着手分は完了。** 未着手: **MAT-04, MAT-09, MAT-10**（機能要望）。infra: **#453**（CI docs-only skip・pip cache）。
 
 ## 1. 着手候補
 

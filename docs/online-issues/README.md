@@ -104,15 +104,16 @@ working メモも完了なら docs/working/finished/ へ移動
 
 | Issue | タイトル要約 | 分類 | overview ID |
 | --- | --- | --- | --- |
-| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜12（熟成運転打ち切り → **改修着手**） | bug / investigation / planning | 改修フェーズ |
+| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜12（熟成運転打ち切り → **一区切り** #442〜#452） | bug / investigation / planning | 改修フェーズ |
 
 ### maturation-20260609-qt-common — 棚卸予定の並び
 
 | 区分 | ID |
 | --- | --- |
-| 改修系 | MAT-01, MAT-01b, 02〜03, 05〜07 |
-| 確かさ向上 | MAT-08, 12 |
-| 機能要望系 | MAT-04, 09〜11 |
+| 改修系（完了） | MAT-01, MAT-01b, 02〜03, 05〜07 |
+| 確かさ向上（完了） | MAT-08, 12 |
+| 機能要望系（完了） | MAT-11 |
+| 機能要望系（未着手） | MAT-04, 09, 10 |
 
 ### 内訳
 
@@ -126,8 +127,8 @@ working メモも完了なら docs/working/finished/ へ移動
 | MAT-06 | CODH キーワード: Xfce+Qt で IME 不可 | 改修 |
 | MAT-07 | embed Text: 2・3 行目 Enter で先頭行へジャンプ | 改修 |
 | MAT-08 | Preset 系 Slideshow 動作ログ（CODH/NDL 観測用） | 確かさ |
-| MAT-12 | Preset 時 Optimize 有無・保存先 | 確かさ |
+| MAT-12 | Preset 時 Optimize 有無・保存先（**完了** #451） | 確かさ |
 | MAT-04 | 江戸買物案内 preset をやめる | 要望 |
 | MAT-09 | Margin 一括変更・リセット | 要望 |
 | MAT-10 | 江戸切絵図を雰囲気絵ソースに（検討・例示のみ） | 要望 |
-| MAT-11 | Slideshow でも Main と同型の Optimize | 要望 |
+| MAT-11 | Slideshow でも Main と同型の Optimize（**完了** #452） | 要望 |
