@@ -303,7 +303,7 @@ GitHub Issue 起票前の観測転記。
 
 - memo（オーナー）: Xfce のみ。Ctrl+Space 無効
 - **仮説（2026-06-09）:** pip PyQt6 の `platforminputcontexts` に ibus のみで fcitx 欠落。`GTK_IM_MODULE=fcitx5` でも `QT_IM_MODULE` 未設定だと Qt が IM に繋がらない。Manage dialog の keyword は日本語入力の主導線のため同 surface で顕在化。
-- **実機（オーナー・viper3 / Xfce）:** mozc（fcitx 内）。`GTK_IM_MODULE` / `QT_IM_MODULE` / `XMODIFIERS` は **既に fcitx で整合**。Firefox は日本語入力可 → **env 不足ではない**。PyQt6 venv は `ibus` + `compose` のみ。`/usr/lib/.../qt6/plugins/platforminputcontexts` **自体が未インストール** → #448 の symlink **単体では不可**。**システムに fcitx Qt6 プラグイン `.so` を入れる**（例: `fcitx5-qt6`）のが前提。
+- **実機（オーナー・viper3 / Xfce）:** mozc（fcitx 内）。`GTK_IM_MODULE` / `QT_IM_MODULE` / `XMODIFIERS` は **既に fcitx で整合**。Firefox は日本語入力可 → **env 不足ではない**。PyQt6 venv は `ibus` + `compose` のみ。`apt install libfcitx5-qt6-1` 後も **Qt6 プラグインは未出現**、`.../qt5/.../libfcitxplatforminputcontextplugin.so` のみ → **Qt5 プラグインは PyQt6 では使えない**。`dpkg -L libfcitx5-qt6-1` で qt6 配備を要確認。
 - **修正:** `qt_input_method.py` — 起動前 env、システムプラグイン symlink、`configure_text_input_widget`、欠落時 warning。spec: gui-spec Manage dialog Linux IME。テスト: `test_qt_input_method.py`
 
 ---

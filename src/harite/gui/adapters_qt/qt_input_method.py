@@ -33,10 +33,31 @@ _SYSTEM_LIB_SEARCH_ROOTS = (
 )
 
 _FCITX_QT_PACKAGE_HINT = (
-    "Install a system package that provides the fcitx Qt6 platforminputcontext plugin "
-    "(e.g. fcitx5-qt6 / libfcitx5-qt6-1 on Debian/Ubuntu, fcitx5-qt6 on Arch). "
-    "Then restart harite-qt so Harite can symlink the plugin into the venv PyQt6."
+    "Install a system package that provides the fcitx **Qt6** platforminputcontext plugin "
+    "(e.g. fcitx5-qt6 / libfcitx5-qt6-1 on Debian/Ubuntu). "
+    "A Qt5-only plugin under .../qt5/plugins/... cannot be used with pip PyQt6. "
+    "Then restart harite-qt so Harite can symlink the Qt6 plugin into the venv PyQt6."
 )
+
+
+def _is_qt6_plugin_path(path: Path) -> bool:
+    normalized = path.as_posix()
+    if "/qt5/" in normalized:
+        return False
+    return "/qt6/" in normalized
+
+
+def discover_system_fcitx_qt5_plugins() -> list[Path]:
+    """Find fcitx Qt5 IM plugins (not usable with PyQt6; diagnostic only)."""
+    found: list[Path] = []
+    for root in _SYSTEM_LIB_SEARCH_ROOTS:
+        if not root.is_dir():
+            continue
+        for plugin_name in ("libfcitxplatforminputcontextplugin.so", "libfcitx5platforminputcontextplugin.so"):
+            for source in root.glob(f"**/qt5/**/{plugin_name}"):
+                if source.is_file():
+                    found.append(source)
+    return sorted(found, key=lambda path: str(path))
 
 
 def _normalize_gtk_im_module(value: str) -> str | None:
@@ -97,12 +118,14 @@ def prepare_qt_input_method_env() -> str | None:
         linked = link_system_fcitx_qt_plugin_if_missing()
         if linked is None and not fcitx_input_context_plugin_names():
             candidates = discover_system_fcitx_qt_plugins()
+            qt5_only = discover_system_fcitx_qt5_plugins()
             logger.warning(
                 "Qt IM: QT_IM_MODULE=fcitx but no fcitx platforminputcontext plugin in PyQt6 "
                 "(typical pip wheel gap). GTK/Firefox may work while Qt widgets do not. "
-                "%s System candidates found: %s",
+                "%s Qt6 candidates: %s; Qt5-only (ignored): %s",
                 _FCITX_QT_PACKAGE_HINT,
                 [str(path) for path in candidates] or "none",
+                [str(path) for path in qt5_only] or "none",
             )
 
     return os.environ.get("QT_IM_MODULE")
@@ -133,25 +156,26 @@ def fcitx_input_context_plugin_names(target_dir: Path | None = None) -> list[str
 
 
 def discover_system_fcitx_qt_plugins() -> list[Path]:
-    """Find fcitx Qt IM plugin files under common system library trees."""
+    """Find fcitx Qt6 IM plugin files under common system library trees."""
     found: list[Path] = []
     seen: set[Path] = set()
     for plugin_dir in _SYSTEM_PLUGIN_DIRS:
-        if not plugin_dir.is_dir():
+        if not plugin_dir.is_dir() or not _is_qt6_plugin_path(plugin_dir):
             continue
-        for plugin_name in _FCITX_PLUGIN_NAMES:
-            source = plugin_dir / plugin_name
-            if source.is_file():
-                resolved = source.resolve()
-                if resolved not in seen:
-                    seen.add(resolved)
-                    found.append(source)
+        for path in plugin_dir.iterdir():
+            if not path.is_file() or "fcitx" not in path.name.lower():
+                continue
+            resolved = path.resolve()
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            found.append(path)
     for root in _SYSTEM_LIB_SEARCH_ROOTS:
         if not root.is_dir():
             continue
         for plugin_name in _FCITX_PLUGIN_NAMES:
             for source in root.glob(f"**/{plugin_name}"):
-                if not source.is_file():
+                if not source.is_file() or not _is_qt6_plugin_path(source):
                     continue
                 resolved = source.resolve()
                 if resolved in seen:
@@ -172,7 +196,8 @@ def audit_qt_fcitx_input_method() -> dict[str, object]:
         "xmodifiers": os.environ.get("XMODIFIERS"),
         "pyqt_plugins_dir": str(target_dir) if target_dir is not None else None,
         "fcitx_plugins_before_link": fcitx_input_context_plugin_names(target_dir),
-        "system_fcitx_plugin_candidates": [str(path) for path in system_candidates],
+        "system_fcitx_qt6_plugin_candidates": [str(path) for path in system_candidates],
+        "system_fcitx_qt5_plugins_ignored": [str(path) for path in discover_system_fcitx_qt5_plugins()],
         "linked_plugin": str(linked) if linked is not None else None,
         "fcitx_plugins_after_link": fcitx_input_context_plugin_names(target_dir),
         "package_hint": _FCITX_QT_PACKAGE_HINT,

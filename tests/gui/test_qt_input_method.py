@@ -107,7 +107,34 @@ def test_audit_qt_fcitx_input_method_reports_plugin_dir(monkeypatch, tmp_path: P
 
     assert report["qt_im_module"] == "fcitx"
     assert report["fcitx_plugins_after_link"] == []
-    assert report["system_fcitx_plugin_candidates"] == []
+    assert report["system_fcitx_qt6_plugin_candidates"] == []
+
+
+def test_discover_system_fcitx_qt_plugins_ignores_qt5_path(tmp_path: Path):
+    from harite.gui.adapters_qt import qt_input_method
+
+    qt5_dir = tmp_path / "usr" / "lib" / "x86_64-linux-gnu" / "qt5" / "plugins" / "platforminputcontexts"
+    qt5_dir.mkdir(parents=True)
+    (qt5_dir / "libfcitxplatforminputcontextplugin.so").write_bytes(b"qt5")
+
+    qt6_dir = tmp_path / "usr" / "lib" / "x86_64-linux-gnu" / "qt6" / "plugins" / "platforminputcontexts"
+    qt6_dir.mkdir(parents=True)
+    qt6_plugin = qt6_dir / "libfcitx5platforminputcontextplugin.so"
+    qt6_plugin.write_bytes(b"qt6")
+
+    original_dirs = qt_input_method._SYSTEM_PLUGIN_DIRS
+    original_roots = qt_input_method._SYSTEM_LIB_SEARCH_ROOTS
+    qt_input_method._SYSTEM_PLUGIN_DIRS = (qt5_dir, qt6_dir)
+    qt_input_method._SYSTEM_LIB_SEARCH_ROOTS = (tmp_path / "usr" / "lib",)
+    try:
+        found = qt_input_method.discover_system_fcitx_qt_plugins()
+        qt5_only = qt_input_method.discover_system_fcitx_qt5_plugins()
+    finally:
+        qt_input_method._SYSTEM_PLUGIN_DIRS = original_dirs
+        qt_input_method._SYSTEM_LIB_SEARCH_ROOTS = original_roots
+
+    assert found == [qt6_plugin]
+    assert qt5_only == [qt5_dir / "libfcitxplatforminputcontextplugin.so"]
 
 
 def test_configure_text_input_widget_enables_input_method(qapp):
