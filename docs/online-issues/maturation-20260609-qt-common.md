@@ -115,6 +115,8 @@ GitHub Issue 起票前の観測転記。
 - memo（オーナー）: 「悲劇」— 母体は原寸・拡大なし。align は display 内限界寄せ / margins は収納・縮小制約。
 - **修正（2026-06-09）:** `core.py` — `_resolve_native_dimensions`, `_allocate_on_display`, `_resolve_display_slots`。spec §4.1 更新。テスト反転。
 - GUI 注釈 `margins define area; align/valign act inside it` は **旧 Harite 実装向け**。gui-spec 整合は follow-up。
+- **実機（オーナー・Windows）:** Preset ソースで顕著。**真の価値・見え方に戻った**（誤 upscale 時代のプロダクト誤解を解消）。天気図など **小画像は原寸のまま中央にポツン** — align では動かせない（余白があるから可能；画像が小さいと center 既定のまま）。→ **MAT-11**（Slideshow へ margin/align 浸透）と強く結びつく。
+- **製品線（別 planning）:** 高解像度ディスプレイ向けの **意図的 2x / 4x 等**は、MAT-01b の「拡大禁止」とは **別軸**（ユーザーが選ぶ display scale）。本改修で誤った「常時 fit 拡大」路線には進まなくてよかった。
 
 ---
 
@@ -490,6 +492,8 @@ GitHub Issue 起票前の観測転記。
 ### 調査メモ
 
 - memo（オーナー）: Slideshow でも Main と同じ見た目制御を期待
+- **実機（オーナー・Windows・MAT-01b 後）:** Preset 天気図が **画面中央に原寸でポツン** — Main の xxAlign だけでは寄せられない／slideshow tick が margin・align を読んでいない疑い。**MAT-01b で見え方は正しくなったが、slideshow 側の「浸透」が次のボトルネック。**
+- 関連: 意図的 **2x/4x** 計画は MAT-11 とは別（高 DPI 向け product 判断）。原寸回帰と混同しない。
 
 ---
 
