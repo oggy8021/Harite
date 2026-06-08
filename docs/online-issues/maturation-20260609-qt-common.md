@@ -259,7 +259,7 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- **改修着手** — `_sync_keyword_field_from_selection` が preset 選択のたびに `persisted_keyword` で `setText` し、編集中ドラフトを破棄していた。
+- **完了** — #447 マージ。実機でドラフト保持 OK（オーナー確認）。
 - スコープ: keyword フィールドの **編集中ドラフト保持**（Enter / focus-out / 選択変更で revert しない）。disk 反映は従来どおり Close / Refresh
 
 ### 調査メモ
@@ -296,13 +296,16 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
-- スコープ: Xfce + Qt の IME。Windows 同一症状は別 ID で記録
-- 次: DE / IME フレームワークの特定 → Qt widget 設定の照合
+- **完了（マージ待ち）** — #448。実機 OK（viper3: keyword IME + SVG アイコン + 静かな起動）。
+- スコープ: `prepare_qt_input_method_env`（`QT_IM_MODULE` 補完、distro PyQt6 は `QT_PLUGIN_PATH`、pip PyQt6 は fcitx 非互換 warning）、`configure_text_input_widget`、`qt_svg_support`、`requirements-linux-qt.txt`。Linux Qt は **distro PyQt6 + fcitx5-frontend-qt6 + python3-pyqt6.qtsvg** を正本とする。
 
 ### 調査メモ
 
 - memo（オーナー）: Xfce のみ。Ctrl+Space 無効
+- **仮説（2026-06-09）:** pip PyQt6 の `platforminputcontexts` に ibus のみで fcitx 欠落。`GTK_IM_MODULE=fcitx5` でも `QT_IM_MODULE` 未設定だと Qt が IM に繋がらない。Manage dialog の keyword は日本語入力の主導線のため同 surface で顕在化。
+- **実機（オーナー・viper3 / Xfce / Linux Mint 22.3 Zena）:** mozc（fcitx 内）。env 整合・Firefox OK。`fcitx5-frontend-qt6` 導入済み。**`QT_DEBUG_PLUGINS=1` で確定:** distro fcitx プラグインは pip PyQt6 と `Qt_6_PRIVATE_API` **非互換**。**回避:** apt `python3-pyqt6` + `--system-site-packages` venv → **keyword 欄 IME 成功**（オーナー確認）。**副作用:** 全 SVG アイコン非表示（`QPixmap::scaled: Pixmap is a null pixmap`）— distro PyQt6 は **QtSvg 別パッケージ**（`python3-pyqt6.qtsvg`）が要る。Harite #448: pip fcitx symlink 廃止、起動時 warning、`qt_svg_support` 追加。
+- **修正:** `qt_input_method.py`、`qt_svg_support.py`、`requirements.txt` / `requirements-linux-qt.txt`。spec: gui-spec Linux Qt 前提。テスト: `test_qt_input_method.py`、`test_qt_svg_support.py`
+- **実機最終（オーナー）:** distro venv + apt 3 パッケージで IME・アイコン・起動 warning 解消。CI 後 #448 マージ予定。
 
 ---
 

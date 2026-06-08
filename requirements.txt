@@ -1,0 +1,10 @@
+# Harite runtime (pip). Install from repo root:
+#   python -m pip install -r requirements.txt
+#
+# Qt GUI on Windows / generic pip:
+#   python -m pip install -e ".[gui-qt]"
+#
+# Linux Mint / Ubuntu / Debian + fcitx IME:
+#   Do NOT pip-install PyQt6. Use distro packages — see requirements-linux-qt.txt
+
+-e .

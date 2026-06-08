@@ -1142,9 +1142,17 @@ def load_qt_runtime_signal_backend() -> QtSignalBackend:
             "Install it with: pip install 'harite[gui-qt]'"
         ) from exc
 
+    from harite.gui.adapters_qt.qt_input_method import (
+        log_qt_input_method_diagnostics,
+        prepare_qt_input_method_env,
+    )
     from harite.gui.adapters_qt.qt_stylesheet import apply_qt_stylesheet
+    from harite.gui.adapters_qt.qt_svg_support import warn_missing_qt_svg_support
 
+    prepare_qt_input_method_env()
     qapp = QApplication.instance() or QApplication(sys.argv)
+    log_qt_input_method_diagnostics(qapp)
+    warn_missing_qt_svg_support()
     apply_qt_stylesheet(qapp)
 
     qwindow = QMainWindow()
