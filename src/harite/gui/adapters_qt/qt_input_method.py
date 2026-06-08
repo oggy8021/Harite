@@ -33,8 +33,8 @@ _SYSTEM_LIB_SEARCH_ROOTS = (
 )
 
 _FCITX_QT_PACKAGE_HINT = (
-    "Install a system package that provides the fcitx **Qt6** platforminputcontext plugin "
-    "(e.g. fcitx5-qt6 / libfcitx5-qt6-1 on Debian/Ubuntu). "
+    "Install fcitx Qt6 runtime packages (Debian/Ubuntu: libfcitx5-qt6-1 and libfcitx5-qt-data). "
+    "The platforminputcontext plugin often lives in libfcitx5-qt-data, not only libfcitx5-qt6-1. "
     "A Qt5-only plugin under .../qt5/plugins/... cannot be used with pip PyQt6. "
     "Then restart harite-qt so Harite can symlink the Qt6 plugin into the venv PyQt6."
 )
