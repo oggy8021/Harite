@@ -222,6 +222,7 @@ def test_embed_text_drawn_in_right_display_margin_for_two_screen(tmp_path):
 
 
 def test_two_screen_explicit_with_outer_margins_keeps_placements_within_display_slices(tmp_path):
+    """Parent parity: margins constrain fit; align uses full display rectangles."""
     from harite.core import optimize_wallpapers
 
     inp_dir = tmp_path / "in"
@@ -249,17 +250,17 @@ def test_two_screen_explicit_with_outer_margins_keeps_placements_within_display_
     assert saved
     assert len(placements) == 2
     left, right = placements
-    assert left.x >= 200
     assert left.x + left.width <= 2048
-    assert left.y >= 200
-    assert left.y + left.height <= 1280 - 200
-    assert right.x >= 2048 + 200
-    assert right.x + right.width <= 4096 - 200
-    assert right.y >= 200
-    assert right.y + right.height <= 1280 - 200
+    assert left.y + left.height <= 1280
+    assert right.x >= 2048
+    assert right.x + right.width <= 4096
+    assert right.y == 0
+    assert right.y + right.height <= 1280
+    assert left.scale <= 1.0 and right.scale <= 1.0
 
 
 def test_two_screen_without_explicit_displays_applies_margins_per_half(tmp_path):
+    """Parent parity: asymmetric L/R margins for contain; align on display origin."""
     from harite.core import optimize_wallpapers
 
     inp_dir = tmp_path / "in-implicit"
@@ -287,15 +288,17 @@ def test_two_screen_without_explicit_displays_applies_margins_per_half(tmp_path)
     left, right = placements
     half_w = 3840 // 2
 
-    assert left.x >= 100
-    assert left.x + left.width <= half_w - 150
-    assert left.y >= 80
-    assert left.y + left.height <= 1080 - 90
+    assert left.x == 0
+    assert left.y == 0
+    assert left.width == 1400
+    assert left.height == 900
+    assert left.x + left.width <= half_w
 
-    assert right.x >= half_w + 100
-    assert right.x + right.width <= 3840 - 150
-    assert right.y >= 80
-    assert right.y + right.height <= 1080 - 90
+    assert right.x == half_w + (half_w - 1200)
+    assert right.y == 1080 - 900
+    assert right.width == 1200
+    assert right.height == 900
+    assert right.x + right.width <= 3840
 
 
 def test_two_screen_equal_displays_keep_identical_inputs_in_matching_positions(tmp_path):

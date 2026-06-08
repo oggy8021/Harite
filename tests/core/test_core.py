@@ -27,7 +27,10 @@ def test_single_monitor_smoke():
     assert len(placements) >= 1
     p = placements[0]
     assert hasattr(p, "x") and hasattr(p, "y")
-    assert p.width >= 1920 or p.height >= 1080
+    assert p.width > 0 and p.height > 0
+    assert p.scale <= 1.0
+    assert p.x >= 0 and p.y >= 0
+    assert p.x + p.width <= 1920 and p.y + p.height <= 1080
 
 
 def test_dual_monitor_smoke():

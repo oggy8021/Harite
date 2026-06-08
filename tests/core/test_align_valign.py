@@ -9,6 +9,28 @@ def _make_image(path: Path, size=(100, 100), color=(255, 0, 0)):
     img.save(path)
 
 
+def test_small_image_stays_native_size(tmp_path):
+    img = tmp_path / "small.jpg"
+    _make_image(img, size=(80, 60))
+
+    out_dir = tmp_path / "out-native"
+    _saved, placements = optimize_wallpapers(
+        [str(img)],
+        (1920, 1080),
+        out_dir,
+        quality=80,
+        align="left",
+        valign="top",
+    )
+
+    assert len(placements) == 1
+    assert placements[0].scale == 1.0
+    assert placements[0].width == 80
+    assert placements[0].height == 60
+    assert placements[0].x == 0
+    assert placements[0].y == 0
+
+
 def test_horizontal_align(tmp_path):
     # image 100x100, canvas 500x100 -> horizontal space exists
     img = tmp_path / "img1.jpg"
@@ -77,5 +99,9 @@ def test_pair_align_and_valign_apply_per_side_in_two_screen_mode(tmp_path):
     assert len(placements) == 2
     assert placements[0].x == 0
     assert placements[0].y == 0
-    assert placements[1].x == 200
-    assert placements[1].y == 100
+    assert placements[0].width == 50
+    assert placements[0].height == 100
+    assert placements[1].x == 300
+    assert placements[1].y == 150
+    assert placements[1].width == 100
+    assert placements[1].height == 50

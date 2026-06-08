@@ -110,14 +110,14 @@ GitHub Issue 起票前の観測転記。
 
 - **改修着手** — 母体の **基底ロジックと貼り方は変えない**（回帰する）。
 - パイプライン: `contains` → 必要時のみ downsize → display 矩形へ align → merge/paste。
-- PR 分割: #442（MAT-01）マージ後 → `fix/mat-01b-native-placement` 想定。
+- PR: `fix/mat-01b-native-placement`（#442 マージ後にマージ想定）。
 - 詳細: [改修方針ドラフト](../working/design/20260609-mat-01b-native-placement-repair-draft.md)
 
 ### 調査メモ
 
 - memo（オーナー）: 「悲劇」— 母体は原寸・拡大なし。align は display 内限界寄せ / margins は収納・縮小制約。
-- Harite テスト `test_upscale_when_target_larger` が upscale を期待しており、逸脱が **意図的ではなくテストで固定**されていた可能性。
-- GUI 注釈 `margins define area; align/valign act inside it` は現行 Harite 実装向け。MAT-01b 後に gui-spec 整合。
+- **修正（2026-06-09）:** `core.py` — `_resolve_native_dimensions`, `_allocate_on_display`, `_resolve_display_slots`。spec §4.1 更新。テスト反転。
+- GUI 注釈 `margins define area; align/valign act inside it` は **旧 Harite 実装向け**。gui-spec 整合は follow-up。
 
 ---
 

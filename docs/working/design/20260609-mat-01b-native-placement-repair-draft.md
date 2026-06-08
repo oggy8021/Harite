@@ -137,7 +137,7 @@ Harite GUI 注釈 `Rule: margins define area; align/valign act inside it` は **
 2. **MAT-01b PR-1** — core 幾何回帰 + spec §4.1 更新 + テスト反転（GTK/Qt 共通）
 3. **MAT-01b PR-2**（必要なら）— GUI priority 文言・preview 同期・回帰確認メモ
 
-実装ブランチ名案: `fix/mat-01b-native-placement`
+実装ブランチ: `fix/mat-01b-native-placement`（**着手済み** 2026-06-09）
 
 ---
 
