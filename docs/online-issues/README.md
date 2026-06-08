@@ -130,4 +130,4 @@ working メモも完了なら docs/working/finished/ へ移動
 | MAT-04 | 江戸買物案内 preset をやめる | 要望 |
 | MAT-09 | Margin 一括変更・リセット | 要望 |
 | MAT-10 | 江戸切絵図を雰囲気絵ソースに（検討・例示のみ） | 要望 |
-| MAT-11 | Slideshow へ Margin / embed / Color 浸透 | 要望 |
+| MAT-11 | Slideshow でも Main と同型の Optimize | 要望 |
