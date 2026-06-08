@@ -19,9 +19,9 @@
 
 - **熟成運転期間**（2026-06-09 宣言）— 実機で使い込み、違和感は [online-issues](../online-issues/README.md) に蓄積する。
 - 第1期 inventory は完了（上記 finished 参照）。
-- **次に確実に言える inventory:** GTK を辞める（Qt 一本化）。廃止前に GTK 固有の粗さは **記念碑的に片付ける**（下記メモ）。
+- **次に確実に言える inventory:** GTK を辞める（Qt 一本化）。廃止前に GTK 固有の粗さは **記念碑的に片付ける**（下記メモ）。GTK は **ソフトランディング** — 直す箇所はしばらく続く想定。致命傷・矛盾は記録し、棚卸後にまとめて解消する。
 
-### 熟成運転メモ（Xfce 実機・1 日目）
+### 熟成運転メモ（Xfce 実機）
 
 | 事象 | 観測 | 原因（調査） | 対応 |
 | --- | --- | --- | --- |
@@ -30,6 +30,7 @@
 | Slideshow タブが Notebook 内で上寄せ | 起動直後から余白が下に溜まる | Main は `build_centered_page_shell` 経由、Slideshow は `slideshow_tab_box` を直 append していた | Slideshow も centered page shell へ（#439・確認済） |
 | Slideshow Srcdir-L/R が横に伸びる | Notebook を左右 2 分割するように見える | 長い path label が panel 幅を押し広げ、同一列の icon button まで横伸び | button を centered row に入れ、label は `format_input_display` + ellipsize（#439 追記・要 Xfce 再確認） |
 | Slideshow path label 省略なし | 長い path がそのまま表示 | GTK `refresh_slideshow_source_labels` が full path 固定 | basename 省略 + tooltip（#439 追記・要 Xfce 再確認） |
+| GTK に Preset/Profile UI がないのに設定が部分展開 | Slideshow で NDL 図版など preset 由来の表示に見える | **認識済み:** GTK 版は Slideshow の Preset / Profile **提供面がない**。一方 settings 読み込みは Qt 版と同型のため、`slideshow_source_id_*` / `slideshow_profile_id` 等が防ぎきれず **部分的に展開**する | **記載のみ** — 矛盾解消は **棚卸（Q-01 等）後**に実施。即時の GTK parity 拡張はしない |
 
 ## 1. 着手候補
 
@@ -38,7 +39,7 @@
 
 | ID   | 項目       | 概要                                              | planning で最初に詰めること                                                      | 現判断                                    |
 | ---- | -------- | ----------------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------- |
-| Q-01 | GTK を辞める | `harite-gtk` / GTK adapter 層を廃止し **Qt 一本化** する。 | 削除範囲（entrypoint / CI / packaging / docs）、GTK 専用 parity の未移植分の扱い、移行期間の有無 | **inventory 確定** — planning 未着手（熟成運転後） |
+| Q-01 | GTK を辞める | `harite-gtk` / GTK adapter 層を廃止し **Qt 一本化** する。 | 削除範囲（entrypoint / CI / packaging / docs）、GTK 専用 parity の未移植分の扱い（例: Slideshow Preset/Profile UI 不在 vs settings 復元）、移行期間の有無 | **inventory 確定** — planning 未着手（熟成運転後） |
 
 
 ## 2. 構想保持
