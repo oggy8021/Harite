@@ -303,7 +303,7 @@ GitHub Issue 起票前の観測転記。
 
 - memo（オーナー）: Xfce のみ。Ctrl+Space 無効
 - **仮説（2026-06-09）:** pip PyQt6 の `platforminputcontexts` に ibus のみで fcitx 欠落。`GTK_IM_MODULE=fcitx5` でも `QT_IM_MODULE` 未設定だと Qt が IM に繋がらない。Manage dialog の keyword は日本語入力の主導線のため同 surface で顕在化。
-- **実機（オーナー・viper3 / Xfce / Linux Mint 22.3 Zena）:** mozc（fcitx 内）。env 整合・Firefox OK。`fcitx5-frontend-qt6` 導入でシステム Qt6 プラグイン確認。Harite #448 で venv へ `libfcitx5platforminputcontextplugin.so` symlink **成功** も **keyword 欄 IME 未起動**。**仮説:** pip PyQt6 同梱 Qt6 と distro fcitx プラグインの **ABI/バージョン不一致**（symlink だけでは不十分）。**切り分け:** `HARITE_QT_IM_DIAG=1 harite-qt`、`QT_DEBUG_PLUGINS=1`、`fcitx5-qt6-immodule-probing`、最小 QLineEdit テスト、`LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu harite-qt`。**回避:** distro `python3-pyqt6`（`--system-site-packages` venv）。
+- **実機（オーナー・viper3 / Xfce / Linux Mint 22.3 Zena）:** mozc（fcitx 内）。env 整合・Firefox OK。`fcitx5-frontend-qt6` 導入済み。**`QT_DEBUG_PLUGINS=1` で確定:** distro `libfcitx5platforminputcontextplugin.so` は `Qt_6_PRIVATE_API` 未定義シンボルで **ロード失敗** — pip PyQt6 同梱 Qt6 とは **非互換**（symlink/LD_LIBRARY_PATH では解決不可）。**回避:** apt `python3-pyqt6` + `--system-site-packages` venv。**Harite #448 更新:** pip 環境では symlink しない・既存 symlink 削除・起動時 warning。
 - **修正:** `qt_input_method.py` — 起動前 env、システムプラグイン symlink、`configure_text_input_widget`、欠落時 warning。spec: gui-spec Manage dialog Linux IME。テスト: `test_qt_input_method.py`
 
 ---

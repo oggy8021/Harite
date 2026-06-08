@@ -36,17 +36,18 @@ _SYSTEM_LIB_SEARCH_ROOTS = (
 _FCITX_QT_PACKAGE_HINT = (
     "Install the fcitx Qt6 IM frontend (Debian/Ubuntu/Mint: fcitx5-frontend-qt6; "
     "libfcitx5-qt6-1 is only the shared library and libfcitx5-qt-data has no .so). "
-    "A Qt5-only plugin under .../qt5/plugins/... cannot be used with pip PyQt6. "
-    "Then restart harite-qt so Harite can symlink the Qt6 plugin into the venv PyQt6."
+    "A Qt5-only plugin under .../qt5/plugins/... cannot be used with pip PyQt6."
 )
 
-_FCITX_ABI_MISMATCH_HINT = (
-    "If the fcitx plugin symlink exists but IME still fails, pip PyQt6 may be using a "
-    "different Qt6 build than the distro fcitx plugin. Try: "
-    "HARITE_QT_IM_DIAG=1 harite-qt; "
-    "QT_DEBUG_PLUGINS=1 harite-qt 2>&1 | grep -i fcitx; "
-    "or use distro PyQt6 (e.g. apt python3-pyqt6 with a --system-site-packages venv)."
+_FCITX_PIP_PYQT6_HINT = (
+    "pip PyQt6 bundles its own Qt6 and cannot load the distro fcitx plugin "
+    "(QT_DEBUG_PLUGINS shows Qt_6_PRIVATE_API undefined symbol). "
+    "Use distro PyQt6 instead (Debian/Ubuntu/Mint: sudo apt install python3-pyqt6, "
+    "then recreate the venv with --system-site-packages). "
+    "Quick probe: QT_IM_MODULE=ibus harite-qt when fcitx ibus frontend is available."
 )
+
+_FCITX_ABI_MISMATCH_HINT = _FCITX_PIP_PYQT6_HINT
 
 _SYSTEM_QT6_LIBRARY_DIRS = (
     Path("/usr/lib/x86_64-linux-gnu"),
@@ -122,6 +123,61 @@ def _resolve_pyqt6_package_root() -> Path | None:
     if spec is None or not spec.origin:
         return None
     return Path(spec.origin).resolve().parent
+
+
+def pyqt6_install_is_pip_venv() -> bool:
+    root = _resolve_pyqt6_package_root()
+    if root is None:
+        return False
+    return "/site-packages/" in root.as_posix()
+
+
+def pip_pyqt6_fcitx_plugin_incompatible() -> bool:
+    if not sys.platform.startswith("linux"):
+        return False
+    if not pyqt6_install_is_pip_venv():
+        return False
+    return bool(discover_system_fcitx_qt_plugins())
+
+
+def _pyqt6_platform_input_context_dir_from_root() -> Path | None:
+    root = _resolve_pyqt6_package_root()
+    if root is None:
+        return None
+    plugins_dir = root / "Qt6" / "plugins" / "platforminputcontexts"
+    return plugins_dir if plugins_dir.is_dir() else None
+
+
+def remove_incompatible_fcitx_plugin_symlink() -> bool:
+    """Drop a distro fcitx symlink from pip PyQt6; it cannot load (PRIVATE_API)."""
+    if not pip_pyqt6_fcitx_plugin_incompatible():
+        return False
+
+    plugins_dir = _pyqt6_platform_input_context_dir_from_root()
+    if plugins_dir is None:
+        return False
+
+    removed = False
+    for name in _FCITX_PLUGIN_NAMES:
+        destination = plugins_dir / name
+        if not destination.is_symlink():
+            continue
+        try:
+            if destination.resolve().as_posix().startswith("/usr/"):
+                destination.unlink()
+                removed = True
+                logger.info(
+                    "Removed incompatible distro fcitx symlink from pip PyQt6: %s",
+                    destination,
+                )
+        except OSError:
+            continue
+    return removed
+
+
+def warn_pip_pyqt6_fcitx_incompatible() -> None:
+    if pip_pyqt6_fcitx_plugin_incompatible():
+        logger.warning("Qt IM: %s", _FCITX_PIP_PYQT6_HINT)
 
 
 def pyqt6_qt_library_dir() -> Path | None:
@@ -223,15 +279,12 @@ def log_qt_input_method_diagnostics(qapp: Any) -> None:
     except Exception as exc:  # pragma: no cover - diagnostic only
         report["runtime_probe_error"] = str(exc)
 
-    if report.get("fcitx_plugins_after_link") and report.get("qt_im_module") in {
-        _FCITX_QT_IM_MODULE,
-        "fcitx5",
-    }:
-        report["abi_mismatch_hint"] = _FCITX_ABI_MISMATCH_HINT
+    if report.get("pip_pyqt6_fcitx_incompatible"):
+        report["pip_pyqt6_hint"] = _FCITX_PIP_PYQT6_HINT
 
     if _should_log_qt_im_diagnostics():
         logger.info("Qt IM diagnostics: %s", report)
-    elif report.get("fcitx_plugins_after_link"):
+    elif report.get("fcitx_plugins_present") or report.get("pip_pyqt6_fcitx_incompatible"):
         logger.debug("Qt IM diagnostics: %s", report)
 
 
@@ -249,19 +302,23 @@ def prepare_qt_input_method_env() -> str | None:
         os.environ["QT_IM_MODULE"] = resolved
 
     if os.environ.get("QT_IM_MODULE", "").strip().lower() in {_FCITX_QT_IM_MODULE, "fcitx5"}:
-        configure_linux_fcitx_dynamic_loader()
-        linked = link_system_fcitx_qt_plugin_if_missing()
-        if linked is None and not fcitx_input_context_plugin_names():
-            candidates = discover_system_fcitx_qt_plugins()
-            qt5_only = discover_system_fcitx_qt5_plugins()
-            logger.warning(
-                "Qt IM: QT_IM_MODULE=fcitx but no fcitx platforminputcontext plugin in PyQt6 "
-                "(typical pip wheel gap). GTK/Firefox may work while Qt widgets do not. "
-                "%s Qt6 candidates: %s; Qt5-only (ignored): %s",
-                _FCITX_QT_PACKAGE_HINT,
-                [str(path) for path in candidates] or "none",
-                [str(path) for path in qt5_only] or "none",
-            )
+        remove_incompatible_fcitx_plugin_symlink()
+        if pip_pyqt6_fcitx_plugin_incompatible():
+            warn_pip_pyqt6_fcitx_incompatible()
+        else:
+            configure_linux_fcitx_dynamic_loader()
+            linked = link_system_fcitx_qt_plugin_if_missing()
+            if linked is None and not fcitx_input_context_plugin_names():
+                candidates = discover_system_fcitx_qt_plugins()
+                qt5_only = discover_system_fcitx_qt5_plugins()
+                logger.warning(
+                    "Qt IM: QT_IM_MODULE=fcitx but no fcitx platforminputcontext plugin in PyQt6. "
+                    "GTK/Firefox may work while Qt widgets do not. "
+                    "%s Qt6 candidates: %s; Qt5-only (ignored): %s",
+                    _FCITX_QT_PACKAGE_HINT,
+                    [str(path) for path in candidates] or "none",
+                    [str(path) for path in qt5_only] or "none",
+                )
 
     return os.environ.get("QT_IM_MODULE")
 
@@ -324,25 +381,28 @@ def audit_qt_fcitx_input_method() -> dict[str, object]:
     """Summarize Qt IM plugin availability for Linux troubleshooting."""
     target_dir = pyqt6_platform_input_context_dir()
     system_candidates = discover_system_fcitx_qt_plugins()
-    linked = link_system_fcitx_qt_plugin_if_missing() if target_dir is not None else None
+    incompatible = pip_pyqt6_fcitx_plugin_incompatible()
     return {
         "qt_im_module": os.environ.get("QT_IM_MODULE"),
         "gtk_im_module": os.environ.get("GTK_IM_MODULE"),
         "xmodifiers": os.environ.get("XMODIFIERS"),
+        "pyqt_install": "pip-venv" if pyqt6_install_is_pip_venv() else "system",
         "pyqt_plugins_dir": str(target_dir) if target_dir is not None else None,
-        "fcitx_plugins_before_link": fcitx_input_context_plugin_names(target_dir),
+        "fcitx_plugins_present": fcitx_input_context_plugin_names(target_dir),
         "system_fcitx_qt6_plugin_candidates": [str(path) for path in system_candidates],
         "system_fcitx_qt5_plugins_ignored": [str(path) for path in discover_system_fcitx_qt5_plugins()],
-        "linked_plugin": str(linked) if linked is not None else None,
-        "fcitx_plugins_after_link": fcitx_input_context_plugin_names(target_dir),
+        "pip_pyqt6_fcitx_incompatible": incompatible,
         "ld_library_path": os.environ.get("LD_LIBRARY_PATH"),
         "package_hint": _FCITX_QT_PACKAGE_HINT,
-        "abi_mismatch_hint": _FCITX_ABI_MISMATCH_HINT,
+        "pip_pyqt6_hint": _FCITX_PIP_PYQT6_HINT if incompatible else None,
     }
 
 
 def link_system_fcitx_qt_plugin_if_missing() -> Path | None:
-    """Symlink a system fcitx Qt plugin into PyQt6 when the pip wheel lacks it."""
+    """Symlink a system fcitx Qt plugin into distro PyQt6 when it lacks one."""
+    if pip_pyqt6_fcitx_plugin_incompatible():
+        return None
+
     target_dir = pyqt6_platform_input_context_dir()
     if target_dir is None:
         return None
