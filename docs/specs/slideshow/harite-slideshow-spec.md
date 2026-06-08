@@ -259,6 +259,48 @@ single-source:
 | single-source / apply 成功 | 作業ディレクトリのスロットファイル削除、追跡を空に |
 | `on_slideshow_stop` | スロットファイルは残す。追跡 state のみクリア（§6.3 R4） |
 
+#### 6.2.1 Preset / remote source と optimize 経路（MAT-12）
+
+**用語（混同しやすい点）:**
+
+| 語 | 意味 |
+| --- | --- |
+| **ソース構成 dual** | **Srcdir-L と Srcdir-R の両方**に source が割り当て済み（§2: 2 ディスプレイ時は start 必須）。ユーザーが「Dual」と呼ぶのは通常こちら。 |
+| **ソース構成 single** | **片方のみ**（1 ディスプレイ時は L のみ。R は空または無視）。 |
+| **remote tick sync** | 各 tick で、**当該 side** が `remote-*` なら provider 別に network を走らせうる（JMA / CODH。NDL は tick ではしない）。**ソース構成 dual では L と R で独立に実行**する（§6.6）。optimize の有無とは **別軸**。 |
+| **apply 経路 dual** | cycle 後に L/R **両方**の選択 path があり、`run_slideshow_optimize` → 作業ディレクトリの固定スロット → apply。 |
+| **apply 経路 single**（**現行実装**） | 有効な選択 path が **1 件**のとき、optimize を通さずその path を直接 apply。 |
+
+**Optimize の有無は preset 種別（JMA/NDL/CODH）ではなく、ソース構成と apply 経路で決まる。** Srcdir-L/R をそれぞれ指定した時点でソース構成は **dual** であり、2 ディスプレイ + auto-split が有効なら **毎 start/tick で optimize する**。
+
+| ソース構成 | 2 ディスプレイ時の start | Optimize（start/tick）**現行** | 成果物の保存先 | plugin `apply` 入力 |
+| --- | --- | --- | --- | --- |
+| **dual**（L+R 指定） | 可（§2） | **する** | `{ピクチャ根}/Harite/slideshow/` 固定スロット（§6.2 R2） | Windows: `harite_slideshow.jpg`（Span）。Linux: per-monitor 分割 map |
+| **single**（片方のみ） | L のみ可 | **しない**（直接 apply） | なし | cycle 選択の **元画像 path**（remote なら `latest.*`） |
+
+**製品上の位置づけ（MAT-11）:** 上記 single の「optimize なし・直接 apply」は **現行コードの経路** であり、Harite（WallpaperOptimizer）としての **あるべき姿ではない**。Main の margin / embed / Color / align を slideshow に効かせるには **optimize を通す必要がある**ため、1 ディスプレイ・片方指定でも optimize するよう **MAT-11 で改める**のが product 整合（現状は未実装。Preset 天気図が原寸中央にポツンと見える主因）。
+
+**Tick シーケンス（ソース構成 dual + 両 side が remote preset の例）:**
+
+1. L: `jma_slideshow_tick` 等 → L cache 更新 → L cycle
+2. R: `codh_slideshow_tick` 等 → R cache 更新 → R cycle
+3. `run_slideshow_optimize`（L/R 選択 path を入力）→ 作業ディレクトリへ書き込み → apply
+
+network は step 1–2、optimize は step 3。**「tick で network する」と「optimize しない」は両立しない（dual 構成では optimize もする）。**
+
+**Preset 種別ごとの remote sync（ソース構成に依存しない。当該 side が remote のとき）:**
+
+| Preset / source | Start 前 sync | Tick 前 sync（当該 side） | Slideshow Mode（cache 1 枚時） |
+| --- | --- | --- | --- |
+| JMA 天気図 | `sync_remote_source` | `jma_slideshow_tick` | 実質無効（`latest.png` 1 枚） |
+| NDL 図版 | `sync_remote_source` | なし | 実質無効（`latest.jpg` 1 枚） |
+| CODH 江戸 | `sync_remote_source` | `codh_slideshow_tick` | 有効（sequential / random） |
+| `local-dir` | なし | なし | 有効（複数枚時） |
+
+**Main の margin / align / scaling:** dual 経路のみ `form_state` を読む。single 経路は未浸透 — **MAT-11 で single も optimize 経路へ統合する前提**（§6.2 single 節の直接 apply は暫定実装として扱う）。
+
+**実装入口:** `_prepare_slideshow_apply(len(sources))` でソース構成 dual を判定。`_apply_slideshow_selection` で `len(selected_paths)==2` なら optimize、`==1` なら single-file apply。`on_slideshow_tick` は L/R 各 side で `_remote_slideshow_tick_for_side` を **独立に**呼んでから cycle する。
+
 ### 6.3 dual-source 作業ディレクトリの整理要件（R1–R5）
 
 以下を満たす。

@@ -390,6 +390,7 @@ GitHub Issue 起票前の観測転記。
 
 - memo（オーナー）: CODH・NDL 観測の前提。JST タイムスタンプ必須。URL 組み立て過程の可視化が欲しい
 - **v0（2026-06-09）:** `REMOTE_SYNC_*` / `NDL_*` / `CODH_*` / `JMA_TICK` ステップ。`ts_jst` は `+09:00` 固定オフセット。viper3 観測は `export HARITE_SLIDESHOW_OP_LOG=~/.cache/harite/slideshow-op.jsonl` 等。
+- **実装:** #450 マージ済み。viper3 JSONL 観測は熟成運転復帰後。
 
 ---
 
@@ -491,13 +492,14 @@ GitHub Issue 起票前の観測転記。
 
 - MAT-03（Optimize で Color が効かない — 関連症状の可能性）
 - 正本: [harite-slideshow-spec.md §6](../specs/slideshow/harite-slideshow-spec.md)、[harite-gui-spec.md](../specs/gui/harite-gui-spec.md)
-- 現状: dual-source GUI slideshow は tick ごとに optimize 経路あり（§6.1 作業ディレクトリ）。単一 preset / remote の経路は要照合
+- 現状: dual-source のみ tick ごとに optimize（§6.1）。**single（1 ディスプレイ・片方指定）は直接 apply で margin/embed 未浸透** — MAT-12 で経路確定
+- MAT-12 接続: single 直接 apply は現行実装。product 上は **認めない**（オーナー 2026-06-09）
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
-- スコープ: 「浸透」の定義（毎 tick optimize に渡す / apply 前処理 / preset 専用）は棚卸で確定
-- 次: 現行 slideshow tick が margins / embed / background を読んでいるかコード照合
+- **次の改修候補** — single-source slideshow も Main と同型の optimize 経路へ（1 枚入力の optimize / 作業ディレクトリ or ピクチャ根スロットは棚卸）
+- スコープ: 毎 tick `form_state`（margin / embed / background / align）を optimize に渡す
+- 前提: MAT-12 §6.2.1 の「single＝直接 apply」は **暫定** と明記済み
 
 ### 調査メモ
 
@@ -535,11 +537,11 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ** — コード + spec 照合で回答を docs に書く（GitHub Issue 化は棚卸後）
-- 期待する成果: Preset 種別ごとの表（optimize する/しない、保存先 path、apply 入力）
-- 次: MAT-08 ログと合わせて tick シーケンスを可視化
+- **改修着手** — コード + spec 照合で回答を正本化。表は [slideshow-spec §6.2.1](../specs/slideshow/harite-slideshow-spec.md)。
+- 結論: **現行コード**はソース構成 dual → optimize、single（片方のみ）→ 直接 apply。tick network は別軸（§6.2.1）。**製品上** single の直接 apply は MAT-11 論旨で **認めない**（WallpaperOptimizer 意味が失われる）。
+- 副次修正: R1 孤児掃除に `harite_slideshow_*` を含める。single-source 成功時に未追跡スロットも削除。
 
 ### 調査メモ
 
 - memo（オーナー）: 壁紙が切り替わらない事象（MAT-02）の土台質問
-- spec 仮説（転記時点・未検証）: dual-source auto-split は §6.1 作業ディレクトリへ optimize 出力。単画像 preset / remote-only は経路が異なる可能性
+- **確定（2026-06-09）:** ソース構成 dual（L+R 指定）→ optimize + 作業ディレクトリ。single（片方のみ）→ **現行** optimize なし・直接 apply。オーナー指摘: dual 指定時点でソースは dual。single 直接 apply は **MAT-11 で廃止方向**（margin/embed 浸透の前提）。

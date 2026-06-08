@@ -1636,16 +1636,26 @@ class MainWindow:
             except OSError as exc:
                 self._log(f"Slideshow cleanup failed: {path} ({exc})")
 
-    def _cleanup_work_dir_orphans(self, work_dir: Path, keep: frozenset[Path]) -> None:
-        """R1: remove legacy harite_output_* files from work dir, keeping slot files."""
+    def _remove_work_dir_slot_files(self, work_dir: Path) -> None:
+        """§6.2 single-source: delete fixed slot files from the slideshow work dir."""
         try:
-            for path in work_dir.glob("harite_output_*.jpg"):
-                if path not in keep:
-                    try:
-                        path.unlink()
-                        self._log(f"Slideshow R1 cleanup removed orphan: {path}")
-                    except OSError as exc:
-                        self._log(f"Slideshow R1 cleanup failed: {path} ({exc})")
+            for pattern in ("harite_slideshow.jpg", "harite_slideshow_*.jpg"):
+                for path in work_dir.glob(pattern):
+                    self._cleanup_slideshow_generated_files((path,))
+        except OSError:
+            pass
+
+    def _cleanup_work_dir_orphans(self, work_dir: Path, keep: frozenset[Path]) -> None:
+        """R1: remove slot-external files from work dir, keeping active slot files."""
+        try:
+            for pattern in ("harite_output_*.jpg", "harite_slideshow.jpg", "harite_slideshow_*.jpg"):
+                for path in work_dir.glob(pattern):
+                    if path not in keep:
+                        try:
+                            path.unlink()
+                            self._log(f"Slideshow R1 cleanup removed orphan: {path}")
+                        except OSError as exc:
+                            self._log(f"Slideshow R1 cleanup failed: {path} ({exc})")
         except OSError:
             pass
 
@@ -1685,6 +1695,7 @@ class MainWindow:
 
         if len(selected_paths) == 1:
             if self._apply_slideshow_target(selected_paths[0], cycle_phase=cycle_phase, apply_mode="single-file"):
+                self._remove_work_dir_slot_files(self._resolve_slideshow_work_dir())
                 self._set_slideshow_active_generated_files(())
                 return True, None
             return False, f"slideshow {user_cycle_phase} single-file apply failed"
