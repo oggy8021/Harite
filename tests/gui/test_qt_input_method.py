@@ -216,10 +216,30 @@ def test_remove_incompatible_fcitx_plugin_symlink(monkeypatch, tmp_path: Path):
     monkeypatch.setattr(qt_input_method, "_resolve_pyqt6_package_root", lambda: pyqt_root)
     monkeypatch.setattr(qt_input_method, "_SYSTEM_PLUGIN_DIRS", (system_plugin,))
     monkeypatch.setattr(qt_input_method, "pip_pyqt6_fcitx_plugin_incompatible", lambda: True)
-    monkeypatch.setattr(qt_input_method, "_fcitx_plugin_uses_system_origin", lambda _dir: True)
 
     assert qt_input_method.remove_incompatible_fcitx_plugin_symlink() is True
     assert not symlink.exists()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="fcitx plugin linking is Linux-only")
+def test_is_distro_fcitx_plugin_symlink_matches_discovered_plugin(tmp_path: Path):
+    from harite.gui.adapters_qt import qt_input_method
+
+    plugins_dir = tmp_path / "pyqt_plugins"
+    plugins_dir.mkdir()
+    system_plugin_dir = tmp_path / "usr" / "lib" / "qt6" / "plugins" / "platforminputcontexts"
+    system_plugin_dir.mkdir(parents=True)
+    system_plugin = system_plugin_dir / "libfcitx5platforminputcontextplugin.so"
+    system_plugin.write_bytes(b"plugin")
+    symlink = plugins_dir / "libfcitx5platforminputcontextplugin.so"
+    symlink.symlink_to(system_plugin)
+
+    original_dirs = qt_input_method._SYSTEM_PLUGIN_DIRS
+    qt_input_method._SYSTEM_PLUGIN_DIRS = (system_plugin_dir,)
+    try:
+        assert qt_input_method._is_distro_fcitx_plugin_symlink(symlink) is True
+    finally:
+        qt_input_method._SYSTEM_PLUGIN_DIRS = original_dirs
 
 
 def test_configure_linux_fcitx_dynamic_loader_can_be_disabled(monkeypatch):

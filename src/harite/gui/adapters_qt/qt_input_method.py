@@ -160,16 +160,15 @@ def remove_incompatible_fcitx_plugin_symlink() -> bool:
     removed = False
     for name in _FCITX_PLUGIN_NAMES:
         destination = plugins_dir / name
-        if not destination.is_symlink():
+        if not _is_distro_fcitx_plugin_symlink(destination):
             continue
         try:
-            if destination.resolve().as_posix().startswith("/usr/"):
-                destination.unlink()
-                removed = True
-                logger.info(
-                    "Removed incompatible distro fcitx symlink from pip PyQt6: %s",
-                    destination,
-                )
+            destination.unlink()
+            removed = True
+            logger.info(
+                "Removed incompatible distro fcitx symlink from pip PyQt6: %s",
+                destination,
+            )
         except OSError:
             continue
     return removed
@@ -203,18 +202,24 @@ def _prepend_ld_library_path(paths: list[Path]) -> None:
     os.environ["LD_LIBRARY_PATH"] = f"{prefix}:{current}" if current else prefix
 
 
+def _resolved_system_fcitx_plugin_paths() -> set[Path]:
+    return {path.resolve() for path in discover_system_fcitx_qt_plugins()}
+
+
+def _is_distro_fcitx_plugin_symlink(destination: Path) -> bool:
+    if not destination.is_symlink():
+        return False
+    try:
+        resolved = destination.resolve()
+    except OSError:
+        return False
+    if resolved.as_posix().startswith("/usr/"):
+        return True
+    return resolved in _resolved_system_fcitx_plugin_paths()
+
+
 def _fcitx_plugin_uses_system_origin(target_dir: Path) -> bool:
-    for name in _FCITX_PLUGIN_NAMES:
-        destination = target_dir / name
-        if not destination.exists():
-            continue
-        try:
-            resolved = destination.resolve()
-        except OSError:
-            continue
-        if resolved.as_posix().startswith("/usr/"):
-            return True
-    return False
+    return any(_is_distro_fcitx_plugin_symlink(target_dir / name) for name in _FCITX_PLUGIN_NAMES)
 
 
 def _linux_fcitx_system_libs_enabled() -> bool:
