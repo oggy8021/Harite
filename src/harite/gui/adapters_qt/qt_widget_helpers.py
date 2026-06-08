@@ -124,6 +124,10 @@ def set_entry_text(backend: Any, name: str, value: object | None) -> None:
         return
     text = str(value or "")
     with _with_blocked_signals(w):
+        if hasattr(w, "toPlainText") and w.toPlainText() == text:
+            return
+        if hasattr(w, "text") and not hasattr(w, "setPlainText") and w.text() == text:
+            return
         if hasattr(w, "setPlainText"):
             w.setPlainText(text)
         elif hasattr(w, "setText"):

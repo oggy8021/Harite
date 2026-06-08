@@ -1098,7 +1098,8 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             self._set_feedback(phase="Margins", state="max-lines-error", error=str(exc))
 
     def _on_margin_text_key_press(self, widget: Any, event: Any) -> bool:
-        return False  # Qt: key-press-event not needed; textChanged suffices
+        """GTK parity hook; Qt uses ``install_margin_text_key_handler`` instead."""
+        return False
 
     # ------------------------------------------------------------------
     # Stub compatibility: GTK "idle_add" style
