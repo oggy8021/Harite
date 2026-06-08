@@ -71,6 +71,27 @@ def test_link_system_fcitx_qt_plugin_if_missing_creates_symlink(monkeypatch, tmp
     assert linked.resolve() == source_plugin.resolve()
 
 
+def test_discover_system_fcitx_qt_plugins_finds_nested_path(tmp_path: Path):
+    from harite.gui.adapters_qt import qt_input_method
+
+    nested = tmp_path / "usr" / "lib" / "qt6" / "plugins" / "platforminputcontexts"
+    nested.mkdir(parents=True)
+    plugin = nested / "libfcitx5platforminputcontextplugin.so"
+    plugin.write_bytes(b"plugin")
+
+    original_dirs = qt_input_method._SYSTEM_PLUGIN_DIRS
+    original_roots = qt_input_method._SYSTEM_LIB_SEARCH_ROOTS
+    qt_input_method._SYSTEM_PLUGIN_DIRS = (nested,)
+    qt_input_method._SYSTEM_LIB_SEARCH_ROOTS = (tmp_path / "usr" / "lib",)
+    try:
+        found = qt_input_method.discover_system_fcitx_qt_plugins()
+    finally:
+        qt_input_method._SYSTEM_PLUGIN_DIRS = original_dirs
+        qt_input_method._SYSTEM_LIB_SEARCH_ROOTS = original_roots
+
+    assert found == [plugin]
+
+
 def test_audit_qt_fcitx_input_method_reports_plugin_dir(monkeypatch, tmp_path: Path):
     from harite.gui.adapters_qt import qt_input_method
 
@@ -86,6 +107,7 @@ def test_audit_qt_fcitx_input_method_reports_plugin_dir(monkeypatch, tmp_path: P
 
     assert report["qt_im_module"] == "fcitx"
     assert report["fcitx_plugins_after_link"] == []
+    assert report["system_fcitx_plugin_candidates"] == []
 
 
 def test_configure_text_input_widget_enables_input_method(qapp):

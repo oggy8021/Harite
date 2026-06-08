@@ -22,8 +22,20 @@ _SYSTEM_PLUGIN_DIRS = (
     Path("/usr/lib/qt6/plugins/platforminputcontexts"),
     Path("/usr/lib/x86_64-linux-gnu/qt6/plugins/platforminputcontexts"),
     Path("/usr/lib/aarch64-linux-gnu/qt6/plugins/platforminputcontexts"),
+    Path("/usr/lib64/qt6/plugins/platforminputcontexts"),
     Path("/usr/lib/qt/plugins/platforminputcontexts"),
     Path("/usr/lib/x86_64-linux-gnu/qt/plugins/platforminputcontexts"),
+)
+
+_SYSTEM_LIB_SEARCH_ROOTS = (
+    Path("/usr/lib"),
+    Path("/usr/lib64"),
+)
+
+_FCITX_QT_PACKAGE_HINT = (
+    "Install a system package that provides the fcitx Qt6 platforminputcontext plugin "
+    "(e.g. fcitx5-qt6 / libfcitx5-qt6-1 on Debian/Ubuntu, fcitx5-qt6 on Arch). "
+    "Then restart harite-qt so Harite can symlink the plugin into the venv PyQt6."
 )
 
 
@@ -84,10 +96,13 @@ def prepare_qt_input_method_env() -> str | None:
     if os.environ.get("QT_IM_MODULE", "").strip().lower() in {_FCITX_QT_IM_MODULE, "fcitx5"}:
         linked = link_system_fcitx_qt_plugin_if_missing()
         if linked is None and not fcitx_input_context_plugin_names():
+            candidates = discover_system_fcitx_qt_plugins()
             logger.warning(
                 "Qt IM: QT_IM_MODULE=fcitx but no fcitx platforminputcontext plugin in PyQt6 "
-                "(typical pip wheel gap). GTK apps may work while Qt widgets do not. "
-                "Install fcitx-qt6 / fcitx5-qt6 system package or symlink plugin into PyQt6 plugins dir."
+                "(typical pip wheel gap). GTK/Firefox may work while Qt widgets do not. "
+                "%s System candidates found: %s",
+                _FCITX_QT_PACKAGE_HINT,
+                [str(path) for path in candidates] or "none",
             )
 
     return os.environ.get("QT_IM_MODULE")
@@ -117,9 +132,39 @@ def fcitx_input_context_plugin_names(target_dir: Path | None = None) -> list[str
     )
 
 
+def discover_system_fcitx_qt_plugins() -> list[Path]:
+    """Find fcitx Qt IM plugin files under common system library trees."""
+    found: list[Path] = []
+    seen: set[Path] = set()
+    for plugin_dir in _SYSTEM_PLUGIN_DIRS:
+        if not plugin_dir.is_dir():
+            continue
+        for plugin_name in _FCITX_PLUGIN_NAMES:
+            source = plugin_dir / plugin_name
+            if source.is_file():
+                resolved = source.resolve()
+                if resolved not in seen:
+                    seen.add(resolved)
+                    found.append(source)
+    for root in _SYSTEM_LIB_SEARCH_ROOTS:
+        if not root.is_dir():
+            continue
+        for plugin_name in _FCITX_PLUGIN_NAMES:
+            for source in root.glob(f"**/{plugin_name}"):
+                if not source.is_file():
+                    continue
+                resolved = source.resolve()
+                if resolved in seen:
+                    continue
+                seen.add(resolved)
+                found.append(source)
+    return sorted(found, key=lambda path: str(path))
+
+
 def audit_qt_fcitx_input_method() -> dict[str, object]:
     """Summarize Qt IM plugin availability for Linux troubleshooting."""
     target_dir = pyqt6_platform_input_context_dir()
+    system_candidates = discover_system_fcitx_qt_plugins()
     linked = link_system_fcitx_qt_plugin_if_missing() if target_dir is not None else None
     return {
         "qt_im_module": os.environ.get("QT_IM_MODULE"),
@@ -127,8 +172,10 @@ def audit_qt_fcitx_input_method() -> dict[str, object]:
         "xmodifiers": os.environ.get("XMODIFIERS"),
         "pyqt_plugins_dir": str(target_dir) if target_dir is not None else None,
         "fcitx_plugins_before_link": fcitx_input_context_plugin_names(target_dir),
+        "system_fcitx_plugin_candidates": [str(path) for path in system_candidates],
         "linked_plugin": str(linked) if linked is not None else None,
         "fcitx_plugins_after_link": fcitx_input_context_plugin_names(target_dir),
+        "package_hint": _FCITX_QT_PACKAGE_HINT,
     }
 
 
@@ -141,22 +188,16 @@ def link_system_fcitx_qt_plugin_if_missing() -> Path | None:
     if any((target_dir / name).exists() for name in _FCITX_PLUGIN_NAMES):
         return None
 
-    for plugin_dir in _SYSTEM_PLUGIN_DIRS:
-        if not plugin_dir.is_dir():
-            continue
-        for plugin_name in _FCITX_PLUGIN_NAMES:
-            source = plugin_dir / plugin_name
-            if not source.is_file():
-                continue
-            destination = target_dir / plugin_name
-            try:
-                if destination.exists() or destination.is_symlink():
-                    return destination
-                destination.symlink_to(source)
-                logger.info("Linked fcitx Qt IM plugin: %s -> %s", destination, source)
+    for source in discover_system_fcitx_qt_plugins():
+        destination = target_dir / source.name
+        try:
+            if destination.exists() or destination.is_symlink():
                 return destination
-            except OSError as exc:
-                logger.debug("Could not link fcitx Qt IM plugin %s: %s", destination, exc)
+            destination.symlink_to(source)
+            logger.info("Linked fcitx Qt IM plugin: %s -> %s", destination, source)
+            return destination
+        except OSError as exc:
+            logger.debug("Could not link fcitx Qt IM plugin %s: %s", destination, exc)
     return None
 
 
