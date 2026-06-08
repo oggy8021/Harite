@@ -334,13 +334,14 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
-- スコープ: Enter 時のカーソル移動。行数上限ロジックとの関係は調査で確定
-- 次: 再現（2 行目 Enter）→ 既存 `key-press-event` 処理の確認
+- **改修着手** — Qt: `textChanged` 後の owner sync が同一 plain text を `setPlainText` し直し、カーソルが先頭へ戻る（GTK は key-press guard あり、Qt は stub）。
+- スコープ: `set_entry_text` の no-op 同値更新、Qt Enter ガード（5 行 cap）、`read_margin_text_widget_text` の `QPlainTextEdit` 対応
 
 ### 調査メモ
 
 - memo（オーナー）: 2・3 行目 Enter で先頭行へジャンプ
+- **原因（2026-06-09）:** `_on_margin_text_changed` → `_sync_margins_state_with_feedback_from_owner` → `setPlainText(embed_text)` が毎 Enter で走りカーソルリセット。Qt `_on_margin_text_key_press` は未配線。
+- **修正:** `qt_margin_text.py`、`set_entry_text` 同値スキップ、spec 追記。テスト: `test_qt_margin_text.py`
 
 ---
 

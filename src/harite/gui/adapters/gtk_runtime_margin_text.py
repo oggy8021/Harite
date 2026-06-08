@@ -8,6 +8,8 @@ def sanitize_margin_text(value: str, *, max_lines: int = 5) -> str:
 
 
 def read_margin_text_widget_text(widget: Any) -> str:
+    if hasattr(widget, "toPlainText"):
+        return str(widget.toPlainText() or "")
     if hasattr(widget, "get_text"):
         return str(widget.get_text() or "")
     if hasattr(widget, "get_buffer"):

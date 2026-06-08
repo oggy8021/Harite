@@ -261,6 +261,9 @@ def _connect_margin_text_widgets(backend: Any, widgets: dict[str, Any]) -> None:
 
     margin_text_entry = widgets.get("margin_text_entry")
     if margin_text_entry is not None:
+        from harite.gui.adapters_qt.qt_margin_text import install_margin_text_key_handler
+
+        install_margin_text_key_handler(margin_text_entry)
         if hasattr(margin_text_entry, "textChanged"):
             _safe_connect(
                 margin_text_entry, "textChanged",
