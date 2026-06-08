@@ -104,3 +104,29 @@ working メモも完了なら docs/working/finished/ へ移動
 
 | Issue | タイトル要約 | 分類 | overview ID |
 | --- | --- | --- | --- |
+| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | 熟成運転 Qt/共通（MAT-01〜12、転記一旦打ち止め） | bug / investigation / planning | 熟成運転 |
+
+### maturation-20260609-qt-common — 棚卸予定の並び
+
+| 区分 | ID |
+| --- | --- |
+| 改修系 | MAT-01〜03, 05〜07 |
+| 確かさ向上 | MAT-08, 12 |
+| 機能要望系 | MAT-04, 09〜11 |
+
+### 内訳
+
+| ID | 要約 | 区分 |
+| --- | --- | --- |
+| MAT-01 | Main xxAlign / Top・Bottom Align が効かない | 改修 |
+| MAT-02 | Slideshow `(stopped)` vs footer `running` 不一致 | 改修 |
+| MAT-03 | Optimize で Color が効かない | 改修 |
+| MAT-05 | CODH キーワード: Close しないと確定されない | 改修 |
+| MAT-06 | CODH キーワード: Xfce+Qt で IME 不可 | 改修 |
+| MAT-07 | embed Text: 2・3 行目 Enter で先頭行へジャンプ | 改修 |
+| MAT-08 | Preset 系 Slideshow 動作ログ（CODH/NDL 観測用） | 確かさ |
+| MAT-12 | Preset 時 Optimize 有無・保存先 | 確かさ |
+| MAT-04 | 江戸買物案内 preset をやめる | 要望 |
+| MAT-09 | Margin 一括変更・リセット | 要望 |
+| MAT-10 | 江戸切絵図を雰囲気絵ソースに（検討・例示のみ） | 要望 |
+| MAT-11 | Slideshow へ Margin / embed / Color 浸透 | 要望 |

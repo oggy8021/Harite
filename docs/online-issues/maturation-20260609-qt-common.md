@@ -1,0 +1,473 @@
+# 熟成運転ログ — Qt / 共通（2026-06-09〜）
+
+GitHub Issue 起票前の観測転記。
+
+- 親: [20260609 feature-overview](../working/20260609-1200-feature-overview.md)（熟成運転期間）
+- 対象: **Qt 版**および **backend 共通**（GTK 専用は [GTK 熟成メモ](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) 参照）
+- **転記:** 2026-06-09 時点で **一旦打ち止め**（MAT-01〜12）。MAT-02b（NDL/CODH 取得）は後送予定。
+
+## 棚卸予定の並び（オーナー方針）
+
+着手・Issue 化の **おおよその優先**（確定順ではない）:
+
+1. **改修系** — 明らかな不具合・期待とのズレ
+2. **確かさ向上** — 観測・仕様の明確化（直す前に切り分けたいもの）
+3. **機能要望系** — 新規 UX / source / product 判断
+
+| 区分 | ID |
+| --- | --- |
+| 改修系 | MAT-01, MAT-02, MAT-03, MAT-05, MAT-06, MAT-07 |
+| 確かさ向上 | MAT-08, MAT-12 |
+| 機能要望系 | MAT-04, MAT-09, MAT-10, MAT-11 |
+
+※ MAT-02 の NDL/CODH 取得側は **MAT-02b** として別枠（未転記）。MAT-10 の具体 URL は例示のみ（[MAT-10](#mat-10--江戸切絵図を雰囲気絵ソースにできないか検討) 参照）。
+
+---
+
+## MAT-01 — Main direction toggle（xxAlign）が効かない
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `Qt: Main direction toggles (xxAlign) have no visible effect`
+
+### 事象
+
+- Main タブの十字 direction toggle（`Top-*` / `Bottom-*` / `Left-*` / `Right-*`）で **上寄せなどが発生しない**（期待どおり画像位置が変わらない）。
+- `margins=0,0,0,0` にしても効果が出ない。
+- embed（margin text）の有無は **関係しない** と観測。
+- `Top Align` / `Bottom Align` も **弱い／おそらく効いていない**。
+
+### 分類
+
+- `bug`（Qt / 共通 optimize パイプラインの疑い）
+- `investigation`
+
+### 関連
+
+- 正本: [harite-gui-spec.md §3 Main](../specs/gui/harite-gui-spec.md)（direction toggle 十字配置）
+- 実装候補: `src/harite/gui/views/main_window.py`、`optimize` / `positioning` 周辺
+
+### 取り込み方針
+
+- 現時点: **転記のみ** — 棚卸後に GitHub Issue 化・spec 照合
+- スコープ: direction toggle → optimize 結果への反映。margins / embed との切り分けは調査で確定
+- 次: 再現手順の固定 → spec 期待との diff → テスト or 修正
+
+### 調査メモ
+
+- memo（オーナー）: margin ゼロ・embed 無関係で再現
+
+---
+
+## MAT-02 — Slideshow タブ `(stopped)` と footer `running` の不一致
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `Qt: Slideshow tab title (stopped) vs footer summary (running) mismatch`
+
+### 事象
+
+- Slideshow **タブ見出し**は `Slideshow (stopped)`。
+- **右下 footer**（`lblSlideshowSummary` 相当）は `Slideshow: running`。
+- このとき **Start 無効・Stop 有効** — widget 状態は「running」側に寄っているが、タブ表示と不一致。
+- ただし **壁紙は切り替わっていない**。
+- Error 表示は `none`。
+- **NDL / CODH 取得問題**の可能性あり → **別事象として後送**（本件からは切り離して記録）。
+
+### 分類
+
+- `bug`（状態表示の整合）
+- `investigation`（slideshow state machine / label refresh）
+
+### 関連
+
+- MAT-02b（未記録）: NDL/CODH 取得 — 後からオーナー伝達予定
+- 正本: [harite-gui-spec.md §3 Slideshow](../specs/gui/harite-gui-spec.md)、[harite-slideshow-spec.md](../specs/slideshow/harite-slideshow-spec.md)
+- 実装候補: `refresh_slideshow_summary_label`、`slideshow_tab_title`、`_slideshow_running` 同期
+
+### 取り込み方針
+
+- 現時点: **転記のみ**
+- スコープ: **表示整合のみ**（タブ title / footer / Start-Stop enable）。tick 失敗・remote sync は MAT-02b へ
+- 次: 再現 state のスナップショット（settings / srcdir / running フラグ）→ ラベル更新経路の照合
+
+### 調査メモ
+
+- memo（オーナー）: 壁紙未切替・Error none だが Stop 有効。取得系は別枠
+
+---
+
+## MAT-03 — Optimize で Color が効かない
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `Qt: background Color not applied on Optimize`
+
+### 事象
+
+- **Optimize** 実行時に **Color**（背景色設定）が効かない。
+
+### 分類
+
+- `bug`
+
+### 関連
+
+- 正本: [harite-gui-spec.md](../specs/gui/harite-gui-spec.md)（Color dialog / optimize フロー）
+- 実装候補: `on_optimize`、背景色の form_state / CLI 引数渡し
+
+### 取り込み方針
+
+- 現時点: **転記のみ**
+- 次: Color 設定値の保持確認 → optimize パイプラインで background が渡っているか調査
+
+### 調査メモ
+
+- memo（オーナー）: Optimize 時 Color 無効
+
+---
+
+## MAT-04 — 江戸買物案内 preset をやめる（不具合ではない）
+
+### 管理情報
+
+- GitHub: **未起票**（product / catalog 判断）
+- 記録日: 2026-06-09
+- 仮タイトル: `Source catalog: drop CODH 江戸買物案内 presets (text-heavy)`
+
+### 事象
+
+- **江戸買物案内**（CODH `edo-shops`）は **文字図版ばかり**で slideshow 用途に合わない。
+- **不具合ではない** — 提供内容の product 判断で **やめる**。
+
+### 分類
+
+- `planning`（source catalog / preset 整理）
+- 不具合 **ではない**
+
+### 関連
+
+- [C-01-E 統合索引](../working/finished/20260603-c01-e-merged-inventory.md)
+- 同梱 preset: `src/harite/gui/resources/source_presets/harite-source-presets.json`（`codh-edo-shops-keyword` / `codh-edo-shops-random`）
+- spec: [harite-source-spec.md §CODH edo-shops](../specs/source/harite-source-spec.md)
+
+### 取り込み方針
+
+- 現時点: **転記のみ** — 棚卸後に preset 削除 or 非表示方針を決定
+- スコープ: 江戸**買物**のみ（江戸観光は別判断）
+- 次: 既存 settings での `slideshow_source_id_*` 参照時の挙動を含めて整理
+
+### 調査メモ
+
+- memo（オーナー）: 文字図版中心のため採用見送り
+
+---
+
+## MAT-05 — CODH キーワード: Close しないと確定されない
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `CODH keyword field reverts until Manage dialog Close`
+
+### 事象
+
+- Manage sources 内の **CODH キーワード入力**で、**Close でダイアログを閉じないと**文字列が確定できない。
+- **Enter** や **入力フォーカスの移動**だけでは、編集内容が破棄され **元の値（例: `桜`）に戻る**。
+- 期待: ダイアログを閉じる前でも、メモリ上の同値は **フォーム内の最新状態**に沿う。**Close 等による確定までは最新状態を保つ**べき。
+
+### 分類
+
+- `bug`（Qt / 共通 — dialog 確定タイミング）
+- `polish`
+
+### 関連
+
+- [C-01-E-KW planning](../working/finished/20260605-c01-e-kw-codh-keyword-planning.md)（#413 完了）
+- 正本: [harite-gui-spec.md](../specs/gui/harite-gui-spec.md)（Manage / CODH keyword 行）
+- 実装候補: Manage dialog、`codh_keyword` の load/save タイミング
+
+### 取り込み方針
+
+- 現時点: **転記のみ**
+- スコープ: keyword フィールドの **編集中ドラフト保持**（Enter / focus-out で revert しない）
+- 次: 確定トリガ（Close / OK / Apply）と field イベントの整理
+
+### 調査メモ
+
+- memo（オーナー）: Enter・フォーカス移動で `桜` に戻る。Close 必須
+
+---
+
+## MAT-06 — CODH キーワード: Xfce + Qt で日本語入力不可
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `Qt on Xfce: IME unavailable in CODH keyword field`
+- 環境: **Qt 版**、**XFCE 実機のみ**（他 DE / Windows は未確認）
+
+### 事象
+
+- CODH キーワード入力欄で **日本語文字列が入力できない**。
+- **Ctrl + Space** 等で IME を起動できない。
+
+### 分類
+
+- `bug`（Qt / platform — IME）
+- `investigation`
+
+### 関連
+
+- MAT-05（同一 surface、別症状）
+- 実装候補: Qt `QLineEdit` / dialog IME 属性、Xfce fcitx/ibus 連携
+
+### 取り込み方針
+
+- 現時点: **転記のみ**
+- スコープ: Xfce + Qt の IME。Windows 同一症状は別 ID で記録
+- 次: DE / IME フレームワークの特定 → Qt widget 設定の照合
+
+### 調査メモ
+
+- memo（オーナー）: Xfce のみ。Ctrl+Space 無効
+
+---
+
+## MAT-07 — embed Text: 2・3 行目で Enter が先頭行へジャンプ
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `Margin embed Text: Enter on line 2/3 jumps cursor to line 1`
+
+### 事象
+
+- **embed pattern: Text**（margin text 自由入力）で **2 行目・3 行目**を入力中に **Enter** を押すと、カーソルが **先頭行**に移ってしまう。
+- 結果として複数行入力がしづらい。
+
+### 分類
+
+- `bug`（Qt / 共通 — margin text widget）
+- `polish`
+
+### 関連
+
+- 正本: [harite-gui-spec.md §8 margin text](../specs/gui/harite-gui-spec.md)
+- 実装候補: `txtMarginText` / `QTextEdit` の key-press ハンドラ、`max_lines` 制約
+
+### 取り込み方針
+
+- 現時点: **転記のみ**
+- スコープ: Enter 時のカーソル移動。行数上限ロジックとの関係は調査で確定
+- 次: 再現（2 行目 Enter）→ 既存 `key-press-event` 処理の確認
+
+### 調査メモ
+
+- memo（オーナー）: 2・3 行目 Enter で先頭行へジャンプ
+
+---
+
+## MAT-08 — Preset 系 Slideshow の動作ログ（CODH / NDL 観測用）
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `Feature: Preset slideshow operation log for remote source diagnosis`
+
+### 事象 / 要望
+
+- **実質機能要望** — 現状このログがないと **CODH / NDL の観測が十分にできない**（熟成運転・MAT-02 系の切り分けにも必要）。
+- **Preset 界隈**を対象にした Slideshow について、**動作ログを採る**仕組みが欲しい。
+
+### ログに含めたい内容（オーナー指定）
+
+1. **画像取得までのシーケンス**に沿ったステップ記録
+2. **URL 組み立ての過程**（中間 URL / クエリ / 解決結果）
+3. **アクセス日時（JST）**
+4. **取得したい情報が取れたか / 取れなかったか**（成否・理由の要約）
+
+### 分類
+
+- `planning`（観測・診断 infrastructure）
+- `investigation`（remote sync / preset slideshow の実機検証支援）
+- 不具合報告 **ではない** — **機能要望**
+
+### 関連
+
+- MAT-02 / MAT-02b（NDL・CODH 取得 — 後送予定）
+- [C-01-F remote sync](../working/finished/20260604-c01-f-remote-sync-on-tick-planning-draft.md)、[harite-slideshow-spec.md §remote](../specs/slideshow/harite-slideshow-spec.md)
+- [harite-source-spec.md](../specs/source/harite-source-spec.md)（CODH / NDL indexer）
+- 既存: `format_remote_sync_error`、footer Error — ユーザー向け要約はあるが **開発者向けシーケンスログは不足**
+
+### 取り込み方針
+
+- 現時点: **転記のみ** — 棚卸で「観測用 logging」としてグループ化
+- スコープ v0 案: Preset 選択時の start / tick / sync パス。手動 srcdir のみは対象外でも可
+- 出力先: ファイル / stderr / 専用 dialog — **未決**（棚卸で決める）
+- 次: シーケンス節の列挙（gui-spec or slideshow-spec 非正本メモ）→ 実装粒度の判断
+
+### 調査メモ
+
+- memo（オーナー）: CODH・NDL 観測の前提。JST タイムスタンプ必須。URL 組み立て過程の可視化が欲しい
+
+---
+
+## MAT-09 — Margin 一括変更・リセット
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `Feature: bulk Margin edit and reset`
+
+### 事象 / 要望
+
+- **単発の新規要望** — Margin を **一括変更**できる操作と、**リセット**（既定値へ戻す等）が欲しい。
+
+### 分類
+
+- `planning`（機能要望）
+- `polish`
+
+### 関連
+
+- 正本: [harite-gui-spec.md §3 Margins / Main cross-grid](../specs/gui/harite-gui-spec.md)
+
+### 取り込み方針
+
+- 現時点: **転記のみ**
+- スコープ: 一括変更の対象（四辺同値 / プリセット / L-R 対称等）は棚卸で決定
+- 次: UX 案（dialog / spin 一括 / settings 連動）の整理
+
+### 調査メモ
+
+- memo（オーナー）: 熟成運転中の単発要望
+
+---
+
+## MAT-10 — 江戸切絵図を「雰囲気絵」ソースにできないか（検討）
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09（2026-06-09 補足: 具体 URL・地図名は **例示のみ**）
+- 仮タイトル: `Investigate Edo Kiriezu as mood/atmosphere slideshow source`
+- 参考: [江戸マップ（CODH）](https://codh.rois.ac.jp/edo-maps/)
+
+### 事象 / 要望
+
+- MAT-04（江戸**買物**案内やめる）により **CODH 系ソースが減る**。
+- 代替として、slideshow に **雰囲気のある絵**（江戸切絵図の地図画像）が出せる経路が欲しい。
+- [CODH 江戸マップ](https://codh.rois.ac.jp/edo-maps/) は NDL 所蔵切絵図と IIIF 連携の入口になりうるため、**技術・ライセンスの観点で検討**する価値がある。
+- **特定の地図・URL に固定する意図はない**（転記時の築地八丁堀例・`dl.ndl.go.jp/.../1286660/...` は雰囲気イメージの **例示**）。
+- **ライセンス NG なら当然断念**。
+
+### 分類
+
+- `investigation`（source / remote / IIIF）
+- `planning`
+
+### 関連
+
+- MAT-04（江戸買物削除）、MAT-08（観測ログ）
+- [C-01-E / NDL 調査](../working/finished/20260603-c01-e-ndl-tsugidigi-inventory.md)、[CODH 調査](../working/finished/20260603-c01-e-codh-icp-inventory.md)
+- CODH: IIIF Curation Platform 経由で NDL 江戸切絵図 29+ 枚を地名 DB 化（[edo-maps 概要](https://codh.rois.ac.jp/edo-maps/)）
+- 実装候補: `remote-ndl` / `remote-codh-edo-maps` 新 indexer、または既存 CODH 経路の拡張
+
+### 取り込み方針
+
+- 現時点: **転記のみ** — 棚卸で source 拡張候補として評価
+- ゲート: NDL / CODH **利用規約・IIIF 利用条件**の確認が先
+- 次: 代表 1 枚での試験（IIIF → download → slideshow）とライセンスメモ。採用時の選定軸は「雰囲気絵」
+
+### 調査メモ
+
+- memo（オーナー）: **雰囲気絵が出てほしい** — 文字図版中心の買物案内の代替。具体地図は例示のみ
+
+---
+
+## MAT-11 — Slideshow に Margin / embed / Color を浸透
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `Feature: apply Main Margin / embed / Color options to Slideshow path`
+
+### 事象 / 要望
+
+- Slideshow 実行時にも、Main で設定している次のオプションを **浸透**（反映）させたい:
+  - **Margin**
+  - **embed**（margin text パターン）
+  - **Color**（背景色）
+
+### 分類
+
+- `planning`（機能要望）
+- `investigation`（optimize / apply パイプラインとの接続）
+
+### 関連
+
+- MAT-03（Optimize で Color が効かない — 関連症状の可能性）
+- 正本: [harite-slideshow-spec.md §6](../specs/slideshow/harite-slideshow-spec.md)、[harite-gui-spec.md](../specs/gui/harite-gui-spec.md)
+- 現状: dual-source GUI slideshow は tick ごとに optimize 経路あり（§6.1 作業ディレクトリ）。単一 preset / remote の経路は要照合
+
+### 取り込み方針
+
+- 現時点: **転記のみ**
+- スコープ: 「浸透」の定義（毎 tick optimize に渡す / apply 前処理 / preset 専用）は棚卸で確定
+- 次: 現行 slideshow tick が margins / embed / background を読んでいるかコード照合
+
+### 調査メモ
+
+- memo（オーナー）: Slideshow でも Main と同じ見た目制御を期待
+
+---
+
+## MAT-12 — Preset slideshow 時の Optimize 有無・保存先
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `Investigation: does Preset slideshow run Optimize and where are outputs saved?`
+
+### 事象 / 質問（そもそも話）
+
+- **Preset 選択時、Optimize しているのか？**
+- **Optimize 後のファイルはどこに保存しているのか？**
+- 熟成運転（MAT-02 / MAT-08）の前提整理としての根本質問。
+
+### 分類
+
+- `investigation`
+- `planning`（仕様明確化）
+
+### 関連
+
+- MAT-02、MAT-08、MAT-11
+- 正本: [harite-slideshow-spec.md §6.1 / §6.2](../specs/slideshow/harite-slideshow-spec.md) — GUI slideshow 作業ディレクトリ、dual-source 時の optimize 出力管理
+- [source-spec §12.4](../specs/source/harite-source-spec.md)（remote sync on tick）
+- 調査入口: `run_optimize` 呼び出し経路、weather-map preset の「optimize 出力なし」分岐（§6.2 付近）
+
+### 取り込み方針
+
+- 現時点: **転記のみ** — コード + spec 照合で回答を docs に書く（GitHub Issue 化は棚卸後）
+- 期待する成果: Preset 種別ごとの表（optimize する/しない、保存先 path、apply 入力）
+- 次: MAT-08 ログと合わせて tick シーケンスを可視化
+
+### 調査メモ
+
+- memo（オーナー）: 壁紙が切り替わらない事象（MAT-02）の土台質問
+- spec 仮説（転記時点・未検証）: dual-source auto-split は §6.1 作業ディレクトリへ optimize 出力。単画像 preset / remote-only は経路が異なる可能性
