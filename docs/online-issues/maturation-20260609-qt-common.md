@@ -390,6 +390,7 @@ GitHub Issue 起票前の観測転記。
 
 - memo（オーナー）: CODH・NDL 観測の前提。JST タイムスタンプ必須。URL 組み立て過程の可視化が欲しい
 - **v0（2026-06-09）:** `REMOTE_SYNC_*` / `NDL_*` / `CODH_*` / `JMA_TICK` ステップ。`ts_jst` は `+09:00` 固定オフセット。viper3 観測は `export HARITE_SLIDESHOW_OP_LOG=~/.cache/harite/slideshow-op.jsonl` 等。
+- **実装:** #450 マージ済み。viper3 JSONL 観測は熟成運転復帰後。
 
 ---
 
@@ -535,11 +536,11 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ** — コード + spec 照合で回答を docs に書く（GitHub Issue 化は棚卸後）
-- 期待する成果: Preset 種別ごとの表（optimize する/しない、保存先 path、apply 入力）
-- 次: MAT-08 ログと合わせて tick シーケンスを可視化
+- **改修着手** — コード + spec 照合で回答を正本化。表は [slideshow-spec §6.2.1](../specs/slideshow/harite-slideshow-spec.md)。
+- 結論: **Optimize は preset 種別ではなく single/dual で分岐。** L のみ preset（典型）では optimize せず、remote cache の `latest.*` を直接 apply。
+- 副次修正: R1 孤児掃除に `harite_slideshow_*` を含める。single-source 成功時に未追跡スロットも削除。
 
 ### 調査メモ
 
 - memo（オーナー）: 壁紙が切り替わらない事象（MAT-02）の土台質問
-- spec 仮説（転記時点・未検証）: dual-source auto-split は §6.1 作業ディレクトリへ optimize 出力。単画像 preset / remote-only は経路が異なる可能性
+- **確定（2026-06-09）:** single-source → optimize なし、apply は cycle 選択 path。dual-source → `{Pictures}/Harite/slideshow/harite_slideshow.jpg`（+ Linux 分割）。JMA「no-optimize」は天気図専用分岐ではなく **single-source 共通経路**。Main margin/align は single-source slideshow に未浸透（MAT-11 接続）。

@@ -259,6 +259,28 @@ single-source:
 | single-source / apply 成功 | 作業ディレクトリのスロットファイル削除、追跡を空に |
 | `on_slideshow_stop` | スロットファイルは残す。追跡 state のみクリア（§6.3 R4） |
 
+#### 6.2.1 Preset / remote source と optimize 経路（MAT-12）
+
+**Optimize の有無は preset 種別ではなく、有効な slideshow 入力が 1 枚か 2 枚かで決まる。** JMA / NDL / CODH preset も `local-dir` と同じ apply 分岐を使う。差分は **sync タイミング**（remote cache の `latest.*` 更新）と **入力 directory** のみ。
+
+| 構成 | Optimize | 成果物の保存先 | plugin `apply` 入力 |
+| --- | --- | --- | --- |
+| **single-source**（L のみ、または有効 path が 1 件） | **しない** | なし（作業ディレクトリのスロットは apply 成功時に削除） | cycle で選んだ **元画像 path**（remote なら `{cache_root}/{source_id}/latest.jpg\|png`、local なら srcdir 内ファイル） |
+| **dual-source**（L+R 両方有効、2 ディスプレイ auto-split 有効） | **する**（毎 start/tick） | `{ピクチャ根}/Harite/slideshow/` の固定スロット（§6.2 R2） | Windows: `harite_slideshow.jpg`（Span）。Linux: per-monitor 分割 map |
+
+**Preset 種別ごとの典型例**（GUI で L のみ選択している場合 — 最も多い）:
+
+| Preset / source | Start 前 sync | Tick 前 sync | Slideshow Mode | single-source 時の apply 入力例 |
+| --- | --- | --- | --- | --- |
+| JMA 天気図 | `sync_remote_source` | `jma_slideshow_tick`（filename 変化時のみ GET） | 実質無効（`latest.png` 1 枚） | `…/remote-cache/{id}/latest.png` |
+| NDL 図版 | `sync_remote_source` | なし | 実質無効（`latest.jpg` 1 枚） | `…/remote-cache/{id}/latest.jpg` |
+| CODH 江戸 | `sync_remote_source` | `codh_slideshow_tick`（cursor + GET） | 有効（sequential / random） | `…/remote-cache/{id}/latest.jpg` |
+| `local-dir` | なし | なし | 有効（複数枚時） | `{user-dir}/photo.jpg` 等 |
+
+**Main の margin / align / scaling:** dual-source optimize では `form_state` を `_build_slideshow_two_screen_state` 経由で読む。**single-source では optimize を通さないため、これらの設定は slideshow apply に作用しない**（MAT-11 関連。意図的な product 判断は別途）。
+
+**実装入口:** `MainWindow._apply_slideshow_selection` — `len(selected_paths)==1` で single-file apply、`==2` で `controller.run_slideshow_optimize`（`harite_slideshow.jpg` 固定スロット。手動 `run_optimize` の `harite_output_NNNN` 採番とは別経路）。
+
 ### 6.3 dual-source 作業ディレクトリの整理要件（R1–R5）
 
 以下を満たす。
