@@ -12,8 +12,9 @@ import pytest
 from harite.slideshow_op_log import log_slideshow_op
 from harite.sources import empty_catalog
 from harite.sources_preset import import_preset_source
-from harite.sources_remote import NDL_RANDOM_FACET_URL, sync_remote_source
+from harite.sources_remote import sync_remote_source
 from harite.sources_remote_codh import codh_slideshow_tick
+from tests.remote_sync_http_mocks import install_ndl_codh_urlopen_mock
 
 
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -46,11 +47,9 @@ def test_ndl_sync_emits_sequence_log(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    from tests.test_c01_remote_ndl_codh_sync import _install_ndl_codh_urlopen_mock
-
     log_path = tmp_path / "slideshow-op.jsonl"
     monkeypatch.setenv("HARITE_SLIDESHOW_OP_LOG", str(log_path))
-    _install_ndl_codh_urlopen_mock(monkeypatch)
+    install_ndl_codh_urlopen_mock(monkeypatch)
 
     cache_root = tmp_path / "remote-cache"
     catalog = empty_catalog()
@@ -70,11 +69,9 @@ def test_codh_sync_emits_index_and_image_steps(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    from tests.test_c01_remote_ndl_codh_sync import _install_ndl_codh_urlopen_mock
-
     log_path = tmp_path / "slideshow-op.jsonl"
     monkeypatch.setenv("HARITE_SLIDESHOW_OP_LOG", str(log_path))
-    _install_ndl_codh_urlopen_mock(monkeypatch)
+    install_ndl_codh_urlopen_mock(monkeypatch)
 
     cache_root = tmp_path / "remote-cache"
     catalog = empty_catalog()
@@ -97,11 +94,9 @@ def test_codh_tick_logs_fetch_failure(
     from io import BytesIO
     from urllib.error import HTTPError
 
-    from tests.test_c01_remote_ndl_codh_sync import _install_ndl_codh_urlopen_mock
-
     log_path = tmp_path / "slideshow-op.jsonl"
     monkeypatch.setenv("HARITE_SLIDESHOW_OP_LOG", str(log_path))
-    _install_ndl_codh_urlopen_mock(monkeypatch)
+    install_ndl_codh_urlopen_mock(monkeypatch)
 
     cache_root = tmp_path / "remote-cache"
     catalog = empty_catalog()
