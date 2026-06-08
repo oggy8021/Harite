@@ -7,7 +7,7 @@
 
 | 文書 | 役割 |
 | --- | --- |
-| [feature-overview §C-01-E-KW](../20260518-2047-feature-overview.md) | inventory 入口（1 行） |
+| [feature-overview §C-01-E-KW](20260518-2047-feature-overview.md) | inventory 入口（1 行） |
 | **本書** | CODH キーワード UI — 計画正本（完了記録） |
 | [CODH inventory](20260603-c01-e-codh-icp-inventory.md) | API・メタデータ棚卸 |
 | [C-01-F planning](20260604-c01-f-remote-sync-on-tick-planning-draft.md) | **完了**（#425–426）— 当時は据え置き。後続で tick sync 実装 |

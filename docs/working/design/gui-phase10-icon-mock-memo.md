@@ -1,6 +1,6 @@
 # GUI Phase10 Icon HTML Mock Memo
 
-最終更新: 2026-06-04（用語: Watch → Slideshow。K-01 は feature-overview [H-08](../20260518-2047-feature-overview.md) 破棄）
+最終更新: 2026-06-09（用語: Watch → Slideshow。K-01 は [H-08](../20260608-1200-feature-pending.md#h-08) 破棄）
 対象: Phase10 Main Window / Slideshow icon mock（当時の design ラベルは Watch）
 
 

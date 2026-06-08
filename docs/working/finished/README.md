@@ -2,7 +2,8 @@
 
 テーマ完了・backlog クローズ・監査/計画の役目を終えた `docs/working/` 文書のアーカイブ。
 
-- 継続して参照する inventory / planning 入口は親の [../20260518-2047-feature-overview.md](../20260518-2047-feature-overview.md) に置く。
+- 継続して参照する inventory / planning 入口は [../20260609-1200-feature-overview.md](../20260609-1200-feature-overview.md)（破棄・保留は [../20260608-1200-feature-pending.md](../20260608-1200-feature-pending.md)）。
+- 第1期 inventory 完了アーカイブ: [20260518-2047-feature-overview.md](20260518-2047-feature-overview.md)
 
 ## 第4波（C-02 → C-05 → C-01 系）— 2026-06-04 整理
 

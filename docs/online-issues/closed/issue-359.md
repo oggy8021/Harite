@@ -18,7 +18,7 @@
 
 ## 関連
 
-- feature-overview: [P-03](../../working/20260518-2047-feature-overview.md) — [planning](../../working/finished/20260606-p03-single-display-ux-planning.md)（**display / monitor まわり UX の入口**。旧 K-01 の monitor 縁はここ。K-01 は [H-08](../../working/20260518-2047-feature-overview.md#3-破棄候補--保留延長) 破棄）
+- feature-overview: [P-03](../../working/finished/20260518-2047-feature-overview.md) — [planning](../../working/finished/20260606-p03-single-display-ux-planning.md)（**display / monitor まわり UX の入口**。旧 K-01 の monitor 縁はここ。K-01 は [H-08](../../working/20260608-1200-feature-pending.md#h-08) 破棄）
 - gui-spec: [§4.3 単 display](../../specs/gui/harite-gui-spec.md)、[§6 slideshow start](../../specs/gui/harite-gui-spec.md)
 - audit: [20260606-p03-3layer-audit.md](../../working/finished/20260606-p03-3layer-audit.md)
 

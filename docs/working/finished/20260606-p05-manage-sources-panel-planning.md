@@ -8,7 +8,7 @@
 
 | 文書                                                                          | 役割                                    |
 | --------------------------------------------------------------------------- | ------------------------------------- |
-| [feature-overview §P-05](../20260518-2047-feature-overview.md)                 | inventory 入口                          |
+| [feature-overview §P-05](20260518-2047-feature-overview.md)                 | inventory 入口                          |
 | **本書**                                                                      | Manage dialog の source 一覧・面板分割 — 計画正本 |
 | [C-01-E-KW 完了](finished/20260605-c01-e-kw-codh-keyword-planning.md)         | `keyword(CODH)` 暫定行の移設先               |
 | [keyword slice-memo](../design/20260605-c01-e-kw-manage-keyword-slice-memo.md) | 暫定 vs 理想の合意                           |

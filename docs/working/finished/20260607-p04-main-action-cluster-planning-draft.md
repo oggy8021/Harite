@@ -7,7 +7,7 @@
 
 | 文書 | 役割 |
 | --- | --- |
-| [feature-overview §P-04](../20260518-2047-feature-overview.md) | inventory 入口 |
+| [feature-overview §P-04](20260518-2047-feature-overview.md) | inventory 入口 |
 | **本書** | Main tab **action cluster**（Preview / Optimize / Apply）の密度整理 |
 | [C-04 計画正本](20260604-c04-gui-surface-planning-draft.md) | Slideshow/Margins/footer は完了。**Main cluster はスコープ外のまま残存** |
 | [harite-gui-spec.md](../../specs/gui/harite-gui-spec.md) | 実装正本（本書合意後に §3 Main tab を改訂） |

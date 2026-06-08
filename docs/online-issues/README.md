@@ -9,7 +9,7 @@ GitHub Issue の調査・観測・方針メモをリポジトリ内に残す置�
 | **GitHub Issue** | 対外トラッカー・議論の入口 | #341, #342, #343 |
 | **docs/online-issues/** | 進行中 Issue の観測ログ・調査メモ | 本ディレクトリ直下 |
 | **docs/online-issues/closed/** | 解決済み Issue の観測ログ・resolution 記録 | [closed/README.md](closed/README.md) |
-| **docs/working/** | 進行中の planning / gap analysis | `20260518-2047-feature-overview.md` 等 |
+| **docs/working/** | 進行中の planning / gap analysis | `20260609-1200-feature-overview.md` 等 |
 | **docs/working/finished/** | 完了した working メモのアーカイブ | [finished/README.md](../working/finished/README.md) |
 | **docs/specs/** | 確定した振る舞いの正本 | `harite-gui-spec.md` 等 |
 
@@ -95,10 +95,10 @@ working メモも完了なら docs/working/finished/ へ移動
 | [#341](closed/issue-341.md) | Windows slideshow / dual-source | **解決済** → spec + #356 | [working](../working/finished/20260531-1200-windows-qt-validation-backlog.md) |
 | [#342](closed/issue-342.md) | Qt Main action cluster レイアウト | polish → **完了** | 同上 |
 | [#343](closed/issue-343.md) | Windows Apply / 壁紙 / 解像度 | **解決済** → spec 反映 | 同上 |
-| [#354](closed/issue-354.md) | Windows settings path（Roaming） | **解決済** → F-01 | [F-01](../../working/20260518-2047-feature-overview.md) |
-| [#353](closed/issue-353.md) | L/R path・srcdir swap | **解決済** → P-01 | [P-01](../../working/20260518-2047-feature-overview.md) |
-| [#358](closed/issue-358.md) | Slideshow srcdir 個別 clear | **解決済** → P-02 | [P-02](../../working/20260518-2047-feature-overview.md) |
-| [#359](closed/issue-359.md) | 単 display / monitor まわり UX（-R 無効化等） | **解決済** → P-03 | [P-03](../../working/20260518-2047-feature-overview.md) |
+| [#354](closed/issue-354.md) | Windows settings path（Roaming） | **解決済** → F-01 | [F-01](../working/finished/20260518-2047-feature-overview.md) |
+| [#353](closed/issue-353.md) | L/R path・srcdir swap | **解決済** → P-01 | [P-01](../working/finished/20260518-2047-feature-overview.md) |
+| [#358](closed/issue-358.md) | Slideshow srcdir 個別 clear | **解決済** → P-02 | [P-02](../working/finished/20260518-2047-feature-overview.md) |
+| [#359](closed/issue-359.md) | 単 display / monitor まわり UX（-R 無効化等） | **解決済** → P-03 | [P-03](../working/finished/20260518-2047-feature-overview.md) |
 
 ## 索引（進行中）
 

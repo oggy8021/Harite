@@ -8,7 +8,7 @@
 
 | 文書                                                                                | 役割                                                        |
 | --------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| [feature-overview](../20260518-2047-feature-overview.md) §C-01-F                     | inventory 入口（1 行）                                         |
+| [feature-overview](20260518-2047-feature-overview.md) §C-01-F                     | inventory 入口（1 行）                                         |
 | **本書**                                                                            | C-01 第 2 段の **計画正本** — remote を「ライブ壁紙 feed」として tick と結線する |
 | [C-01 planning](20260603-1400-c01-external-wallpaper-source-planning.md) | 第 1 段（cache-first staging + Start/Refresh sync）— **完了**   |
 | [C-01-E 統合索引](20260603-c01-e-merged-inventory.md)                        | NDL/CODH 実現性検証 — **完了**（本書の素材）                            |

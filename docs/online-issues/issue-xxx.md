@@ -19,7 +19,7 @@
 
 ## 関連
 
-- feature-overview: （該当時）`P-xx` / `F-xx` / `C-xx` — [20260518-2047-feature-overview.md](../working/20260518-2047-feature-overview.md)
+- feature-overview: （該当時）`Q-xx` / `C-xx` — [20260609-1200-feature-overview.md](../working/20260609-1200-feature-overview.md)（完了 ID は [finished/20260518](../working/finished/20260518-2047-feature-overview.md)）
 - 正本: （該当 spec 節へのリンク）
 - 他 Issue: [#nnn](issue-nnn.md)
 - 実装: `src/...`（分かっていれば）

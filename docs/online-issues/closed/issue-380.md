@@ -18,7 +18,7 @@
 
 ## 関連
 
-- feature-overview: W-03 B-lite — [20260518-2047-feature-overview.md](../../working/20260518-2047-feature-overview.md)
+- feature-overview: W-03 B-lite — [20260518-2047-feature-overview.md](../../working/finished/20260518-2047-feature-overview.md)
 - 正本: [harite-gui-spec.md](../../specs/gui/harite-gui-spec.md) — `windows_apply_span`
 - 他 Issue: [#343](issue-343.md)（Span opt-in 実装）
 - 実装: `src/harite/gui/adapters_qt/qt_dialogs.py`, `src/harite/gui/adapters/gtk_dialog_builders.py`

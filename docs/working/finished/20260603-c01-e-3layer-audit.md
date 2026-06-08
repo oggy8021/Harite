@@ -34,4 +34,4 @@
 
 ## 結論
 
-**C-01-E（V1）は完了** — spec / tests / impl / 実現性検証が一致。**C-01-E-KW**（#413）も完了。次の inventory 入口は [feature-overview](../20260518-2047-feature-overview.md) §1（P-05 / P-03）。
+**C-01-E（V1）は完了** — spec / tests / impl / 実現性検証が一致。**C-01-E-KW**（#413）も完了。当時の次入口は P-05 / P-03（いずれも [feature-overview](20260518-2047-feature-overview.md) で完了）。現行入口は [20260609 feature-overview](../../20260609-1200-feature-overview.md)。

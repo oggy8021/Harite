@@ -7,13 +7,13 @@
 
 | 文書 | 役割 |
 | --- | --- |
-| [feature-overview](../20260518-2047-feature-overview.md) | WS10 **inventory 入口**（ID の置き場・優先順のみ） |
+| [feature-overview](20260518-2047-feature-overview.md) | WS10 **inventory 入口**（ID の置き場・優先順のみ） |
 | **本書** | **C-04 + 近接 polish の計画正本**（オーナー気づきのダンプ、採択表、widget 切り分け、波分け） |
 | [harite-gui-spec.md](../../specs/gui/harite-gui-spec.md) | 実装正本 — **反映済み**（#427） |
 
 **C-03（plugin capability 可視化）** は本書の主題から外す。必要なら C-04 内の「短い環境 help」に吸収する（§6 参照）。
 
-**関連 inventory:** [C-01-E-KW](../20260518-2047-feature-overview.md)（CODH キーワード UI）は **Slideshow / Manage 面の余白** が本書の成果指標の一つ。
+**関連 inventory:** [C-01-E-KW](20260518-2047-feature-overview.md)（CODH キーワード UI）は **Slideshow / Manage 面の余白** が本書の成果指標の一つ。
 
 ---
 
@@ -23,7 +23,7 @@
 
 ### 1.1 密度・導線
 
-- **Slideshow タブ**とその配下ダイアログ（Manage sources and profiles…）が混み合い、キーワード検索などを載せる余裕がない（[C-01-E-KW](../20260518-2047-feature-overview.md) の先送りと直結）。
+- **Slideshow タブ**とその配下ダイアログ（Manage sources and profiles…）が混み合い、キーワード検索などを載せる余裕がない（[C-01-E-KW](20260518-2047-feature-overview.md) の先送りと直結）。
 - Slideshow では **中核操作**（source 選定 → Start）と **補助操作**（registry 管理、preset 体験、mode help、output 表示）の流れが悪い。§4 の切り分けで整理したい。
 - 補助・付帯操作は **Drawer**（側面／下段の開閉パネル等）に追い出す案がある。
 - **Margin タブ**は Copilot 時代に分離したが、**永久の 3 tab 構成ではない**。意味論（margin 十字）が伝わりやすければ **Main から Drawer 等で開く**案もある（§7.2）。
@@ -49,7 +49,7 @@
 
 ### 1.5 維持・強化
 
-- **ボタン enable/disable** は効果的で好印象 → 拡張（[P-03](../20260518-2047-feature-overview.md) / #359 と同系）。
+- **ボタン enable/disable** は効果的で好印象 → 拡張（[P-03](20260518-2047-feature-overview.md) / #359 と同系）。
 - **hoobar / Tooltip** はうまい手 → 情報逃がし先として拡張。
 
 ### 1.6 ゴール（product）
@@ -87,7 +87,7 @@
 | --- | --- |
 | 現行（plugin 実質 1 択、Settings に Plugin 文字列） | **日常 UI に plugin  identity を出さない** — A4 非採択 |
 | plugin が細分化・複数化し、ユーザーが **選ぶ・切り替える** | そのとき初めて「どれが active か」の表示を再検討 |
-| [K-04](../20260518-2047-feature-overview.md) plugin 拡張パック + コミュニティ MR 受け入れ | **再検討のゲート**。それまでは capability パネルも「何者か」常設も不要 |
+| [K-04](../../20260609-1200-feature-overview.md) plugin 拡張パック + コミュニティ MR 受け入れ | **再検討のゲート**。それまでは capability パネルも「何者か」常設も不要 |
 | C-03 型の capability 可視化パネル | 上記ゲートなしでは **出さない**（§6） |
 
 **残してよいもの:** Settings の `Plugin` 行（設定ファイル・上級者向け）。Apply mode help の Span/Auto-Split 説明（plugin 名ではなく **挙動**の説明）。
@@ -162,7 +162,7 @@ mock: [surface-slice.html](../design/20260604-c04-slideshow-margins-surface-slic
 
 ### 4.3 C-01-E-KW との関係
 
-[C-01-E-KW](../20260518-2047-feature-overview.md) 先送り理由は「Manage 周りが込み入り」。**C-04b で Manage を Drawer 化または tab 正面の行数削減**できれば、KW 入力は dialog 内 1 フィールド追加で再評価可能。
+[C-01-E-KW](20260518-2047-feature-overview.md) 先送り理由は「Manage 周りが込み入り」。**C-04b で Manage を Drawer 化または tab 正面の行数削減**できれば、KW 入力は dialog 内 1 フィールド追加で再評価可能。
 
 ---
 

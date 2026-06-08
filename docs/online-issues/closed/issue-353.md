@@ -18,7 +18,7 @@
 
 ## 関連
 
-- feature-overview: [P-01](../../working/20260518-2047-feature-overview.md)
+- feature-overview: [P-01](../../working/finished/20260518-2047-feature-overview.md)
 - [#358](issue-358.md)（同第2波 — Slideshow clear）
 - design: [20260601-p01-p02-lr-swap-clear-slice.html](../../working/design/20260601-p01-p02-lr-swap-clear-slice.html)
 - 正本: [harite-gui-spec.md §3 Main / §4.1](../../specs/gui/harite-gui-spec.md)
