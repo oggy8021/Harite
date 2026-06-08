@@ -303,8 +303,8 @@ GitHub Issue 起票前の観測転記。
 
 - memo（オーナー）: Xfce のみ。Ctrl+Space 無効
 - **仮説（2026-06-09）:** pip PyQt6 の `platforminputcontexts` に ibus のみで fcitx 欠落。`GTK_IM_MODULE=fcitx5` でも `QT_IM_MODULE` 未設定だと Qt が IM に繋がらない。Manage dialog の keyword は日本語入力の主導線のため同 surface で顕在化。
-- **実機（オーナー・viper3 / Xfce / Linux Mint 22.3 Zena）:** mozc（fcitx 内）。env 整合・Firefox OK。`fcitx5-frontend-qt6` 導入済み。**`QT_DEBUG_PLUGINS=1` で確定:** distro `libfcitx5platforminputcontextplugin.so` は `Qt_6_PRIVATE_API` 未定義シンボルで **ロード失敗** — pip PyQt6 同梱 Qt6 とは **非互換**（symlink/LD_LIBRARY_PATH では解決不可）。**回避:** apt `python3-pyqt6` + `--system-site-packages` venv。**Harite #448 更新:** pip 環境では symlink しない・既存 symlink 削除・起動時 warning。
-- **修正:** `qt_input_method.py` — 起動前 env、システムプラグイン symlink、`configure_text_input_widget`、欠落時 warning。spec: gui-spec Manage dialog Linux IME。テスト: `test_qt_input_method.py`
+- **実機（オーナー・viper3 / Xfce / Linux Mint 22.3 Zena）:** mozc（fcitx 内）。env 整合・Firefox OK。`fcitx5-frontend-qt6` 導入済み。**`QT_DEBUG_PLUGINS=1` で確定:** distro fcitx プラグインは pip PyQt6 と `Qt_6_PRIVATE_API` **非互換**。**回避:** apt `python3-pyqt6` + `--system-site-packages` venv → **keyword 欄 IME 成功**（オーナー確認）。**副作用:** 全 SVG アイコン非表示（`QPixmap::scaled: Pixmap is a null pixmap`）— distro PyQt6 は **QtSvg 別パッケージ**（`python3-pyqt6.qtsvg`）が要る。Harite #448: pip fcitx symlink 廃止、起動時 warning、`qt_svg_support` 追加。
+- **修正:** `qt_input_method.py` — env 補完、`configure_text_input_widget`、pip/distro 分岐 warning。`qt_svg_support.py` — SVG 欠落 warning。spec: gui-spec Linux Qt 前提。テスト: `test_qt_input_method.py`、`test_qt_svg_support.py`
 
 ---
 
