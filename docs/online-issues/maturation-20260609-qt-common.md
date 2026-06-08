@@ -110,7 +110,7 @@ GitHub Issue 起票前の観測転記。
 
 - **改修着手** — 母体の **基底ロジックと貼り方は変えない**（回帰する）。
 - パイプライン: `contains` → 必要時のみ downsize → display 矩形へ align → merge/paste。
-- PR: `fix/mat-01b-native-placement`（#442 マージ後にマージ想定）。
+- PR: **#444**（`fix/mat-01b-native-placement-retry` → `main`）。#442 マージ済み。#443 は誤 close。
 - 詳細: [改修方針ドラフト](../working/design/20260609-mat-01b-native-placement-repair-draft.md)
 
 ### 調査メモ
