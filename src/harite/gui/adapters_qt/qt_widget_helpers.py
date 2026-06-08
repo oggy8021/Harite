@@ -406,18 +406,36 @@ def refresh_slideshow_mode_controls(backend: Any, owner: Any) -> None:
         )
 
 
-def refresh_slideshow_summary_label(backend: Any) -> None:
+def _slideshow_display_state(backend: Any) -> str:
+    """Return stopped / running / paused (GTK ``refresh_slideshow_summary_label`` parity)."""
     running = bool(getattr(backend, "_slideshow_running", False))
-    l_src = getattr(backend, "_slideshow_srcdir_l", "")
-    r_src = getattr(backend, "_slideshow_srcdir_r", "")
-    has_src = bool(l_src or r_src)
+    paused = bool(getattr(backend, "_slideshow_paused", False))
+    if paused and running:
+        return "paused"
     if running:
-        text = "Slideshow: running"
-    elif has_src:
-        text = "Slideshow: ready"
-    else:
-        text = "Slideshow: no source"
-    set_label_text(backend, "lblSlideshowSummary", text)
+        return "running"
+    return "stopped"
+
+
+def refresh_slideshow_tab_title(backend: Any, state: str | None = None) -> None:
+    """Sync QTabWidget tab text and registry label with slideshow state (MAT-02)."""
+    resolved = state or _slideshow_display_state(backend)
+    title = f"Slideshow ({resolved})"
+    set_label_text(backend, "lblSlideshowTabTitle", title)
+    tabs = backend._objects.get("command_tabs")
+    tab_box = backend._objects.get("slideshow_tab_box")
+    if tabs is None or tab_box is None or not hasattr(tabs, "setTabText"):
+        return
+    for index in range(tabs.count()):
+        if tabs.widget(index) is tab_box:
+            tabs.setTabText(index, title)
+            break
+
+
+def refresh_slideshow_summary_label(backend: Any) -> None:
+    state = _slideshow_display_state(backend)
+    set_label_text(backend, "lblSlideshowSummary", f"Slideshow: {state}")
+    refresh_slideshow_tab_title(backend, state)
 
 
 def refresh_slideshow_current_label(

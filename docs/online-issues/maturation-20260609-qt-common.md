@@ -53,9 +53,8 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- ~~現時点: **転記のみ**~~ → **改修着手**（初回 PR）
+- **完了** — #442 マージ。実機で align 体感 OK（オーナー確認 2026-06-09）。
 - スコープ: direction toggle → `form_state.align` / `valign` への反映
-- 次: optimize 出力での視覚確認（本件の handler 経路は修正済み）
 
 ### 調査メモ
 
@@ -108,9 +107,7 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- **改修着手** — 母体の **基底ロジックと貼り方は変えない**（回帰する）。
-- パイプライン: `contains` → 必要時のみ downsize → display 矩形へ align → merge/paste。
-- PR: **#444**（`fix/mat-01b-native-placement-retry` → `main`）。#442 マージ済み。#443 は誤 close。
+- **完了** — #444 マージ。実機で align 体感 OK（オーナー確認 2026-06-09）。
 - 詳細: [改修方針ドラフト](../working/design/20260609-mat-01b-native-placement-repair-draft.md)
 
 ### 調査メモ
@@ -151,13 +148,14 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
+- **改修着手** — Qt `refresh_slideshow_summary_label` が **タブ見出しを更新していなかった**（GTK は両方更新）。
 - スコープ: **表示整合のみ**（タブ title / footer / Start-Stop enable）。tick 失敗・remote sync は MAT-02b へ
-- 次: 再現 state のスナップショット（settings / srcdir / running フラグ）→ ラベル更新経路の照合
 
 ### 調査メモ
 
 - memo（オーナー）: 壁紙未切替・Error none だが Stop 有効。取得系は別枠
+- **原因（2026-06-09）:** Qt は footer のみ更新。`QTabWidget.setTabText` と `lblSlideshowTabTitle` が初期 `Slideshow (stopped)` のまま。GTK `refresh_slideshow_summary_label` は両方を `Slideshow ({state})` に同期。
+- **修正:** `qt_widget_helpers.refresh_slideshow_summary_label` — stopped/running/paused を GTK 同型で footer + tab に反映。
 
 ---
 
