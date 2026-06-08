@@ -364,7 +364,7 @@ catalog 契約は [source-spec §7](../source/harite-source-spec.md)。
 - **Presets タブ:** remote/preset 一覧（provider グループ見出し + 名前昇順）、**keyword(CODH)**、Refresh。
   - グループ見出し: `JMA 天気図` / `NDL 図版` / `CODH 江戸` / `その他`（`harite-preset:` の preset_id 接頭辞で分類）。
   - Delete は **Local タブのみ**（preset は materialize で再出現しうる）。
-- **keyword(CODH)**: Presets タブ内に常設 `QLineEdit`（ラベル `keyword(CODH)`、初期値 `桜`、`maxLength=16`）。`codh-edo-spots-keyword` / `codh-edo-shops-keyword` 選択時のみ enabled。Refresh 前および Close 時に `harite-settings.json` の `codh_keyword` へ反映（[source-spec §15.4.2](../source/harite-source-spec.md)）。
+- **keyword(CODH)**: Presets タブ内に常設 `QLineEdit`（ラベル `keyword(CODH)`、初期値 `桜`、`maxLength=16`）。`codh-edo-spots-keyword` / `codh-edo-shops-keyword` 選択時のみ enabled。編集中のドラフトは **preset 選択変更・Enter・フォーカス移動では破棄しない**（Close / Refresh 確定まで field 上の最新文字列を保持）。Refresh 前および Close 時に `harite-settings.json` の `codh_keyword` へ反映（[source-spec §15.4.2](../source/harite-source-spec.md)）。
 - Profiles: 一覧、L/R slot combo（source id または empty）、Add / Delete profile。
 - 保存は `harite-sources.json` へ即 write。settings dialog とは別 surface。
 - dialog Close 後、Slideshow tab の profile / saved source combo を reload する。

@@ -9,6 +9,40 @@ import pytest
 pytest.importorskip("PyQt6.QtWidgets")
 
 
+def test_sync_manage_dialog_keyword_field_preserves_entry_text(qapp, tmp_path: Path):
+    from PyQt6.QtWidgets import QLineEdit
+
+    from harite.gui.adapters_qt.qt_source_registry_dialog import sync_manage_dialog_keyword_field
+    from harite.sources import empty_catalog, import_preset_source
+
+    cache = tmp_path / "cache"
+    catalog = empty_catalog()
+    keyword_source = import_preset_source(catalog, "codh-edo-spots-keyword", cache_root=cache)
+
+    keyword_entry = QLineEdit("edited-draft")
+    sync_manage_dialog_keyword_field(keyword_entry, selected_entry=keyword_source)
+
+    assert keyword_entry.text() == "edited-draft"
+    assert keyword_entry.isEnabled() is True
+
+
+def test_sync_manage_dialog_keyword_field_disables_for_non_keyword_preset(qapp, tmp_path: Path):
+    from PyQt6.QtWidgets import QLineEdit
+
+    from harite.gui.adapters_qt.qt_source_registry_dialog import sync_manage_dialog_keyword_field
+    from harite.sources import empty_catalog, import_preset_source
+
+    cache = tmp_path / "cache"
+    catalog = empty_catalog()
+    random_source = import_preset_source(catalog, "codh-edo-shops-random", cache_root=cache)
+
+    keyword_entry = QLineEdit("edited-draft")
+    sync_manage_dialog_keyword_field(keyword_entry, selected_entry=random_source)
+
+    assert keyword_entry.text() == "edited-draft"
+    assert keyword_entry.isEnabled() is False
+
+
 def test_apply_profile_slot_combos_avoids_stale_sibling_slot(qapp):
     from PyQt6.QtWidgets import QComboBox
 
