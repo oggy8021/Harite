@@ -25,16 +25,27 @@
   - 役割: コード整形・スタイルチェック（早期の軽量フィードバック）。
   - 備考: ここでの失敗はコード品質指摘だが必須修正対象とするかは運用次第。
 
+- `changes`（コード変更検出、PR のみ）
+  - 役割: `dorny/paths-filter` で `src/`, `tests/`, 依存定義, `.github/`, `scripts/` 等の変更を検出する。
+  - `docs/**` のみの PR では後段の pytest を省略し、同名の `Test matrix` ジョブを即時成功させる（branch protection の必須チェック名を維持）。
+
 - `test`（テストマトリクス）
-  - 実行環境: `ubuntu-latest`、`macos-latest`、`windows-latest`（matrix）
-  - 役割: 各 OS 上でのユニットテストを実行し互換性を確認。
-  - 備考: 現状は Python 3.12 のみで回しており、CI の重さが出やすいポイント。重要だが、全組合せを PR 毎に必須にするかはコストと頻度を考慮して判断すること。
+  - 実行環境: `ubuntu-latest`（matrix、Python 3.12）
+  - 役割: ユニットテスト（`pytest -q`、`QT_QPA_PLATFORM=offscreen`）。
+  - 備考: PR でコード変更がある場合、または `main` への push 時に実行。`pip` キャッシュ（`setup-python` `cache: pip`）で依存インストールを短縮。
 
-運用上の提案
+- `test-skipped`（docs-only PR 用）
+  - 役割: コード変更なし PR 向けの pytest 省略パス。チェック名は `Test matrix (ubuntu-latest, 3.12)` と同一。
 
-- 当面の方針: テストマトリクスは `ubuntu` のみ（必要に応じて XFCE に絞る）で運用します。Windows や macOS を正式にサポート・検証対象とする明確なリリース企画がある場合に限り、マトリクス拡張や縮約（代表環境のみ）を検討します。
-- マトリクスの縮約案: Windows/macOS を継続的に対象にする場合は、PR 毎は代表環境のみ（縮約）とし、完全マトリクスは別ジョブやスケジュールで実行する案を検討します。
-- 夜間バッチ／手動トリガー: 今回は一旦候補外とし、PR 毎のジョブは原則として即時実行のみとします。
+- `build-dist`
+  - 役割: sdist / wheel ビルドと artifact 保存。
+  - 備考: branch protection の必須チェックには含めない（`test` 成功後に実行）。
+
+運用上の方針
+
+- テストマトリクスは **ubuntu のみ**（`.github/branch-protection.json` と整合）。
+- `docs/**` のみの PR は pytest を省略（lint / pr-checks / docs-diff-check は従来どおり）。
+- Windows / macOS マトリクスは PR 毎必須から外す。将来のリリース企画がある場合に別ジョブで検討。
 
 ---
 
