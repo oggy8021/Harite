@@ -2,7 +2,8 @@ from pathlib import Path
 from harite.core import optimize_wallpapers
 
 
-def test_upscale_when_target_larger(tmp_path):
+def test_native_size_when_target_larger(tmp_path):
+    """MAT-01b: small images stay native size (parent parity; no upscale)."""
     p = Path("tests/data/left.jpg")
     assert p.exists()
 
@@ -16,8 +17,7 @@ def test_upscale_when_target_larger(tmp_path):
     )
 
     assert len(placements) == 1
-    # target bigger than source -> scale should be > 1
-    assert placements[0].scale > 1.0
+    assert placements[0].scale == 1.0
 
 
 def test_three_images_split(tmp_path):

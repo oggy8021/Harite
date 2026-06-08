@@ -151,6 +151,139 @@ def _scale_to_fit(img: Image.Image, max_w: int, max_h: int) -> Tuple[int, int, f
     return nw, nh, scale
 
 
+def _image_fits_with_margins(
+    img_w: int,
+    img_h: int,
+    screen_w: int,
+    screen_h: int,
+    margins: Tuple[int, int, int, int],
+) -> bool:
+    """Return True when image plus margins fit inside the display rectangle."""
+    ml, mr, mt, mb = margins
+    return screen_w >= img_w + ml + mr and screen_h >= img_h + mt + mb
+
+
+def _downsize_to_fit_margins(
+    img_w: int,
+    img_h: int,
+    screen_w: int,
+    screen_h: int,
+    margins: Tuple[int, int, int, int],
+) -> Tuple[int, int, float]:
+    """Shrink image to fit a display with margins (parent down-only; never upscale)."""
+    if img_w == 0 or img_h == 0:
+        return 1, 1, 1.0
+    ml, mr, mt, mb = margins
+    max_w = max(1, screen_w - ml - mr)
+    max_h = max(1, screen_h - mt - mb)
+    w, h = img_w, img_h
+    orig_w, orig_h = w, h
+    if w > max_w:
+        h = max(1, int(h * max_w / w))
+        w = max_w
+    if h > max_h:
+        w = max(1, int(w * max_h / h))
+        h = max_h
+    scale = min(w / orig_w, h / orig_h)
+    return w, h, float(scale)
+
+
+def _resolve_native_dimensions(
+    img: Image.Image,
+    screen_w: int,
+    screen_h: int,
+    margins: Tuple[int, int, int, int],
+) -> Tuple[int, int, float]:
+    """Keep native size when image+margins fit; otherwise parent-style downsize only."""
+    w, h = img.size
+    if _image_fits_with_margins(w, h, screen_w, screen_h, margins):
+        return w, h, 1.0
+    return _downsize_to_fit_margins(w, h, screen_w, screen_h, margins)
+
+
+def _allocate_on_display(
+    img_w: int,
+    img_h: int,
+    screen_w: int,
+    screen_h: int,
+    align: str,
+    valign: str,
+) -> Tuple[int, int]:
+    """Position image within a display rectangle (origin left/top; parent parity)."""
+    space_x = max(0, screen_w - img_w)
+    space_y = max(0, screen_h - img_h)
+    if align == "right":
+        x = space_x
+    elif align == "center":
+        x = space_x // 2
+    else:
+        x = 0
+    if valign == "bottom":
+        y = space_y
+    elif valign == "center":
+        y = space_y // 2
+    else:
+        y = 0
+    return x, y
+
+
+def _resolve_display_slots(
+    *,
+    w_target: int,
+    h_target: int,
+    count: int,
+    two_screen: bool,
+    l_display: Optional[Tuple[int, int]],
+    r_display: Optional[Tuple[int, int]],
+    ml: int,
+    mr: int,
+    mt: int,
+    mb: int,
+) -> List[Tuple[int, int, int, int, Tuple[int, int, int, int]]]:
+    """Return per-image slots: (origin_x, origin_y, screen_w, screen_h, side_margins)."""
+    slots: List[Tuple[int, int, int, int, Tuple[int, int, int, int]]] = []
+
+    if two_screen and l_display and r_display:
+        left_w = int(l_display[0])
+        right_w = int(r_display[0])
+        total_display_w = max(1, left_w + right_w)
+        split_x = int(round((left_w / total_display_w) * w_target))
+        split_x = max(1, min(w_target - 1, split_x)) if w_target > 1 else w_target
+        left_slice_w = max(1, int(split_x or 0))
+        right_slice_w = max(1, w_target - left_slice_w)
+        left_screen_h = max(1, min(h_target, int(l_display[1])))
+        right_screen_h = max(1, min(h_target, int(r_display[1])))
+        slots.append((0, 0, left_slice_w, left_screen_h, (ml, 0, mt, mb)))
+        slots.append((split_x, 0, right_slice_w, right_screen_h, (0, mr, mt, mb)))
+        return slots[:count]
+
+    if two_screen:
+        left_slice_w = max(1, w_target // 2)
+        right_slice_w = max(1, w_target - left_slice_w)
+        slots.append((0, 0, left_slice_w, h_target, (ml, 0, mt, mb)))
+        slots.append((left_slice_w, 0, right_slice_w, h_target, (0, mr, mt, mb)))
+        return slots[:count]
+
+    if count <= 1:
+        slots.append((0, 0, w_target, h_target, (ml, mr, mt, mb)))
+        return slots
+
+    base_w = max(1, w_target // count)
+    widths = [base_w] * count
+    widths[-1] = max(1, w_target - base_w * (count - 1))
+    origin_x = 0
+    for i, slice_w in enumerate(widths):
+        if i == 0:
+            side_margins = (ml, 0, mt, mb)
+        elif i == count - 1:
+            side_margins = (0, mr, mt, mb)
+        else:
+            side_margins = (0, 0, mt, mb)
+        slots.append((origin_x, 0, slice_w, h_target, side_margins))
+        origin_x += slice_w
+    return slots
+
+
 def _build_embed_lines(
     mode: str,
     *,
@@ -524,46 +657,21 @@ def optimize_wallpapers(
     saved_files: List[Path] = []
 
     count = max(1, len(items))
-
-    # Compute inner available area after margins
-    inner_w = max(1, w_target - (ml + mr))
-    inner_h = max(1, h_target - (mt + mb))
-
-    split_x = None
-    # If two-screen with explicit displays, prefer those widths
-    if two_screen and l_display and r_display:
-        # Force count to 2
-        count = 2
-        left_w = int(l_display[0])
-        right_w = int(r_display[0])
-        total_display_w = max(1, left_w + right_w)
-        split_x = int(round((left_w / total_display_w) * w_target))
-        split_x = max(1, min(w_target - 1, split_x)) if w_target > 1 else w_target
-        left_slice_w = max(1, int(split_x or 0))
-        right_slice_w = max(1, w_target - left_slice_w)
-        left_region_w = max(1, left_slice_w - (ml + mr))
-        right_region_w = max(1, right_slice_w - (ml + mr))
-        left_display_h = max(1, int(l_display[1]))
-        right_display_h = max(1, int(r_display[1]))
-        cell_w_list = [left_region_w, right_region_w]
-        cell_h_list = [
-            max(1, min(h_target, left_display_h) - (mt + mb)),
-            max(1, min(h_target, right_display_h) - (mt + mb)),
-        ]
-    elif two_screen:
+    if two_screen:
         count = min(2, count)
-        left_slice_w = max(1, w_target // 2)
-        right_slice_w = max(1, w_target - left_slice_w)
-        cell_w_list = [
-            max(1, left_slice_w - (ml + mr)),
-            max(1, right_slice_w - (ml + mr)),
-        ][:count]
-        cell_h_list = [max(1, h_target - (mt + mb))] * count
-    else:
-        # Simple layout: split inner width horizontally among items
-        cell_w = max(1, inner_w // count)
-        cell_w_list = [cell_w] * count
-        cell_h_list = [inner_h] * count
+
+    display_slots = _resolve_display_slots(
+        w_target=w_target,
+        h_target=h_target,
+        count=count,
+        two_screen=two_screen,
+        l_display=l_display,
+        r_display=r_display,
+        ml=ml,
+        mr=mr,
+        mt=mt,
+        mb=mb,
+    )
 
     for i, img_path in enumerate(items[:count]):
         try:
@@ -572,49 +680,18 @@ def optimize_wallpapers(
             # Skip unreadable images
             continue
 
-        # determine this cell's width
-        this_cell_w = cell_w_list[i] if i < len(cell_w_list) else cell_w_list[-1]
-        this_cell_h = cell_h_list[i] if i < len(cell_h_list) else cell_h_list[-1]
-        nw, nh, scale = _scale_to_fit(img, this_cell_w, this_cell_h)
-        img_resized = img.resize((nw, nh), Image.LANCZOS)
+        slot = display_slots[i] if i < len(display_slots) else display_slots[-1]
+        origin_x, origin_y, screen_w, screen_h, side_margins = slot
+        nw, nh, scale = _resolve_native_dimensions(img, screen_w, screen_h, side_margins)
+        if (nw, nh) != img.size:
+            img_resized = img.resize((nw, nh), Image.LANCZOS)
+        else:
+            img_resized = img
 
-        # determine alignment offsets (defaults: center)
         align, valign = _resolve_cell_alignment(kwargs, i)
-
-        # horizontal offset within this cell
-        space_x = max(0, this_cell_w - nw)
-        if align == "left":
-            inner_x = 0
-        elif align == "right":
-            inner_x = space_x
-        else:
-            inner_x = space_x // 2
-
-        # vertical offset within this cell
-        space_y = max(0, this_cell_h - nh)
-        if valign == "top":
-            inner_y = 0
-        elif valign == "bottom":
-            inner_y = space_y
-        else:
-            inner_y = space_y // 2
-
-        # compute x offset: start from left margin
-        if two_screen and l_display and r_display:
-            if i == 0:
-                x = ml + inner_x
-            else:
-                x = int(split_x or 0) + ml + inner_x
-        elif two_screen:
-            left_slice_w = max(1, w_target // 2)
-            if i == 0:
-                x = ml + inner_x
-            else:
-                x = left_slice_w + ml + inner_x
-        else:
-            x = ml + i * this_cell_w + inner_x
-
-        y = mt + inner_y
+        inner_x, inner_y = _allocate_on_display(nw, nh, screen_w, screen_h, align, valign)
+        x = origin_x + inner_x
+        y = origin_y + inner_y
 
         bg.paste(img_resized, (x, y))
 
@@ -691,9 +768,10 @@ def compute_placement(
         `PlacementResult`。
     """
     img = Image.open(image_path).convert("RGB")
-    nw, nh, scale = _scale_to_fit(img, target_resolution[0], target_resolution[1])
-    x = max(0, (target_resolution[0] - nw) // 2)
-    y = max(0, (target_resolution[1] - nh) // 2)
+    screen_w, screen_h = target_resolution
+    zero_margins = (0, 0, 0, 0)
+    nw, nh, scale = _resolve_native_dimensions(img, screen_w, screen_h, zero_margins)
+    x, y = _allocate_on_display(nw, nh, screen_w, screen_h, "center", "center")
     return PlacementResult(image_path=Path(image_path), x=x, y=y, width=nw, height=nh, scale=scale)
 
 
