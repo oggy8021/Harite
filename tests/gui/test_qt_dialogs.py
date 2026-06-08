@@ -223,6 +223,70 @@ def test_color_dialog_proxy_get_pending_color(qapp):
     assert proxy.get_pending_color() == "#334455"
 
 
+def test_color_dialog_proxy_get_pending_color_reads_entry_text(qapp):
+    from harite.gui.adapters_qt.qt_dialogs import build_color_dialog
+
+    w = build_color_dialog(default_color_hex="#112233")
+    w["color_value_entry"].setText("#AABBCC")
+
+    assert w["ColorDialog"].get_pending_color() == "#AABBCC"
+
+
+def test_color_dialog_open_dialog_shows_manual_editor(qapp):
+    from harite.gui.adapters_qt.qt_dialogs import build_color_dialog
+
+    w = build_color_dialog()
+    proxy = w["ColorDialog"]
+
+    proxy.open_dialog()
+
+    assert w["color_window"].isVisible() is True
+
+
+def test_color_dialog_shows_color_preview_in_picker_host(qapp):
+    from harite.gui.adapters_qt.qt_dialogs import build_color_dialog
+
+    w = build_color_dialog(default_color_hex="#112233")
+    proxy = w["ColorDialog"]
+
+    assert proxy._color_preview is not None
+    assert w["color_picker_host"].layout().count() >= 2
+    assert "background-color: #112233" in proxy._color_preview.styleSheet()
+    proxy.open_dialog()
+    assert w["color_pick_btn"].isHidden() is False
+
+
+def test_color_dialog_preview_syncs_with_entry(qapp):
+    from harite.gui.adapters_qt.qt_dialogs import build_color_dialog
+
+    w = build_color_dialog(default_color_hex="#112233")
+    proxy = w["ColorDialog"]
+
+    w["color_value_entry"].setText("#AABBCC")
+
+    assert "background-color: #AABBCC" in proxy._color_preview.styleSheet()
+    assert proxy.get_pending_color() == "#AABBCC"
+
+
+def test_color_dialog_pick_color_syncs_entry(qapp, monkeypatch):
+    from PyQt6.QtGui import QColor
+
+    from harite.gui.adapters_qt.qt_dialogs import build_color_dialog
+
+    w = build_color_dialog(default_color_hex="#112233")
+    proxy = w["ColorDialog"]
+
+    monkeypatch.setattr(
+        "PyQt6.QtWidgets.QColorDialog.getColor",
+        lambda *_args, **_kwargs: QColor("#AABBCC"),
+    )
+
+    proxy.pick_color()
+
+    assert proxy.get_pending_color() == "#AABBCC"
+    assert w["color_value_entry"].text() == "#AABBCC"
+
+
 def test_color_dialog_proxy_notice(qapp):
     from harite.gui.adapters_qt.qt_dialogs import build_color_dialog
 

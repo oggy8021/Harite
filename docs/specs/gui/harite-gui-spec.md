@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-08
+最終更新: 2026-06-09
 
 ## 1. GUI の責務
 
@@ -123,6 +123,7 @@ Main Window:
 - footer の `Status`、`Slideshow summary`、`Error` は実行状態と失敗面を読むための常設説明面である。
 - footer の `Error` は `Status` / `Slideshow summary` と **視覚的に区別**する（例: 赤系 foreground）。同一の muted 色で status と error を並べない。
 - footer の `Status` 行に `{Phase}: {state}` 形式を常設しない。進行中の slideshow 状態は `Slideshow summary` に寄せる。内部の `status_phase` は保持してよい。
+- footer の `Slideshow summary` と notebook の `Slideshow (...)` タブ見出しは **同一の実行状態**（`stopped` / `running` / `paused`）で同期する。`refresh_slideshow_summary_label` が両方を `Slideshow ({state})` 形式へ更新する。
 
 Main tab:
 
@@ -203,11 +204,73 @@ Dialogs:
 - settings dialog の `Apply` row は radio を横並びに持つが、main tab の apply mode help label に相当する補助説明 row は持たない。
 - settings dialog は下段に `Settings: current values` を起点とする state label と notice label を持つ。
 - optimize 結果画像の書き出しには別の image export dialog を使い、user-facing surface は dialog title に `Export Image`、状態表示に `Export path`、選択結果表示に `Export target` を使う。
-- color dialog は title、picker host、値 entry、actions row、separator、state/notice の順で縦積みする。
-- color dialog は下段に `Color: ...` を起点とする state label と notice label を持つ。
+- color dialog の組み立て・操作・backend 差分は **§3.1 Color dialog** を正本とする。
 - about dialog は content 全体を window 内で上下中央寄せし、icon、title、version、description、credits、license、close button を縦積みする。
 - about dialog の `Version`、`description`、`Credits`、`License` は product 情報を読むための常設情報 label 群である。
 - dialog 群は main window より小さい独立 window として扱い、settings だけ resizable、color/about は fixed-size 寄りの扱いを取る。
+
+### 3.1 Color dialog（背景色）
+
+MAT-03（2026-06-09）で Qt の組み立てと操作契約を GTK と揃えた。本節が color dialog の正本である。
+
+#### Window
+
+- title: `Background Color`
+- main window より小さい **独立 window**（non-modal、fixed-size 寄り）
+- 既定サイズ: **420×360**（GTK / Qt 共通）
+- 実装: GTK `build_color_dialog_section`、`Qt` `build_color_dialog`
+
+#### 縦積み（上→下）
+
+| 段 | user-facing | 役割 |
+| --- | --- | --- |
+| 1 | `Background color (#RRGGBB)` | 編集面タイトル |
+| 2 | picker host | backend 固有の色選択・プレビュー面（下記） |
+| 3 | hex entry | `#RRGGBB` リテラル。Apply の読取元 |
+| 4 | actions row | `Pick Color` / `Color Apply` / `Color Cancel`（横並び） |
+| 5 | separator | state / notice との区切り |
+| 6 | `Color: {hex}` | 直近に Apply 済みの確定色（state label） |
+| 7 | notice label | 検証エラー等（例: `Color: invalid background color`） |
+
+#### picker host（backend 差分）
+
+| backend | picker host の中身 | `Pick Color` |
+| --- | --- | --- |
+| GTK | 可能なら `ColorChooserWidget` を embedded。選択は entry と同期 | embedded 有効時は **非表示** |
+| Qt | caption `Current background color` + **現在色 preview**（`QLabel` + `background-color` stylesheet）。entry / `Pick Color` / `set_color` と同期。無効 hex は `Invalid color` 表示 | **常設**。native `QColorDialog.getColor` を開く |
+
+Qt は picker host へ **非 native `QColorDialog` を embedded しない**。Windows では別窓 `Select Color` が重複起動し、host が空の白枠になるため（MAT-03 調査）。
+
+#### 操作フロー（2 段）
+
+```mermaid
+flowchart LR
+    A[header Color / tray BaseColor] --> B[手動 editor を開く]
+    B --> C[entry に作業色]
+    C --> D[Color Apply]
+    D --> E[form_state.background_color]
+    E --> F[Optimize / Slideshow]
+
+    C -.->|任意| G[Pick Color]
+    G -.->|native chooser 確定| C
+```
+
+1. **編集（作業色）** — picker host / hex entry / `Pick Color` で `#RRGGBB` を決める。この時点では **Optimize には未反映**。
+2. **確定（システム書き戻し）** — `Color Apply` が entry を `get_pending_color()` で読み、`on_set_color(color)` → `form_state.background_color` と settings キャッシュへ反映。成功時は dialog を閉じ、`lblColorState` を更新。
+
+#### シグナル契約（GTK / Qt 共通）
+
+| 操作 | handler 経路 | 備考 |
+| --- | --- | --- |
+| header `Color` / tray `BaseColor` | `on_color_clicked` → `refresh_color_dialog_from_getter` → `on_set_color(None)` → `ColorDialog.open_dialog()`（**show のみ**） | Qt は **起動時に native chooser を自動では開かない** |
+| `Pick Color` | `pick_color()` → native chooser → `set_color`（entry + preview 同期） | Apply 前の作業色 |
+| `Color Apply` | `on_color_dialog_apply_clicked` → `get_pending_color()`（**entry 読取**）→ `on_set_color(color)` | invalid 時は notice を出し dialog を開いたまま |
+| `Color Cancel` | `on_color_dialog_canceled` → dialog close | `form_state` は変更しない |
+
+#### Optimize との接続
+
+- `OptimizeController` は `form_state.background_color` を `optimize_wallpapers(..., background_color=...)` へ渡す。
+- Color dialog で **Apply していない作業色**は Optimize に影響しない。
 
 ## 4. メイン操作フロー
 

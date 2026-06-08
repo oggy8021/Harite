@@ -150,14 +150,14 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- **改修着手** — Qt `refresh_slideshow_summary_label` が **タブ見出しを更新していなかった**（GTK は両方更新）。
+- **完了** — #445 マージ。実機でタブ / footer 整合 OK（オーナー確認 2026-06-09）。
 - スコープ: **表示整合のみ**（タブ title / footer / Start-Stop enable）。tick 失敗・remote sync は MAT-02b へ
 
 ### 調査メモ
 
 - memo（オーナー）: 壁紙未切替・Error none だが Stop 有効。取得系は別枠
 - **原因（2026-06-09）:** Qt は footer のみ更新。`QTabWidget.setTabText` と `lblSlideshowTabTitle` が初期 `Slideshow (stopped)` のまま。GTK `refresh_slideshow_summary_label` は両方を `Slideshow ({state})` に同期。
-- **修正:** `qt_widget_helpers.refresh_slideshow_summary_label` — stopped/running/paused を GTK 同型で footer + tab に反映。
+- **修正:** `qt_widget_helpers.refresh_slideshow_summary_label` — stopped/running/paused を GTK 同型で footer + tab に反映。spec: gui-spec §3 footer / notebook 同期。
 
 ---
 
@@ -184,12 +184,15 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
-- 次: Color 設定値の保持確認 → optimize パイプラインで background が渡っているか調査
+- **完了** — 実機で preview + Apply → Optimize 反映 OK（オーナー確認）。
+- スコープ: Color dialog → `on_set_color` → Optimize の `background_color` 反映（core パイプラインは正常）
 
 ### 調査メモ
 
 - memo（オーナー）: Optimize 時 Color 無効
+- **原因（2026-06-09）:** `open_dialog()` が `QColorDialog.getColor` を直呼び（header Color 押下で手動 editor + Apply を経由しない）。`get_pending_color()` が内部 `_pending_color` のみ参照し entry 編集を無視（GTK は entry 読取）。`pick_color` 未実装で Pick も `open_dialog` へ誤配線。
+- **修正:** `open_dialog` → show（GTK 同型）、`pick_color` 追加、entry 読取、`qt_backend._on_color_pick_clicked` 修正。Qt picker host は preview 面 + `Pick Color`（embedded `QColorDialog` は Windows で別窓 `Select Color` 重複のため不採用）。spec: [harite-gui-spec.md §3.1](../specs/gui/harite-gui-spec.md)。テスト: `test_qt_dialogs.py`, `test_qt_signal_wiring.py`
+- **実機（オーナー・Windows）:** preview 表示・Apply 書き戻し OK。
 
 ---
 
