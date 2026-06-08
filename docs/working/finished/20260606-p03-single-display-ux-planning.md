@@ -7,7 +7,7 @@
 
 | 文書 | 役割 |
 | --- | --- |
-| [feature-overview §P-03](../20260518-2047-feature-overview.md) | inventory 入口 |
+| [feature-overview §P-03](20260518-2047-feature-overview.md) | inventory 入口 |
 | [issue #359](../../online-issues/closed/issue-359.md) | 起票メモ（クローズ済み） |
 | [gui-spec § Main / Slideshow](../../specs/gui/harite-gui-spec.md) | dual-display 前提 UI + §4.3 P-03 |
 | [slideshow-spec §2 / §6](../../specs/slideshow/harite-slideshow-spec.md) | start 条件 / per-monitor / pause |

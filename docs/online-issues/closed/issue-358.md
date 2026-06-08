@@ -18,7 +18,7 @@
 
 ## 関連
 
-- feature-overview: [P-02](../../working/20260518-2047-feature-overview.md)
+- feature-overview: [P-02](../../working/finished/20260518-2047-feature-overview.md)
 - [#353](issue-353.md)（同第2波 — L/R swap）
 - design: [20260601-p01-p02-lr-swap-clear-slice.html](../../working/design/20260601-p01-p02-lr-swap-clear-slice.html)
 - 正本: [harite-gui-spec.md §3 Slideshow / §4.1](../../specs/gui/harite-gui-spec.md)

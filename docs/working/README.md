@@ -18,9 +18,10 @@ docs/working/
 
 | ファイル | 内容 |
 | --- | --- |
-| [20260518-2047-feature-overview.md](20260518-2047-feature-overview.md) | post-1.0.0 機能 inventory（C-xx / W-xx / P-xx）。**継続更新する唯一の planning 入口** |
+| [20260609-1200-feature-overview.md](20260609-1200-feature-overview.md) | 第2期 inventory 入口（熟成運転期間）。**継続更新する唯一の planning 入口** |
+| [20260608-1200-feature-pending.md](20260608-1200-feature-pending.md) | 破棄候補 / 保留延長（H-xx / K-05 等） |
 
-**2026-05-31 棚卸:** 直下は **overview のみ**。P-08 は #436 マージ・[3層 audit](../specs/gui/audit/p08-3layer-audit.md) 反映後 [finished/](finished/) へ。design の P-08 slice は gate 記録として [design/](design/20260608-p08-main-margins-drawer-slice-memo.md) に残す。
+**2026-06-09 分割:** 第1期完了記録は [finished/20260518-2047-feature-overview.md](finished/20260518-2047-feature-overview.md) へ。P-08 は #436 マージ・[3層 audit](../specs/gui/audit/p08-3layer-audit.md) 反映済み。
 
 ## design（GUI 合意 artifact）
 

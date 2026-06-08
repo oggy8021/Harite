@@ -19,7 +19,7 @@
 
 ## 関連
 
-- feature-overview: [F-01](../../working/20260518-2047-feature-overview.md)
+- feature-overview: [F-01](../../working/finished/20260518-2047-feature-overview.md)
 - 実装: `src/harite/settings_file.py` — `resolve_default_settings_path()`
 - 正本: [harite-core-spec.md §6.1](../../specs/core/harite-core-spec.md)、[harite-foundation-spec.md §7](../../specs/harite-foundation-spec.md)、[harite-gui-spec.md §5](../../specs/gui/harite-gui-spec.md)
 - 参考: [Windows フォルダ構造（User Profile）](https://jpwinsup.github.io/blog/2026/04/16/ActiveDirectory/UserProfile/windows-folder-structure/)

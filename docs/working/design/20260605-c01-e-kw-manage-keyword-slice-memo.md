@@ -7,7 +7,7 @@ mock: [20260605-c01-e-kw-manage-keyword-slice.html](20260605-c01-e-kw-manage-key
 ## 目的
 
 - Manage sources and profiles… に **CODH keyword 入力行 1 本分**の配置・ラベルを固定する（C-04 S6 の中身）。
-- **現フェーズは暫定配置**。local / preset の面板分割は [P-05](../20260518-2047-feature-overview.md) 理想像として別途。
+- **現フェーズは暫定配置**。local / preset の面板分割は [P-05](../finished/20260518-2047-feature-overview.md) 理想像として別途。
 
 ## 使い方
 
