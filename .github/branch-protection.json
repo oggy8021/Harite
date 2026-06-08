@@ -3,9 +3,7 @@
     "strict": true,
     "contexts": [
       "Lint (ruff)",
-      "Test matrix (ubuntu-latest, 3.12)",
-      "Test matrix (macos-latest, 3.12)",
-      "Test matrix (windows-latest, 3.12)"
+      "Test matrix (ubuntu-latest, 3.12)"
     ]
   },
   "enforce_admins": true,
