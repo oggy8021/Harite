@@ -561,8 +561,11 @@ class GtkRuntimeSignalBackend:
     def _refresh_save_target_label(self, filename: str | None = None) -> None:
         refresh_save_target_label(self, filename)
 
-    def _refresh_slideshow_source_labels(self) -> None:
-        refresh_slideshow_source_labels(self)
+    def _refresh_slideshow_source_labels(self, owner: Any | None = None) -> None:
+        refresh_slideshow_source_labels(self, owner)
+
+    def _refresh_slideshow_mode_controls(self, owner: Any) -> None:
+        refresh_slideshow_source_labels(self, owner)
 
     def _refresh_slideshow_summary_label(self) -> None:
         refresh_slideshow_summary_label(self)

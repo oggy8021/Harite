@@ -27,7 +27,9 @@
 | --- | --- | --- | --- |
 | Main `More margin options…` が開かない | Drawer が見えない | `Gtk.Revealer` は組み立て済みだが `backend._objects` に revealer / snake_case キーが未登録。toggle が no-op | `gtk_runtime_object_registry` へ登録（修正済・要 Xfce 再確認） |
 | Slideshow `More slideshow options…` が開かない | 同上 | 同上 | 同上 |
-| Slideshow タブが Notebook 内で上寄せ | 起動直後から余白が下に溜まる | Main は `build_centered_page_shell` 経由、Slideshow は `slideshow_tab_box` を直 append していた | Slideshow も centered page shell へ（修正済・要 Xfce 再確認） |
+| Slideshow タブが Notebook 内で上寄せ | 起動直後から余白が下に溜まる | Main は `build_centered_page_shell` 経由、Slideshow は `slideshow_tab_box` を直 append していた | Slideshow も centered page shell へ（#439・確認済） |
+| Slideshow Srcdir-L/R が横に伸びる | Notebook を左右 2 分割するように見える | 長い path label が panel 幅を押し広げ、同一列の icon button まで横伸び | button を centered row に入れ、label は `format_input_display` + ellipsize（#439 追記・要 Xfce 再確認） |
+| Slideshow path label 省略なし | 長い path がそのまま表示 | GTK `refresh_slideshow_source_labels` が full path 固定 | basename 省略 + tooltip（#439 追記・要 Xfce 再確認） |
 
 ## 1. 着手候補
 

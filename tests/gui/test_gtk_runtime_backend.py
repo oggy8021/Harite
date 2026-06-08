@@ -851,6 +851,29 @@ def test_runtime_backend_slideshow_tab_uses_centered_page_shell():
     assert slideshow_page is slideshow_tab_box._parent._parent
 
 
+def test_runtime_backend_slideshow_srcdir_buttons_are_centered_not_stretched():
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    srcdir_row = backend._objects["slideshow_tab_box"].children[0]
+    left_block = srcdir_row.children[1]
+    right_block = srcdir_row.children[3]
+    left_btn_row, _left_label = left_block.children
+    right_btn_row, _right_label = right_block.children
+    assert left_btn_row.children[1] is backend.get_object("btnOpenSrcdirL")
+    assert right_btn_row.children[1] is backend.get_object("btnOpenSrcdirR")
+
+
+def test_runtime_backend_slideshow_srcdir_labels_abbreviate_long_paths():
+    from harite.gui.adapters.gtk_runtime_slideshow_ui import refresh_slideshow_source_labels
+
+    backend = GtkRuntimeSignalBackend(_FakeGtk)
+    long_path = "/cache/" + ("segment/" * 12) + "very-long-album-name.jpg"
+    backend._slideshow_srcdir_l = long_path
+    refresh_slideshow_source_labels(backend)
+    label = backend.get_object("lblSlideshowSourceL")
+    assert label.text.startswith("L: ")
+    assert len(label.text) < len(long_path) + 3
+
+
 def test_runtime_backend_margins_tab_updates_owner_state_and_cli_preview(tmp_path):
     backend = GtkRuntimeSignalBackend(_FakeGtk)
     window = MainWindow()
@@ -1219,7 +1242,7 @@ def test_runtime_backend_slideshow_srcdir_selection_and_slideshow_cycle_updates_
     srcdir_dialog.set_current_folder(str(left_dir))
     srcdir_dialog.confirm()
 
-    assert slideshow_source_l.text == f"L: {left_dir}"
+    assert slideshow_source_l.text == f"L: {left_dir.name}"
     assert slideshow_source_r.text == "R: -"
     expected_output_label, _ = format_slideshow_output_label_text(str(work_dir))
     assert slideshow_output.text == expected_output_label

@@ -15,6 +15,43 @@ def set_halign_if_supported(widget: Any, value: Any) -> None:
         widget.set_halign(value)
 
 
+def set_hexpand_if_supported(widget: Any, expand: bool) -> None:
+    if hasattr(widget, "set_hexpand"):
+        widget.set_hexpand(bool(expand))
+
+
+def configure_path_label_for_display(widget: Any, *, max_width_chars: int = 42) -> None:
+    """Keep long srcdir/path labels from stretching sibling widgets (gui-spec §6.1)."""
+    if hasattr(widget, "set_max_width_chars"):
+        widget.set_max_width_chars(int(max_width_chars))
+    if hasattr(widget, "set_line_wrap"):
+        widget.set_line_wrap(False)
+    try:
+        import gi
+
+        gi.require_version("Pango", "1.0")
+        from gi.repository import Pango
+
+        if hasattr(widget, "set_ellipsize"):
+            widget.set_ellipsize(Pango.EllipsizeMode.MIDDLE)
+    except Exception:
+        pass
+
+
+def build_centered_widget_row(gtk_module: Any, widget: Any) -> Any:
+    """Center a fixed-size child in a horizontally expanding row (Qt btn_row parity)."""
+    row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    left_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    right_gap = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    set_hexpand_if_supported(left_gap, True)
+    set_hexpand_if_supported(right_gap, True)
+    set_hexpand_if_supported(widget, False)
+    row.pack_start(left_gap, True, True, 0)
+    row.pack_start(widget, False, False, 0)
+    row.pack_start(right_gap, True, True, 0)
+    return row
+
+
 def build_image_from_resource_if_supported(gtk_module: Any, *resource_parts: str) -> Any | None:
     image_factory = getattr(gtk_module, "Image", None)
     if image_factory is None:
