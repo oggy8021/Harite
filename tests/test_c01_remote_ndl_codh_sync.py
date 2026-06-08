@@ -15,103 +15,23 @@ from harite.sources import empty_catalog
 from harite.sources_preset import import_preset_source
 from harite.sources_remote import (
     CODH_SEARCH_URL_TEMPLATE,
-    NDL_IIIF_TEMPLATE,
     NDL_RANDOM_FACET_URL,
     sync_remote_source,
 )
-
-_JPEG_BYTES = b"\xff\xd8\xff" + b"\x00" * 16
-_NDL_ILLUSTRATION = [
-    {
-        "pid": "2558316",
-        "page": 28,
-        "x": 56.3,
-        "y": 53.3,
-        "w": 32.1,
-        "h": 26.4,
-    }
-]
-_CODH_THUMB = (
-    "https://example.test/iiif/book.tif/10,20,30,40/200,/0/default.jpg"
+from tests.remote_sync_http_mocks import (
+    CODH_RESULTS,
+    JPEG_BYTES,
+    NDL_ILLUSTRATION,
+    install_ndl_codh_urlopen_mock,
+    ndl_iiif_url_from_sample,
 )
-_CODH_RESULTS = {
-    "total": 3,
-    "results": [{"canvasThumbnail": _CODH_THUMB}],
-}
-
-
-def _install_ndl_codh_urlopen_mock(monkeypatch: pytest.MonkeyPatch) -> None:
-    iiif_url = _ndl_iiif_url_from_sample()
-
-    def fake_urlopen(url: str | Request, *args: Any, **kwargs: Any) -> Any:
-        target = url if isinstance(url, str) else url.full_url
-        if target.startswith(NDL_RANDOM_FACET_URL):
-
-            class _Json:
-                def read(self) -> bytes:
-                    return json.dumps(_NDL_ILLUSTRATION).encode("utf-8")
-
-                def __enter__(self) -> "_Json":
-                    return self
-
-                def __exit__(self, *exc: object) -> None:
-                    return None
-
-            return _Json()
-        if target == iiif_url or target.startswith("https://example.test/iiif/"):
-            if "/200,/" in target:
-                raise AssertionError(f"unexpected thumbnail url: {target}")
-
-            class _Img:
-                def read(self) -> bytes:
-                    return _JPEG_BYTES
-
-                def __enter__(self) -> "_Img":
-                    return self
-
-                def __exit__(self, *exc: object) -> None:
-                    return None
-
-            return _Img()
-        if "mp.ex.nii.ac.jp/api/" in target and "/search" in target:
-            if "limit=1" in target:
-                payload: dict[str, Any] = {"total": _CODH_RESULTS["total"]}
-            else:
-                payload = _CODH_RESULTS
-
-            class _Codh:
-                def read(self) -> bytes:
-                    return json.dumps(payload).encode("utf-8")
-
-                def __enter__(self) -> "_Codh":
-                    return self
-
-                def __exit__(self, *exc: object) -> None:
-                    return None
-
-            return _Codh()
-        raise AssertionError(f"unexpected url: {target}")
-
-    monkeypatch.setattr("harite.sources_remote.urlopen", fake_urlopen)
-
-
-def _ndl_iiif_url_from_sample() -> str:
-    item = _NDL_ILLUSTRATION[0]
-    return NDL_IIIF_TEMPLATE.format(
-        pid=item["pid"],
-        page=item["page"],
-        x=item["x"],
-        y=item["y"],
-        w=item["w"],
-        h=item["h"],
-    )
 
 
 def test_ndl_facet_sync_writes_latest_jpg(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    _install_ndl_codh_urlopen_mock(monkeypatch)
+    install_ndl_codh_urlopen_mock(monkeypatch)
     cache_root = tmp_path / "remote-cache"
     catalog = empty_catalog()
     entry = import_preset_source(catalog, "ndl-random-illust", cache_root=cache_root)
@@ -120,14 +40,14 @@ def test_ndl_facet_sync_writes_latest_jpg(
 
     latest = Path(entry.path) / "latest.jpg"
     assert latest.is_file()
-    assert latest.read_bytes() == _JPEG_BYTES
+    assert latest.read_bytes() == JPEG_BYTES
 
 
 def test_ndl_iiif_404_retries_next_illustration(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    iiif_url = _ndl_iiif_url_from_sample()
+    iiif_url = ndl_iiif_url_from_sample()
     facet_calls = {"count": 0}
     iiif_calls = {"count": 0}
 
@@ -138,7 +58,7 @@ def test_ndl_iiif_404_retries_next_illustration(
 
             class _Json:
                 def read(self) -> bytes:
-                    return json.dumps(_NDL_ILLUSTRATION).encode("utf-8")
+                    return json.dumps(NDL_ILLUSTRATION).encode("utf-8")
 
                 def __enter__(self) -> "_Json":
                     return self
@@ -154,7 +74,7 @@ def test_ndl_iiif_404_retries_next_illustration(
 
             class _Img:
                 def read(self) -> bytes:
-                    return _JPEG_BYTES
+                    return JPEG_BYTES
 
                 def __enter__(self) -> "_Img":
                     return self
@@ -181,7 +101,7 @@ def test_ndl_iiif_400_retries_next_illustration(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    iiif_url = _ndl_iiif_url_from_sample()
+    iiif_url = ndl_iiif_url_from_sample()
     facet_calls = {"count": 0}
     iiif_calls = {"count": 0}
 
@@ -192,7 +112,7 @@ def test_ndl_iiif_400_retries_next_illustration(
 
             class _Json:
                 def read(self) -> bytes:
-                    return json.dumps(_NDL_ILLUSTRATION).encode("utf-8")
+                    return json.dumps(NDL_ILLUSTRATION).encode("utf-8")
 
                 def __enter__(self) -> "_Json":
                     return self
@@ -208,7 +128,7 @@ def test_ndl_iiif_400_retries_next_illustration(
 
             class _Img:
                 def read(self) -> bytes:
-                    return _JPEG_BYTES
+                    return JPEG_BYTES
 
                 def __enter__(self) -> "_Img":
                     return self
@@ -237,7 +157,7 @@ def test_ndl_random_map_uses_facet_url(
 ) -> None:
     seen: list[str] = []
 
-    iiif_url = _ndl_iiif_url_from_sample()
+    iiif_url = ndl_iiif_url_from_sample()
 
     def fake_urlopen(url: str | Request, *args: Any, **kwargs: Any) -> Any:
         target = url if isinstance(url, str) else url.full_url
@@ -247,7 +167,7 @@ def test_ndl_random_map_uses_facet_url(
 
             class _Json:
                 def read(self) -> bytes:
-                    return json.dumps(_NDL_ILLUSTRATION).encode("utf-8")
+                    return json.dumps(NDL_ILLUSTRATION).encode("utf-8")
 
                 def __enter__(self) -> "_Json":
                     return self
@@ -260,7 +180,7 @@ def test_ndl_random_map_uses_facet_url(
 
             class _Img:
                 def read(self) -> bytes:
-                    return _JPEG_BYTES
+                    return JPEG_BYTES
 
                 def __enter__(self) -> "_Img":
                     return self
@@ -283,7 +203,7 @@ def test_codh_edo_spots_keyword_sync(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    _install_ndl_codh_urlopen_mock(monkeypatch)
+    install_ndl_codh_urlopen_mock(monkeypatch)
     cache_root = tmp_path / "remote-cache"
     catalog = empty_catalog()
     entry = import_preset_source(catalog, "codh-edo-spots-keyword", cache_root=cache_root)
@@ -292,7 +212,7 @@ def test_codh_edo_spots_keyword_sync(
 
     latest = Path(entry.path) / "latest.jpg"
     assert latest.is_file()
-    assert latest.read_bytes() == _JPEG_BYTES
+    assert latest.read_bytes() == JPEG_BYTES
 
 
 def test_codh_random_sync_builds_paged_index(
@@ -311,7 +231,7 @@ def test_codh_random_sync_builds_paged_index(
             payload = (
                 {"total": 5}
                 if "limit=1" in target
-                else _CODH_RESULTS
+                else CODH_RESULTS
             )
 
             class _Codh:
@@ -329,7 +249,7 @@ def test_codh_random_sync_builds_paged_index(
 
             class _Img:
                 def read(self) -> bytes:
-                    return _JPEG_BYTES
+                    return JPEG_BYTES
 
                 def __enter__(self) -> "_Img":
                     return self

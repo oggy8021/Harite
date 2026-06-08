@@ -342,6 +342,7 @@ GitHub Issue 起票前の観測転記。
 - memo（オーナー）: 2・3 行目 Enter で先頭行へジャンプ
 - **原因（2026-06-09）:** `_on_margin_text_changed` → `_sync_margins_state_with_feedback_from_owner` → `setPlainText(embed_text)` が毎 Enter で走りカーソルリセット。Qt `_on_margin_text_key_press` は未配線。
 - **修正:** `qt_margin_text.py`、`set_entry_text` 同値スキップ、spec 追記。テスト: `test_qt_margin_text.py`
+- **実機（オーナー）:** Enter・IME 変換確定とも体感 OK。#449 マージ済み。
 
 ---
 
@@ -380,14 +381,15 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ** — 棚卸で「観測用 logging」としてグループ化
-- スコープ v0 案: Preset 選択時の start / tick / sync パス。手動 srcdir のみは対象外でも可
-- 出力先: ファイル / stderr / 専用 dialog — **未決**（棚卸で決める）
-- 次: シーケンス節の列挙（gui-spec or slideshow-spec 非正本メモ）→ 実装粒度の判断
+- **改修着手（v0）** — Preset remote の start sync / Manage Refresh sync / CODH tick に JSONL 操作ログ。
+- スコープ: NDL・CODH の URL 組み立て〜 GET〜 cache 書き込み、CODH index build、tick 成否。手動 srcdir のみは対象外。
+- 出力: 環境変数 `HARITE_SLIDESHOW_OP_LOG`（ファイル path または `stderr`）。未設定時は no-op。
+- 実装: `slideshow_op_log.py`、`sources_remote*` / `main_window` フック。spec: source-spec §12。テスト: `test_slideshow_op_log.py`
 
 ### 調査メモ
 
 - memo（オーナー）: CODH・NDL 観測の前提。JST タイムスタンプ必須。URL 組み立て過程の可視化が欲しい
+- **v0（2026-06-09）:** `REMOTE_SYNC_*` / `NDL_*` / `CODH_*` / `JMA_TICK` ステップ。`ts_jst` は `+09:00` 固定オフセット。viper3 観測は `export HARITE_SLIDESHOW_OP_LOG=~/.cache/harite/slideshow-op.jsonl` 等。
 
 ---
 
