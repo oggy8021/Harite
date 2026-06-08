@@ -27,6 +27,16 @@
 - libpng-dev
 - xvfb（GUI/ヘッドレス検証用）
 
+### Qt 版 GUI（`harite-qt`）+ fcitx IME
+
+pip の `PyQt6` は distro fcitx プラグインと非互換のため、**Linux では apt の PyQt6 を使う**（詳細: [requirements-linux-qt.txt](../../requirements-linux-qt.txt)）。
+
+- `python3-pyqt6`
+- `python3-pyqt6.qtsvg`（SVG アイコン表示）
+- `fcitx5-frontend-qt6`（日本語 IME）
+
+venv は `--system-site-packages` で作成し、`pip install PyQt6` は **しない**。
+
 ## 初期セットアップ手順（接続先で実行）
 
 ```

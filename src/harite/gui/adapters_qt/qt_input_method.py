@@ -231,6 +231,46 @@ def _fcitx_loader_paths() -> list[Path]:
     return paths
 
 
+def _system_qt6_plugin_roots() -> list[Path]:
+    roots: list[Path] = []
+    seen: set[str] = set()
+    for plugin in discover_system_fcitx_qt_plugins():
+        plugin_root = plugin.parent.parent
+        key = plugin_root.as_posix()
+        if key in seen:
+            continue
+        seen.add(key)
+        roots.append(plugin_root)
+    return roots
+
+
+def configure_distro_fcitx_qt_plugin_path() -> bool:
+    """Expose distro Qt6 plugins to distro PyQt6 without writing under dist-packages."""
+    if pip_pyqt6_fcitx_plugin_incompatible():
+        return False
+
+    plugin_roots = _system_qt6_plugin_roots()
+    if not plugin_roots:
+        return False
+
+    existing = os.environ.get("QT_PLUGIN_PATH", "")
+    existing_parts = [part for part in existing.split(":") if part]
+    new_parts = [str(root) for root in plugin_roots if str(root) not in existing_parts]
+    if not new_parts:
+        return True
+
+    merged = ":".join([*new_parts, *existing_parts]) if existing_parts else ":".join(new_parts)
+    os.environ["QT_PLUGIN_PATH"] = merged
+    logger.debug("Qt IM: QT_PLUGIN_PATH=%s", merged)
+    return True
+
+
+def fcitx_input_method_available() -> bool:
+    if fcitx_input_context_plugin_names():
+        return True
+    return bool(discover_system_fcitx_qt_plugins())
+
+
 def configure_linux_fcitx_dynamic_loader() -> bool:
     """Prepend loader paths before PyQt6 import when a distro fcitx plugin exists."""
     if not sys.platform.startswith("linux") or not _linux_fcitx_system_libs_enabled():
@@ -306,13 +346,14 @@ def prepare_qt_input_method_env() -> str | None:
         if pip_pyqt6_fcitx_plugin_incompatible():
             warn_pip_pyqt6_fcitx_incompatible()
         else:
+            plugin_path_configured = configure_distro_fcitx_qt_plugin_path()
             configure_linux_fcitx_dynamic_loader()
             linked = link_system_fcitx_qt_plugin_if_missing()
-            if linked is None and not fcitx_input_context_plugin_names():
+            if not plugin_path_configured and linked is None and not fcitx_input_method_available():
                 candidates = discover_system_fcitx_qt_plugins()
                 qt5_only = discover_system_fcitx_qt5_plugins()
                 logger.warning(
-                    "Qt IM: QT_IM_MODULE=fcitx but no fcitx platforminputcontext plugin in PyQt6. "
+                    "Qt IM: QT_IM_MODULE=fcitx but no fcitx platforminputcontext plugin is available. "
                     "GTK/Firefox may work while Qt widgets do not. "
                     "%s Qt6 candidates: %s; Qt5-only (ignored): %s",
                     _FCITX_QT_PACKAGE_HINT,
@@ -392,6 +433,8 @@ def audit_qt_fcitx_input_method() -> dict[str, object]:
         "system_fcitx_qt6_plugin_candidates": [str(path) for path in system_candidates],
         "system_fcitx_qt5_plugins_ignored": [str(path) for path in discover_system_fcitx_qt5_plugins()],
         "pip_pyqt6_fcitx_incompatible": incompatible,
+        "qt_plugin_path": os.environ.get("QT_PLUGIN_PATH"),
+        "fcitx_input_method_available": fcitx_input_method_available(),
         "ld_library_path": os.environ.get("LD_LIBRARY_PATH"),
         "package_hint": _FCITX_QT_PACKAGE_HINT,
         "pip_pyqt6_hint": _FCITX_PIP_PYQT6_HINT if incompatible else None,

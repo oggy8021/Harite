@@ -137,6 +137,22 @@ def test_discover_system_fcitx_qt_plugins_ignores_qt5_path(tmp_path: Path):
     assert qt5_only == [qt5_dir / "libfcitxplatforminputcontextplugin.so"]
 
 
+def test_configure_distro_fcitx_qt_plugin_path_sets_qt_plugin_path(monkeypatch, tmp_path: Path):
+    from harite.gui.adapters_qt import qt_input_method
+
+    system_plugin_dir = tmp_path / "usr" / "lib" / "x86_64-linux-gnu" / "qt6" / "plugins" / "platforminputcontexts"
+    system_plugin_dir.mkdir(parents=True)
+    (system_plugin_dir / "libfcitx5platforminputcontextplugin.so").write_bytes(b"plugin")
+
+    monkeypatch.setattr(qt_input_method, "pip_pyqt6_fcitx_plugin_incompatible", lambda: False)
+    monkeypatch.setattr(qt_input_method, "_SYSTEM_PLUGIN_DIRS", (system_plugin_dir,))
+    monkeypatch.delenv("QT_PLUGIN_PATH", raising=False)
+
+    assert qt_input_method.configure_distro_fcitx_qt_plugin_path() is True
+    assert "qt6" in Path(qt_input_method.os.environ["QT_PLUGIN_PATH"]).as_posix()
+    assert qt_input_method.os.environ["QT_PLUGIN_PATH"].endswith("plugins")
+
+
 def test_configure_linux_fcitx_dynamic_loader_prepends_paths(monkeypatch, tmp_path: Path):
     from harite.gui.adapters_qt import qt_input_method
 

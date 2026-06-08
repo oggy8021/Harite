@@ -1,0 +1,27 @@
+# Linux Qt backend (harite-qt) — apt packages, not pip.
+#
+# pip PyQt6 cannot load the distro fcitx Qt6 plugin (Qt_6_PRIVATE_API mismatch).
+# Use distro PyQt6 with a venv that sees system site-packages.
+#
+# One-time OS setup (Mint 22.3 / Ubuntu 24.04 noble example):
+#
+#   sudo apt install -y \
+#     python3-pyqt6 \
+#     python3-pyqt6.qtsvg \
+#     fcitx5-frontend-qt6
+#
+# Python venv (from repo root):
+#
+#   python3 -m venv .venv --system-site-packages
+#   source .venv/bin/activate
+#   python -m pip install -U pip
+#   python -m pip install -r requirements.txt
+#   # Do not run: pip install PyQt6
+#
+# Verify:
+#
+#   python -c "import PyQt6; print(PyQt6.__file__)"
+#   # expect .../dist-packages/PyQt6/...
+#
+#   python -c "from PyQt6.QtGui import QImageReader; print(b'svg' in QImageReader.supportedImageFormats())"
+#   # expect True after python3-pyqt6.qtsvg
