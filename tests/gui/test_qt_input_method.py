@@ -56,11 +56,12 @@ def test_link_system_fcitx_qt_plugin_if_missing_creates_symlink(monkeypatch, tmp
 
     target_dir = tmp_path / "pyqt_plugins"
     target_dir.mkdir()
-    source_dir = tmp_path / "system_plugins"
-    source_dir.mkdir()
+    source_dir = tmp_path / "usr" / "lib" / "qt6" / "plugins" / "platforminputcontexts"
+    source_dir.mkdir(parents=True)
     source_plugin = source_dir / "libfcitx5platforminputcontextplugin.so"
     source_plugin.write_bytes(b"plugin")
 
+    monkeypatch.setattr(qt_input_method, "pip_pyqt6_fcitx_plugin_incompatible", lambda: False)
     monkeypatch.setattr(qt_input_method, "pyqt6_platform_input_context_dir", lambda: target_dir)
     monkeypatch.setattr(qt_input_method, "_SYSTEM_PLUGIN_DIRS", (source_dir,))
 
@@ -192,6 +193,7 @@ def test_link_skips_symlink_for_pip_pyqt6_with_system_fcitx(monkeypatch, tmp_pat
     monkeypatch.setattr(qt_input_method, "_resolve_pyqt6_package_root", lambda: pyqt_root)
     monkeypatch.setattr(qt_input_method, "_SYSTEM_PLUGIN_DIRS", (system_plugin_dir,))
     monkeypatch.setattr(qt_input_method, "pyqt6_platform_input_context_dir", lambda: plugins_dir)
+    monkeypatch.setattr(qt_input_method, "pip_pyqt6_fcitx_plugin_incompatible", lambda: True)
 
     assert qt_input_method.link_system_fcitx_qt_plugin_if_missing() is None
     assert not (plugins_dir / "libfcitx5platforminputcontextplugin.so").exists()
@@ -213,6 +215,8 @@ def test_remove_incompatible_fcitx_plugin_symlink(monkeypatch, tmp_path: Path):
 
     monkeypatch.setattr(qt_input_method, "_resolve_pyqt6_package_root", lambda: pyqt_root)
     monkeypatch.setattr(qt_input_method, "_SYSTEM_PLUGIN_DIRS", (system_plugin,))
+    monkeypatch.setattr(qt_input_method, "pip_pyqt6_fcitx_plugin_incompatible", lambda: True)
+    monkeypatch.setattr(qt_input_method, "_fcitx_plugin_uses_system_origin", lambda _dir: True)
 
     assert qt_input_method.remove_incompatible_fcitx_plugin_symlink() is True
     assert not symlink.exists()
