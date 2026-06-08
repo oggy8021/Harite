@@ -532,14 +532,27 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
     def _on_direction_toggled(self, object_name: str) -> None:
         self._refresh_current_state_labels()
         callback = self._signal_handlers.get("on_toggle_position")
+        active = self._is_toggle_active(object_name)
         if callback is not None:
             try:
-                callback(object_name)
+                callback(object_name, active)
                 owner = self._get_handler_owner("on_toggle_position")
                 if owner is not None:
                     self._sync_non_preview_state_from_owner(owner)
             except Exception as exc:
                 self._set_feedback(phase="Position", state="error", error=str(exc))
+                return
+
+        if not active:
+            reset_callback = self._signal_handlers.get("on_toggle_position_reset")
+            if reset_callback is not None:
+                try:
+                    reset_callback(object_name)
+                    owner = self._get_handler_owner("on_toggle_position_reset")
+                    if owner is not None:
+                        self._sync_non_preview_state_from_owner(owner)
+                except Exception as exc:
+                    self._set_feedback(phase="Position", state="error", error=str(exc))
 
     def _on_direction_released(self, object_name: str) -> None:
         pass

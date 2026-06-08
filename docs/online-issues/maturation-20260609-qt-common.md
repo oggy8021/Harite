@@ -2,11 +2,13 @@
 
 GitHub Issue 起票前の観測転記。
 
-- 親: [20260609 feature-overview](../working/20260609-1200-feature-overview.md)（熟成運転期間）
+- 親: [20260609 feature-overview](../working/20260609-1200-feature-overview.md)
 - 対象: **Qt 版**および **backend 共通**（GTK 専用は [GTK 熟成メモ](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) 参照）
-- **転記:** 2026-06-09 時点で **一旦打ち止め**（MAT-01〜12）。MAT-02b（NDL/CODH 取得）は後送予定。
+- **転記:** MAT-01〜12 完了。MAT-02b（NDL/CODH 取得）は後送予定。
+- **熟成運転:** 2026-06-09 **打ち切り**（継続には改修が先決）。
+- **現フェーズ:** **改修着手** — 下記並びの **改修系から端から**（GitHub Issue 化なし）。
 
-## 棚卸予定の並び（オーナー方針）
+## 着手順（オーナー方針）
 
 着手・Issue 化の **おおよその優先**（確定順ではない）:
 
@@ -16,7 +18,7 @@ GitHub Issue 起票前の観測転記。
 
 | 区分 | ID |
 | --- | --- |
-| 改修系 | MAT-01, MAT-02, MAT-03, MAT-05, MAT-06, MAT-07 |
+| 改修系 | MAT-01, MAT-01b, MAT-02, MAT-03, MAT-05, MAT-06, MAT-07 |
 | 確かさ向上 | MAT-08, MAT-12 |
 | 機能要望系 | MAT-04, MAT-09, MAT-10, MAT-11 |
 
@@ -51,13 +53,71 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ** — 棚卸後に GitHub Issue 化・spec 照合
-- スコープ: direction toggle → optimize 結果への反映。margins / embed との切り分けは調査で確定
-- 次: 再現手順の固定 → spec 期待との diff → テスト or 修正
+- ~~現時点: **転記のみ**~~ → **改修着手**（初回 PR）
+- スコープ: direction toggle → `form_state.align` / `valign` への反映
+- 次: optimize 出力での視覚確認（本件の handler 経路は修正済み）
 
 ### 調査メモ
 
 - memo（オーナー）: margin ゼロ・embed 無関係で再現
+- **原因（2026-06-09）:** Qt `QtSignalBackend._on_direction_toggled` が GTK と異なり `on_toggle_position(widget_name, active)` の **`active` 引数を渡していなかった**（`TypeError` または state 未更新）。解除時の `on_toggle_position_reset` も未呼び出し。
+- **修正:** GTK 実装に合わせ `active` 渡し + 非 active 時 reset。テスト: `tests/gui/test_qt_signal_wiring.py`
+- **関連:** 出力で align が見えない主因の一つは **MAT-01b**（core upscale）。handler 修正だけでは不十分。
+
+---
+
+## MAT-01b — Optimize が小画像を拡大し align 座標系が母体と乖離
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `core: restore native-size placement and display-rect align (parent parity)`
+- 改修方針ドラフト: [20260609-mat-01b-native-placement-repair-draft.md](../working/design/20260609-mat-01b-native-placement-repair-draft.md)
+
+### 事象
+
+- 解像度領域に **小さい画像** を載せると、**引き伸ばし（拡大）** されて配置される。
+- xxAlign / x 寄せの体感が悪い（toggle しても Optimize 結果が変わらない、または拡大で余白が消える）。
+- オーナー認識: Optimize に **無理な拡大は含めない**。原寸志向であったが Harite 現行はそうなっていない。
+
+### 分類
+
+- `bug`（core / 共通 optimize 幾何の **母体からの回帰**）
+- `investigation` → **照合完了**（2026-06-09）
+
+### 母体照合（`C:\Users\oggy_\Develop\Repos\wallpaperoptimizer`）
+
+| 観点 | 母体 | Harite 現行 |
+| --- | --- | --- |
+| 小画像 | `containsPlusMergin` 通過 → **原寸** | `_scale_to_fit` で **拡大** |
+| resize | 収まらないときのみ `_downsizeImg`（**縮小のみ**） | **毎回** fit（`scale` 上限なし） |
+| align 座標系 | 各 `lScreen` / `rScreen` **全矩形**（初期 left/top） | margins 差引き **cell 内余白** |
+| two-screen margins | L `(L,0,T,B)` / R `(0,R,T,B)` | 左右とも同一 `(ml,mr,mt,mb)` で cell 計算 |
+| paste | 右画像 `x += lScreen.width` | split_x + cell offset |
+
+**結論:** オーナー記憶は **正しい**。reformation 以降の Harite core が母体基底から逸脱している。
+
+### 関連
+
+- MAT-01（#442）— handler 層。本件と **併せて** 初めて align 体感が戻る。
+- 母体: `WallpaperOptimizer/Core.py` — `_checkContain`, `_downsizeImg`, `_allocateImg`, `_mergeWallpaper`
+- Harite: `src/harite/core.py` — `_scale_to_fit`, `optimize_wallpapers`
+- spec: [harite-core-spec.md §4.1](../specs/core/harite-core-spec.md)（現行は upscale 前提で **要改訂**）
+- `scaling` 設定無効は **合意済み** — 本件スコープ外
+
+### 取り込み方針
+
+- **改修着手** — 母体の **基底ロジックと貼り方は変えない**（回帰する）。
+- パイプライン: `contains` → 必要時のみ downsize → display 矩形へ align → merge/paste。
+- PR 分割: #442（MAT-01）マージ後 → `fix/mat-01b-native-placement` 想定。
+- 詳細: [改修方針ドラフト](../working/design/20260609-mat-01b-native-placement-repair-draft.md)
+
+### 調査メモ
+
+- memo（オーナー）: 「悲劇」— 母体は原寸・拡大なし。align は display 内限界寄せ / margins は収納・縮小制約。
+- Harite テスト `test_upscale_when_target_larger` が upscale を期待しており、逸脱が **意図的ではなくテストで固定**されていた可能性。
+- GUI 注釈 `margins define area; align/valign act inside it` は現行 Harite 実装向け。MAT-01b 後に gui-spec 整合。
 
 ---
 

@@ -401,6 +401,58 @@ def test_on_direction_pressed_calls_handler(qapp):
     assert "tglUpperL" in calls
 
 
+def test_on_direction_toggled_passes_active_and_calls_reset(qapp):
+    """MAT-01: Qt must mirror GTK toggle callback contract (name, active)."""
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    calls: list[tuple] = []
+    backend._signal_handlers["on_toggle_position"] = (
+        lambda name, active: calls.append(("toggled", name, active))
+    )
+    backend._signal_handlers["on_toggle_position_reset"] = (
+        lambda name: calls.append(("reset", name))
+    )
+
+    backend._set_toggle_active("tglUpperL", True)
+    backend._on_direction_toggled("tglUpperL")
+    assert calls == [("toggled", "tglUpperL", True)]
+
+    calls.clear()
+    backend._set_toggle_active("tglUpperL", False)
+    backend._on_direction_toggled("tglUpperL")
+    assert calls == [("toggled", "tglUpperL", False), ("reset", "tglUpperL")]
+
+
+def test_qt_direction_toggle_updates_main_window_form_state(qapp):
+    """End-to-end: wired toggle click updates MainWindow align/valign."""
+    from harite.gui.adapters.ui_adapter import RUNTIME_HANDLER_MAP, create_mainwindow_signal_dispatch
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+
+    window = MainWindow()
+    backend = load_qt_runtime_signal_backend()
+    dispatch = create_mainwindow_signal_dispatch(
+        window,
+        tuple(RUNTIME_HANDLER_MAP.keys()),
+        handler_map=RUNTIME_HANDLER_MAP,
+        signal_backend=backend,
+    )
+    backend.connect_signals(dispatch)
+
+    upper_l = backend._objects["tglUpperL"]
+    push_right_l = backend._objects["tglPushRightL"]
+
+    upper_l.click()
+    assert window.form_state.valign == ("top", "center")
+
+    push_right_l.click()
+    assert window.form_state.align == ("right", "center")
+
+    upper_l.click()
+    assert window.form_state.valign == ("center", "center")
+
+
 # ---------------------------------------------------------------------------
 # Slideshow timer
 # ---------------------------------------------------------------------------

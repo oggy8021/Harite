@@ -104,13 +104,13 @@ working メモも完了なら docs/working/finished/ へ移動
 
 | Issue | タイトル要約 | 分類 | overview ID |
 | --- | --- | --- | --- |
-| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | 熟成運転 Qt/共通（MAT-01〜12、転記一旦打ち止め） | bug / investigation / planning | 熟成運転 |
+| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜12（熟成運転打ち切り → **改修着手**） | bug / investigation / planning | 改修フェーズ |
 
 ### maturation-20260609-qt-common — 棚卸予定の並び
 
 | 区分 | ID |
 | --- | --- |
-| 改修系 | MAT-01〜03, 05〜07 |
+| 改修系 | MAT-01, MAT-01b, 02〜03, 05〜07 |
 | 確かさ向上 | MAT-08, 12 |
 | 機能要望系 | MAT-04, 09〜11 |
 
@@ -118,7 +118,8 @@ working メモも完了なら docs/working/finished/ へ移動
 
 | ID | 要約 | 区分 |
 | --- | --- | --- |
-| MAT-01 | Main xxAlign / Top・Bottom Align が効かない | 改修 |
+| MAT-01 | Main xxAlign / Top・Bottom Align が効かない（handler） | 改修 |
+| MAT-01b | 小画像 upscale + align 座標系が母体と乖離（core 回帰） | 改修 |
 | MAT-02 | Slideshow `(stopped)` vs footer `running` 不一致 | 改修 |
 | MAT-03 | Optimize で Color が効かない | 改修 |
 | MAT-05 | CODH キーワード: Close しないと確定されない | 改修 |
