@@ -17,9 +17,17 @@
 
 ## 現在ステータス
 
-- **熟成運転期間** — 実機で使い込み、違和感は [online-issues](../online-issues/README.md) に蓄積する。
+- **熟成運転期間**（2026-06-09 宣言）— 実機で使い込み、違和感は [online-issues](../online-issues/README.md) に蓄積する。
 - 第1期 inventory は完了（上記 finished 参照）。
-- **次に確実に言える inventory:** GTK を辞める（Qt 一本化）。
+- **次に確実に言える inventory:** GTK を辞める（Qt 一本化）。廃止前に GTK 固有の粗さは **記念碑的に片付ける**（下記メモ）。
+
+### 熟成運転メモ（Xfce 実機・1 日目）
+
+| 事象 | 観測 | 原因（調査） | 対応 |
+| --- | --- | --- | --- |
+| Main `More margin options…` が開かない | Drawer が見えない | `Gtk.Revealer` は組み立て済みだが `backend._objects` に revealer / snake_case キーが未登録。toggle が no-op | `gtk_runtime_object_registry` へ登録（修正済・要 Xfce 再確認） |
+| Slideshow `More slideshow options…` が開かない | 同上 | 同上 | 同上 |
+| Slideshow タブが Notebook 内で上寄せ | 起動直後から余白が下に溜まる | Main は `build_centered_page_shell` 経由、Slideshow は `slideshow_tab_box` を直 append していた | Slideshow も centered page shell へ（修正済・要 Xfce 再確認） |
 
 ## 1. 着手候補
 
