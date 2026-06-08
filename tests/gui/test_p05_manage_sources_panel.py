@@ -30,7 +30,7 @@ def test_local_sources_for_manage_dialog_sorts_by_name(tmp_path: Path) -> None:
 def test_preset_list_rows_group_and_sort(tmp_path: Path) -> None:
     catalog = empty_catalog()
     cache = tmp_path / "cache"
-    codh = import_preset_source(catalog, "codh-edo-shops-keyword", cache_root=cache)
+    codh = import_preset_source(catalog, "codh-edo-spots-keyword", cache_root=cache)
     jma = import_preset_source(catalog, "jma-near-color", cache_root=cache)
     ndl = import_preset_source(catalog, "ndl-random-map", cache_root=cache)
     local_dir = tmp_path / "local"
@@ -57,7 +57,7 @@ def test_preset_list_rows_group_and_sort(tmp_path: Path) -> None:
 def test_catalog_sources_for_selection_combo_orders_local_then_presets(tmp_path: Path) -> None:
     catalog = empty_catalog()
     cache = tmp_path / "cache"
-    codh = import_preset_source(catalog, "codh-edo-shops-keyword", cache_root=cache)
+    codh = import_preset_source(catalog, "codh-edo-spots-keyword", cache_root=cache)
     jma = import_preset_source(catalog, "jma-near-color", cache_root=cache)
     ndl = import_preset_source(catalog, "ndl-random-map", cache_root=cache)
     zebra = tmp_path / "z"

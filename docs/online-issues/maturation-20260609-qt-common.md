@@ -223,13 +223,14 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ** — 棚卸後に preset 削除 or 非表示方針を決定
-- スコープ: 江戸**買物**のみ（江戸観光は別判断）
-- 次: 既存 settings での `slideshow_source_id_*` 参照時の挙動を含めて整理
+- **改修着手** — 同梱 preset から `codh-edo-shops-keyword` / `codh-edo-shops-random` を削除。江戸**観光**（`edo-spots`）は維持。
+- スコープ: 江戸**買物**のみ。CLI / remote indexer 実装の `edo-shops` API 経路はコードに残すが **同梱・sync マップからは外す**。
+- 既存 catalog: 江戸買物由来 source が残っている場合は sync 非対応（手動削除想定）。`slideshow_source_id_*` は catalog 上の source_id を指すため、source 削除まで有効。
 
 ### 調査メモ
 
 - memo（オーナー）: 文字図版中心のため採用見送り
+- **実装:** `harite-source-presets.json`、`sources_remote.py`（`CODH_KEYWORD_PRESET_IDS` / `_CODH_PRESET_SEARCH`）、source-spec §15.4、gui-spec keyword 行。テスト: `test_c01_source_presets`（MAT-04 削除検証）
 
 ---
 

@@ -44,10 +44,21 @@ _BUNDLED_SOURCE_PRESET_IDS = {
     "ndl-random-landmark",
     "ndl-random-outdoor",
     "codh-edo-spots-keyword",
-    "codh-edo-shops-keyword",
     "codh-edo-spots-random",
-    "codh-edo-shops-random",
 }
+
+
+def test_mat04_edo_shops_presets_removed_from_bundle() -> None:
+    presets = load_source_presets()
+    ids = {template.preset_id for template in presets.sources}
+    assert "codh-edo-shops-keyword" not in ids
+    assert "codh-edo-shops-random" not in ids
+
+
+def test_import_removed_edo_shops_preset_raises(tmp_path: Path) -> None:
+    catalog = empty_catalog()
+    with pytest.raises(ValueError, match="unknown preset source id"):
+        import_preset_source(catalog, "codh-edo-shops-random", cache_root=tmp_path / "cache")
 
 
 def test_load_bundled_presets() -> None:
@@ -125,7 +136,7 @@ def test_ndl_and_codh_random_interval_floor_from_preset_not_notes(tmp_path: Path
     cache_root = tmp_path / "cache"
     catalog = empty_catalog()
     presets = load_source_presets()
-    for preset_id in ("ndl-random-illust", "codh-edo-spots-random", "codh-edo-shops-random"):
+    for preset_id in ("ndl-random-illust", "codh-edo-spots-random"):
         entry = import_preset_source(
             catalog,
             preset_id,
