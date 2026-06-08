@@ -71,6 +71,23 @@ def test_link_system_fcitx_qt_plugin_if_missing_creates_symlink(monkeypatch, tmp
     assert linked.resolve() == source_plugin.resolve()
 
 
+def test_audit_qt_fcitx_input_method_reports_plugin_dir(monkeypatch, tmp_path: Path):
+    from harite.gui.adapters_qt import qt_input_method
+
+    plugins_dir = tmp_path / "platforminputcontexts"
+    plugins_dir.mkdir()
+    (plugins_dir / "libibusplatforminputcontextplugin.so").write_bytes(b"ibus")
+
+    monkeypatch.setattr(qt_input_method, "pyqt6_platform_input_context_dir", lambda: plugins_dir)
+    monkeypatch.setenv("QT_IM_MODULE", "fcitx")
+    monkeypatch.setattr(qt_input_method, "link_system_fcitx_qt_plugin_if_missing", lambda: None)
+
+    report = qt_input_method.audit_qt_fcitx_input_method()
+
+    assert report["qt_im_module"] == "fcitx"
+    assert report["fcitx_plugins_after_link"] == []
+
+
 def test_configure_text_input_widget_enables_input_method(qapp):
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import QLineEdit

@@ -82,7 +82,13 @@ def prepare_qt_input_method_env() -> str | None:
         os.environ["QT_IM_MODULE"] = resolved
 
     if os.environ.get("QT_IM_MODULE", "").strip().lower() in {_FCITX_QT_IM_MODULE, "fcitx5"}:
-        link_system_fcitx_qt_plugin_if_missing()
+        linked = link_system_fcitx_qt_plugin_if_missing()
+        if linked is None and not fcitx_input_context_plugin_names():
+            logger.warning(
+                "Qt IM: QT_IM_MODULE=fcitx but no fcitx platforminputcontext plugin in PyQt6 "
+                "(typical pip wheel gap). GTK apps may work while Qt widgets do not. "
+                "Install fcitx-qt6 / fcitx5-qt6 system package or symlink plugin into PyQt6 plugins dir."
+            )
 
     return os.environ.get("QT_IM_MODULE")
 
@@ -97,6 +103,33 @@ def pyqt6_platform_input_context_dir() -> Path | None:
     if plugins_dir.is_dir():
         return plugins_dir
     return None
+
+
+def fcitx_input_context_plugin_names(target_dir: Path | None = None) -> list[str]:
+    """Return fcitx-related plugin filenames present under PyQt6 IM plugins."""
+    plugins_dir = target_dir or pyqt6_platform_input_context_dir()
+    if plugins_dir is None:
+        return []
+    return sorted(
+        path.name
+        for path in plugins_dir.iterdir()
+        if path.is_file() and "fcitx" in path.name.lower()
+    )
+
+
+def audit_qt_fcitx_input_method() -> dict[str, object]:
+    """Summarize Qt IM plugin availability for Linux troubleshooting."""
+    target_dir = pyqt6_platform_input_context_dir()
+    linked = link_system_fcitx_qt_plugin_if_missing() if target_dir is not None else None
+    return {
+        "qt_im_module": os.environ.get("QT_IM_MODULE"),
+        "gtk_im_module": os.environ.get("GTK_IM_MODULE"),
+        "xmodifiers": os.environ.get("XMODIFIERS"),
+        "pyqt_plugins_dir": str(target_dir) if target_dir is not None else None,
+        "fcitx_plugins_before_link": fcitx_input_context_plugin_names(target_dir),
+        "linked_plugin": str(linked) if linked is not None else None,
+        "fcitx_plugins_after_link": fcitx_input_context_plugin_names(target_dir),
+    }
 
 
 def link_system_fcitx_qt_plugin_if_missing() -> Path | None:
