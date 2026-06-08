@@ -537,10 +537,10 @@ GitHub Issue 起票前の観測転記。
 ### 取り込み方針
 
 - **改修着手** — コード + spec 照合で回答を正本化。表は [slideshow-spec §6.2.1](../specs/slideshow/harite-slideshow-spec.md)。
-- 結論: **Optimize は preset 種別ではなく single/dual で分岐。** L のみ preset（典型）では optimize せず、remote cache の `latest.*` を直接 apply。
+- 結論: **Optimize は preset 種別ではなくソース構成（L+R 指定＝dual）で分岐。** Srcdir-L/R 両方指定時は dual → optimize。片方のみが single → optimize なし。tick の network（JMA/CODH）は L/R 独立で走り、optimize とは別軸（§6.2.1 改訂）。
 - 副次修正: R1 孤児掃除に `harite_slideshow_*` を含める。single-source 成功時に未追跡スロットも削除。
 
 ### 調査メモ
 
 - memo（オーナー）: 壁紙が切り替わらない事象（MAT-02）の土台質問
-- **確定（2026-06-09）:** single-source → optimize なし、apply は cycle 選択 path。dual-source → `{Pictures}/Harite/slideshow/harite_slideshow.jpg`（+ Linux 分割）。JMA「no-optimize」は天気図専用分岐ではなく **single-source 共通経路**。Main margin/align は single-source slideshow に未浸透（MAT-11 接続）。
+- **確定（2026-06-09）:** ソース構成 dual（L+R 指定）→ optimize + 作業ディレクトリ。single（片方のみ）→ optimize なし。tick network は dual でも L/R 各 side で独立（MAT-08 と整合）。オーナー指摘: 「L のみ典型」表現は誤解を招く — dual 指定時点でソースは dual。
