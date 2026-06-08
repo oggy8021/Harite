@@ -110,7 +110,7 @@ working メモも完了なら docs/working/finished/ へ移動
 
 | 区分 | ID |
 | --- | --- |
-| 改修系 | MAT-01〜03, 05〜07 |
+| 改修系 | MAT-01, MAT-01b, 02〜03, 05〜07 |
 | 確かさ向上 | MAT-08, 12 |
 | 機能要望系 | MAT-04, 09〜11 |
 
@@ -118,7 +118,8 @@ working メモも完了なら docs/working/finished/ へ移動
 
 | ID | 要約 | 区分 |
 | --- | --- | --- |
-| MAT-01 | Main xxAlign / Top・Bottom Align が効かない | 改修 |
+| MAT-01 | Main xxAlign / Top・Bottom Align が効かない（handler） | 改修 |
+| MAT-01b | 小画像 upscale + align 座標系が母体と乖離（core 回帰） | 改修 |
 | MAT-02 | Slideshow `(stopped)` vs footer `running` 不一致 | 改修 |
 | MAT-03 | Optimize で Color が効かない | 改修 |
 | MAT-05 | CODH キーワード: Close しないと確定されない | 改修 |

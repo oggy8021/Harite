@@ -33,7 +33,7 @@
 | Slideshow path label 省略なし | 長い path がそのまま表示 | GTK `refresh_slideshow_source_labels` が full path 固定 | basename 省略 + tooltip（#439 追記・要 Xfce 再確認） |
 | GTK に Preset/Profile UI がないのに設定が部分展開 | Slideshow で NDL 図版など preset 由来の表示に見える | **認識済み:** GTK 版は Slideshow の Preset / Profile **提供面がない**。一方 settings 読み込みは Qt 版と同型のため、`slideshow_source_id_*` / `slideshow_profile_id` 等が防ぎきれず **部分的に展開**する | **記載のみ** — 矛盾解消は **棚卸（Q-01 等）後**に実施。即時の GTK parity 拡張はしない |
 
-**Qt / 共通（v1.9.0 以降）:** [maturation-20260609-qt-common.md](../online-issues/maturation-20260609-qt-common.md)（MAT-01〜12）。**着手順:** 改修系 → 確かさ向上 → 機能要望系。現行: **MAT-01** 改修中（初回 PR）。
+**Qt / 共通（v1.9.0 以降）:** [maturation-20260609-qt-common.md](../online-issues/maturation-20260609-qt-common.md)（MAT-01〜12）。**着手順:** 改修系 → 確かさ向上 → 機能要望系。現行: **MAT-01**（#442）→ **MAT-01b**（[core 回帰ドラフト](design/20260609-mat-01b-native-placement-repair-draft.md) — 母体原寸配置・display 矩形 align）。
 
 ## 1. 着手候補
 
