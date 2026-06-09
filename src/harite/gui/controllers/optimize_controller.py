@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from harite.cli import parse_resolution
+from harite.resolution import parse_resolution
 from harite.core import (
     DEFAULT_BACKGROUND_COLOR_HEX,
     normalize_background_color,

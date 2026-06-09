@@ -11,11 +11,18 @@ from . import __version__
 from .apply_settings import resolve_apply_settings
 from .core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color, normalize_optimize_input_paths, optimize_wallpapers
 from .plugins import registry as plugin_registry
+from .settings import SlideshowSettings
 from .settings_file import load_settings
 from .linux_xdg_launcher import install_desktop_entry as install_linux_desktop_entry
 from .optimize_settings import is_auto_value, resolve_optimize_display_settings
 from .positioning import parse_position_pair
-from .slideshow import collect_slideshow_input_images, run_slideshow_cycles
+from .resolution import parse_resolution
+from .slideshow import collect_slideshow_input_images
+from .slideshow_optimize import (
+    build_slideshow_optimize_config,
+    run_slideshow_optimize_cycles,
+    validate_dual_source_slideshow,
+)
 
 app = typer.Typer(help="Harite - wallpaper optimizer")
 
@@ -32,18 +39,6 @@ def _default_plugin_name() -> str:
     if available:
         return available[0]
     return "windows"
-
-
-def parse_resolution(value: str) -> Tuple[int, int]:
-    """Parse resolution strings like '1920x1080'."""
-    try:
-        w_str, h_str = value.lower().split("x")
-        w, h = int(w_str), int(h_str)
-        if w <= 0 or h <= 0:
-            raise ValueError("resolution must be positive")
-        return w, h
-    except Exception:
-        raise ValueError("Invalid resolution format. Use WIDTHxHEIGHT, e.g. 3840x2160")
 
 
 def parse_margins(value: str) -> Tuple[int, int, int, int]:
@@ -130,6 +125,28 @@ def resolve_option_value(
     if _parameter_source_is_commandline(ctx, name):
         return cli_value
     return cfg.get(name, cli_value)
+
+
+def _slideshow_srcdir_paths_from_settings(cfg: dict) -> List[Path]:
+    slideshow = SlideshowSettings.from_settings_dict(cfg)
+    dirs: List[Path] = []
+    for raw in (slideshow.srcdir_l, slideshow.srcdir_r):
+        if raw is None:
+            continue
+        text = str(raw).strip()
+        if text:
+            dirs.append(Path(text).expanduser())
+    return dirs[:2]
+
+
+def _expand_slideshow_cli_input_dirs(input: List[str] | None) -> List[Path]:
+    input_dirs: List[Path] = []
+    if not input:
+        return input_dirs
+    for it in input:
+        parts = [p.strip() for p in it.split(",") if p.strip()]
+        input_dirs.extend(Path(part).expanduser() for part in parts)
+    return input_dirs[:2]
 
 
 def resolve_bool_or_auto_option(
@@ -453,46 +470,113 @@ def apply(
 
 @app.command(help="Rotate wallpapers from directories using the existing apply path.")
 def slideshow(
-    input: List[str] = typer.Option(..., "--input", help="Input directories. Use comma-separated paths or repeat --input."),
-    interval_sec: int = typer.Option(..., "--interval-sec", help="Cycle interval in seconds (>=1)"),
+    ctx: typer.Context,
+    input: Optional[List[str]] = typer.Option(
+        None,
+        "--input",
+        help="Input directories. Use comma-separated paths or repeat --input.",
+    ),
+    interval_sec: Optional[int] = typer.Option(
+        None,
+        "--interval-sec",
+        help="Cycle interval in seconds (>=1)",
+    ),
     mode: str = typer.Option("sequential", "--mode", help="Selection mode: sequential|random"),
     plugin: str = typer.Option(_default_plugin_name(), "--plugin", "-p", help="Plugin name used to apply each selected image"),
+    settings_file: Optional[Path] = typer.Option(
+        None,
+        "--settings-file",
+        "-c",
+        help="Optional path to harite-settings.json",
+    ),
 ) -> None:
     """Rotate wallpapers from directories (minimum execution control)."""
-    if interval_sec < 1:
+    cfg: dict = {}
+    if settings_file is not None:
+        try:
+            cfg = load_settings(settings_file)
+        except Exception as exc:
+            typer.echo(f"Failed to load settings: {exc}")
+            raise typer.Exit(code=2)
+
+    slideshow_settings = SlideshowSettings.from_settings_dict(cfg) if cfg else SlideshowSettings()
+
+    if _parameter_source_is_commandline(ctx, "input"):
+        input_dirs = _expand_slideshow_cli_input_dirs(input)
+    else:
+        input_dirs = _slideshow_srcdir_paths_from_settings(cfg)
+
+    if not input_dirs:
+        typer.echo("--input is required (or provide slideshow_srcdir_l/r in --settings-file)")
+        raise typer.Exit(code=2)
+
+    if _parameter_source_is_commandline(ctx, "interval_sec"):
+        eff_interval = interval_sec
+    elif cfg:
+        eff_interval = slideshow_settings.interval_seconds
+    else:
+        eff_interval = interval_sec
+
+    if eff_interval is None:
+        typer.echo("--interval-sec is required (or provide slideshow_interval_seconds in --settings-file)")
+        raise typer.Exit(code=2)
+
+    if eff_interval < 1:
         typer.echo("--interval-sec must be >= 1")
         raise typer.Exit(code=2)
 
-    mode = mode.lower().strip()
-    if mode not in ("sequential", "random"):
+    if _parameter_source_is_commandline(ctx, "mode"):
+        eff_mode = mode
+    elif cfg:
+        eff_mode = slideshow_settings.mode
+    else:
+        eff_mode = mode
+
+    eff_mode = eff_mode.lower().strip()
+    if eff_mode not in ("sequential", "random"):
         typer.echo("--mode must be one of: sequential, random")
         raise typer.Exit(code=2)
 
-    input_dirs: List[Path] = []
-    for it in input:
-        parts = [p.strip() for p in it.split(",") if p.strip()]
-        input_dirs.extend(Path(part).expanduser() for part in parts)
-    input_dirs = input_dirs[:2]
+    eff_plugin = str(resolve_option_value("plugin", plugin, cfg, ctx))
 
     try:
-        images = collect_slideshow_input_images(input_dirs)
+        image_counts = []
+        for directory in input_dirs:
+            images = collect_slideshow_input_images([directory])
+            image_counts.append(len(images))
     except ValueError as exc:
         typer.echo(str(exc))
         raise typer.Exit(code=2)
 
+    optimize_config = build_slideshow_optimize_config(cfg, default_plugin=eff_plugin)
+    if len(input_dirs) > 1:
+        try:
+            validate_dual_source_slideshow(eff_plugin)
+        except ValueError as exc:
+            typer.echo(str(exc))
+            raise typer.Exit(code=2)
+        optimize_config.dual_auto_split = True
+
     input_summary = ",".join(str(path) for path in input_dirs)
+    images_total = sum(image_counts)
+    source_layout = "dual" if len(input_dirs) > 1 else "single"
 
     typer.echo(
-        f"Slideshow start: input={input_summary} images={len(images)} interval_sec={interval_sec} "
-        f"mode={mode} plugin={plugin}"
+        f"Slideshow start: input={input_summary} images={images_total} sources={source_layout} "
+        f"interval_sec={eff_interval} mode={eff_mode} plugin={eff_plugin} "
+        f"optimize=yes work_dir={optimize_config.work_dir}"
     )
 
     try:
-        plugin_impl = plugin_registry.get(plugin)
+        plugin_impl = plugin_registry.get(eff_plugin)
     except KeyError:
-        typer.echo(f"Unknown plugin: {plugin}")
+        typer.echo(f"Unknown plugin: {eff_plugin}")
         typer.echo(f"Available plugins: {', '.join(plugin_registry.list())}")
         raise typer.Exit(code=2)
+
+    from harite.gui.controllers.optimize_controller import OptimizeController as _OptimizeController
+
+    controller = _OptimizeController()
 
     stats = {
         "apply_ok": 0,
@@ -500,31 +584,33 @@ def slideshow(
         "apply_error": 0,
     }
 
-    def _on_cycle(selected: Path, cycle_index: int) -> None:
-        try:
-            success = bool(plugin_impl.apply(str(selected)))
-        except Exception as exc:
+    def _on_cycle(target: object | None, cycle_index: int, success: bool, error_message: str | None) -> None:
+        if success:
+            stats["apply_ok"] += 1
+            return
+
+        if error_message and "apply error" in error_message:
             stats["apply_error"] += 1
             typer.echo(
-                f"Slideshow cycle={cycle_index + 1} selected={selected} "
-                f"apply=error reason=plugin-exception error_type={type(exc).__name__} message={exc}"
+                f"Slideshow cycle={cycle_index + 1} target={target} "
+                f"apply=error reason=optimize-or-apply-exception message={error_message}"
             )
             return
 
-        if success:
-            stats["apply_ok"] += 1
-        else:
-            stats["apply_failed"] += 1
-            typer.echo(
-                f"Slideshow cycle={cycle_index + 1} selected={selected} "
-                "apply=failed reason=plugin-returned-false"
-            )
+        stats["apply_failed"] += 1
+        typer.echo(
+            f"Slideshow cycle={cycle_index + 1} target={target} "
+            f"apply=failed reason={error_message or 'plugin-returned-false'}"
+        )
 
     try:
-        completed = run_slideshow_cycles(
-            images=images,
-            mode=mode,
-            interval_sec=interval_sec,
+        completed = run_slideshow_optimize_cycles(
+            input_dirs=input_dirs,
+            mode=eff_mode,
+            interval_sec=eff_interval,
+            config=optimize_config,
+            controller=controller,
+            plugin_impl=plugin_impl,
             on_cycle=_on_cycle,
         )
     except KeyboardInterrupt:

@@ -63,7 +63,7 @@ sequenceDiagram
 ## 4. `optimize`
 
 - 入力画像、表示条件、margins、align、background_color、embed 系を受け取る。
-- `--settings-file` は optimize 専用 option であり、与えられた場合は設定ファイルを読み、CLI 引数を優先して上書きする。apply / slideshow は `--settings-file` を受け付けない。
+- `--settings-file` は optimize / slideshow で受け付ける。与えられた場合は設定ファイルを読み、CLI 引数を優先して上書きする。`apply` は `--settings-file` を受け付けない。
 - help では `--settings-file` を optimize 用 defaults を読む option だと分かる文言で説明する。規範文言は `Optional path to optimize settings JSON` を基準にする。
 - help では `--input` を、カンマ区切りまたは `--input` の繰り返しで最大 2 件まで受け付ける画像入力だと分かる文言で説明する。規範文言は `Input file(s). Use comma-separated paths or repeat --input.` を基準にする。
 - `scaling` は public surface から外す。optimize の拡大縮小は内部で fit 系計算を使い、`fill` / `crop` は user-facing option として露出しない。
@@ -170,8 +170,21 @@ apply mode の決定順:
 - command 名も `slideshow` とし、public surface の機能名と揃える。
 - 入力 directory を 1 件または最大 2 件の source directory として扱う。
 - `mode`, `interval_sec`, `plugin` を扱う。
-- CLI `slideshow` の `--mode` 既定値は `sequential` である。
+- `--settings-file` / `-c` で `harite-settings.json` 相当の JSON を読み込める。優先順位は **CLI 引数 > settings > 既定値**。
+- settings から読む slideshow 関連キー: `slideshow_srcdir_l`, `slideshow_srcdir_r`, `slideshow_interval_seconds`, `slideshow_mode`, `plugin`。
+- `--input` / `--interval-sec` は settings 未指定時は必須。`--settings-file` がある場合は settings 値で補完できる（CLI が指定されていれば CLI を優先）。
+- CLI `slideshow` の `--mode` 既定値は `sequential` である（settings 未使用時）。settings の `slideshow_mode` 既定は GUI と同様 `random`。
 - help では `--input` を、カンマ区切りまたは `--input` の繰り返しで source directory を指定できる option だと分かる文言で説明する。規範文言は `Input directories. Use comma-separated paths or repeat --input.` を基準にする。
+- help では `--settings-file` を harite-settings を読む option だと分かる文言で説明する。規範文言は `Optional path to harite-settings.json` を基準にする。
+
+### settings 読込と optimize 経路（MAT-11 / MAT-17）
+
+- CLI は settings の **srcdir パス** を `--input` の代替として使う。`slideshow_source_id_*` / `slideshow_profile_id` は **catalog 解決しない**（GUI が保存した `slideshow_srcdir_*` が空のときは CLI 単独では開始できない）。
+- **毎 cycle** で GUI と同型の `run_slideshow_optimize` を通す（`AppSettings.optimize` 一式: resolution / margins / align / scale / background / embed 等）。
+- **single**（1 directory）: 選択 1 枚 → `harite_slideshow.jpg` → plugin apply。
+- **dual**（2 directories）: L/R 各 side で独立 cycle 選択 → optimize → `per-monitor-auto-split`（Windows は Span composite）。plugin は `linux` / `windows` のみ。2 ディスプレイ検出が必須。
+- 作業ディレクトリは `{Pictures}/Harite/slideshow/`（slideshow-spec §6.1）。
+- remote source の **sync-on-tick**、op log、`SLIDESHOW_TICK` / `SLIDESHOW_APPLY` は GUI 専用。
 
 slideshow command の意味:
 

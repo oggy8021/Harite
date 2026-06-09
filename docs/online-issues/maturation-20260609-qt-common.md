@@ -6,7 +6,7 @@ GitHub Issue 起票前の観測転記。
 - 対象: **Qt 版**および **backend 共通**（GTK 専用は [GTK 熟成メモ](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) 参照）
 - **転記（中間整理 2026-05-31）:** 改修系・確かさ向上・**MAT-11** まで **完了**（#442〜#452）。
 - **機能要望（2026-06-09）:** **MAT-04**（#455）、**MAT-09**（#456）**完了**。Post Main Merge CI 緑（run 27195018405）。
-- **v2.0.0 backlog（2026-05-31）:** **MAT-13**（#458）、**MAT-14**（#459）、**MAT-15**（#460）、**MAT-16**（#461）**完了**。次: **MAT-17**（MAT-08 観測途中結果を先に転記）。
+- **v2.0.0 backlog（2026-05-31）:** **MAT-13**（#458）〜**MAT-16**（#461）**完了**。**MAT-17** 実装中（CLI slideshow + `--settings-file`）。次: **Q-01**。
 - **熟成運転:** 2026-06-09 **打ち切り**（継続には改修が先決）。
 - **製品線:** `v1.9.0` は熟成運転の **中間マイルストーン**。本 stream の営みは **`v2.0.0` を目指す**（Qt 一本化・remote source の確かさ・製品線の再定義）。詳細は下記 [v2.0.0 への再整理](#v200-への再整理オーナー方針-2026-06-09)。
 
@@ -593,7 +593,7 @@ GitHub Issue 起票前の観測転記。
 - MAT-03（Optimize で Color が効かない — 関連症状の可能性）
 - 正本: [harite-slideshow-spec.md §6](../specs/slideshow/harite-slideshow-spec.md)、[harite-gui-spec.md](../specs/gui/harite-gui-spec.md)
 - MAT-12 接続: single 直接 apply は **#452 で廃止**（§6.2.1 正本化は #451）
-- CLI `slideshow` は optimize 非経由のまま（仕様どおり・対象外）
+- CLI `slideshow` は当時 optimize 非経由（**MAT-17 で GUI parity へ拡張**）
 
 ### 取り込み方針
 
@@ -842,9 +842,12 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
-- スコープ: CLI slideshow の settings 読込 + headless / GUI 差分の明文化
+- **実装（MAT-17）:** CLI `slideshow` に `--settings-file` / `-c` を追加。`optimize` と同様 **CLI > settings > 既定値**。
+- **optimize 経路（MAT-11 parity）:** single / dual とも毎 cycle `run_slideshow_optimize` → apply。settings の optimize 一式を反映。
+- 読むキー: slideshow 系 + optimize / apply 系（`resolution`, `margins`, `align`, `plugin`, `apply_mode`, …）。
+- **スコープ外:** `slideshow_source_id_*` / `slideshow_profile_id` の catalog 解決、remote sync-on-tick、op log。
+- 正本: [harite-cli-spec.md](../specs/cli/harite-cli-spec.md) §6、[harite-slideshow-spec.md](../specs/slideshow/harite-slideshow-spec.md) §7。
 
 ### 調査メモ
 
-- memo（オーナー）: optimize 経路とは別軸。settings をどこまで CLI に渡すかは planning で確定
+- memo（オーナー）: MAT-11 当時 CLI は対象外だったが、settings 読込だけでは意味が薄い → **optimize 経路まで揃える**（オーナー確定）

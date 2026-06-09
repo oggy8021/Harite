@@ -113,7 +113,7 @@ working メモも完了なら docs/working/finished/ へ移動
 | 完了 | MAT-01, 01b, 02〜03, 05〜09, 11〜16（#458〜#461） |
 | 観測途中 | MAT-08 観測（viper3 slideshow-op.jsonl） |
 | 先送り（v2.0.0） | MAT-02b, Q-01（GTK メンテ対象外） |
-| 未着手 | MAT-17 |
+| 実装中 | MAT-17（CLI slideshow + settings） |
 | 未着手（後回し可） | MAT-10 |
 
 ### 内訳
