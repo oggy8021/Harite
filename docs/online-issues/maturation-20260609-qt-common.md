@@ -4,11 +4,53 @@ GitHub Issue 起票前の観測転記。
 
 - 親: [20260609 feature-overview](../working/20260609-1200-feature-overview.md)
 - 対象: **Qt 版**および **backend 共通**（GTK 専用は [GTK 熟成メモ](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) 参照）
-- **転記（中間整理 2026-05-31）:** 改修系・確かさ向上・**MAT-11** まで **完了**（#442〜#452）。**未着手:** MAT-04, MAT-09, MAT-10（機能要望）。MAT-02b（NDL/CODH 取得）は後送予定。
+- **転記（中間整理 2026-05-31）:** 改修系・確かさ向上・**MAT-11** まで **完了**（#442〜#452）。
+- **機能要望（2026-06-09）:** **MAT-04**（#455）、**MAT-09**（#456）**完了**。Post Main Merge CI 緑（run 27195018405）。
 - **熟成運転:** 2026-06-09 **打ち切り**（継続には改修が先決）。
-- **現フェーズ:** maturation stream **一区切り** — 次は機能要望残（MAT-04/09/10）または [Q-01](../working/20260609-1200-feature-overview.md#1-着手候補)（GitHub Issue 化なし）。
+- **製品線:** `v1.9.0` は熟成運転の **中間マイルストーン**。本 stream の営みは **`v2.0.0` を目指す**（Qt 一本化・remote source の確かさ・製品線の再定義）。詳細は下記 [v2.0.0 への再整理](#v200-への再整理オーナー方針-2026-06-09)。
 
-## 着手順（オーナー方針）
+## v2.0.0 への再整理（オーナー方針 2026-06-09）
+
+熟成運転の過程で **先送り** したものと **閃いた** ものを改めて並べる。骨格は **Q-01** — GTK を **メンテ対象外** に落とす（回収コスト観点）。**例: `v2.0.0` を GTK 同梱の最終版とする** 等は planning で確定。**MAT-10** は完全新規 source 調査のため、下記の **後** で十分。
+
+**GTK 熟成メモ:** [overview §Xfce](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) は **削除しない**（観測記録として残す）。GTK への parity 拡張・改修は行わない。
+
+### 完了（v1.9.0 マイルストーン）
+
+| 区分 | ID | PR |
+| --- | --- | --- |
+| 改修系 | MAT-01, 01b, 02, 03, 05, 06, 07 | #442〜#449 |
+| 確かさ向上 | MAT-08, 12 | #450, #451 |
+| 機能要望 | MAT-04, 09, 11 | #455, #456, #452 |
+| infra | CI docs-only skip 等 | #453 |
+
+### 先送り（v2.0.0 までに再棚卸）
+
+| ID | 要約 | 先送り理由 / 次の詰め |
+| --- | --- | --- |
+| **MAT-02b** | NDL / CODH **取得**（壁紙未切替の根） | MAT-02 は表示整合のみ完了。取得系は別枠のまま **未転記・未着手** |
+| **MAT-08 観測** | Preset slideshow JSONL 操作ログの **実機切り分け** | v0 実装済（#450）。`HARITE_SLIDESHOW_OP_LOG` による viper3 観測は **熟成運転復帰後** — MAT-02b の前提 |
+| **Q-01** | GTK を **メンテ対象外** に落とす → Qt 一本化 | **v2.0.0 の骨格** — 例: v2.0.0 を GTK 同梱の最終版とする。entrypoint / CI / packaging / docs の削除範囲を planning で確定 |
+
+### 未着手（v2.0.0 向け・2026-06-09 採番）
+
+| ID | 要約 | 区分 |
+| --- | --- | --- |
+| **MAT-13** | エラーメッセージを **赤色** で表示（現状メッセージ性が弱い） | polish |
+| **MAT-14** | **2x / 4x** display scale（MAT-01b 原寸回帰とは別軸） | 機能要望 |
+| **MAT-15** | align / margin / 画像ストレッチの **core 幾何総点検**（MAT-12→11 延長） | 確かさ向上 |
+| **MAT-16** | `jma-cycle.json` 等の時刻を **ローカルタイム**（日本なら JST）で扱う | 確かさ向上 |
+| **MAT-17** | **CLI slideshow** でも設定ファイルを読む | planning（CLI） |
+| **MAT-10** | 江戸切絵図 / edo-maps 雰囲気 source（完全新規） | 機能要望・**後回し** |
+
+### おおよその次の流れ（確定順ではない）
+
+1. **Q-01 planning** — GTK をメンテ対象外に落とす境界（例: v2.0.0 を最終同梱版）
+2. **MAT-02b + MAT-08 観測** — remote source の実機切り分け（Qt 側で継続）
+3. **MAT-13〜17** — v2.0.0 向け backlog（下記 § 参照）
+4. **MAT-10** — 新規 source 調査（MAT-13〜17 の後で十分）
+
+## 着手順（オーナー方針・熟成運転中の区分）
 
 着手・Issue 化の **おおよその優先**（確定順ではない）:
 
@@ -19,11 +61,15 @@ GitHub Issue 起票前の観測転記。
 | 区分 | ID |
 | --- | --- |
 | 改修系 | MAT-01, MAT-01b, MAT-02, MAT-03, MAT-05, MAT-06, MAT-07 |
-| 確かさ向上 | MAT-08, MAT-12 |
-| 機能要望系（未着手） | MAT-04, MAT-09, MAT-10 |
-| 機能要望系（完了） | MAT-11 |
+| 確かさ向上（完了） | MAT-08, MAT-12 |
+| 確かさ向上（未着手） | MAT-15, MAT-16 |
+| 機能要望系（完了） | MAT-04, MAT-09, MAT-11 |
+| 機能要望系（未着手） | MAT-14, MAT-10 |
+| polish（未着手） | MAT-13 |
+| CLI（未着手） | MAT-17 |
+| 先送り（v2.0.0 再棚卸） | MAT-02b, MAT-08 観測, Q-01 |
 
-※ MAT-02 の NDL/CODH 取得側は **MAT-02b** として別枠（未転記）。MAT-10 の具体 URL は例示のみ（[MAT-10](#mat-10--江戸切絵図を雰囲気絵ソースにできないか検討) 参照）。
+※ MAT-02b は [v2.0.0 への再整理](#v200-への再整理オーナー方針-2026-06-09) 参照。MAT-10 の具体 URL は例示のみ（[MAT-10](#mat-10--江戸切絵図を雰囲気絵ソースにできないか検討)）。MAT-13〜17 は [v2.0.0 向け採番](#mat-13--エラーメッセージを赤色で表示したい) 参照。
 
 ---
 
@@ -117,7 +163,7 @@ GitHub Issue 起票前の観測転記。
 - **修正（2026-06-09）:** `core.py` — `_resolve_native_dimensions`, `_allocate_on_display`, `_resolve_display_slots`。spec §4.1 更新。テスト反転。
 - GUI 注釈 `margins define area; align/valign act inside it` は **旧 Harite 実装向け**。gui-spec 整合は follow-up。
 - **実機（オーナー・Windows）:** Preset ソースで顕著。**真の価値・見え方に戻った**（誤 upscale 時代のプロダクト誤解を解消）。天気図など **小画像は原寸のまま中央にポツン** — align では動かせない（余白があるから可能；画像が小さいと center 既定のまま）。→ **MAT-11**（Slideshow でも Optimize）と強く結びつく。
-- **製品線（別 planning）:** 高解像度ディスプレイ向けの **意図的 2x / 4x 等**は、MAT-01b の「拡大禁止」とは **別軸**（ユーザーが選ぶ display scale）。本改修で誤った「常時 fit 拡大」路線には進まなくてよかった。
+- **製品線:** 高解像度向け **意図的 2x / 4x** は [MAT-14](#mat-14--2x--4x-display-scale意図的拡大)（MAT-01b の拡大禁止とは別軸）。
 
 ---
 
@@ -231,6 +277,7 @@ GitHub Issue 起票前の観測転記。
 
 - memo（オーナー）: 文字図版中心のため採用見送り
 - **実装:** `harite-source-presets.json`、`sources_remote.py`（`CODH_KEYWORD_PRESET_IDS` / `_CODH_PRESET_SEARCH`）、source-spec §15.4、gui-spec keyword 行。テスト: `test_c01_source_presets`（MAT-04 削除検証）
+- **完了** — #455 マージ（2026-06-09）。Post Main Merge CI 緑。
 
 ---
 
@@ -427,7 +474,8 @@ GitHub Issue 起票前の観測転記。
 
 - memo（オーナー）: 熟成運転中の単発要望
 - **UX（2026-05-31）:** 案 B（既存 spin に All）は分かりにくいため不採用。案 A 変形（右下専用 spin）を採用。
-- **実装:** `build_margin_cross_grid`、 `on_change_margins`（`spnAllMargins`）、`uniform_all_margin_spin_value`、gui-spec §3。
+- **実装:** `build_margin_cross_grid`、`on_change_margins`（`spnAllMargins`）、`refresh_all_margins_bulk_controls`、gui-spec §3。Qt/GTK parity。
+- **完了** — #456 マージ（2026-06-09）。Post Main Merge CI 緑（run 27195018405）。
 
 ---
 
@@ -509,7 +557,7 @@ GitHub Issue 起票前の観測転記。
 - **実機（オーナー・Windows・MAT-01b 後）:** Preset 天気図が **原寸中央にポツン** — single 経路が Optimize を通らないため。MAT-01b で Main 側は正しくなったが、slideshow が **Optimize 迂回**のままが次のボトルネック
 - **実装（#452）:** spec §6.2 / §6.2.1 更新。テスト: `test_mat11_slideshow_single_optimize.py` 他。
 - **実機（オーナー・#452 後）:** おおまかには良好。細部は別途。
-- 関連: 意図的 **2x/4x** 計画は MAT-11 とは別（高 DPI 向け product 判断）。原寸回帰と混同しない。
+- 関連: 意図的 **2x/4x** は [MAT-14](#mat-14--2x--4x-display-scale意図的拡大)（MAT-11 とは別軸）。
 
 ---
 
@@ -550,3 +598,184 @@ GitHub Issue 起票前の観測転記。
 - memo（オーナー）: 壁紙が切り替わらない事象（MAT-02）の土台質問
 - **確定（2026-06-09）:** ソース構成 dual（L+R 指定）→ optimize + 作業ディレクトリ。single（片方のみ）→ **現行** optimize なし・直接 apply。オーナー指摘: dual 指定時点でソースは dual。single の Optimize 迂回は **MAT-11 で廃止**（Main と同型の Optimize 経路へ）。
 - **完了:** #451 マージ済み（§6.2.1 正本化、R1 掃除・single スロット削除）。
+
+---
+
+## MAT-13 — エラーメッセージを赤色で表示したい
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `GUI: show error feedback in red (stronger message affordance)`
+
+### 事象 / 要望
+
+- エラー時のメッセージが **赤色で出て欲しい**。現状、メッセージ性がすごく弱い。
+
+### 分類
+
+- `polish`
+- `planning`（feedback / Status 面の視認性）
+
+### 関連
+
+- 正本: [harite-gui-spec.md §9 footer Status](../specs/gui/harite-gui-spec.md)
+- 実装候補: `set_feedback` / `status_phase=error`、Qt/GTK の error 色スタイル
+
+### 取り込み方針
+
+- 現時点: **転記のみ**
+- スコープ: footer `Status` および error 系 feedback の **色・コントラスト**（文言変更は別途）
+
+### 調査メモ
+
+- memo（オーナー）: v2.0.0 向け backlog 採番（MAT-13）
+
+---
+
+## MAT-14 — 2x / 4x display scale（意図的拡大）
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `Feature: per-display preset scale (2x/4x) separate from native placement`
+
+### 事象 / 要望
+
+- 高 DPI 向けに **意図的 2x / 4x** 等の display scale をユーザーが選べるようにしたい。
+- **MAT-01b** の原寸回帰（拡大禁止）とは **別軸**（ユーザーが選ぶ product 判断）。
+
+### UX メモ（オーナー指定）
+
+- **QSlider の自由スライドではなく**、プリセット値を **ステップ移動**（縦横どちらのコントロールでも可）。
+- Optimize 時に解像度を突破する判定となった場合は **エラー**。
+- 理想は **L / R に一つずつ** 用意。
+- Compose エリアが詰め込みすぎ — **Clear ボタン左**、または **下** に置く案（要 mock）。
+
+### 分類
+
+- `planning`（機能要望）
+- `investigation`（optimize 解像度ゲートとの接続）
+
+### 関連
+
+- MAT-01b（#444 — 原寸配置・誤 upscale 禁止）
+- MAT-11（#452 — Optimize 経路）
+- `Display.scale_percent`（W-03-C — 付加情報として既存）
+- 正本: [harite-core-spec.md](../specs/core/harite-core-spec.md)、[harite-gui-spec.md §3 compose grid](../specs/gui/harite-gui-spec.md)
+
+### 取り込み方針
+
+- 現時点: **転記のみ**
+- スコープ: per-display preset scale UI + optimize 時の解像度上限チェック
+
+### 調査メモ
+
+- memo（オーナー）: 旧「閃き」を MAT-14 として正式採番。MAT-11 調査メモの 2x/4x 言及と同系
+
+---
+
+## MAT-15 — align / margin / ストレッチの core 幾何総点検
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `Investigation: re-audit alignment vs margin precedence and core geometry`
+
+### 事象 / 要望
+
+- **MAT-12 → MAT-11** の Optimize 必須線を踏まえ、**Alignment とマージンの勝ち負け**を再々点検したい。
+- Alignment と画像のストレッチで **大きな誤解**があったため、**core を中心とした幾何計算**を総点検する。
+
+### 分類
+
+- `investigation`
+- `planning`（core-spec / gui 注釈の整合）
+
+### 関連
+
+- MAT-01（#442）、MAT-01b（#444）、MAT-11（#452）、MAT-12（#451）
+- 正本: [harite-core-spec.md](../specs/core/harite-core-spec.md)、gui-spec margin 注釈（`margins define area; align/valign act inside it`）
+- 設計ドラフト: [MAT-01b native placement repair](../working/design/20260609-mat-01b-native-placement-repair-draft.md)
+
+### 取り込み方針
+
+- 現時点: **転記のみ**
+- スコープ: core 幾何の照合（母体 `wallpaperoptimizer` 含む）→ 必要なら spec 改訂・改修 PR に分解
+
+### 調査メモ
+
+- memo（オーナー）: MAT-01b で誤 upscale を直したが、align / margin / stretch の優先関係は別途総点検が必要
+
+---
+
+## MAT-16 — 時刻フィールドをローカルタイム（JST）で扱う
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `Use local timezone (JST) for cache metadata and op logs`
+
+### 事象 / 要望
+
+- `jma-cycle.json` をはじめ、`updated_at` など時刻は **ローカルタイム**（日本なら **JST**）で扱って欲しい。
+- 正直、解析しづらい。**先行する MAT-08**（slideshow 操作ログ）も同じ。
+
+### 分類
+
+- `planning`（観測・診断 infrastructure）
+- `investigation`（既存 UTC / naive 表現の棚卸）
+
+### 関連
+
+- MAT-08（#450 — `ts_jst` は JSONL で `+09:00` 固定オフセット済み。cache / settings 側は未整理）
+- [harite-source-spec.md](../specs/source/harite-source-spec.md)（remote cache、`jma-cycle.json`）
+- `HARITE_SLIDESHOW_OP_LOG` 出力形式
+
+### 取り込み方針
+
+- 現時点: **転記のみ**
+- スコープ: cache メタデータ・settings・op log の **表記方針統一**（ローカル TZ、日本環境では JST）
+
+### 調査メモ
+
+- memo（オーナー）: MAT-08 観測の前提整理にも効く
+
+---
+
+## MAT-17 — CLI slideshow でも設定ファイルを読む
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09
+- 仮タイトル: `CLI: slideshow command loads harite-settings.json`
+
+### 事象 / 要望
+
+- **CLI:** `slideshow` でも **設定ファイルを読ませる**。
+- **headless モード**との差異なども点検が必要か。
+
+### 分類
+
+- `planning`（CLI / GUI parity）
+- `investigation`（現行 CLI slideshow の settings 未読経路）
+
+### 関連
+
+- MAT-11（GUI slideshow は `form_state` 経由で settings 反映 — #452）
+- 正本: [harite-cli-spec.md](../specs/cli/harite-cli-spec.md)、[harite-slideshow-spec.md](../specs/slideshow/harite-slideshow-spec.md)
+- MAT-11 調査メモ: CLI `slideshow` は optimize 非経由のまま（仕様どおり・当時対象外）— 本件は **settings 読込** の話
+
+### 取り込み方針
+
+- 現時点: **転記のみ**
+- スコープ: CLI slideshow の settings 読込 + headless / GUI 差分の明文化
+
+### 調査メモ
+
+- memo（オーナー）: optimize 経路とは別軸。settings をどこまで CLI に渡すかは planning で確定

@@ -104,16 +104,16 @@ working メモも完了なら docs/working/finished/ へ移動
 
 | Issue | タイトル要約 | 分類 | overview ID |
 | --- | --- | --- | --- |
-| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜12（熟成運転打ち切り → **一区切り** #442〜#452） | bug / investigation / planning | 改修フェーズ |
+| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜17（`v1.9.0` 一区切り → **`v2.0.0` 目標** #442〜#456） | bug / investigation / planning | Q-01 / MAT-13〜17 |
 
-### maturation-20260609-qt-common — 棚卸予定の並び
+### maturation-20260609-qt-common — 棚卸（2026-06-09 再整理）
 
 | 区分 | ID |
 | --- | --- |
-| 改修系（完了） | MAT-01, MAT-01b, 02〜03, 05〜07 |
-| 確かさ向上（完了） | MAT-08, 12 |
-| 機能要望系（完了） | MAT-11 |
-| 機能要望系（未着手） | MAT-04, 09, 10 |
+| 完了 | MAT-01, 01b, 02〜03, 05〜09, 11, 12 |
+| 先送り（v2.0.0） | MAT-02b, MAT-08 観測, Q-01（GTK メンテ対象外） |
+| 未着手 | MAT-13, 14, 15, 16, 17 |
+| 未着手（後回し可） | MAT-10 |
 
 ### 内訳
 
@@ -128,7 +128,13 @@ working メモも完了なら docs/working/finished/ へ移動
 | MAT-07 | embed Text: 2・3 行目 Enter で先頭行へジャンプ | 改修 |
 | MAT-08 | Preset 系 Slideshow 動作ログ（CODH/NDL 観測用） | 確かさ |
 | MAT-12 | Preset 時 Optimize 有無・保存先（**完了** #451） | 確かさ |
-| MAT-04 | 江戸買物案内 preset をやめる | 要望 |
-| MAT-09 | Margin 一括変更・リセット | 要望 |
-| MAT-10 | 江戸切絵図を雰囲気絵ソースに（検討・例示のみ） | 要望 |
+| MAT-04 | 江戸買物案内 preset をやめる（**完了** #455） | 要望 |
+| MAT-09 | Margin 一括変更・リセット（**完了** #456） | 要望 |
+| MAT-10 | 江戸切絵図を雰囲気絵ソースに（検討・例示のみ・**後回し**） | 要望 |
 | MAT-11 | Slideshow でも Main と同型の Optimize（**完了** #452） | 要望 |
+| MAT-02b | NDL/CODH 取得（MAT-02 から先送り・未転記） | 先送り |
+| MAT-13 | エラーメッセージを赤色で表示 | polish |
+| MAT-14 | 2x/4x display scale（プリセットステップ・L/R） | 要望 |
+| MAT-15 | align / margin / ストレッチの core 幾何総点検 | 確かさ |
+| MAT-16 | 時刻をローカル TZ（JST）で統一 | 確かさ |
+| MAT-17 | CLI slideshow で settings 読込 | CLI |
