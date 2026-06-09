@@ -1230,9 +1230,13 @@ class MainWindow:
         if not selected_id:
             if normalized_side == "L":
                 self.slideshow_source_id_l = ""
+                self.slideshow_srcdir_l = ""
             else:
                 self.slideshow_source_id_r = ""
+                self.slideshow_srcdir_r = ""
             self.slideshow_profile_id = ""
+            self._update_slideshow_source_display()
+            self._refresh_action_availability()
             self._log(f"Slideshow saved source cleared ({normalized_side})")
             return True
 
@@ -1713,12 +1717,29 @@ class MainWindow:
         if self._slideshow_plugin_impl is None:
             return False
 
+        from harite.slideshow_op_log import log_slideshow_op
+
         try:
             ok = bool(self._slideshow_plugin_impl.apply(target))
         except Exception as exc:
             self._log(f"Slideshow {cycle_phase} {apply_mode} apply error: {exc}")
+            log_slideshow_op(
+                "SLIDESHOW_APPLY",
+                ok=False,
+                phase=cycle_phase,
+                apply_mode=apply_mode,
+                target=str(target),
+                error=str(exc),
+            )
             return False
 
+        log_slideshow_op(
+            "SLIDESHOW_APPLY",
+            ok=ok,
+            phase=cycle_phase,
+            apply_mode=apply_mode,
+            target=str(target),
+        )
         if ok:
             self._log(f"Slideshow {cycle_phase} {apply_mode} apply ok: {target}")
             return True
@@ -1902,6 +1923,17 @@ class MainWindow:
             self._log("Slideshow tick ignored: slideshow is idle")
             return False
 
+        from harite.slideshow_op_log import log_slideshow_op
+
+        log_slideshow_op(
+            "SLIDESHOW_TICK",
+            phase="tick",
+            srcdir_l=self.slideshow_srcdir_l or "",
+            srcdir_r=self.slideshow_srcdir_r or "",
+            source_id_l=self.slideshow_source_id_l or "",
+            source_id_r=self.slideshow_source_id_r or "",
+        )
+
         selected_left = "-"
         selected_right = "-"
         sources: list[tuple[str, Path]] = []
@@ -1941,6 +1973,12 @@ class MainWindow:
             self._update_slideshow_summary_display()
             self._set_status("error", "slideshow", error_message or "slideshow cycle apply failed", error=error_message or "slideshow cycle apply failed")
             self._log(f"Slideshow tick stopped: {error_message or 'slideshow cycle apply failed'}")
+            log_slideshow_op(
+                "SLIDESHOW_TICK",
+                ok=False,
+                phase="tick",
+                error=error_message or "slideshow cycle apply failed",
+            )
             return False
         if was_paused:
             self._clear_slideshow_pause()
@@ -1949,6 +1987,13 @@ class MainWindow:
             self._slideshow_feedback_dirty = True
             self._log("Slideshow resumed")
         self._log(f"Slideshow tick: L={selected_left} R={selected_right}")
+        log_slideshow_op(
+            "SLIDESHOW_TICK",
+            ok=True,
+            phase="tick",
+            selected_l=selected_left,
+            selected_r=selected_right,
+        )
         return True
 
     def on_slideshow_stop(self) -> bool:

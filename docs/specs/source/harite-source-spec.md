@@ -389,8 +389,8 @@ CODH / NDL の実機切り分け用に、Preset `remote-*` の **sync / tick** �
 | 有効化 | 環境変数 `HARITE_SLIDESHOW_OP_LOG` が非空のときのみ記録。未設定時は **no-op**（通常利用への影響なし） |
 | 出力先 | ファイル path（追記 JSONL）、または `stderr` / `1` / `true`（logger `harite.slideshow.remote` へ INFO） |
 | タイムスタンプ | 各レコードの `ts_jst` は JST（`+09:00` 固定オフセット） |
-| 対象 | slideshow **Start 直前 sync**、Manage **Refresh**、**CODH tick**、**JMA tick**（要約のみ）。手動 `local-dir` のみは対象外 |
-| 内容 | `step`（例: `REMOTE_SYNC_BEGIN`, `NDL_META_URL`, `NDL_IIIF_GET`, `CODH_INDEX_PROBE`, `CODH_TICK`）、`url`、`preset_id`、`ok`、`error` 等 |
+| 対象 | slideshow **Start 直前 sync**、Manage **Refresh**、**CODH tick**、**JMA tick**、**slideshow tick/apply**（MAT-02b）。手動 `local-dir` のみは対象外 |
+| 内容 | `step`（例: `REMOTE_SYNC_BEGIN`, `NDL_META_URL`, `CODH_TICK`, `SLIDESHOW_TICK`, `SLIDESHOW_APPLY`）、`url`、`preset_id`、`ok`、`error` 等 |
 
 実装: `harite.slideshow_op_log.log_slideshow_op`。viper3 観測例: `export HARITE_SLIDESHOW_OP_LOG=~/.cache/harite/slideshow-op.jsonl`。
 

@@ -347,7 +347,7 @@ catalog 契約は [source-spec §7](../source/harite-source-spec.md)。
 | 操作 | owner path | registry tracking（`slideshow_source_id_*` / `slideshow_profile_id`） | combo 表示 |
 | --- | --- | --- | --- |
 | Saved combo で source 選択 | `resolve_source` → `slideshow_srcdir_*` 更新 | 当該 side の source id を記録 | 選択 source 名 |
-| Saved combo で `— none —` | path **は変更しない** | 当該 side の source id のみクリア | `— none —` |
+| Saved combo で `— none —` | 当該 side の `slideshow_srcdir_*` も `""`（`Clear-L/R` と同型） | 当該 side の source id をクリア | `— none —` |
 | Srcdir-L/R ブラウズ確定 | 従来どおり path 直書き | 当該 side の source id をクリア | `— none —` |
 | Profile 選択 | L/R 両 path を profile から展開 | `slideshow_profile_id` + 両 source id を記録 | 各 side を対応 source に |
 | Clear-L/R（§4.1 拡張） | 当該 side path を `""` | 当該 side source id + **`slideshow_profile_id` をクリア** | 当該 side saved combo → `— none —`。**Profile combo → `— none —`** |
@@ -465,7 +465,7 @@ GTK / Qt 両 backend で、次の user-facing surface は **同じ省略規則**
 
 - Slideshow tab の registry UI は §4.2 の layout / handler に従う。catalog 永続化は [source-spec](../source/harite-source-spec.md) が正本。
 - startup / settings load 後、backend は catalog を load し、[source-spec §13.4](../source/harite-source-spec.md) `bootstrap_preset_sources` のち tab 上 combo を構築する（§6.5）。settings の任意 key `slideshow_source_id_l/r` / `slideshow_profile_id` があれば、対応 combo 選択を復元してよい（path は従来どおり `slideshow_srcdir_*` が実行値）。
-- Saved / Profile 選択および Srcdir ブラウズの優先関係は §4.2 の併存表が正本。**`— none —` は source id のみクリアし path は維持**、**Srcdir ブラウズは registry 外 path として combo を `— none —` に戻す**。
+- Saved / Profile 選択および Srcdir ブラウズの優先関係は §4.2 の併存表が正本。**`— none —` は source id と path を両方クリア**（MAT-02b）、**Srcdir ブラウズは registry 外 path として combo を `— none —` に戻す**。
 
 ### 6.4 Registry resolve at start
 

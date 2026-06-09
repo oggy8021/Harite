@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from harite.gui.adapters.ui_adapter import RUNTIME_HANDLER_MAP
 from harite.gui.views.main_window import MainWindow
 from harite.sources import add_profile, add_source, empty_catalog, save_catalog
@@ -50,21 +52,33 @@ def test_on_select_slideshow_source_sets_path_and_id(tmp_path: Path):
     assert window.slideshow_profile_id == ""
 
 
-def test_on_select_slideshow_source_none_clears_id_only(tmp_path: Path):
+@pytest.mark.parametrize("side,id_attr,path_attr", [
+    ("L", "slideshow_source_id_l", "slideshow_srcdir_l"),
+    ("R", "slideshow_source_id_r", "slideshow_srcdir_r"),
+])
+def test_on_select_slideshow_source_none_clears_id_and_path(
+    tmp_path: Path,
+    side: str,
+    id_attr: str,
+    path_attr: str,
+) -> None:
     left_dir = tmp_path / "left"
     right_dir = tmp_path / "right"
     left_dir.mkdir()
     right_dir.mkdir()
     catalog_path = tmp_path / "sources.json"
-    left_id, _, _ = _write_catalog(catalog_path, left_dir, right_dir)
+    left_id, right_id, _ = _write_catalog(catalog_path, left_dir, right_dir)
+    source_id = left_id if side == "L" else right_id
+    expected_path = str((left_dir if side == "L" else right_dir).resolve())
 
     window = MainWindow()
     window._source_catalog_path = catalog_path
-    window.on_select_slideshow_source("L", left_id)
+    window.on_select_slideshow_source(side, source_id)
 
-    assert window.on_select_slideshow_source("L", None) is True
-    assert window.slideshow_source_id_l == ""
-    assert window.slideshow_srcdir_l == str(left_dir.resolve())
+    assert getattr(window, path_attr) == expected_path
+    assert window.on_select_slideshow_source(side, None) is True
+    assert getattr(window, id_attr) == ""
+    assert getattr(window, path_attr) == ""
 
 
 def test_on_pick_slideshow_srcdir_clears_saved_source_tracking(tmp_path: Path):

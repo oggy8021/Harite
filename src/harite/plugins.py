@@ -510,11 +510,20 @@ class LinuxPlugin:
                 str(mon_name): str(Path(mon_path).expanduser().resolve())
                 for mon_name, mon_path in path.items()
             }
+            for mon_path in mapping.values():
+                try:
+                    Path(mon_path).touch()
+                except OSError:
+                    logger.debug("Could not touch wallpaper file before apply: %s", mon_path)
         else:
             p = Path(path).expanduser().resolve()
             if not p.exists():
                 logger.error("Wallpaper file does not exist: %s", path)
                 return False
+            try:
+                p.touch()
+            except OSError:
+                logger.debug("Could not touch wallpaper file before apply: %s", p)
 
         # Try common desktop environment commands (gsettings, feh). This is a best-effort
         # and intentionally not guaranteed to work on all distributions / DEs.

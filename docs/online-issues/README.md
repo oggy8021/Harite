@@ -104,15 +104,15 @@ working メモも完了なら docs/working/finished/ へ移動
 
 | Issue | タイトル要約 | 分類 | overview ID |
 | --- | --- | --- | --- |
-| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜17（`v1.9.0` 一区切り → **`v2.0.0` 目標** #442〜#460） | bug / investigation / planning | MAT-16〜17 → Q-01 → MAT-10 |
+| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜17（`v1.9.0` 一区切り → **`v2.0.0` 目標** #442〜#461） | bug / investigation / planning | MAT-17 → Q-01 → MAT-10 |
 
 ### maturation-20260609-qt-common — 棚卸（2026-06-09 再整理）
 
 | 区分 | ID |
 | --- | --- |
-| 完了 | MAT-01, 01b, 02〜03, 05〜09, 11〜15（#458〜#460） |
-| 先送り（v2.0.0） | MAT-02b, MAT-08 観測, Q-01（GTK メンテ対象外） |
-| 実装中 | MAT-16 |
+| 完了 | MAT-01, 01b, 02〜03, 05〜09, 11〜16（#458〜#461） |
+| 観測途中 | MAT-08 観測（viper3 slideshow-op.jsonl） |
+| 先送り（v2.0.0） | MAT-02b, Q-01（GTK メンテ対象外） |
 | 未着手 | MAT-17 |
 | 未着手（後回し可） | MAT-10 |
 
@@ -137,5 +137,6 @@ working メモも完了なら docs/working/finished/ へ移動
 | MAT-13 | エラーメッセージを赤色で表示（**完了** #458） | polish |
 | MAT-14 | source image scale % プリセット・L/R（**完了** #459） | 要望 |
 | MAT-15 | align / margin / ストレッチの core 幾何総点検（**完了** #460） | 確かさ |
-| MAT-16 | 時刻をローカル TZ（JST）で統一（**実装中**） | 確かさ |
+| MAT-16 | 時刻をローカル TZ（JST）で統一（**完了** #461） | 確かさ |
+| MAT-08 観測 | viper3 途中結果（JMA のみ安定、NDL/CODH は tick/apply 不安定） | 確かさ |
 | MAT-17 | CLI slideshow で settings 読込 | CLI |

@@ -6,7 +6,7 @@ GitHub Issue 起票前の観測転記。
 - 対象: **Qt 版**および **backend 共通**（GTK 専用は [GTK 熟成メモ](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) 参照）
 - **転記（中間整理 2026-05-31）:** 改修系・確かさ向上・**MAT-11** まで **完了**（#442〜#452）。
 - **機能要望（2026-06-09）:** **MAT-04**（#455）、**MAT-09**（#456）**完了**。Post Main Merge CI 緑（run 27195018405）。
-- **v2.0.0 backlog（2026-05-31）:** **MAT-13**（#458）、**MAT-14**（#459）、**MAT-15**（#460）**完了**。次: **MAT-16**。
+- **v2.0.0 backlog（2026-05-31）:** **MAT-13**（#458）、**MAT-14**（#459）、**MAT-15**（#460）、**MAT-16**（#461）**完了**。次: **MAT-17**（MAT-08 観測途中結果を先に転記）。
 - **熟成運転:** 2026-06-09 **打ち切り**（継続には改修が先決）。
 - **製品線:** `v1.9.0` は熟成運転の **中間マイルストーン**。本 stream の営みは **`v2.0.0` を目指す**（Qt 一本化・remote source の確かさ・製品線の再定義）。詳細は下記 [v2.0.0 への再整理](#v200-への再整理オーナー方針-2026-06-09)。
 
@@ -25,34 +25,33 @@ GitHub Issue 起票前の観測転記。
 | 機能要望 | MAT-04, 09, 11 | #455, #456, #452 |
 | infra | CI docs-only skip 等 | #453 |
 
-### 完了（v2.0.0 向け・MAT-13〜15）
+### 完了（v2.0.0 向け・MAT-13〜16）
 
 | 区分 | ID | PR |
 | --- | --- | --- |
 | polish | MAT-13 | #458 |
 | 機能要望 | MAT-14 | #459 |
-| 確かさ向上 | MAT-15 | #460 |
+| 確かさ向上 | MAT-15, 16 | #460, #461 |
 
 ### 先送り（v2.0.0 までに再棚卸）
 
 | ID | 要約 | 先送り理由 / 次の詰め |
 | --- | --- | --- |
-| **MAT-02b** | NDL / CODH **取得**（壁紙未切替の根） | MAT-02 は表示整合のみ完了。取得系は別枠のまま **未転記・未着手** |
-| **MAT-08 観測** | Preset slideshow JSONL 操作ログの **実機切り分け** | v0 実装済（#450）。`HARITE_SLIDESHOW_OP_LOG` による viper3 観測は **熟成運転復帰後** — MAT-02b の前提 |
+| **MAT-02b** | NDL / CODH slideshow **tick / apply 不安定** | MAT-08 viper3 で JMA のみ安定。**実装中** `fix/mat-02b-slideshow-stability` |
+| **MAT-08 観測** | Preset slideshow JSONL 操作ログの **実機切り分け** | v0 実装済（#450）。viper3 途中結果: **JMA のみ安定**、NDL/CODH は tick 不発・未反映あり（[観測メモ](../working/20260609-mat-08-viper3-slideshow-op-observation.md)）→ MAT-02b 前提 |
 | **Q-01** | GTK を **メンテ対象外** に落とす → Qt 一本化 | **v2.0.0 の骨格** — 例: v2.0.0 を GTK 同梱の最終版とする。entrypoint / CI / packaging / docs の削除範囲を planning で確定 |
 
 ### 残 backlog（v2.0.0 向け）
 
 | ID | 要約 | 区分 |
 | --- | --- | --- |
-| **MAT-16** | `jma-cycle.json` 等の時刻を **ローカルタイム**（日本なら JST）で扱う | 確かさ向上（**実装中** `fix/mat-16-local-tz-cache`） |
 | **MAT-17** | **CLI slideshow** でも設定ファイルを読む | planning（CLI） |
 | **MAT-10** | 江戸切絵図 / edo-maps 雰囲気 source（完全新規） | 機能要望・**後回し** |
 
 ### おおよその次の流れ（オーナー確定 2026-06-09）
 
-1. ~~**MAT-13 → 14 → 15**~~ **完了**（#458〜#460）→ **MAT-16 → 17** — v2.0.0 向け backlog を順に片づけ（下記 § 参照）
-   - **並行 / 前提:** MAT-02b + MAT-08 観測（remote source 実機切り分け）
+1. ~~**MAT-13 → 14 → 15 → 16**~~ **完了**（#458〜#461）→ **MAT-17** — v2.0.0 向け backlog を順に片づけ（下記 § 参照）
+   - **並行 / 前提:** MAT-02b + MAT-08 観測（viper3 途中結果転記済み。apply 層は未）
 2. **Q-01** — GTK をメンテ対象外に落とす（例: v2.0.0 を最終同梱版）。**MAT-10 より先**
 3. **MAT-10** — 完全新規 source 調査（**最後**）
 
@@ -67,13 +66,14 @@ GitHub Issue 起票前の観測転記。
 | 区分 | ID |
 | --- | --- |
 | 改修系 | MAT-01, MAT-01b, MAT-02, MAT-03, MAT-05, MAT-06, MAT-07 |
-| 確かさ向上（完了） | MAT-08, MAT-12, MAT-15 |
-| 確かさ向上（実装中） | MAT-16 |
+| 確かさ向上（完了） | MAT-08, MAT-12, MAT-15, MAT-16 |
+| 確かさ向上（観測途中） | MAT-08 観測 |
 | 機能要望系（完了） | MAT-04, MAT-09, MAT-11, MAT-14 |
 | 機能要望系（未着手） | MAT-10 |
 | polish（完了） | MAT-13 |
 | CLI（未着手） | MAT-17 |
-| 先送り（v2.0.0 再棚卸） | MAT-02b, MAT-08 観測, Q-01 |
+| 改修系（実装中） | MAT-02b |
+| 先送り（v2.0.0 再棚卸） | Q-01 |
 
 ※ MAT-02b は [v2.0.0 への再整理](#v200-への再整理オーナー方針-2026-06-09) 参照。MAT-10 の具体 URL は例示のみ（[MAT-10](#mat-10--江戸切絵図を雰囲気絵ソースにできないか検討)）。MAT-13〜17 は [v2.0.0 向け採番](#mat-13--エラーメッセージを赤色で表示したい) 参照。
 
@@ -211,6 +211,44 @@ GitHub Issue 起票前の観測転記。
 - memo（オーナー）: 壁紙未切替・Error none だが Stop 有効。取得系は別枠
 - **原因（2026-06-09）:** Qt は footer のみ更新。`QTabWidget.setTabText` と `lblSlideshowTabTitle` が初期 `Slideshow (stopped)` のまま。GTK `refresh_slideshow_summary_label` は両方を `Slideshow ({state})` に同期。
 - **修正:** `qt_widget_helpers.refresh_slideshow_summary_label` — stopped/running/paused を GTK 同型で footer + tab に反映。spec: gui-spec §3 footer / notebook 同期。
+
+---
+
+## MAT-02b — NDL / CODH slideshow 取得・壁紙更新の不安定
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-09（MAT-08 観測後に着手）
+- 仮タイトル: `Fix NDL/CODH slideshow tick stability and wallpaper apply on Linux`
+
+### 事象
+
+- MAT-02 は **表示整合のみ** 完了（#445）。**壁紙が切り替わらない** / **期待 tick が来ない** は本項目。
+- [MAT-08 viper3 観測](../working/20260609-mat-08-viper3-slideshow-op-observation.md): **JMA のみ安定**。NDL / CODH は JSONL GET 成功でも実機未反映・tick 不発あり。
+
+### 分類
+
+- `bug`（slideshow tick / apply / UI state）
+- `investigation`（remote sync 後パイプライン）
+
+### 関連
+
+- MAT-02（#445 — 表示のみ）、MAT-08（#450 + viper3 観測）、MAT-11（#452 — Optimize 経路）
+- [20260609-mat-02b-slideshow-remote-stability.md](../working/20260609-mat-02b-slideshow-remote-stability.md)
+
+### 取り込み方針
+
+- 実装（`fix/mat-02b-slideshow-stability`）:
+  - `— none —` 選択時に `slideshow_srcdir_*` もクリア（gui-spec §4.2 更新）
+  - op log に `SLIDESHOW_TICK` / `SLIDESHOW_APPLY` を追加（MAT-08 観測の切り分け強化）
+  - Linux `LinuxPlugin.apply` — 同一 path 再適用前に `touch`（XFCE 等の再描画促進）
+- **未着手（follow-up）:** NDL sync-on-tick（product）、tick apply 失敗時の pause 継続方針
+
+### 調査メモ
+
+- viper3: R `--none--` で path 残存 → dual 幽霊 R。CODH 20:37 `CODH_TICK` OK だが壁紙未更新 → apply / DE キャッシュ疑い
+- NDL は設計上 tick で新規取得しない — 「新しい図版毎 10 分」は別 feature
 
 ---
 
@@ -445,7 +483,13 @@ GitHub Issue 起票前の観測転記。
 
 - memo（オーナー）: CODH・NDL 観測の前提。JST タイムスタンプ必須。URL 組み立て過程の可視化が欲しい
 - **v0（2026-06-09）:** `REMOTE_SYNC_*` / `NDL_*` / `CODH_*` / `JMA_TICK` ステップ。`ts_jst` は `+09:00` 固定オフセット。viper3 観測は `export HARITE_SLIDESHOW_OP_LOG=~/.cache/harite/slideshow-op.jsonl` 等。
-- **実装:** #450 マージ済み。viper3 JSONL 観測は熟成運転復帰後。
+- **実装:** #450 マージ済み。
+- **観測（途中・2026-06-09）:** viper3 `slideshow-op.jsonl` 90 行 + オーナー実機メモ。[20260609-mat-08-viper3-slideshow-op-observation.md](../working/20260609-mat-08-viper3-slideshow-op-observation.md)
+  - **JMA:** 問題なし（ログ・体感一致）
+  - **NDL おまかせ:** 手編集 catalog 残存 — 想定どおり失敗（product 問題ではない）
+  - **NDL / CODH その他:** **不安定** — 期待 tick（20:04 / 20:20 / 20:49）不発、CODH は 20:37 に JSONL 上 `CODH_TICK` OK だが **壁紙未更新**
+  - **副次:** R を `--none--` にしても画像パス残存（`Clear-R` と不整合）→ L-only 観測が汚染
+  - **MAT-02b 示唆:** GET 成功 ≠ 壁紙更新。tick 発火・apply 層が主戦場。op log v1+ で apply/tick 記録が必要
 
 ---
 
@@ -759,7 +803,7 @@ GitHub Issue 起票前の観測転記。
 ### 取り込み方針
 
 - スコープ: cache メタデータ・op log の **表記方針統一**（ローカル TZ、日本環境では JST）
-- 実装（`fix/mat-16-local-tz-cache`）:
+- **完了:** #461 マージ済み（`fix/mat-16-local-tz-cache`）:
   - `harite.local_time` — `local_now_iso`（cache）、`jst_now_iso`（op log MAT-08 互換）
   - `jma-cycle.json` / `codh-cycle.json` の `updated_at`、`codh-index.json` の `built_at` を UTC → ローカル TZ へ
   - source-spec §12.5 にタイムスタンプ契約を追記
