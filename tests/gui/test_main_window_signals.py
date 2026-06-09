@@ -1124,6 +1124,49 @@ def test_slideshow_handlers_use_srcdirs_and_interval_validation(monkeypatch, tmp
     assert window.last_error == "slideshow interval must be positive"
 
 
+def test_slideshow_tick_writes_op_log_steps(monkeypatch, tmp_path):
+    import json
+
+    class DummyPlugin:
+        def apply(self, path: str) -> bool:
+            return True
+
+    log_path = tmp_path / "slideshow-op.jsonl"
+    monkeypatch.setenv("HARITE_SLIDESHOW_OP_LOG", str(log_path))
+    monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+    monkeypatch.setattr("harite.gui.views.main_window.dual_display_detected", lambda: False)
+
+    work_dir = tmp_path / "Pictures" / "Harite" / "slideshow"
+    composite = work_dir / "harite_slideshow.jpg"
+
+    window = MainWindow()
+
+    def fake_run_slideshow_optimize(_state):
+        work_dir.mkdir(parents=True, exist_ok=True)
+        composite.write_bytes(b"x")
+        return [composite], []
+
+    monkeypatch.setattr(window.controller, "run_slideshow_optimize", fake_run_slideshow_optimize)
+    monkeypatch.setattr(window, "_resolve_slideshow_work_dir", lambda: work_dir)
+
+    left_dir = tmp_path / "slideshow-left"
+    left_dir.mkdir()
+    (left_dir / "left-1.jpg").write_bytes(b"left")
+    (left_dir / "left-2.jpg").write_bytes(b"left-2")
+
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.on_slideshow_start() is True
+    log_path.write_text("", encoding="utf-8")
+
+    assert window.on_slideshow_tick() is True
+
+    records = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    steps = [record["step"] for record in records]
+    assert "SLIDESHOW_TICK" in steps
+    assert "SLIDESHOW_APPLY" in steps
+    assert any(record["step"] == "SLIDESHOW_TICK" and record.get("ok") is True for record in records)
+
+
 def test_slideshow_current_display_abbreviates_long_paths():
     window = MainWindow()
     long_path = "G:/My Drive/very/long/nested/folder/structure/wallpaper.jpg"
