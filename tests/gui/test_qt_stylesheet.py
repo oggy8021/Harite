@@ -47,6 +47,16 @@ def test_build_qt_stylesheet_contains_qpushbutton_rule():
     assert "QPushButton" in css
 
 
+def test_build_qt_stylesheet_footer_error_active_style_mat13():
+    from harite.gui.adapters_qt.qt_stylesheet import build_qt_stylesheet
+    from harite.gui.views.footer_feedback import FOOTER_ERROR_ACTIVE_COLOR
+
+    css = build_qt_stylesheet()
+    assert FOOTER_ERROR_ACTIVE_COLOR in css
+    assert 'hasError="true"' in css
+    assert "font-weight: bold" in css
+
+
 def test_build_qt_stylesheet_does_not_override_global_disabled_rules():
     from harite.gui.adapters_qt.qt_stylesheet import build_qt_stylesheet
 

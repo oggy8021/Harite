@@ -104,7 +104,7 @@ working メモも完了なら docs/working/finished/ へ移動
 
 | Issue | タイトル要約 | 分類 | overview ID |
 | --- | --- | --- | --- |
-| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜17（`v1.9.0` 一区切り → **`v2.0.0` 目標** #442〜#456） | bug / investigation / planning | Q-01 / MAT-13〜17 |
+| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜17（`v1.9.0` 一区切り → **`v2.0.0` 目標** #442〜#457） | bug / investigation / planning | MAT-13〜17 → Q-01 → MAT-10 |
 
 ### maturation-20260609-qt-common — 棚卸（2026-06-09 再整理）
 

@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from harite.gui.views.footer_feedback import FOOTER_ERROR_ACTIVE_COLOR, FOOTER_ERROR_IDLE_COLOR
+
 # Minimal stylesheet applied to the entire QApplication.
 # Uses only stable Qt stylesheet selectors.
 _HARITE_QT_STYLESHEET = """
@@ -37,11 +39,13 @@ QLabel#statusLabel {
     font-size: 8pt;
 }
 QLabel#errorLabel {
-    color: #555;
+    color: %(error_idle)s;
     font-size: 8pt;
 }
 QLabel#errorLabel[hasError="true"] {
-    color: #c0392b;
+    color: %(error_active)s;
+    font-weight: bold;
+    font-size: 9pt;
 }
 
 /* ---- Preview boxes ---- */
@@ -65,7 +69,10 @@ QTabBar::tab:selected {
 
 def build_qt_stylesheet() -> str:
     """Return the stylesheet string to be applied via QApplication.setStyleSheet()."""
-    return _HARITE_QT_STYLESHEET
+    return _HARITE_QT_STYLESHEET % {
+        "error_idle": FOOTER_ERROR_IDLE_COLOR,
+        "error_active": FOOTER_ERROR_ACTIVE_COLOR,
+    }
 
 
 def apply_qt_stylesheet(qapp: Any) -> None:

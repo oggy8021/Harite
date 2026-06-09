@@ -19,7 +19,7 @@
 
 - **熟成運転:** 2026-06-09 宣言 → 同日 **打ち切り**（未改修のままでは継続不可のため）。
 - **製品線:** `pyproject.toml` の `1.9.0` は熟成運転の中間マイルストーン。**本 stream の営みは `v2.0.0` を目指す**（Qt 一本化・remote source の確かさ）。
-- **現フェーズ:** maturation **一区切り** — MAT-01〜12 の着手分は完了（#442〜#456）。次は **Q-01**（GTK をメンテ対象外に落とす。例: `v2.0.0` を GTK 同梱の最終版）と先送りの再棚卸。**MAT-10** はその **後** で十分。
+- **現フェーズ:** maturation **一区切り** — MAT-01〜12 着手分は完了（#442〜#456）。次は **MAT-13〜17** を順に片づけ（並行/前提: MAT-02b + MAT-08 観測）→ **Q-01**（MAT-10 より先）→ **MAT-10**（最後）。
 - 第1期 inventory は完了（上記 finished 参照）。
 - **再棚卸の入口:** [maturation §v2.0.0 への再整理](../online-issues/maturation-20260609-qt-common.md#v200-への再整理オーナー方針-2026-06-09)。
 
@@ -34,7 +34,7 @@
 | Slideshow path label 省略なし | 長い path がそのまま表示 | GTK `refresh_slideshow_source_labels` が full path 固定 | basename 省略 + tooltip（#439 追記・要 Xfce 再確認） |
 | GTK に Preset/Profile UI がないのに設定が部分展開 | Slideshow で NDL 図版など preset 由来の表示に見える | **認識済み:** GTK 版は Slideshow の Preset / Profile **提供面がない**。一方 settings 読み込みは Qt 版と同型のため、`slideshow_source_id_*` / `slideshow_profile_id` 等が防ぎきれず **部分的に展開**する | **記載のみ・削除しない** — GTK はメンテ対象外へ（Q-01）。parity 拡張はしない |
 
-**Qt / 共通（v1.9.0 → v2.0.0）:** [maturation-20260609-qt-common.md](../online-issues/maturation-20260609-qt-common.md)。**完了（#442〜#456）:** MAT-01, 01b, 02, 03, 05〜08, 12, 11, 04, 09。**先送り:** MAT-02b、MAT-08 観測。**未着手:** MAT-13〜17。**骨格:** **Q-01**。**後回し可:** **MAT-10**。infra: **#453**。
+**Qt / 共通（v1.9.0 → v2.0.0）:** [maturation-20260609-qt-common.md](../online-issues/maturation-20260609-qt-common.md)。**完了（#442〜#456）:** MAT-01, 01b, 02, 03, 05〜08, 12, 11, 04, 09。**着手順:** MAT-13〜17（前提: MAT-02b + MAT-08 観測）→ **Q-01** → MAT-10。infra: **#453**。
 
 ## 1. 着手候補
 
@@ -43,15 +43,15 @@
 
 | ID   | 項目       | 概要                                              | planning で最初に詰めること                                                      | 現判断                                    |
 | ---- | -------- | ----------------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------- |
-| Q-01 | GTK をメンテ対象外に落とす | 回収コスト観点で `harite-gtk` / GTK adapter を **メンテ対象外** とし **Qt 一本化**。**v2.0.0 の骨格。** | **境界の確定**（例: `v2.0.0` を GTK 同梱の最終版）、削除範囲（entrypoint / CI / packaging）、GTK 熟成メモは **残す**（観測記録） | **inventory 確定** — **次の planning 入口** |
-| — | MAT-02b（先送り） | NDL / CODH **取得**（壁紙未切替）。MAT-02 表示整合とは別枠。 | MAT-08 JSONL 観測との切り分け。Qt 側で継続 | maturation 転記のみ |
-| — | MAT-08 観測（先送り） | Preset slideshow 操作ログの **viper3 実機切り分け** | v0 実装済（#450）。`HARITE_SLIDESHOW_OP_LOG` | MAT-02b の前提 |
-| MAT-13 | エラー表示を赤色に | footer / feedback の error がメッセージ性弱い | Status 面の色・コントラスト | maturation 転記のみ |
+| MAT-13 | エラー表示を赤色に | footer / feedback の error がメッセージ性弱い | Status 面の色・コントラスト | **次の着手** — maturation 転記のみ |
 | MAT-14 | 2x / 4x display scale | プリセットステップ、L/R 各1、Optimize 解像度突破はエラー | MAT-01b 原寸回帰とは別軸。Compose 周辺の配置 | maturation 転記のみ |
 | MAT-15 | core 幾何総点検 | align / margin 優先、ストレッチ誤解の是正 | MAT-12→11 延長。core 中心の照合 | maturation 転記のみ |
 | MAT-16 | 時刻をローカル TZ（JST） | `jma-cycle.json` / `updated_at` 等の解析しづらさ | MAT-08 op log と方針統一 | maturation 転記のみ |
 | MAT-17 | CLI slideshow + settings | CLI でも `harite-settings.json` を読む | headless との差異点検 | maturation 転記のみ |
-| MAT-10 | 江戸切絵図 source（新規） | edo-maps / IIIF を雰囲気 slideshow source に | ライセンス・indexer。完全新規 | **MAT-13〜17 の後** |
+| Q-01 | GTK をメンテ対象外に落とす | 回収コスト観点で `harite-gtk` / GTK adapter を **メンテ対象外** とし **Qt 一本化**。**v2.0.0 の骨格。** | **境界の確定**（例: `v2.0.0` を GTK 同梱の最終版）、削除範囲（entrypoint / CI / packaging）、GTK 熟成メモは **残す**（観測記録） | **MAT-13〜17 の後** — MAT-10 より先 |
+| — | MAT-02b（先送り） | NDL / CODH **取得**（壁紙未切替）。MAT-02 表示整合とは別枠。 | MAT-08 JSONL 観測との切り分け。Qt 側で継続 | **MAT-13〜17 と並行 / 前提** |
+| — | MAT-08 観測（先送り） | Preset slideshow 操作ログの **viper3 実機切り分け** | v0 実装済（#450）。`HARITE_SLIDESHOW_OP_LOG` | MAT-02b の前提 |
+| MAT-10 | 江戸切絵図 source（新規） | edo-maps / IIIF を雰囲気 slideshow source に | ライセンス・indexer。完全新規 | **Q-01 の後・最後** |
 
 
 ## 2. 構想保持
@@ -79,7 +79,7 @@
 ## 次期 planning への渡し方
 
 - overview では実装順をまだ固定せず、まず候補群の置き場所を作る。
-- 着手候補から 1 つを選び、個別の spec / plan / tasks へ落とす（次は **Q-01** — GTK をメンテ対象外に落とす境界。MAT-10 は後で十分）。
+- 着手候補から 1 つを選び、個別の spec / plan / tasks へ落とす（次は **MAT-13** から順に。Q-01 は MAT-13〜17 の後・MAT-10 より先）。
 - 構想保持は、Q-01 や issue 蓄積の結果を受けて再分類する。
 - 破棄候補 / 保留延長は [pending](20260608-1200-feature-pending.md) に置き、懐かしさで復活させない。
 

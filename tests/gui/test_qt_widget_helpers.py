@@ -74,9 +74,24 @@ def test_set_error_updates_lblError(qapp, backend):
     from harite.gui.adapters_qt.qt_widget_helpers import set_error
 
     lbl = QLabel("")
+    lbl.setObjectName("errorLabel")
     backend._objects["lblError"] = lbl
-    set_error(backend, "boom")
-    assert lbl.text() == "boom"
+    set_error(backend, "Error: boom")
+    assert lbl.text() == "Error: boom"
+    assert lbl.property("hasError") is True
+
+
+def test_set_error_clears_has_error_property(qapp, backend):
+    from PyQt6.QtWidgets import QLabel
+
+    from harite.gui.adapters_qt.qt_widget_helpers import set_error
+
+    lbl = QLabel("")
+    lbl.setObjectName("errorLabel")
+    backend._objects["lblError"] = lbl
+    set_error(backend, "Error: boom")
+    set_error(backend, None)
+    assert lbl.property("hasError") is False
 
 
 def test_set_error_clears_on_none(qapp, backend):

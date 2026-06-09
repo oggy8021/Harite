@@ -54,3 +54,16 @@ def test_dialog_unavailable_maps_to_human_error():
 def test_footer_error_is_active():
     assert footer_error_is_active(ERROR_NONE) is False
     assert footer_error_is_active("Error: failed") is True
+
+
+def test_failure_state_promotes_to_error_row_without_error_param():
+    assert format_footer_error(phase="Slideshow", state="start-failed", error=None) == (
+        "Error: start failed"
+    )
+    assert format_footer_status(phase="Slideshow", state="start-failed", error=None) == STATUS_READY
+
+
+def test_rejected_state_promotes_to_error_row():
+    assert format_footer_error(phase="Margins", state="text-rejected", error=None) == (
+        "Error: text rejected"
+    )

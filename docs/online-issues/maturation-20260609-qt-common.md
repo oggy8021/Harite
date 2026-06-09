@@ -36,19 +36,19 @@ GitHub Issue 起票前の観測転記。
 
 | ID | 要約 | 区分 |
 | --- | --- | --- |
-| **MAT-13** | エラーメッセージを **赤色** で表示（現状メッセージ性が弱い） | polish |
+| **MAT-13** | エラーメッセージを **赤色** で表示（現状メッセージ性が弱い） | polish（**着手**） |
 | **MAT-14** | **2x / 4x** display scale（MAT-01b 原寸回帰とは別軸） | 機能要望 |
 | **MAT-15** | align / margin / 画像ストレッチの **core 幾何総点検**（MAT-12→11 延長） | 確かさ向上 |
 | **MAT-16** | `jma-cycle.json` 等の時刻を **ローカルタイム**（日本なら JST）で扱う | 確かさ向上 |
 | **MAT-17** | **CLI slideshow** でも設定ファイルを読む | planning（CLI） |
 | **MAT-10** | 江戸切絵図 / edo-maps 雰囲気 source（完全新規） | 機能要望・**後回し** |
 
-### おおよその次の流れ（確定順ではない）
+### おおよその次の流れ（オーナー確定 2026-06-09）
 
-1. **Q-01 planning** — GTK をメンテ対象外に落とす境界（例: v2.0.0 を最終同梱版）
-2. **MAT-02b + MAT-08 観測** — remote source の実機切り分け（Qt 側で継続）
-3. **MAT-13〜17** — v2.0.0 向け backlog（下記 § 参照）
-4. **MAT-10** — 新規 source 調査（MAT-13〜17 の後で十分）
+1. **MAT-13 → 14 → 15 → 16 → 17** — v2.0.0 向け backlog を順に片づけ（下記 § 参照）
+   - **並行 / 前提:** MAT-02b + MAT-08 観測（remote source 実機切り分け）
+2. **Q-01** — GTK をメンテ対象外に落とす（例: v2.0.0 を最終同梱版）。**MAT-10 より先**
+3. **MAT-10** — 完全新規 source 調査（**最後**）
 
 ## 着手順（オーナー方針・熟成運転中の区分）
 
@@ -625,12 +625,13 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
-- スコープ: footer `Status` および error 系 feedback の **色・コントラスト**（文言変更は別途）
+- **改修着手** — footer `Error` 行を **赤・太字** で強調（Qt `hasError` / GTK `harite-error-active`）。失敗 trace state（`*-failed` 等）は Error 行へ昇格。
+- スコープ: 色・コントラスト・failure state の error 行表示（文言の全面見直しは別途）
 
 ### 調査メモ
 
 - memo（オーナー）: v2.0.0 向け backlog 採番（MAT-13）
+- **実装:** `footer_feedback`（`FOOTER_ERROR_ACTIVE_COLOR`、failure state 昇格）、`qt_stylesheet`、`gtk_runtime_widget_access`。テスト: `test_footer_feedback`、`test_qt_stylesheet`、`test_qt_widget_helpers`
 
 ---
 
