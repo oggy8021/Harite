@@ -13,6 +13,8 @@ SECOND_SLOT_WIDGET_NAMES: tuple[str, ...] = (
     "tglPushRightR",
     "btnGetImgR",
     "btnClrPathR",
+    "cmbDisplayScaleR",
+    "combo_display_scale_r",
     "entPathR",
     "imgPreviewR",
     "btnSwapInputPaths",
