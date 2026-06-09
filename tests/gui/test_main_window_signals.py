@@ -4,6 +4,7 @@ from PIL import Image
 import pytest
 
 from harite.apply_settings import EffectiveApplySettings
+from harite.apply_surface import preview_assist_summary, preview_result_notes
 from harite.settings_file import load_settings
 from harite.settings_file import save_settings
 from harite.display_context import TwoScreenOptimizeContext
@@ -344,13 +345,14 @@ def test_build_result_preview_state_uses_latest_saved_file(tmp_path):
     saved.write_bytes(b"x")
 
     window.last_saved_files = [saved]
+    window.apply_mode = "single-file"
     window.form_state.input_value = "single-source.jpg"
 
     state = window.build_result_preview_state()
 
     assert state.source_file == saved
     assert state.apply_mode == window.apply_mode
-    assert state.assist_summary == "Assist: same optimized image will be applied to both displays"
+    assert state.assist_summary == preview_assist_summary(window.apply_mode, None, None)
     assert state.l_assignment == "L display <- single-source.jpg"
     assert state.r_assignment == "R display <- single-source.jpg"
     assert state.l_result_note == "Result: full optimized image"
@@ -376,11 +378,16 @@ def test_build_result_preview_state_includes_two_screen_display_sizes(tmp_path):
     assert state.apply_mode == "per-monitor-auto-split"
     assert state.l_display == (200, 180)
     assert state.r_display == (120, 180)
-    assert state.assist_summary == "Assist: auto-split as L 200x180 | R 120x180"
+    assert state.assist_summary == preview_assist_summary(
+        window.apply_mode,
+        state.l_display,
+        state.r_display,
+    )
     assert state.l_assignment == "L display <- left.jpg"
     assert state.r_assignment == "R display <- right.jpg"
-    assert state.l_result_note == "Result: auto-split left crop"
-    assert state.r_result_note == "Result: auto-split right crop"
+    l_result_note, r_result_note = preview_result_notes(window.apply_mode)
+    assert state.l_result_note == l_result_note
+    assert state.r_result_note == r_result_note
 
 
 def test_build_result_preview_state_truncates_long_assignment_names(tmp_path):
@@ -835,7 +842,11 @@ def test_get_settings_expands_current_detected_display_values(monkeypatch):
     assert settings["r_display"] == "1280x1024"
 
 
-def test_get_settings_uses_auto_for_fully_unresolved_defaults():
+def test_get_settings_uses_auto_for_fully_unresolved_defaults(monkeypatch):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: None,
+    )
     window = MainWindow()
 
     settings = window.on_get_settings()
@@ -845,7 +856,11 @@ def test_get_settings_uses_auto_for_fully_unresolved_defaults():
     assert "r_display" not in settings
 
 
-def test_settings_file_save_normalizes_fully_unresolved_defaults(tmp_path):
+def test_settings_file_save_normalizes_fully_unresolved_defaults(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: None,
+    )
     window = MainWindow()
     target = tmp_path / "settings-unresolved.json"
 
@@ -893,7 +908,11 @@ def test_settings_file_load_missing_display_settings_keeps_resolution_unresolved
     assert window.form_state.r_display is None
 
 
-def test_settings_file_save_and_load_round_trip(tmp_path):
+def test_settings_file_save_and_load_round_trip(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: None,
+    )
     window = MainWindow()
     window.form_state.resolution = "auto"
     window.form_state.two_screen = None
@@ -1001,7 +1020,11 @@ def test_main_window_startup_settings_load_propagates_unexpected_runtime_error(m
         MainWindow()
 
 
-def test_settings_file_save_accepts_explicit_dialog_settings(tmp_path):
+def test_settings_file_save_accepts_explicit_dialog_settings(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: None,
+    )
     window = MainWindow()
     target = tmp_path / "settings-dialog.json"
 

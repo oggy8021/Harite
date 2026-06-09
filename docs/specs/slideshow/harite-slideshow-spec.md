@@ -248,8 +248,8 @@ single-source（MAT-11）:
 
 対象範囲:
 
-- R1–R3 は **GUI slideshow の optimize 経路**（single / dual）に適用する。
-- **CLI `slideshow` command** は optimize 出力を生成しないため対象外（§8）。
+- R1–R3 は **slideshow の optimize 経路**（single / dual）に適用する（GUI + CLI）。
+- CLI `slideshow` も毎 cycle optimize 出力を `{Pictures}/Harite/slideshow/` へ書く（§7）。
 
 ライフサイクル:
 
@@ -385,9 +385,10 @@ tick 中の画像 GET 失敗（CODH 等）は前回 `latest.*` を維持して t
 
 ## 7. CLI `slideshow` command の責務
 
-- 入力 directory 1 件または最大 2 件からの画像収集
-- サイクル実行
-- plugin 解決と各サイクルの実 apply
+- 入力 directory 1 件または最大 2 件からの画像収集（dual 時は L/R 各 side で独立 cycle 状態）
+- サイクル実行（MAT-11 同型: 毎 cycle `run_slideshow_optimize` → apply）
+- settings / `--settings-file` から optimize 一式を読み、GUI `form_state` と同型で optimize に渡す
+- plugin 解決と各サイクルの実 apply（single: composite 1 枚、dual: auto-split map または Windows Span）
 - `Slideshow start` / `Slideshow cycle` / `Slideshow interrupted by user` 実行メッセージ出力
 
 CLI `slideshow` command の特徴:
@@ -410,7 +411,7 @@ CLI `slideshow` command の特徴:
 - CLI `slideshow` command は stdout に実行メッセージを出す。
 - CLI は固定の自然な user-facing 実行メッセージ方針を採る。現行英語表記では `Slideshow ...` を使い、全部大文字の prefix は使わない。
 - GUI は status, history, output display を併用する。
-- CLI には slideshow 専用の画像保存先はない。GUI dual-source では §6.1 の作業ディレクトリへ一時的な optimize 出力を書く（ユーザーが Export した成果物とは別）。
+- CLI も §6.1 の作業ディレクトリ `{Pictures}/Harite/slideshow/` へ optimize 出力を書く（手動 Export 成果物とは別）。
 
 GUI feedback の補足:
 

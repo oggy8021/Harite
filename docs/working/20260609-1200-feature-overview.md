@@ -47,7 +47,7 @@
 | MAT-14 | source image scale（% プリセット） | 100/125/150/200%、L/R 各1、拡大後が display に収まらなければエラー | MAT-01b 原寸回帰とは別軸。Compose 周辺の配置 | **完了** #459 |
 | MAT-15 | core 幾何総点検 | align / margin 優先、ストレッチ誤解の是正、MAT-14 接続 | MAT-12→11 延長。GUI 注釈 + spec + テスト | **完了** #460 |
 | MAT-16 | 時刻をローカル TZ（JST） | `jma-cycle.json` / `updated_at` 等の解析しづらさ | MAT-08 op log と方針統一 | **完了** #461 |
-| MAT-17 | CLI slideshow + settings | CLI でも `harite-settings.json` を読む | headless との差異点検 | **次の着手** |
+| MAT-17 | CLI slideshow + settings | CLI でも `harite-settings.json` を読む | settings + MAT-11 optimize 経路（single/dual）。catalog / remote tick は GUI 専用 | **実装中** |
 | Q-01 | GTK をメンテ対象外に落とす | 回収コスト観点で `harite-gtk` / GTK adapter を **メンテ対象外** とし **Qt 一本化**。**v2.0.0 の骨格。** | **境界の確定**（例: `v2.0.0` を GTK 同梱の最終版）、削除範囲（entrypoint / CI / packaging）、GTK 熟成メモは **残す**（観測記録） | **MAT-17 の後** — MAT-10 より先 |
 | — | MAT-02b（先送り） | NDL / CODH **取得**（壁紙未切替）。MAT-02 表示整合とは別枠。 | MAT-08: GET OK でも tick 不発・未反映。tick/apply が主戦場 | **高** — 継続 |
 | — | MAT-08 観測（途中） | Preset slideshow 操作ログの **viper3 実機切り分け** | [観測メモ](20260609-mat-08-viper3-slideshow-op-observation.md) — JMA のみ安定 | MAT-02b の前提 |
