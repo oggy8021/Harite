@@ -38,7 +38,7 @@ GitHub Issue 起票前の観測転記。
 | --- | --- | --- |
 | **MAT-13** | エラーメッセージを **赤色** で表示（現状メッセージ性が弱い） | polish（**着手**） |
 | **MAT-14** | **2x / 4x** display scale（MAT-01b 原寸回帰とは別軸） | 実装中（`fix/mat-14-display-scale`） |
-| **MAT-15** | align / margin / 画像ストレッチの **core 幾何総点検**（MAT-12→11 延長） | 確かさ向上 |
+| **MAT-15** | align / margin / 画像ストレッチの **core 幾何総点検**（MAT-12→11 延長） | 実装中（`fix/mat-15-core-geometry-audit`） |
 | **MAT-16** | `jma-cycle.json` 等の時刻を **ローカルタイム**（日本なら JST）で扱う | 確かさ向上 |
 | **MAT-17** | **CLI slideshow** でも設定ファイルを読む | planning（CLI） |
 | **MAT-10** | 江戸切絵図 / edo-maps 雰囲気 source（完全新規） | 機能要望・**後回し** |
@@ -62,7 +62,8 @@ GitHub Issue 起票前の観測転記。
 | --- | --- |
 | 改修系 | MAT-01, MAT-01b, MAT-02, MAT-03, MAT-05, MAT-06, MAT-07 |
 | 確かさ向上（完了） | MAT-08, MAT-12 |
-| 確かさ向上（未着手） | MAT-15, MAT-16 |
+| 確かさ向上（未着手） | MAT-16 |
+| 確かさ向上（実装中） | MAT-15 |
 | 機能要望系（完了） | MAT-04, MAT-09, MAT-11 |
 | 機能要望系（未着手） | MAT-10 |
 | 機能要望系（実装中） | MAT-14 |
@@ -711,12 +712,19 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
-- スコープ: core 幾何の照合（母体 `wallpaperoptimizer` 含む）→ 必要なら spec 改訂・改修 PR に分解
+- スコープ: core 幾何の照合（母体 `wallpaperoptimizer` 含む）→ spec / GUI 注釈整合 + テスト
+- 実装（`fix/mat-15-core-geometry-audit`）:
+  - 監査: [20260609-mat-15-core-geometry-audit.md](../working/20260609-mat-15-core-geometry-audit.md)
+  - **結論:** core パイプラインは MAT-01b + MAT-14 整合。誤解の主因は GUI 旧注釈
+  - GUI priority rule 更新（margin-inner → **full display slot**）
+  - core-spec §4.1 に MAT-14 計算順・`scaling` 無効を明記
+  - `tests/core/test_mat15_geometry_audit.py` 追加
 
 ### 調査メモ
 
 - memo（オーナー）: MAT-01b で誤 upscale を直したが、align / margin / stretch の優先関係は別途総点検が必要
+- **点検（2026-06-09）:** `scaling` 設定は幾何に無効（テスト確認）。MAT-14 は slot 解決後・align 前に元画像サイズのみ変更。left/top + margins で小画像が margin 帯に重なるのは母体同型（バグではない）
+- **母体再読（2026-06-09）:** `wallpaperoptimizer` の `Core.py` / `Rectangle.py` を直接再読し、上記優先関係を確認（監査 §1.1）
 
 ---
 

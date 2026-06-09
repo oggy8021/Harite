@@ -466,6 +466,8 @@ def build_runtime_state_labels() -> dict[str, Any]:
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import QLabel
 
+    from harite.gui.views.margins_surface import MARGIN_PRIORITY_RULE_TEXT
+
     def _lbl(text: str) -> QLabel:
         lbl = QLabel(text)
         lbl.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -476,7 +478,7 @@ def build_runtime_state_labels() -> dict[str, Any]:
         "save_path_state_label": _lbl("Export path: idle"),
         "save_target_label": _lbl("Export target: not-selected"),
         # Shared with Margins tab
-        "priority_note_label": _lbl("Rule: margins define area; align/valign act inside it"),
+        "priority_note_label": _lbl(MARGIN_PRIORITY_RULE_TEXT),
         "style_legend_label": _lbl("Current behavior: margins are global to the composite canvas"),
         "current_state_section_label": _lbl("Main Window Current alignment:"),
         "current_margins_label": _lbl("margins=0,0,0,0"),

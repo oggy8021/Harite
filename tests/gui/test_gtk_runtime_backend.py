@@ -1177,7 +1177,9 @@ def test_runtime_backend_shows_current_labels_and_controls():
     btn_get_img_l = backend.get_object("btnGetImgL")
 
     assert do_it.text == "Apply updates wallpaper immediately"
-    assert priority.text == "Rule: margins define area; align/valign act inside it"
+    from harite.gui.views.margins_surface import MARGIN_PRIORITY_RULE_TEXT
+
+    assert priority.text == MARGIN_PRIORITY_RULE_TEXT
     assert slideshow_section.text == ""
     assert interval.text == "Interval"
     assert color_btn.label == "Color"

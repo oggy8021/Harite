@@ -304,9 +304,9 @@ def build_runtime_state_labels(gtk_module: Any) -> dict[str, Any]:
     save_target_label = gtk_module.Label(label="Export target: not-selected")
     set_xalign_if_supported(save_target_label)
 
-    priority_note_label = gtk_module.Label(
-        label="Rule: margins define area; align/valign act inside it"
-    )
+    from harite.gui.views.margins_surface import MARGIN_PRIORITY_RULE_TEXT
+
+    priority_note_label = gtk_module.Label(label=MARGIN_PRIORITY_RULE_TEXT)
     set_xalign_if_supported(priority_note_label)
 
     style_legend_label = gtk_module.Label(label="Current behavior: margins are global to the composite canvas")
