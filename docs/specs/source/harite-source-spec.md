@@ -398,6 +398,17 @@ CODH / NDL の実機切り分け用に、Preset `remote-*` の **sync / tick** �
 
 すべての `remote-*` に共通する契約。サイト別手順は §15。
 
+#### タイムスタンプ（MAT-16）
+
+| 対象 | フィールド | 形式 |
+| --- | --- | --- |
+| JMA `jma-cycle.json` | `updated_at` | ホスト **ローカル TZ** の ISO8601（オフセット付き、マイクロ秒なし） |
+| CODH `codh-cycle.json` | `updated_at` | 同上 |
+| CODH `codh-index.json` | `built_at` | 同上 |
+| Preset remote 操作ログ（§12.4.3） | `ts_jst` | **JST**（`+09:00` 固定オフセット）— MAT-08 互換 |
+
+実装: cache メタデータは `harite.local_time.local_now_iso`。操作ログは `jst_now_iso`。日本環境ではいずれも JST 表記になる。
+
 #### 設計前提
 
 | 前提 | 契約 |

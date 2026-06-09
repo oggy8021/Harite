@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
 import json
 from pathlib import Path
 from typing import Any
 
+from harite.local_time import local_now_iso
 from harite.sources import Catalog, SourceEntry, get_source
 from harite.sources_remote import (
     JMA_LIST_URL,
@@ -49,10 +49,6 @@ def resolve_jma_sync_context(entry: SourceEntry) -> JmaSyncContext:
     )
 
 
-def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-
-
 def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
@@ -77,7 +73,7 @@ def save_jma_cycle(cache_dir: Path, *, preset_id: str, filename: str) -> None:
         {
             "preset_id": preset_id,
             "filename": filename,
-            "updated_at": _utc_now_iso(),
+            "updated_at": local_now_iso(),
         },
     )
 

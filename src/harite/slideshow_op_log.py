@@ -5,16 +5,12 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-_JST = timezone(timedelta(hours=9), name="JST")
+from harite.local_time import jst_now_iso
+
 _LOGGER = logging.getLogger("harite.slideshow.remote")
-
-
-def _jst_now() -> str:
-    return datetime.now(_JST).replace(microsecond=0).isoformat()
 
 
 def _slideshow_op_log_target() -> str | None:
@@ -33,7 +29,7 @@ def log_slideshow_op(step: str, *, ok: bool | None = None, **fields: Any) -> Non
     if target is None:
         return
 
-    record: dict[str, Any] = {"ts_jst": _jst_now(), "step": step}
+    record: dict[str, Any] = {"ts_jst": jst_now_iso(), "step": step}
     if ok is not None:
         record["ok"] = ok
     for key, value in fields.items():

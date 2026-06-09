@@ -6,6 +6,7 @@ GitHub Issue 起票前の観測転記。
 - 対象: **Qt 版**および **backend 共通**（GTK 専用は [GTK 熟成メモ](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) 参照）
 - **転記（中間整理 2026-05-31）:** 改修系・確かさ向上・**MAT-11** まで **完了**（#442〜#452）。
 - **機能要望（2026-06-09）:** **MAT-04**（#455）、**MAT-09**（#456）**完了**。Post Main Merge CI 緑（run 27195018405）。
+- **v2.0.0 backlog（2026-05-31）:** **MAT-13**（#458）、**MAT-14**（#459）、**MAT-15**（#460）**完了**。次: **MAT-16**。
 - **熟成運転:** 2026-06-09 **打ち切り**（継続には改修が先決）。
 - **製品線:** `v1.9.0` は熟成運転の **中間マイルストーン**。本 stream の営みは **`v2.0.0` を目指す**（Qt 一本化・remote source の確かさ・製品線の再定義）。詳細は下記 [v2.0.0 への再整理](#v200-への再整理オーナー方針-2026-06-09)。
 
@@ -24,6 +25,14 @@ GitHub Issue 起票前の観測転記。
 | 機能要望 | MAT-04, 09, 11 | #455, #456, #452 |
 | infra | CI docs-only skip 等 | #453 |
 
+### 完了（v2.0.0 向け・MAT-13〜15）
+
+| 区分 | ID | PR |
+| --- | --- | --- |
+| polish | MAT-13 | #458 |
+| 機能要望 | MAT-14 | #459 |
+| 確かさ向上 | MAT-15 | #460 |
+
 ### 先送り（v2.0.0 までに再棚卸）
 
 | ID | 要約 | 先送り理由 / 次の詰め |
@@ -32,20 +41,17 @@ GitHub Issue 起票前の観測転記。
 | **MAT-08 観測** | Preset slideshow JSONL 操作ログの **実機切り分け** | v0 実装済（#450）。`HARITE_SLIDESHOW_OP_LOG` による viper3 観測は **熟成運転復帰後** — MAT-02b の前提 |
 | **Q-01** | GTK を **メンテ対象外** に落とす → Qt 一本化 | **v2.0.0 の骨格** — 例: v2.0.0 を GTK 同梱の最終版とする。entrypoint / CI / packaging / docs の削除範囲を planning で確定 |
 
-### 未着手（v2.0.0 向け・2026-06-09 採番）
+### 残 backlog（v2.0.0 向け）
 
 | ID | 要約 | 区分 |
 | --- | --- | --- |
-| **MAT-13** | エラーメッセージを **赤色** で表示（現状メッセージ性が弱い） | polish（**着手**） |
-| **MAT-14** | **2x / 4x** display scale（MAT-01b 原寸回帰とは別軸） | 実装中（`fix/mat-14-display-scale`） |
-| **MAT-15** | align / margin / 画像ストレッチの **core 幾何総点検**（MAT-12→11 延長） | 実装中（`fix/mat-15-core-geometry-audit`） |
-| **MAT-16** | `jma-cycle.json` 等の時刻を **ローカルタイム**（日本なら JST）で扱う | 確かさ向上 |
+| **MAT-16** | `jma-cycle.json` 等の時刻を **ローカルタイム**（日本なら JST）で扱う | 確かさ向上（**実装中** `fix/mat-16-local-tz-cache`） |
 | **MAT-17** | **CLI slideshow** でも設定ファイルを読む | planning（CLI） |
 | **MAT-10** | 江戸切絵図 / edo-maps 雰囲気 source（完全新規） | 機能要望・**後回し** |
 
 ### おおよその次の流れ（オーナー確定 2026-06-09）
 
-1. **MAT-13 → 14 → 15 → 16 → 17** — v2.0.0 向け backlog を順に片づけ（下記 § 参照）
+1. ~~**MAT-13 → 14 → 15**~~ **完了**（#458〜#460）→ **MAT-16 → 17** — v2.0.0 向け backlog を順に片づけ（下記 § 参照）
    - **並行 / 前提:** MAT-02b + MAT-08 観測（remote source 実機切り分け）
 2. **Q-01** — GTK をメンテ対象外に落とす（例: v2.0.0 を最終同梱版）。**MAT-10 より先**
 3. **MAT-10** — 完全新規 source 調査（**最後**）
@@ -61,13 +67,11 @@ GitHub Issue 起票前の観測転記。
 | 区分 | ID |
 | --- | --- |
 | 改修系 | MAT-01, MAT-01b, MAT-02, MAT-03, MAT-05, MAT-06, MAT-07 |
-| 確かさ向上（完了） | MAT-08, MAT-12 |
-| 確かさ向上（未着手） | MAT-16 |
-| 確かさ向上（実装中） | MAT-15 |
-| 機能要望系（完了） | MAT-04, MAT-09, MAT-11 |
+| 確かさ向上（完了） | MAT-08, MAT-12, MAT-15 |
+| 確かさ向上（実装中） | MAT-16 |
+| 機能要望系（完了） | MAT-04, MAT-09, MAT-11, MAT-14 |
 | 機能要望系（未着手） | MAT-10 |
-| 機能要望系（実装中） | MAT-14 |
-| polish（未着手） | MAT-13 |
+| polish（完了） | MAT-13 |
 | CLI（未着手） | MAT-17 |
 | 先送り（v2.0.0 再棚卸） | MAT-02b, MAT-08 観測, Q-01 |
 
@@ -627,8 +631,8 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- **改修着手** — footer `Error` 行を **赤・太字** で強調（Qt `hasError` / GTK `harite-error-active`）。失敗 trace state（`*-failed` 等）は Error 行へ昇格。
 - スコープ: 色・コントラスト・failure state の error 行表示（文言の全面見直しは別途）
+- **完了:** #458 マージ済み — footer `Error` 行を **赤・太字** で強調（Qt `hasError` / GTK `harite-error-active`）。失敗 trace state（`*-failed` 等）は Error 行へ昇格。
 
 ### 調査メモ
 
@@ -672,7 +676,7 @@ GitHub Issue 起票前の観測転記。
 ### 取り込み方針
 
 - スコープ: per-display preset scale UI + optimize 時の解像度上限チェック
-- 実装（`fix/mat-14-display-scale`）:
+- **完了:** #459 マージ済み（`fix/mat-14-display-scale`）:
   - **対象は元画像のみ**（detected display / composite 解像度は変えない）
   - `display_scale.py` — プリセット **100% / 125% / 150% / 200%**（内部係数 `1.0 / 1.25 / 1.5 / 2.0`）、スケール後画像の上限 `16384px/edge`
   - Compose Clear 左に L/R 各 % コンボ（Qt/GTK）。旧 `4x` 設定は `200%` へ正規化
@@ -713,7 +717,7 @@ GitHub Issue 起票前の観測転記。
 ### 取り込み方針
 
 - スコープ: core 幾何の照合（母体 `wallpaperoptimizer` 含む）→ spec / GUI 注釈整合 + テスト
-- 実装（`fix/mat-15-core-geometry-audit`）:
+- **完了:** #460 マージ済み（`fix/mat-15-core-geometry-audit`）:
   - 監査: [20260609-mat-15-core-geometry-audit.md](../working/20260609-mat-15-core-geometry-audit.md)
   - **結論:** core パイプラインは MAT-01b + MAT-14 整合。誤解の主因は GUI 旧注釈
   - GUI priority rule 更新（margin-inner → **full display slot**）
@@ -754,12 +758,17 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
-- スコープ: cache メタデータ・settings・op log の **表記方針統一**（ローカル TZ、日本環境では JST）
+- スコープ: cache メタデータ・op log の **表記方針統一**（ローカル TZ、日本環境では JST）
+- 実装（`fix/mat-16-local-tz-cache`）:
+  - `harite.local_time` — `local_now_iso`（cache）、`jst_now_iso`（op log MAT-08 互換）
+  - `jma-cycle.json` / `codh-cycle.json` の `updated_at`、`codh-index.json` の `built_at` を UTC → ローカル TZ へ
+  - source-spec §12.5 にタイムスタンプ契約を追記
+  - `tests/test_mat16_local_time.py`
 
 ### 調査メモ
 
 - memo（オーナー）: MAT-08 観測の前提整理にも効く
+- **棚卸（2026-05-31）:** UTC だったのは JMA/CODH cache のみ。op log `ts_jst` は #450 済み。settings JSON に時刻フィールドなし
 
 ---
 
