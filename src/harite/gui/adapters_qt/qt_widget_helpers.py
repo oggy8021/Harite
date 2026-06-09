@@ -66,17 +66,30 @@ def set_status(backend: Any, message: str) -> None:
 
 
 def _apply_qt_error_label_style(widget: Any, *, active: bool) -> None:
-    if widget is None or not hasattr(widget, "setProperty"):
+    if widget is None:
         return
-    widget.setProperty("hasError", bool(active))
-    style = getattr(widget, "style", None)
-    if style is None:
-        return
-    try:
-        style.unpolish(widget)
-        style.polish(widget)
-    except Exception:
-        pass
+    from harite.gui.views.footer_feedback import FOOTER_ERROR_ACTIVE_COLOR, FOOTER_ERROR_IDLE_COLOR
+
+    # String property for app-level stylesheet; inline sheet is the reliable path (MAT-13).
+    if hasattr(widget, "setProperty"):
+        widget.setProperty("hasError", "true" if active else "false")
+        style = getattr(widget, "style", None)
+        if style is not None:
+            try:
+                style.unpolish(widget)
+                style.polish(widget)
+            except Exception:
+                pass
+
+    if hasattr(widget, "setStyleSheet"):
+        if active:
+            widget.setStyleSheet(
+                f"color: {FOOTER_ERROR_ACTIVE_COLOR}; font-weight: bold; font-size: 9pt;"
+            )
+        else:
+            widget.setStyleSheet(
+                f"color: {FOOTER_ERROR_IDLE_COLOR}; font-weight: normal; font-size: 8pt;"
+            )
 
 
 def set_error(backend: Any, message: str | None) -> None:

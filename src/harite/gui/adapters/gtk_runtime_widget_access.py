@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from harite.gui.views.footer_feedback import (
+    FOOTER_ERROR_ACTIVE_COLOR,
     footer_error_is_active,
     format_footer_error,
     format_footer_status,
@@ -196,7 +197,10 @@ def ensure_gtk_footer_error_styles(gtk_module: Any) -> None:
         return
     try:
         provider = css_provider_cls()
-        provider.load_from_data(b"label.harite-error-active { color: #c0392b; }")
+        css = (
+            f"label.harite-error-active {{ color: {FOOTER_ERROR_ACTIVE_COLOR}; font-weight: bold; }}"
+        ).encode()
+        provider.load_from_data(css)
         screen = None
         gdk = getattr(gtk_module, "gdk", None)
         if gdk is not None:

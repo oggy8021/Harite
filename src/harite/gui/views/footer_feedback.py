@@ -11,6 +11,10 @@ from typing import Any
 STATUS_READY = "Status: ready"
 ERROR_NONE = "Error: none"
 
+# MAT-13: active footer errors — shared by Qt stylesheet and GTK CSS.
+FOOTER_ERROR_ACTIVE_COLOR = "#c62828"
+FOOTER_ERROR_IDLE_COLOR = "#888888"
+
 _TRACE_STATES = frozenset(
     {
         "planned",
@@ -74,6 +78,21 @@ def _is_trace_state(state: str) -> bool:
     return state.startswith("interval-updated(")
 
 
+_FAILURE_STATE_SUFFIXES = ("-failed", "-rejected", "-error", "-missing")
+
+
+def _is_failure_state(state: str) -> bool:
+    if not state:
+        return False
+    if state == "failed":
+        return True
+    return any(state.endswith(suffix) for suffix in _FAILURE_STATE_SUFFIXES)
+
+
+def _format_failure_state_message(state: str) -> str:
+    return state.replace("-", " ")
+
+
 def format_footer_status(
     *,
     phase: str,
@@ -109,6 +128,8 @@ def format_footer_error(
     state_s = _normalized(state)
     if state_s == "dialog-unavailable":
         return "Error: Could not open file dialog"
+    if _is_failure_state(state_s):
+        return f"Error: {_format_failure_state_message(state_s)}"
     level = _normalized(status_level).lower()
     if level in _ERROR_LEVELS and state_s and not _is_trace_state(state_s):
         return f"Error: {state_s}"
