@@ -99,6 +99,15 @@ def sync_main_state_from_owner(backend: Any, owner: Any) -> None:
     backend._set_toggle_active("tglUpperR", valign_right == "top")
     backend._set_toggle_active("tglLowerR", valign_right == "bottom")
 
+    from harite.gui.views.display_scale_surface import set_display_scale_combo
+
+    combo_l = backend._objects.get("combo_display_scale_l") or backend._objects.get("cmbDisplayScaleL")
+    if combo_l is not None:
+        set_display_scale_combo(combo_l, getattr(form_state, "l_display_scale", 1.0) or 1.0)
+    combo_r = backend._objects.get("combo_display_scale_r") or backend._objects.get("cmbDisplayScaleR")
+    if combo_r is not None:
+        set_display_scale_combo(combo_r, getattr(form_state, "r_display_scale", 1.0) or 1.0)
+
     backend._refresh_current_state_labels()
     sync_apply_mode_from_owner(backend, owner)
 

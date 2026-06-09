@@ -37,7 +37,7 @@ GitHub Issue 起票前の観測転記。
 | ID | 要約 | 区分 |
 | --- | --- | --- |
 | **MAT-13** | エラーメッセージを **赤色** で表示（現状メッセージ性が弱い） | polish（**着手**） |
-| **MAT-14** | **2x / 4x** display scale（MAT-01b 原寸回帰とは別軸） | 機能要望 |
+| **MAT-14** | **2x / 4x** display scale（MAT-01b 原寸回帰とは別軸） | 実装中（`fix/mat-14-display-scale`） |
 | **MAT-15** | align / margin / 画像ストレッチの **core 幾何総点検**（MAT-12→11 延長） | 確かさ向上 |
 | **MAT-16** | `jma-cycle.json` 等の時刻を **ローカルタイム**（日本なら JST）で扱う | 確かさ向上 |
 | **MAT-17** | **CLI slideshow** でも設定ファイルを読む | planning（CLI） |
@@ -64,7 +64,8 @@ GitHub Issue 起票前の観測転記。
 | 確かさ向上（完了） | MAT-08, MAT-12 |
 | 確かさ向上（未着手） | MAT-15, MAT-16 |
 | 機能要望系（完了） | MAT-04, MAT-09, MAT-11 |
-| 機能要望系（未着手） | MAT-14, MAT-10 |
+| 機能要望系（未着手） | MAT-10 |
+| 機能要望系（実装中） | MAT-14 |
 | polish（未着手） | MAT-13 |
 | CLI（未着手） | MAT-17 |
 | 先送り（v2.0.0 再棚卸） | MAT-02b, MAT-08 観測, Q-01 |
@@ -669,12 +670,18 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
 - スコープ: per-display preset scale UI + optimize 時の解像度上限チェック
+- 実装（`fix/mat-14-display-scale`）:
+  - **対象は元画像のみ**（detected display / composite 解像度は変えない）
+  - `display_scale.py` — プリセット **100% / 125% / 150% / 200%**（内部係数 `1.0 / 1.25 / 1.5 / 2.0`）、スケール後画像の上限 `16384px/edge`
+  - Compose Clear 左に L/R 各 % コンボ（Qt/GTK）。旧 `4x` 設定は `200%` へ正規化
+  - `optimize_wallpapers` 配置時に元画像を意図的拡大（`100%` は MAT-01b 原寸/down-only）
+  - 拡大後が display 矩形（margins 込み）に収まらない場合は `ValueError` → Optimize エラー（MAT-13 赤表示）
 
 ### 調査メモ
 
 - memo（オーナー）: 旧「閃き」を MAT-14 として正式採番。MAT-11 調査メモの 2x/4x 言及と同系
+- `Display.scale_percent`（W-03-C）は OS DPI 情報のみ。本項目のユーザー render scale とは別軸
 
 ---
 

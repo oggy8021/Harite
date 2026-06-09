@@ -44,7 +44,7 @@
 | ID   | 項目       | 概要                                              | planning で最初に詰めること                                                      | 現判断                                    |
 | ---- | -------- | ----------------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------- |
 | MAT-13 | エラー表示を赤色に | footer / feedback の error がメッセージ性弱い | Status 面の色・コントラスト | **次の着手** — maturation 転記のみ |
-| MAT-14 | 2x / 4x display scale | プリセットステップ、L/R 各1、Optimize 解像度突破はエラー | MAT-01b 原寸回帰とは別軸。Compose 周辺の配置 | maturation 転記のみ |
+| MAT-14 | source image scale（% プリセット） | 100/125/150/200%、L/R 各1、拡大後が display に収まらなければエラー | MAT-01b 原寸回帰とは別軸。Compose 周辺の配置 | `fix/mat-14-display-scale` |
 | MAT-15 | core 幾何総点検 | align / margin 優先、ストレッチ誤解の是正 | MAT-12→11 延長。core 中心の照合 | maturation 転記のみ |
 | MAT-16 | 時刻をローカル TZ（JST） | `jma-cycle.json` / `updated_at` 等の解析しづらさ | MAT-08 op log と方針統一 | maturation 転記のみ |
 | MAT-17 | CLI slideshow + settings | CLI でも `harite-settings.json` を読む | headless との差異点検 | maturation 転記のみ |

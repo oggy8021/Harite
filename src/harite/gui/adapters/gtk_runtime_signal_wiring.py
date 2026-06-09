@@ -24,6 +24,14 @@ def _connect_input_widgets(backend: Any, widgets: dict[str, Any]) -> None:
     widgets["btn_get_img_r"].connect("clicked", lambda *_args: backend._on_pick_input_clicked("R"))
     widgets["btn_clr_path_l"].connect("clicked", lambda *_args: backend._on_clear_input_clicked("L"))
     widgets["btn_clr_path_r"].connect("clicked", lambda *_args: backend._on_clear_input_clicked("R"))
+    widgets["combo_display_scale_l"].connect(
+        "changed",
+        lambda *_args: backend._on_display_scale_combo_changed("L"),
+    )
+    widgets["combo_display_scale_r"].connect(
+        "changed",
+        lambda *_args: backend._on_display_scale_combo_changed("R"),
+    )
 
 
 def _connect_direction_widgets(backend: Any, widgets: dict[str, Any]) -> None:

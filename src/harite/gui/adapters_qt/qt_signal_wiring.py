@@ -52,6 +52,16 @@ def _connect_input_widgets(backend: Any, widgets: dict[str, Any]) -> None:
         lambda: backend._on_clear_input_clicked("R"),
     )
     _safe_connect(
+        widgets.get("combo_display_scale_l"),
+        "currentIndexChanged",
+        lambda _index: backend._on_display_scale_combo_changed("L"),
+    )
+    _safe_connect(
+        widgets.get("combo_display_scale_r"),
+        "currentIndexChanged",
+        lambda _index: backend._on_display_scale_combo_changed("R"),
+    )
+    _safe_connect(
         widgets.get("btn_swap_input_paths"),
         "clicked",
         backend._on_swap_input_paths_clicked,

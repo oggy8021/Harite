@@ -193,6 +193,10 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     set_xalign_if_supported(input_display_l, 0.5)
     if hasattr(input_display_l, "set_editable"):
         input_display_l.set_editable(False)
+    from harite.gui.views.display_scale_surface import build_display_scale_combo_gtk
+
+    combo_display_scale_l = build_display_scale_combo_gtk(gtk_module)
+    combo_display_scale_l.set_tooltip_text("Source image scale preset (100% / 125% / 150% / 200%)")
     btn_clr_path_l = gtk_module.Button(label="")
     set_button_icon_if_supported(gtk_module, btn_clr_path_l, "icons", "lucide", "folder-x.svg")
     apply_icon_only_button(btn_clr_path_l, "Clear-L")
@@ -207,6 +211,7 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
         set_halign_if_supported(clear_row_l, gtk_module.Align.END)
     if hasattr(clear_row_l, "set_hexpand"):
         clear_row_l.set_hexpand(True)
+    clear_row_l.pack_start(combo_display_scale_l, False, False, 0)
     clear_row_l.pack_start(btn_clr_path_l, False, False, 0)
     input_row_l.pack_start(input_path_row_l, False, False, 0)
     input_row_l.pack_start(clear_row_l, False, False, 0)
@@ -229,6 +234,8 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
     set_xalign_if_supported(input_display_r, 0.5)
     if hasattr(input_display_r, "set_editable"):
         input_display_r.set_editable(False)
+    combo_display_scale_r = build_display_scale_combo_gtk(gtk_module)
+    combo_display_scale_r.set_tooltip_text("Source image scale preset (100% / 125% / 150% / 200%)")
     btn_clr_path_r = gtk_module.Button(label="")
     set_button_icon_if_supported(gtk_module, btn_clr_path_r, "icons", "lucide", "folder-x.svg")
     apply_icon_only_button(btn_clr_path_r, "Clear-R")
@@ -243,6 +250,7 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
         set_halign_if_supported(clear_row_r, gtk_module.Align.END)
     if hasattr(clear_row_r, "set_hexpand"):
         clear_row_r.set_hexpand(True)
+    clear_row_r.pack_start(combo_display_scale_r, False, False, 0)
     clear_row_r.pack_start(btn_clr_path_r, False, False, 0)
     input_row_r.pack_start(input_path_row_r, False, False, 0)
     input_row_r.pack_start(clear_row_r, False, False, 0)
@@ -276,9 +284,11 @@ def build_main_tab_section(gtk_module: Any) -> dict[str, Any]:
         "btn_get_img_r": btn_get_img_r,
         "input_row_l": input_row_l,
         "input_display_l": input_display_l,
+        "combo_display_scale_l": combo_display_scale_l,
         "btn_clr_path_l": btn_clr_path_l,
         "input_row_r": input_row_r,
         "input_display_r": input_display_r,
+        "combo_display_scale_r": combo_display_scale_r,
         "btn_clr_path_r": btn_clr_path_r,
         "pick_state_label": pick_state_label,
     }

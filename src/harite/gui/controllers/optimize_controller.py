@@ -7,7 +7,13 @@ from pathlib import Path
 from typing import Optional
 
 from harite.cli import parse_resolution
-from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, normalize_background_color, normalize_optimize_input_paths, optimize_wallpapers
+from harite.core import (
+    DEFAULT_BACKGROUND_COLOR_HEX,
+    normalize_background_color,
+    normalize_optimize_input_paths,
+    optimize_wallpapers,
+    validate_intentional_image_scales,
+)
 from harite.optimize_settings import resolve_optimize_display_settings
 from harite.positioning import parse_position_pair, position_value_for_side
 
@@ -34,6 +40,8 @@ class OptimizeFormState:
     margins: Optional[str] = None
     l_display: Optional[str] = None
     r_display: Optional[str] = None
+    l_display_scale: float = 1.0
+    r_display_scale: float = 1.0
     align: tuple[str, str] = ("center", "center")
     valign: tuple[str, str] = ("center", "center")
     quality: int = 90
@@ -84,6 +92,8 @@ class OptimizeController:
         w, h = parse_resolution(display_settings.resolution)
         output = Path(state.output_dir)
         margins = self._parse_margins(state.margins)
+        l_display = None if not display_settings.l_display else parse_resolution(display_settings.l_display)
+        r_display = None if not display_settings.r_display else parse_resolution(display_settings.r_display)
 
         return optimize_wallpapers(
             inputs=inputs,
@@ -94,8 +104,10 @@ class OptimizeController:
             quality=state.quality,
             two_screen=display_settings.two_screen,
             margins=margins,
-            l_display=None if not display_settings.l_display else parse_resolution(display_settings.l_display),
-            r_display=None if not display_settings.r_display else parse_resolution(display_settings.r_display),
+            l_display=l_display,
+            r_display=r_display,
+            l_display_scale=state.l_display_scale,
+            r_display_scale=state.r_display_scale,
             align=state.align,
             valign=state.valign,
             embed_info=state.embed_info,
@@ -135,16 +147,27 @@ class OptimizeController:
             l_display=state.l_display,
             r_display=state.r_display,
         )
-        parse_resolution(display_settings.resolution)
+        w, h = parse_resolution(display_settings.resolution)
+        margins = self._parse_margins(state.margins)
         if state.quality < 1 or state.quality > 100:
             raise ValueError("quality must be between 1 and 100")
         if state.embed_info not in ("none", "params", "free", "combo"):
             raise ValueError("embed_info must be one of: none, params, free, combo")
-        self._parse_margins(state.margins)
-        if display_settings.l_display:
-            parse_resolution(display_settings.l_display)
-        if display_settings.r_display:
-            parse_resolution(display_settings.r_display)
+        l_display = None if not display_settings.l_display else parse_resolution(display_settings.l_display)
+        r_display = None if not display_settings.r_display else parse_resolution(display_settings.r_display)
+        from harite.display_scale import is_unity_display_scale
+
+        if not is_unity_display_scale(state.l_display_scale) or not is_unity_display_scale(state.r_display_scale):
+            validate_intentional_image_scales(
+                inputs,
+                (w, h),
+                two_screen=display_settings.two_screen,
+                margins=margins,
+                l_display=l_display,
+                r_display=r_display,
+                l_display_scale=state.l_display_scale,
+                r_display_scale=state.r_display_scale,
+            )
 
     def run_optimize(self, state: OptimizeFormState) -> tuple[list[Path], list]:
         output = Path(state.output_dir)

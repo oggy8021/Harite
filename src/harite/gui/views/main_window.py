@@ -426,6 +426,27 @@ class MainWindow:
         self._log(f"Margins updated: {self.form_state.margins}")
         self._update_margin_text_preflight_status()
 
+    def on_change_display_scale(self, side: str, value: int | float) -> None:
+        from harite.display_scale import normalize_display_scale
+
+        normalized_side = side.strip().upper()
+        scale = normalize_display_scale(value)
+        if normalized_side == "L":
+            self.form_state.l_display_scale = scale
+        elif normalized_side == "R":
+            if self._second_slot_blocked(normalized_side):
+                return
+            self.form_state.r_display_scale = scale
+        else:
+            self.last_error = "display scale side is required"
+            self._log("Display scale change ignored: missing side")
+            return
+
+        self._refresh_action_availability()
+        from harite.display_scale import format_display_scale_label
+
+        self._log(f"Display scale updated ({normalized_side}={format_display_scale_label(scale)})")
+
     def on_change_margins(self, widget_name: str, value: int | float) -> None:
         if "AllMargins" in widget_name:
             self._apply_margins(int(value), int(value), int(value), int(value))
@@ -522,13 +543,32 @@ class MainWindow:
             from harite.optimize_settings import resolve_optimize_display_settings
 
             parts = [part.strip() for part in self.form_state.input_value.split(",") if part.strip()]
-            resolve_optimize_display_settings(
+            from harite.core import validate_intentional_image_scales
+
+            display_settings = resolve_optimize_display_settings(
                 input_values=parts,
                 resolution=self.form_state.resolution,
                 two_screen=self.form_state.two_screen,
                 l_display=self.form_state.l_display,
                 r_display=self.form_state.r_display,
             )
+            from harite.display_scale import is_unity_display_scale
+
+            if not is_unity_display_scale(self.form_state.l_display_scale) or not is_unity_display_scale(
+                self.form_state.r_display_scale
+            ):
+                w, h = self._parse_resolution_value(display_settings.resolution) or (0, 0)
+                margins = self._current_margin_values()
+                validate_intentional_image_scales(
+                    parts,
+                    (w, h),
+                    two_screen=display_settings.two_screen,
+                    margins=margins,
+                    l_display=self._parse_resolution_value(display_settings.l_display),
+                    r_display=self._parse_resolution_value(display_settings.r_display),
+                    l_display_scale=self.form_state.l_display_scale,
+                    r_display_scale=self.form_state.r_display_scale,
+                )
             return True
         except ValueError:
             return False
@@ -915,6 +955,8 @@ class MainWindow:
         self.form_state.embed_max_lines = optimize.embed_max_lines
         self.form_state.l_display = optimize.l_display
         self.form_state.r_display = optimize.r_display
+        self.form_state.l_display_scale = optimize.l_display_scale
+        self.form_state.r_display_scale = optimize.r_display_scale
         if optimize.two_screen_mode == "auto":
             self.form_state.two_screen = None
             if self.input_path_l and self.input_path_r:
@@ -972,6 +1014,8 @@ class MainWindow:
             self.preferences.optimize.two_screen_mode = "on" if self.form_state.two_screen else "off"
         self.preferences.optimize.l_display = self.form_state.l_display
         self.preferences.optimize.r_display = self.form_state.r_display
+        self.preferences.optimize.l_display_scale = self.form_state.l_display_scale
+        self.preferences.optimize.r_display_scale = self.form_state.r_display_scale
         return self.preferences.to_settings_dict()
 
     def _normalize_settings_display_payload(self, config: dict[str, object]) -> dict[str, object]:
