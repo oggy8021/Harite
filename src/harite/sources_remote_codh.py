@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
 import json
 import random
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
 
+from harite.local_time import local_now_iso
 from harite.sources import Catalog, SourceEntry, get_source
 from harite.sources_remote import (
     CODH_SEARCH_URL_TEMPLATE,
@@ -97,10 +97,6 @@ def _normalize_codh_thumbnail_url(thumbnail: str) -> str:
     return thumbnail.replace("/200,/", "/max/")
 
 
-def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-
-
 def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
@@ -137,7 +133,7 @@ def load_codh_cycle(cache_dir: Path) -> dict[str, Any] | None:
 
 def save_codh_cycle(cache_dir: Path, cycle: dict[str, Any]) -> None:
     cycle = dict(cycle)
-    cycle["updated_at"] = _utc_now_iso()
+    cycle["updated_at"] = local_now_iso()
     _atomic_write_json(cache_dir / CODH_CYCLE_FILENAME, cycle)
 
 
@@ -225,7 +221,7 @@ def build_codh_index(ctx: CodhSyncContext, *, source_id: str | None = None) -> d
         "version": CODH_INDEX_VERSION,
         "query_key": ctx.query_key,
         "total": total,
-        "built_at": _utc_now_iso(),
+        "built_at": local_now_iso(),
         "entries": entries,
     }
     _atomic_write_json(ctx.cache_dir / CODH_INDEX_FILENAME, index_payload)
