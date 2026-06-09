@@ -45,7 +45,7 @@
 | ---- | -------- | ----------------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------- |
 | MAT-13 | エラー表示を赤色に | footer / feedback の error がメッセージ性弱い | Status 面の色・コントラスト | **次の着手** — maturation 転記のみ |
 | MAT-14 | source image scale（% プリセット） | 100/125/150/200%、L/R 各1、拡大後が display に収まらなければエラー | MAT-01b 原寸回帰とは別軸。Compose 周辺の配置 | `fix/mat-14-display-scale` |
-| MAT-15 | core 幾何総点検 | align / margin 優先、ストレッチ誤解の是正 | MAT-12→11 延長。core 中心の照合 | maturation 転記のみ |
+| MAT-15 | core 幾何総点検 | align / margin 優先、ストレッチ誤解の是正、MAT-14 接続 | MAT-12→11 延長。GUI 注釈 + spec + テスト | `fix/mat-15-core-geometry-audit` |
 | MAT-16 | 時刻をローカル TZ（JST） | `jma-cycle.json` / `updated_at` 等の解析しづらさ | MAT-08 op log と方針統一 | maturation 転記のみ |
 | MAT-17 | CLI slideshow + settings | CLI でも `harite-settings.json` を読む | headless との差異点検 | maturation 転記のみ |
 | Q-01 | GTK をメンテ対象外に落とす | 回収コスト観点で `harite-gtk` / GTK adapter を **メンテ対象外** とし **Qt 一本化**。**v2.0.0 の骨格。** | **境界の確定**（例: `v2.0.0` を GTK 同梱の最終版）、削除範囲（entrypoint / CI / packaging）、GTK 熟成メモは **残す**（観測記録） | **MAT-13〜17 の後** — MAT-10 より先 |

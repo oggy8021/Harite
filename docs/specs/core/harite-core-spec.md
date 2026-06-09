@@ -134,10 +134,12 @@ flowchart TD
 
 母体 `wallpaperoptimizer` 準拠（MAT-01b、2026-06-09）:
 
-- **拡大しない。** 画像 + margins が display 矩形に収まるときは **原寸**（`scale = 1.0`）。収まらないときのみ `_downsize_to_fit_margins(...)` で **縮小のみ**（二段 proportional shrink）。
-- `scaling` 引数・設定キーは optimize 幾何に **影響しない**（合意済み）。
+- **拡大しない（既定）。** 画像 + margins が display 矩形に収まるときは **原寸**（`scale = 1.0`）。収まらないときのみ `_downsize_to_fit_margins(...)` で **縮小のみ**（二段 proportional shrink）。
+- **MAT-14（意図的拡大）:** Compose の source scale（100% / 125% / 150% / 200%）は **元画像サイズのみ** に掛ける。display / composite 解像度は変えない。100% は上記 MAT-01b 経路、それ以外は upscale 後に収納判定し、display 矩形（margins 込み）に収まらなければエラー（縮小フォールバックなし）。align / valign は upscale 後の `(nw, nh)` に対して適用する。
+- `scaling` 引数・設定キーは optimize 幾何に **影響しない**（合意済み）。Settings の `scaling` 値や `compute_placement(..., scaling=...)` の引数は **互換用シグネチャ** であり、配置計算では参照されない。
 - 各入力は **display スロット**（矩形 + 非対称 margins）に割り当てる。two-screen では L margins `(ml, 0, mt, mb)`、R margins `(0, mr, mt, mb)`。
-- **align / valign** は display 矩形の原点 `(0,0)` を left/top とし、矩形内の余白で寄せる。margins は **収納判定と縮小上限** に使い、paste 座標の `+= ml` オフセットには使わない。
+- **align / valign** は display 矩形の原点 `(0,0)` を left/top とし、**スロット全面**（`screen_w × screen_h`）の余白で寄せる。margins は **収納判定と縮小上限** に使い、paste 座標の `+= ml` オフセットには使わない（margin-inner cell へ align しない）。
+- **計算順（入力ごと）:** display slot 解決 → 画像サイズ決定（MAT-14 scale → `_resolve_intentional_image_dimensions`）→ align/valign（`_allocate_on_display`）→ paste（`origin + inner`）。
 - two-screen で `l_display`, `r_display` がある場合、`split_x = round(left_w / (left_w + right_w) * w_target)`（`1..w_target-1` に clamp）。左画像は `x ∈ [0, split_x)`、右画像は `x = split_x + inner_x`（母体 `_mergeWallpaper` 同型）。
 - single-screen 1 枚: display = 全面 `(w_target, h_target)`、margins `(ml, mr, mt, mb)`。
 - single-screen 複数枚: 横幅を等分した display スライス。先頭スライスは `(ml,0,mt,mb)`、末尾は `(0,mr,mt,mb)`、中間は `(0,0,mt,mb)`。

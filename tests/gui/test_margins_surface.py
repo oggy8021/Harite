@@ -7,7 +7,7 @@ def test_margins_surface_tooltips_non_empty():
     from harite.gui.views import margins_surface as ms
 
     assert "margin text mode" in ms.MARGIN_TEXT_LINE_LIMITS_TOOLTIP.lower()
-    assert "margins define area" in ms.MARGIN_PRIORITY_RULE_TOOLTIP.lower()
+    assert "full display slot" in ms.MARGIN_PRIORITY_RULE_TOOLTIP.lower()
     assert "global" in ms.MARGIN_BEHAVIOR_TOOLTIP.lower()
     assert ms.MARGIN_CROSS_GRID_TOOLTIP.count("\n") == 2
     assert "same value" in ms.MARGIN_ALL_TOOLTIP.lower()

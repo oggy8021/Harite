@@ -165,7 +165,7 @@ Main tab — Margins options Drawer（P-08）:
 | --- | --- |
 | `embed pattern` の mode label | `Line limits are chosen automatically for the selected margin text mode.` |
 | `Text` page の margin text entry | 同上 |
-| `position selector` | `Rule: margins define area; align/valign act inside it.` |
+| `position selector` | `Rule: margins constrain image size; align/valign use the full display slot.` |
 | cross-grid、各辺 margin label | `Current behavior: margins are global to the composite canvas.` |
 | **all margins (px)** spin / label（MAT-09） | `Set left, right, top, and bottom margins to the same value. 0 restores the default margins.` |
 | center stack 全体（任意） | 上記 3 文を連結した tooltip |
