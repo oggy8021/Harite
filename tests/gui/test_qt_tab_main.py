@@ -39,8 +39,8 @@ def test_compose_grid_required_widgets(qapp):
         "btn_get_img_l",
         "tgl_upper_r", "tgl_lower_r", "tgl_push_left_r", "tgl_push_right_r",
         "btn_get_img_r",
-        "input_display_l", "btn_clr_path_l",
-        "input_display_r", "btn_clr_path_r",
+        "input_display_l", "combo_display_scale_l", "btn_clr_path_l",
+        "input_display_r", "combo_display_scale_r", "btn_clr_path_r",
         "pick_state_label",
     }
     assert expected <= set(w)

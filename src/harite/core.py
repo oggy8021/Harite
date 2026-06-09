@@ -201,6 +201,36 @@ def _resolve_native_dimensions(
     return _downsize_to_fit_margins(w, h, screen_w, screen_h, margins)
 
 
+def _resolve_intentional_image_dimensions(
+    img: Image.Image,
+    screen_w: int,
+    screen_h: int,
+    margins: Tuple[int, int, int, int],
+    intentional_factor: int = 1,
+    *,
+    side_label: str = "display",
+) -> Tuple[int, int, float]:
+    """Apply MAT-14 user upscale to the source image; MAT-01b down-only when factor is 1."""
+    from harite.display_scale import normalize_display_scale, scale_image_dimensions, validate_scaled_image_edge
+
+    factor = normalize_display_scale(intentional_factor)
+    if factor == 1.0:
+        return _resolve_native_dimensions(img, screen_w, screen_h, margins)
+
+    orig_w, orig_h = img.size
+    nw, nh = scale_image_dimensions(orig_w, orig_h, factor)
+    validate_scaled_image_edge(nw, nh, label=f"source image ({side_label})")
+    if not _image_fits_with_margins(nw, nh, screen_w, screen_h, margins):
+        ml, mr, mt, mb = margins
+        max_w = max(1, screen_w - ml - mr)
+        max_h = max(1, screen_h - mt - mb)
+        raise ValueError(
+            f"scaled source image exceeds {side_label} area: {nw}x{nh} does not fit in {max_w}x{max_h} "
+            f"(display {screen_w}x{screen_h} with margins L{ml},R{mr},U{mt},B{mb})"
+        )
+    return nw, nh, float(factor)
+
+
 def _allocate_on_display(
     img_w: int,
     img_h: int,
@@ -599,6 +629,53 @@ def _draw_embed_text_in_margin(
         text_y += line_h
 
 
+def validate_intentional_image_scales(
+    inputs: Sequence[str],
+    target_resolution: Tuple[int, int],
+    *,
+    two_screen: bool = False,
+    margins: Tuple[int, int, int, int] = (0, 0, 0, 0),
+    l_display: Optional[Tuple[int, int]] = None,
+    r_display: Optional[Tuple[int, int]] = None,
+    l_display_scale: float = 1.0,
+    r_display_scale: float = 1.0,
+) -> None:
+    """Preflight MAT-14 source-image scale against display slots without writing output."""
+    items = _parse_inputs(inputs)
+    w_target, h_target = target_resolution
+    count = max(1, len(items))
+    if two_screen:
+        count = min(2, count)
+
+    display_slots = _resolve_display_slots(
+        w_target=w_target,
+        h_target=h_target,
+        count=count,
+        two_screen=two_screen,
+        l_display=l_display,
+        r_display=r_display,
+        ml=margins[0],
+        mr=margins[1],
+        mt=margins[2],
+        mb=margins[3],
+    )
+    side_labels = ("L", "R")
+    for i, img_path in enumerate(items[:count]):
+        img = Image.open(img_path).convert("RGB")
+        slot = display_slots[i] if i < len(display_slots) else display_slots[-1]
+        _origin_x, _origin_y, screen_w, screen_h, side_margins = slot
+        image_scale = l_display_scale if i == 0 else (r_display_scale if i == 1 else 1)
+        side_label = side_labels[i] if i < len(side_labels) else f"slot {i + 1}"
+        _resolve_intentional_image_dimensions(
+            img,
+            screen_w,
+            screen_h,
+            side_margins,
+            image_scale,
+            side_label=side_label,
+        )
+
+
 def optimize_wallpapers(
     inputs: Sequence[Path | str],
     target_resolution: Tuple[int, int],
@@ -673,6 +750,12 @@ def optimize_wallpapers(
         mb=mb,
     )
 
+    from harite.display_scale import normalize_display_scale
+
+    l_display_scale = normalize_display_scale(kwargs.get("l_display_scale", 1.0))
+    r_display_scale = normalize_display_scale(kwargs.get("r_display_scale", 1.0))
+    side_labels = ("L", "R")
+
     for i, img_path in enumerate(items[:count]):
         try:
             img = Image.open(img_path).convert("RGB")
@@ -682,7 +765,16 @@ def optimize_wallpapers(
 
         slot = display_slots[i] if i < len(display_slots) else display_slots[-1]
         origin_x, origin_y, screen_w, screen_h, side_margins = slot
-        nw, nh, scale = _resolve_native_dimensions(img, screen_w, screen_h, side_margins)
+        image_scale = l_display_scale if i == 0 else (r_display_scale if i == 1 else 1)
+        side_label = side_labels[i] if i < len(side_labels) else f"slot {i + 1}"
+        nw, nh, scale = _resolve_intentional_image_dimensions(
+            img,
+            screen_w,
+            screen_h,
+            side_margins,
+            image_scale,
+            side_label=side_label,
+        )
         if (nw, nh) != img.size:
             img_resized = img.resize((nw, nh), Image.LANCZOS)
         else:

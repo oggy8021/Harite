@@ -5,6 +5,7 @@ import os
 from typing import Any
 
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, normalize_background_color
+from harite.display_scale import normalize_display_scale
 from harite.optimize_settings import AUTO
 from harite.positioning import parse_position_pair
 
@@ -42,6 +43,8 @@ class OptimizeSettings:
     two_screen_mode: str = "off"
     l_display: str | None = None
     r_display: str | None = None
+    l_display_scale: float = 1.0
+    r_display_scale: float = 1.0
     margins: str | None = None
     align: tuple[str, str] = ("center", "center")
     valign: tuple[str, str] = ("center", "center")
@@ -60,6 +63,8 @@ class OptimizeSettings:
             two_screen_mode=_decode_two_screen_mode(settings.get("two_screen", False)),
             l_display=_decode_optional_auto_string(settings.get("l_display")),
             r_display=_decode_optional_auto_string(settings.get("r_display")),
+            l_display_scale=normalize_display_scale(settings.get("l_display_scale", 1)),
+            r_display_scale=normalize_display_scale(settings.get("r_display_scale", 1)),
             margins=None if settings.get("margins") is None else str(settings.get("margins")),
             align=parse_position_pair(settings.get("align", "center"), axis="align"),
             valign=parse_position_pair(settings.get("valign", "center"), axis="valign"),

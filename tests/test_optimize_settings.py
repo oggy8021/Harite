@@ -65,3 +65,25 @@ def test_resolve_optimize_display_settings_preserves_explicit_values_without_con
     assert resolved.resolution == "1600x900"
     assert resolved.l_display is None
     assert resolved.r_display is None
+
+
+def test_optimize_settings_roundtrips_display_scale_fields():
+    from harite.settings import OptimizeSettings
+
+    loaded = OptimizeSettings.from_settings_dict(
+        {
+            "l_display_scale": 1.25,
+            "r_display_scale": 2,
+        }
+    )
+    assert loaded.l_display_scale == 1.25
+    assert loaded.r_display_scale == 2.0
+    assert loaded.to_settings_dict()["l_display_scale"] == 1.25
+    assert loaded.to_settings_dict()["r_display_scale"] == 2.0
+
+
+def test_optimize_settings_maps_legacy_four_x_to_two_x():
+    from harite.settings import OptimizeSettings
+
+    loaded = OptimizeSettings.from_settings_dict({"l_display_scale": 4})
+    assert loaded.l_display_scale == 2.0

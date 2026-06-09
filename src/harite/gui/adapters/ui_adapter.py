@@ -40,6 +40,7 @@ RUNTIME_HANDLER_MAP: dict[str, str] = {
     "on_toggle_position": "on_toggle_position",
     "on_toggle_position_reset": "on_toggle_position_reset",
     "on_change_margins": "on_change_margins",
+    "on_change_display_scale": "on_change_display_scale",
     "on_save_path_selection_canceled": "on_save_path_selection_canceled",
     "on_save_path_selected": "on_save_path_selected",
     "on_close_save_path_dialog": "on_close_save_path_dialog",

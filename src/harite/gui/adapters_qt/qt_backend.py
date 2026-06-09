@@ -618,6 +618,25 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         # Notify MainWindow that the dialog has closed (confirm or cancel).
         self._notify_close_handler("on_close_open_image_dialog")
 
+    def _on_display_scale_combo_changed(self, side: str) -> None:
+        combo = self._objects.get(f"combo_display_scale_{side.lower()}") or self._objects.get(
+            f"cmbDisplayScale{side.upper()}"
+        )
+        callback = self._signal_handlers.get("on_change_display_scale")
+        if combo is None or callback is None:
+            return
+        from harite.gui.views.display_scale_surface import read_display_scale_combo
+
+        scale = read_display_scale_combo(combo)
+        try:
+            callback(side.upper(), scale)
+            owner = self._get_handler_owner("on_change_display_scale")
+            if owner is not None:
+                self._sync_main_state_from_owner(owner)
+                self._sync_action_availability_from_owner(owner)
+        except Exception as exc:
+            self._set_feedback(phase="Compose", state="error", error=str(exc))
+
     def _on_clear_input_clicked(self, side: str) -> None:
         callback = self._signal_handlers.get("on_clear_input")
         if callback is None:

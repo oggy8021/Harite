@@ -272,6 +272,29 @@ class _ToggleButton(_Button):
         self.emit("clicked", self)
 
 
+class _ComboBoxText(_WidgetBase):
+    def __init__(self):
+        super().__init__()
+        self._active = 0
+        self.tooltip_text = ""
+
+    def append(self, _item_id, text):
+        return None
+
+    def append_text(self, _text):
+        return None
+
+    def set_active(self, index):
+        self._active = int(index)
+        self.emit("changed", self)
+
+    def get_active(self):
+        return self._active
+
+    def set_tooltip_text(self, text):
+        self.tooltip_text = text
+
+
 class _SpinButton(_WidgetBase):
     def __init__(self):
         super().__init__()
@@ -384,6 +407,7 @@ class _FakeGtk:
     CheckButton = _CheckButton
     SpinButton = _SpinButton
     RadioButton = _RadioButton
+    ComboBoxText = _ComboBoxText
     Image = _Image
 
 
