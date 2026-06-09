@@ -935,12 +935,19 @@ class GtkRuntimeSignalBackend:
 
         try:
             widget_name = widget.get_name() if hasattr(widget, "get_name") else ""
+            if "AllMargins" in widget_name:
+                self._set_widget_enabled("lblAllMargins", True)
             value = 0
             if hasattr(widget, "get_value_as_int"):
                 value = int(widget.get_value_as_int())
             elif hasattr(widget, "get_value"):
                 value = int(widget.get_value())
             callback(widget_name, value)
+            owner = self._get_handler_owner("on_change_margins")
+            if owner is not None:
+                self._sync_main_state_from_owner(owner)
+                self._sync_feedback_from_owner(owner)
+                return
             self._set_feedback(phase="Margins", state="updated")
         except TypeError as exc:
             self._set_feedback(phase="Margins", state="error", error=str(exc))

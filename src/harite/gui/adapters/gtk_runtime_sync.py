@@ -80,6 +80,12 @@ def sync_main_state_from_owner(backend: Any, owner: Any) -> None:
     backend._set_spin_value("spnRightMargin", margin_right)
     backend._set_spin_value("spnTopMargin", margin_top)
     backend._set_spin_value("spnBottomMargin", margin_bottom)
+    from harite.gui.views.margins_surface import refresh_all_margins_bulk_controls
+
+    refresh_all_margins_bulk_controls(
+        backend,
+        (margin_left, margin_right, margin_top, margin_bottom),
+    )
 
     align_left, align_right = parse_position_pair(getattr(form_state, "align", "center"), axis="align")
     valign_left, valign_right = parse_position_pair(getattr(form_state, "valign", "center"), axis="valign")

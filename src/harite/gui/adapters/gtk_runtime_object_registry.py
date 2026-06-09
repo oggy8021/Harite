@@ -85,6 +85,8 @@ def _build_main_runtime_object_aliases(widgets: dict[str, Any]) -> dict[str, Any
         "hbox12": widgets["bottom_margin_row"],
         "lblBottomMargin": widgets["bottom_margin_label"],
         "spnBottomMargin": widgets["bottom_margin_spin"],
+        "lblAllMargins": widgets.get("all_margins_label"),
+        "spnAllMargins": widgets.get("all_margins_spin"),
         "boxOptimizeSection": widgets["optimize_group"],
         "btnSave": widgets["optimize_btn"],
         "btnOptimize": widgets["optimize_modern_btn"],

@@ -42,8 +42,16 @@ def _connect_direction_widgets(backend: Any, widgets: dict[str, Any]) -> None:
         widget.connect("toggled", lambda *_args, key=handler_key: backend._on_direction_toggled(key))
         widget.connect("released", lambda *_args, key=handler_key: backend._on_direction_released(key))
 
-    for widget_name in ("top_margin_spin", "left_margin_spin", "right_margin_spin", "bottom_margin_spin"):
-        widgets[widget_name].connect("value-changed", backend._on_margin_changed)
+    for widget_name in (
+        "top_margin_spin",
+        "left_margin_spin",
+        "right_margin_spin",
+        "bottom_margin_spin",
+        "all_margins_spin",
+    ):
+        widget = widgets.get(widget_name)
+        if widget is not None:
+            widget.connect("value-changed", backend._on_margin_changed)
 
 
 def _connect_action_widgets(backend: Any, widgets: dict[str, Any]) -> None:

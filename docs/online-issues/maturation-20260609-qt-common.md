@@ -419,13 +419,15 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ**
-- スコープ: 一括変更の対象（四辺同値 / プリセット / L-R 対称等）は棚卸で決定
-- 次: UX 案（dialog / spin 一括 / settings 連動）の整理
+- **改修着手** — cross-grid 右下に **All margins (px)** spin。四辺同値・即時反映。`0` で既定復帰（専用 Reset なし）。
+- スコープ: 四辺同値のみ（L=R 対称のみ・プリセットは対象外）。
+- 表示: 四辺同値のときラベル有効 + all spin 同期。不一致時は **ラベルのみ無効化**（spin 値は維持）。all spin `valueChanged` でラベル復帰。
 
 ### 調査メモ
 
 - memo（オーナー）: 熟成運転中の単発要望
+- **UX（2026-05-31）:** 案 B（既存 spin に All）は分かりにくいため不採用。案 A 変形（右下専用 spin）を採用。
+- **実装:** `build_margin_cross_grid`、 `on_change_margins`（`spnAllMargins`）、`uniform_all_margin_spin_value`、gui-spec §3。
 
 ---
 

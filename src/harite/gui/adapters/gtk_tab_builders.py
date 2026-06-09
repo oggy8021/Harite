@@ -756,6 +756,28 @@ def build_margin_cross_grid_section(
         set_halign_if_supported(bottom_margin_box, gtk_module.Align.CENTER)
     bottom_margin_shell.pack_start(bottom_margin_box, False, False, 0)
 
+    all_margins_box = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=6)
+    all_margins_label = gtk_module.Label(label="All margins (px)")
+    set_xalign_if_supported(all_margins_label)
+    all_margins_spin = gtk_module.SpinButton()
+    configure_spin_button(all_margins_spin, minimum=0, maximum=250, step=1, page=10)
+    all_margins_box.pack_start(all_margins_label, False, False, 0)
+    all_margins_box.pack_start(all_margins_spin, False, False, 0)
+    all_margins_shell = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    all_margins_top_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    all_margins_center_row = gtk_module.Box(orientation=gtk_module.Orientation.HORIZONTAL, spacing=0)
+    all_margins_bottom_spacer = gtk_module.Box(orientation=gtk_module.Orientation.VERTICAL, spacing=0)
+    if hasattr(all_margins_top_spacer, "set_vexpand"):
+        all_margins_top_spacer.set_vexpand(True)
+    if hasattr(all_margins_bottom_spacer, "set_vexpand"):
+        all_margins_bottom_spacer.set_vexpand(True)
+    if hasattr(gtk_module, "Align"):
+        set_halign_if_supported(all_margins_center_row, gtk_module.Align.CENTER)
+    all_margins_center_row.pack_start(all_margins_box, False, False, 0)
+    all_margins_shell.pack_start(all_margins_top_spacer, True, True, 0)
+    all_margins_shell.pack_start(all_margins_center_row, False, False, 0)
+    all_margins_shell.pack_start(all_margins_bottom_spacer, True, True, 0)
+
     margin_cross_grid = gtk_module.Grid()
     if hasattr(margin_cross_grid, "set_column_spacing"):
         margin_cross_grid.set_column_spacing(24)
@@ -779,12 +801,15 @@ def build_margin_cross_grid_section(
         margin_cross_grid.attach(compose_center, 1, 1, 1, 1)
         margin_cross_grid.attach(right_margin_shell, 2, 1, 1, 1)
         margin_cross_grid.attach(bottom_margin_shell, 1, 2, 1, 1)
+        margin_cross_grid.attach(all_margins_shell, 2, 2, 1, 1)
 
-    from harite.gui.views.margins_surface import MARGIN_BEHAVIOR_TOOLTIP, apply_widget_tooltip
+    from harite.gui.views.margins_surface import MARGIN_ALL_TOOLTIP, MARGIN_BEHAVIOR_TOOLTIP, apply_widget_tooltip
 
     apply_widget_tooltip(margin_cross_grid, MARGIN_BEHAVIOR_TOOLTIP)
     for edge_label in (top_margin_label, left_margin_label, right_margin_label, bottom_margin_label):
         apply_widget_tooltip(edge_label, MARGIN_BEHAVIOR_TOOLTIP)
+    apply_widget_tooltip(all_margins_label, MARGIN_ALL_TOOLTIP)
+    apply_widget_tooltip(all_margins_spin, MARGIN_ALL_TOOLTIP)
 
     return {
         "margin_cross_grid": margin_cross_grid,
@@ -794,6 +819,8 @@ def build_margin_cross_grid_section(
         "bottom_margin_row": bottom_margin_row,
         "bottom_margin_label": bottom_margin_label,
         "bottom_margin_spin": bottom_margin_spin,
+        "all_margins_label": all_margins_label,
+        "all_margins_spin": all_margins_spin,
     }
 
 
