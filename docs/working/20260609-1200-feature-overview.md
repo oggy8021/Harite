@@ -1,7 +1,7 @@
 # Harite - Feature Overview（active）
 
-最終更新: 2026-05-31  
-ステータス: **現行 planning 入口**（熟成運転 **打ち切り** → 改修フェーズ・**maturation 一区切り**）
+最終更新: 2026-06-09  
+ステータス: **現行 planning 入口**（`v1.9.0` 熟成運転 **一区切り** → **`v2.0.0` 目標**）
 
 ## 位置づけ
 
@@ -18,9 +18,10 @@
 ## 現在ステータス
 
 - **熟成運転:** 2026-06-09 宣言 → 同日 **打ち切り**（未改修のままでは継続不可のため）。
-- **現フェーズ:** maturation **一区切り** — [maturation ログ](../online-issues/maturation-20260609-qt-common.md) の改修系・確かさ向上・MAT-11 まで完了（#442〜#452）。**残:** MAT-04/09/10（機能要望）または **Q-01**。GitHub Issue 化は行わない（リポジトリ内ログのまま）。
+- **製品線:** `pyproject.toml` の `1.9.0` は熟成運転の中間マイルストーン。**本 stream の営みは `v2.0.0` を目指す**（Qt 一本化・remote source の確かさ）。
+- **現フェーズ:** maturation **一区切り** — MAT-01〜12 の着手分は完了（#442〜#456）。次は **Q-01**（GTK をメンテ対象外に落とす。例: `v2.0.0` を GTK 同梱の最終版）と先送りの再棚卸。**MAT-10** はその **後** で十分。
 - 第1期 inventory は完了（上記 finished 参照）。
-- **次に確実に言える inventory:** GTK を辞める（Qt 一本化）。GTK 固有の粗さは Q-01 前に **記念碑的に片付ける**（下記 GTK メモ）。Qt/共通の改修が先。
+- **再棚卸の入口:** [maturation §v2.0.0 への再整理](../online-issues/maturation-20260609-qt-common.md#v200-への再整理オーナー方針-2026-06-09)。
 
 ### 熟成運転メモ（Xfce 実機）
 
@@ -31,9 +32,9 @@
 | Slideshow タブが Notebook 内で上寄せ | 起動直後から余白が下に溜まる | Main は `build_centered_page_shell` 経由、Slideshow は `slideshow_tab_box` を直 append していた | Slideshow も centered page shell へ（#439・確認済） |
 | Slideshow Srcdir-L/R が横に伸びる | Notebook を左右 2 分割するように見える | 長い path label が panel 幅を押し広げ、同一列の icon button まで横伸び | button を centered row に入れ、label は `format_input_display` + ellipsize（#439 追記・要 Xfce 再確認） |
 | Slideshow path label 省略なし | 長い path がそのまま表示 | GTK `refresh_slideshow_source_labels` が full path 固定 | basename 省略 + tooltip（#439 追記・要 Xfce 再確認） |
-| GTK に Preset/Profile UI がないのに設定が部分展開 | Slideshow で NDL 図版など preset 由来の表示に見える | **認識済み:** GTK 版は Slideshow の Preset / Profile **提供面がない**。一方 settings 読み込みは Qt 版と同型のため、`slideshow_source_id_*` / `slideshow_profile_id` 等が防ぎきれず **部分的に展開**する | **記載のみ** — 矛盾解消は **棚卸（Q-01 等）後**に実施。即時の GTK parity 拡張はしない |
+| GTK に Preset/Profile UI がないのに設定が部分展開 | Slideshow で NDL 図版など preset 由来の表示に見える | **認識済み:** GTK 版は Slideshow の Preset / Profile **提供面がない**。一方 settings 読み込みは Qt 版と同型のため、`slideshow_source_id_*` / `slideshow_profile_id` 等が防ぎきれず **部分的に展開**する | **記載のみ・削除しない** — GTK はメンテ対象外へ（Q-01）。parity 拡張はしない |
 
-**Qt / 共通（v1.9.0 以降）:** [maturation-20260609-qt-common.md](../online-issues/maturation-20260609-qt-common.md)（MAT-01〜12）。**着手順:** 改修系 → 確かさ向上 → 機能要望系。完了: **MAT-01**（#442）、**MAT-01b**（#444）、**MAT-02**（#445）、**MAT-03**（#446）、**MAT-05**（#447）、**MAT-06**（#448）、**MAT-07**（#449）、**MAT-08**（#450）、**MAT-12**（#451）、**MAT-11**（#452）。**maturation 着手分は完了。** 未着手: **MAT-04, MAT-09, MAT-10**（機能要望）。infra: **#453**（CI docs-only skip・pip cache）。
+**Qt / 共通（v1.9.0 → v2.0.0）:** [maturation-20260609-qt-common.md](../online-issues/maturation-20260609-qt-common.md)。**完了（#442〜#456）:** MAT-01, 01b, 02, 03, 05〜08, 12, 11, 04, 09。**先送り:** MAT-02b、MAT-08 観測。**未着手:** MAT-13〜17。**骨格:** **Q-01**。**後回し可:** **MAT-10**。infra: **#453**。
 
 ## 1. 着手候補
 
@@ -42,7 +43,15 @@
 
 | ID   | 項目       | 概要                                              | planning で最初に詰めること                                                      | 現判断                                    |
 | ---- | -------- | ----------------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------- |
-| Q-01 | GTK を辞める | `harite-gtk` / GTK adapter 層を廃止し **Qt 一本化** する。 | 削除範囲（entrypoint / CI / packaging / docs）、GTK 専用 parity の未移植分の扱い（例: Slideshow Preset/Profile UI 不在 vs settings 復元）、移行期間の有無 | **inventory 確定** — planning 未着手（熟成運転後） |
+| Q-01 | GTK をメンテ対象外に落とす | 回収コスト観点で `harite-gtk` / GTK adapter を **メンテ対象外** とし **Qt 一本化**。**v2.0.0 の骨格。** | **境界の確定**（例: `v2.0.0` を GTK 同梱の最終版）、削除範囲（entrypoint / CI / packaging）、GTK 熟成メモは **残す**（観測記録） | **inventory 確定** — **次の planning 入口** |
+| — | MAT-02b（先送り） | NDL / CODH **取得**（壁紙未切替）。MAT-02 表示整合とは別枠。 | MAT-08 JSONL 観測との切り分け。Qt 側で継続 | maturation 転記のみ |
+| — | MAT-08 観測（先送り） | Preset slideshow 操作ログの **viper3 実機切り分け** | v0 実装済（#450）。`HARITE_SLIDESHOW_OP_LOG` | MAT-02b の前提 |
+| MAT-13 | エラー表示を赤色に | footer / feedback の error がメッセージ性弱い | Status 面の色・コントラスト | maturation 転記のみ |
+| MAT-14 | 2x / 4x display scale | プリセットステップ、L/R 各1、Optimize 解像度突破はエラー | MAT-01b 原寸回帰とは別軸。Compose 周辺の配置 | maturation 転記のみ |
+| MAT-15 | core 幾何総点検 | align / margin 優先、ストレッチ誤解の是正 | MAT-12→11 延長。core 中心の照合 | maturation 転記のみ |
+| MAT-16 | 時刻をローカル TZ（JST） | `jma-cycle.json` / `updated_at` 等の解析しづらさ | MAT-08 op log と方針統一 | maturation 転記のみ |
+| MAT-17 | CLI slideshow + settings | CLI でも `harite-settings.json` を読む | headless との差異点検 | maturation 転記のみ |
+| MAT-10 | 江戸切絵図 source（新規） | edo-maps / IIIF を雰囲気 slideshow source に | ライセンス・indexer。完全新規 | **MAT-13〜17 の後** |
 
 
 ## 2. 構想保持
@@ -70,7 +79,7 @@
 ## 次期 planning への渡し方
 
 - overview では実装順をまだ固定せず、まず候補群の置き場所を作る。
-- 着手候補から 1 つを選び、個別の spec / plan / tasks へ落とす（次は **Q-01** が自然）。
+- 着手候補から 1 つを選び、個別の spec / plan / tasks へ落とす（次は **Q-01** — GTK をメンテ対象外に落とす境界。MAT-10 は後で十分）。
 - 構想保持は、Q-01 や issue 蓄積の結果を受けて再分類する。
 - 破棄候補 / 保留延長は [pending](20260608-1200-feature-pending.md) に置き、懐かしさで復活させない。
 
