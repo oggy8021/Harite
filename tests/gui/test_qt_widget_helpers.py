@@ -72,13 +72,41 @@ def test_set_error_updates_lblError(qapp, backend):
     from PyQt6.QtWidgets import QLabel
 
     from harite.gui.adapters_qt.qt_widget_helpers import set_error
+    from harite.gui.views.footer_feedback import FOOTER_ERROR_ACTIVE_COLOR
 
     lbl = QLabel("")
     lbl.setObjectName("errorLabel")
     backend._objects["lblError"] = lbl
     set_error(backend, "Error: boom")
     assert lbl.text() == "Error: boom"
-    assert lbl.property("hasError") is True
+    assert lbl.property("hasError") == "true"
+    assert FOOTER_ERROR_ACTIVE_COLOR in lbl.styleSheet()
+    assert "font-weight: bold" in lbl.styleSheet()
+
+
+def test_set_error_sync_feedback_input_required_style(qapp, backend):
+    from PyQt6.QtWidgets import QLabel
+
+    from harite.gui.adapters_qt.qt_widget_helpers import set_feedback
+    from harite.gui.views.footer_feedback import FOOTER_ERROR_ACTIVE_COLOR
+
+    status = QLabel()
+    error = QLabel()
+    error.setObjectName("errorLabel")
+    backend._objects["lblStatus"] = status
+    backend._objects["lblError"] = error
+
+    set_feedback(
+        backend,
+        phase="Input",
+        state="input is required",
+        error="input is required",
+        status_level="error",
+    )
+
+    assert error.text() == "Error: input is required"
+    assert error.property("hasError") == "true"
+    assert FOOTER_ERROR_ACTIVE_COLOR in error.styleSheet()
 
 
 def test_set_error_clears_has_error_property(qapp, backend):
@@ -91,7 +119,7 @@ def test_set_error_clears_has_error_property(qapp, backend):
     backend._objects["lblError"] = lbl
     set_error(backend, "Error: boom")
     set_error(backend, None)
-    assert lbl.property("hasError") is False
+    assert lbl.property("hasError") == "false"
 
 
 def test_set_error_clears_on_none(qapp, backend):
