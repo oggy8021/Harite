@@ -54,6 +54,7 @@ def test_margin_cross_grid_required_spin_widgets(qapp):
         "left_margin_spin", "left_margin_label",
         "right_margin_spin", "right_margin_label",
         "bottom_margin_spin", "bottom_margin_label",
+        "all_margins_spin", "all_margins_label",
     }
     assert expected <= set(w)
 
@@ -61,7 +62,13 @@ def test_margin_cross_grid_required_spin_widgets(qapp):
 def test_margin_spin_initial_values(qapp):
     w = _make_margin_cross_grid(qapp)
 
-    for key in ("top_margin_spin", "left_margin_spin", "right_margin_spin", "bottom_margin_spin"):
+    for key in (
+        "top_margin_spin",
+        "left_margin_spin",
+        "right_margin_spin",
+        "bottom_margin_spin",
+        "all_margins_spin",
+    ):
         assert w[key].value() == 0, f"{key} should start at 0"
 
 
@@ -73,6 +80,7 @@ def test_margin_spin_ranges(qapp):
     assert w["bottom_margin_spin"].maximum() == 250
     assert w["left_margin_spin"].maximum() == 500
     assert w["right_margin_spin"].maximum() == 500
+    assert w["all_margins_spin"].maximum() == 250
 
 
 # ---------------------------------------------------------------------------

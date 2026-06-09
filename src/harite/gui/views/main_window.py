@@ -402,6 +402,8 @@ class MainWindow:
         return 3
 
     def _margin_index_for_widget(self, widget_name: str) -> int | None:
+        if "AllMargins" in widget_name:
+            return None
         if "LeftMargin" in widget_name:
             return 0
         if "RightMargin" in widget_name:
@@ -425,6 +427,10 @@ class MainWindow:
         self._update_margin_text_preflight_status()
 
     def on_change_margins(self, widget_name: str, value: int | float) -> None:
+        if "AllMargins" in widget_name:
+            self._apply_margins(int(value), int(value), int(value), int(value))
+            return
+
         margin_index = self._margin_index_for_widget(widget_name)
         if margin_index is None:
             self.last_error = f"unknown margin widget: {widget_name}"

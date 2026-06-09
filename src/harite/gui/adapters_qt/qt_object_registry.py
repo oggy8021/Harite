@@ -70,6 +70,8 @@ def _main_aliases(w: dict[str, Any]) -> dict[str, Any]:
         "lblRightMargin": _get("right_margin_label"),
         "spnBottomMargin": _get("bottom_margin_spin"),
         "lblBottomMargin": _get("bottom_margin_label"),
+        "spnAllMargins": _get("all_margins_spin"),
+        "lblAllMargins": _get("all_margins_label"),
         "boxOptimizeSection": _get("optimize_group"),
         "btnSave": _get("optimize_btn"),
         "btnOptimize": _get("optimize_modern_btn"),

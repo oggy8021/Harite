@@ -554,6 +554,25 @@ def test_on_change_margins_supports_single_widget_update():
     assert window.form_state.margins == "1,2,99,4"
     assert window.last_error == ""
 
+
+def test_on_change_all_margins_sets_uniform_values():
+    window = MainWindow()
+
+    window.on_change_margins("spnAllMargins", 12)
+
+    assert window.form_state.margins == "12,12,12,12"
+    assert window.last_error == ""
+
+
+def test_on_change_all_margins_zero_resets_default():
+    window = MainWindow()
+    window.form_state.margins = "5,5,5,5"
+
+    window.on_change_margins("spnAllMargins", 0)
+
+    assert window.form_state.margins == "0,0,0,0"
+
+
 def test_on_toggle_position_updates_alignment_and_reset():
     window = MainWindow()
 

@@ -100,6 +100,7 @@ def _connect_direction_widgets(backend: Any, widgets: dict[str, Any]) -> None:
         ("left_margin_spin", "spnLeftMargin"),
         ("right_margin_spin", "spnRightMargin"),
         ("bottom_margin_spin", "spnBottomMargin"),
+        ("all_margins_spin", "spnAllMargins"),
     )
     for spin_key, alias in spin_aliases:
         spin = widgets.get(spin_key)

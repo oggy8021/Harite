@@ -128,7 +128,7 @@ Main Window:
 Main tab:
 
 - `Main` tab は縦積みの `main_col` を持ち、上から **margin cross-grid（外周 4 spin、内包 compose grid）**、**action cluster**、**Margins options Drawer トリガ**、（開時）**Margins options Drawer** の順とする（P-08）。
-- margin cross-grid は top / left / right / bottom の 4 辺 margin spin を **compose grid を内包する** 外周配置とする（上段 top、中段は left | compose | right、下段 bottom）。**embed pattern / margin text / position は Drawer 内**（正面常設は 4 spin のみ）。
+- margin cross-grid は top / left / right / bottom の 4 辺 margin spin を **compose grid を内包する** 外周配置とする（上段 top、中段は left | compose | right、下段 bottom | **all margins**）。**all margins (px)**（MAT-09）は右下セルに常設し、四辺を同値に即時反映する（`0` = 既定）。四辺が不一致のときは **all margins ラベルのみ無効化**（spin は触れるまま）。all spin の `valueChanged` でラベルを復帰する。専用 Reset コントロールは置かない。**embed pattern / margin text / position は Drawer 内**（正面常設は 4 辺 + all margins spin）。
 - compose grid は左・中央・右の 3 列構成で、左 panel と右 panel は display ごとの入力・方向操作面、中央 panel は pick state と swap 操作面とする。
 - 中央 panel は direction toggle 群と **同型 3 行**とし、上段に pick state label、**中段**（Left-L … Right-L / Left-R … Right-R と同高）に **`Swap L/R`** button を置く（§4.1）。
 - 左右 panel は同型で、上段に十字配置の direction toggle と `Open-L/R`、下段に選択 path 表示と `Clear-L/R` を置く。
@@ -167,6 +167,7 @@ Main tab — Margins options Drawer（P-08）:
 | `Text` page の margin text entry | 同上 |
 | `position selector` | `Rule: margins define area; align/valign act inside it.` |
 | cross-grid、各辺 margin label | `Current behavior: margins are global to the composite canvas.` |
+| **all margins (px)** spin / label（MAT-09） | `Set left, right, top, and bottom margins to the same value. 0 restores the default margins.` |
 | center stack 全体（任意） | 上記 3 文を連結した tooltip |
 
 - **footer `Status`**（§9）: margin text preflight の成否と寸法要約（§8 `margin text preflight の現行規則`）。

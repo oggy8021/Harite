@@ -563,6 +563,8 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
 
     def _on_margin_changed(self, widget_name: str, value: int | float) -> None:
         """Mirror GTK: forward one margin spin change as (widget_name, value)."""
+        if "AllMargins" in widget_name:
+            self._set_widget_enabled("lblAllMargins", True)
         self._refresh_current_state_labels()
         callback = self._signal_handlers.get("on_change_margins")
         if callback is None:

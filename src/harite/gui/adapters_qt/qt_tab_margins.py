@@ -326,6 +326,7 @@ def build_margin_cross_grid(*, compose_center: Any) -> dict[str, Any]:
     left = _build_margin_spin_block("Left margin (px)", maximum=500)
     right = _build_margin_spin_block("Right margin (px)", maximum=500)
     bottom = _build_margin_spin_block("Bottom margin (px)", maximum=250)
+    all_margins = _build_margin_spin_block("All margins (px)", maximum=250)
 
     def _hcenter(block: Any) -> Any:
         shell = QWidget()
@@ -340,6 +341,7 @@ def build_margin_cross_grid(*, compose_center: Any) -> dict[str, Any]:
     bottom_shell = _hcenter(bottom["block"])
     left_shell = _vcenter_widget(left["block"])
     right_shell = _vcenter_widget(right["block"])
+    all_shell = _vcenter_widget(all_margins["block"])
 
     margin_cross_grid = QWidget()
     margin_cross_grid.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
@@ -354,12 +356,19 @@ def build_margin_cross_grid(*, compose_center: Any) -> dict[str, Any]:
     cross_grid.addWidget(compose_center, 1, 1)
     cross_grid.addWidget(right_shell, 1, 2)
     cross_grid.addWidget(bottom_shell, 2, 1, Qt.AlignmentFlag.AlignHCenter)
+    cross_grid.addWidget(all_shell, 2, 2, Qt.AlignmentFlag.AlignHCenter)
 
-    from harite.gui.views.margins_surface import MARGIN_BEHAVIOR_TOOLTIP, apply_widget_tooltip
+    from harite.gui.views.margins_surface import (
+        MARGIN_ALL_TOOLTIP,
+        MARGIN_BEHAVIOR_TOOLTIP,
+        apply_widget_tooltip,
+    )
 
     apply_widget_tooltip(margin_cross_grid, MARGIN_BEHAVIOR_TOOLTIP)
     for edge in (top["label"], left["label"], right["label"], bottom["label"]):
         apply_widget_tooltip(edge, MARGIN_BEHAVIOR_TOOLTIP)
+    apply_widget_tooltip(all_margins["label"], MARGIN_ALL_TOOLTIP)
+    apply_widget_tooltip(all_margins["spin"], MARGIN_ALL_TOOLTIP)
 
     return {
         "margin_cross_grid": margin_cross_grid,
@@ -371,6 +380,8 @@ def build_margin_cross_grid(*, compose_center: Any) -> dict[str, Any]:
         "right_margin_spin": right["spin"],
         "bottom_margin_label": bottom["label"],
         "bottom_margin_spin": bottom["spin"],
+        "all_margins_label": all_margins["label"],
+        "all_margins_spin": all_margins["spin"],
     }
 
 
