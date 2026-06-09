@@ -1,12 +1,12 @@
 # MAT-15 — core 幾何総点検（align / margin / MAT-14 scale）
 
-最終更新: 2026-06-09  
+最終更新: 2026-06-09（母体 Core.py 直接再読を追記）  
 親: [maturation-20260609-qt-common.md §MAT-15](../online-issues/maturation-20260609-qt-common.md#mat-15--align--margin--ストレッチの-core-幾何総点検)  
 正本: [harite-core-spec.md §4.1](../specs/core/harite-core-spec.md)、[harite-gui-spec.md §3](../specs/gui/harite-gui-spec.md)
 
 ## 一行結論
 
-**core 配置パイプラインは MAT-01b 母体回帰後も整合している。** ユーザー誤解の主因は GUI 注釈「margins define area; align/valign act inside it」が **旧実装・誤解を助長**していたこと。MAT-14 は **元画像サイズ決定の前段**として正しく挿入されている。`scaling` 設定は幾何に未使用（合意どおり）。
+**core 配置パイプラインは MAT-01b 母体回帰後も整合している。** ユーザー誤解の主因は GUI 注釈「margins define area; align/valign act inside it」が **旧実装・誤解を助長**していたこと。MAT-14 は **元画像サイズ決定の前段**として正しく挿入されている。`scaling` 設定は幾何に未使用（合意どおり）。**母体 `WallpaperOptimizer/Core.py` を直接再読し、align/margin 優先関係は一致を確認した**（§1.1）。
 
 ---
 
@@ -21,6 +21,27 @@
 | `scaling` 設定 | `optimize_wallpapers` / `compute_placement` 引数の無効性 |
 | GUI 注釈 | priority rule / margins drawer tooltip |
 | Preview / CLI | `main_window_preview`（配置幾何は共有せず、apply 向け表示のみ） |
+
+### 1.1 母体 Core.py 直接再読（2026-06-09）
+
+初版監査は [MAT-01b 設計ドラフト](design/20260609-mat-01b-native-placement-repair-draft.md) と Harite `core.py` / テストを主参照とした。オーナー確認後、母体リポジトリを **直接再読** して照合した。
+
+| 項目 | 内容 |
+| --- | --- |
+| リポジトリ | `C:\Users\oggy_\Develop\Repos\wallpaperoptimizer` |
+| 再読ファイル | `WallpaperOptimizer/Core.py`（`_checkContain`, `_downsizeImg`, `_allocateImg`, `_optimizeWallpapers` 経路）、`WallpaperOptimizer/Imaging/Rectangle.py`（`containsPlusMergin`） |
+| 再読日 | 2026-06-09 |
+
+**母体で確認した優先関係（Harite と同型）:**
+
+| 母体 | 確認内容 |
+| --- | --- |
+| `containsPlusMergin` | `screen.w >= img.w + ml + mr`（高さも同様）— Harite `_image_fits_with_margins` と同型 |
+| `_checkContain` → `_downsizeImg` | 収まらないときのみ縮小。**upscale 経路なし** |
+| `_allocateImg` | 初期 `(x,y)=(0,0)` = left/top。`tmpScreen`（`lScreen` / `rScreen`）**全面**に対し center/right・middle/bottom をオフセット。margin は paste `+= ml` に使わない |
+| left/top + 小画像 | 原点 `(0,0)` 配置のため **margin 帯上に画像が重なる**ことがある（意図どおり） |
+
+**母体にない Harite 拡張（再読時に確認）:** MAT-14 source scale（125–200% 意図的 upscale）は母体に相当機能なし。align/margin 優先関係の **後段ではなく前段**（画像サイズ決定）にのみ追加されている。
 
 ---
 

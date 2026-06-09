@@ -724,6 +724,7 @@ GitHub Issue 起票前の観測転記。
 
 - memo（オーナー）: MAT-01b で誤 upscale を直したが、align / margin / stretch の優先関係は別途総点検が必要
 - **点検（2026-06-09）:** `scaling` 設定は幾何に無効（テスト確認）。MAT-14 は slot 解決後・align 前に元画像サイズのみ変更。left/top + margins で小画像が margin 帯に重なるのは母体同型（バグではない）
+- **母体再読（2026-06-09）:** `wallpaperoptimizer` の `Core.py` / `Rectangle.py` を直接再読し、上記優先関係を確認（監査 §1.1）
 
 ---
 
