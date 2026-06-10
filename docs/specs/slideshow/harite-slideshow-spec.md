@@ -295,7 +295,7 @@ network は step 1–2、optimize は step 3。**「tick で network する」�
 | Preset / source | Start 前 sync | Tick 前 sync（当該 side） | Slideshow Mode（cache 1 枚時） |
 | --- | --- | --- | --- |
 | JMA 天気図 | `sync_remote_source` | `jma_slideshow_tick` | 実質無効（`latest.png` 1 枚） |
-| NDL 図版 | `sync_remote_source` | なし | 実質無効（`latest.jpg` 1 枚） |
+| NDL 図版 | `sync_remote_source` | `ndl_slideshow_tick` | 実質無効（`latest.jpg` 1 枚。tick 毎 randomwithfacet で候補更新） |
 | CODH 江戸 | `sync_remote_source` | `codh_slideshow_tick` | 有効（sequential / random） |
 | `local-dir` | なし | なし | 有効（複数枚時） |
 
@@ -355,14 +355,14 @@ stop 時は作業ディレクトリ内のスロットファイル **を削除し
 
 - **CODH**: tick 前に cursor で次 URL を選び画像 GET → `latest.*` 上書き。cache は 1 枚だが Slideshow Mode（sequential / random）が有効。
 - **JMA**: tick 前に `list.json` で filename を確認し、変化時のみ PNG 等画像ファイルを取得する。Slideshow Mode は **作用しない** — cache は `latest.*` 1 枚のため `sequential` / `random` 切替で見た目は変わらない。
-- **NDL 他**: tick では network 再取得しない。Slideshow Mode は **作用しない** — cache は `latest.*` 1 枚のため `sequential` / `random` 切替で見た目は変わらない。
+- **NDL**: tick 前に §15.3.4 と同型で `randomwithfacet` → IIIF GET → `latest.jpg` 上書き。Slideshow Mode は **作用しない** — cache は `latest.*` 1 枚のため `sequential` / `random` 切替で見た目は変わらない。
 - **`local-dir`（複数枚）**: 従来どおりファイル列に Mode を適用。L/R は独立 cycle。
 
 #### tick 前の remote sync
 
 各 tick の **画像収集より前**に、当該 side の `remote-*` について [source-spec §12.4](../source/harite-source-spec.md) の provider 別 tick sync を行う。順序:
 
-1. remote tick sync（JMA: §15.1.3、CODH: §15.4.5）
+1. remote tick sync（JMA: §15.1.3、CODH: §15.4.5、NDL: §15.3.4）
 2. `collect_slideshow_input_images`
 3. `select_next_image`（Mode）
 4. optimize / apply

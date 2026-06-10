@@ -36,3 +36,4 @@ harite-xfce-logs/*
 docs/specs/gui/mock-assets/*
 
 _tmp_catalog_test/
+*.jsonl

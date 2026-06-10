@@ -1385,7 +1385,8 @@ class MainWindow:
         return ""
 
     def _remote_slideshow_tick_for_side(self, catalog: Catalog, side: str, source_dir: Path) -> None:
-        from harite.sources_remote import KIND_CODH_EDO, KIND_JMA_WEATHER_MAP
+        from harite.sources_remote import KIND_CODH_EDO, KIND_JMA_WEATHER_MAP, KIND_NDL_TSUGIDIGI
+        from harite.sources_remote import ndl_slideshow_tick
         from harite.sources_remote_codh import codh_slideshow_tick
         from harite.sources_remote_jma import jma_slideshow_tick
 
@@ -1399,16 +1400,9 @@ class MainWindow:
             mode = self._slideshow_active_mode if self._slideshow_active_mode else self.slideshow_mode
             codh_slideshow_tick(catalog, source_id, mode)
         elif entry.kind == KIND_JMA_WEATHER_MAP:
-            from harite.slideshow_op_log import log_slideshow_op
-
-            tick_ok = jma_slideshow_tick(catalog, source_id)
-            log_slideshow_op(
-                "JMA_TICK",
-                ok=tick_ok,
-                side=side,
-                source_id=source_id,
-                phase="tick",
-            )
+            jma_slideshow_tick(catalog, source_id, side=side)
+        elif entry.kind == KIND_NDL_TSUGIDIGI:
+            ndl_slideshow_tick(catalog, source_id, side=side)
 
     def _resolve_slideshow_srcdirs_for_start(self) -> bool:
         catalog = self.load_source_catalog()

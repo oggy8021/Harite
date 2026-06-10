@@ -14,12 +14,14 @@ from harite.sources import Catalog, SourceEntry, get_source
 from harite.sources_remote import (
     CODH_SEARCH_URL_TEMPLATE,
     KIND_CODH_EDO,
+    CacheWriteResult,
     _CODH_PRESET_SEARCH,
     _CodhSearchSpec,
     _http_get_bytes,
     _http_get_json,
     _write_latest_cache,
     preset_id_from_notes,
+    remote_image_outcome_fields,
     resolve_codh_keyword,
 )
 
@@ -330,7 +332,7 @@ def fetch_codh_image(
     *,
     source_id: str | None = None,
     phase: str | None = None,
-) -> bool:
+) -> tuple[bool, CacheWriteResult | None]:
     from harite.slideshow_op_log import log_slideshow_op
 
     try:
@@ -341,20 +343,29 @@ def fetch_codh_image(
             ok=False,
             source_id=source_id,
             phase=phase,
-            url=image_url,
             error=str(exc),
+            **remote_image_outcome_fields(
+                image_fetched=False,
+                cache_written=False,
+                url=image_url,
+                skip_reason="image_fetch_failed",
+            ),
         )
-        return False
-    _write_latest_cache(cache_dir, image_bytes, url=image_url)
+        return False, None
+    write_result = _write_latest_cache(cache_dir, image_bytes, url=image_url)
     log_slideshow_op(
         "CODH_IMAGE_GET",
         ok=True,
         source_id=source_id,
         phase=phase,
-        url=image_url,
-        bytes=len(image_bytes),
+        **remote_image_outcome_fields(
+            image_fetched=True,
+            cache_written=True,
+            write=write_result,
+            url=image_url,
+        ),
     )
-    return True
+    return True, write_result
 
 
 def codh_sync_with_pick(
@@ -390,7 +401,13 @@ def codh_sync_with_pick(
         url=image_url,
         cursor_index=cycle.get("index"),
     )
-    if not fetch_codh_image(ctx.cache_dir, image_url, source_id=source_id, phase="sync"):
+    fetched, _write_result = fetch_codh_image(
+        ctx.cache_dir,
+        image_url,
+        source_id=source_id,
+        phase="sync",
+    )
+    if not fetched:
         raise ValueError(f"remote fetch failed for CODH image: {image_url}")
     save_codh_cycle(ctx.cache_dir, cycle)
 
@@ -431,14 +448,25 @@ def codh_slideshow_tick(catalog: Catalog, source_id: str, mode: str) -> bool:
         url=image_url,
         cursor_index=cycle.get("index"),
     )
-    if not fetch_codh_image(ctx.cache_dir, image_url, source_id=source_id, phase="tick"):
+    fetched, write_result = fetch_codh_image(
+        ctx.cache_dir,
+        image_url,
+        source_id=source_id,
+        phase="tick",
+    )
+    if not fetched:
         log_slideshow_op(
             "CODH_TICK",
             ok=False,
             source_id=source_id,
             mode=mode,
-            url=image_url,
             reason="image fetch failed",
+            **remote_image_outcome_fields(
+                image_fetched=False,
+                cache_written=False,
+                url=image_url,
+                skip_reason="image_fetch_failed",
+            ),
         )
         return False
     cycle["mode"] = mode.lower().strip()
@@ -448,7 +476,12 @@ def codh_slideshow_tick(catalog: Catalog, source_id: str, mode: str) -> bool:
         ok=True,
         source_id=source_id,
         mode=mode,
-        url=image_url,
+        **remote_image_outcome_fields(
+            image_fetched=True,
+            cache_written=True,
+            write=write_result,
+            url=image_url,
+        ),
     )
     return True
 

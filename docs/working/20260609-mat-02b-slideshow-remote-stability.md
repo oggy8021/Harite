@@ -36,10 +36,11 @@
 - 1 回の apply 失敗がセッション全体を止める。NDL「20:04 が来ない」の説明になりうる
 - **現状維持**（今回は観測強化を優先）。再発時は op log で apply 層を確認
 
-### 5. NDL は tick で画像取得しない（設計・product）
+### 5. NDL は tick で画像取得しない（設計ギャップ → 改修）
 
-- source-spec §12.4 — NDL は Start/Refresh のみ sync。tick は **同一 `latest.jpg` の再 apply**
-- 「10 分毎に新しい NDL 図版」は **未実装**（`ndl_slideshow_tick` が必要）。tick 不発とは別軸
+- 旧 source-spec §12.4 — NDL は Start/Refresh のみ sync。tick は **同一 `latest.jpg` の再 apply**
+- op2（2026-06-10）で再確認。[op2 観測メモ](20260610-mat-08-viper3-slideshow-op2-observation.md)
+- **対応:** `ndl_slideshow_tick`（`fix/ndl-slideshow-tick-sync`）。tick 不発とは別軸
 
 ## 本 PR（`fix/mat-02b-slideshow-stability`）
 
@@ -50,8 +51,10 @@
 | Linux touch before apply | `plugins.py` |
 | テスト | `test_c02_source_registry_gui.py`、`test_slideshow_op_log.py` |
 
-## 未着手（follow-up）
+## follow-up
 
-- NDL sync-on-tick（product 判断）
-- tick apply 失敗時の pause 継続 vs 完全 stop の方針
+| 項目 | 状態 |
+| --- | --- |
+| NDL sync-on-tick | **実装中** — `fix/ndl-slideshow-tick-sync` |
+| tick apply 失敗時の pause 継続 vs 完全 stop | 未着手 |
 - XFCE で touch 不足時の二段 set（空→path）
