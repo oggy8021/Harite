@@ -666,7 +666,7 @@ harite-preset:{preset_id}
 | `ndl-random-indoor` | `picture_indoor` |
 | `ndl-random-landmark` | `picture_landmark` |
 | `ndl-random-outdoor` | `picture_outdoor` |
-| `ndl-search-keyword` | `searchbytext`（`keyword2vec` は settings `ndl_keyword`、既定 `ペンギン`） |
+| `ndl-search-keyword` | `searchbytext`（`keyword2vec` は settings `ndl_keyword`、既定 `妖怪`） |
 
 plain `/illustration/random`（旧 `ndl-random`）は **同梱しない**。
 

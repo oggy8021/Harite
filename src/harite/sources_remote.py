@@ -50,7 +50,7 @@ CODH_KEYWORD_DEFAULT = "桜"
 CODH_KEYWORD_PRESET_IDS = frozenset({"codh-edo-spots-keyword"})
 NDL_KEYWORD_SETTINGS_KEY = "ndl_keyword"
 NDL_KEYWORD_MAX_LEN = 16
-NDL_KEYWORD_DEFAULT = "ペンギン"
+NDL_KEYWORD_DEFAULT = "妖怪"
 NDL_KEYWORD_PRESET_IDS = frozenset({"ndl-search-keyword"})
 
 _JMA_PRESET_LIST_KEYS: dict[str, tuple[str, ...]] = {
