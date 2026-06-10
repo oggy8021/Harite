@@ -22,15 +22,21 @@ from harite.sources import (
 )
 from harite.sources_remote import (
     CODH_KEYWORD_MAX_LEN,
+    NDL_KEYWORD_MAX_LEN,
     codh_keyword_from_settings,
     is_remote_kind,
     load_codh_keyword_settings,
+    load_ndl_keyword_settings,
+    ndl_keyword_from_settings,
     preset_id_from_notes,
     save_codh_keyword_settings,
+    save_ndl_keyword_settings,
     source_supports_codh_keyword,
+    source_supports_ndl_keyword,
     format_remote_sync_error,
     sync_remote_source,
     validate_codh_keyword,
+    validate_ndl_keyword,
 )
 
 ManagePanel = Literal["local", "preset"]
@@ -174,14 +180,18 @@ def read_slot_members(slot_l: Any, slot_r: Any) -> dict[str, str | None]:
     }
 
 
-def sync_manage_dialog_keyword_field(
-    keyword_entry: Any,
+def sync_manage_dialog_keyword_fields(
+    codh_keyword_entry: Any,
+    ndl_keyword_entry: Any,
     *,
     selected_entry: SourceEntry | None,
 ) -> None:
-    """Enable/disable CODH keyword entry without clobbering in-dialog edits."""
-    keyword_entry.setEnabled(
+    """Enable/disable keyword entries without clobbering in-dialog edits."""
+    codh_keyword_entry.setEnabled(
         selected_entry is not None and source_supports_codh_keyword(selected_entry)
+    )
+    ndl_keyword_entry.setEnabled(
+        selected_entry is not None and source_supports_ndl_keyword(selected_entry)
     )
 
 
@@ -240,9 +250,11 @@ def run_source_registry_dialog(
     resolved_settings_path = settings_path or resolve_default_settings_path()
     catalog = materialize_source_catalog_at_path(catalog_path)
     settings_data = load_codh_keyword_settings(resolved_settings_path)
+    ndl_settings_data = load_ndl_keyword_settings(resolved_settings_path)
     changed = False
     settings_changed = False
     persisted_keyword = {"value": codh_keyword_from_settings(settings_data)}
+    persisted_ndl_keyword = {"value": ndl_keyword_from_settings(ndl_settings_data)}
 
     dialog = QDialog(parent)
     dialog.setWindowTitle("Manage sources and profiles")
@@ -286,18 +298,29 @@ def run_source_registry_dialog(
     preset_tab_layout.setContentsMargins(0, 0, 0, 0)
     preset_source_list = QListWidget()
     preset_tab_layout.addWidget(preset_source_list)
-    keyword_row = QWidget()
-    keyword_row_layout = QHBoxLayout(keyword_row)
-    keyword_row_layout.setContentsMargins(0, 0, 0, 0)
-    keyword_label = QLabel("keyword(CODH)")
-    keyword_entry = QLineEdit(persisted_keyword["value"])
-    keyword_entry.setMaxLength(CODH_KEYWORD_MAX_LEN)
     from harite.gui.adapters_qt.qt_input_method import configure_text_input_widget
 
-    configure_text_input_widget(keyword_entry)
-    keyword_row_layout.addWidget(keyword_label)
-    keyword_row_layout.addWidget(keyword_entry, 1)
-    preset_tab_layout.addWidget(keyword_row)
+    codh_keyword_row = QWidget()
+    codh_keyword_row_layout = QHBoxLayout(codh_keyword_row)
+    codh_keyword_row_layout.setContentsMargins(0, 0, 0, 0)
+    codh_keyword_label = QLabel("keyword(CODH)")
+    codh_keyword_entry = QLineEdit(persisted_keyword["value"])
+    codh_keyword_entry.setMaxLength(CODH_KEYWORD_MAX_LEN)
+    configure_text_input_widget(codh_keyword_entry)
+    codh_keyword_row_layout.addWidget(codh_keyword_label)
+    codh_keyword_row_layout.addWidget(codh_keyword_entry, 1)
+    preset_tab_layout.addWidget(codh_keyword_row)
+
+    ndl_keyword_row = QWidget()
+    ndl_keyword_row_layout = QHBoxLayout(ndl_keyword_row)
+    ndl_keyword_row_layout.setContentsMargins(0, 0, 0, 0)
+    ndl_keyword_label = QLabel("keyword(NDL)")
+    ndl_keyword_entry = QLineEdit(persisted_ndl_keyword["value"])
+    ndl_keyword_entry.setMaxLength(NDL_KEYWORD_MAX_LEN)
+    configure_text_input_widget(ndl_keyword_entry)
+    ndl_keyword_row_layout.addWidget(ndl_keyword_label)
+    ndl_keyword_row_layout.addWidget(ndl_keyword_entry, 1)
+    preset_tab_layout.addWidget(ndl_keyword_row)
     preset_actions = QWidget()
     preset_actions_layout = QHBoxLayout(preset_actions)
     preset_actions_layout.setContentsMargins(0, 0, 0, 0)
@@ -418,18 +441,28 @@ def run_source_registry_dialog(
         _refresh_preset_source_list(select_source_id=select_source_id)
 
     def _sync_keyword_field_from_selection() -> None:
-        sync_manage_dialog_keyword_field(
-            keyword_entry,
+        sync_manage_dialog_keyword_fields(
+            codh_keyword_entry,
+            ndl_keyword_entry,
             selected_entry=_selected_source_entry(),
         )
 
-    def _flush_keyword_to_settings() -> None:
+    def _flush_codh_keyword_to_settings() -> None:
         nonlocal settings_changed
-        keyword = validate_codh_keyword(keyword_entry.text())
+        keyword = validate_codh_keyword(codh_keyword_entry.text())
         if keyword == persisted_keyword["value"]:
             return
         save_codh_keyword_settings(resolved_settings_path, keyword)
         persisted_keyword["value"] = keyword
+        settings_changed = True
+
+    def _flush_ndl_keyword_to_settings() -> None:
+        nonlocal settings_changed
+        keyword = validate_ndl_keyword(ndl_keyword_entry.text())
+        if keyword == persisted_ndl_keyword["value"]:
+            return
+        save_ndl_keyword_settings(resolved_settings_path, keyword)
+        persisted_ndl_keyword["value"] = keyword
         settings_changed = True
 
     def _on_refresh_source() -> None:
@@ -442,7 +475,9 @@ def run_source_registry_dialog(
             return
         try:
             if source_supports_codh_keyword(entry):
-                _flush_keyword_to_settings()
+                _flush_codh_keyword_to_settings()
+            if source_supports_ndl_keyword(entry):
+                _flush_ndl_keyword_to_settings()
             sync_remote_source(catalog, entry.id)
             _persist()
             _refresh_preset_source_list(select_source_id=entry.id)
@@ -457,7 +492,8 @@ def run_source_registry_dialog(
         if _active_panel() == "preset":
             _sync_keyword_field_from_selection()
         else:
-            keyword_entry.setEnabled(False)
+            codh_keyword_entry.setEnabled(False)
+            ndl_keyword_entry.setEnabled(False)
 
     def _source_slot_items() -> list[tuple[str, str]]:
         return source_slot_items(catalog)
@@ -616,7 +652,11 @@ def run_source_registry_dialog(
             except ValueError:
                 pass
         try:
-            _flush_keyword_to_settings()
+            _flush_codh_keyword_to_settings()
+        except ValueError:
+            pass
+        try:
+            _flush_ndl_keyword_to_settings()
         except ValueError:
             pass
         dialog.reject()

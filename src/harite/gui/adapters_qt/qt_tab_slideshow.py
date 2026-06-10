@@ -136,8 +136,8 @@ def _build_srcdir_row() -> dict[str, Any]:
     }
 
 
-def _build_codh_keyword_chip_row() -> dict[str, Any]:
-    """Read-only CODH keyword chip — top-right of Slideshow tab (P-06)."""
+def _build_slideshow_keyword_chip_row() -> dict[str, Any]:
+    """Read-only CODH/NDL keyword chips — top-right of Slideshow tab."""
     from PyQt6.QtCore import Qt
     from PyQt6.QtGui import QPalette
     from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
@@ -147,17 +147,27 @@ def _build_codh_keyword_chip_row() -> dict[str, Any]:
     layout.setContentsMargins(0, 4, 0, 0)
     layout.addStretch()
 
-    chip = QLabel("")
-    chip.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-    chip.setVisible(False)
-    muted = chip.palette().color(QPalette.ColorRole.PlaceholderText)
-    chip.setStyleSheet(f"color: {muted.name()};")
+    muted_style = ""
+    codh_chip = QLabel("")
+    codh_chip.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+    codh_chip.setVisible(False)
+    muted = codh_chip.palette().color(QPalette.ColorRole.PlaceholderText)
+    muted_style = f"color: {muted.name()};"
+    codh_chip.setStyleSheet(muted_style)
 
-    layout.addWidget(chip)
+    ndl_chip = QLabel("")
+    ndl_chip.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+    ndl_chip.setVisible(False)
+    ndl_chip.setStyleSheet(muted_style)
+
+    layout.addWidget(codh_chip)
+    layout.addSpacing(12)
+    layout.addWidget(ndl_chip)
 
     return {
         "slideshow_codh_keyword_chip_row": row,
-        "slideshow_codh_keyword_chip": chip,
+        "slideshow_codh_keyword_chip": codh_chip,
+        "slideshow_ndl_keyword_chip": ndl_chip,
     }
 
 
@@ -466,7 +476,7 @@ def build_slideshow_tab() -> dict[str, Any]:
     """Build the complete Slideshow tab widget and return the widget registry.
 
     Layout (top → bottom, Option B frame-resize parity with Main):
-        codh_keyword_chip_row   (top-right, hidden unless keyword preset active)
+        keyword_chip_row        (top-right CODH/NDL chips, hidden unless keyword preset active)
         profile_row
         srcdir_row          (L/R source grid + Swap)
         controls_shell      (Interval + Start/Stop centred)
@@ -490,7 +500,7 @@ def build_slideshow_tab() -> dict[str, Any]:
     # Dynamic tab title label (adapter can update text via this reference)
     slideshow_tab_title = QLabel("Slideshow (stopped)")
 
-    chip_widgets = _build_codh_keyword_chip_row()
+    chip_widgets = _build_slideshow_keyword_chip_row()
     profile_widgets = _build_profile_row()
     srcdir_widgets = _build_srcdir_row()
     controls_widgets = _build_interval_controls_section()

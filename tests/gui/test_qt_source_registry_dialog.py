@@ -9,38 +9,74 @@ import pytest
 pytest.importorskip("PyQt6.QtWidgets")
 
 
-def test_sync_manage_dialog_keyword_field_preserves_entry_text(qapp, tmp_path: Path):
+def test_sync_manage_dialog_keyword_fields_preserves_entry_text(qapp, tmp_path: Path):
     from PyQt6.QtWidgets import QLineEdit
 
-    from harite.gui.adapters_qt.qt_source_registry_dialog import sync_manage_dialog_keyword_field
+    from harite.gui.adapters_qt.qt_source_registry_dialog import sync_manage_dialog_keyword_fields
     from harite.sources import empty_catalog, import_preset_source
 
     cache = tmp_path / "cache"
     catalog = empty_catalog()
     keyword_source = import_preset_source(catalog, "codh-edo-spots-keyword", cache_root=cache)
 
-    keyword_entry = QLineEdit("edited-draft")
-    sync_manage_dialog_keyword_field(keyword_entry, selected_entry=keyword_source)
+    codh_entry = QLineEdit("edited-draft")
+    ndl_entry = QLineEdit("ndl-draft")
+    sync_manage_dialog_keyword_fields(
+        codh_entry,
+        ndl_entry,
+        selected_entry=keyword_source,
+    )
 
-    assert keyword_entry.text() == "edited-draft"
-    assert keyword_entry.isEnabled() is True
+    assert codh_entry.text() == "edited-draft"
+    assert codh_entry.isEnabled() is True
+    assert ndl_entry.text() == "ndl-draft"
+    assert ndl_entry.isEnabled() is False
 
 
-def test_sync_manage_dialog_keyword_field_disables_for_non_keyword_preset(qapp, tmp_path: Path):
+def test_sync_manage_dialog_keyword_fields_enables_ndl_keyword_preset(qapp, tmp_path: Path):
     from PyQt6.QtWidgets import QLineEdit
 
-    from harite.gui.adapters_qt.qt_source_registry_dialog import sync_manage_dialog_keyword_field
+    from harite.gui.adapters_qt.qt_source_registry_dialog import sync_manage_dialog_keyword_fields
+    from harite.sources import empty_catalog, import_preset_source
+
+    cache = tmp_path / "cache"
+    catalog = empty_catalog()
+    keyword_source = import_preset_source(catalog, "ndl-search-keyword", cache_root=cache)
+
+    codh_entry = QLineEdit("codh-draft")
+    ndl_entry = QLineEdit("ペンギン")
+    sync_manage_dialog_keyword_fields(
+        codh_entry,
+        ndl_entry,
+        selected_entry=keyword_source,
+    )
+
+    assert codh_entry.isEnabled() is False
+    assert ndl_entry.text() == "ペンギン"
+    assert ndl_entry.isEnabled() is True
+
+
+def test_sync_manage_dialog_keyword_fields_disables_for_non_keyword_preset(qapp, tmp_path: Path):
+    from PyQt6.QtWidgets import QLineEdit
+
+    from harite.gui.adapters_qt.qt_source_registry_dialog import sync_manage_dialog_keyword_fields
     from harite.sources import empty_catalog, import_preset_source
 
     cache = tmp_path / "cache"
     catalog = empty_catalog()
     random_source = import_preset_source(catalog, "codh-edo-spots-random", cache_root=cache)
 
-    keyword_entry = QLineEdit("edited-draft")
-    sync_manage_dialog_keyword_field(keyword_entry, selected_entry=random_source)
+    codh_entry = QLineEdit("edited-draft")
+    ndl_entry = QLineEdit("ndl-draft")
+    sync_manage_dialog_keyword_fields(
+        codh_entry,
+        ndl_entry,
+        selected_entry=random_source,
+    )
 
-    assert keyword_entry.text() == "edited-draft"
-    assert keyword_entry.isEnabled() is False
+    assert codh_entry.text() == "edited-draft"
+    assert codh_entry.isEnabled() is False
+    assert ndl_entry.isEnabled() is False
 
 
 def test_apply_profile_slot_combos_avoids_stale_sibling_slot(qapp):

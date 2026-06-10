@@ -16,6 +16,7 @@ from harite.sources_preset import import_preset_source
 from harite.sources_remote import (
     CODH_SEARCH_URL_TEMPLATE,
     NDL_RANDOM_FACET_URL,
+    NDL_SEARCHBYTEXT_URL,
     ndl_slideshow_tick,
     sync_remote_source,
 )
@@ -26,6 +27,22 @@ from tests.remote_sync_http_mocks import (
     install_ndl_codh_urlopen_mock,
     ndl_iiif_url_from_sample,
 )
+
+
+def test_ndl_searchbytext_sync_writes_latest_jpg(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    install_ndl_codh_urlopen_mock(monkeypatch)
+    cache_root = tmp_path / "remote-cache"
+    catalog = empty_catalog()
+    entry = import_preset_source(catalog, "ndl-search-keyword", cache_root=cache_root)
+
+    sync_remote_source(catalog, entry.id, cache_root=cache_root)
+
+    latest = Path(entry.path) / "latest.jpg"
+    assert latest.is_file()
+    assert latest.read_bytes() == JPEG_BYTES
 
 
 def test_ndl_facet_sync_writes_latest_jpg(

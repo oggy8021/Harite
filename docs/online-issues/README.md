@@ -104,17 +104,16 @@ working メモも完了なら docs/working/finished/ へ移動
 
 | Issue | タイトル要約 | 分類 | overview ID |
 | --- | --- | --- | --- |
-| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜17（`v1.9.0` 一区切り → **`v2.0.0` 目標** #442〜#461） | bug / investigation / planning | MAT-17 → Q-01 → MAT-10 |
+| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜18（`v2.0.0` 目標） | bug / investigation / planning | Q-01 → MAT-10 / MAT-18 / MAT-14b |
 
-### maturation-20260609-qt-common — 棚卸（2026-06-09 再整理）
+### maturation-20260609-qt-common — 棚卸（2026-06-10 op3 後）
 
 | 区分 | ID |
 | --- | --- |
-| 完了 | MAT-01, 01b, 02〜03, 05〜09, 11〜16（#458〜#461） |
-| 観測途中 | MAT-08 観測（viper3 slideshow-op.jsonl） |
-| 先送り（v2.0.0） | MAT-02b, Q-01（GTK メンテ対象外） |
-| 実装中 | MAT-17（CLI slideshow + settings） |
-| 未着手（後回し可） | MAT-10 |
+| 完了 | MAT-01, 01b, 02〜03, 05〜09, 11〜17, 02b（#462〜#465） |
+| 観測完了 | MAT-08 op3（[メモ](../working/20260610-mat-08-viper3-slideshow-op3-observation.md)） |
+| 先送り（v2.0.0） | Q-01（GTK メンテ対象外） |
+| 実施 backlog | MAT-10, MAT-18, MAT-14b |
 
 ### 内訳
 
@@ -131,12 +130,14 @@ working メモも完了なら docs/working/finished/ へ移動
 | MAT-12 | Preset 時 Optimize 有無・保存先（**完了** #451） | 確かさ |
 | MAT-04 | 江戸買物案内 preset をやめる（**完了** #455） | 要望 |
 | MAT-09 | Margin 一括変更・リセット（**完了** #456） | 要望 |
-| MAT-10 | 江戸切絵図を雰囲気絵ソースに（検討・例示のみ・**後回し**） | 要望 |
+| MAT-10 | 江戸切絵図を雰囲気絵ソースに（**実施 backlog**） | 要望 |
+| MAT-18 | NDL `searchbytext` + キーワード（op3 品質所見） | 要望 |
+| MAT-14b | 小画像 auto 倍率（Main + Slideshow） | 要望 |
 | MAT-11 | Slideshow でも Main と同型の Optimize（**完了** #452） | 要望 |
-| MAT-02b | NDL/CODH 取得（MAT-02 から先送り・未転記） | 先送り |
+| MAT-02b | NDL/CODH slideshow 安定化（**完了** #462–#465） | 改修 |
 | MAT-13 | エラーメッセージを赤色で表示（**完了** #458） | polish |
 | MAT-14 | source image scale % プリセット・L/R（**完了** #459） | 要望 |
 | MAT-15 | align / margin / ストレッチの core 幾何総点検（**完了** #460） | 確かさ |
 | MAT-16 | 時刻をローカル TZ（JST）で統一（**完了** #461） | 確かさ |
-| MAT-08 観測 | viper3 途中結果（JMA のみ安定、NDL/CODH は tick/apply 不安定） | 確かさ |
-| MAT-17 | CLI slideshow で settings 読込 | CLI |
+| MAT-08 観測 | viper3 op1–op3（op3 で勝ち筋確定） | 確かさ |
+| MAT-17 | CLI slideshow で settings 読込（**完了** #463） | CLI |

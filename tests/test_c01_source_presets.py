@@ -43,6 +43,7 @@ _BUNDLED_SOURCE_PRESET_IDS = {
     "ndl-random-indoor",
     "ndl-random-landmark",
     "ndl-random-outdoor",
+    "ndl-search-keyword",
     "codh-edo-spots-keyword",
     "codh-edo-spots-random",
 }
