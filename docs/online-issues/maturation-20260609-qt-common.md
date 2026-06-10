@@ -243,12 +243,13 @@ GitHub Issue 起票前の観測転記。
   - `— none —` 選択時に `slideshow_srcdir_*` もクリア（gui-spec §4.2 更新）
   - op log に `SLIDESHOW_TICK` / `SLIDESHOW_APPLY` を追加（MAT-08 観測の切り分け強化）
   - Linux `LinuxPlugin.apply` — 同一 path 再適用前に `touch`（XFCE 等の再描画促進）
-- **未着手（follow-up）:** NDL sync-on-tick（product）、tick apply 失敗時の pause 継続方針
+- **follow-up（実装中）:** NDL sync-on-tick — `fix/ndl-slideshow-tick-sync`（`ndl_slideshow_tick` + op2 観測メモ）
+- **未着手:** tick apply 失敗時の pause 継続方針
 
 ### 調査メモ
 
 - viper3: R `--none--` で path 残存 → dual 幽霊 R。CODH 20:37 `CODH_TICK` OK だが壁紙未更新 → apply / DE キャッシュ疑い
-- NDL は設計上 tick で新規取得しない — 「新しい図版毎 10 分」は別 feature
+- NDL は旧設計で tick 再取得なしだった — op2 で確認。`ndl_slideshow_tick` で product 要件に合わせ改修中
 
 ---
 
@@ -490,6 +491,11 @@ GitHub Issue 起票前の観測転記。
   - **NDL / CODH その他:** **不安定** — 期待 tick（20:04 / 20:20 / 20:49）不発、CODH は 20:37 に JSONL 上 `CODH_TICK` OK だが **壁紙未更新**
   - **副次:** R を `--none--` にしても画像パス残存（`Clear-R` と不整合）→ L-only 観測が汚染
   - **MAT-02b 示唆:** GET 成功 ≠ 壁紙更新。tick 発火・apply 層が主戦場。op log v1+ で apply/tick 記録が必要
+- **観測（op2・2026-06-10）:** viper3 `slideshow-op2.jsonl` 114 行（#462 以降）。[20260610-mat-08-viper3-slideshow-op2-observation.md](../working/20260610-mat-08-viper3-slideshow-op2-observation.md)
+  - **CODH:** 安定（tick + apply 一連記録）
+  - **JMA:** 安定（2h interval、`JMA_TICK` + cache mtime 確認）
+  - **NDL:** Start sync OK、tick は同一 `latest.jpg` 再 apply のみ → **`ndl_slideshow_tick` 改修**
+  - **00:53 セッション:** Start 後 tick 無し — 安定化観測で継続（本改修スコープ外）
 
 ---
 

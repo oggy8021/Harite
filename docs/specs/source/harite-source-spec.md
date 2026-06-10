@@ -344,13 +344,13 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 | **Catalog materialize** | GUI 起動・combo 更新時 — preset 追加・修復、**孤児 cache directory 削除**（§12.3）。**ネットワーク sync は行わない**（UI ブロック防止） |
 | **Refresh** | Manage dialog の Refresh — 選択中 remote に `sync_remote_source` |
 | **slideshow Start 直前** | 実行予定の L/R が参照する **すべての `remote-*`** source に `sync_remote_source`（[gui-spec §6.5](../gui/harite-gui-spec.md)） |
-| **slideshow tick** | **provider 別**。**JMA**: §15.1.3（`list.json` で filename 比較、変化時のみ PNG GET）。**CODH**: §15.4.5（index + cursor、画像 GET のみ）。**NDL 他**: network fetch しない。各 tick は cache を再スキャンし `latest.*` を apply |
+| **slideshow tick** | **provider 別**。**JMA**: §15.1.3（`list.json` で filename 比較、変化時のみ PNG GET）。**CODH**: §15.4.5（index + cursor、画像 GET のみ）。**NDL**: §15.3.4（毎 tick `randomwithfacet` → IIIF GET → `latest.jpg` 上書き）。各 tick は cache を再スキャンし `latest.*` を apply |
 | **resolve** | `remote-*` は cache directory が無ければ **作成してから** §4 と同型の `normalize_directory_path` を満たす。`local-dir` は既存 directory 必須。空 directory や画像 0 件は **resolve 時には成功しうる**が、slideshow start の画像収集は [slideshow-spec](../slideshow/harite-slideshow-spec.md) で失敗しうる |
 | **実行中** | cache 削除・Sync による参照不能 → §7.5 / §7.6 と同型（stop / start failure） |
 
 network エラー・HTTP 4xx/5xx は Sync 時に `ValueError`（またはラップした `OSError` を `ValueError` に変換してよい）。
 
-**tick 毎の network 取得:** **JMA** は §15.1.3。**CODH** は §15.4.5。NDL 他は Start / Refresh のみ。
+**tick 毎の network 取得:** **JMA** は §15.1.3。**CODH** は §15.4.5。**NDL** は §15.3.4。
 
 #### 12.4.1 再起動・Refresh・Start — cache が変わる条件（正本）
 
@@ -361,7 +361,7 @@ network エラー・HTTP 4xx/5xx は Sync 時に `ValueError`（またはラッ�
 | **アプリ再起動のみ** | **しない**（materialize は `bootstrap_preset_sources(..., sync=False)`） | **変わらない** — 前セッションの cache をそのまま読む |
 | 再起動 → **Slideshow Start** | **する**（実行 L/R の全 `remote-*`） | **変わりうる** — 層 A で候補を引き直す（§12.5） |
 | 再起動 → Manage **Refresh** → Close | **する**（選択中 remote **1 件**） | 当該 source だけ変わりうる。Slideshow はまだ Start していなければ壁紙 apply は起きない |
-| 実行中の **tick** のみ | **JMA**: §15.1.3。**CODH**: §15.4.5。NDL 他: しない | **JMA**: filename 更新時に変わりうる。**CODH**: cursor 進行で変わりうる。NDL 他: 変わらない |
+| 実行中の **tick** のみ | **JMA**: §15.1.3。**CODH**: §15.4.5。**NDL**: §15.3.4 | **JMA**: filename 更新時に変わりうる。**CODH**: cursor 進行で変わりうる。**NDL**: 毎 tick で変わりうる |
 | **Stop** → **Start**（再起動なし） | Start 直前で sync | 変わりうる（再起動 + Start と同型の sync 入口） |
 
 **日常運用の読み方:** 「日々違う絵にしたい」なら **その日の最初の Slideshow Start**（前日 Stop 済み、または起動直後）が自然な入口。**再起動だけでは足りない**。前日と同じ cache を載せたまま Start すれば、sync 後に別候補へ変わりうる（NDL/CODH はランダム再抽選、JMA は list の最新 filename）。
@@ -389,8 +389,9 @@ CODH / NDL の実機切り分け用に、Preset `remote-*` の **sync / tick** �
 | 有効化 | 環境変数 `HARITE_SLIDESHOW_OP_LOG` が非空のときのみ記録。未設定時は **no-op**（通常利用への影響なし） |
 | 出力先 | ファイル path（追記 JSONL）、または `stderr` / `1` / `true`（logger `harite.slideshow.remote` へ INFO） |
 | タイムスタンプ | 各レコードの `ts_jst` は JST（`+09:00` 固定オフセット） |
-| 対象 | slideshow **Start 直前 sync**、Manage **Refresh**、**CODH tick**、**JMA tick**、**slideshow tick/apply**（MAT-02b）。手動 `local-dir` のみは対象外 |
-| 内容 | `step`（例: `REMOTE_SYNC_BEGIN`, `NDL_META_URL`, `CODH_TICK`, `SLIDESHOW_TICK`, `SLIDESHOW_APPLY`）、`url`、`preset_id`、`ok`、`error` 等 |
+| 対象 | slideshow **Start 直前 sync**、Manage **Refresh**、**CODH / JMA / NDL tick**、**slideshow tick/apply**（MAT-02b）。手動 `local-dir` のみは対象外 |
+| 内容 | `step`（例: `REMOTE_SYNC_BEGIN`, `NDL_META_URL`, `NDL_CACHE_WRITE`, `NDL_TICK`, `CODH_IMAGE_GET`, `CODH_TICK`, `JMA_CACHE_WRITE`, `JMA_TICK`, `SLIDESHOW_TICK`, `SLIDESHOW_APPLY`）、`url`、`preset_id`、`ok`、`error` 等 |
+| 画像 outcome（provider 共通） | 要約 tick / cache 行に **`image_fetched`**（network GET 成功）、**`cache_written`**（`latest.*` 書込）、**`had_previous`**（書込前に cache あり）、**`overwritten`**（既存 `latest.*` を置換）、**`content_changed`**（bytes 変化）、**`skip_reason`**（例: `filename_unchanged`） |
 
 実装: `harite.slideshow_op_log.log_slideshow_op`。viper3 観測例: `export HARITE_SLIDESHOW_OP_LOG=~/.cache/harite/slideshow-op.jsonl`。
 
@@ -415,7 +416,7 @@ CODH / NDL の実機切り分け用に、Preset `remote-*` の **sync / tick** �
 | --- | --- |
 | 所蔵の更新頻度 | 国立機関コレクションは滅多に変わらない想定とする |
 | ローカルコーパス | 所蔵リスト全体は cache に持たない。画像バイナリは常に `latest.*` 1 枚 |
-| 鮮度 | Start 直前 Sync と Refresh が入口。**JMA / CODH** は slideshow tick でも §12.4 のとおり更新しうる |
+| 鮮度 | Start 直前 Sync と Refresh が入口。**JMA / CODH / NDL** は slideshow tick でも §12.4 のとおり更新しうる |
 
 #### cache の slideshow 入力としての意味
 
@@ -430,7 +431,7 @@ CODH / NDL の実機切り分け用に、Preset `remote-*` の **sync / tick** �
 | **A. Sync 時の候補選択** | Start 直前・Refresh | リモートコーパス（または keyword 絞り込み後）から **どの 1 キャンバス／図版**を画像化するか | §15.3（NDL）、§15.4（CODH）、§15.1（JMA） |
 | **B. Slideshow Mode** | 各 tick | **すでに cache にあるファイル列**から次に apply する path（`sequential` / `random`） | [slideshow-spec](../slideshow/harite-slideshow-spec.md) |
 
-**CODH** は tick 前に層 A（cursor 進行 + 画像 GET）が動くため、cache は 1 枚でも **Slideshow Mode が有効**（仮想 feed）。**JMA / NDL** 等は cache 1 枚のため **Slideshow Mode は作用しない**（`sequential` / `random` 切替で見た目は変わらない）。
+**CODH** は tick 前に層 A（cursor 進行 + 画像 GET）が動くため、cache は 1 枚でも **Slideshow Mode が有効**（仮想 feed）。**NDL** は tick 毎に層 A（`randomwithfacet`）で候補が変わりうるが cache は 1 枚のため **Slideshow Mode は作用しない**。**JMA** は filename 変化時のみ層 A が動き、Mode も作用しない。
 
 #### L/R と Mode
 
@@ -446,7 +447,7 @@ CODH / NDL の実機切り分け用に、Preset `remote-*` の **sync / tick** �
 | 再起動 → Slideshow **Start** | 実行 L/R の全 `remote-*` で sync → 候補が変わりうる | 開始 |
 | Slideshow **Start**（再起動なし） | 同上 | 開始 |
 | Manage **Refresh** | 選択中 remote で sync（Start せず再抽選） | — |
-| Slideshow **tick** | **JMA**: §15.1.3。**CODH**: §15.4.5。NDL 他: しない | **JMA**: filename 更新時に変化。**CODH**: cursor 進行で変化。NDL 他: 変化なし |
+| Slideshow **tick** | **JMA**: §15.1.3。**CODH**: §15.4.5。**NDL**: §15.3.4 | **JMA**: filename 更新時に変化。**CODH**: cursor 進行で変化。**NDL**: 毎 tick で変化しうる |
 | Mode を sequential ↔ random に変更 | — | CODH side では **有効**（cursor 進行）。NDL/JMA 1 枚 side では **作用しない** |
 
 ## 13. Source preset
@@ -638,8 +639,8 @@ harite-preset:{preset_id}
 | --- | --- |
 | 入力形状 | 各 source の cache は画像 1 枚（`latest.*`）。§12.5 |
 | start 前 | [slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md) — 実行 L/R の全 `remote-*` で sync |
-| tick | **JMA**: §15.1.3。**CODH**: §15.4.5。NDL 他: network 再取得しない |
-| 鮮度 | Start 直前 Sync / Manage Refresh。JMA は tick 中の filename 更新でも `latest.png` が変わりうる |
+| tick | **JMA**: §15.1.3。**CODH**: §15.4.5。**NDL**: §15.3.4 |
+| 鮮度 | Start 直前 Sync / Manage Refresh。JMA は tick 中の filename 更新、NDL は毎 tick で `latest.jpg` が変わりうる |
 
 気象庁デュアル profile: 同梱 `jma-dual-lr`（L = `jma-near-color`、R = `jma-asia-color`）。Interval 下限 **600** 秒 — [gui-spec §6.5](../gui/harite-gui-spec.md)。
 
@@ -678,9 +679,20 @@ plain `/illustration/random`（旧 `ndl-random`）は **同梱しない**。
 
 **IIIF 404 / 400:** 同一 IIIF URL は再試行しない。手順 1 から Illustration API を再呼び出しして別候補を試す（最大 5 回、試行間の待ち時間なし）。5 回とも失敗なら `ValueError`。
 
-slideshow tick では network 再取得しない（Start / Refresh のみ）。
+Start / Refresh では上記手順を 1 回実行する。
 
-#### 15.3.4 候補選択と保持しないもの
+#### 15.3.4 Slideshow tick sync
+
+slideshow running 中、当該 side が `remote-ndl-tsugidigi` を参照するとき、各 tick 前に §15.3.3 の手順 1–4 と同型で **毎回** `randomwithfacet` から新しい図版を取得し `latest.jpg` を上書きする（[slideshow-spec §6.2.1](../slideshow/harite-slideshow-spec.md)）。
+
+1. `GET randomwithfacet?size=1&f-graphictags.tagname={facet}` → JSON 配列 1 件。
+2. IIIF URL を組み立てて GET し画像 bytes を取得する。
+3. §12.3 の共通ヘルパで `latest.jpg` を上書き保存する。
+4. IIIF 404 / 400 時の再試行は §15.3.3 と同型（最大 5 回）。全試行失敗時は前回 `latest.jpg` を維持して tick を継続する（`ndl_slideshow_tick` は `False`）。
+
+op log: 要約 `NDL_TICK`（MAT-08）。詳細は `NDL_META_URL` / `NDL_IIIF_*` / `NDL_CACHE_WRITE`。
+
+#### 15.3.5 候補選択と保持しないもの
 
 | 項目 | 契約 |
 | --- | --- |
@@ -689,7 +701,7 @@ slideshow tick では network 再取得しない（Start / Refresh のみ）。
 | Illustration メタデータ | IIIF URL 生成に使ったら **永続化しない**（`pid` / 切り出し矩形 / 書誌情報等は cache に残さない） |
 | Slideshow Mode | **作用しない** — cache は常に `latest.*` 1 枚のため、`sequential` / `random` 切替で見た目は変わらない（§12.5） |
 
-#### 15.3.5 帰属
+#### 15.3.6 帰属
 
 preset `notes` および Manage 表示（`harite-preset:` 行の次行）:
 

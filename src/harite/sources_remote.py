@@ -481,7 +481,59 @@ def _http_get_json(url: str) -> Any:
         raise ValueError(f"invalid JSON from remote: {url}") from exc
 
 
-def _write_latest_cache(cache_dir: Path, image_bytes: bytes, *, url: str) -> None:
+@dataclass(frozen=True)
+class CacheWriteResult:
+    path: Path
+    bytes_written: int
+    had_previous: bool
+    previous_bytes: int | None
+    content_changed: bool
+    overwritten: bool
+
+
+def remote_image_outcome_fields(
+    *,
+    image_fetched: bool,
+    cache_written: bool,
+    write: CacheWriteResult | None = None,
+    url: str | None = None,
+    filename: str | None = None,
+    skip_reason: str | None = None,
+    had_previous: bool | None = None,
+) -> dict[str, Any]:
+    """Shared op-log fields for remote image fetch / cache overwrite outcomes."""
+    fields: dict[str, Any] = {
+        "image_fetched": image_fetched,
+        "cache_written": cache_written,
+    }
+    if write is not None:
+        fields.update(
+            {
+                "path": str(write.path),
+                "bytes": write.bytes_written,
+                "had_previous": write.had_previous,
+                "previous_bytes": write.previous_bytes,
+                "content_changed": write.content_changed,
+                "overwritten": write.overwritten,
+            }
+        )
+    elif had_previous is not None:
+        fields["had_previous"] = had_previous
+        fields["content_changed"] = False
+        fields["overwritten"] = False
+    else:
+        fields["content_changed"] = False
+        fields["overwritten"] = False
+    if url:
+        fields["url"] = url
+    if filename:
+        fields["filename"] = filename
+    if skip_reason:
+        fields["skip_reason"] = skip_reason
+    return fields
+
+
+def _write_latest_cache(cache_dir: Path, image_bytes: bytes, *, url: str) -> CacheWriteResult:
     cache_dir.mkdir(parents=True, exist_ok=True)
     if "default.jpg" in url or url.rstrip("/").endswith(".jpg"):
         latest = cache_dir / "latest.jpg"
@@ -489,11 +541,29 @@ def _write_latest_cache(cache_dir: Path, image_bytes: bytes, *, url: str) -> Non
     else:
         latest = cache_dir / "latest.png"
         stale_globs = ("*.png", "*.jpg", "*.jpeg")
+    previous_bytes: int | None = None
+    previous_content: bytes | None = None
+    had_previous = latest.is_file()
+    if had_previous:
+        try:
+            previous_content = latest.read_bytes()
+            previous_bytes = len(previous_content)
+        except OSError:
+            had_previous = False
     latest.write_bytes(image_bytes)
     for pattern in stale_globs:
         for stale in cache_dir.glob(pattern):
             if stale != latest:
                 stale.unlink(missing_ok=True)
+    content_changed = not had_previous or previous_content != image_bytes
+    return CacheWriteResult(
+        path=latest,
+        bytes_written=len(image_bytes),
+        had_previous=had_previous,
+        previous_bytes=previous_bytes,
+        content_changed=content_changed,
+        overwritten=had_previous,
+    )
 
 
 def _jma_pick_filename(
@@ -562,7 +632,7 @@ def _ndl_fetch_iiif_image_bytes(url: str) -> bytes | None:
         raise ValueError(f"remote fetch failed: {exc}") from exc
 
 
-def _ndl_sync(catalog: Catalog, source_id: str) -> None:
+def _ndl_sync(catalog: Catalog, source_id: str) -> CacheWriteResult:
     from harite.slideshow_op_log import log_slideshow_op
 
     entry = get_source(catalog, source_id)
@@ -604,15 +674,21 @@ def _ndl_sync(catalog: Catalog, source_id: str) -> None:
                 bytes=len(image_bytes),
             )
             cache_dir = Path(entry.path)
-            _write_latest_cache(cache_dir, image_bytes, url=iiif_url)
+            write_result = _write_latest_cache(cache_dir, image_bytes, url=iiif_url)
             log_slideshow_op(
                 "NDL_CACHE_WRITE",
                 ok=True,
                 source_id=source_id,
                 preset_id=preset_id,
-                path=str(cache_dir / "latest.jpg"),
+                attempt=attempt,
+                **remote_image_outcome_fields(
+                    image_fetched=True,
+                    cache_written=True,
+                    write=write_result,
+                    url=iiif_url,
+                ),
             )
-            return
+            return write_result
         log_slideshow_op(
             "NDL_IIIF_GET",
             ok=False,
@@ -632,6 +708,49 @@ def _ndl_sync(catalog: Catalog, source_id: str) -> None:
         "remote fetch failed: NDL IIIF unavailable after "
         f"{NDL_IIIF_FETCH_MAX_ATTEMPTS} illustration attempts{suffix}"
     )
+
+
+def ndl_slideshow_tick(
+    catalog: Catalog,
+    source_id: str,
+    *,
+    side: str | None = None,
+) -> bool:
+    """Fetch a new random NDL illustration into latest.jpg on each slideshow tick."""
+    from harite.slideshow_op_log import log_slideshow_op
+
+    entry = get_source(catalog, source_id)
+    if entry is None or entry.kind != KIND_NDL_TSUGIDIGI:
+        return False
+    try:
+        write_result = _ndl_sync(catalog, source_id)
+    except ValueError as exc:
+        log_slideshow_op(
+            "NDL_TICK",
+            ok=False,
+            side=side,
+            source_id=source_id,
+            phase="tick",
+            **remote_image_outcome_fields(
+                image_fetched=False,
+                cache_written=False,
+                skip_reason=str(exc),
+            ),
+        )
+        return False
+    log_slideshow_op(
+        "NDL_TICK",
+        ok=True,
+        side=side,
+        source_id=source_id,
+        phase="tick",
+        **remote_image_outcome_fields(
+            image_fetched=True,
+            cache_written=True,
+            write=write_result,
+        ),
+    )
+    return True
 
 
 def _codh_search_query(

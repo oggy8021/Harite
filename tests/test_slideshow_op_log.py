@@ -12,8 +12,9 @@ import pytest
 from harite.slideshow_op_log import log_slideshow_op
 from harite.sources import empty_catalog
 from harite.sources_preset import import_preset_source
-from harite.sources_remote import sync_remote_source
+from harite.sources_remote import JMA_LIST_URL, sync_remote_source
 from harite.sources_remote_codh import codh_slideshow_tick
+from harite.sources_remote_jma import jma_slideshow_tick
 from tests.remote_sync_http_mocks import install_ndl_codh_urlopen_mock
 
 
@@ -63,6 +64,12 @@ def test_ndl_sync_emits_sequence_log(
     assert "NDL_CACHE_WRITE" in steps
     assert steps[-1] == "REMOTE_SYNC_END"
     assert _read_jsonl(log_path)[-1]["ok"] is True
+    cache_write = next(record for record in _read_jsonl(log_path) if record["step"] == "NDL_CACHE_WRITE")
+    assert cache_write["image_fetched"] is True
+    assert cache_write["cache_written"] is True
+    assert cache_write["had_previous"] is False
+    assert cache_write["content_changed"] is True
+    assert cache_write["overwritten"] is False
 
 
 def test_codh_sync_emits_index_and_image_steps(
@@ -85,6 +92,10 @@ def test_codh_sync_emits_index_and_image_steps(
     assert "CODH_IMAGE_URL" in steps
     assert "CODH_IMAGE_GET" in steps
     assert steps[-1] == "REMOTE_SYNC_END"
+    image_get = next(record for record in _read_jsonl(log_path) if record["step"] == "CODH_IMAGE_GET")
+    assert image_get["image_fetched"] is True
+    assert image_get["cache_written"] is True
+    assert image_get["content_changed"] is True
 
 
 def test_codh_tick_logs_fetch_failure(
@@ -119,3 +130,91 @@ def test_codh_tick_logs_fetch_failure(
     assert any(record["step"] == "CODH_IMAGE_GET" and record["ok"] is False for record in records)
     assert records[-1]["step"] == "CODH_TICK"
     assert records[-1]["ok"] is False
+    assert records[-1]["image_fetched"] is False
+    assert records[-1]["cache_written"] is False
+
+
+def test_ndl_tick_logs_overwrite_outcome(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from harite.sources_remote import ndl_slideshow_tick
+
+    log_path = tmp_path / "slideshow-op.jsonl"
+    monkeypatch.setenv("HARITE_SLIDESHOW_OP_LOG", str(log_path))
+    install_ndl_codh_urlopen_mock(monkeypatch)
+
+    cache_root = tmp_path / "remote-cache"
+    catalog = empty_catalog()
+    entry = import_preset_source(catalog, "ndl-random-illust", cache_root=cache_root)
+    sync_remote_source(catalog, entry.id, cache_root=cache_root)
+    log_path.write_text("", encoding="utf-8")
+
+    assert ndl_slideshow_tick(catalog, entry.id, side="L") is True
+
+    tick = _read_jsonl(log_path)[-1]
+    assert tick["step"] == "NDL_TICK"
+    assert tick["image_fetched"] is True
+    assert tick["cache_written"] is True
+    assert tick["had_previous"] is True
+    assert tick["overwritten"] is True
+
+
+def test_jma_tick_logs_filename_unchanged_without_fetch(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    import json
+    from io import BytesIO
+
+    list_payload = {"near": {"now": ["stale_JRcolor.png", "fresh_JRcolor.png"]}}
+    png_bytes = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
+    log_path = tmp_path / "slideshow-op.jsonl"
+    monkeypatch.setenv("HARITE_SLIDESHOW_OP_LOG", str(log_path))
+
+    def fake_urlopen(url: str | Request, *args: Any, **kwargs: Any) -> Any:
+        target = url if isinstance(url, str) else url.full_url
+        if target == JMA_LIST_URL:
+
+            class _List:
+                def read(self) -> bytes:
+                    return json.dumps(list_payload).encode("utf-8")
+
+                def __enter__(self) -> "_List":
+                    return self
+
+                def __exit__(self, *exc: object) -> None:
+                    return None
+
+            return _List()
+        if target.endswith("fresh_JRcolor.png"):
+
+            class _Png:
+                def read(self) -> bytes:
+                    return png_bytes
+
+                def __enter__(self) -> "_Png":
+                    return self
+
+                def __exit__(self, *exc: object) -> None:
+                    return None
+
+            return _Png()
+        raise AssertionError(target)
+
+    monkeypatch.setattr("harite.sources_remote.urlopen", fake_urlopen)
+    cache_root = tmp_path / "remote-cache"
+    catalog = empty_catalog()
+    entry = import_preset_source(catalog, "jma-near-color", cache_root=cache_root)
+    sync_remote_source(catalog, entry.id, cache_root=cache_root)
+    log_path.write_text("", encoding="utf-8")
+
+    assert jma_slideshow_tick(catalog, entry.id, side="R") is True
+
+    tick = _read_jsonl(log_path)[-1]
+    assert tick["step"] == "JMA_TICK"
+    assert tick["ok"] is True
+    assert tick["image_fetched"] is False
+    assert tick["cache_written"] is False
+    assert tick["skip_reason"] == "filename_unchanged"
+    assert tick["had_previous"] is True

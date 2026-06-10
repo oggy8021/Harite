@@ -13,6 +13,7 @@ from harite.sources_remote import (
     JMA_LIST_URL,
     JMA_PNG_URL,
     KIND_JMA_WEATHER_MAP,
+    CacheWriteResult,
     _JMA_PRESET_FILENAME_TAG,
     _JMA_PRESET_LIST_KEYS,
     _http_get_bytes,
@@ -20,6 +21,7 @@ from harite.sources_remote import (
     _jma_pick_filename,
     _write_latest_cache,
     preset_id_from_notes,
+    remote_image_outcome_fields,
 )
 
 JMA_CYCLE_FILENAME = "jma-cycle.json"
@@ -89,24 +91,98 @@ def jma_fetch_current_filename(ctx: JmaSyncContext) -> str:
     )
 
 
-def jma_fetch_png_to_latest(ctx: JmaSyncContext, filename: str) -> bool:
+def jma_fetch_png_to_latest(
+    ctx: JmaSyncContext,
+    filename: str,
+) -> tuple[bool, CacheWriteResult | None]:
+    from harite.slideshow_op_log import log_slideshow_op
+
     png_url = JMA_PNG_URL.format(filename=filename)
     try:
         png_bytes = _http_get_bytes(png_url)
-    except ValueError:
-        return False
-    _write_latest_cache(ctx.cache_dir, png_bytes, url=png_url)
-    return True
+    except ValueError as exc:
+        log_slideshow_op(
+            "JMA_IMAGE_GET",
+            ok=False,
+            preset_id=ctx.preset_id,
+            phase="fetch",
+            error=str(exc),
+            **remote_image_outcome_fields(
+                image_fetched=False,
+                cache_written=False,
+                filename=filename,
+                url=png_url,
+                skip_reason="png_fetch_failed",
+            ),
+        )
+        return False, None
+    write_result = _write_latest_cache(ctx.cache_dir, png_bytes, url=png_url)
+    log_slideshow_op(
+        "JMA_CACHE_WRITE",
+        ok=True,
+        preset_id=ctx.preset_id,
+        **remote_image_outcome_fields(
+            image_fetched=True,
+            cache_written=True,
+            write=write_result,
+            url=png_url,
+            filename=filename,
+        ),
+    )
+    return True, write_result
 
 
 def jma_sync_refresh(ctx: JmaSyncContext) -> None:
     filename = jma_fetch_current_filename(ctx)
-    if not jma_fetch_png_to_latest(ctx, filename):
+    fetched, _write_result = jma_fetch_png_to_latest(ctx, filename)
+    if not fetched:
         raise ValueError(f"remote fetch failed for JMA image: {filename}")
     save_jma_cycle(ctx.cache_dir, preset_id=ctx.preset_id, filename=filename)
 
 
-def jma_slideshow_tick(catalog: Catalog, source_id: str) -> bool:
+def _jma_latest_had_previous(ctx: JmaSyncContext) -> bool:
+    return (ctx.cache_dir / "latest.png").is_file()
+
+
+def _log_jma_tick(
+    *,
+    ok: bool,
+    source_id: str,
+    side: str | None,
+    filename: str,
+    image_fetched: bool,
+    cache_written: bool,
+    write: CacheWriteResult | None = None,
+    url: str | None = None,
+    skip_reason: str | None = None,
+    had_previous: bool | None = None,
+) -> None:
+    from harite.slideshow_op_log import log_slideshow_op
+
+    log_slideshow_op(
+        "JMA_TICK",
+        ok=ok,
+        side=side,
+        source_id=source_id,
+        phase="tick",
+        **remote_image_outcome_fields(
+            image_fetched=image_fetched,
+            cache_written=cache_written,
+            write=write,
+            url=url,
+            filename=filename,
+            skip_reason=skip_reason,
+            had_previous=had_previous,
+        ),
+    )
+
+
+def jma_slideshow_tick(
+    catalog: Catalog,
+    source_id: str,
+    *,
+    side: str | None = None,
+) -> bool:
     entry = get_source(catalog, source_id)
     if entry is None or entry.kind != KIND_JMA_WEATHER_MAP:
         return False
@@ -115,6 +191,15 @@ def jma_slideshow_tick(catalog: Catalog, source_id: str) -> bool:
     try:
         filename = jma_fetch_current_filename(ctx)
     except ValueError:
+        _log_jma_tick(
+            ok=False,
+            source_id=source_id,
+            side=side,
+            filename="",
+            image_fetched=False,
+            cache_written=False,
+            skip_reason="list_json_failed",
+        )
         return False
 
     cycle = load_jma_cycle(ctx.cache_dir)
@@ -123,11 +208,42 @@ def jma_slideshow_tick(catalog: Catalog, source_id: str) -> bool:
         and str(cycle.get("preset_id") or "") == ctx.preset_id
         and str(cycle.get("filename") or "") == filename
     ):
+        _log_jma_tick(
+            ok=True,
+            source_id=source_id,
+            side=side,
+            filename=filename,
+            image_fetched=False,
+            cache_written=False,
+            skip_reason="filename_unchanged",
+            had_previous=_jma_latest_had_previous(ctx),
+        )
         return True
 
-    if not jma_fetch_png_to_latest(ctx, filename):
+    fetched, write_result = jma_fetch_png_to_latest(ctx, filename)
+    if not fetched:
+        _log_jma_tick(
+            ok=False,
+            source_id=source_id,
+            side=side,
+            filename=filename,
+            image_fetched=False,
+            cache_written=False,
+            skip_reason="png_fetch_failed",
+            had_previous=_jma_latest_had_previous(ctx),
+        )
         return False
     save_jma_cycle(ctx.cache_dir, preset_id=ctx.preset_id, filename=filename)
+    _log_jma_tick(
+        ok=True,
+        source_id=source_id,
+        side=side,
+        filename=filename,
+        image_fetched=True,
+        cache_written=True,
+        write=write_result,
+        url=JMA_PNG_URL.format(filename=filename),
+    )
     return True
 
 
