@@ -11,7 +11,7 @@ from . import __version__
 from .apply_settings import resolve_apply_settings
 from .core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color, normalize_optimize_input_paths, optimize_wallpapers
 from .plugins import registry as plugin_registry
-from .settings import SlideshowSettings
+from .settings import AppSettings, SlideshowSettings
 from .settings_file import load_settings
 from .linux_xdg_launcher import install_desktop_entry as install_linux_desktop_entry
 from .optimize_settings import is_auto_value, resolve_optimize_display_settings
@@ -386,6 +386,18 @@ def optimize(
         typer.echo("--quality must be between 1 and 100")
         raise typer.Exit(code=2)
 
+    if cfg:
+        optimize_settings = AppSettings.from_settings_dict(cfg, default_plugin=_default_plugin_name()).optimize
+        eff_l_display_scale = optimize_settings.l_display_scale
+        eff_r_display_scale = optimize_settings.r_display_scale
+        eff_l_auto_display_scale = optimize_settings.l_auto_display_scale
+        eff_r_auto_display_scale = optimize_settings.r_auto_display_scale
+    else:
+        eff_l_display_scale = 1.0
+        eff_r_display_scale = 1.0
+        eff_l_auto_display_scale = False
+        eff_r_auto_display_scale = False
+
     saved_files, placements = optimize_wallpapers(
         inputs=expanded_inputs,
         target_resolution=(w, h),
@@ -396,6 +408,10 @@ def optimize(
         margins=(0, 0, 0, 0) if eff_margins is None else parse_margins(str(eff_margins)),
         l_display=None if resolved_display_settings.l_display is None else parse_display(resolved_display_settings.l_display),
         r_display=None if resolved_display_settings.r_display is None else parse_display(resolved_display_settings.r_display),
+        l_display_scale=eff_l_display_scale,
+        r_display_scale=eff_r_display_scale,
+        l_auto_display_scale=eff_l_auto_display_scale,
+        r_auto_display_scale=eff_r_auto_display_scale,
         align=eff_align,
         valign=eff_valign,
         embed_info=embed_info,

@@ -40,6 +40,14 @@ def sync_slideshow_state_from_owner(backend: Any, owner: Any) -> None:
     backend._slideshow_state_r = getattr(owner, "_slideshow_state_r", backend._slideshow_state_r)
     backend._slideshow_previous_l = getattr(owner, "_slideshow_previous_l", backend._slideshow_previous_l)
     backend._slideshow_previous_r = getattr(owner, "_slideshow_previous_r", backend._slideshow_previous_r)
+    for side_key, attr in (("l", "slideshow_l_auto_display_scale"), ("r", "slideshow_r_auto_display_scale")):
+        widget = backend._objects.get(f"chk_slideshow_auto_display_scale_{side_key}")
+        if widget is not None and hasattr(widget, "setChecked"):
+            widget.blockSignals(True)
+            try:
+                widget.setChecked(bool(getattr(owner, attr, False)))
+            finally:
+                widget.blockSignals(False)
     interval_seconds = int(getattr(owner, "slideshow_interval_seconds", 0) or 0)
     backend._set_spin_value("spnInterval", interval_seconds if interval_seconds > 0 else 60)
     backend._set_toggle_active("radSlideshowModeSequential", backend.slideshow_mode == "sequential")
@@ -107,6 +115,15 @@ def sync_main_state_from_owner(backend: Any, owner: Any) -> None:
     combo_r = backend._objects.get("combo_display_scale_r") or backend._objects.get("cmbDisplayScaleR")
     if combo_r is not None:
         set_display_scale_combo(combo_r, getattr(form_state, "r_display_scale", 1.0) or 1.0)
+
+    for side_key, attr in (("l", "l_auto_display_scale"), ("r", "r_auto_display_scale")):
+        widget = backend._objects.get(f"chk_auto_display_scale_{side_key}")
+        if widget is not None and hasattr(widget, "setChecked"):
+            widget.blockSignals(True)
+            try:
+                widget.setChecked(bool(getattr(form_state, attr, False)))
+            finally:
+                widget.blockSignals(False)
 
     backend._refresh_current_state_labels()
     sync_apply_mode_from_owner(backend, owner)

@@ -79,6 +79,8 @@ class MainWindow:
         self.slideshow_source_id_l = ""
         self.slideshow_source_id_r = ""
         self.slideshow_profile_id = ""
+        self.slideshow_l_auto_display_scale = False
+        self.slideshow_r_auto_display_scale = False
         self._source_catalog_path: Path | None = None
         self._source_catalog_cache: Catalog | None = None
         self._source_catalog_cache_mtime: float | None = None
@@ -447,6 +449,61 @@ class MainWindow:
 
         self._log(f"Display scale updated ({normalized_side}={format_display_scale_label(scale)})")
 
+    def on_change_auto_display_scale(self, side: str, enabled: bool) -> None:
+        normalized_side = side.strip().upper()
+        if normalized_side == "L":
+            self.form_state.l_auto_display_scale = bool(enabled)
+        elif normalized_side == "R":
+            if self._second_slot_blocked(normalized_side):
+                return
+            self.form_state.r_auto_display_scale = bool(enabled)
+        else:
+            self.last_error = "auto display scale side is required"
+            self._log("Auto display scale change ignored: missing side")
+            return
+
+        self._refresh_action_availability()
+        state = "on" if enabled else "off"
+        self._log(f"Auto display scale updated ({normalized_side}={state})")
+
+    def on_change_slideshow_auto_display_scale(self, side: str, enabled: bool) -> None:
+        normalized_side = side.strip().upper()
+        if normalized_side == "L":
+            self.slideshow_l_auto_display_scale = bool(enabled)
+            self.preferences.slideshow.l_auto_display_scale = bool(enabled)
+        elif normalized_side == "R":
+            if not self.dual_display_available:
+                return
+            self.slideshow_r_auto_display_scale = bool(enabled)
+            self.preferences.slideshow.r_auto_display_scale = bool(enabled)
+        else:
+            self.last_error = "slideshow auto display scale side is required"
+            self._log("Slideshow auto display scale change ignored: missing side")
+            return
+
+        state = "on" if enabled else "off"
+        self._log(f"Slideshow auto display scale updated ({normalized_side}={state})")
+        self._reapply_slideshow_if_running()
+
+    def _prepare_slideshow_optimize_state(self, state: OptimizeFormState) -> OptimizeFormState:
+        """Slideshow optimize: manual scale is always 100%; auto comes from Slideshow tab only."""
+        return replace(
+            state,
+            l_display_scale=1.0,
+            r_display_scale=1.0,
+            l_auto_display_scale=self.slideshow_l_auto_display_scale,
+            r_auto_display_scale=self.slideshow_r_auto_display_scale,
+        )
+
+    def _reapply_slideshow_if_running(self) -> None:
+        if not self.slideshow_running:
+            return
+        left = str(self._slideshow_previous_l) if self._slideshow_previous_l else "-"
+        right = str(self._slideshow_previous_r) if self._slideshow_previous_r else "-"
+        if left == "-" and right == "-":
+            return
+        self._apply_slideshow_selection(left, right, cycle_phase="tick")
+
     def on_change_margins(self, widget_name: str, value: int | float) -> None:
         if "AllMargins" in widget_name:
             self._apply_margins(int(value), int(value), int(value), int(value))
@@ -554,9 +611,13 @@ class MainWindow:
             )
             from harite.display_scale import is_unity_display_scale
 
-            if not is_unity_display_scale(self.form_state.l_display_scale) or not is_unity_display_scale(
-                self.form_state.r_display_scale
-            ):
+            needs_scale_check = (
+                not is_unity_display_scale(self.form_state.l_display_scale)
+                or not is_unity_display_scale(self.form_state.r_display_scale)
+                or self.form_state.l_auto_display_scale
+                or self.form_state.r_auto_display_scale
+            )
+            if needs_scale_check:
                 w, h = self._parse_resolution_value(display_settings.resolution) or (0, 0)
                 margins = self._current_margin_values()
                 validate_intentional_image_scales(
@@ -568,6 +629,8 @@ class MainWindow:
                     r_display=self._parse_resolution_value(display_settings.r_display),
                     l_display_scale=self.form_state.l_display_scale,
                     r_display_scale=self.form_state.r_display_scale,
+                    l_auto_display_scale=self.form_state.l_auto_display_scale,
+                    r_auto_display_scale=self.form_state.r_auto_display_scale,
                 )
             return True
         except ValueError:
@@ -957,6 +1020,8 @@ class MainWindow:
         self.form_state.r_display = optimize.r_display
         self.form_state.l_display_scale = optimize.l_display_scale
         self.form_state.r_display_scale = optimize.r_display_scale
+        self.form_state.l_auto_display_scale = optimize.l_auto_display_scale
+        self.form_state.r_auto_display_scale = optimize.r_auto_display_scale
         if optimize.two_screen_mode == "auto":
             self.form_state.two_screen = None
             if self.input_path_l and self.input_path_r:
@@ -979,6 +1044,8 @@ class MainWindow:
         self.slideshow_source_id_l = settings_value.slideshow.source_id_l or ""
         self.slideshow_source_id_r = settings_value.slideshow.source_id_r or ""
         self.slideshow_profile_id = settings_value.slideshow.profile_id or ""
+        self.slideshow_l_auto_display_scale = settings_value.slideshow.l_auto_display_scale
+        self.slideshow_r_auto_display_scale = settings_value.slideshow.r_auto_display_scale
         self._update_slideshow_source_display()
         self._update_slideshow_output_display()
         self._refresh_action_availability()
@@ -1008,6 +1075,8 @@ class MainWindow:
         self.preferences.slideshow.source_id_l = self.slideshow_source_id_l or None
         self.preferences.slideshow.source_id_r = self.slideshow_source_id_r or None
         self.preferences.slideshow.profile_id = self.slideshow_profile_id or None
+        self.preferences.slideshow.l_auto_display_scale = self.slideshow_l_auto_display_scale
+        self.preferences.slideshow.r_auto_display_scale = self.slideshow_r_auto_display_scale
         if self.form_state.two_screen is None:
             self.preferences.optimize.two_screen_mode = "auto"
         else:
@@ -1016,6 +1085,8 @@ class MainWindow:
         self.preferences.optimize.r_display = self.form_state.r_display
         self.preferences.optimize.l_display_scale = self.form_state.l_display_scale
         self.preferences.optimize.r_display_scale = self.form_state.r_display_scale
+        self.preferences.optimize.l_auto_display_scale = self.form_state.l_auto_display_scale
+        self.preferences.optimize.r_auto_display_scale = self.form_state.r_auto_display_scale
         return self.preferences.to_settings_dict()
 
     def _normalize_settings_display_payload(self, config: dict[str, object]) -> dict[str, object]:
@@ -1673,7 +1744,7 @@ class MainWindow:
             slideshow_state.l_display = f"{context.l_display[0]}x{context.l_display[1]}"
             slideshow_state.r_display = f"{context.r_display[0]}x{context.r_display[1]}"
             slideshow_state.resolution = f"{context.resolution[0]}x{context.resolution[1]}"
-        return slideshow_state
+        return self._prepare_slideshow_optimize_state(slideshow_state)
 
     def _ensure_slideshow_output_dir(self) -> None:
         output_dir = str(self.form_state.output_dir or "").strip()
@@ -1761,7 +1832,9 @@ class MainWindow:
         tick_files: list[Path] = []
 
         try:
-            slideshow_state = replace(self.form_state, input_value=image_path)
+            slideshow_state = self._prepare_slideshow_optimize_state(
+                replace(self.form_state, input_value=image_path)
+            )
             slideshow_state_for_work = replace(slideshow_state, output_dir=str(work_dir))
             saved_files, _placements = self.controller.run_slideshow_optimize(slideshow_state_for_work)
             composite_path = saved_files[-1]

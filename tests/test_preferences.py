@@ -14,6 +14,8 @@ def test_app_settings_round_trip_settings_with_auto_values():
             "slideshow_mode": "random",
             "slideshow_srcdir_l": "/slideshow/left",
             "slideshow_srcdir_r": "/slideshow/right",
+            "slideshow_l_auto_display_scale": True,
+            "slideshow_r_auto_display_scale": False,
         },
         default_plugin="windows",
     )
@@ -33,3 +35,5 @@ def test_app_settings_round_trip_settings_with_auto_values():
     assert exported["slideshow_mode"] == "random"
     assert exported["slideshow_srcdir_l"] == "/slideshow/left"
     assert exported["slideshow_srcdir_r"] == "/slideshow/right"
+    assert exported["slideshow_l_auto_display_scale"] is True
+    assert exported["slideshow_r_auto_display_scale"] is False

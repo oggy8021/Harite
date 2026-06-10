@@ -280,7 +280,9 @@ single-source（MAT-11）:
 | **dual**（L+R 指定） | 可（§2） | **する** | `{ピクチャ根}/Harite/slideshow/` 固定スロット（§6.2 R2） | Windows: `harite_slideshow.jpg`（Span）。Linux: per-monitor 分割 map |
 | **single**（片方のみ） | L のみ可 | **する**（MAT-11） | 同上（`harite_slideshow.jpg`） | `harite_slideshow.jpg`（Optimize 済み） |
 
-**MAT-11:** single も **Main と同型の Optimize**（`form_state` 一式。特定オプションにスコープ限定しない）を毎 start/tick 通す。
+**MAT-11:** single も **Main と同型の Optimize**（margins / align / embed 等は Main `form_state` と共有）を毎 start/tick 通す。手動 source scale（MAT-14 %）は slideshow 経路では **常に 100%**。
+
+**MAT-14b:** auto 倍率だけは **Slideshow 専用設定**（`slideshow_l_auto_display_scale` / `slideshow_r_auto_display_scale`）。Main の `l_auto_display_scale` は slideshow optimize では参照しない。GUI は Slideshow タブの auto checkbox、CLI は settings の slideshow 面キー。
 
 **Tick シーケンス（ソース構成 dual + 両 side が remote preset の例）:**
 
@@ -299,7 +301,7 @@ network は step 1–2、optimize は step 3。**「tick で network する」�
 | CODH 江戸 | `sync_remote_source` | `codh_slideshow_tick` | 有効（sequential / random） |
 | `local-dir` | なし | なし | 有効（複数枚時） |
 
-**Main Optimize 設定（`form_state`）:** single / dual とも optimize に渡す（MAT-11）。
+**Optimize 設定の合成（single / dual 共通）:** Main `form_state` をベースに、auto 倍率のみ `slideshow_*_auto_display_scale` で上書きして `run_slideshow_optimize` へ渡す（MAT-11 + MAT-14b）。
 
 **実装入口:** `_apply_slideshow_single_source`（single）、`_apply_slideshow_selection` の dual 分岐。`on_slideshow_tick` は L/R 各 side で `_remote_slideshow_tick_for_side` を **独立に**呼んでから cycle する。
 

@@ -637,6 +637,31 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         except Exception as exc:
             self._set_feedback(phase="Compose", state="error", error=str(exc))
 
+    def _on_auto_display_scale_toggled(self, side: str, enabled: bool) -> None:
+        callback = self._signal_handlers.get("on_change_auto_display_scale")
+        if callback is None:
+            return
+        try:
+            callback(side.upper(), bool(enabled))
+            owner = self._get_handler_owner("on_change_auto_display_scale")
+            if owner is not None:
+                self._sync_main_state_from_owner(owner)
+                self._sync_action_availability_from_owner(owner)
+        except Exception as exc:
+            self._set_feedback(phase="Compose", state="error", error=str(exc))
+
+    def _on_slideshow_auto_display_scale_toggled(self, side: str, enabled: bool) -> None:
+        callback = self._signal_handlers.get("on_change_slideshow_auto_display_scale")
+        if callback is None:
+            return
+        try:
+            callback(side.upper(), bool(enabled))
+            owner = self._get_handler_owner("on_change_slideshow_auto_display_scale")
+            if owner is not None:
+                self._sync_slideshow_state_from_owner(owner)
+        except Exception as exc:
+            self._set_feedback(phase="Slideshow", state="error", error=str(exc))
+
     def _on_clear_input_clicked(self, side: str) -> None:
         callback = self._signal_handlers.get("on_clear_input")
         if callback is None:

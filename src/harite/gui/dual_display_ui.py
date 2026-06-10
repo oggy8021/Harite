@@ -25,6 +25,7 @@ SECOND_SLOT_WIDGET_NAMES: tuple[str, ...] = (
     "btn_clr_srcdir_r",
     "comboSlideshowSourceR",
     "combo_slideshow_source_r",
+    "chk_slideshow_auto_display_scale_r",
     "lblSlideshowSourceR",
     "btnSwapSlideshowSrcdirs",
     "btn_swap_slideshow_srcdirs",

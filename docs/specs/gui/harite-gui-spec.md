@@ -417,6 +417,16 @@ GTK / Qt は `harite.gui.dual_display_ui` 経由で同一 widget 名を同期す
 
 ## 6. slideshow との接続
 
+### 6.0 MAT-14b auto 倍率（Main / Slideshow の分離）
+
+| 面 | UI | 設定キー | optimize 経路 |
+| --- | --- | --- | --- |
+| Main Compose | 手動 % combo + `auto` checkbox（L/R） | `l_display_scale`, `r_display_scale`, `l_auto_display_scale`, `r_auto_display_scale` | `on_optimize` / `run_optimize` |
+| Slideshow Srcdir | `auto` checkbox のみ（L/R。Srcdir ラベル下） | `slideshow_l_auto_display_scale`, `slideshow_r_auto_display_scale` | `run_slideshow_optimize`（`form_state` の auto は slideshow 専用値で上書き） |
+
+- 手動 % は Main のみ。Slideshow optimize は **常に 100% 手動**（Main の手動 % は引き継がない）。Slideshow タブが制御するのは **auto のみ**。
+- Main auto ON・Slideshow auto OFF の組み合わせは有効（独立設定）。
+
 - GUI のスライドショー機能は `MainWindow` 側に運用責務を持つ。
 - slideshow start 時に srcdir（空不可）と plugin（解決可否）を検証する。apply_mode は start 時に検証しない。
 - dual-source（Srcdir-L と Srcdir-R の両方に画像が存在する）実行では、GUI の apply_mode 設定値にかかわらず常に `per-monitor-auto-split` を使用する。single-source 実行では常に `single-file` を使用する。
