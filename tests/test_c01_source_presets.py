@@ -27,6 +27,7 @@ from harite.sources_preset import (
 from harite.sources_remote import (
     KIND_CODH_EDO,
     KIND_JMA_WEATHER_MAP,
+    KIND_NDL_KIRIEZU,
     KIND_NDL_TSUGIDIGI,
     is_remote_kind,
     preset_id_from_notes,
@@ -44,6 +45,19 @@ _BUNDLED_SOURCE_PRESET_IDS = {
     "ndl-random-landmark",
     "ndl-random-outdoor",
     "ndl-search-keyword",
+    "ndl-kiriezu-all",
+    "ndl-kiriezu-group-shitamachi",
+    "ndl-kiriezu-group-yamanote",
+    "ndl-kiriezu-group-nihonbashi",
+    "ndl-kiriezu-group-north",
+    "ndl-kiriezu-group-south",
+    "ndl-kiriezu-asakusa",
+    "ndl-kiriezu-nihonbashi",
+    "ndl-kiriezu-shiba",
+    "ndl-kiriezu-ueno",
+    "ndl-kiriezu-fukagawa",
+    "ndl-kiriezu-honjo",
+    "ndl-kiriezu-yamanote",
     "codh-edo-spots-keyword",
     "codh-edo-spots-random",
 }
@@ -73,6 +87,7 @@ def test_load_bundled_presets() -> None:
     assert kind_by_id["jma-near-color"] == KIND_JMA_WEATHER_MAP
     assert kind_by_id["ndl-random-illust"] == KIND_NDL_TSUGIDIGI
     assert kind_by_id["codh-edo-spots-keyword"] == KIND_CODH_EDO
+    assert kind_by_id["ndl-kiriezu-asakusa"] == KIND_NDL_KIRIEZU
     for template in presets.sources:
         assert is_remote_kind(template.kind)
         assert template.min_slideshow_interval_seconds == 600

@@ -1462,8 +1462,14 @@ class MainWindow:
         return ""
 
     def _remote_slideshow_tick_for_side(self, catalog: Catalog, side: str, source_dir: Path) -> None:
-        from harite.sources_remote import KIND_CODH_EDO, KIND_JMA_WEATHER_MAP, KIND_NDL_TSUGIDIGI
-        from harite.sources_remote import ndl_slideshow_tick
+        from harite.sources_remote import (
+            KIND_CODH_EDO,
+            KIND_JMA_WEATHER_MAP,
+            KIND_NDL_KIRIEZU,
+            KIND_NDL_TSUGIDIGI,
+            kiriezu_slideshow_tick,
+            ndl_slideshow_tick,
+        )
         from harite.sources_remote_codh import codh_slideshow_tick
         from harite.sources_remote_jma import jma_slideshow_tick
 
@@ -1478,6 +1484,8 @@ class MainWindow:
             codh_slideshow_tick(catalog, source_id, mode)
         elif entry.kind == KIND_JMA_WEATHER_MAP:
             jma_slideshow_tick(catalog, source_id, side=side)
+        elif entry.kind == KIND_NDL_KIRIEZU:
+            kiriezu_slideshow_tick(catalog, source_id, side=side)
         elif entry.kind == KIND_NDL_TSUGIDIGI:
             ndl_slideshow_tick(catalog, source_id, side=side)
 

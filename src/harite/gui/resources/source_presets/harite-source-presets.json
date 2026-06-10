@@ -160,6 +160,188 @@
 
     {
 
+      "preset_id": "ndl-kiriezu-all",
+
+      "name": "江戸切絵図・おまかせ（全区）",
+
+      "kind": "remote-ndl-kiriezu",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション「江戸切絵図」（尾張屋版）。地図索引：CODH 江戸マップ（https://codh.rois.ac.jp/edo-maps/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-kiriezu-group-shitamachi",
+
+      "name": "江戸切絵図・下町まとめ",
+
+      "kind": "remote-ndl-kiriezu",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション「江戸切絵図」（尾張屋版）。地図索引：CODH 江戸マップ（https://codh.rois.ac.jp/edo-maps/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-kiriezu-group-yamanote",
+
+      "name": "江戸切絵図・山の手・御三家",
+
+      "kind": "remote-ndl-kiriezu",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション「江戸切絵図」（尾張屋版）。地図索引：CODH 江戸マップ（https://codh.rois.ac.jp/edo-maps/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-kiriezu-group-nihonbashi",
+
+      "name": "江戸切絵図・日本橋・中心",
+
+      "kind": "remote-ndl-kiriezu",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション「江戸切絵図」（尾張屋版）。地図索引：CODH 江戸マップ（https://codh.rois.ac.jp/edo-maps/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-kiriezu-group-north",
+
+      "name": "江戸切絵図・北部",
+
+      "kind": "remote-ndl-kiriezu",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション「江戸切絵図」（尾張屋版）。地図索引：CODH 江戸マップ（https://codh.rois.ac.jp/edo-maps/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-kiriezu-group-south",
+
+      "name": "江戸切絵図・南部",
+
+      "kind": "remote-ndl-kiriezu",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション「江戸切絵図」（尾張屋版）。地図索引：CODH 江戸マップ（https://codh.rois.ac.jp/edo-maps/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-kiriezu-asakusa",
+
+      "name": "江戸切絵図・浅草",
+
+      "kind": "remote-ndl-kiriezu",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション「江戸切絵図」（尾張屋版）。地図索引：CODH 江戸マップ（https://codh.rois.ac.jp/edo-maps/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-kiriezu-nihonbashi",
+
+      "name": "江戸切絵図・日本橋",
+
+      "kind": "remote-ndl-kiriezu",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション「江戸切絵図」（尾張屋版）。地図索引：CODH 江戸マップ（https://codh.rois.ac.jp/edo-maps/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-kiriezu-shiba",
+
+      "name": "江戸切絵図・芝",
+
+      "kind": "remote-ndl-kiriezu",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション「江戸切絵図」（尾張屋版）。地図索引：CODH 江戸マップ（https://codh.rois.ac.jp/edo-maps/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-kiriezu-ueno",
+
+      "name": "江戸切絵図・上野",
+
+      "kind": "remote-ndl-kiriezu",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション「江戸切絵図」（尾張屋版）。地図索引：CODH 江戸マップ（https://codh.rois.ac.jp/edo-maps/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-kiriezu-fukagawa",
+
+      "name": "江戸切絵図・深川",
+
+      "kind": "remote-ndl-kiriezu",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション「江戸切絵図」（尾張屋版）。地図索引：CODH 江戸マップ（https://codh.rois.ac.jp/edo-maps/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-kiriezu-honjo",
+
+      "name": "江戸切絵図・本所",
+
+      "kind": "remote-ndl-kiriezu",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション「江戸切絵図」（尾張屋版）。地図索引：CODH 江戸マップ（https://codh.rois.ac.jp/edo-maps/）"
+
+    },
+
+    {
+
+      "preset_id": "ndl-kiriezu-yamanote",
+
+      "name": "江戸切絵図・山の手",
+
+      "kind": "remote-ndl-kiriezu",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション「江戸切絵図」（尾張屋版）。地図索引：CODH 江戸マップ（https://codh.rois.ac.jp/edo-maps/）"
+
+    },
+
+    {
+
       "preset_id": "codh-edo-spots-keyword",
 
       "name": "江戸観光（キーワード）",
