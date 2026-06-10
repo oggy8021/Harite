@@ -8,7 +8,7 @@ from urllib.request import Request
 
 import pytest
 
-from harite.sources_remote import NDL_IIIF_TEMPLATE, NDL_RANDOM_FACET_URL
+from harite.sources_remote import NDL_IIIF_TEMPLATE, NDL_RANDOM_FACET_URL, NDL_SEARCHBYTEXT_URL
 
 JPEG_BYTES = b"\xff\xd8\xff" + b"\x00" * 16
 NDL_ILLUSTRATION = [
@@ -21,6 +21,12 @@ NDL_ILLUSTRATION = [
         "h": 26.4,
     }
 ]
+NDL_SEARCHBYTEXT_RESPONSE = {
+    "facets": {},
+    "list": NDL_ILLUSTRATION,
+    "hit": 1,
+    "from": 0,
+}
 CODH_THUMB = "https://example.test/iiif/book.tif/10,20,30,40/200,/0/default.jpg"
 CODH_RESULTS = {
     "total": 3,
@@ -45,10 +51,12 @@ def install_ndl_codh_urlopen_mock(monkeypatch: pytest.MonkeyPatch) -> None:
 
     def fake_urlopen(url: str | Request, *args: Any, **kwargs: Any) -> Any:
         target = url if isinstance(url, str) else url.full_url
-        if target.startswith(NDL_RANDOM_FACET_URL):
+        if target.startswith(NDL_RANDOM_FACET_URL) or target.startswith(NDL_SEARCHBYTEXT_URL):
 
             class _Json:
                 def read(self) -> bytes:
+                    if target.startswith(NDL_SEARCHBYTEXT_URL):
+                        return json.dumps(NDL_SEARCHBYTEXT_RESPONSE).encode("utf-8")
                     return json.dumps(NDL_ILLUSTRATION).encode("utf-8")
 
                 def __enter__(self) -> "_Json":

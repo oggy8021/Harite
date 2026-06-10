@@ -19,7 +19,7 @@
 
 - **熟成運転:** 2026-06-09 宣言 → 同日 **打ち切り**（未改修のままでは継続不可のため）。
 - **製品線:** `pyproject.toml` の `1.9.0` は熟成運転の中間マイルストーン。**本 stream の営みは `v2.0.0` を目指す**（Qt 一本化・remote source の確かさ）。
-- **現フェーズ:** MAT-01〜16 完了（#442〜#461）。**MAT-08 観測** viper3 途中結果転記済み。次は **MAT-17** → **Q-01** → **MAT-10**。
+- **現フェーズ:** MAT-01〜17・MAT-02b 完了（#442〜#465）。**MAT-08 op3** 勝ち筋確定。次は **Q-01** → **MAT-10** / **MAT-18** / **MAT-14b**（[op3 後ロードマップ](20260610-v2-roadmap-op3-planning.md)）。
 - 第1期 inventory は完了（上記 finished 参照）。
 - **再棚卸の入口:** [maturation §v2.0.0 への再整理](../online-issues/maturation-20260609-qt-common.md#v200-への再整理オーナー方針-2026-06-09)。
 
@@ -51,7 +51,9 @@
 | Q-01 | GTK をメンテ対象外に落とす | 回収コスト観点で `harite-gtk` / GTK adapter を **メンテ対象外** とし **Qt 一本化**。**v2.0.0 の骨格。** | **境界の確定**（例: `v2.0.0` を GTK 同梱の最終版）、削除範囲（entrypoint / CI / packaging）、GTK 熟成メモは **残す**（観測記録） | **MAT-17 の後** — MAT-10 より先 |
 | — | MAT-02b（先送り） | NDL / CODH **取得**（壁紙未切替）。MAT-02 表示整合とは別枠。 | MAT-08: GET OK でも tick 不発・未反映。tick/apply が主戦場 | **高** — 継続 |
 | — | MAT-08 観測（途中） | Preset slideshow 操作ログの **viper3 実機切り分け** | [観測メモ](20260609-mat-08-viper3-slideshow-op-observation.md) — JMA のみ安定 | MAT-02b の前提 |
-| MAT-10 | 江戸切絵図 source（新規） | edo-maps / IIIF を雰囲気 slideshow source に | ライセンス・indexer。完全新規 | **Q-01 の後・最後** |
+| MAT-10 | 江戸切絵図 source（新規） | edo-maps / IIIF を雰囲気 slideshow source に | ライセンス・indexer | **実施 backlog**（Q-01 後） |
+| MAT-18 | NDL searchbytext | キーワードで図版検索（CODH 同型 UI） | op3: facet は書簡偏重 | planning |
+| MAT-14b | auto 倍率 | 短辺閾値で 1.25–2x 自動拡大（Main+Slideshow） | MAT-14 手動 % とは別軸 | planning |
 
 
 ## 2. 構想保持

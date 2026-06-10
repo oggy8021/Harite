@@ -146,6 +146,20 @@
 
     {
 
+      "preset_id": "ndl-search-keyword",
+
+      "name": "NDL 図版（キーワード）",
+
+      "kind": "remote-ndl-tsugidigi",
+
+      "min_slideshow_interval_seconds": 600,
+
+      "notes": "出典：国立国会図書館デジタルコレクション・次世代デジタルライブラリー（https://dl.ndl.go.jp/）"
+
+    },
+
+    {
+
       "preset_id": "codh-edo-spots-keyword",
 
       "name": "江戸観光（キーワード）",

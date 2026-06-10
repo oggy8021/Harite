@@ -6,13 +6,13 @@ GitHub Issue 起票前の観測転記。
 - 対象: **Qt 版**および **backend 共通**（GTK 専用は [GTK 熟成メモ](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) 参照）
 - **転記（中間整理 2026-05-31）:** 改修系・確かさ向上・**MAT-11** まで **完了**（#442〜#452）。
 - **機能要望（2026-06-09）:** **MAT-04**（#455）、**MAT-09**（#456）**完了**。Post Main Merge CI 緑（run 27195018405）。
-- **v2.0.0 backlog（2026-05-31）:** **MAT-13**（#458）〜**MAT-16**（#461）**完了**。**MAT-17** 実装中（CLI slideshow + `--settings-file`）。次: **Q-01**。
+- **v2.0.0 backlog（2026-05-31）:** **MAT-13**（#458）〜**MAT-17**（#463）**完了**。**MAT-02b** op3 で勝ち筋確定（#462–#465）。次: **Q-01** → **MAT-10** / **MAT-18** / **MAT-14b**（[op3 後ロードマップ](../working/20260610-v2-roadmap-op3-planning.md)）。
 - **熟成運転:** 2026-06-09 **打ち切り**（継続には改修が先決）。
 - **製品線:** `v1.9.0` は熟成運転の **中間マイルストーン**。本 stream の営みは **`v2.0.0` を目指す**（Qt 一本化・remote source の確かさ・製品線の再定義）。詳細は下記 [v2.0.0 への再整理](#v200-への再整理オーナー方針-2026-06-09)。
 
 ## v2.0.0 への再整理（オーナー方針 2026-06-09）
 
-熟成運転の過程で **先送り** したものと **閃いた** ものを改めて並べる。骨格は **Q-01** — GTK を **メンテ対象外** に落とす（回収コスト観点）。**例: `v2.0.0` を GTK 同梱の最終版とする** 等は planning で確定。**MAT-10** は完全新規 source 調査のため、下記の **後** で十分。
+熟成運転の過程で **先送り** したものと **閃いた** ものを改めて並べる。骨格は **Q-01** — GTK を **メンテ対象外** に落とす（回収コスト観点）。**例: `v2.0.0` を GTK 同梱の最終版とする** 等は planning で確定。**MAT-10** は **実施 backlog** に載せる（Q-01 後に着手）。**op3（2026-06-10）** で **MAT-18**（NDL キーワード検索）・**MAT-14b**（auto 倍率）を追加。
 
 **GTK 熟成メモ:** [overview §Xfce](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) は **削除しない**（観測記録として残す）。GTK への parity 拡張・改修は行わない。
 
@@ -33,27 +33,37 @@ GitHub Issue 起票前の観測転記。
 | 機能要望 | MAT-14 | #459 |
 | 確かさ向上 | MAT-15, 16 | #460, #461 |
 
+### 完了（MAT-02b / MAT-17 / MAT-08 op3）
+
+| ID | 要約 | PR / 観測 |
+| --- | --- | --- |
+| **MAT-17** | CLI slideshow + settings | #463 |
+| **MAT-02b** | tick / apply / none クリア / NDL tick | #462, #464, #465。[op3](../working/20260610-mat-08-viper3-slideshow-op3-observation.md) で勝ち筋確定 |
+| **MAT-08 観測** | op1 → op2 → **op3** 完了 | [op3 メモ](../working/20260610-mat-08-viper3-slideshow-op3-observation.md) |
+
 ### 先送り（v2.0.0 までに再棚卸）
 
 | ID | 要約 | 先送り理由 / 次の詰め |
 | --- | --- | --- |
-| **MAT-02b** | NDL / CODH slideshow **tick / apply 不安定** | MAT-08 viper3 で JMA のみ安定。**実装中** `fix/mat-02b-slideshow-stability` |
-| **MAT-08 観測** | Preset slideshow JSONL 操作ログの **実機切り分け** | v0 実装済（#450）。viper3 途中結果: **JMA のみ安定**、NDL/CODH は tick 不発・未反映あり（[観測メモ](../working/20260609-mat-08-viper3-slideshow-op-observation.md)）→ MAT-02b 前提 |
 | **Q-01** | GTK を **メンテ対象外** に落とす → Qt 一本化 | **v2.0.0 の骨格** — 例: v2.0.0 を GTK 同梱の最終版とする。entrypoint / CI / packaging / docs の削除範囲を planning で確定 |
 
-### 残 backlog（v2.0.0 向け）
+### 実施 backlog（v2.0.0 向け・op3 後更新）
 
 | ID | 要約 | 区分 |
 | --- | --- | --- |
-| **MAT-17** | **CLI slideshow** でも設定ファイルを読む | planning（CLI） |
-| **MAT-10** | 江戸切絵図 / edo-maps 雰囲気 source（完全新規） | 機能要望・**後回し** |
+| **MAT-10** | 江戸切絵図 / edo-maps 雰囲気 source | 機能要望・**実施**（Q-01 後） |
+| **MAT-18** | NDL `searchbytext` + キーワード（CODH 同型） | 機能要望・op3 品質所見 |
+| **MAT-14b** | 小画像向け **auto 倍率**（Main + Slideshow） | 機能要望・op3 閃き |
 
-### おおよその次の流れ（オーナー確定 2026-06-09）
+### おおよその次の流れ（オーナー確定 2026-06-10）
 
-1. ~~**MAT-13 → 14 → 15 → 16**~~ **完了**（#458〜#461）→ **MAT-17** — v2.0.0 向け backlog を順に片づけ（下記 § 参照）
-   - **並行 / 前提:** MAT-02b + MAT-08 観測（viper3 途中結果転記済み。apply 層は未）
-2. **Q-01** — GTK をメンテ対象外に落とす（例: v2.0.0 を最終同梱版）。**MAT-10 より先**
-3. **MAT-10** — 完全新規 source 調査（**最後**）
+1. ~~**MAT-13 → 17**~~、~~**MAT-02b 主戦場**~~ **完了**（#458〜#465、op3）
+2. **Q-01** — GTK メンテ対象外（v2.0.0 骨格）
+3. **MAT-10** — 江戸切絵図 / edo-maps 雰囲気 source（**実施に載せた**）
+4. **MAT-18** — NDL テキスト類似検索試験 → preset（書簡偏重の改善）
+5. **MAT-14b** — auto 倍率（MAT-14 手動 % とは別軸）
+
+詳細: [20260610-v2-roadmap-op3-planning.md](../working/20260610-v2-roadmap-op3-planning.md)
 
 ## 着手順（オーナー方針・熟成運転中の区分）
 
@@ -68,14 +78,14 @@ GitHub Issue 起票前の観測転記。
 | 改修系 | MAT-01, MAT-01b, MAT-02, MAT-03, MAT-05, MAT-06, MAT-07 |
 | 確かさ向上（完了） | MAT-08, MAT-12, MAT-15, MAT-16 |
 | 確かさ向上（観測途中） | MAT-08 観測 |
-| 機能要望系（完了） | MAT-04, MAT-09, MAT-11, MAT-14 |
-| 機能要望系（未着手） | MAT-10 |
+| 機能要望系（完了） | MAT-04, MAT-09, MAT-11, MAT-14, MAT-17 |
+| 機能要望系（実施 backlog） | MAT-10, MAT-18, MAT-14b |
 | polish（完了） | MAT-13 |
-| CLI（未着手） | MAT-17 |
-| 改修系（実装中） | MAT-02b |
+| 改修系（完了） | MAT-02b |
+| 確かさ（op3 完了） | MAT-08 観測 |
 | 先送り（v2.0.0 再棚卸） | Q-01 |
 
-※ MAT-02b は [v2.0.0 への再整理](#v200-への再整理オーナー方針-2026-06-09) 参照。MAT-10 の具体 URL は例示のみ（[MAT-10](#mat-10--江戸切絵図を雰囲気絵ソースにできないか検討)）。MAT-13〜17 は [v2.0.0 向け採番](#mat-13--エラーメッセージを赤色で表示したい) 参照。
+※ MAT-02b / op3: [観測メモ](../working/20260610-mat-08-viper3-slideshow-op3-observation.md)。MAT-10 の具体 URL は例示のみ（[MAT-10](#mat-10--江戸切絵図を雰囲気絵ソースにできないか検討)）。MAT-18 / MAT-14b は [op3 後ロードマップ](../working/20260610-v2-roadmap-op3-planning.md)。
 
 ---
 
@@ -243,13 +253,16 @@ GitHub Issue 起票前の観測転記。
   - `— none —` 選択時に `slideshow_srcdir_*` もクリア（gui-spec §4.2 更新）
   - op log に `SLIDESHOW_TICK` / `SLIDESHOW_APPLY` を追加（MAT-08 観測の切り分け強化）
   - Linux `LinuxPlugin.apply` — 同一 path 再適用前に `touch`（XFCE 等の再描画促進）
-- **follow-up（実装中）:** NDL sync-on-tick — `fix/ndl-slideshow-tick-sync`（`ndl_slideshow_tick` + op2 観測メモ）
+- **完了（#464）:** NDL sync-on-tick — `ndl_slideshow_tick` + outcome op log
+- **完了（#465）:** Profile `— none —` → L/R srcdir クリア
 - **未着手:** tick apply 失敗時の pause 継続方針
+- **op3（2026-06-10）:** [観測メモ](../working/20260610-mat-08-viper3-slideshow-op3-observation.md) — NDL tick + apply 一連・JMA `filename_unchanged` 可視化を確認。**勝ち筋確定。**
 
 ### 調査メモ
 
-- viper3: R `--none--` で path 残存 → dual 幽霊 R。CODH 20:37 `CODH_TICK` OK だが壁紙未更新 → apply / DE キャッシュ疑い
-- NDL は旧設計で tick 再取得なしだった — op2 で確認。`ndl_slideshow_tick` で product 要件に合わせ改修中
+- viper3: R `--none--` で path 残存 → dual 幽霊 R（#462 + #465 で対応）
+- CODH 20:37 `CODH_TICK` OK だが壁紙未更新 → op2 以降 CODH は安定傾向。長時間は op4 で再検証可
+- NDL tick 再取得 — #464 + op3 で確認済
 
 ---
 
@@ -496,6 +509,11 @@ GitHub Issue 起票前の観測転記。
   - **JMA:** 安定（2h interval、`JMA_TICK` + cache mtime 確認）
   - **NDL:** Start sync OK、tick は同一 `latest.jpg` 再 apply のみ → **`ndl_slideshow_tick` 改修**
   - **00:53 セッション:** Start 後 tick 無し — 安定化観測で継続（本改修スコープ外）
+- **観測（op3・2026-06-10）:** viper3 `slideshow-op3.jsonl` 110 行（#464 以降）。[20260610-mat-08-viper3-slideshow-op3-observation.md](../working/20260610-mat-08-viper3-slideshow-op3-observation.md)
+  - **JMA:** `filename_unchanged` + tick 後 `SLIDESHOW_APPLY` 記録 — outcome フィールドどおり
+  - **NDL:** tick 毎 `NDL_META_URL` / `NDL_TICK` / `content_changed=true` / apply 一連 — **#464 成功**
+  - **NDL IIIF 404:** 3 件すべて再試行で回復
+  - **オーナー:** 勝ち筋取得 — MAT-02b 主戦場は残課題（timer 方針・長時間 CODH）へ縮小
 
 ---
 
@@ -566,13 +584,15 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- 現時点: **転記のみ** — 棚卸で source 拡張候補として評価
+- **2026-06-10:** **実施 backlog に載せる**（後回し解除）。Q-01 後に調査・試験着手。
 - ゲート: NDL / CODH **利用規約・IIIF 利用条件**の確認が先
 - 次: 代表 1 枚での試験（IIIF → download → slideshow）とライセンスメモ。採用時の選定軸は「雰囲気絵」
+- **MAT-18 との関係:** NDL facet 品質改善（キーワード検索）と **別経路**で補完。MAT-10 は edo-maps / 切絵図の雰囲気 source。
 
 ### 調査メモ
 
 - memo（オーナー）: **雰囲気絵が出てほしい** — 文字図版中心の買物案内の代替。具体地図は例示のみ
+- op3: facet NDL はパイプライン成立だが **書簡・スキャン偏重** → MAT-18 で品質軸を追加、MAT-10 で雰囲気絵の別入口
 
 ---
 
@@ -737,6 +757,79 @@ GitHub Issue 起票前の観測転記。
 
 - memo（オーナー）: 旧「閃き」を MAT-14 として正式採番。MAT-11 調査メモの 2x/4x 言及と同系
 - `Display.scale_percent`（W-03-C）は OS DPI 情報のみ。本項目のユーザー render scale とは別軸
+
+---
+
+## MAT-14b — auto 倍率（小画像の閾値ベース拡大）
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-10（op3 観測からの閃き）
+- 仮タイトル: `Feature: auto source scale from short-edge vs display resolution`
+
+### 事象 / 要望
+
+- MAT-01b 原寸 + MAT-14 手動 % では、NDL 切り出し等の **小画像が display 中央にポツン**しうる。
+- **fit / fill ではなく**、割当 display 解像度に対する **短辺（主に height）** で閾値判定し、自動で 1.25x / 1.5x / 2x 等を掛けたい。
+- オーナー案:
+  - 短辺 ≤ 割当解像度の **1/2** → **1.25x または 1.5x**（アスペクト比維持）
+  - 短辺 ≤ **1/4** → **1.5x または 2x**
+- **Surface（Compose）** の倍率 combo **左**に L/R 各コントロール。
+- **設定ファイル**に載せ、**Main タブと Slideshow タブ**の両方から利用（slideshow も Optimize 経路で適用）。
+
+### 分類
+
+- `planning`（機能要望）
+- MAT-14（手動 %）の **派生・別軸**（自動 vs 手動の優先は設計時確定）
+
+### 関連
+
+- MAT-14（#459）、MAT-01b（#444）、MAT-11（#452）
+- [op3 ロードマップ](../working/20260610-v2-roadmap-op3-planning.md) §MAT-14b
+
+### 取り込み方針
+
+- 現時点: **planning のみ** — 係数デフォルト・MAT-14 手動との合成順を設計ゲート
+- スコープ: core 画像サイズ決定段階 + settings + Qt Compose UI + slideshow form_state 浸透
+
+---
+
+## MAT-18 — NDL テキスト類似検索（`searchbytext`）+ キーワード
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-10（op3 品質所見）
+- 仮タイトル: `Feature: NDL illustration searchbytext preset with keyword UI`
+
+### 事象 / 要望
+
+- op3: `randomwithfacet` + tick sync は **技術的成功**だが、実機では **書簡・文書スキャン**が多く「絵図」期待に届かない。
+- NDL API `GET /api/illustration/searchbytext?keyword2vec={keyword}` を試したい（例: `keyword2vec=ペンギン`）。
+- キーワード UI は **CODH keyword と同型**（Manage Presets + settings 永続化）。
+
+### 分類
+
+- `planning`（機能要望）
+- `investigation`（API 試験・preset 設計）
+
+### 関連
+
+- MAT-02b / #464（NDL tick 基盤 — 層 A 入口の差し替え先）
+- [C-01-E NDL 調査](../working/finished/20260603-c01-e-ndl-tsugidigi-inventory.md) §1（当初 searchbytext は対象外 → **方針転換**）
+- MAT-10（雰囲気絵の別経路）
+
+### 取り込み方針
+
+- **試験優先:** `searchbytext` → IIIF → cache の手動 / curl 検証 → facet との品質比較
+- 実装案: 新 preset または既存 NDL preset の検索モード。sync/tick は §15.3 と同型（IIIF 404 再試行維持）
+- settings: `ndl_keyword`（仮）— CODH `codh_keyword` と並列
+
+### 調査メモ
+
+- 試験 URL: `https://lab.ndl.go.jp/dl/api/illustration/searchbytext?keyword2vec=ペンギン`
+- op log: 既存 `NDL_META_URL` で url 可視化
 
 ---
 

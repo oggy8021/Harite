@@ -59,7 +59,7 @@
 | `GET /illustration/randomwithfacet` | タグ facet で絞ってランダム | `query` マップ（下記 §3） | **採用候補**（preset 分類） |
 | `GET /illustration/{id}` | 図版 ID 指定メタデータ | path `id` = `{pid}_{page}_{n}` | 補助（ID は random 返却から） |
 | `GET /illustration/multi-get` | 複数 ID 一括 | `ids` カンマ区切り | 対象外 |
-| `GET /illustration/searchbytext` | テキスト類似図版検索 | **`keyword2vec` 必須** | 対象外（キーワード UI なし） |
+| `GET /illustration/searchbytext` | テキスト類似図版検索 | **`keyword2vec` 必須** | **MAT-18 候補**（2026-06-10 op3: facet は書簡偏重。CODH 同型キーワード UI で試験） |
 | `GET /illustration/searchbyid` | ID 検索 | `id` | 対象外 |
 
 `apiinfo` §3 に明記されているのは **図版メタデータ取得** と **テキスト類似検索** のみ。**ランダム系は Swagger / OpenAPI のみ**（2026-06-03 時点）。

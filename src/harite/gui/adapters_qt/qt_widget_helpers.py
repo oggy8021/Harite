@@ -574,6 +574,54 @@ def refresh_slideshow_codh_keyword_chip(backend: Any, owner: Any) -> None:
     widget.setVisible(True)
 
 
+def refresh_slideshow_ndl_keyword_chip(backend: Any, owner: Any) -> None:
+    from harite.gui.adapters_qt.qt_source_catalog import prepare_owner_source_catalog
+    from harite.gui.views.slideshow_ndl_keyword_chip import (
+        format_slideshow_ndl_keyword_chip,
+        slideshow_uses_ndl_keyword_preset,
+    )
+    from harite.settings_file import resolve_default_settings_path
+    from harite.sources_remote import load_ndl_keyword_settings, ndl_keyword_from_settings
+
+    widget = _get(backend, "lblSlideshowNdlKeyword")
+    if widget is None:
+        return
+
+    try:
+        catalog = prepare_owner_source_catalog(owner)
+    except Exception:
+        widget.setVisible(False)
+        return
+
+    visible = slideshow_uses_ndl_keyword_preset(
+        catalog=catalog,
+        source_id_l=str(getattr(owner, "slideshow_source_id_l", "") or ""),
+        source_id_r=str(getattr(owner, "slideshow_source_id_r", "") or ""),
+        profile_id=str(getattr(owner, "slideshow_profile_id", "") or ""),
+    )
+    if not visible:
+        widget.setVisible(False)
+        widget.setText("")
+        return
+
+    settings_path = getattr(owner, "_settings_path", None) or resolve_default_settings_path()
+    settings_data = load_ndl_keyword_settings(settings_path)
+    keyword = ndl_keyword_from_settings(settings_data)
+    text = format_slideshow_ndl_keyword_chip(keyword)
+    if not text:
+        widget.setVisible(False)
+        widget.setText("")
+        return
+
+    widget.setText(text)
+    widget.setVisible(True)
+
+
+def refresh_slideshow_keyword_chips(backend: Any, owner: Any) -> None:
+    refresh_slideshow_codh_keyword_chip(backend, owner)
+    refresh_slideshow_ndl_keyword_chip(backend, owner)
+
+
 def refresh_slideshow_registry_combos(backend: Any, owner: Any) -> None:
     from harite.gui.adapters_qt.qt_source_catalog import (
         prepare_owner_source_catalog,

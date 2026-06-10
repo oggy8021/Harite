@@ -34,6 +34,7 @@ KIND_CODH_EDO = "remote-codh-edo"
 
 JMA_LIST_URL = "https://www.jma.go.jp/bosai/weather_map/data/list.json"
 NDL_RANDOM_FACET_URL = "https://lab.ndl.go.jp/dl/api/illustration/randomwithfacet"
+NDL_SEARCHBYTEXT_URL = "https://lab.ndl.go.jp/dl/api/illustration/searchbytext"
 NDL_IIIF_FETCH_MAX_ATTEMPTS = 5
 NDL_IIIF_TEMPLATE = (
     "https://dl.ndl.go.jp/api/iiif/{pid}/{page}/pct:{x},{y},{w},{h}/max/0/default.jpg"
@@ -47,6 +48,10 @@ CODH_KEYWORD_SETTINGS_KEY = "codh_keyword"
 CODH_KEYWORD_MAX_LEN = 16
 CODH_KEYWORD_DEFAULT = "桜"
 CODH_KEYWORD_PRESET_IDS = frozenset({"codh-edo-spots-keyword"})
+NDL_KEYWORD_SETTINGS_KEY = "ndl_keyword"
+NDL_KEYWORD_MAX_LEN = 16
+NDL_KEYWORD_DEFAULT = "ペンギン"
+NDL_KEYWORD_PRESET_IDS = frozenset({"ndl-search-keyword"})
 
 _JMA_PRESET_LIST_KEYS: dict[str, tuple[str, ...]] = {
     "jma-near-color": ("near", "now"),
@@ -350,6 +355,66 @@ def source_supports_codh_keyword(entry: SourceEntry) -> bool:
     return is_codh_keyword_preset(preset_id_from_notes(entry.notes))
 
 
+def is_ndl_keyword_preset(preset_id: str | None) -> bool:
+    return preset_id in NDL_KEYWORD_PRESET_IDS if preset_id else False
+
+
+def validate_ndl_keyword(keyword: str) -> str:
+    value = str(keyword).strip()
+    if not value:
+        raise ValueError("NDL keyword cannot be empty")
+    if len(value) > NDL_KEYWORD_MAX_LEN:
+        raise ValueError(f"NDL keyword exceeds {NDL_KEYWORD_MAX_LEN} characters")
+    if "\n" in value or "\r" in value:
+        raise ValueError("NDL keyword cannot contain newlines")
+    return value
+
+
+def ndl_keyword_from_settings(settings: dict[str, Any]) -> str:
+    raw = settings.get(NDL_KEYWORD_SETTINGS_KEY)
+    if raw is None:
+        return NDL_KEYWORD_DEFAULT
+    text = str(raw).strip()
+    if not text:
+        return NDL_KEYWORD_DEFAULT
+    return validate_ndl_keyword(text)
+
+
+def apply_ndl_keyword_to_settings(settings: dict[str, Any], keyword: str) -> dict[str, Any]:
+    updated = dict(settings)
+    updated[NDL_KEYWORD_SETTINGS_KEY] = validate_ndl_keyword(keyword)
+    return updated
+
+
+def save_ndl_keyword_settings(settings_path: Path, keyword: str) -> Path:
+    from harite.settings_file import patch_settings_value
+
+    return patch_settings_value(
+        settings_path,
+        NDL_KEYWORD_SETTINGS_KEY,
+        validate_ndl_keyword(keyword),
+    )
+
+
+def load_ndl_keyword_settings(settings_path: Path | None = None) -> dict[str, Any]:
+    from harite.settings_file import load_settings, resolve_default_settings_path
+
+    path = settings_path or resolve_default_settings_path()
+    if not path.exists():
+        return {}
+    return load_settings(path)
+
+
+def resolve_ndl_keyword(settings_path: Path | None = None) -> str:
+    return ndl_keyword_from_settings(load_ndl_keyword_settings(settings_path))
+
+
+def source_supports_ndl_keyword(entry: SourceEntry) -> bool:
+    if entry.kind != KIND_NDL_TSUGIDIGI:
+        return False
+    return is_ndl_keyword_preset(preset_id_from_notes(entry.notes))
+
+
 def add_remote_source(
     catalog: Catalog,
     *,
@@ -598,12 +663,30 @@ def _jma_sync(catalog: Catalog, source_id: str) -> None:
         entry.notes = _validate_notes(provider.default_notes)
 
 
-def _ndl_illustration_url(preset_id: str) -> str:
+def _ndl_meta_url(preset_id: str, *, settings_path: Path | None = None) -> tuple[str, bool]:
+    """Return (meta URL, searchbytext response shape when True)."""
+    if preset_id in NDL_KEYWORD_PRESET_IDS:
+        keyword = resolve_ndl_keyword(settings_path)
+        query = urlencode([("keyword2vec", keyword), ("size", "1")])
+        return f"{NDL_SEARCHBYTEXT_URL}?{query}", True
     facet = _NDL_PRESET_FACET_TAG.get(preset_id)
     if not facet:
         raise ValueError(f"unsupported NDL preset for sync: {preset_id}")
     query = urlencode([("size", "1"), ("f-graphictags.tagname", facet)])
-    return f"{NDL_RANDOM_FACET_URL}?{query}"
+    return f"{NDL_RANDOM_FACET_URL}?{query}", False
+
+
+def _ndl_parse_illustration_candidates(payload: Any, *, searchbytext: bool) -> list[dict[str, Any]]:
+    if searchbytext:
+        if not isinstance(payload, dict):
+            raise ValueError("NDL searchbytext API returned invalid JSON")
+        candidates = payload.get("list")
+        if not isinstance(candidates, list) or not candidates:
+            raise ValueError("NDL searchbytext API returned no results")
+        return candidates
+    if not isinstance(payload, list) or not payload:
+        raise ValueError("NDL illustration API returned no results")
+    return payload
 
 
 def _ndl_iiif_url(illustration: dict[str, Any]) -> str:
@@ -642,7 +725,7 @@ def _ndl_sync(catalog: Catalog, source_id: str) -> CacheWriteResult:
     if preset_id is None:
         raise ValueError("NDL sync requires harite-preset marker in notes")
 
-    meta_url = _ndl_illustration_url(preset_id)
+    meta_url, searchbytext = _ndl_meta_url(preset_id)
     log_slideshow_op(
         "NDL_META_URL",
         source_id=source_id,
@@ -652,9 +735,8 @@ def _ndl_sync(catalog: Catalog, source_id: str) -> CacheWriteResult:
     last_skipped_url: str | None = None
     for attempt in range(1, NDL_IIIF_FETCH_MAX_ATTEMPTS + 1):
         payload = _http_get_json(meta_url)
-        if not isinstance(payload, list) or not payload:
-            raise ValueError("NDL illustration API returned no results")
-        iiif_url = _ndl_iiif_url(payload[0])
+        candidates = _ndl_parse_illustration_candidates(payload, searchbytext=searchbytext)
+        iiif_url = _ndl_iiif_url(candidates[0])
         log_slideshow_op(
             "NDL_IIIF_URL",
             source_id=source_id,
