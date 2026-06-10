@@ -666,9 +666,10 @@ def _jma_sync(catalog: Catalog, source_id: str) -> None:
 def _ndl_meta_url(preset_id: str, *, settings_path: Path | None = None) -> tuple[str, bool]:
     """Return (meta URL, searchbytext response shape when True)."""
     if preset_id in NDL_KEYWORD_PRESET_IDS:
+        from harite.sources_remote_ndl_keyword import NDL_SEARCH_PAGE_SIZE, ndl_searchbytext_url
+
         keyword = resolve_ndl_keyword(settings_path)
-        query = urlencode([("keyword2vec", keyword), ("size", "1")])
-        return f"{NDL_SEARCHBYTEXT_URL}?{query}", True
+        return ndl_searchbytext_url(keyword, from_offset=0, size=NDL_SEARCH_PAGE_SIZE), True
     facet = _NDL_PRESET_FACET_TAG.get(preset_id)
     if not facet:
         raise ValueError(f"unsupported NDL preset for sync: {preset_id}")
@@ -724,6 +725,17 @@ def _ndl_sync(catalog: Catalog, source_id: str) -> CacheWriteResult:
     preset_id = preset_id_from_notes(entry.notes)
     if preset_id is None:
         raise ValueError("NDL sync requires harite-preset marker in notes")
+
+    if preset_id in NDL_KEYWORD_PRESET_IDS:
+        from harite.sources_remote_ndl_keyword import ndl_search_keyword_sync
+
+        pick = _CODH_SYNC_PICK.get()
+        return ndl_search_keyword_sync(
+            catalog,
+            source_id,
+            advance_cursor=False,
+            force_reset=pick == "refresh",
+        )
 
     meta_url, searchbytext = _ndl_meta_url(preset_id)
     log_slideshow_op(
@@ -804,6 +816,11 @@ def ndl_slideshow_tick(
     entry = get_source(catalog, source_id)
     if entry is None or entry.kind != KIND_NDL_TSUGIDIGI:
         return False
+    preset_id = preset_id_from_notes(entry.notes)
+    if preset_id in NDL_KEYWORD_PRESET_IDS:
+        from harite.sources_remote_ndl_keyword import ndl_search_keyword_slideshow_tick
+
+        return ndl_search_keyword_slideshow_tick(catalog, source_id, side=side)
     try:
         write_result = _ndl_sync(catalog, source_id)
     except ValueError as exc:

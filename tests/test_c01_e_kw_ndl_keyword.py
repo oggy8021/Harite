@@ -61,6 +61,7 @@ def test_resolve_ndl_keyword_reads_settings_file(tmp_path: Path) -> None:
 
 def test_ndl_searchbytext_url_includes_keyword(tmp_path: Path) -> None:
     from harite.sources_remote import _ndl_meta_url
+    from harite.sources_remote_ndl_keyword import NDL_SEARCH_PAGE_SIZE
 
     settings_path = tmp_path / "harite-settings.json"
     save_settings(settings_path, {NDL_KEYWORD_SETTINGS_KEY: "ペンギン"})
@@ -68,3 +69,5 @@ def test_ndl_searchbytext_url_includes_keyword(tmp_path: Path) -> None:
     assert searchbytext is True
     assert url.startswith(NDL_SEARCHBYTEXT_URL)
     assert f"keyword2vec={quote('ペンギン')}" in url
+    assert f"size={NDL_SEARCH_PAGE_SIZE}" in url
+    assert "from=0" in url
