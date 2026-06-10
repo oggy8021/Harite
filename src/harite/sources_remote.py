@@ -30,6 +30,7 @@ from harite.sources import (
 REMOTE_KIND_RE = re.compile(r"^remote-[a-z0-9]+(?:-[a-z0-9]+)*$")
 KIND_JMA_WEATHER_MAP = "remote-jma-weather-map"
 KIND_NDL_TSUGIDIGI = "remote-ndl-tsugidigi"
+KIND_NDL_KIRIEZU = "remote-ndl-kiriezu"
 KIND_CODH_EDO = "remote-codh-edo"
 
 JMA_LIST_URL = "https://www.jma.go.jp/bosai/weather_map/data/list.json"
@@ -908,6 +909,29 @@ def _codh_pick_thumbnail_url(
     return thumbnail.replace("/200,/", "/max/")
 
 
+def _kiriezu_sync(catalog: Catalog, source_id: str) -> CacheWriteResult:
+    from harite.sources_remote_ndl_kiriezu import ndl_kiriezu_sync
+
+    pick = _CODH_SYNC_PICK.get()
+    return ndl_kiriezu_sync(
+        catalog,
+        source_id,
+        advance_cursor=False,
+        force_reset=pick == "refresh",
+    )
+
+
+def kiriezu_slideshow_tick(
+    catalog: Catalog,
+    source_id: str,
+    *,
+    side: str | None = None,
+) -> bool:
+    from harite.sources_remote_ndl_kiriezu import ndl_kiriezu_slideshow_tick
+
+    return ndl_kiriezu_slideshow_tick(catalog, source_id, side=side)
+
+
 def _codh_sync(catalog: Catalog, source_id: str) -> None:
     from harite.sources_remote_codh import (
         CODH_SYNC_REFRESH,
@@ -948,6 +972,14 @@ register_remote_provider(
     _RegisteredProvider(
         kind=KIND_CODH_EDO,
         sync=_codh_sync,
+        default_notes=None,
+    ),
+)
+register_remote_provider(
+    KIND_NDL_KIRIEZU,
+    _RegisteredProvider(
+        kind=KIND_NDL_KIRIEZU,
+        sync=_kiriezu_sync,
         default_notes=None,
     ),
 )

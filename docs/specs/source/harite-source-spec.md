@@ -788,6 +788,49 @@ running 中、各 tick 前（[slideshow-spec §6.6](../slideshow/harite-slidesho
 
 江戸マップ ID・緯度経度・GIS・Curation JSON の自前パース。
 
+### 15.8 NDL 江戸切絵図（尾張屋版・MAT-10）
+
+`kind`: **`remote-ndl-kiriezu`**。NDL デジタルコレクション IIIF の **地図1枚全体**（`dl.ndl.go.jp/api/iiif/{pid}/...`）。edo-maps は **pid 索引**のみ（Canvas Indexer 経由ではない）。
+
+#### 15.8.1 同梱 preset（A / B / C）
+
+正本: [CODH 尾張屋版一覧](https://codh.rois.ac.jp/edo-maps/owariya/)（**29 pid**）。キーワード UI なし。interval はユーザー設定（preset floor 600s）。
+
+**A — 全区:** `ndl-kiriezu-all`（29 枚 cursor 巡回）
+
+**B — 大グループ:**
+
+| `preset_id` | 枚数 | 概要 |
+| --- | ---: | --- |
+| `ndl-kiriezu-group-shitamachi` | 7 | 浅草・深川・本所・向島・下谷・根岸 等 |
+| `ndl-kiriezu-group-yamanote` | 10 | 芝・赤坂・麻布・四谷・駒込・巣鴨・新宿 等 |
+| `ndl-kiriezu-group-nihonbashi` | 4 | 日本橋・大名小路・番町 |
+| `ndl-kiriezu-group-north` | 5 | 外桜田・駿河台・本郷湯島・小石川・音羽 |
+| `ndl-kiriezu-group-south` | 3 | 大久保・目黒・小日向 |
+
+**C — 単エリア:** `ndl-kiriezu-asakusa` / `nihonbashi` / `shiba` / `ueno` / `fukagawa` / `honjo` / `yamanote`（各 1〜3 枚。雰囲気固定向け）
+
+カタログ詳細は `sources_remote_ndl_kiriezu.py` の `_KIRIEZU_ALL_MAPS`。
+
+#### 15.8.2 画像 URL
+
+1. `GET .../api/iiif/{pid}/manifest.json` → canvas id（例 `R0000001`）を `ndl-kiriezu-manifest-cache.json` に cache。
+2. `GET .../api/iiif/{pid}/{canvas}/full/1200,/0/default.jpg`（幅 **1200px** 固定）。
+
+#### 15.8.3 sync / tick
+
+| 操作 | 契約 |
+| --- | --- |
+| Manage Refresh | `ndl-kiriezu-cycle.json` を preset 先頭（`cursor_index=0`）へ |
+| Start 直前 | cursor 維持（resume）— 現位置の地図を再 GET |
+| tick | cursor 進行（preset 内 wrap）→ 次地図を GET |
+
+op log: `NDL_KIRIEZU_PICK` / `NDL_KIRIEZU_TICK`（`pid`, `map_label`, `cursor_index`）。
+
+#### 15.8.4 帰属
+
+preset `notes` 正本: 国立国会図書館デジタルコレクション「江戸切絵図」（尾張屋版）+ CODH 江戸マップ索引 URL。
+
 ## 16. GUI / CLI
 
 | surface | 契約 |

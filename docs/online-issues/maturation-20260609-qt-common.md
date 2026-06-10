@@ -6,7 +6,7 @@ GitHub Issue 起票前の観測転記。
 - 対象: **Qt 版**および **backend 共通**（GTK 専用は [GTK 熟成メモ](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) 参照）
 - **転記（中間整理 2026-05-31）:** 改修系・確かさ向上・**MAT-11** まで **完了**（#442〜#452）。
 - **機能要望（2026-06-09）:** **MAT-04**（#455）、**MAT-09**（#456）**完了**。Post Main Merge CI 緑（run 27195018405）。
-- **v2.0.0 backlog（2026-05-31）:** **MAT-13**（#458）〜**MAT-17**（#463）**完了**。**MAT-02b** op3 で勝ち筋確定（#462–#465）。次: **Q-01** → **MAT-10** / **MAT-18** / **MAT-14b**（[op3 後ロードマップ](../working/20260610-v2-roadmap-op3-planning.md)）。
+- **v2.0.0 backlog（2026-05-31）:** **MAT-13**（#458）〜**MAT-17**（#463）**完了**。**MAT-02b** op3 で勝ち筋確定（#462–#465）。**MAT-18**（#467/#468）、**MAT-14b**（#469）、**MAT-10**（江戸切絵図 A/B/C preset）**完了**。**Preset Slideshow 仕組み**（sync/tick/apply/op log）は **成立**（op5 で MAT-18b 確認）。次: **Q-01**（[op3 後ロードマップ](../working/20260610-v2-roadmap-op3-planning.md)）。
 - **熟成運転:** 2026-06-09 **打ち切り**（継続には改修が先決）。
 - **製品線:** `v1.9.0` は熟成運転の **中間マイルストーン**。本 stream の営みは **`v2.0.0` を目指す**（Qt 一本化・remote source の確かさ・製品線の再定義）。詳細は下記 [v2.0.0 への再整理](#v200-への再整理オーナー方針-2026-06-09)。
 
@@ -40,6 +40,9 @@ GitHub Issue 起票前の観測転記。
 | **MAT-17** | CLI slideshow + settings | #463 |
 | **MAT-02b** | tick / apply / none クリア / NDL tick | #462, #464, #465。[op3](../working/20260610-mat-08-viper3-slideshow-op3-observation.md) で勝ち筋確定 |
 | **MAT-08 観測** | op1 → op2 → **op3** 完了 | [op3 メモ](../working/20260610-mat-08-viper3-slideshow-op3-observation.md) |
+| **MAT-18** | NDL `searchbytext` + キーワード preset | #467 |
+| **MAT-18b** | `searchbytext` リスト巡回（cursor） | #468。op5 で tick 毎別 IIIF 確認 |
+| **MAT-14b** | auto 倍率（Main + Slideshow 分離） | #469 |
 
 ### 先送り（v2.0.0 までに再棚卸）
 
@@ -47,21 +50,17 @@ GitHub Issue 起票前の観測転記。
 | --- | --- | --- |
 | **Q-01** | GTK を **メンテ対象外** に落とす → Qt 一本化 | **v2.0.0 の骨格** — 例: v2.0.0 を GTK 同梱の最終版とする。entrypoint / CI / packaging / docs の削除範囲を planning で確定 |
 
-### 実施 backlog（v2.0.0 向け・op3 後更新）
+### 実施 backlog（v2.0.0 向け・2026-05-31 更新）
 
 | ID | 要約 | 区分 |
 | --- | --- | --- |
-| **MAT-10** | 江戸切絵図 / edo-maps 雰囲気 source | 機能要望・**実施**（Q-01 後） |
-| **MAT-18** | NDL `searchbytext` + キーワード（CODH 同型） | 機能要望・op3 品質所見 |
-| **MAT-14b** | 小画像向け **auto 倍率**（Main + Slideshow） | 機能要望・op3 閃き · **実装中**（`feature/auto-display-scale-20260610`） |
+| **MAT-10** | 江戸切絵図 / 雰囲気 source | 機能要望 · **完了**（[計画文書](../working/20260531-mat-10-kiriezu-source-planning.md)） |
 
-### おおよその次の流れ（オーナー確定 2026-06-10）
+### おおよその次の流れ（オーナー確定 2026-06-10 → 2026-05-31 更新）
 
-1. ~~**MAT-13 → 17**~~、~~**MAT-02b 主戦場**~~ **完了**（#458〜#465、op3）
-2. **Q-01** — GTK メンテ対象外（v2.0.0 骨格）
-3. **MAT-10** — 江戸切絵図 / edo-maps 雰囲気 source（**実施に載せた**）
-4. **MAT-18** — NDL テキスト類似検索試験 → preset（書簡偏重の改善）
-5. **MAT-14b** — auto 倍率（MAT-14 手動 % とは別軸）
+1. ~~**MAT-13 → 17**~~、~~**MAT-02b**~~、~~**MAT-18 / MAT-14b**~~ **完了**（#458〜#469、op5）
+2. ~~**MAT-10**~~ — 江戸切絵図 **完了**（浅草実機 OK、A/B/C preset 13 本）
+3. **Q-01** — GTK メンテ対象外（v2.0.0 骨格。MAT-10 と並行可）
 
 詳細: [20260610-v2-roadmap-op3-planning.md](../working/20260610-v2-roadmap-op3-planning.md)
 
@@ -78,8 +77,8 @@ GitHub Issue 起票前の観測転記。
 | 改修系 | MAT-01, MAT-01b, MAT-02, MAT-03, MAT-05, MAT-06, MAT-07 |
 | 確かさ向上（完了） | MAT-08, MAT-12, MAT-15, MAT-16 |
 | 確かさ向上（観測途中） | MAT-08 観測 |
-| 機能要望系（完了） | MAT-04, MAT-09, MAT-11, MAT-14, MAT-17 |
-| 機能要望系（実施 backlog） | MAT-10, MAT-18, MAT-14b |
+| 機能要望系（完了） | MAT-04, MAT-09, MAT-11, MAT-14, MAT-14b, MAT-17, MAT-18 |
+| 機能要望系（完了） | MAT-10 |
 | polish（完了） | MAT-13 |
 | 改修系（完了） | MAT-02b |
 | 確かさ（op3 完了） | MAT-08 観測 |
@@ -514,6 +513,11 @@ GitHub Issue 起票前の観測転記。
   - **NDL:** tick 毎 `NDL_META_URL` / `NDL_TICK` / `content_changed=true` / apply 一連 — **#464 成功**
   - **NDL IIIF 404:** 3 件すべて再試行で回復
   - **オーナー:** 勝ち筋取得 — MAT-02b 主戦場は残課題（timer 方針・長時間 CODH）へ縮小
+- **観測（op5・2026-05-31）:** viper3 `slideshow-op5.jsonl`（#468 以降）。キーワード `妖怪` / `ndl-search-keyword`
+  - **MAT-18b 成功:** `cursor_index` 0→1→… と進行、tick 毎別 `pid/page/pct`、`content_changed: true`（op4 の同一 IIIF 固定は解消）
+  - **IIIF:** facet と同型（`_ndl_iiif_url` / `pct` テンプレ）。変わるのは search リストの pick のみ
+  - **副次:** cursor 7 付近で IIIF 404 連続 → 既存再試行で cursor 11 成功
+  - **オーナー所見:** Preset Slideshow **仕組みは成立**（見える画像の品質は別軸）
 
 ---
 
@@ -580,19 +584,69 @@ GitHub Issue 起票前の観測転記。
 - MAT-04（江戸買物削除）、MAT-08（観測ログ）
 - [C-01-E / NDL 調査](../working/finished/20260603-c01-e-ndl-tsugidigi-inventory.md)、[CODH 調査](../working/finished/20260603-c01-e-codh-icp-inventory.md)
 - CODH: IIIF Curation Platform 経由で NDL 江戸切絵図 29+ 枚を地名 DB 化（[edo-maps 概要](https://codh.rois.ac.jp/edo-maps/)）
-- 実装候補: `remote-ndl` / `remote-codh-edo-maps` 新 indexer、または既存 CODH 経路の拡張
+- 実装候補（2026-05-31 planning 更新）: **`remote-ndl-kiriezu`（NDL manifest カタログ巡回）** を第一候補。`remote-codh-edo-maps` indexer は **存在しない**（下記）
 
 ### 取り込み方針
 
-- **2026-06-10:** **実施 backlog に載せる**（後回し解除）。Q-01 後に調査・試験着手。
-- ゲート: NDL / CODH **利用規約・IIIF 利用条件**の確認が先
-- 次: 代表 1 枚での試験（IIIF → download → slideshow）とライセンスメモ。採用時の選定軸は「雰囲気絵」
-- **MAT-18 との関係:** NDL facet 品質改善（キーワード検索）と **別経路**で補完。MAT-10 は edo-maps / 切絵図の雰囲気 source。
+- **2026-06-10:** **実施 backlog に載せる**（後回し解除）
+- **2026-05-31:** **実装完了** — [計画文書](../working/20260531-mat-10-kiriezu-source-planning.md)。preset **A+B+C 三段**（13 本）、IIIF **1200px**。浅草 Start → 東部浅草絵図（1286208）**オーナー確認 OK**
+- ゲート: NDL **デジタルコレクション利用** + 出典表記。edo-maps 地名 CSV は CC BY だが **画像は NDL IIIF**
+- **MAT-18 との関係:** NDL 切り出し（小図版・キーワード）と **別経路**。MAT-10 は **地図1枚全体**の雰囲気
+
+### planning（2026-05-31）
+
+#### 目的の再確認
+
+- slideshow に **地図全体の雰囲気絵**（尾張屋版江戸切絵図など）を出す
+- **GIS・地名検索・緯度経度は不要**（C-01-E / edo-maps 方針と同型で見送り）
+- 特定地図固定の意図はない — **カタログから順次／ランダム巡回**
+
+#### 経路比較（live 試験）
+
+| 経路 | 結果 | 採用 |
+| --- | --- | --- |
+| **A. edo-maps Canvas Indexer** `mp.ex.nii.ac.jp/api/edo-maps/...` | **404**（edo-spots / edo-shops とは別サービス。Indexer 未公開） | ✗ |
+| **B. edo-spots を出典=江戸切絵図で絞る** | `total=0`（観光 spot の切り出し。地図全体ではない） | ✗ |
+| **C. NDL IIIF manifest（個別 pid）** | 例 `1286208` → `.../R0000001/full/2000,/0/default.jpg` **200 OK**（≈912KB）。`full/full` は ≈4.7MB | **◎ 第一候補** |
+| **D. NDL illustration API**（facet / searchbytext） | 小矩形 `pct` 切り出し — 既存 NDL preset と同型 | 対象外（MAT-18 領域） |
+
+#### 推奨アーキテクチャ（案）
+
+```
+preset（江戸切絵図・おまかせ）
+  → 内蔵カタログ（尾張屋版 ≈32 pid。edo-maps 地図件数と整合）
+  → sync/tick: cursor または random（CODH / MAT-18b 同型）
+  → manifest 初回取得で canvas id（例 R0000001）を cache
+  → IIIF GET: full/{width},/0/default.jpg（帯域と slideshow 品質のバランス。要チューニング）
+  → notes: 地図名 + NDL 出典 + CODH 江戸マップ参照（任意）
+```
+
+- **kind 案:** `remote-ndl-kiriezu`（新規）— 既存 `remote-ndl` の illustration 経路とは分離
+- **preset（確定）:** **A** `ndl-kiriezu-all`（29）+ **B** 大グループ 5 本 + **C** 単エリア 7 本。IIIF **1200px** 固定。interval はユーザー設定。キーワード UI なし
+- **再利用:** `sources_remote_codh.py` の index + cycle パターン、slideshow tick / op log、MAT-14b auto 倍率
+
+#### スパイク（実装前）
+
+| # | 検証 | 合格基準 |
+| --- | --- | --- |
+| V1 | ライセンス | NDL 公開画像の壁紙表示・再配布なしで問題ない旨をメモ |
+| V2 | カタログ | edo-maps 32 地図に対応する pid 一覧（manifest URL 付き） |
+| V3 | IIIF 解像度 | `2000,` / `1200,` 等で安定 GET + optimize で許容画質 |
+| V4 | sync/tick | cursor 進行 + resume + Manage Refresh + op log |
+| V5 | 帯域 | 10 分 interval で実用サイズ（目安 &lt;2MB/枚） |
+
+#### オーナー判断（2026-05-31）
+
+- IIIF 幅: **`1200,`**（2000 はクローズアップ過多、フルはれきちず級の手間）
+- preset: **A+B+C 三段**（13 本。計画 §4）
+- Q-01: **並行可**（計画 §6）
 
 ### 調査メモ
 
 - memo（オーナー）: **雰囲気絵が出てほしい** — 文字図版中心の買物案内の代替。具体地図は例示のみ
 - op3: facet NDL はパイプライン成立だが **書簡・スキャン偏重** → MAT-18 で品質軸を追加、MAT-10 で雰囲気絵の別入口
+- **C-01-E CODH inventory:** edo-maps は 2026-06-03 時点 **スコープ外**（GIS）。MAT-10 は **画像入口のみ** edo-maps を参照し、API は NDL 直
+- **実装（2026-05-31）:** `remote-ndl-kiriezu`、preset **A1+B5+C7**、IIIF 1200px、cursor sync/tick。`test_c01_ndl_kiriezu.py` / `test_c01_source_presets.py` 緑。**P3:** 浅草 Start → 東部浅草絵図（1286208）オーナー OK
 
 ---
 
@@ -780,7 +834,7 @@ GitHub Issue 起票前の観測転記。
 
 ### 分類
 
-- `in_progress`（機能要望）— branch `feature/auto-display-scale-20260610`、PR 未起票
+- `planning` → **完了**（#469）
 - MAT-14（手動 %）の **派生・別軸**
 
 ### 設計確定（2026-06-10）
@@ -808,7 +862,7 @@ GitHub Issue 起票前の観測転記。
 
 ### 取り込み方針
 
-- **実装済み（未マージ）** — Main 1024×768 手動確認済。Slideshow 専用 auto UI + 別設定キー追加
+- **完了** — #469 マージ。Main / Slideshow 手動確認済
 - GTK Compose / Slideshow UI は未追加（`gtk_runtime_sync` の checkbox 同期のみ；Q-01 方針と整合）
 
 ---
@@ -829,8 +883,7 @@ GitHub Issue 起票前の観測転記。
 
 ### 分類
 
-- `planning`（機能要望）
-- `investigation`（API 試験・preset 設計）
+- **完了**（#467 preset、#468 cursor）
 
 ### 関連
 
@@ -870,6 +923,7 @@ GitHub Issue 起票前の観測転記。
 - slideshow **start**: `resume` — cursor 位置を維持。Manage **Refresh**: `refresh` — from/cursor リセット
 - tick: cursor 進行 → バッチ末尾で `from` 進めて再取得（`hit` 超過で wrap）
 - op log: `NDL_SEARCH_BATCH` / `NDL_SEARCH_PICK`（`cursor_index`, `from_offset`）
+- **完了** — #468 マージ。**op5:** キーワード `妖怪` で tick 毎別 IIIF・`content_changed: true`（§MAT-08 op5）
 
 ---
 
