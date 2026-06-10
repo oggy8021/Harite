@@ -1,6 +1,6 @@
 """Qt signal-to-handler wiring for Harite GUI (Phase 8).
 
-Mirrors ``gtk_runtime_signal_wiring.connect_runtime_widgets``.
+Mirrors ``gui_runtime_signal_wiring.connect_runtime_widgets``.
 
 GTK pattern:  ``widget.connect("clicked", backend._on_*_clicked)``
 Qt  pattern:  ``widget.clicked.connect(backend._on_*_clicked)``

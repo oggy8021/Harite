@@ -4,7 +4,7 @@ Three modal dialog windows (Settings / Color / About) plus three file-dialog
 proxies (ImgOpen / Srcdir / SavePath).
 
 All proxy classes expose the same duck-typed API that
-``gtk_runtime_settings_dialogs.py`` and friends call through
+``gui_runtime_settings_dialogs.py`` and friends call through
 ``backend._objects.get("SettingsDialog")`` etc.
 """
 
@@ -34,7 +34,7 @@ class QtSettingsDialogProxy:
         self._dialog = dialog
         self._settings: dict[str, object] = {}
 
-    # --- Protocol API (called by gtk_runtime_settings_dialogs) ---
+    # --- Protocol API (called by gui_runtime_settings_dialogs) ---
 
     def get_settings(self) -> dict[str, object]:
         return dict(self._settings)

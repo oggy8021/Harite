@@ -3,9 +3,8 @@
 Free functions that operate on the widget registry
 (``backend._objects``) using Qt-specific APIs.
 
-These mirror the GTK equivalents in ``gtk_runtime_state_labels.py`` and
-scattered ``set_*`` / ``read_*`` helpers in ``gtk_backend.py``, but use
-Qt widget API instead of GTK.
+These consolidate legacy ``set_*`` / ``read_*`` widget helpers using
+Qt widget APIs.
 
 All functions accept ``backend`` (any object with ``._objects: dict``)
 and delegate silently if the named widget is not found.
@@ -16,7 +15,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Any
 
-from harite.gui.adapters.gtk_runtime_file_dialog_flow import format_slideshow_path_display
+from harite.gui.path_display import format_slideshow_path_display
 from harite.gui.views.footer_feedback import (
     footer_error_is_active,
     format_footer_error,
@@ -341,7 +340,7 @@ def set_save_path_state_text(backend: Any, message: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Misc refresh helpers (called by gtk_runtime_sync.py through backend._*)
+# Misc refresh helpers (called by gui_runtime_sync.py through backend._*)
 # ---------------------------------------------------------------------------
 
 

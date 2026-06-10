@@ -1,7 +1,7 @@
 """Framework-neutral GUI view model.
 
-This file intentionally avoids hard dependency on GTK/PyGObject so the core
-package remains importable in environments without GUI libraries.
+This file intentionally avoids hard dependency on Qt so the core package
+remains importable in environments without GUI libraries.
 """
 
 from __future__ import annotations
@@ -664,7 +664,7 @@ class MainWindow:
         self.slideshow_summary_display = "Slideshow: running" if self.slideshow_running else "Slideshow: stopped"
 
     def _update_slideshow_current_display(self, left: str | None = None, right: str | None = None) -> None:
-        from harite.gui.adapters.gtk_runtime_file_dialog_flow import format_slideshow_path_display
+        from harite.gui.path_display import format_slideshow_path_display
 
         current_left = left if left is not None else (str(self._slideshow_previous_l) if self._slideshow_previous_l else "-")
         current_right = right if right is not None else (str(self._slideshow_previous_r) if self._slideshow_previous_r else "-")

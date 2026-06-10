@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from harite.gui.adapters.gtk_runtime_margin_text import (
+from harite.gui.adapters.gui_runtime_margin_text import (
     read_margin_text_widget_text,
     should_block_margin_text_return,
 )

@@ -1,6 +1,6 @@
 """Qt widget alias registry for Harite GUI (Phase 8).
 
-Maps GTK-style camelCase object names (used throughout gtk_runtime_*.py
+Maps GTK-style camelCase object names (used throughout gui_runtime_*.py
 sync functions and dialog handlers) to the snake_case keys that Phase 3–7
 builders register in the flat widget dict.
 
@@ -14,7 +14,7 @@ from typing import Any
 
 
 # ---------------------------------------------------------------------------
-# Alias builders (same logical sections as gtk_runtime_object_registry.py)
+# Alias builders (same logical sections as gui_runtime_object_registry.py)
 # ---------------------------------------------------------------------------
 
 

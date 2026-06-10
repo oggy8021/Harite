@@ -1,7 +1,7 @@
 """Footer status/error label formatting (C-04 Wave 0).
 
 Maps internal ``phase`` / ``state`` / ``error`` trace fields to user-facing
-footer labels.  Shared by GTK and Qt widget helpers.
+footer labels.  Shared by Qt widget helpers.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from typing import Any
 STATUS_READY = "Status: ready"
 ERROR_NONE = "Error: none"
 
-# MAT-13: active footer errors — shared by Qt stylesheet and GTK CSS.
+# MAT-13: active footer errors — shared by Qt stylesheet.
 FOOTER_ERROR_ACTIVE_COLOR = "#c62828"
 FOOTER_ERROR_IDLE_COLOR = "#888888"
 
@@ -149,12 +149,3 @@ def configure_footer_error_label_qt(label: Any) -> None:
     label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
     label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
-
-def configure_footer_error_label_gtk(label: Any) -> None:
-    """Footer error row: selectable text + wrap on GTK."""
-    if hasattr(label, "set_selectable"):
-        label.set_selectable(True)
-    if hasattr(label, "set_wrap"):
-        label.set_wrap(True)
-    if hasattr(label, "set_wrap_mode"):
-        label.set_wrap_mode(2)  # Pango.WrapMode.WORD

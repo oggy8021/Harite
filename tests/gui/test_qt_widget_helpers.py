@@ -319,7 +319,7 @@ def test_format_slideshow_output_label_text_truncates_long_paths() -> None:
 def test_slideshow_output_sync_uses_work_dir_not_pictures_root(qapp, monkeypatch, tmp_path: Path) -> None:
     from PyQt6.QtWidgets import QLabel
 
-    from harite.gui.adapters.gtk_runtime_sync import sync_slideshow_state_from_owner
+    from harite.gui.adapters.gui_runtime_sync import sync_slideshow_state_from_owner
     from harite.gui.views.main_window import MainWindow
 
     home = tmp_path / "home"

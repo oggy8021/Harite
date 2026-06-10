@@ -31,7 +31,7 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         self._signal_handlers: dict[str, Callable[..., Any]] = {}
         self._tray_adapter: Any | None = None
 
-        # Runtime state (mirrors gtk_backend initialisation)
+        # Runtime state (owner/widget sync fields)
         self._slideshow_running: bool = False
         self._slideshow_paused: bool = False
         self._slideshow_srcdir_l: str = ""
@@ -306,12 +306,12 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         return (160, 90)
 
     def _sync_result_preview_from_owner(self, owner: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_preview import sync_result_preview_from_owner
+        from harite.gui.adapters.gui_runtime_preview import sync_result_preview_from_owner
 
         sync_result_preview_from_owner(self, owner)
 
     def _sync_action_availability_from_owner(self, owner: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_sync import sync_action_availability_from_owner
+        from harite.gui.adapters.gui_runtime_sync import sync_action_availability_from_owner
         sync_action_availability_from_owner(self, owner)
 
     # ------------------------------------------------------------------
@@ -319,31 +319,31 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
     # ------------------------------------------------------------------
 
     def _sync_slideshow_state_from_owner(self, owner: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_sync import sync_slideshow_state_from_owner
+        from harite.gui.adapters.gui_runtime_sync import sync_slideshow_state_from_owner
         sync_slideshow_state_from_owner(self, owner)
 
     def _sync_main_state_from_owner(self, owner: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_sync import sync_main_state_from_owner
+        from harite.gui.adapters.gui_runtime_sync import sync_main_state_from_owner
         sync_main_state_from_owner(self, owner)
 
     def _sync_input_state_from_owner(self, owner: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_sync import sync_input_state_from_owner
+        from harite.gui.adapters.gui_runtime_sync import sync_input_state_from_owner
         sync_input_state_from_owner(self, owner)
 
     def _sync_margins_state_from_owner(self, owner: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_sync import sync_margins_state_from_owner
+        from harite.gui.adapters.gui_runtime_sync import sync_margins_state_from_owner
         sync_margins_state_from_owner(self, owner)
 
     def _refresh_margins_controls(self, owner: Any | None = None) -> None:
-        from harite.gui.adapters.gtk_runtime_sync import refresh_margins_controls
+        from harite.gui.adapters.gui_runtime_sync import refresh_margins_controls
         refresh_margins_controls(self, owner)
 
     def _sync_feedback_from_owner(self, owner: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_sync import sync_feedback_from_owner
+        from harite.gui.adapters.gui_runtime_sync import sync_feedback_from_owner
         sync_feedback_from_owner(self, owner)
 
     def _sync_non_preview_state_from_owner(self, owner: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_owner_sync import sync_non_preview_state_from_owner
+        from harite.gui.adapters.gui_runtime_owner_sync import sync_non_preview_state_from_owner
         sync_non_preview_state_from_owner(self, owner)
 
     def _sync_preview_state_from_owner(
@@ -353,7 +353,7 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         include_input: bool = False,
         include_feedback: bool = False,
     ) -> None:
-        from harite.gui.adapters.gtk_runtime_owner_sync import sync_preview_state_from_owner
+        from harite.gui.adapters.gui_runtime_owner_sync import sync_preview_state_from_owner
         sync_preview_state_from_owner(
             self, owner, include_input=include_input, include_feedback=include_feedback
         )
@@ -361,23 +361,23 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
     def _sync_input_preview_state_from_owner(
         self, owner: Any, *, include_feedback: bool = False
     ) -> None:
-        from harite.gui.adapters.gtk_runtime_owner_sync import sync_input_preview_state_from_owner
+        from harite.gui.adapters.gui_runtime_owner_sync import sync_input_preview_state_from_owner
         sync_input_preview_state_from_owner(self, owner, include_feedback=include_feedback)
 
     def _sync_margins_state_with_feedback_from_owner(self, owner: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_owner_sync import (
+        from harite.gui.adapters.gui_runtime_owner_sync import (
             sync_margins_state_with_feedback_from_owner,
         )
         sync_margins_state_with_feedback_from_owner(self, owner)
 
     def _sync_slideshow_state_with_feedback_from_owner(self, owner: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_owner_sync import (
+        from harite.gui.adapters.gui_runtime_owner_sync import (
             sync_slideshow_state_with_feedback_from_owner,
         )
         sync_slideshow_state_with_feedback_from_owner(self, owner)
 
     def _sync_slideshow_state_only_from_owner(self, owner: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_owner_sync import sync_slideshow_state_only_from_owner
+        from harite.gui.adapters.gui_runtime_owner_sync import sync_slideshow_state_only_from_owner
         sync_slideshow_state_only_from_owner(self, owner)
 
     # ------------------------------------------------------------------
@@ -385,43 +385,43 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
     # ------------------------------------------------------------------
 
     def _set_settings_two_screen_mode(self, value: object) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import set_settings_two_screen_mode
+        from harite.gui.adapters.gui_runtime_settings_dialogs import set_settings_two_screen_mode
         set_settings_two_screen_mode(self, value)
 
     def _read_settings_two_screen_mode(self) -> str | bool:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import read_settings_two_screen_mode
+        from harite.gui.adapters.gui_runtime_settings_dialogs import read_settings_two_screen_mode
         return read_settings_two_screen_mode(self)
 
     def _set_settings_apply_mode(self, value: object | None) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import set_settings_apply_mode
+        from harite.gui.adapters.gui_runtime_settings_dialogs import set_settings_apply_mode
         set_settings_apply_mode(self, value)
 
     def _read_settings_apply_mode(self) -> str:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import read_settings_apply_mode
+        from harite.gui.adapters.gui_runtime_settings_dialogs import read_settings_apply_mode
         return read_settings_apply_mode(self)
 
     def _sync_settings_widgets_from_dialog(self) -> dict[str, object]:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import sync_settings_widgets_from_dialog
+        from harite.gui.adapters.gui_runtime_settings_dialogs import sync_settings_widgets_from_dialog
         return sync_settings_widgets_from_dialog(self)
 
     def _sync_settings_dialog_from_widgets(self) -> dict[str, object]:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import sync_settings_dialog_from_widgets
+        from harite.gui.adapters.gui_runtime_settings_dialogs import sync_settings_dialog_from_widgets
         return sync_settings_dialog_from_widgets(self)
 
     def _refresh_settings_dialog_from_getter(self) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import refresh_settings_dialog_from_getter
+        from harite.gui.adapters.gui_runtime_settings_dialogs import refresh_settings_dialog_from_getter
         refresh_settings_dialog_from_getter(self)
 
     def _refresh_color_dialog_from_getter(self) -> str:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import refresh_color_dialog_from_getter
+        from harite.gui.adapters.gui_runtime_settings_dialogs import refresh_color_dialog_from_getter
         return refresh_color_dialog_from_getter(self)
 
     def _refresh_about_dialog_from_getter(self) -> dict[str, object]:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import refresh_about_dialog_from_getter
+        from harite.gui.adapters.gui_runtime_settings_dialogs import refresh_about_dialog_from_getter
         return refresh_about_dialog_from_getter(self)
 
     def _store_background_color_in_settings_dialog(self, color: str) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import (
+        from harite.gui.adapters.gui_runtime_settings_dialogs import (
             store_background_color_in_settings_dialog,
         )
         store_background_color_in_settings_dialog(self, color)
@@ -465,7 +465,7 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
 
     def _sanitize_margin_text(self, value: str) -> str:
         try:
-            from harite.gui.adapters.gtk_runtime_margin_text import sanitize_margin_text
+            from harite.gui.adapters.gui_runtime_margin_text import sanitize_margin_text
             return sanitize_margin_text(value)
         except Exception:
             return value
@@ -846,13 +846,13 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         self._notify_close_handler("on_close_save_path_dialog")
 
     def _on_optimize_clicked(self, *_args: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_action_handlers import run_optimize_clicked
+        from harite.gui.adapters.gui_runtime_action_handlers import run_optimize_clicked
 
         callback = self._signal_handlers.get("on_optimize")
         run_optimize_clicked(self, callback)
 
     def _on_apply_clicked(self, *_args: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_action_handlers import run_apply_clicked
+        from harite.gui.adapters.gui_runtime_action_handlers import run_apply_clicked
 
         callback = self._signal_handlers.get("on_apply")
         run_apply_clicked(self, callback)
@@ -863,7 +863,7 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
 
         sync_apply_mode_tooltips(self, owner, mode=mode)
 
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_apply_mode_toggled
+        from harite.gui.adapters.gui_runtime_settings_dialogs import on_settings_apply_mode_toggled
         on_settings_apply_mode_toggled(self, widget, mode)
         callback = self._signal_handlers.get("on_change_apply_mode")
         if callback is None:
@@ -888,19 +888,19 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
     # ------------------------------------------------------------------
 
     def _on_settings_clicked(self, *_args: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_clicked
+        from harite.gui.adapters.gui_runtime_settings_dialogs import on_settings_clicked
         on_settings_clicked(self)
 
     def _on_settings_apply_clicked(self, *_args: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_apply_clicked
+        from harite.gui.adapters.gui_runtime_settings_dialogs import on_settings_apply_clicked
         on_settings_apply_clicked(self)
 
     def _on_settings_save_clicked(self, *_args: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_save_clicked
+        from harite.gui.adapters.gui_runtime_settings_dialogs import on_settings_save_clicked
         on_settings_save_clicked(self)
 
     def _on_settings_close_clicked(self, *_args: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import on_settings_close_clicked
+        from harite.gui.adapters.gui_runtime_settings_dialogs import on_settings_close_clicked
         on_settings_close_clicked(self)
 
     # ------------------------------------------------------------------
@@ -913,23 +913,23 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             proxy.pick_color()
 
     def _on_color_clicked(self, *_args: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import on_color_clicked
+        from harite.gui.adapters.gui_runtime_settings_dialogs import on_color_clicked
         on_color_clicked(self)
 
     def _on_color_dialog_apply_clicked(self, *_args: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import on_color_dialog_apply_clicked
+        from harite.gui.adapters.gui_runtime_settings_dialogs import on_color_dialog_apply_clicked
         on_color_dialog_apply_clicked(self)
 
     def _on_color_dialog_cancel_clicked(self, *_args: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import on_color_dialog_cancel_clicked
+        from harite.gui.adapters.gui_runtime_settings_dialogs import on_color_dialog_cancel_clicked
         on_color_dialog_cancel_clicked(self)
 
     def _on_color_dialog_confirmed(self, color: str) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import on_color_dialog_confirmed
+        from harite.gui.adapters.gui_runtime_settings_dialogs import on_color_dialog_confirmed
         on_color_dialog_confirmed(self, color)
 
     def _on_color_dialog_canceled(self, destroyed: bool = False) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import on_color_dialog_canceled
+        from harite.gui.adapters.gui_runtime_settings_dialogs import on_color_dialog_canceled
         on_color_dialog_canceled(self, destroyed)
 
     # ------------------------------------------------------------------
@@ -937,11 +937,11 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
     # ------------------------------------------------------------------
 
     def _on_about_clicked(self, *_args: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import on_about_clicked
+        from harite.gui.adapters.gui_runtime_settings_dialogs import on_about_clicked
         on_about_clicked(self)
 
     def _on_about_dialog_close_clicked(self, *_args: Any) -> None:
-        from harite.gui.adapters.gtk_runtime_settings_dialogs import on_about_dialog_close_clicked
+        from harite.gui.adapters.gui_runtime_settings_dialogs import on_about_dialog_close_clicked
         on_about_dialog_close_clicked(self)
 
     # ------------------------------------------------------------------
@@ -993,7 +993,7 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             self._set_feedback(phase="Slideshow", state="planned")
             return
         try:
-            from harite.gui.adapters.gtk_runtime_slideshow_ui import commit_slideshow_interval_from_spin
+            from harite.gui.adapters.gui_runtime_slideshow_ui import commit_slideshow_interval_from_spin
 
             interval = commit_slideshow_interval_from_spin(self)
             ok = callback()

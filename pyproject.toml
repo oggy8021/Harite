@@ -19,8 +19,7 @@ gui-qt = ["PyQt6>=6.4"]
 
 [project.scripts]
 harite = "harite.cli:run"
-harite-gui = "harite.gui.app:run"
-harite-gtk = "harite.gui.app:run"
+harite-gui = "harite.gui.app_qt:run"
 harite-qt = "harite.gui.app_qt:run"
 
 [tool.setuptools]

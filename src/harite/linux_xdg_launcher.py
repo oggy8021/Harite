@@ -27,7 +27,7 @@ def resolve_launcher_icon_path() -> Path | None:
 
 
 def build_desktop_entry_text() -> str:
-    exec_args = [_quote_exec_arg(str(sys.executable)), "-m", "harite.gui.app"]
+    exec_args = [_quote_exec_arg(str(sys.executable)), "-m", "harite.gui.app_qt"]
     icon_path = resolve_launcher_icon_path()
     icon_value = str(icon_path) if icon_path is not None else "harite"
 

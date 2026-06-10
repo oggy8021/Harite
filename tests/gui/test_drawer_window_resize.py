@@ -46,7 +46,7 @@ class _SizeHint:
 
 
 def test_restore_shrinks_taller_window_to_content_fit_without_adjust_size():
-    class _GtkStyleWindow:
+    class _ResizeOnlyWindow:
         def __init__(self):
             self._width = 900
             self._height = 900
@@ -67,7 +67,7 @@ def test_restore_shrinks_taller_window_to_content_fit_without_adjust_size():
             self._height = int(height)
             self.resize_calls.append((self._width, self._height))
 
-    window = _GtkStyleWindow()
+    window = _ResizeOnlyWindow()
     backend = type("B", (), {"_objects": {"main_window": window}})()
     state_attr = "_test_drawer_saved_window_height"
 
