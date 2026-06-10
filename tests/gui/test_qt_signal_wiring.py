@@ -947,3 +947,38 @@ def test_slideshow_mode_toggled_updates_lblSlideshowModeHelp_random(qapp):
     backend._objects["lblSlideshowModeHelp"] = lbl
     backend._on_slideshow_mode_toggled(None, "random")
     assert lbl.text() == "Random rotates images."
+
+
+def test_slideshow_auto_display_scale_widgets_registered_and_wired(qapp):
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+
+    backend = load_qt_runtime_signal_backend()
+    backend.connect_signals({})
+
+    for key in ("chk_slideshow_auto_display_scale_l", "chk_slideshow_auto_display_scale_r"):
+        widget = backend._objects.get(key)
+        assert widget is not None, key
+        assert widget.receivers(widget.toggled) >= 1
+
+
+def test_slideshow_auto_display_scale_toggle_updates_owner_state(qapp, monkeypatch):
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+
+    monkeypatch.setattr(MainWindow, "_default_plugin_name", lambda self: "windows")
+    monkeypatch.setattr(MainWindow, "_default_output_dir", lambda self: ".")
+    monkeypatch.setattr(MainWindow, "dual_display_available", property(lambda self: True))
+
+    window = MainWindow()
+    backend = load_qt_runtime_signal_backend()
+    from harite.gui.adapters.ui_adapter import RUNTIME_HANDLER_MAP, create_mainwindow_signal_dispatch
+
+    dispatch = create_mainwindow_signal_dispatch(window, tuple(RUNTIME_HANDLER_MAP.keys()))
+    backend.connect_signals(dispatch)
+
+    chk = backend._objects["chk_slideshow_auto_display_scale_l"]
+    chk.setChecked(True)
+    assert window.slideshow_l_auto_display_scale is True
+
+    chk.setChecked(False)
+    assert window.slideshow_l_auto_display_scale is False

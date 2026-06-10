@@ -98,6 +98,7 @@ def _build_display_path_section(side: str) -> dict[str, Any]:
     """Build path display + clear row for one display panel (below direction grid)."""
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (
+        QCheckBox,
         QComboBox,
         QHBoxLayout,
         QLineEdit,
@@ -129,6 +130,9 @@ def _build_display_path_section(side: str) -> dict[str, Any]:
 
     apply_icon_only_button(btn_clr, f"Clear-{side.upper()}")
 
+    chk_auto_scale = QCheckBox("auto")
+    chk_auto_scale.setToolTip("Auto upscale small source images by short-edge thresholds (MAT-14b)")
+
     cmb_scale = QComboBox()
     cmb_scale.setToolTip("Source image scale preset (100% / 125% / 150% / 200%)")
     populate_display_scale_combo_qt(cmb_scale)
@@ -137,6 +141,7 @@ def _build_display_path_section(side: str) -> dict[str, Any]:
     clear_row_layout = QHBoxLayout(clear_row)
     clear_row_layout.setContentsMargins(0, 0, 0, 0)
     clear_row_layout.addStretch()
+    clear_row_layout.addWidget(chk_auto_scale)
     clear_row_layout.addWidget(cmb_scale)
     clear_row_layout.addWidget(btn_clr)
 
@@ -145,6 +150,7 @@ def _build_display_path_section(side: str) -> dict[str, Any]:
 
     return {
         f"input_display_{side}": input_display,
+        f"chk_auto_display_scale_{side}": chk_auto_scale,
         f"combo_display_scale_{side}": cmb_scale,
         f"btn_clr_path_{side}": btn_clr,
         f"path_panel_{side}": path_panel,
@@ -167,6 +173,7 @@ def _build_display_panel(side: str) -> dict[str, Any]:
 
     return {
         f"input_display_{side}": path_widgets[f"input_display_{side}"],
+        f"chk_auto_display_scale_{side}": path_widgets[f"chk_auto_display_scale_{side}"],
         f"combo_display_scale_{side}": path_widgets[f"combo_display_scale_{side}"],
         f"btn_clr_path_{side}": path_widgets[f"btn_clr_path_{side}"],
         f"panel_{side}": panel,

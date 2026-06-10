@@ -191,6 +191,8 @@ def _tab_aliases(w: dict[str, Any]) -> dict[str, Any]:
         "btnOpenSrcdirR": _get("btn_open_srcdir_r"),
         "btnClrSrcdirL": _get("btn_clr_srcdir_l"),
         "btnClrSrcdirR": _get("btn_clr_srcdir_r"),
+        "chkSlideshowAutoDisplayScaleL": _get("chk_slideshow_auto_display_scale_l"),
+        "chkSlideshowAutoDisplayScaleR": _get("chk_slideshow_auto_display_scale_r"),
         "btnSwapSlideshowSrcdirs": _get("btn_swap_slideshow_srcdirs"),
         "comboSlideshowSourceL": _get("combo_slideshow_source_l"),
         "comboSlideshowSourceR": _get("combo_slideshow_source_r"),

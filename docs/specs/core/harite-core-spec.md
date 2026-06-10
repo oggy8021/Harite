@@ -136,6 +136,7 @@ flowchart TD
 
 - **拡大しない（既定）。** 画像 + margins が display 矩形に収まるときは **原寸**（`scale = 1.0`）。収まらないときのみ `_downsize_to_fit_margins(...)` で **縮小のみ**（二段 proportional shrink）。
 - **MAT-14（意図的拡大）:** Compose の source scale（100% / 125% / 150% / 200%）は **元画像サイズのみ** に掛ける。display / composite 解像度は変えない。100% は上記 MAT-01b 経路、それ以外は upscale 後に収納判定し、display 矩形（margins 込み）に収まらなければエラー（縮小フォールバックなし）。align / valign は upscale 後の `(nw, nh)` に対して適用する。
+- **MAT-14b（auto 倍率）:** `auto` ON かつ手動 scale が 100% のとき、画像短辺と display slot 短辺（margins 控除後）を比較し、≤1/2 → 1.5x、≤1/4 → 2.0x を自動適用。手動 % は auto より優先。Main optimize は `l_auto_display_scale` / `r_auto_display_scale`、Slideshow optimize は `slideshow_l_auto_display_scale` / `slideshow_r_auto_display_scale`（別キー・別 UI）。
 - `scaling` 引数・設定キーは optimize 幾何に **影響しない**（合意済み）。Settings の `scaling` 値や `compute_placement(..., scaling=...)` の引数は **互換用シグネチャ** であり、配置計算では参照されない。
 - 各入力は **display スロット**（矩形 + 非対称 margins）に割り当てる。two-screen では L margins `(ml, 0, mt, mb)`、R margins `(0, mr, mt, mb)`。
 - **align / valign** は display 矩形の原点 `(0,0)` を left/top とし、**スロット全面**（`screen_w × screen_h`）の余白で寄せる。margins は **収納判定と縮小上限** に使い、paste 座標の `+= ml` オフセットには使わない（margin-inner cell へ align しない）。
@@ -286,10 +287,21 @@ Windows の補足:
 
 ### 6.3 論理グループ
 
-- optimize 面: `resolution`, `two_screen`, `l_display`, `r_display`, `margins`, `align`, `valign`, `scaling`, `quality`, `background_color`, `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`
+- optimize 面: `resolution`, `two_screen`, `l_display`, `r_display`, `l_display_scale`, `r_display_scale`, `l_auto_display_scale`, `r_auto_display_scale`, `margins`, `align`, `valign`, `scaling`, `quality`, `background_color`, `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`
 - apply 面: `plugin`, `apply_mode`
-- スライドショー面: `slideshow_interval_seconds`, `slideshow_mode`, `slideshow_srcdir_l`, `slideshow_srcdir_r`
+- スライドショー面: `slideshow_interval_seconds`, `slideshow_mode`, `slideshow_srcdir_l`, `slideshow_srcdir_r`, `slideshow_l_auto_display_scale`, `slideshow_r_auto_display_scale`
 - スライドショー registry 追跡（任意）: `slideshow_source_id_l`, `slideshow_source_id_r`, `slideshow_profile_id` — [source-spec §6.4](../source/harite-source-spec.md)
+
+MAT-14 / MAT-14b の設定キーと optimize 経路（§4.1 参照）:
+
+| キー | 論理グループ | Main optimize | Slideshow optimize |
+| --- | --- | --- | --- |
+| `l_display_scale` / `r_display_scale` | optimize | 使用 | **使用しない**（slideshow 経路は手動 100% 固定。UI は Main のみ） |
+| `l_auto_display_scale` / `r_auto_display_scale` | optimize | 使用 | **使用しない** |
+| `slideshow_l_auto_display_scale` / `slideshow_r_auto_display_scale` | slideshow | 使用しない | **使用**（auto のみ Slideshow 専用） |
+
+- GUI: Main Compose に手動 % + auto。Slideshow タブに auto のみ（手動 % UI なし）。
+- CLI: `optimize` は optimize 面の 4 キーを settings から読む。`slideshow` は上表どおり `build_slideshow_optimize_config` で合成する。
 
 主要 key の意味:
 

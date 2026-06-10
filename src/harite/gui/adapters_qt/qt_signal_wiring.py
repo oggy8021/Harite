@@ -52,6 +52,16 @@ def _connect_input_widgets(backend: Any, widgets: dict[str, Any]) -> None:
         lambda: backend._on_clear_input_clicked("R"),
     )
     _safe_connect(
+        widgets.get("chk_auto_display_scale_l"),
+        "toggled",
+        lambda checked: backend._on_auto_display_scale_toggled("L", checked),
+    )
+    _safe_connect(
+        widgets.get("chk_auto_display_scale_r"),
+        "toggled",
+        lambda checked: backend._on_auto_display_scale_toggled("R", checked),
+    )
+    _safe_connect(
         widgets.get("combo_display_scale_l"),
         "currentIndexChanged",
         lambda _index: backend._on_display_scale_combo_changed("L"),
@@ -191,6 +201,16 @@ def _connect_slideshow_widgets(backend: Any, widgets: dict[str, Any]) -> None:
         widgets.get("btn_clr_srcdir_r"),
         "clicked",
         lambda: backend._on_clear_slideshow_srcdir_clicked("R"),
+    )
+    _safe_connect(
+        widgets.get("chk_slideshow_auto_display_scale_l"),
+        "toggled",
+        lambda checked: backend._on_slideshow_auto_display_scale_toggled("L", checked),
+    )
+    _safe_connect(
+        widgets.get("chk_slideshow_auto_display_scale_r"),
+        "toggled",
+        lambda checked: backend._on_slideshow_auto_display_scale_toggled("R", checked),
     )
     _safe_connect(
         widgets.get("combo_slideshow_source_l"),

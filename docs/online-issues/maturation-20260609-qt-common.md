@@ -53,7 +53,7 @@ GitHub Issue 起票前の観測転記。
 | --- | --- | --- |
 | **MAT-10** | 江戸切絵図 / edo-maps 雰囲気 source | 機能要望・**実施**（Q-01 後） |
 | **MAT-18** | NDL `searchbytext` + キーワード（CODH 同型） | 機能要望・op3 品質所見 |
-| **MAT-14b** | 小画像向け **auto 倍率**（Main + Slideshow） | 機能要望・op3 閃き |
+| **MAT-14b** | 小画像向け **auto 倍率**（Main + Slideshow） | 機能要望・op3 閃き · **実装中**（`feature/auto-display-scale-20260610`） |
 
 ### おおよその次の流れ（オーナー確定 2026-06-10）
 
@@ -776,22 +776,40 @@ GitHub Issue 起票前の観測転記。
   - 短辺 ≤ 割当解像度の **1/2** → **1.25x または 1.5x**（アスペクト比維持）
   - 短辺 ≤ **1/4** → **1.5x または 2x**
 - **Surface（Compose）** の倍率 combo **左**に L/R 各コントロール。
-- **設定ファイル**に載せ、**Main タブと Slideshow タブ**の両方から利用（slideshow も Optimize 経路で適用）。
+- **設定ファイル**に載せ、Main / Slideshow **それぞれ独立した auto 値**として保存。Slideshow タブにも Surface 露出（auto のみ）。
 
 ### 分類
 
-- `planning`（機能要望）
-- MAT-14（手動 %）の **派生・別軸**（自動 vs 手動の優先は設計時確定）
+- `in_progress`（機能要望）— branch `feature/auto-display-scale-20260610`、PR 未起票
+- MAT-14（手動 %）の **派生・別軸**
+
+### 設計確定（2026-06-10）
+
+| 項目 | 内容 |
+|------|------|
+| 閾値 | 短辺 ≤ display 短辺の **1/2** → **1.5x**；≤ **1/4** → **2.0x** |
+| 比較軸 | `min(img_w, img_h)` vs margins 控除後の `min(usable_w, usable_h)` |
+| 手動優先 | MAT-14 手動 % が 100% 以外なら auto を無視（**Main のみ**） |
+| Slideshow 手動 | slideshow 経路は **常に 100%**。Main の手動 % は引き継がない |
+| デフォルト | auto **OFF** |
+| 設定キー | Main: `l_auto_display_scale` / `r_auto_display_scale`（optimize 節） |
+| | Slideshow: `slideshow_l_auto_display_scale` / `slideshow_r_auto_display_scale`（slideshow 節・**別値**） |
+| UI | Qt Main Compose：scale combo **左**に L/R 各 `auto` checkbox |
+| | Qt Slideshow：Srcdir ラベル下・Clear 左に L/R 各 `auto` checkbox（手動 % なし） |
+| 経路 | Main optimize → optimize 節の auto／Slideshow optimize → slideshow 節の auto |
+| CLI | `optimize` → optimize 節 4 キー／`slideshow` → 手動 % は optimize 節・auto は slideshow 節（core/cli/slideshow spec §6.3 表） |
 
 ### 関連
 
 - MAT-14（#459）、MAT-01b（#444）、MAT-11（#452）
 - [op3 ロードマップ](../working/20260610-v2-roadmap-op3-planning.md) §MAT-14b
+- core spec: `docs/specs/core/harite-core-spec.md` MAT-14b 節
+- 実装: `src/harite/auto_display_scale.py`、`tests/test_auto_display_scale.py`
 
 ### 取り込み方針
 
-- 現時点: **planning のみ** — 係数デフォルト・MAT-14 手動との合成順を設計ゲート
-- スコープ: core 画像サイズ決定段階 + settings + Qt Compose UI + slideshow form_state 浸透
+- **実装済み（未マージ）** — Main 1024×768 手動確認済。Slideshow 専用 auto UI + 別設定キー追加
+- GTK Compose / Slideshow UI は未追加（`gtk_runtime_sync` の checkbox 同期のみ；Q-01 方針と整合）
 
 ---
 

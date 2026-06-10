@@ -42,6 +42,8 @@ class OptimizeFormState:
     r_display: Optional[str] = None
     l_display_scale: float = 1.0
     r_display_scale: float = 1.0
+    l_auto_display_scale: bool = False
+    r_auto_display_scale: bool = False
     align: tuple[str, str] = ("center", "center")
     valign: tuple[str, str] = ("center", "center")
     quality: int = 90
@@ -108,6 +110,8 @@ class OptimizeController:
             r_display=r_display,
             l_display_scale=state.l_display_scale,
             r_display_scale=state.r_display_scale,
+            l_auto_display_scale=state.l_auto_display_scale,
+            r_auto_display_scale=state.r_auto_display_scale,
             align=state.align,
             valign=state.valign,
             embed_info=state.embed_info,
@@ -157,7 +161,13 @@ class OptimizeController:
         r_display = None if not display_settings.r_display else parse_resolution(display_settings.r_display)
         from harite.display_scale import is_unity_display_scale
 
-        if not is_unity_display_scale(state.l_display_scale) or not is_unity_display_scale(state.r_display_scale):
+        needs_scale_check = (
+            not is_unity_display_scale(state.l_display_scale)
+            or not is_unity_display_scale(state.r_display_scale)
+            or state.l_auto_display_scale
+            or state.r_auto_display_scale
+        )
+        if needs_scale_check:
             validate_intentional_image_scales(
                 inputs,
                 (w, h),
@@ -167,6 +177,8 @@ class OptimizeController:
                 r_display=r_display,
                 l_display_scale=state.l_display_scale,
                 r_display_scale=state.r_display_scale,
+                l_auto_display_scale=state.l_auto_display_scale,
+                r_auto_display_scale=state.r_auto_display_scale,
             )
 
     def run_optimize(self, state: OptimizeFormState) -> tuple[list[Path], list]:

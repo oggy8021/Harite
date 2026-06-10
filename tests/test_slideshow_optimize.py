@@ -25,6 +25,36 @@ def test_build_slideshow_optimize_config_reads_optimize_keys() -> None:
     assert config.apply_mode in {"single-file", "per-monitor-auto-split"}
 
 
+def test_build_slideshow_optimize_config_uses_slideshow_auto_scale_keys() -> None:
+    cfg = {
+        "l_auto_display_scale": False,
+        "r_auto_display_scale": False,
+        "l_display_scale": 1.5,
+        "r_display_scale": 2.0,
+        "slideshow_l_auto_display_scale": True,
+        "slideshow_r_auto_display_scale": True,
+    }
+    config = build_slideshow_optimize_config(cfg, default_plugin="linux")
+
+    assert config.base_form_state.l_auto_display_scale is True
+    assert config.base_form_state.r_auto_display_scale is True
+    assert config.base_form_state.l_display_scale == 1.0
+    assert config.base_form_state.r_display_scale == 1.0
+
+
+def test_build_slideshow_optimize_config_ignores_optimize_auto_scale_keys() -> None:
+    cfg = {
+        "l_auto_display_scale": True,
+        "r_auto_display_scale": True,
+        "slideshow_l_auto_display_scale": False,
+        "slideshow_r_auto_display_scale": False,
+    }
+    config = build_slideshow_optimize_config(cfg, default_plugin="linux")
+
+    assert config.base_form_state.l_auto_display_scale is False
+    assert config.base_form_state.r_auto_display_scale is False
+
+
 def test_apply_slideshow_single_source_runs_optimize_and_apply(tmp_path, monkeypatch) -> None:
     img = tmp_path / "src.jpg"
     img.write_bytes(b"fake")

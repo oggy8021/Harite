@@ -25,6 +25,7 @@ def _build_srcdir_row() -> dict[str, Any]:
     """Three-column srcdir row (L panel / center Swap / R panel), Main tab parity."""
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (
+        QCheckBox,
         QComboBox,
         QGridLayout,
         QHBoxLayout,
@@ -83,10 +84,16 @@ def _build_srcdir_row() -> dict[str, Any]:
         _set_button_icon(btn_clr, "icons", "lucide", "folder-x.svg")
         apply_icon_only_button(btn_clr, f"Clear-{side_label}")
 
+        chk_auto_scale = QCheckBox("auto")
+        chk_auto_scale.setToolTip(
+            "Auto upscale small slideshow source images by short-edge thresholds (MAT-14b)"
+        )
+
         clear_row = QWidget()
         clear_row_layout = QHBoxLayout(clear_row)
         clear_row_layout.setContentsMargins(0, 0, 0, 0)
         clear_row_layout.addStretch()
+        clear_row_layout.addWidget(chk_auto_scale)
         clear_row_layout.addWidget(btn_clr)
 
         layout.addWidget(saved_row)
@@ -99,6 +106,7 @@ def _build_srcdir_row() -> dict[str, Any]:
             f"combo_slideshow_source_{side_key}": combo,
             f"btn_open_srcdir_{side_key}": btn,
             f"slideshow_source_label_{side_key}": lbl,
+            f"chk_slideshow_auto_display_scale_{side_key}": chk_auto_scale,
             f"btn_clr_srcdir_{side_key}": btn_clr,
         }
 
@@ -130,6 +138,8 @@ def _build_srcdir_row() -> dict[str, Any]:
         "slideshow_source_label_r": right["slideshow_source_label_r"],
         "btn_clr_srcdir_l": left["btn_clr_srcdir_l"],
         "btn_clr_srcdir_r": right["btn_clr_srcdir_r"],
+        "chk_slideshow_auto_display_scale_l": left["chk_slideshow_auto_display_scale_l"],
+        "chk_slideshow_auto_display_scale_r": right["chk_slideshow_auto_display_scale_r"],
         "btn_swap_slideshow_srcdirs": btn_swap,
         "combo_slideshow_source_l": left["combo_slideshow_source_l"],
         "combo_slideshow_source_r": right["combo_slideshow_source_r"],

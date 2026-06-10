@@ -639,8 +639,11 @@ def validate_intentional_image_scales(
     r_display: Optional[Tuple[int, int]] = None,
     l_display_scale: float = 1.0,
     r_display_scale: float = 1.0,
+    l_auto_display_scale: bool = False,
+    r_auto_display_scale: bool = False,
 ) -> None:
-    """Preflight MAT-14 source-image scale against display slots without writing output."""
+    """Preflight MAT-14/14b source-image scale against display slots without writing output."""
+    from harite.auto_display_scale import resolve_effective_display_scale
     items = _parse_inputs(inputs)
     w_target, h_target = target_resolution
     count = max(1, len(items))
@@ -664,7 +667,17 @@ def validate_intentional_image_scales(
         img = Image.open(img_path).convert("RGB")
         slot = display_slots[i] if i < len(display_slots) else display_slots[-1]
         _origin_x, _origin_y, screen_w, screen_h, side_margins = slot
-        image_scale = l_display_scale if i == 0 else (r_display_scale if i == 1 else 1)
+        manual_scale = l_display_scale if i == 0 else (r_display_scale if i == 1 else 1)
+        auto_enabled = l_auto_display_scale if i == 0 else (r_auto_display_scale if i == 1 else False)
+        image_scale = resolve_effective_display_scale(
+            img.size[0],
+            img.size[1],
+            screen_w=screen_w,
+            screen_h=screen_h,
+            margins=side_margins,
+            manual_scale=manual_scale,
+            auto_enabled=auto_enabled,
+        )
         side_label = side_labels[i] if i < len(side_labels) else f"slot {i + 1}"
         _resolve_intentional_image_dimensions(
             img,
@@ -754,6 +767,10 @@ def optimize_wallpapers(
 
     l_display_scale = normalize_display_scale(kwargs.get("l_display_scale", 1.0))
     r_display_scale = normalize_display_scale(kwargs.get("r_display_scale", 1.0))
+    l_auto_display_scale = bool(kwargs.get("l_auto_display_scale", False))
+    r_auto_display_scale = bool(kwargs.get("r_auto_display_scale", False))
+    from harite.auto_display_scale import resolve_effective_display_scale
+
     side_labels = ("L", "R")
 
     for i, img_path in enumerate(items[:count]):
@@ -765,7 +782,17 @@ def optimize_wallpapers(
 
         slot = display_slots[i] if i < len(display_slots) else display_slots[-1]
         origin_x, origin_y, screen_w, screen_h, side_margins = slot
-        image_scale = l_display_scale if i == 0 else (r_display_scale if i == 1 else 1)
+        manual_scale = l_display_scale if i == 0 else (r_display_scale if i == 1 else 1)
+        auto_enabled = l_auto_display_scale if i == 0 else (r_auto_display_scale if i == 1 else False)
+        image_scale = resolve_effective_display_scale(
+            img.size[0],
+            img.size[1],
+            screen_w=screen_w,
+            screen_h=screen_h,
+            margins=side_margins,
+            manual_scale=manual_scale,
+            auto_enabled=auto_enabled,
+        )
         side_label = side_labels[i] if i < len(side_labels) else f"slot {i + 1}"
         nw, nh, scale = _resolve_intentional_image_dimensions(
             img,

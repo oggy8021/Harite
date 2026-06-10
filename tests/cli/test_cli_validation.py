@@ -746,6 +746,48 @@ def test_optimize_defaults_embed_position_to_right_bottom(tmp_path, monkeypatch)
     assert captured["embed_position"] == "right-bottom"
 
 
+def test_optimize_mat14_scale_keys_can_come_from_settings(tmp_path, monkeypatch):
+    runner = CliRunner()
+    captured = {}
+
+    def fake_optimize_wallpapers(**kwargs):
+        captured.update(kwargs)
+        return [], []
+
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(
+        json.dumps(
+            {
+                "input": ["a.jpg"],
+                "resolution": "100x100",
+                "l_display_scale": 1.5,
+                "r_display_scale": 2.0,
+                "l_auto_display_scale": True,
+                "r_auto_display_scale": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    img = tmp_path / "a.jpg"
+    from PIL import Image
+
+    Image.new("RGB", (10, 10), (100, 100, 100)).save(img)
+    settings_payload = json.loads(settings_file.read_text(encoding="utf-8"))
+    settings_payload["input"] = [str(img)]
+    settings_file.write_text(json.dumps(settings_payload), encoding="utf-8")
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+
+    result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
+
+    assert result.exit_code == 0
+    assert captured["l_display_scale"] == 1.5
+    assert captured["r_display_scale"] == 2.0
+    assert captured["l_auto_display_scale"] is True
+    assert captured["r_auto_display_scale"] is False
+
+
 def test_optimize_auto_display_values_can_come_from_settings(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
