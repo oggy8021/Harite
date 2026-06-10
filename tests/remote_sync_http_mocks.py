@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 from urllib.request import Request
 
 import pytest
@@ -21,10 +22,30 @@ NDL_ILLUSTRATION = [
         "h": 26.4,
     }
 ]
+NDL_SEARCH_POOL = [
+    NDL_ILLUSTRATION[0],
+    {
+        "pid": "1111111",
+        "page": 10,
+        "x": 12.0,
+        "y": 13.0,
+        "w": 20.0,
+        "h": 21.0,
+    },
+    {
+        "pid": "2222222",
+        "page": 11,
+        "x": 22.0,
+        "y": 23.0,
+        "w": 24.0,
+        "h": 25.0,
+    },
+]
+NDL_SEARCH_HIT = len(NDL_SEARCH_POOL)
 NDL_SEARCHBYTEXT_RESPONSE = {
     "facets": {},
-    "list": NDL_ILLUSTRATION,
-    "hit": 1,
+    "list": NDL_SEARCH_POOL,
+    "hit": NDL_SEARCH_HIT,
     "from": 0,
 }
 CODH_THUMB = "https://example.test/iiif/book.tif/10,20,30,40/200,/0/default.jpg"
@@ -34,8 +55,7 @@ CODH_RESULTS = {
 }
 
 
-def ndl_iiif_url_from_sample() -> str:
-    item = NDL_ILLUSTRATION[0]
+def ndl_iiif_url_from_illustration(item: dict[str, Any]) -> str:
     return NDL_IIIF_TEMPLATE.format(
         pid=item["pid"],
         page=item["page"],
@@ -44,6 +64,29 @@ def ndl_iiif_url_from_sample() -> str:
         w=item["w"],
         h=item["h"],
     )
+
+
+def ndl_iiif_url_from_sample() -> str:
+    return ndl_iiif_url_from_illustration(NDL_ILLUSTRATION[0])
+
+
+def ndl_searchbytext_response_for_url(target: str) -> dict[str, Any]:
+    query = parse_qs(urlparse(target).query)
+    try:
+        from_offset = int((query.get("from") or ["0"])[0])
+    except (TypeError, ValueError):
+        from_offset = 0
+    try:
+        size = int((query.get("size") or [str(len(NDL_SEARCH_POOL))])[0])
+    except (TypeError, ValueError):
+        size = len(NDL_SEARCH_POOL)
+    items = NDL_SEARCH_POOL[from_offset : from_offset + size]
+    return {
+        "facets": {},
+        "list": items,
+        "hit": NDL_SEARCH_HIT,
+        "from": from_offset,
+    }
 
 
 def install_ndl_codh_urlopen_mock(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -56,7 +99,7 @@ def install_ndl_codh_urlopen_mock(monkeypatch: pytest.MonkeyPatch) -> None:
             class _Json:
                 def read(self) -> bytes:
                     if target.startswith(NDL_SEARCHBYTEXT_URL):
-                        return json.dumps(NDL_SEARCHBYTEXT_RESPONSE).encode("utf-8")
+                        return json.dumps(ndl_searchbytext_response_for_url(target)).encode("utf-8")
                     return json.dumps(NDL_ILLUSTRATION).encode("utf-8")
 
                 def __enter__(self) -> "_Json":
@@ -66,7 +109,11 @@ def install_ndl_codh_urlopen_mock(monkeypatch: pytest.MonkeyPatch) -> None:
                     return None
 
             return _Json()
-        if target == iiif_url or target.startswith("https://example.test/iiif/"):
+        if (
+            target == iiif_url
+            or target.startswith("https://dl.ndl.go.jp/api/iiif/")
+            or target.startswith("https://example.test/iiif/")
+        ):
             if "/200,/" in target:
                 raise AssertionError(f"unexpected thumbnail url: {target}")
 

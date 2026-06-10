@@ -44,7 +44,7 @@ def test_sync_manage_dialog_keyword_fields_enables_ndl_keyword_preset(qapp, tmp_
     keyword_source = import_preset_source(catalog, "ndl-search-keyword", cache_root=cache)
 
     codh_entry = QLineEdit("codh-draft")
-    ndl_entry = QLineEdit("ペンギン")
+    ndl_entry = QLineEdit("妖怪")
     sync_manage_dialog_keyword_fields(
         codh_entry,
         ndl_entry,
@@ -52,7 +52,7 @@ def test_sync_manage_dialog_keyword_fields_enables_ndl_keyword_preset(qapp, tmp_
     )
 
     assert codh_entry.isEnabled() is False
-    assert ndl_entry.text() == "ペンギン"
+    assert ndl_entry.text() == "妖怪"
     assert ndl_entry.isEnabled() is True
 
 

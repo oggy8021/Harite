@@ -666,7 +666,7 @@ harite-preset:{preset_id}
 | `ndl-random-indoor` | `picture_indoor` |
 | `ndl-random-landmark` | `picture_landmark` |
 | `ndl-random-outdoor` | `picture_outdoor` |
-| `ndl-search-keyword` | `searchbytext`（`keyword2vec` は settings `ndl_keyword`、既定 `ペンギン`） |
+| `ndl-search-keyword` | `searchbytext`（`keyword2vec` は settings `ndl_keyword`、既定 `妖怪`） |
 
 plain `/illustration/random`（旧 `ndl-random`）は **同梱しない**。
 
@@ -674,7 +674,7 @@ plain `/illustration/random`（旧 `ndl-random`）は **同梱しない**。
 
 `harite-preset:{preset_id}` で入口 API を解決し、次を行う。
 
-1. **facet preset:** `GET randomwithfacet?size=1&f-graphictags.tagname={facet}` → JSON 配列 1 件（`Illustration`）。**keyword preset (`ndl-search-keyword`):** `GET searchbytext?keyword2vec={ndl_keyword}&size=1` → JSON オブジェクトの `list` 1 件。
+1. **facet preset:** `GET randomwithfacet?size=1&f-graphictags.tagname={facet}` → JSON 配列 1 件（`Illustration`）。**keyword preset (`ndl-search-keyword`):** `GET searchbytext?keyword2vec={ndl_keyword}&size=20&from={offset}` → JSON オブジェクトの `list`（`hit` / `from` 付き）。cache に `ndl-search-batch.json`（現バッチ）と `ndl-search-cycle.json`（`from` + `cursor_index`）を保持し、CODH `codh-cycle.json` と同型に **リストを順次巡回**する（MAT-18b）。
 2. 返却から `pid`, `page`, `x`, `y`, `w`, `h` を読み IIIF URL を組み立てる。
 3. IIIF URL を GET し画像 bytes を取得する。
 4. §12.3 の共通ヘルパで **`latest.jpg`**（または URL に応じた `latest.png`）として cache へ上書き保存する。
@@ -687,7 +687,7 @@ Start / Refresh では上記手順を 1 回実行する。
 
 slideshow running 中、当該 side が `remote-ndl-tsugidigi` を参照するとき、各 tick 前に §15.3.3 の手順 1–4 と同型で **毎回** 入口 API（`randomwithfacet` または `searchbytext`）から新しい図版を取得し `latest.jpg` を上書きする（[slideshow-spec §6.2.1](../slideshow/harite-slideshow-spec.md)）。
 
-1. facet: `GET randomwithfacet?...` → JSON 配列 1 件。keyword: `GET searchbytext?keyword2vec={ndl_keyword}&size=1` → `list` 1 件。
+1. facet: `GET randomwithfacet?...` → JSON 配列 1 件。keyword: 現バッチの `list[cursor_index]` を IIIF 化。tick 毎に cursor 進行。バッチ末尾で `from` を進めて再取得（`from >= hit` で 0 に wrap）。
 2. IIIF URL を組み立てて GET し画像 bytes を取得する。
 3. §12.3 の共通ヘルパで `latest.jpg` を上書き保存する。
 4. IIIF 404 / 400 時の再試行は §15.3.3 と同型（最大 5 回）。全試行失敗時は前回 `latest.jpg` を維持して tick を継続する（`ndl_slideshow_tick` は `False`）。
@@ -698,9 +698,10 @@ op log: 要約 `NDL_TICK`（MAT-08）。詳細は `NDL_META_URL` / `NDL_IIIF_*` 
 
 | 項目 | 契約 |
 | --- | --- |
-| 候補の主体 | **NDL サーバー**（`randomwithfacet` または `searchbytext`）。Harite はローカルコーパスを持たず、sync ごとに API を 1 回（404 時は再呼び出し） |
+| 候補の主体 | **facet:** サーバー側ランダム（毎 API 呼び出し）。**keyword:** `searchbytext` の **検索結果リスト**（バッチ取得 + cursor） |
 | キーワード設定 | `ndl_keyword`（settings、Manage Presets `keyword(NDL)`、最大 16 文字）— CODH `codh_keyword` と並列 |
-| ローカルリスト巡回 | **しない** — cache は常に **1 枚**（§12.5） |
+| ローカルリスト巡回 | **keyword のみ** — `ndl-search-batch.json` + `ndl-search-cycle.json` で現バッチを順次巡回（画像は常に `latest.*` 1 枚） |
+| Manage Refresh | `codh_sync_pick=refresh` と同型 — keyword の `from` / cursor を 0 に戻しバッチ再取得 |
 | Illustration メタデータ | IIIF URL 生成に使ったら **永続化しない**（`pid` / 切り出し矩形 / 書誌情報等は cache に残さない） |
 | Slideshow Mode | **作用しない** — cache は常に `latest.*` 1 枚のため、`sequential` / `random` 切替で見た目は変わらない（§12.5） |
 

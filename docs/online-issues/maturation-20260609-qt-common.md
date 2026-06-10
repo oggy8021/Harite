@@ -830,6 +830,28 @@ GitHub Issue 起票前の観測転記。
 
 - 試験 URL: `https://lab.ndl.go.jp/dl/api/illustration/searchbytext?keyword2vec=ペンギン`
 - op log: 既存 `NDL_META_URL` で url 可視化
+- **op4（2026-06-10）:** `size=1` 固定で毎 tick 同一 IIIF（`content_changed: false`）→ **MAT-18b** へ
+
+---
+
+## MAT-18b — NDL `searchbytext` リスト巡回（cursor）
+
+### 管理情報
+
+- 記録日: 2026-06-10（op4 所見）
+- 前提: MAT-18（#467）マージ済み
+
+### 事象
+
+- op4: `ndl-search-keyword`（例: 妖怪）は tick 毎に API を呼ぶが **同一図版**（`1082331/48`）が続く。`size=1` + 先頭固定が原因。
+
+### 取り込み方針
+
+- `searchbytext?size=20&from={offset}` でバッチ取得 → cache `ndl-search-batch.json`
+- `ndl-search-cycle.json` に `from` + `cursor_index`（CODH `codh-cycle.json` 同型）
+- slideshow **start**: `resume` — cursor 位置を維持。Manage **Refresh**: `refresh` — from/cursor リセット
+- tick: cursor 進行 → バッチ末尾で `from` 進めて再取得（`hit` 超過で wrap）
+- op log: `NDL_SEARCH_BATCH` / `NDL_SEARCH_PICK`（`cursor_index`, `from_offset`）
 
 ---
 
