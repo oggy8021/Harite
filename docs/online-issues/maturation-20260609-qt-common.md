@@ -12,7 +12,7 @@ GitHub Issue 起票前の観測転記。
 
 ## v2.0.0 への再整理（オーナー方針 2026-06-09）
 
-熟成運転の過程で **先送り** したものと **閃いた** ものを改めて並べる。骨格は **Q-01** — GTK を **メンテ対象外** に落とす（回収コスト観点）。**例: `v2.0.0` を GTK 同梱の最終版とする** 等は planning で確定。**MAT-10** は **実施 backlog** に載せる（Q-01 後に着手）。**op3（2026-06-10）** で **MAT-18**（NDL キーワード検索）・**MAT-14b**（auto 倍率）を追加。
+熟成運転の過程で **先送り** したものと **閃いた** ものを改めて並べる。骨格は **Q-01** — GTK を **メンテ対象外** に落とす（回収コスト観点）。**例: `v2.0.0` を GTK 同梱の最終版とする** 等は [Q-01 計画](../working/20260610-q01-gtk-deprecation-planning.md) で確定。**MAT-10 / MAT-18 / MAT-14b** は **完了**（#467〜#470）。**Q-01** は **planning 中**（2026-06-10 棚卸）。
 
 **GTK 熟成メモ:** [overview §Xfce](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) は **削除しない**（観測記録として残す）。GTK への parity 拡張・改修は行わない。
 
@@ -48,7 +48,7 @@ GitHub Issue 起票前の観測転記。
 
 | ID | 要約 | 先送り理由 / 次の詰め |
 | --- | --- | --- |
-| **Q-01** | GTK を **メンテ対象外** に落とす → Qt 一本化 | **v2.0.0 の骨格** — 例: v2.0.0 を GTK 同梱の最終版とする。entrypoint / CI / packaging / docs の削除範囲を planning で確定 |
+| **Q-01** | GTK を **メンテ対象外** に落とす → Qt 一本化 | **承認・実装中** — [計画](../working/20260610-q01-gtk-deprecation-planning.md)。**v2.0.0 で GTK 削除**、共有層は rename |
 
 ### 実施 backlog（v2.0.0 向け・2026-05-31 更新）
 
@@ -60,7 +60,7 @@ GitHub Issue 起票前の観測転記。
 
 1. ~~**MAT-13 → 17**~~、~~**MAT-02b**~~、~~**MAT-18 / MAT-14b**~~ **完了**（#458〜#469、op5）
 2. ~~**MAT-10**~~ — 江戸切絵図 **完了**（浅草実機 OK、A/B/C preset 13 本）
-3. **Q-01** — GTK メンテ対象外（v2.0.0 骨格。MAT-10 と並行可）
+3. **Q-01** — GTK 削除 + rename（**承認済** · [計画](../working/20260610-q01-gtk-deprecation-planning.md)）— **実装着手**
 
 詳細: [20260610-v2-roadmap-op3-planning.md](../working/20260610-v2-roadmap-op3-planning.md)
 
@@ -82,7 +82,7 @@ GitHub Issue 起票前の観測転記。
 | polish（完了） | MAT-13 |
 | 改修系（完了） | MAT-02b |
 | 確かさ（op3 完了） | MAT-08 観測 |
-| 先送り（v2.0.0 再棚卸） | Q-01 |
+| 製品線（実装中） | Q-01 |
 
 ※ MAT-02b / op3: [観測メモ](../working/20260610-mat-08-viper3-slideshow-op3-observation.md)。MAT-10 の具体 URL は例示のみ（[MAT-10](#mat-10--江戸切絵図を雰囲気絵ソースにできないか検討)）。MAT-18 / MAT-14b は [op3 後ロードマップ](../working/20260610-v2-roadmap-op3-planning.md)。
 
@@ -646,7 +646,51 @@ preset（江戸切絵図・おまかせ）
 - memo（オーナー）: **雰囲気絵が出てほしい** — 文字図版中心の買物案内の代替。具体地図は例示のみ
 - op3: facet NDL はパイプライン成立だが **書簡・スキャン偏重** → MAT-18 で品質軸を追加、MAT-10 で雰囲気絵の別入口
 - **C-01-E CODH inventory:** edo-maps は 2026-06-03 時点 **スコープ外**（GIS）。MAT-10 は **画像入口のみ** edo-maps を参照し、API は NDL 直
-- **実装（2026-05-31）:** `remote-ndl-kiriezu`、preset **A1+B5+C7**、IIIF 1200px、cursor sync/tick。`test_c01_ndl_kiriezu.py` / `test_c01_source_presets.py` 緑。**P3:** 浅草 Start → 東部浅草絵図（1286208）オーナー OK
+- **実装（2026-05-31）:** `remote-ndl-kiriezu`、preset **A1+B5+C7**、IIIF 1200px、cursor sync/tick。`test_c01_ndl_kiriezu.py` / `test_c01_source_presets.py` 緑。**P3:** 浅草 Start → 東部浅草絵図（1286208）オーナー OK。**#470** マージ（2026-06-10）
+
+---
+
+## Q-01 — GTK メンテ対象外化・Qt 一本化
+
+### 管理情報
+
+- GitHub: **未起票**
+- 記録日: 2026-06-10
+- 仮タイトル: `Deprecate GTK backend; Qt-only GUI for v2.0.0`
+- 計画: [20260610-q01-gtk-deprecation-planning.md](../working/20260610-q01-gtk-deprecation-planning.md)
+
+### 事象 / 要望
+
+- Qt migration（MAT-01〜17）完了。GTK は **maintenance mode** から **メンテ対象外** へ落とし、回収コストを止める。
+- **v2.0.0 の骨格** — 製品線を Qt 一本化として再定義する。
+
+### 分類
+
+- `planning`（製品線 / packaging）
+- `investigation`（GTK コード棚卸 — 2026-06-10 完了）
+
+### 棚卸サマリ（2026-06-10）
+
+| 層 | 規模 | Q-01 扱い |
+| --- | --- | --- |
+| GTK UI 専用（`gtk_backend`, builders, dialogs, `app.py`, tasktray） | adapters 約 **3,900 行** | **削除候補** |
+| 共有ロジック（`gtk_runtime_*`、Qt が import） | 約 **1,400 行** | **rename / 分割**（一括削除不可） |
+| `views/` GTK 分岐（drawer 等） | 数ファイル | P4 で除去 |
+| CI | GTK ジョブなし | 変更小 |
+| 熟成メモ（overview §Xfce） | — | **残す** |
+
+### 取り込み方針
+
+- **2026-06-10 オーナー承認** — 付録 C レビュー後。「管理限界」として **GTK 削除 + 共有層 rename** を Q-01 で実施
+- **parity 拡張しない** — [付録 C](../working/20260610-q01-gtk-deprecation-planning.md#付録-c--gtk--qt-機能差レビュー用)
+- **確定:** v2.0.0 で GTK コード削除。`harite-gtk` 廃止。`harite-gui` → `harite-qt` エイリアス（移行）
+- **実装フェーズ:** P2 GTK UI 削除 → P3 rename → P4 views → P1/P5 entrypoint + v2.0.0（計画 §6・§8）
+
+### 関連
+
+- [foundation-spec §4/§10](../specs/harite-foundation-spec.md) — 現状デュアルバックエンド記述
+- MAT-14b — GTK Compose UI 未追加（Q-01 と整合）
+- K-04 — packaging は Q-01 後（overview §2）
 
 ---
 

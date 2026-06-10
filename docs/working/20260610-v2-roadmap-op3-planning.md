@@ -20,10 +20,10 @@
 | --- | --- | --- | --- |
 | 1 | ~~MAT-17~~ | **完了** #463 | CLI slideshow + settings |
 | 2 | ~~MAT-02b 主戦場~~ | **op3 完了** #462–#465 | 残: apply 失敗時 timer |
-| 3 | **Q-01** | 未着手 | v2.0.0 骨格（GTK メンテ対象外） |
-| 4 | **MAT-10** | **実施に載せる** | 江戸切絵図 / edo-maps 雰囲気 source |
-| 5 | **MAT-18** | planning | NDL テキスト類似検索 preset（試験優先） |
-| 6 | **MAT-14b** | planning | auto 倍率（Main + Slideshow） |
+| 3 | **Q-01** | **承認・実装中** | v2.0.0 GTK 削除 + rename（[計画](20260610-q01-gtk-deprecation-planning.md)） |
+| 4 | ~~**MAT-10**~~ | **完了** #470 | 江戸切絵図 A/B/C preset |
+| 5 | ~~**MAT-18**~~ | **完了** #467–#468 | NDL searchbytext + cursor |
+| 6 | ~~**MAT-14b**~~ | **完了** #469 | auto 倍率 |
 
 **並行可:** MAT-18 の API 試験は Q-01 / MAT-10 と独立。MAT-14b は core + settings 浸透のため MAT-10 より先に着手してもよい（オーナー判断待ち）。
 
