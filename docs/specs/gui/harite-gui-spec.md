@@ -350,6 +350,7 @@ catalog 契約は [source-spec §7](../source/harite-source-spec.md)。
 | Saved combo で `— none —` | 当該 side の `slideshow_srcdir_*` も `""`（`Clear-L/R` と同型） | 当該 side の source id をクリア | `— none —` |
 | Srcdir-L/R ブラウズ確定 | 従来どおり path 直書き | 当該 side の source id をクリア | `— none —` |
 | Profile 選択 | L/R 両 path を profile から展開 | `slideshow_profile_id` + 両 source id を記録 | 各 side を対応 source に |
+| Profile で `— none —` | L/R 両 `slideshow_srcdir_*` を `""`（`Clear-L/R` 両方と同型） | `slideshow_profile_id` + 両 source id をクリア | 両 saved combo → `— none —` |
 | Clear-L/R（§4.1 拡張） | 当該 side path を `""` | 当該 side source id + **`slideshow_profile_id` をクリア** | 当該 side saved combo → `— none —`。**Profile combo → `— none —`** |
 | Swap L/R（§4.1 拡張） | `slideshow_srcdir_l/r` swap | `slideshow_source_id_l/r` swap。`slideshow_profile_id` は **クリア**（L/R 対応が崩れるため） |
 

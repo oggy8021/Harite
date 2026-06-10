@@ -1268,6 +1268,12 @@ class MainWindow:
         selected_id = (profile_id or "").strip()
         if not selected_id:
             self.slideshow_profile_id = ""
+            self.slideshow_srcdir_l = ""
+            self.slideshow_srcdir_r = ""
+            self.slideshow_source_id_l = ""
+            self.slideshow_source_id_r = ""
+            self._update_slideshow_source_display()
+            self._refresh_action_availability()
             self._log("Slideshow profile selection cleared")
             return True
 
