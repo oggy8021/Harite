@@ -102,6 +102,28 @@ def test_on_pick_slideshow_srcdir_clears_saved_source_tracking(tmp_path: Path):
     assert window.slideshow_profile_id == ""
 
 
+def test_on_select_slideshow_profile_none_clears_lr(tmp_path: Path) -> None:
+    left_dir = tmp_path / "left"
+    right_dir = tmp_path / "right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    catalog_path = tmp_path / "sources.json"
+    _, _, profile_id = _write_catalog(catalog_path, left_dir, right_dir)
+
+    window = MainWindow()
+    window._source_catalog_path = catalog_path
+    window.on_select_slideshow_profile(profile_id)
+    assert window.slideshow_srcdir_l == str(left_dir.resolve())
+    assert window.slideshow_srcdir_r == str(right_dir.resolve())
+
+    assert window.on_select_slideshow_profile(None) is True
+    assert window.slideshow_profile_id == ""
+    assert window.slideshow_srcdir_l == ""
+    assert window.slideshow_srcdir_r == ""
+    assert window.slideshow_source_id_l == ""
+    assert window.slideshow_source_id_r == ""
+
+
 def test_on_select_slideshow_profile_applies_lr(tmp_path: Path):
     left_dir = tmp_path / "left"
     right_dir = tmp_path / "right"

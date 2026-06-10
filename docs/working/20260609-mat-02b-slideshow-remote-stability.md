@@ -19,6 +19,7 @@
 - **旧仕様:** gui-spec §4.2 — `— none —` は source id のみクリア、path 維持
 - **実害:** `— none —` でも当該 side の `slideshow_srcdir_*` が残り、Start / tick が **幽霊 side** で動く（viper3 では R で観測、L でも同操作は起こりうる）
 - **対応:** `on_select_slideshow_source` で **L/R 対称**に none 時 path もクリア（`Clear-L/R` と同型）
+- **follow-up（#464 後）:** Profile combo を `— none —` にしても L/R path が残る — `on_select_slideshow_profile(None)` で **両 Srcdir を Clear-L/R 同型**にクリア（`fix/profile-none-clears-srcdir-lr`）
 
 ### 2. op log が GET まで（観測限界・HIGH）
 
