@@ -38,31 +38,6 @@ def test_toggle_qt_style_drawer():
     assert trigger.text == MORE_LABEL
 
 
-class _Revealer:
-    def __init__(self):
-        self._revealed = False
-
-    def get_reveal_child(self):
-        return self._revealed
-
-    def set_reveal_child(self, revealed):
-        self._revealed = bool(revealed)
-
-
-def test_toggle_gtk_revealer():
-    revealer = _Revealer()
-    trigger = _Trigger()
-    backend = type(
-        "B",
-        (),
-        {"_objects": {"slideshow_options_revealer": revealer, "btn_slideshow_options_more": trigger}},
-    )()
-
-    toggle_slideshow_options_drawer(backend)
-    assert revealer.get_reveal_child()
-    assert trigger.text == FEWER_LABEL
-
-
 def test_toggle_restores_window_height_on_close():
     from harite.gui.views.slideshow_options_drawer import toggle_slideshow_options_drawer
 

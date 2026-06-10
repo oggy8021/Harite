@@ -97,16 +97,6 @@ def _schedule_on_next_event_loop(callback: Callable[[], None]) -> bool:
             return True
     except Exception:
         pass
-    try:
-        import gi
-
-        gi.require_version("Gtk", "3.0")
-        from gi.repository import GLib
-
-        GLib.idle_add(callback)
-        return True
-    except Exception:
-        pass
     return False
 
 

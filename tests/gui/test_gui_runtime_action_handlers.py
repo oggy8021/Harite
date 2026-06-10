@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from harite.gui.adapters.gtk_runtime_action_handlers import run_apply_clicked, run_optimize_clicked
+from harite.gui.adapters.gui_runtime_action_handlers import run_apply_clicked, run_optimize_clicked
 
 
 class _FakeBackend:

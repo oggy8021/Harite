@@ -10,7 +10,7 @@ pytest.importorskip("PyQt6")
 
 from PyQt6.QtWidgets import QApplication
 
-from harite.gui.adapters.gtk_runtime_owner_sync import sync_non_preview_state_from_owner
+from harite.gui.adapters.gui_runtime_owner_sync import sync_non_preview_state_from_owner
 from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
 from harite.gui.views.main_window import MainWindow
 

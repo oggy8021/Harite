@@ -14,7 +14,7 @@ def test_build_desktop_entry_text_includes_gui_module_exec() -> None:
     assert "[Desktop Entry]" in desktop_text
     assert "Type=Application" in desktop_text
     assert "Name=Harite" in desktop_text
-    assert "-m harite.gui.app" in desktop_text
+    assert "-m harite.gui.app_qt" in desktop_text
     assert "Terminal=false" in desktop_text
 
 
@@ -38,7 +38,7 @@ def test_install_desktop_entry_command_writes_desktop_file(tmp_path, monkeypatch
     content = output_path.read_text(encoding="utf-8")
     assert "[Desktop Entry]" in content
     assert "Exec=" in content
-    assert "-m harite.gui.app" in content
+    assert "-m harite.gui.app_qt" in content
 
 
 def test_install_desktop_entry_command_rejects_existing_file_without_force(tmp_path, monkeypatch) -> None:

@@ -75,7 +75,7 @@ def _resolve_main_window(signal_backend: Any) -> Any | None:
 class QtTaskTrayAdapter:
     """Qt implementation of the system tray adapter.
 
-    Mirrors ``GtkTaskTrayAdapter`` from ``tasktray_adapter.py``.
+    Qt system-tray adapter for slideshow controls.
     """
 
     def __init__(
@@ -213,7 +213,7 @@ class QtTaskTrayAdapter:
             self._tray.setIcon(icon)
 
     # ------------------------------------------------------------------
-    # State readers (same logic as GtkTaskTrayAdapter)
+    # State readers
     # ------------------------------------------------------------------
 
     def _connected_owner(self) -> Any | None:

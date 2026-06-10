@@ -8,7 +8,7 @@ import pytest
 def test_read_margin_text_widget_text_reads_qplain_text_edit(qapp):
     from PyQt6.QtWidgets import QPlainTextEdit
 
-    from harite.gui.adapters.gtk_runtime_margin_text import read_margin_text_widget_text
+    from harite.gui.adapters.gui_runtime_margin_text import read_margin_text_widget_text
 
     entry = QPlainTextEdit()
     entry.setPlainText("line1\nline2\n")

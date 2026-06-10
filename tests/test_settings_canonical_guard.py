@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from harite import settings_file
-from harite.gui.adapters.gtk_runtime_dialogs import SettingsDialogProxy
+from harite.gui.adapters_qt.qt_dialogs import QtSettingsDialogProxy as SettingsDialogProxy
 from harite.settings import AppSettings, ApplySettings, OptimizeSettings, SlideshowSettings
 
 
@@ -31,11 +31,10 @@ def test_legacy_settings_modules_are_removed_from_src_tree():
 
 
 def test_settings_dialog_proxy_exposes_only_canonical_settings_methods():
-    dialog = SettingsDialogProxy()
+    dialog = SettingsDialogProxy(object())
 
     assert hasattr(dialog, "set_settings")
     assert hasattr(dialog, "get_settings")
-    assert hasattr(dialog, "update_setting")
     assert not hasattr(dialog, "set_settings_config")
     assert not hasattr(dialog, "get_settings_config")
     assert not hasattr(dialog, "set_preferences_config")
