@@ -180,8 +180,8 @@ flowchart TD
 - そのうえで左右半分は `left_slice_width = usable_width // 2`, `right_slice_width = usable_width - left_slice_width` で分ける。single-screen では `left-top` は左半分上端、`left-bottom` は左半分下端、`right-top` は右半分上端、`right-bottom` は右半分下端に対応する。
 - two-screen で display 情報がある場合も、配置面は left display / right display の上側・下側 4 位置だけを持つ。`left-top` は left display の上端、`left-bottom` は left display の下端、`right-top` は right display の上端、`right-bottom` は right display の下端に対応する。slice 内部の横範囲は `x0 = offset_x + ml`, `x1 = max(x0, offset_x + slice_w - mr)` であり、上端側は `(x0, 0, x1, mt)`、下端側は `(x0, slice_h - mb, x1, slice_h)` を基底にする。
 - 描画前には `area_w = x1 - x0`, `area_h = y1 - y0` を求め、`area_w < 40` または `area_h < 12` なら何も描かない。
-- **重畳ガード（MAT-20）:** 全画像の paste 完了後、`resolve_embed_margin_region` で得た embed 領域（AABB）と、各 `PlacementResult` の貼り付け矩形 `(x, y, x+width, y+height)` の **軸平行交差** を検査する。1 件でも交差すれば **embed テキストは描画しない**（画像への重畳を避ける）。精密な字形クリッピングや画面外欠けの自動補正は行わない。
-- スキップ時、CLI は `Embed: skipped (overlap with image placement)` を stdout に出す（[cli-spec §4](../cli/harite-cli-spec.md)）。GUI は同一規則で描画省略（feedback は実装フェーズで接続可）。
+- **重畳ガード（MAT-20）:** 全画像の paste 完了後、`resolve_embed_margin_region` で得た embed 領域（AABB）と、各 `PlacementResult` の貼り付け矩形 `(x, y, x+width, y+height)` の **軸平行交差** を検査する。1 件でも交差すれば **エラー** とし、出力 JPEG は保存しない（embed 指定の意図に反する黙りスキップを避ける）。精密な字形クリッピングや画面外欠けの自動補正は行わない。
+- エラー文言（規範）: `Embed position overlaps pasted image. Choose another embed_position (left-top, left-bottom, right-top, right-bottom) or adjust align, valign, or margins.` CLI は終了コード `2`（[cli-spec §4](../cli/harite-cli-spec.md)）。GUI も同一メッセージで失敗扱いとする。
 - フォントサイズ候補は `preferred_size = max(12, min(24, area_h // (max_lines + 1)))` で決め、1 行高さは `line_h = max(10, bbox("Ag").height + 2)` 相当で求める。
 - 実際に描く行数は `fit_lines = area_h // line_h`, `line_limit = min(max(1, embed_max_lines), fit_lines)` で決め、超過した行は末尾に `...`（スペース+三点リーダー）を付けて切り詰める。
 - 実際の描画開始 x 座標は左端ぴったりではなく、`quartile_offset = max(4, min(max(1, area_w // 4), max(1, longest_px // 4 or 1)))` を使って `text_x = x0 + quartile_offset` に置く。y 座標は `text_y = y0 + 2` から始める。

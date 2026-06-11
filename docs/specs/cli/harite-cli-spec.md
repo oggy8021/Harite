@@ -150,10 +150,10 @@ Placement: {image_name} @ ({x},{y}) {width}x{height} scale={scale} posit={left|r
 
 **margins と Placement の関係:** [core-spec §4.1 Placement 座標と margins](../core/harite-core-spec.md#41-placement-計算の現行規則) を正とする。margins は x/y に直接効かないため、原寸収まり時は margins を変えても Placement の x/y が同じになることがある（仕様）。
 
-**embed 重畳ガード:** `--embed-info` が有効かつ embed 領域がいずれかの貼り付け画像矩形と交差する場合、embed テキストは描画せず、次を stdout に出す:
+**embed 重畳ガード:** `--embed-info` が有効かつ embed 領域がいずれかの貼り付け画像矩形と交差する場合、**出力を保存せず** 終了コード `2` で止める。stdout には次の規範文言（または同等の英語）を出し、**embed_position の選び直し**（または align / valign / margins の調整）を促す:
 
 ```text
-Embed: skipped (overlap with image placement)
+Embed position overlaps pasted image. Choose another embed_position (left-top, left-bottom, right-top, right-bottom) or adjust align, valign, or margins.
 ```
 
 ### 短縮形オプション
@@ -357,7 +357,7 @@ Harite 固有の stdout 実行メッセージは、言語に応じた自然な u
 
 | command | 代表メッセージ |
 |---|---|
-| `optimize` | `Saved: {paths}`、`Placement: ...`（§4.1）、`Embed: skipped ...`（重畳時） |
+| `optimize` | `Saved: {paths}`、`Placement: ...`（§4.1）。重畳時は保存せずエラー（§4） |
 | `apply` | `Plugin '{plugin}' applied wallpaper: {path}` / `failed to apply wallpaper: {path}` |
 | `slideshow` | `Slideshow start`、`Slideshow interrupted by user`、`Slideshow completed`（将来） |
 | `install-desktop-entry` | `Installed desktop entry: {path}` |

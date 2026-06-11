@@ -414,36 +414,36 @@ def optimize(
         eff_l_auto_display_scale = False
         eff_r_auto_display_scale = False
 
-    embed_status_out: list[str] = []
-    saved_files, placements = optimize_wallpapers(
-        inputs=expanded_inputs,
-        target_resolution=(w, h),
-        output_dir=output,
-        scaling=eff_scaling,
-        quality=eff_quality,
-        two_screen=resolved_display_settings.two_screen,
-        margins=(0, 0, 0, 0) if eff_margins is None else parse_margins(str(eff_margins)),
-        l_display=None if resolved_display_settings.l_display is None else parse_display(resolved_display_settings.l_display),
-        r_display=None if resolved_display_settings.r_display is None else parse_display(resolved_display_settings.r_display),
-        l_display_scale=eff_l_display_scale,
-        r_display_scale=eff_r_display_scale,
-        l_auto_display_scale=eff_l_auto_display_scale,
-        r_auto_display_scale=eff_r_auto_display_scale,
-        align=eff_align,
-        valign=eff_valign,
-        embed_info=embed_info,
-        background_color=eff_background_color,
-        embed_text=eff_embed_text,
-        embed_position=embed_position,
-        embed_max_lines=eff_embed_max_lines,
-        embed_font=(str(eff_embed_font) if eff_embed_font is not None else None),
-        embed_status_out=embed_status_out,
-    )
+    try:
+        saved_files, placements = optimize_wallpapers(
+            inputs=expanded_inputs,
+            target_resolution=(w, h),
+            output_dir=output,
+            scaling=eff_scaling,
+            quality=eff_quality,
+            two_screen=resolved_display_settings.two_screen,
+            margins=(0, 0, 0, 0) if eff_margins is None else parse_margins(str(eff_margins)),
+            l_display=None if resolved_display_settings.l_display is None else parse_display(resolved_display_settings.l_display),
+            r_display=None if resolved_display_settings.r_display is None else parse_display(resolved_display_settings.r_display),
+            l_display_scale=eff_l_display_scale,
+            r_display_scale=eff_r_display_scale,
+            l_auto_display_scale=eff_l_auto_display_scale,
+            r_auto_display_scale=eff_r_auto_display_scale,
+            align=eff_align,
+            valign=eff_valign,
+            embed_info=embed_info,
+            background_color=eff_background_color,
+            embed_text=eff_embed_text,
+            embed_position=embed_position,
+            embed_max_lines=eff_embed_max_lines,
+            embed_font=(str(eff_embed_font) if eff_embed_font is not None else None),
+        )
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=2)
     typer.echo(f"Saved: {saved_files}")
     for p in placements:
         typer.echo(f"Placement: {format_placement_line(p)}")
-    if embed_status_out and embed_status_out[-1] == "skipped_overlap":
-        typer.echo("Embed: skipped (overlap with image placement)")
 
 
 @app.command()

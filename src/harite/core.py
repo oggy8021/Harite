@@ -19,6 +19,12 @@ EMBED_POSITION_VALUES: tuple[str, str, str, str] = (
 
 DEFAULT_BACKGROUND_COLOR_HEX = "#1E1E1E"
 
+EMBED_OVERLAP_ERROR = (
+    "Embed position overlaps pasted image. "
+    "Choose another embed_position (left-top, left-bottom, right-top, right-bottom) "
+    "or adjust align, valign, or margins."
+)
+
 
 def is_background_color_literal(value: object | None) -> bool:
     raw = value
@@ -608,7 +614,10 @@ def _draw_embed_text_in_margin(
         placements: paste 済み配置。重畳ガードに使う。
 
     Returns:
-        `drawn` / `skipped_empty` / `skipped_no_area` / `skipped_overlap`
+        `drawn` / `skipped_empty` / `skipped_no_area`
+
+    Raises:
+        ValueError: embed 領域が貼り付け画像と交差するとき（`EMBED_OVERLAP_ERROR`）。
     """
     if not lines:
         return "skipped_empty"
@@ -635,7 +644,7 @@ def _draw_embed_text_in_margin(
         return "skipped_no_area"
 
     if placements and embed_region_overlaps_placements(area, placements):
-        return "skipped_overlap"
+        raise ValueError(EMBED_OVERLAP_ERROR)
 
     draw = ImageDraw.Draw(bg)
     preferred_size = max(12, min(24, area_h // max(1, max_lines + 1)))

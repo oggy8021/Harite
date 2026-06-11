@@ -74,7 +74,7 @@ def test_optimize_help_reflects_current_surface() -> None:
     assert "auto-detect" in compact_output
 
 
-def test_optimize_reports_embed_overlap_skip(tmp_path, monkeypatch):
+def test_optimize_reports_embed_overlap_error(tmp_path, monkeypatch):
     from harite.core import optimize_wallpapers as real_optimize_wallpapers
 
     monkeypatch.setattr(cli, "optimize_wallpapers", real_optimize_wallpapers)
@@ -106,8 +106,9 @@ def test_optimize_reports_embed_overlap_skip(tmp_path, monkeypatch):
         ],
     )
 
-    assert result.exit_code == 0
-    assert "Embed: skipped (overlap with image placement)" in result.output
+    assert result.exit_code == 2
+    assert "Embed position overlaps pasted image" in result.output
+    assert "embed_position" in result.output
 
 
 def test_format_placement_line_matches_cli_spec() -> None:

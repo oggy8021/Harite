@@ -384,35 +384,30 @@ def test_mat20_margins_do_not_offset_placement_when_image_fits_native(tmp_path):
     assert no_margin[0].y == with_margin[0].y == 340
 
 
-def test_mat20_embed_skipped_when_region_overlaps_placement(tmp_path):
-    from harite.core import optimize_wallpapers
+def test_mat20_embed_overlap_raises_without_saving(tmp_path):
+    import pytest
+
+    from harite.core import EMBED_OVERLAP_ERROR, optimize_wallpapers
 
     img = tmp_path / "wide.jpg"
     make_image(img, size=(460, 360), color=(200, 50, 50))
     out = tmp_path / "out"
-    embed_status: list[str] = []
 
-    saved, placements = optimize_wallpapers(
-        [str(img)],
-        (500, 400),
-        out,
-        margins=(0, 0, 0, 40),
-        align="right",
-        valign="bottom",
-        background_color="1E1E1E",
-        embed_info="params",
-        embed_position="right-bottom",
-        embed_status_out=embed_status,
-    )
+    with pytest.raises(ValueError, match="Embed position overlaps pasted image"):
+        optimize_wallpapers(
+            [str(img)],
+            (500, 400),
+            out,
+            margins=(0, 0, 0, 40),
+            align="right",
+            valign="bottom",
+            background_color="1E1E1E",
+            embed_info="params",
+            embed_position="right-bottom",
+        )
 
-    assert saved
-    assert placements[0].y + placements[0].height == 400
-    assert embed_status == ["skipped_overlap"]
-
-    rendered = Image.open(saved[0]).convert("RGB")
-    # Image may cover the margin band; guard only prevents light-gray embed text.
-    sample = rendered.crop((420, 360, 498, 398))
-    assert all(px != (235, 235, 235) for px in sample.getdata())
+    assert EMBED_OVERLAP_ERROR.startswith("Embed position overlaps pasted image")
+    assert not list(out.glob("harite_output_*.jpg"))
 
 
 def test_mat20_embed_drawn_when_no_placement_overlap(tmp_path):
