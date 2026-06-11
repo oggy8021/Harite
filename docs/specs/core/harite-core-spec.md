@@ -135,12 +135,12 @@ flowchart TD
 母体 `wallpaperoptimizer` 準拠（MAT-01b、2026-06-09）:
 
 - **拡大しない（既定）。** 画像 + margins が display 矩形に収まるときは **原寸**（`scale = 1.0`）。収まらないときのみ `_downsize_to_fit_margins(...)` で **縮小のみ**（二段 proportional shrink）。
-- **MAT-14（意図的拡大）:** Compose の source scale（100% / 125% / 150% / 200%）は **元画像サイズのみ** に掛ける。display / composite 解像度は変えない。100% は上記 MAT-01b 経路、それ以外は upscale 後に収納判定し、display 矩形（margins 込み）に収まらなければエラー（縮小フォールバックなし）。align / valign は upscale 後の `(nw, nh)` に対して適用する。
-- **MAT-14b（auto 倍率）:** `auto` ON かつ手動 scale が 100% のとき、画像短辺と display slot 短辺（margins 控除後）を比較し、≤1/2 → 1.5x、≤1/4 → 2.0x を自動適用。手動 % は auto より優先。Main optimize は `l_auto_display_scale` / `r_auto_display_scale`、Slideshow optimize は `slideshow_l_auto_display_scale` / `slideshow_r_auto_display_scale`（別キー・別 UI）。
+- **意図的拡大:** Compose の source scale（100% / 125% / 150% / 200%）は **元画像サイズのみ** に掛ける。display / composite 解像度は変えない。100% は上記 MAT-01b 経路、それ以外は upscale 後に収納判定し、display 矩形（margins 込み）に収まらなければエラー（縮小フォールバックなし）。align / valign は upscale 後の `(nw, nh)` に対して適用する。
+- **auto 倍率:** `auto` ON かつ手動 scale が 100% のとき、画像短辺と display slot 短辺（margins 控除後）を比較し、≤1/2 → 1.5x、≤1/4 → 2.0x を自動適用。手動 % は auto より優先。Main optimize は `l_auto_display_scale` / `r_auto_display_scale`、Slideshow optimize は `slideshow_l_auto_display_scale` / `slideshow_r_auto_display_scale`（別キー・別 UI）。
 - `scaling` 引数・設定キーは optimize 幾何に **影響しない**（合意済み）。Settings の `scaling` 値や `compute_placement(..., scaling=...)` の引数は **互換用シグネチャ** であり、配置計算では参照されない。
 - 各入力は **display スロット**（矩形 + 非対称 margins）に割り当てる。two-screen では L margins `(ml, 0, mt, mb)`、R margins `(0, mr, mt, mb)`。
 - **align / valign** は display 矩形の原点 `(0,0)` を left/top とし、**スロット全面**（`screen_w × screen_h`）の余白で寄せる。margins は **収納判定と縮小上限** に使い、paste 座標の `+= ml` オフセットには使わない（margin-inner cell へ align しない）。
-- **計算順（入力ごと）:** display slot 解決 → 画像サイズ決定（MAT-14 scale → `_resolve_intentional_image_dimensions`）→ align/valign（`_allocate_on_display`）→ paste（`origin + inner`）。
+- **計算順（入力ごと）:** display slot 解決 → 画像サイズ決定（scale → `_resolve_intentional_image_dimensions`）→ align/valign（`_allocate_on_display`）→ paste（`origin + inner`）。
 - two-screen で `l_display`, `r_display` がある場合、`split_x = round(left_w / (left_w + right_w) * w_target)`（`1..w_target-1` に clamp）。左画像は `x ∈ [0, split_x)`、右画像は `x = split_x + inner_x`（母体 `_mergeWallpaper` 同型）。
 - single-screen 1 枚: display = 全面 `(w_target, h_target)`、margins `(ml, mr, mt, mb)`。
 - single-screen 複数枚: 横幅を等分した display スライス。先頭スライスは `(ml,0,mt,mb)`、末尾は `(0,mr,mt,mb)`、中間は `(0,0,mt,mb)`。
@@ -173,9 +173,9 @@ flowchart TD
 - two-screen で display 情報がある場合も、配置面は left display / right display の上側・下側 4 位置だけを持つ。`left-top` は left display の上端、`left-bottom` は left display の下端、`right-top` は right display の上端、`right-bottom` は right display の下端に対応する。slice 内部の横範囲は `x0 = offset_x + ml`, `x1 = max(x0, offset_x + slice_w - mr)` であり、上端側は `(x0, 0, x1, mt)`、下端側は `(x0, slice_h - mb, x1, slice_h)` を基底にする。
 - 描画前には `area_w = x1 - x0`, `area_h = y1 - y0` を求め、`area_w < 40` または `area_h < 12` なら何も描かない。
 - フォントサイズ候補は `preferred_size = max(12, min(24, area_h // (max_lines + 1)))` で決め、1 行高さは `line_h = max(10, bbox("Ag").height + 2)` 相当で求める。
-- 実際に描く行数は `fit_lines = area_h // line_h`, `line_limit = min(max(1, embed_max_lines), fit_lines)` で決め、超過した行は末尾に ` ...`（スペース+三点リーダー）を付けて切り詰める。
+- 実際に描く行数は `fit_lines = area_h // line_h`, `line_limit = min(max(1, embed_max_lines), fit_lines)` で決め、超過した行は末尾に `...`（スペース+三点リーダー）を付けて切り詰める。
 - 実際の描画開始 x 座標は左端ぴったりではなく、`quartile_offset = max(4, min(max(1, area_w // 4), max(1, longest_px // 4 or 1)))` を使って `text_x = x0 + quartile_offset` に置く。y 座標は `text_y = y0 + 2` から始める。
-- 各行の最大描画幅は `max_text_w = max(0, area_w - quartile_offset - 4)` であり、`_truncate_to_width(...)` によってこの幅に収まるよう末尾 ` ...`（スペース+三点リーダー）付きで再切り詰めする。
+- 各行の最大描画幅は `max_text_w = max(0, area_w - quartile_offset - 4)` であり、`_truncate_to_width(...)` によってこの幅に収まるよう末尾 `...`（スペース+三点リーダー）付きで再切り詰めする。
 - 行ごとの描画は `text_y + line_h > y1` になった時点で打ち切る。したがって line_limit に達していなくても、縦方向に収まらなければそれ以上は描かない。
 - 描画色は `(235, 235, 235)`（ほぼ白の薄いグレー）で固定。
 - `_load_preferred_font` のフォント探索順: まず CLI/GUI から渡された `embed_font` パスを試し、次に OS 別 CJK 対応フォント候補（Windows: `meiryo.ttc` → `msgothic.ttc` → `YuGothM.ttc`、Linux: Noto Sans CJK 各パス、macOS: ヒラギノ各パス）を存在確認して順に試す。すべて失敗した場合は `ImageFont.load_default()` にフォールバックする。
@@ -292,7 +292,7 @@ Windows の補足:
 - スライドショー面: `slideshow_interval_seconds`, `slideshow_mode`, `slideshow_srcdir_l`, `slideshow_srcdir_r`, `slideshow_l_auto_display_scale`, `slideshow_r_auto_display_scale`
 - スライドショー registry 追跡（任意）: `slideshow_source_id_l`, `slideshow_source_id_r`, `slideshow_profile_id` — [source-spec §6.4](../source/harite-source-spec.md)
 
-MAT-14 / MAT-14b の設定キーと optimize 経路（§4.1 参照）:
+意図的拡大 / auto倍率 の設定キーと optimize 経路（§4.1 参照）:
 
 | キー | 論理グループ | Main optimize | Slideshow optimize |
 | --- | --- | --- | --- |

@@ -43,6 +43,19 @@
 | [20260606-p03-single-display-ux-planning.md](20260606-p03-single-display-ux-planning.md) | P-03 単 display 第二スロット UX（#420 完了） |
 | [20260606-p03-3layer-audit.md](20260606-p03-3layer-audit.md) | P-03 3層 audit（#420） |
 
+## MAT / Q-01 — 2026-06-11 整理
+
+| ファイル | 内容 |
+| --- | --- |
+| [20260531-mat-10-kiriezu-source-planning.md](20260531-mat-10-kiriezu-source-planning.md) | MAT-10 江戸切絵図 preset（#470 完了） |
+| [20260609-mat-15-core-geometry-audit.md](20260609-mat-15-core-geometry-audit.md) | MAT-15 core 幾何監査 |
+| [20260609-mat-08-viper3-slideshow-op-observation.md](20260609-mat-08-viper3-slideshow-op-observation.md) | MAT-08 op1 観測 |
+| [20260610-mat-08-viper3-slideshow-op2-observation.md](20260610-mat-08-viper3-slideshow-op2-observation.md) | MAT-08 op2 観測 |
+| [20260610-mat-08-viper3-slideshow-op3-observation.md](20260610-mat-08-viper3-slideshow-op3-observation.md) | MAT-08 op3 観測（MAT-02b 勝ち筋確定） |
+| [20260609-mat-02b-slideshow-remote-stability.md](20260609-mat-02b-slideshow-remote-stability.md) | MAT-02b NDL/CODH 不安定調査 |
+| [20260610-q01-gtk-deprecation-planning.md](20260610-q01-gtk-deprecation-planning.md) | Q-01 GTK 廃止計画（#472 コード完了） |
+| [20260610-v2-roadmap-op3-planning.md](20260610-v2-roadmap-op3-planning.md) | v2.0.0 ロードマップ固め（op3 後・Q-01 完了でクローズ） |
+
 ## Qt / Windows / 横断
 
 | ファイル | 内容 |

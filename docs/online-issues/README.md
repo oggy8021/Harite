@@ -104,14 +104,14 @@ working メモも完了なら docs/working/finished/ へ移動
 
 | Issue | タイトル要約 | 分類 | overview ID |
 | --- | --- | --- | --- |
-| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜18 + Q-01（`v2.0.0` 目標） | bug / investigation / planning | **Q-01**（[棚卸](../working/20260610-q01-gtk-deprecation-planning.md)） |
+| [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜18 + Q-01（`v2.0.0` 目標） | bug / investigation / planning | **Q-01**（[棚卸](../working/finished/20260610-q01-gtk-deprecation-planning.md)） |
 
 ### maturation-20260609-qt-common — 棚卸（2026-06-10 · #470 後）
 
 | 区分 | ID |
 | --- | --- |
 | 完了 | MAT-01, 01b, 02〜03, 05〜09, 11〜18, 14b, 10, 02b（#442〜#470） |
-| 観測完了 | MAT-08 op3（[メモ](../working/20260610-mat-08-viper3-slideshow-op3-observation.md)） |
+| 観測完了 | MAT-08 op3（[メモ](../working/finished/20260610-mat-08-viper3-slideshow-op3-observation.md)） |
 | 実装中 | **Q-01**（GTK 削除 + rename → Qt 一本化 · v2.0.0） |
 
 ### 内訳
