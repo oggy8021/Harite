@@ -52,6 +52,9 @@ def test_dual_monitor_smoke():
         output_dir=Path("tests/out"),
         scaling="fit",
         quality=90,
+        two_screen=True,
+        l_display=(1920, 1080),
+        r_display=(1920, 1080),
     )
 
     assert len(placements) == 2

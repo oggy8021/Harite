@@ -1,5 +1,11 @@
+import pytest
+
 from harite.display_context import TwoScreenOptimizeContext
-from harite.optimize_settings import resolve_optimize_display_settings
+from harite.optimize_settings import (
+    DUAL_INPUT_REQUIRES_TWO_DISPLAYS,
+    DUAL_INPUT_REQUIRES_TWO_SCREEN,
+    resolve_optimize_display_settings,
+)
 from harite.workspace import Display
 
 
@@ -80,6 +86,46 @@ def test_optimize_settings_roundtrips_display_scale_fields():
     assert loaded.r_display_scale == 2.0
     assert loaded.to_settings_dict()["l_display_scale"] == 1.25
     assert loaded.to_settings_dict()["r_display_scale"] == 2.0
+
+
+def test_resolve_optimize_display_settings_rejects_dual_input_without_two_displays(monkeypatch):
+    monkeypatch.setattr("harite.optimize_settings.build_two_screen_optimize_context", lambda: None)
+
+    with pytest.raises(ValueError, match="two detected displays"):
+        resolve_optimize_display_settings(
+            input_values=["left.jpg", "right.jpg"],
+            resolution="auto",
+            two_screen=None,
+            l_display="auto",
+            r_display="auto",
+        )
+
+
+def test_resolve_optimize_display_settings_rejects_dual_input_with_two_screen_off(monkeypatch):
+    monkeypatch.setattr(
+        "harite.optimize_settings.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="L", width=1920, height=1080, x_offset=0),
+                Display(name="R", width=1280, height=1024, x_offset=1920),
+            ),
+            resolution=(3200, 1080),
+            l_display=(1920, 1080),
+            r_display=(1280, 1024),
+        ),
+    )
+
+    with pytest.raises(ValueError, match="two-screen mode"):
+        resolve_optimize_display_settings(
+            input_values=["left.jpg", "right.jpg"],
+            resolution="auto",
+            two_screen=False,
+            l_display="auto",
+            r_display="auto",
+        )
+
+    assert DUAL_INPUT_REQUIRES_TWO_SCREEN.startswith("Two input images require two-screen")
+    assert DUAL_INPUT_REQUIRES_TWO_DISPLAYS.startswith("Two input images require two detected")
 
 
 def test_optimize_settings_maps_legacy_four_x_to_two_x():
