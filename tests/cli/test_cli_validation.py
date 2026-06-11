@@ -74,6 +74,43 @@ def test_optimize_help_reflects_current_surface() -> None:
     assert "auto-detect" in compact_output
 
 
+def test_optimize_reports_embed_overlap_error(tmp_path, monkeypatch):
+    from harite.core import optimize_wallpapers as real_optimize_wallpapers
+
+    monkeypatch.setattr(cli, "optimize_wallpapers", real_optimize_wallpapers)
+
+    runner = CliRunner()
+    img = tmp_path / "wide.jpg"
+    from PIL import Image
+
+    Image.new("RGB", (460, 360), (200, 50, 50)).save(img)
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "optimize",
+            "--input",
+            str(img),
+            "--resolution",
+            "500x400",
+            "--align",
+            "right",
+            "--valign",
+            "bottom",
+            "--margins",
+            "0,0,0,40",
+            "--embed-info",
+            "params",
+            "--embed-position",
+            "right-bottom",
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "Embed position overlaps pasted image" in result.output
+    assert "embed_position" in result.output
+
+
 def test_format_placement_line_matches_cli_spec() -> None:
     from pathlib import Path
 

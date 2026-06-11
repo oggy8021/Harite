@@ -19,6 +19,12 @@ EMBED_POSITION_VALUES: tuple[str, str, str, str] = (
 
 DEFAULT_BACKGROUND_COLOR_HEX = "#1E1E1E"
 
+EMBED_OVERLAP_ERROR = (
+    "Embed position overlaps pasted image. "
+    "Choose another embed_position (left-top, left-bottom, right-top, right-bottom) "
+    "or adjust align, valign, or margins."
+)
+
 
 def is_background_color_literal(value: object | None) -> bool:
     raw = value
@@ -383,6 +389,41 @@ def describe_embed_position(position: str) -> str:
     return "right bottom"
 
 
+def _aabb_overlap(
+    region_a: Tuple[int, int, int, int],
+    region_b: Tuple[int, int, int, int],
+) -> bool:
+    """Return True when two axis-aligned boxes intersect (edges touching counts)."""
+    ax0, ay0, ax1, ay1 = region_a
+    bx0, by0, bx1, by1 = region_b
+    if ax1 <= bx0 or bx1 <= ax0:
+        return False
+    if ay1 <= by0 or by1 <= ay0:
+        return False
+    return True
+
+
+def placement_to_aabb(placement: PlacementResult) -> Tuple[int, int, int, int]:
+    """Convert a placement paste rectangle to (x0, y0, x1, y1)."""
+    return (
+        int(placement.x),
+        int(placement.y),
+        int(placement.x) + int(placement.width),
+        int(placement.y) + int(placement.height),
+    )
+
+
+def embed_region_overlaps_placements(
+    embed_region: Tuple[int, int, int, int],
+    placements: Sequence[PlacementResult],
+) -> bool:
+    """Return True when the embed margin band intersects any pasted image."""
+    for placement in placements:
+        if _aabb_overlap(embed_region, placement_to_aabb(placement)):
+            return True
+    return False
+
+
 def resolve_embed_margin_region(
     target_size: Tuple[int, int],
     margins: Tuple[int, int, int, int],
@@ -560,7 +601,8 @@ def _draw_embed_text_in_margin(
     two_screen: bool = False,
     l_display: Tuple[int, int] | None = None,
     r_display: Tuple[int, int] | None = None,
-) -> None:
+    placements: Sequence[PlacementResult] | None = None,
+) -> str:
     """余白に埋め込みテキストを描画する。
 
     Args:
@@ -569,12 +611,16 @@ def _draw_embed_text_in_margin(
         margins: 余白 (l, r, t, b)。
         position: 描画位置指定。
         max_lines: 最大行数。
+        placements: paste 済み配置。重畳ガードに使う。
 
     Returns:
-        None
+        `drawn` / `skipped_empty` / `skipped_no_area`
+
+    Raises:
+        ValueError: embed 領域が貼り付け画像と交差するとき（`EMBED_OVERLAP_ERROR`）。
     """
     if not lines:
-        return
+        return "skipped_empty"
 
     ml, mr, mt, mb = margins
     w_target, h_target = bg.size
@@ -589,13 +635,16 @@ def _draw_embed_text_in_margin(
         r_display=r_display,
     )
     if area is None:
-        return
+        return "skipped_no_area"
 
     x0, y0, x1, y1 = area
     area_w = max(0, x1 - x0)
     area_h = max(0, y1 - y0)
     if area_w < 40 or area_h < 12:
-        return
+        return "skipped_no_area"
+
+    if placements and embed_region_overlaps_placements(area, placements):
+        raise ValueError(EMBED_OVERLAP_ERROR)
 
     draw = ImageDraw.Draw(bg)
     preferred_size = max(12, min(24, area_h // max(1, max_lines + 1)))
@@ -605,7 +654,7 @@ def _draw_embed_text_in_margin(
     fit_lines = max(0, area_h // line_h)
     line_limit = min(max(1, int(max_lines)), fit_lines)
     if line_limit <= 0:
-        return
+        return "skipped_no_area"
 
     cropped_lines = lines[:line_limit]
     if len(lines) > line_limit:
@@ -627,6 +676,7 @@ def _draw_embed_text_in_margin(
         if one_line:
             draw.text((text_x, text_y), one_line, fill=(235, 235, 235), font=font)
         text_y += line_h
+    return "drawn"
 
 
 def validate_intentional_image_scales(
@@ -840,7 +890,8 @@ def optimize_wallpapers(
         r_display=r_display,
         free_text=embed_text,
     )
-    _draw_embed_text_in_margin(
+    embed_status_out = kwargs.get("embed_status_out")
+    embed_status = _draw_embed_text_in_margin(
         bg,
         embed_lines,
         margins=(ml, mr, mt, mb),
@@ -850,7 +901,10 @@ def optimize_wallpapers(
         two_screen=two_screen,
         l_display=l_display,
         r_display=r_display,
+        placements=placements,
     )
+    if isinstance(embed_status_out, list):
+        embed_status_out.append(embed_status)
 
     if output_path is not None:
         out_path = Path(output_path)
