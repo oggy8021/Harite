@@ -414,6 +414,7 @@ def optimize(
         eff_l_auto_display_scale = False
         eff_r_auto_display_scale = False
 
+    embed_status_out: list[str] = []
     saved_files, placements = optimize_wallpapers(
         inputs=expanded_inputs,
         target_resolution=(w, h),
@@ -436,10 +437,13 @@ def optimize(
         embed_position=embed_position,
         embed_max_lines=eff_embed_max_lines,
         embed_font=(str(eff_embed_font) if eff_embed_font is not None else None),
+        embed_status_out=embed_status_out,
     )
     typer.echo(f"Saved: {saved_files}")
     for p in placements:
         typer.echo(f"Placement: {format_placement_line(p)}")
+    if embed_status_out and embed_status_out[-1] == "skipped_overlap":
+        typer.echo("Embed: skipped (overlap with image placement)")
 
 
 @app.command()

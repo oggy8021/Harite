@@ -1,6 +1,6 @@
 # Harite CLI 仕様 (CLI Spec)
 
-最終更新: 2026-06-11
+最終更新: 2026-06-11（MAT-20 embed ガード追記）
 
 ## 1. CLI の責務
 
@@ -147,6 +147,14 @@ Placement: {image_name} @ ({x},{y}) {width}x{height} scale={scale} posit={left|r
 | `posit` | two-screen / 複数入力時のスロット: `left` / `right`。単一入力で左右の区別が無いときは行末から省略可 |
 
 `rotation` / `score` は内部互換フィールドであり、CLI 一行出力には含めない。
+
+**margins と Placement の関係:** [core-spec §4.1 Placement 座標と margins](../core/harite-core-spec.md#41-placement-計算の現行規則) を正とする。margins は x/y に直接効かないため、原寸収まり時は margins を変えても Placement の x/y が同じになることがある（仕様）。
+
+**embed 重畳ガード:** `--embed-info` が有効かつ embed 領域がいずれかの貼り付け画像矩形と交差する場合、embed テキストは描画せず、次を stdout に出す:
+
+```text
+Embed: skipped (overlap with image placement)
+```
 
 ### 短縮形オプション
 
@@ -349,7 +357,7 @@ Harite 固有の stdout 実行メッセージは、言語に応じた自然な u
 
 | command | 代表メッセージ |
 |---|---|
-| `optimize` | `Saved: {paths}`、`Placement: {name} @ ({x},{y}) {w}x{h} scale=...`（§4.1） |
+| `optimize` | `Saved: {paths}`、`Placement: ...`（§4.1）、`Embed: skipped ...`（重畳時） |
 | `apply` | `Plugin '{plugin}' applied wallpaper: {path}` / `failed to apply wallpaper: {path}` |
 | `slideshow` | `Slideshow start`、`Slideshow interrupted by user`、`Slideshow completed`（将来） |
 | `install-desktop-entry` | `Installed desktop entry: {path}` |

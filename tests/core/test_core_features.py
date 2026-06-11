@@ -352,3 +352,93 @@ def test_load_preferred_font_tries_explicit_path_first(monkeypatch):
     font = core._load_preferred_font(14, explicit_path="custom-font.ttf")
     assert font is fallback
     assert tried[0][0] == "custom-font.ttf"
+
+
+def test_mat20_margins_do_not_offset_placement_when_image_fits_native(tmp_path):
+    """C4: margins affect fit/shrink, not paste x/y offset, when image already fits."""
+    from harite.core import optimize_wallpapers
+
+    img = tmp_path / "small.jpg"
+    make_image(img, size=(80, 60))
+    out = tmp_path / "out"
+
+    _saved, no_margin = optimize_wallpapers(
+        [str(img)],
+        (500, 400),
+        out / "a",
+        margins=(0, 0, 0, 0),
+        align="right",
+        valign="bottom",
+    )
+    _saved, with_margin = optimize_wallpapers(
+        [str(img)],
+        (500, 400),
+        out / "b",
+        margins=(20, 20, 20, 20),
+        align="right",
+        valign="bottom",
+    )
+
+    assert no_margin[0].scale == with_margin[0].scale == 1.0
+    assert no_margin[0].x == with_margin[0].x == 420
+    assert no_margin[0].y == with_margin[0].y == 340
+
+
+def test_mat20_embed_skipped_when_region_overlaps_placement(tmp_path):
+    from harite.core import optimize_wallpapers
+
+    img = tmp_path / "wide.jpg"
+    make_image(img, size=(460, 360), color=(200, 50, 50))
+    out = tmp_path / "out"
+    embed_status: list[str] = []
+
+    saved, placements = optimize_wallpapers(
+        [str(img)],
+        (500, 400),
+        out,
+        margins=(0, 0, 0, 40),
+        align="right",
+        valign="bottom",
+        background_color="1E1E1E",
+        embed_info="params",
+        embed_position="right-bottom",
+        embed_status_out=embed_status,
+    )
+
+    assert saved
+    assert placements[0].y + placements[0].height == 400
+    assert embed_status == ["skipped_overlap"]
+
+    rendered = Image.open(saved[0]).convert("RGB")
+    # Image may cover the margin band; guard only prevents light-gray embed text.
+    sample = rendered.crop((420, 360, 498, 398))
+    assert all(px != (235, 235, 235) for px in sample.getdata())
+
+
+def test_mat20_embed_drawn_when_no_placement_overlap(tmp_path):
+    from harite.core import optimize_wallpapers
+
+    img = tmp_path / "small.jpg"
+    make_image(img, size=(120, 80))
+    out = tmp_path / "out"
+    embed_status: list[str] = []
+
+    saved, _ = optimize_wallpapers(
+        [str(img)],
+        (500, 400),
+        out,
+        margins=(0, 0, 60, 40),
+        align="center",
+        valign="center",
+        background_color="1E1E1E",
+        embed_info="free",
+        embed_text="safe-margin",
+        embed_position="left-top",
+        embed_status_out=embed_status,
+    )
+
+    assert saved
+    assert embed_status == ["drawn"]
+    rendered = Image.open(saved[0]).convert("RGB")
+    top_band = rendered.crop((4, 4, 200, 50))
+    assert any(px != (30, 30, 30) for px in top_band.getdata())

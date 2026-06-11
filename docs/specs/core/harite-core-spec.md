@@ -1,6 +1,6 @@
 # Harite コア仕様 (Core Spec)
 
-最終更新: 2026-06-07
+最終更新: 2026-06-11
 
 ## 1. コア (core) の責務
 
@@ -147,6 +147,14 @@ flowchart TD
 - `compute_placement(...)` は `_resolve_native_dimensions` + display 中央寄せ（down-only）。
 - `optimize_wallpapers` は 3 枚以上も等幅スライスで処理する（CLI/GUI public surface は先頭 2 件制限は従来どおり）。
 
+#### Placement 座標と margins の関係（CLI `Placement:` 出力の読み方）
+
+- `PlacementResult.x` / `y` は **合成キャンバス上の貼り付け左上**（ピクセル）。`width` / `height` は scale 適用後の画像サイズ。
+- **margins は x/y に直接加算しない**（§4.1 の paste 規則）。align / valign は display スロット全面で効く。
+- **原寸で display スロットに収まるとき:** margins を増やしても **x/y は変わらないことがある**（align/valign が同じなら paste 位置は不変）。margins の効きは主に **収納判定・縮小** 経由で `width` / `height` / `scale` に現れる。
+- **収まらないとき:** margins が縮小上限を変え、縮小後の `(nw, nh)` に対して align/valign が再計算されるため、**x/y も変わりうる**。
+- 母体比較で判然としなかったのは、この「直接オフセットしない」規則のため。**正本は本節と §4.1** とする。意図的な角寄せで画面端が欠けるのはユーザー調整の範囲（再作成でよい）。
+
 **画像読み込みとリサイズ:**
 
 - リサイズは `Image.LANCZOS`（`Image.Resampling.LANCZOS` と同値）を使用する。`optimize_wallpapers` と `compute_placement` で適用する。
@@ -172,6 +180,8 @@ flowchart TD
 - そのうえで左右半分は `left_slice_width = usable_width // 2`, `right_slice_width = usable_width - left_slice_width` で分ける。single-screen では `left-top` は左半分上端、`left-bottom` は左半分下端、`right-top` は右半分上端、`right-bottom` は右半分下端に対応する。
 - two-screen で display 情報がある場合も、配置面は left display / right display の上側・下側 4 位置だけを持つ。`left-top` は left display の上端、`left-bottom` は left display の下端、`right-top` は right display の上端、`right-bottom` は right display の下端に対応する。slice 内部の横範囲は `x0 = offset_x + ml`, `x1 = max(x0, offset_x + slice_w - mr)` であり、上端側は `(x0, 0, x1, mt)`、下端側は `(x0, slice_h - mb, x1, slice_h)` を基底にする。
 - 描画前には `area_w = x1 - x0`, `area_h = y1 - y0` を求め、`area_w < 40` または `area_h < 12` なら何も描かない。
+- **重畳ガード（MAT-20）:** 全画像の paste 完了後、`resolve_embed_margin_region` で得た embed 領域（AABB）と、各 `PlacementResult` の貼り付け矩形 `(x, y, x+width, y+height)` の **軸平行交差** を検査する。1 件でも交差すれば **embed テキストは描画しない**（画像への重畳を避ける）。精密な字形クリッピングや画面外欠けの自動補正は行わない。
+- スキップ時、CLI は `Embed: skipped (overlap with image placement)` を stdout に出す（[cli-spec §4](../cli/harite-cli-spec.md)）。GUI は同一規則で描画省略（feedback は実装フェーズで接続可）。
 - フォントサイズ候補は `preferred_size = max(12, min(24, area_h // (max_lines + 1)))` で決め、1 行高さは `line_h = max(10, bbox("Ag").height + 2)` 相当で求める。
 - 実際に描く行数は `fit_lines = area_h // line_h`, `line_limit = min(max(1, embed_max_lines), fit_lines)` で決め、超過した行は末尾に `...`（スペース+三点リーダー）を付けて切り詰める。
 - 実際の描画開始 x 座標は左端ぴったりではなく、`quartile_offset = max(4, min(max(1, area_w // 4), max(1, longest_px // 4 or 1)))` を使って `text_x = x0 + quartile_offset` に置く。y 座標は `text_y = y0 + 2` から始める。
