@@ -68,6 +68,40 @@ def test_optimize_help_reflects_current_surface() -> None:
     assert "--settings-file" in output
     assert "--embed-position" in output
     assert "--scaling" not in output
+    assert "left,right,top,bottom" in compact_output
+    assert "その内側で" not in output
+    assert "効きが強く" not in output
+    assert "auto-detect" in compact_output
+
+
+def test_format_placement_line_matches_cli_spec() -> None:
+    from pathlib import Path
+
+    from harite.core import PlacementResult
+
+    line = cli.format_placement_line(
+        PlacementResult(
+            image_path=Path("C:/photos/a.jpg"),
+            x=960,
+            y=540,
+            width=1920,
+            height=1080,
+            scale=1.0,
+            posit="left",
+        )
+    )
+    assert line == "a.jpg @ (960,540) 1920x1080 scale=1.0 posit=left"
+
+
+def test_root_help_lists_typer_shell_completion_options() -> None:
+    runner = CliRunner()
+
+    result = runner.invoke(cli.app, ["--help"])
+    output = _normalize_cli_output(result.output)
+
+    assert result.exit_code == 0
+    assert "--install-completion" in output
+    assert "--show-completion" in output
 
 
 def test_optimize_rejects_invalid_embed_info(tmp_path):
