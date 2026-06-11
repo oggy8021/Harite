@@ -169,13 +169,16 @@ def test_embed_text_drawn_on_top_margin(tmp_path):
     out_dir.mkdir()
 
     img1 = inp_dir / "a.jpg"
-    make_image(img1, size=(300, 200), color=(90, 120, 150))
+    # Keep image in the bottom-right so left-top margin band stays clear (MAT-20 guard).
+    make_image(img1, size=(100, 80), color=(90, 120, 150))
 
     saved, _ = optimize_wallpapers(
         [str(img1)],
         (400, 220),
         out_dir,
         margins=(10, 10, 40, 10),
+        align="right",
+        valign="bottom",
         embed_info="free",
         embed_text="margin-note",
         embed_position="left-top",
