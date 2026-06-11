@@ -1,6 +1,7 @@
 .specify
 .vscode
 .venv/
+.venv-system
 /out/
 /dist/
 /build/

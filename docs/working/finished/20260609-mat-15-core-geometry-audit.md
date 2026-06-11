@@ -24,7 +24,7 @@
 
 ### 1.1 母体 Core.py 直接再読（2026-06-09）
 
-初版監査は [MAT-01b 設計ドラフト](design/20260609-mat-01b-native-placement-repair-draft.md) と Harite `core.py` / テストを主参照とした。オーナー確認後、母体リポジトリを **直接再読** して照合した。
+初版監査は [MAT-01b 設計ドラフト](../design/20260609-mat-01b-native-placement-repair-draft.md) と Harite `core.py` / テストを主参照とした。オーナー確認後、母体リポジトリを **直接再読** して照合した。
 
 | 項目 | 内容 |
 | --- | --- |

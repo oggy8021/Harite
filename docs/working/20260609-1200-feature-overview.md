@@ -1,6 +1,6 @@
 # Harite - Feature Overview（active）
 
-最終更新: 2026-06-09  
+最終更新: 2026-06-11  
 ステータス: **現行 planning 入口**（`v1.9.0` 熟成運転 **一区切り** → **`v2.0.0` 目標**）
 
 ## 位置づけ
@@ -19,7 +19,7 @@
 
 - **熟成運転:** 2026-06-09 宣言 → 同日 **打ち切り**（未改修のままでは継続不可のため）。
 - **製品線:** `pyproject.toml` の `1.9.0` は熟成運転の中間マイルストーン。**本 stream の営みは `v2.0.0` を目指す**（Qt 一本化・remote source の確かさ）。
-- **現フェーズ:** MAT-01〜18・MAT-10・MAT-14b・MAT-02b 完了（#442〜#470）。**次: Q-01**（[計画・棚卸](20260610-q01-gtk-deprecation-planning.md)）。
+- **現フェーズ:** MAT-01〜18・MAT-10・MAT-14b・MAT-02b・**Q-01 コード** 完了（#442〜#472）。**次:** v2.0.0 前 CLI / 幾何一本化（[CLI v2 roadmap](20260611-1200-cli-v2-roadmap.md) — MAT-19〜24）。
 - 第1期 inventory は完了（上記 finished 参照）。
 - **再棚卸の入口:** [maturation §v2.0.0 への再整理](../online-issues/maturation-20260609-qt-common.md#v200-への再整理オーナー方針-2026-06-09)。
 
@@ -34,7 +34,7 @@
 | Slideshow path label 省略なし | 長い path がそのまま表示 | GTK `refresh_slideshow_source_labels` が full path 固定 | basename 省略 + tooltip（#439 追記・要 Xfce 再確認） |
 | GTK に Preset/Profile UI がないのに設定が部分展開 | Slideshow で NDL 図版など preset 由来の表示に見える | **認識済み:** GTK 版は Slideshow の Preset / Profile **提供面がない**。一方 settings 読み込みは Qt 版と同型のため、`slideshow_source_id_*` / `slideshow_profile_id` 等が防ぎきれず **部分的に展開**する | **記載のみ・削除しない** — GTK はメンテ対象外へ（Q-01）。parity 拡張はしない |
 
-**Qt / 共通（v1.9.0 → v2.0.0）:** [maturation-20260609-qt-common.md](../online-issues/maturation-20260609-qt-common.md)。**完了（#442〜#470）:** MAT-01〜18, 10, 14b。**次:** [Q-01 棚卸](20260610-q01-gtk-deprecation-planning.md)。
+**Qt / 共通（v1.9.0 → v2.0.0）:** [maturation-20260609-qt-common.md](../online-issues/maturation-20260609-qt-common.md)。**完了（#442〜#472）:** MAT-01〜18, 10, 14b, Q-01 コード。[Q-01 計画](finished/20260610-q01-gtk-deprecation-planning.md) は finished へ移動済み。
 
 ## 1. 着手候補
 
@@ -48,12 +48,13 @@
 | MAT-15 | core 幾何総点検 | align / margin 優先、ストレッチ誤解の是正、MAT-14 接続 | MAT-12→11 延長。GUI 注釈 + spec + テスト | **完了** #460 |
 | MAT-16 | 時刻をローカル TZ（JST） | `jma-cycle.json` / `updated_at` 等の解析しづらさ | MAT-08 op log と方針統一 | **完了** #461 |
 | MAT-17 | CLI slideshow + settings | CLI でも `harite-settings.json` を読む | settings + MAT-11 optimize 経路（single/dual）。catalog / remote tick は GUI 専用 | **完了** #463 |
-| Q-01 | GTK をメンテ対象外に落とす | 回収コスト観点で GTK 削除 + 共有層 rename。**v2.0.0 = Qt 一本化。** | 付録 C レビュー済。GTK 熟成メモは **残す** | **承認・実装中** — [計画](20260610-q01-gtk-deprecation-planning.md) |
-| — | MAT-02b（先送り） | NDL / CODH **取得**（壁紙未切替）。MAT-02 表示整合とは別枠。 | MAT-08: GET OK でも tick 不発・未反映。tick/apply が主戦場 | **高** — 継続 |
-| — | MAT-08 観測（途中） | Preset slideshow 操作ログの **viper3 実機切り分け** | [観測メモ](20260609-mat-08-viper3-slideshow-op-observation.md) — JMA のみ安定 | MAT-02b の前提 |
+| Q-01 | GTK をメンテ対象外に落とす | 回収コスト観点で GTK 削除 + 共有層 rename。**v2.0.0 = Qt 一本化。** | 付録 C レビュー済。GTK 熟成メモは **残す** | **コード完了** #472 — [計画](finished/20260610-q01-gtk-deprecation-planning.md) |
+| MAT-02b | NDL / CODH slideshow 不安定 | tick / apply / none クリア。MAT-02 表示整合とは別枠。 | op3 で勝ち筋確定 | **完了** #462–#465 — [メモ](finished/20260609-mat-02b-slideshow-remote-stability.md) |
+| MAT-08 | Preset slideshow 操作ログ（viper3） | op1 → op2 → op3 実機切り分け | [op3](finished/20260610-mat-08-viper3-slideshow-op3-observation.md) | **完了** |
 | MAT-10 | 江戸切絵図 source（新規） | edo-maps / IIIF を雰囲気 slideshow source に | ライセンス・indexer | **完了** #470 |
 | MAT-18 | NDL searchbytext | キーワードで図版検索（CODH 同型 UI） | op3: facet は書簡偏重 | **完了** #467–#468 |
 | MAT-14b | auto 倍率 | 短辺閾値で 1.25–2x 自動拡大（Main+Slideshow） | MAT-14 手動 % とは別軸 | **完了** #469 |
+| MAT-19〜24 | v2 前 CLI / 幾何一本化 | spec/help・embed・四重露出・Apply 経路・plugin 縮小・v2 bump | [roadmap](20260611-1200-cli-v2-roadmap.md)。従属: [gatereview](20260611-pre-bump-cli-gatereview.md)、[two-screen](20260611-two-screen-display-params-clarification.md) | **planning 中** |
 
 
 ## 2. 構想保持
@@ -72,7 +73,8 @@
 
 | カテゴリ                       | 現状                                             |
 | -------------------------- | ---------------------------------------------- |
-| GUI / runtime              | **Q-01** GTK 廃止 → Qt 一本化                       |
+| GUI / runtime              | **Q-01** 完了 #472 → Qt 一本化                       |
+| CLI / 幾何 / v2 bump         | **MAT-19〜24** [roadmap](20260611-1200-cli-v2-roadmap.md) |
 | plugin / apply             | C-03 capability 可視化（縮小保留）、K-04 拡張パック           |
 | 外部ソース / slideshow / source | 第1期完了。拡張は issue 駆動                             |
 | 破棄・保留                      | [pending](20260608-1200-feature-pending.md) 参照 |
@@ -81,7 +83,7 @@
 ## 次期 planning への渡し方
 
 - overview では実装順をまだ固定せず、まず候補群の置き場所を作る。
-- 着手候補から 1 つを選び、個別の spec / plan / tasks へ落とす（次は **MAT-17**。Q-01 は MAT-17 の後・MAT-10 より先）。
+- 着手候補から 1 つを選び、個別の spec / plan / tasks へ落とす（次は **MAT-19** から [CLI v2 roadmap](20260611-1200-cli-v2-roadmap.md) の順序どおり）。
 - 構想保持は、Q-01 や issue 蓄積の結果を受けて再分類する。
 - 破棄候補 / 保留延長は [pending](20260608-1200-feature-pending.md) に置き、懐かしさで復活させない。
 

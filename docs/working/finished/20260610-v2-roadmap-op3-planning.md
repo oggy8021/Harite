@@ -1,7 +1,10 @@
 # v2.0.0 ロードマップ固め — op3 観測後（2026-06-10）
 
+最終更新: 2026-06-11（Q-01 #472 完了 · **finished へ移動**）  
 親: [maturation §v2.0.0](../online-issues/maturation-20260609-qt-common.md)  
 前提: [op3 観測](20260610-mat-08-viper3-slideshow-op3-observation.md)、main `0672e7d`（#464 + #465）
+
+**ステータス:** 本稿に載せた着手順（MAT-10/18/14b・Q-01）は **すべて完了**。v2.0.0 bump 前の残作業は [feature-overview](../20260609-1200-feature-overview.md) および熟成運転メモへ委譲。
 
 ## オーナー判断（2026-06-10）
 
@@ -20,8 +23,8 @@
 | --- | --- | --- | --- |
 | 1 | ~~MAT-17~~ | **完了** #463 | CLI slideshow + settings |
 | 2 | ~~MAT-02b 主戦場~~ | **op3 完了** #462–#465 | 残: apply 失敗時 timer |
-| 3 | **Q-01** | **承認・実装中** | v2.0.0 GTK 削除 + rename（[計画](20260610-q01-gtk-deprecation-planning.md)） |
-| 4 | ~~**MAT-10**~~ | **完了** #470 | 江戸切絵図 A/B/C preset |
+| 3 | ~~**Q-01**~~ | **完了** #472 | v2.0.0 GTK 削除 + rename（[計画](20260610-q01-gtk-deprecation-planning.md)） |
+| 4 | ~~MAT-10~~ | **完了** #470 | 江戸切絵図 A/B/C preset |
 | 5 | ~~**MAT-18**~~ | **完了** #467–#468 | NDL searchbytext + cursor |
 | 6 | ~~**MAT-14b**~~ | **完了** #469 | auto 倍率 |
 

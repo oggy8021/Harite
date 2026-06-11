@@ -6,13 +6,13 @@ GitHub Issue 起票前の観測転記。
 - 対象: **Qt 版**および **backend 共通**（GTK 専用は [GTK 熟成メモ](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) 参照）
 - **転記（中間整理 2026-05-31）:** 改修系・確かさ向上・**MAT-11** まで **完了**（#442〜#452）。
 - **機能要望（2026-06-09）:** **MAT-04**（#455）、**MAT-09**（#456）**完了**。Post Main Merge CI 緑（run 27195018405）。
-- **v2.0.0 backlog（2026-05-31）:** **MAT-13**（#458）〜**MAT-17**（#463）**完了**。**MAT-02b** op3 で勝ち筋確定（#462–#465）。**MAT-18**（#467/#468）、**MAT-14b**（#469）、**MAT-10**（江戸切絵図 A/B/C preset）**完了**。**Preset Slideshow 仕組み**（sync/tick/apply/op log）は **成立**（op5 で MAT-18b 確認）。次: **Q-01**（[op3 後ロードマップ](../working/20260610-v2-roadmap-op3-planning.md)）。
+- **v2.0.0 backlog（2026-05-31）:** **MAT-13**（#458）〜**MAT-17**（#463）**完了**。**MAT-02b** op3 で勝ち筋確定（#462–#465）。**MAT-18**（#467/#468）、**MAT-14b**（#469）、**MAT-10**（江戸切絵図 A/B/C preset）**完了**。**Preset Slideshow 仕組み**（sync/tick/apply/op log）は **成立**（op5 で MAT-18b 確認）。**Q-01**（#472）**完了**（[op3 後ロードマップ](../working/finished/20260610-v2-roadmap-op3-planning.md) — **finished**）。
 - **熟成運転:** 2026-06-09 **打ち切り**（継続には改修が先決）。
 - **製品線:** `v1.9.0` は熟成運転の **中間マイルストーン**。本 stream の営みは **`v2.0.0` を目指す**（Qt 一本化・remote source の確かさ・製品線の再定義）。詳細は下記 [v2.0.0 への再整理](#v200-への再整理オーナー方針-2026-06-09)。
 
 ## v2.0.0 への再整理（オーナー方針 2026-06-09）
 
-熟成運転の過程で **先送り** したものと **閃いた** ものを改めて並べる。骨格は **Q-01** — GTK を **メンテ対象外** に落とす（回収コスト観点）。**例: `v2.0.0` を GTK 同梱の最終版とする** 等は [Q-01 計画](../working/20260610-q01-gtk-deprecation-planning.md) で確定。**MAT-10 / MAT-18 / MAT-14b** は **完了**（#467〜#470）。**Q-01** は **planning 中**（2026-06-10 棚卸）。
+熟成運転の過程で **先送り** したものと **閃いた** ものを改めて並べる。骨格は **Q-01** — GTK を **メンテ対象外** に落とす（回収コスト観点）。**例: `v2.0.0` を GTK 同梱の最終版とする** 等は [Q-01 計画](../working/finished/20260610-q01-gtk-deprecation-planning.md) で確定。**MAT-10 / MAT-18 / MAT-14b / Q-01** は **完了**（#467〜#472）。着手順の記録: [op3 後ロードマップ](../working/finished/20260610-v2-roadmap-op3-planning.md)（**finished**）。
 
 **GTK 熟成メモ:** [overview §Xfce](../working/20260609-1200-feature-overview.md#熟成運転メモxfce-実機) は **削除しない**（観測記録として残す）。GTK への parity 拡張・改修は行わない。
 
@@ -38,8 +38,8 @@ GitHub Issue 起票前の観測転記。
 | ID | 要約 | PR / 観測 |
 | --- | --- | --- |
 | **MAT-17** | CLI slideshow + settings | #463 |
-| **MAT-02b** | tick / apply / none クリア / NDL tick | #462, #464, #465。[op3](../working/20260610-mat-08-viper3-slideshow-op3-observation.md) で勝ち筋確定 |
-| **MAT-08 観測** | op1 → op2 → **op3** 完了 | [op3 メモ](../working/20260610-mat-08-viper3-slideshow-op3-observation.md) |
+| **MAT-02b** | tick / apply / none クリア / NDL tick | #462, #464, #465。[op3](../working/finished/20260610-mat-08-viper3-slideshow-op3-observation.md) で勝ち筋確定 |
+| **MAT-08 観測** | op1 → op2 → **op3** 完了 | [op3 メモ](../working/finished/20260610-mat-08-viper3-slideshow-op3-observation.md) |
 | **MAT-18** | NDL `searchbytext` + キーワード preset | #467 |
 | **MAT-18b** | `searchbytext` リスト巡回（cursor） | #468。op5 で tick 毎別 IIIF 確認 |
 | **MAT-14b** | auto 倍率（Main + Slideshow 分離） | #469 |
@@ -48,21 +48,21 @@ GitHub Issue 起票前の観測転記。
 
 | ID | 要約 | 先送り理由 / 次の詰め |
 | --- | --- | --- |
-| **Q-01** | GTK を **メンテ対象外** に落とす → Qt 一本化 | **承認・実装中** — [計画](../working/20260610-q01-gtk-deprecation-planning.md)。**v2.0.0 で GTK 削除**、共有層は rename |
+| **Q-01** | GTK を **メンテ対象外** に落とす → Qt 一本化 | **承認・実装中** — [計画](../working/finished/20260610-q01-gtk-deprecation-planning.md)。**v2.0.0 で GTK 削除**、共有層は rename |
 
 ### 実施 backlog（v2.0.0 向け・2026-05-31 更新）
 
 | ID | 要約 | 区分 |
 | --- | --- | --- |
-| **MAT-10** | 江戸切絵図 / 雰囲気 source | 機能要望 · **完了**（[計画文書](../working/20260531-mat-10-kiriezu-source-planning.md)） |
+| **MAT-10** | 江戸切絵図 / 雰囲気 source | 機能要望 · **完了**（[計画文書](../working/finished/20260531-mat-10-kiriezu-source-planning.md)） |
 
 ### おおよその次の流れ（オーナー確定 2026-06-10 → 2026-05-31 更新）
 
 1. ~~**MAT-13 → 17**~~、~~**MAT-02b**~~、~~**MAT-18 / MAT-14b**~~ **完了**（#458〜#469、op5）
 2. ~~**MAT-10**~~ — 江戸切絵図 **完了**（浅草実機 OK、A/B/C preset 13 本）
-3. **Q-01** — GTK 削除 + rename（**承認済** · [計画](../working/20260610-q01-gtk-deprecation-planning.md)）— **実装着手**
+3. **Q-01** — GTK 削除 + rename（**承認済** · [計画](../working/finished/20260610-q01-gtk-deprecation-planning.md)）— **実装着手**
 
-詳細: [20260610-v2-roadmap-op3-planning.md](../working/20260610-v2-roadmap-op3-planning.md)
+詳細: [20260610-v2-roadmap-op3-planning.md](../working/finished/20260610-v2-roadmap-op3-planning.md)
 
 ## 着手順（オーナー方針・熟成運転中の区分）
 
@@ -84,7 +84,7 @@ GitHub Issue 起票前の観測転記。
 | 確かさ（op3 完了） | MAT-08 観測 |
 | 製品線（実装中） | Q-01 |
 
-※ MAT-02b / op3: [観測メモ](../working/20260610-mat-08-viper3-slideshow-op3-observation.md)。MAT-10 の具体 URL は例示のみ（[MAT-10](#mat-10--江戸切絵図を雰囲気絵ソースにできないか検討)）。MAT-18 / MAT-14b は [op3 後ロードマップ](../working/20260610-v2-roadmap-op3-planning.md)。
+※ MAT-02b / op3: [観測メモ](../working/finished/20260610-mat-08-viper3-slideshow-op3-observation.md)。MAT-10 の具体 URL は例示のみ（[MAT-10](#mat-10--江戸切絵図を雰囲気絵ソースにできないか検討)）。MAT-18 / MAT-14b は [op3 後ロードマップ](../working/finished/20260610-v2-roadmap-op3-planning.md)。
 
 ---
 
@@ -234,7 +234,7 @@ GitHub Issue 起票前の観測転記。
 ### 事象
 
 - MAT-02 は **表示整合のみ** 完了（#445）。**壁紙が切り替わらない** / **期待 tick が来ない** は本項目。
-- [MAT-08 viper3 観測](../working/20260609-mat-08-viper3-slideshow-op-observation.md): **JMA のみ安定**。NDL / CODH は JSONL GET 成功でも実機未反映・tick 不発あり。
+- [MAT-08 viper3 観測](../working/finished/20260609-mat-08-viper3-slideshow-op-observation.md): **JMA のみ安定**。NDL / CODH は JSONL GET 成功でも実機未反映・tick 不発あり。
 
 ### 分類
 
@@ -244,7 +244,7 @@ GitHub Issue 起票前の観測転記。
 ### 関連
 
 - MAT-02（#445 — 表示のみ）、MAT-08（#450 + viper3 観測）、MAT-11（#452 — Optimize 経路）
-- [20260609-mat-02b-slideshow-remote-stability.md](../working/20260609-mat-02b-slideshow-remote-stability.md)
+- [20260609-mat-02b-slideshow-remote-stability.md](../working/finished/20260609-mat-02b-slideshow-remote-stability.md)
 
 ### 取り込み方針
 
@@ -255,7 +255,7 @@ GitHub Issue 起票前の観測転記。
 - **完了（#464）:** NDL sync-on-tick — `ndl_slideshow_tick` + outcome op log
 - **完了（#465）:** Profile `— none —` → L/R srcdir クリア
 - **未着手:** tick apply 失敗時の pause 継続方針
-- **op3（2026-06-10）:** [観測メモ](../working/20260610-mat-08-viper3-slideshow-op3-observation.md) — NDL tick + apply 一連・JMA `filename_unchanged` 可視化を確認。**勝ち筋確定。**
+- **op3（2026-06-10）:** [観測メモ](../working/finished/20260610-mat-08-viper3-slideshow-op3-observation.md) — NDL tick + apply 一連・JMA `filename_unchanged` 可視化を確認。**勝ち筋確定。**
 
 ### 調査メモ
 
@@ -497,18 +497,18 @@ GitHub Issue 起票前の観測転記。
 - memo（オーナー）: CODH・NDL 観測の前提。JST タイムスタンプ必須。URL 組み立て過程の可視化が欲しい
 - **v0（2026-06-09）:** `REMOTE_SYNC_*` / `NDL_*` / `CODH_*` / `JMA_TICK` ステップ。`ts_jst` は `+09:00` 固定オフセット。viper3 観測は `export HARITE_SLIDESHOW_OP_LOG=~/.cache/harite/slideshow-op.jsonl` 等。
 - **実装:** #450 マージ済み。
-- **観測（途中・2026-06-09）:** viper3 `slideshow-op.jsonl` 90 行 + オーナー実機メモ。[20260609-mat-08-viper3-slideshow-op-observation.md](../working/20260609-mat-08-viper3-slideshow-op-observation.md)
+- **観測（途中・2026-06-09）:** viper3 `slideshow-op.jsonl` 90 行 + オーナー実機メモ。[20260609-mat-08-viper3-slideshow-op-observation.md](../working/finished/20260609-mat-08-viper3-slideshow-op-observation.md)
   - **JMA:** 問題なし（ログ・体感一致）
   - **NDL おまかせ:** 手編集 catalog 残存 — 想定どおり失敗（product 問題ではない）
   - **NDL / CODH その他:** **不安定** — 期待 tick（20:04 / 20:20 / 20:49）不発、CODH は 20:37 に JSONL 上 `CODH_TICK` OK だが **壁紙未更新**
   - **副次:** R を `--none--` にしても画像パス残存（`Clear-R` と不整合）→ L-only 観測が汚染
   - **MAT-02b 示唆:** GET 成功 ≠ 壁紙更新。tick 発火・apply 層が主戦場。op log v1+ で apply/tick 記録が必要
-- **観測（op2・2026-06-10）:** viper3 `slideshow-op2.jsonl` 114 行（#462 以降）。[20260610-mat-08-viper3-slideshow-op2-observation.md](../working/20260610-mat-08-viper3-slideshow-op2-observation.md)
+- **観測（op2・2026-06-10）:** viper3 `slideshow-op2.jsonl` 114 行（#462 以降）。[20260610-mat-08-viper3-slideshow-op2-observation.md](../working/finished/20260610-mat-08-viper3-slideshow-op2-observation.md)
   - **CODH:** 安定（tick + apply 一連記録）
   - **JMA:** 安定（2h interval、`JMA_TICK` + cache mtime 確認）
   - **NDL:** Start sync OK、tick は同一 `latest.jpg` 再 apply のみ → **`ndl_slideshow_tick` 改修**
   - **00:53 セッション:** Start 後 tick 無し — 安定化観測で継続（本改修スコープ外）
-- **観測（op3・2026-06-10）:** viper3 `slideshow-op3.jsonl` 110 行（#464 以降）。[20260610-mat-08-viper3-slideshow-op3-observation.md](../working/20260610-mat-08-viper3-slideshow-op3-observation.md)
+- **観測（op3・2026-06-10）:** viper3 `slideshow-op3.jsonl` 110 行（#464 以降）。[20260610-mat-08-viper3-slideshow-op3-observation.md](../working/finished/20260610-mat-08-viper3-slideshow-op3-observation.md)
   - **JMA:** `filename_unchanged` + tick 後 `SLIDESHOW_APPLY` 記録 — outcome フィールドどおり
   - **NDL:** tick 毎 `NDL_META_URL` / `NDL_TICK` / `content_changed=true` / apply 一連 — **#464 成功**
   - **NDL IIIF 404:** 3 件すべて再試行で回復
@@ -589,7 +589,7 @@ GitHub Issue 起票前の観測転記。
 ### 取り込み方針
 
 - **2026-06-10:** **実施 backlog に載せる**（後回し解除）
-- **2026-05-31:** **実装完了** — [計画文書](../working/20260531-mat-10-kiriezu-source-planning.md)。preset **A+B+C 三段**（13 本）、IIIF **1200px**。浅草 Start → 東部浅草絵図（1286208）**オーナー確認 OK**
+- **2026-05-31:** **実装完了** — [計画文書](../working/finished/20260531-mat-10-kiriezu-source-planning.md)。preset **A+B+C 三段**（13 本）、IIIF **1200px**。浅草 Start → 東部浅草絵図（1286208）**オーナー確認 OK**
 - ゲート: NDL **デジタルコレクション利用** + 出典表記。edo-maps 地名 CSV は CC BY だが **画像は NDL IIIF**
 - **MAT-18 との関係:** NDL 切り出し（小図版・キーワード）と **別経路**。MAT-10 は **地図1枚全体**の雰囲気
 
@@ -657,7 +657,7 @@ preset（江戸切絵図・おまかせ）
 - GitHub: **未起票**
 - 記録日: 2026-06-10
 - 仮タイトル: `Deprecate GTK backend; Qt-only GUI for v2.0.0`
-- 計画: [20260610-q01-gtk-deprecation-planning.md](../working/20260610-q01-gtk-deprecation-planning.md)
+- 計画: [20260610-q01-gtk-deprecation-planning.md](../working/finished/20260610-q01-gtk-deprecation-planning.md)
 
 ### 事象 / 要望
 
@@ -682,7 +682,7 @@ preset（江戸切絵図・おまかせ）
 ### 取り込み方針
 
 - **2026-06-10 オーナー承認** — 付録 C レビュー後。「管理限界」として **GTK 削除 + 共有層 rename** を Q-01 で実施
-- **parity 拡張しない** — [付録 C](../working/20260610-q01-gtk-deprecation-planning.md#付録-c--gtk--qt-機能差レビュー用)
+- **parity 拡張しない** — [付録 C](../working/finished/20260610-q01-gtk-deprecation-planning.md#付録-c--gtk--qt-機能差レビュー用)
 - **確定:** v2.0.0 で GTK コード削除。`harite-gtk` 廃止。`harite-gui` → `harite-qt` エイリアス（移行）
 - **実装フェーズ:** P2 GTK UI 削除 → P3 rename → P4 views → P1/P5 entrypoint + v2.0.0（計画 §6・§8）
 
@@ -900,7 +900,7 @@ preset（江戸切絵図・おまかせ）
 ### 関連
 
 - MAT-14（#459）、MAT-01b（#444）、MAT-11（#452）
-- [op3 ロードマップ](../working/20260610-v2-roadmap-op3-planning.md) §MAT-14b
+- [op3 ロードマップ](../working/finished/20260610-v2-roadmap-op3-planning.md) §MAT-14b
 - core spec: `docs/specs/core/harite-core-spec.md` MAT-14b 節
 - 実装: `src/harite/auto_display_scale.py`、`tests/test_auto_display_scale.py`
 
@@ -999,7 +999,7 @@ preset（江戸切絵図・おまかせ）
 
 - スコープ: core 幾何の照合（母体 `wallpaperoptimizer` 含む）→ spec / GUI 注釈整合 + テスト
 - **完了:** #460 マージ済み（`fix/mat-15-core-geometry-audit`）:
-  - 監査: [20260609-mat-15-core-geometry-audit.md](../working/20260609-mat-15-core-geometry-audit.md)
+  - 監査: [20260609-mat-15-core-geometry-audit.md](../working/finished/20260609-mat-15-core-geometry-audit.md)
   - **結論:** core パイプラインは MAT-01b + MAT-14 整合。誤解の主因は GUI 旧注釈
   - GUI priority rule 更新（margin-inner → **full display slot**）
   - core-spec §4.1 に MAT-14 計算順・`scaling` 無効を明記

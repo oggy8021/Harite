@@ -13,7 +13,7 @@
 | やること | やらないこと |
 | --- | --- |
 | entrypoint / packaging / docs で **GTK を非推奨または削除** | GTK への **parity 拡張**（Preset / Profile UI 等） |
-| 共有ロジック（誤名 `gtk_runtime_*`）の **rename / 移設** | [overview §Xfce 熟成メモ](20260609-1200-feature-overview.md#熟成運転メモxfce-実機) の **削除** |
+| 共有ロジック（誤名 `gtk_runtime_*`）の **rename / 移設** | [overview §Xfce 熟成メモ](../20260609-1200-feature-overview.md#熟成運転メモxfce-実機) の **削除** |
 | `harite-foundation-spec` / `harite-gui-spec` の **Qt 一本化記述** | 図版品質フィルタ等の **source 特別対策**（別論点） |
 
 **オーナー判断（2026-06-10 · 確定）**
@@ -173,7 +173,7 @@ flowchart TB
 
 | 文書 | 理由 |
 | --- | --- |
-| [overview §Xfce 熟成メモ](20260609-1200-feature-overview.md#熟成運転メモxfce-実機) | **観測記録**（maturation 方針） |
+| [overview §Xfce 熟成メモ](../20260609-1200-feature-overview.md#熟成運転メモxfce-実機) | **観測記録**（maturation 方針） |
 | `docs/working/finished/*pyqt6*` 等 | migration 履歴 |
 | `docs/working/design/*glade*` | レガシー解釈 |
 
@@ -181,15 +181,15 @@ flowchart TB
 
 | 文書 | 現状 | 更新 |
 | --- | --- | --- |
-| [20260609-1200-feature-overview.md](20260609-1200-feature-overview.md) | MAT-10 等が旧ステータス | Q-01 **着手**、MAT-10/18/14b **完了** |
-| [20260610-v2-roadmap-op3-planning.md](20260610-v2-roadmap-op3-planning.md) | Q-01 未着手 | **planning 中** |
+| [20260609-1200-feature-overview.md](../20260609-1200-feature-overview.md) | MAT-10 等が旧ステータス | Q-01 **着手**、MAT-10/18/14b **完了** |
+| [20260610-v2-roadmap-op3-planning.md](20260610-v2-roadmap-op3-planning.md) | Q-01 完了 #472 | **finished** |
 | [online-issues/README.md](../online-issues/README.md) | backlog 表が旧 | MAT 完了反映 |
 
 ---
 
 ## 5. GTK の既知ギャップ（parity しない根拠）
 
-[overview §Xfce](20260609-1200-feature-overview.md) より — **記載のみ・特別対策しない**:
+[overview §Xfce](../20260609-1200-feature-overview.md) より — **記載のみ・特別対策しない**:
 
 | 事象 | 方針 |
 | --- | --- |
@@ -266,7 +266,7 @@ flowchart TB
 
 **方針（Q-01）:** ✗ / △ の GTK 側は **parity 拡張しない**。v2.0.0 で GTK を外すと、表の **✗ 列が製品の正** になる。
 
-**正本・補足:** [p03 3layer audit](finished/20260606-p03-3layer-audit.md) §Widget 棚卸、[overview §Xfce](20260609-1200-feature-overview.md#熟成運転メモxfce-実機)、maturation §MAT-14b / §MAT-18 等。
+**正本・補足:** [p03 3layer audit](20260606-p03-3layer-audit.md) §Widget 棚卸、[overview §Xfce](../20260609-1200-feature-overview.md#熟成運転メモxfce-実機)、maturation §MAT-14b / §MAT-18 等。
 
 ### C.1 一覧
 
