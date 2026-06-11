@@ -1,6 +1,6 @@
 # Harite CLI 仕様 (CLI Spec)
 
-最終更新: 2026-06-07
+最終更新: 2026-06-11
 
 ## 1. CLI の責務
 
@@ -67,7 +67,7 @@ sequenceDiagram
 - help では `--settings-file` を optimize 用 defaults を読む option だと分かる文言で説明する。規範文言は `Optional path to optimize settings JSON` を基準にする。
 - help では `--input` を、カンマ区切りまたは `--input` の繰り返しで最大 2 件まで受け付ける画像入力だと分かる文言で説明する。規範文言は `Input file(s). Use comma-separated paths or repeat --input.` を基準にする。
 - `scaling` は public surface から外す。optimize の拡大縮小は内部で fit 系計算を使い、`fill` / `crop` は user-facing option として露出しない。
-- 成功時は `Saved:` と `Placement:` を出力する。
+- 成功時は `Saved:` と 1 行ずつの `Placement:` を出力する（§4.1）。
 
 主要な流れ:
 
@@ -89,7 +89,7 @@ sequenceDiagram
 - 2 件入力を採用した場合、先頭を left、2 件目を right として順番に割り当てる。CLI には optimize 入力の左右を明示的に入れ替える別 option は持たない。
 - `optimize` の `--input` は画像ファイル列のみを受け付け、directory が渡された場合は明示エラーで終了する。
 - `quality`, `embed_info`, `embed_position`, `embed_max_lines`, `background_color` は CLI 側で先に妥当性検証する。
-- **MAT-14 / MAT-14b（settings 経由）:** `--settings-file` から `l_display_scale`, `r_display_scale`, `l_auto_display_scale`, `r_auto_display_scale` を読み、`optimize_wallpapers(...)` へ渡す。CLI 専用 option は持たない（GUI Main Compose と同型）。
+- **意図的拡大 / auto 倍率（settings 経由）:** `--settings-file` から `l_display_scale`, `r_display_scale`, `l_auto_display_scale`, `r_auto_display_scale` を読み、`optimize_wallpapers(...)` へ渡す。CLI 専用 option は持たない（GUI Main Compose と同型）。挙動の正本は [core-spec §4.1](../core/harite-core-spec.md#41-placement-計算の現行規則)。
 - `background_color` の値規則自体は `#` の有無を許容するが、CLI help と例示は shell 誤解を避けるため `E0E0E0` のような 6 桁 HEX を基準にする。
 - `embed_position` は `left-top|left-bottom|right-top|right-bottom` の 4 値だけを受け付ける。help でも同じ 4 値をそのまま見せる。
 - `embed_position` が未指定のときの既定値は `right-bottom` である。
@@ -101,7 +101,19 @@ display / two-screen 解決:
 - `resolution`, `l_display`, `r_display` は CLI 引数 > 設定ファイル値 > two-screen 用表示情報から導いた自動値 の順で解決する。
 - `two_screen` が自動判定のままで two-screen 用の表示情報を取得できない場合、最終的な two-screen 判定は `False` に戻る。
 - `--l-display` / `--r-display` は個別指定できるが、未指定時は two-screen 用表示情報から導いた display size を使う。
-- `--margins` は `l,r,top,bottom` の 4 要素文字列として解釈し、省略時は `(0, 0, 0, 0)` を使う。
+- `--margins` は `left,right,top,bottom` の 4 要素文字列（ピクセル）として解釈し、省略時は `(0, 0, 0, 0)` を使う。
+
+margins / align / valign の関係（[core-spec §4.1](../core/harite-core-spec.md#41-placement-計算の現行規則) と同型）:
+
+- `margins` は **画像の収納判定と縮小上限** に使う（display 矩形から控除した利用可能領域）。
+- `align` / `valign` は各 display **スロット全面**（`screen_w × screen_h`）の余白で寄せる。margins の内側セルへ align しない。
+- paste 座標に margins の `+= ml` オフセットは **付けない**。したがって help で「margins の内側で align が効く」と読んではいけない。
+
+two-screen / resolution / display override（現行）:
+
+- 未指定時は `resolve_optimize_display_settings(...)` が workspace 検出と入力枚数から `resolution` / `l_display` / `r_display` / `two_screen` を解決する。
+- `--two-screen` / `--no-two-screen` は settings / auto より CLI 明示で上書きする。通常の総点検では **省略可**。
+- `two_screen=OFF` かつ 2 枚入力の「半分キャンバス」経路は現行に残るが、v2.0.0 前整理（MAT-21）で見直す予定。
 
 計算規則の補足:
 
@@ -117,6 +129,24 @@ display / two-screen 解決:
 - 画像入力不正
 - resolution / display 条件不正
 - background color や embed 系 option 不正
+
+### 4.1 `Placement:` 出力
+
+各入力画像ごとに 1 行を stdout へ出す。形式:
+
+```text
+Placement: {image_name} @ ({x},{y}) {width}x{height} scale={scale} posit={left|right}
+```
+
+| フィールド | 意味 |
+| --- | --- |
+| `image_name` | 入力画像のファイル名（パス末尾） |
+| `x`, `y` | **合成キャンバス**上の貼り付け左上座標（ピクセル、原点は左上） |
+| `width`, `height` | 配置後の画像ピクセルサイズ（scale 適用後） |
+| `scale` | 適用した拡大縮小倍率（原寸なら `1.0`） |
+| `posit` | two-screen / 複数入力時のスロット: `left` / `right`。単一入力で左右の区別が無いときは行末から省略可 |
+
+`rotation` / `score` は内部互換フィールドであり、CLI 一行出力には含めない。
 
 ### 短縮形オプション
 
@@ -292,6 +322,17 @@ Windows / macOS ではサポート外であり、終了コード `2` で終了�
 - subcommand 未指定時は簡易ヘルプ文言を出して正常終了する。
 - Typer / Click の parse error は framework 側の終了に委ねるが、業務上の入力不正は Harite 側で `2` に寄せる。
 
+### Typer シェル補完（ルート `harite --help`）
+
+Click / Typer が自動付与する補助 option。Harite 独自の業務仕様ではない。
+
+| option | 役割 |
+| --- | --- |
+| `--install-completion` | 現在のシェル向けに tab 補完スクリプトをインストールする（bash / zsh / fish 等。環境依存） |
+| `--show-completion` | 補完スクリプトを stdout に出力する（手動設定用） |
+
+去就（残す / 廃止）は MAT-23 の CLI surface 整理で決める。現行は Typer 既定のまま提供する。
+
 ### `--plugin` 未指定時のデフォルト決定規則
 
 - `apply` / `slideshow` の `--plugin` 未指定時は以下の順序でデフォルト plugin 名を決定する:
@@ -308,7 +349,7 @@ Harite 固有の stdout 実行メッセージは、言語に応じた自然な u
 
 | command | 代表メッセージ |
 |---|---|
-| `optimize` | `Saved: {path}`、`Placement: ...` |
+| `optimize` | `Saved: {paths}`、`Placement: {name} @ ({x},{y}) {w}x{h} scale=...`（§4.1） |
 | `apply` | `Plugin '{plugin}' applied wallpaper: {path}` / `failed to apply wallpaper: {path}` |
 | `slideshow` | `Slideshow start`、`Slideshow interrupted by user`、`Slideshow completed`（将来） |
 | `install-desktop-entry` | `Installed desktop entry: {path}` |

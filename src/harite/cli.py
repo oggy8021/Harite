@@ -9,7 +9,14 @@ import json
 
 from . import __version__
 from .apply_settings import resolve_apply_settings
-from .core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color, normalize_optimize_input_paths, optimize_wallpapers
+from .core import (
+    DEFAULT_BACKGROUND_COLOR_HEX,
+    PlacementResult,
+    is_background_color_literal,
+    normalize_background_color,
+    normalize_optimize_input_paths,
+    optimize_wallpapers,
+)
 from .plugins import registry as plugin_registry
 from .settings import AppSettings, SlideshowSettings
 from .settings_file import load_settings
@@ -41,8 +48,20 @@ def _default_plugin_name() -> str:
     return "windows"
 
 
+def format_placement_line(placement: PlacementResult) -> str:
+    """Format one placement for CLI stdout (harite-cli-spec §4.1)."""
+    name = placement.image_path.name
+    line = (
+        f"{name} @ ({placement.x},{placement.y}) "
+        f"{placement.width}x{placement.height} scale={placement.scale}"
+    )
+    if placement.posit:
+        line = f"{line} posit={placement.posit}"
+    return line
+
+
 def parse_margins(value: str) -> Tuple[int, int, int, int]:
-    """Parse margins as 'left,top,right,bottom' or 'l,r,t,b' in pixels."""
+    """Parse margins as left,right,top,bottom pixel values."""
     parts = [p.strip() for p in value.split(",") if p.strip()]
     if len(parts) != 4:
         raise ValueError("Margins must have four comma-separated integers: l,r,top,bottom")
@@ -205,25 +224,25 @@ def optimize(
     two_screen: bool = typer.Option(
         False,
         "--two-screen/--no-two-screen",
-        help="Enable two-screen mode. For explicit left/right widths, use with --l-display and --r-display.",
+        help="Dual-monitor layout for two inputs. Omit to auto-detect from workspace.",
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     margins: Optional[str] = typer.Option(
         None,
         "--margins",
-        help="Margins as l,r,top,bottom in pixels (e.g. 10,0,10,0)",
+        help="Margins as left,right,top,bottom in pixels (e.g. 10,10,0,0). Constrain fit only; align uses full slot.",
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     l_display: Optional[str] = typer.Option(
         None,
         "--l-display",
-        help="Left display size WxH (e.g. 1920x1080). Effective with --two-screen.",
+        help="Override left monitor size WxH (e.g. 1920x1080). Usually omitted (auto-detect).",
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     r_display: Optional[str] = typer.Option(
         None,
         "--r-display",
-        help="Right display size WxH (e.g. 1280x1024). Effective with --two-screen.",
+        help="Override right monitor size WxH (e.g. 1280x1024). Usually omitted (auto-detect).",
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     align: str = typer.Option(
@@ -290,20 +309,17 @@ def optimize(
 ) -> None:
     """Optimize wallpapers.
 
-    `--input` は複数指定可。カンマ区切りまたは `--input` の繰り返しで複数パスを指定できます。
-    `optimize` では画像ファイルのみを受け付け、ディレクトリは受け付けません。
+    `--input` accepts image files only (not directories), via comma-separated paths
+    or repeated `--input` (max 2 images).
 
-    `--two-screen` は左右2画面向けモードです。
-    `--l-display` / `--r-display` を併用した場合は、先頭2入力を左・右へ割り当てます。
+    Display: omit `--two-screen`, `--l-display`, `--r-display`, and `--resolution`
+    to auto-detect from workspace when possible.
 
-    パラメータの強弱（現状）:
-    - `margins` はまず有効領域を決め、その内側で `align` / `valign` が効きます。
-    - `two-screen` は `--l-display` / `--r-display` 併用時に効きが強くなります。
+    Geometry (core-spec §4.1): `margins` (left,right,top,bottom) constrain image
+    fit/shrink; `align` / `valign` use the full display slot for positioning.
 
-    余白情報埋め込み:
-    - `--embed-info` は `none|params|free|combo` を指定できます。
-    - `free` / `combo` では `--embed-text` を併用できます。
-    - `--embed-font` は任意指定です。既定では自動的に利用可能なフォントを探索します。
+    Embed: `--embed-info` is `none|params|free|combo`; use `--embed-text` with
+    `free` or `combo`. `--embed-font` is optional (auto font discovery when omitted).
     """
     # Load settings if provided and merge defaults (CLI options override settings)
     cfg: dict = {}
@@ -423,7 +439,7 @@ def optimize(
     )
     typer.echo(f"Saved: {saved_files}")
     for p in placements:
-        typer.echo(f"Placement: {p}")
+        typer.echo(f"Placement: {format_placement_line(p)}")
 
 
 @app.command()
