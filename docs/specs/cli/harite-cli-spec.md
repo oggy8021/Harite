@@ -1,6 +1,6 @@
 # Harite CLI 仕様 (CLI Spec)
 
-最終更新: 2026-06-11（MAT-20 embed ガード追記）
+最終更新: 2026-06-12（MAT-21 dual 入力規則）
 
 ## 1. CLI の責務
 
@@ -97,9 +97,10 @@ sequenceDiagram
 
 display / two-screen 解決:
 
-- `two_screen` は CLI / 設定ファイルで明示されなければ `auto` 扱いになり、入力画像が 2 枚以上あり、two-screen 用の表示情報を取得できる場合だけ有効化される。
-- `resolution`, `l_display`, `r_display` は CLI 引数 > 設定ファイル値 > two-screen 用表示情報から導いた自動値 の順で解決する。
-- `two_screen` が自動判定のままで two-screen 用の表示情報を取得できない場合、最終的な two-screen 判定は `False` に戻る。
+- **入力 2 枚（MAT-21）:** dual 必須。`--no-two-screen` または settings の `two_screen: false` は **終了コード `2`**（半分キャンバス廃止）。
+- **2 枚 + 自動判定 + 検出 display `< 2`:** **終了コード `2`**（`DUAL_INPUT_REQUIRES_TWO_DISPLAYS`）。メッセージは [core-spec §3.1](../core/harite-core-spec.md#31-表示コンテキスト解決の現行規則) の規範文言。
+- **入力 1 枚:** 従来どおり。`two_screen` 未指定時は single。検出 1 台から `resolution` を補完しうる。
+- `resolution`, `l_display`, `r_display` は CLI 引数 > 設定ファイル値 > two-screen 用表示情報から導いた自動値 の順で解決する（**四重露出の格下げは別フェーズ**）。
 - `--l-display` / `--r-display` は個別指定できるが、未指定時は two-screen 用表示情報から導いた display size を使う。
 - `--margins` は `left,right,top,bottom` の 4 要素文字列（ピクセル）として解釈し、省略時は `(0, 0, 0, 0)` を使う。
 
@@ -111,17 +112,9 @@ margins / align / valign の関係（[core-spec §4.1](../core/harite-core-spec.
 
 two-screen / resolution / display override（現行）:
 
-- 未指定時は `resolve_optimize_display_settings(...)` が workspace 検出と入力枚数から `resolution` / `l_display` / `r_display` / `two_screen` を解決する。
-- `--two-screen` / `--no-two-screen` は settings / auto より CLI 明示で上書きする。通常の総点検では **省略可**。
-- `two_screen=OFF` かつ 2 枚入力の「半分キャンバス」経路は現行に残るが、v2.0.0 前整理（MAT-21）で見直す予定。
-
-計算規則の補足:
-
-- `resolve_optimize_display_settings(...)` は、まず空文字を除いた入力列 `cleaned_inputs` を作り、`len(cleaned_inputs) >= 2` のときだけ two-screen 用表示情報取得を試みる。
-- `two_screen` が CLI / 設定ファイルで未指定なら `auto` と見なし、最終値は `effective_two_screen = context is not None` で始まる。明示指定がある場合はその bool 値をそのまま使う。
-- `resolution`, `l_display`, `r_display` は、値が `None` または `auto` のときだけ未確定扱いに戻し、context が得られていて `effective_two_screen=True` の場合に限って自動補完する。
-- 自動補完で使う値は `resolution = "{virtual_w}x{virtual_h}"`, `l_display = "{left_w}x{left_h}"`, `r_display = "{right_w}x{right_h}"` である。
-- `two_screen` が自動判定のまま context を得られなかった場合だけ、最後に `effective_two_screen=False` へ戻す。`resolution` が最後まで未確定なら CLI はエラー終了する。
+- 未指定時は `resolve_optimize_display_settings(...)` が workspace 検出と入力枚数から解決する（詳細は core-spec §3.1）。
+- `--two-screen` / `--no-two-screen` は settings / auto より CLI 明示で上書きする。**2 枚入力時は `--no-two-screen` 不可**。
+- `resolution` / `l_display` / `r_display` / `two_screen` の CLI 露出整理（四重露出）は **MAT-21 後半** とする。方針は [two-screen 整理メモ §6](../../working/20260611-two-screen-display-params-clarification.md#6-将来整理の方向オーナー判断確定-2026-06-12)（全面撤去・上級 override 格下げ・`resolution` 名称/`xx%` 案）。本節では現行挙動のみ固定する。
 
 主な失敗条件:
 
