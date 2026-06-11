@@ -1,6 +1,6 @@
 # Harite コア仕様 (Core Spec)
 
-最終更新: 2026-06-11
+最終更新: 2026-06-12
 
 ## 1. コア (core) の責務
 
@@ -76,9 +76,14 @@ two-screen 文脈で重要な点:
 - `build_two_screen_optimize_context(...)` は display が 2 件未満なら `None` を返す。2 件以上ある場合だけ、ordered 先頭 2 件から `l_display = (left.width, left.height)`, `r_display = (right.width, right.height)` を作る。
 - `resolve_optimize_display_settings(...)` は、空文字を除いた入力列の件数が 2 件以上のときだけ two-screen context 取得を試みる。入力が 1 件しかない場合、display 自動解決は行わない。
 - CLI / GUI の public surface では、optimize 入力が 3 件以上与えられても先頭 2 件だけを採用する。two-screen 文脈の left / right 割当は、この採用済み先頭 2 件の順序で決まる。
-- `two_screen` が未指定なら自動判定であり、初期値は `effective_two_screen = context is not None` である。明示指定がある場合はその bool 値を優先する。
-- `resolution`, `l_display`, `r_display` は、値が `None` または `auto` のときだけ未確定扱いとなる。context が得られていて `effective_two_screen=True` の場合に限って、`resolution = "{virtual_w}x{virtual_h}"`, `l_display = "{left_w}x{left_h}"`, `r_display = "{right_w}x{right_h}"` を自動補完する。
-- 自動判定で context が得られなかった場合だけ、最後に `effective_two_screen=False` へ戻る。`resolution` が最後まで確定しなければ入力不正として止める。
+- **入力 2 件（MAT-21）:** `two_screen` は **常に True** とする。半分キャンバス（`two_screen=OFF` + 2 枚）の第3経路は **廃止**。
+- **2 枚 + `two_screen` 明示 OFF**（`--no-two-screen` / settings `two_screen: false`）→ `ValueError`（`DUAL_INPUT_REQUIRES_TWO_SCREEN`）。
+- **2 枚 + 自動判定 + 検出 display `< 2`** → `ValueError`（`DUAL_INPUT_REQUIRES_TWO_DISPLAYS`）。1 枚目だけ適用するフォールバックは行わない。
+- **上級 override（四重露出整理前の暫定）:** 検出 `< 2` でも、`two_screen=True` かつ **明示 `resolution`** があれば dual として通す（`l_display` / `r_display` は任意）。CLI/GUI のフラグ露出整理は別フェーズ。
+- **MAT-21 後半（設計方針・未実装）:** [two-screen 整理メモ §6](../../working/20260611-two-screen-display-params-clarification.md#6-将来整理の方向オーナー判断確定-2026-06-12) — 画像:ディスプレイ＝1:1、`two_screen` は UI/CLI/設定/embed から全面撤去、`l/r-display` は上級 override または廃止、`resolution` は合成キャンバスとして名称是正（`xx%` 指定案あり）。
+- **入力 1 件:** 従来どおり。`two_screen` 未指定なら `effective_two_screen=False`。単一 display から `resolution` を自動補完しうる。
+- `resolution`, `l_display`, `r_display` は、値が `None` または `auto` のときだけ未確定扱いとなる。context が得られていて dual の場合に限って、`resolution` / `l_display` / `r_display` を自動補完する。
+- `resolution` が最後まで確定しなければ入力不正として止める。
 - `resolve_optimize_display_settings` は解像度文字列の `WxH` フォーマット自体を検証しない。`WxH` 形式の検証は CLI の `parse_resolution`、GUI の独自解析など呼び出し側レイヤーの責務である。
 - `normalize_optimize_input_paths` はディレクトリパスを `ValueError` で拒否するが、存在しないファイルや非画像ファイルは検証しない。これらは `optimize_wallpapers` 処理中に黙ってスキップされる。
 
