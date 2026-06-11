@@ -8,6 +8,16 @@ from .display_context import build_two_screen_optimize_context
 
 AUTO = "auto"
 
+DUAL_INPUT_REQUIRES_TWO_DISPLAYS = (
+    "Two input images require two detected displays. "
+    "Use one input, or set --two-screen with explicit --resolution and --l-display/--r-display."
+)
+
+DUAL_INPUT_REQUIRES_TWO_SCREEN = (
+    "Two input images require two-screen mode. "
+    "Do not use --no-two-screen or two_screen off in settings."
+)
+
 
 def is_auto_value(value: object) -> bool:
     return isinstance(value, str) and value.strip().lower() == AUTO
@@ -34,10 +44,22 @@ def resolve_optimize_display_settings(
     r_display: str | None,
 ) -> EffectiveOptimizeDisplaySettings:
     cleaned_inputs = [str(value).strip() for value in input_values if str(value).strip()]
-    context = build_two_screen_optimize_context() if len(cleaned_inputs) >= 2 else None
+    dual_input = len(cleaned_inputs) >= 2
+    context = build_two_screen_optimize_context() if dual_input else None
 
-    auto_two_screen = two_screen is None
-    effective_two_screen = bool(two_screen) if two_screen is not None else context is not None
+    explicit_resolution = resolution is not None and not is_auto_value(resolution)
+    manual_dual_override = dual_input and two_screen is True and explicit_resolution
+
+    if dual_input:
+        if two_screen is False:
+            raise ValueError(DUAL_INPUT_REQUIRES_TWO_SCREEN)
+        if context is None and not manual_dual_override:
+            raise ValueError(DUAL_INPUT_REQUIRES_TWO_DISPLAYS)
+        effective_two_screen = True
+    elif two_screen is not None:
+        effective_two_screen = bool(two_screen)
+    else:
+        effective_two_screen = False
 
     effective_resolution = None if resolution is None or is_auto_value(resolution) else str(resolution).strip()
     if not effective_resolution:
@@ -53,10 +75,7 @@ def resolve_optimize_display_settings(
         if effective_r_display is None:
             effective_r_display = _stringify_resolution(context.r_display)
 
-    if auto_two_screen and context is None:
-        effective_two_screen = False
-
-    if effective_resolution is None and cleaned_inputs:
+    if effective_resolution is None and cleaned_inputs and not dual_input:
         from .display_context import order_displays
         from .workspace import detect_displays
 

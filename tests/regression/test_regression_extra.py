@@ -20,24 +20,21 @@ def test_native_size_when_target_larger(tmp_path):
     assert placements[0].scale == 1.0
 
 
-def test_three_images_split(tmp_path):
+def test_multi_input_without_two_screen_raises(tmp_path):
+    import pytest
+
     a = Path("tests/data/left.jpg")
     b = Path("tests/data/right.jpg")
     c = Path("tests/data/img_wide.jpg")
     out_dir = tmp_path / "out"
     out_dir.mkdir()
 
-    saved, placements = optimize_wallpapers(
-        inputs=[str(a), str(b), str(c)],
-        target_resolution=(3000, 1000),
-        output_dir=out_dir,
-    )
-
-    assert len(placements) == 3
-    inner_w = 3000
-    # each width should be roughly inner_w/3 (allow some slack)
-    for p in placements:
-        assert p.width <= inner_w // 3 + 200
+    with pytest.raises(ValueError, match="two-screen mode"):
+        optimize_wallpapers(
+            inputs=[str(a), str(b), str(c)],
+            target_resolution=(3000, 1000),
+            output_dir=out_dir,
+        )
 
 
 def test_output_filename_contains_prefix(tmp_path):

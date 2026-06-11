@@ -12,6 +12,18 @@ def _normalize_cli_output(text: str) -> str:
     return re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text)
 
 
+def _stub_dual_display_context() -> TwoScreenOptimizeContext:
+    return TwoScreenOptimizeContext(
+        displays=(
+            Display(name="L", width=1920, height=1080, x_offset=0),
+            Display(name="R", width=1920, height=1080, x_offset=1920),
+        ),
+        resolution=(3840, 1080),
+        l_display=(1920, 1080),
+        r_display=(1920, 1080),
+    )
+
+
 @pytest.fixture(autouse=True)
 def _block_real_optimize_side_effects(monkeypatch):
     def fail_optimize_wallpapers(**_kwargs):
@@ -357,7 +369,10 @@ def test_optimize_uses_only_first_two_cli_inputs(tmp_path, monkeypatch):
         path.write_bytes(b"x")
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
-    monkeypatch.setattr("harite.optimize_settings.build_two_screen_optimize_context", lambda: None)
+    monkeypatch.setattr(
+        "harite.optimize_settings.build_two_screen_optimize_context",
+        _stub_dual_display_context,
+    )
 
     result = runner.invoke(
         cli.app,
@@ -392,7 +407,10 @@ def test_optimize_ignores_invalid_third_input_after_first_two(tmp_path, monkeypa
     invalid_third.mkdir()
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
-    monkeypatch.setattr("harite.optimize_settings.build_two_screen_optimize_context", lambda: None)
+    monkeypatch.setattr(
+        "harite.optimize_settings.build_two_screen_optimize_context",
+        _stub_dual_display_context,
+    )
 
     result = runner.invoke(
         cli.app,
@@ -427,7 +445,10 @@ def test_optimize_expands_tilde_for_each_comma_separated_input(tmp_path, monkeyp
     right.write_bytes(b"x")
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
-    monkeypatch.setattr("harite.optimize_settings.build_two_screen_optimize_context", lambda: None)
+    monkeypatch.setattr(
+        "harite.optimize_settings.build_two_screen_optimize_context",
+        _stub_dual_display_context,
+    )
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
 
@@ -587,40 +608,33 @@ def test_optimize_cli_two_screen_overrides_settings_false(tmp_path, monkeypatch)
     assert captured["two_screen"] is True
 
 
-def test_optimize_cli_no_two_screen_overrides_settings_true(tmp_path, monkeypatch):
+def test_optimize_cli_no_two_screen_rejects_dual_input(tmp_path, monkeypatch):
     runner = CliRunner()
-    captured = {}
+    left = tmp_path / "left.jpg"
+    right = tmp_path / "right.jpg"
+    left.write_bytes(b"x")
+    right.write_bytes(b"x")
 
-    def fake_optimize_wallpapers(**kwargs):
-        captured.update(kwargs)
-        return [], []
-
-    settings_file = tmp_path / "settings.json"
-    settings_file.write_text(
-        json.dumps(
-            {
-                "input": ["from_config.jpg"],
-                "resolution": "1600x900",
-                "two_screen": True,
-            }
-        ),
-        encoding="utf-8",
+    monkeypatch.setattr(cli, "optimize_wallpapers", lambda **_kwargs: ([], []))
+    monkeypatch.setattr(
+        "harite.optimize_settings.build_two_screen_optimize_context",
+        lambda: None,
     )
-
-    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
 
     result = runner.invoke(
         cli.app,
         [
             "optimize",
-            "--settings-file",
-            str(settings_file),
+            "--input",
+            f"{left},{right}",
+            "--resolution",
+            "1600x900",
             "--no-two-screen",
         ],
     )
 
-    assert result.exit_code == 0
-    assert captured["two_screen"] is False
+    assert result.exit_code == 2
+    assert "two-screen mode" in result.output
 
 
 def test_optimize_rejects_removed_fixed_flag(tmp_path):
@@ -943,20 +957,15 @@ def test_optimize_two_screen_defaults_to_auto_when_unspecified_with_context(tmp_
     assert captured["r_display"] == (1280, 1024)
 
 
-def test_optimize_two_screen_defaults_to_false_when_unspecified_without_context(tmp_path, monkeypatch):
-    """--two-screen 未指定かつ display context なし → two_screen=False (CLI1)。"""
+def test_optimize_dual_input_errors_when_only_one_display_detected(tmp_path, monkeypatch):
+    """MAT-21: 2 inputs + auto + no two-screen context → exit 2."""
     runner = CliRunner()
-    captured = {}
     left = tmp_path / "left.jpg"
     right = tmp_path / "right.jpg"
     left.write_bytes(b"x")
     right.write_bytes(b"x")
 
-    def fake_optimize_wallpapers(**kwargs):
-        captured.update(kwargs)
-        return [], []
-
-    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    monkeypatch.setattr(cli, "optimize_wallpapers", lambda **_kwargs: ([], []))
     monkeypatch.setattr(
         "harite.optimize_settings.build_two_screen_optimize_context",
         lambda: None,
@@ -967,8 +976,8 @@ def test_optimize_two_screen_defaults_to_false_when_unspecified_without_context(
         ["optimize", "--input", str(left), "--input", str(right), "--resolution", "1920x1080"],
     )
 
-    assert result.exit_code == 0, result.output
-    assert captured["two_screen"] is False
+    assert result.exit_code == 2, result.output
+    assert "two detected displays" in result.output
 
 
 def test_version_flag_exits_zero() -> None:

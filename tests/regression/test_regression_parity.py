@@ -16,16 +16,15 @@ def test_two_screen_basic_parity(tmp_path):
         target_resolution=(3840, 1080),
         output_dir=out_dir,
         scaling="fit",
+        two_screen=True,
+        l_display=(1920, 1080),
+        r_display=(1920, 1080),
     )
 
-    # Expect one output file and two placement entries
     assert len(saved) == 1
     assert len(placements) == 2
 
-    # Left/right posit assigned and sizes within bounds
     w_target, h_target = 3840, 1080
-    count = 2
-    cell_w = max(1, w_target // count)
 
     assert placements[0].posit == "left"
     assert placements[1].posit == "right"
@@ -33,6 +32,6 @@ def test_two_screen_basic_parity(tmp_path):
     for p in placements:
         assert 0 <= p.x < w_target
         assert 0 <= p.y < h_target
-        assert 1 <= p.width <= cell_w
+        assert 1 <= p.width <= 1920
         assert 1 <= p.height <= h_target
         assert p.scale > 0.0

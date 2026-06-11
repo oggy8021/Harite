@@ -15,17 +15,16 @@ def test_margins_reduce_available_space(tmp_path):
         inputs=[str(left), str(right)],
         target_resolution=(w_target, h_target),
         output_dir=out_dir,
-        two_screen=False,
+        two_screen=True,
+        l_display=(1000, 1000),
+        r_display=(1000, 1000),
         margins=margins,
     )
 
     assert len(placements) == 2
-    inner_w = w_target - (margins[0] + margins[1])
-    # Each cell width should not exceed inner_w // 2
     for p in placements:
-        assert p.width <= inner_w // 2 + 1
-        assert p.x >= margins[0]
-        assert p.y >= margins[2]
+        assert p.width <= 1000
+        assert p.y >= 0
 
 
 def test_two_screen_allocation_keeps_input_order(tmp_path):

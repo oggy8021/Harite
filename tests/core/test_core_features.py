@@ -23,7 +23,14 @@ def test_optimize_wallpapers_creates_output_and_placements(tmp_path):
     make_image(img1, size=(300, 200))
     make_image(img2, size=(100, 400))
 
-    saved, placements = optimize_wallpapers([str(img1), str(img2)], (800, 600), out_dir)
+    saved, placements = optimize_wallpapers(
+        [str(img1), str(img2)],
+        (800, 600),
+        out_dir,
+        two_screen=True,
+        l_display=(400, 600),
+        r_display=(400, 600),
+    )
 
     assert isinstance(saved, list) and len(saved) >= 1
     assert saved[0].exists()

@@ -774,6 +774,10 @@ def optimize_wallpapers(
     w_target, h_target = target_resolution
     # Compatibility: accept upstream-style kwargs
     two_screen = bool(kwargs.get("two_screen", False))
+    if len(items) >= 2 and not two_screen:
+        from harite.optimize_settings import DUAL_INPUT_REQUIRES_TWO_SCREEN
+
+        raise ValueError(DUAL_INPUT_REQUIRES_TWO_SCREEN)
     margins = kwargs.get("margins", (0, 0, 0, 0))
     try:
         ml, mr, mt, mb = tuple(int(x) for x in margins)
