@@ -12,6 +12,8 @@ from harite.settings import AppSettings
 from harite.gui.views.main_window import MainWindow
 from harite.workspace import Display
 
+from tests.gui.conftest import patch_detect_displays
+
 
 def test_on_change_input_text_updates_state():
     window = MainWindow()
@@ -39,8 +41,8 @@ def test_can_optimize_with_detected_display(monkeypatch):
 
 
 def test_on_change_input_text_disables_optimize_when_display_unresolved(monkeypatch):
+    patch_detect_displays(monkeypatch, lambda: [])
     window = MainWindow()
-    monkeypatch.setattr("harite.workspace.detect_displays", lambda: [])
 
     window.on_change_input_text("a.jpg")
 
@@ -495,15 +497,15 @@ def test_dual_input_enables_optimize_when_two_displays_exist(monkeypatch):
 
 
 def test_dual_input_blocks_optimize_when_second_input_removed_with_one_display(monkeypatch):
-    monkeypatch.setattr(
-        "harite.workspace.detect_displays",
+    patch_detect_displays(
+        monkeypatch,
         lambda: [Display(name="", width=1600, height=900, x_offset=0)],
     )
 
     window = MainWindow()
     window.on_pick_input("left.jpg", "L")
     window.on_pick_input("right.jpg", "R")
-    assert window.can_optimize is True
+    assert window.can_optimize is False
 
     window.on_change_input_text("left.jpg")
 
@@ -880,7 +882,7 @@ def test_settings_file_save_prefers_detected_display_context_without_inputs(monk
 
 
 def test_settings_file_load_without_canvas_scale_keeps_default(tmp_path, monkeypatch):
-    monkeypatch.setattr("harite.workspace.detect_displays", lambda: [])
+    patch_detect_displays(monkeypatch, lambda: [])
     target = tmp_path / "settings-missing-display.json"
     target.write_text('{"plugin":"linux","apply_mode":"per-monitor-auto-split"}', encoding="utf-8")
 

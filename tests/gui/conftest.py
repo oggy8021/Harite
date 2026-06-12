@@ -6,9 +6,35 @@ The fixture is skipped automatically when PyQt6.QtWidgets is not available.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import pytest
+
+from harite.workspace import Display
+
+DETECT_DISPLAYS_PATCH_TARGETS = (
+    "harite.workspace.detect_displays",
+    "harite.display_context.detect_displays",
+    "harite.slideshow_optimize.detect_displays",
+    "harite.apply_surface.detect_displays",
+)
+
+
+def _default_stub_displays() -> list[Display]:
+    return [
+        Display(name="stub-L", width=1920, height=1080, x_offset=0, y_offset=0),
+        Display(name="stub-R", width=1920, height=1080, x_offset=1920, y_offset=0),
+    ]
+
+
+def patch_detect_displays(
+    monkeypatch: pytest.MonkeyPatch,
+    provider: Callable[[], Sequence[Display]],
+) -> None:
+    """Patch every module-level ``detect_displays`` import used by optimize paths."""
+    for target in DETECT_DISPLAYS_PATCH_TARGETS:
+        monkeypatch.setattr(target, provider)
 
 
 @pytest.fixture(autouse=True)
@@ -19,8 +45,9 @@ def isolate_gui_test_runtime(
 ):
     """Keep GUI unit tests independent of host display count and settings file.
 
-    Pre-P-03 tests assume two displays; CI runners often report ``len==1``.
-    P-03 single-display tests live in ``test_p03_*.py`` and patch detection themselves.
+    MAT-21b resolves optimize canvas from ``detect_displays()``; Linux CI often
+    reports zero displays. Stub two displays for all GUI tests except ``test_p03_*``,
+    which exercise single-display UX and patch detection themselves.
 
     Redirect the default settings path to a non-existent file so a developer's
     ``harite-settings.json`` does not leak margins, slideshow paths, etc.
@@ -32,6 +59,7 @@ def isolate_gui_test_runtime(
             "harite.gui.views.main_window.dual_display_detected",
             lambda: True,
         )
+        patch_detect_displays(monkeypatch, _default_stub_displays)
 
     missing_settings = tmp_path / "harite-settings-missing.json"
     monkeypatch.setattr(
