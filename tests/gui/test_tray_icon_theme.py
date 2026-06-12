@@ -52,9 +52,25 @@ def test_tray_surface_is_light_falls_back_to_qt(monkeypatch):
     assert theme.tray_surface_is_light() is False
 
 
-def test_tray_surface_is_light_defaults_to_light_surface(monkeypatch):
+def test_tray_surface_is_light_defaults_to_dark_surface_on_linux(monkeypatch):
+    monkeypatch.setattr(theme.sys, "platform", "linux")
+    monkeypatch.setattr(theme, "windows_system_uses_light_taskbar", lambda: None)
+    monkeypatch.setattr(theme, "qt_application_prefers_light_chrome", lambda: True)
+
+    assert theme.tray_surface_is_light() is False
+
+
+def test_tray_surface_is_light_defaults_to_light_surface_on_windows(monkeypatch):
+    monkeypatch.setattr(theme.sys, "platform", "win32")
     monkeypatch.setattr(theme, "windows_system_uses_light_taskbar", lambda: None)
     monkeypatch.setattr(theme, "qt_application_prefers_light_chrome", lambda: None)
+
+    assert theme.tray_surface_is_light() is True
+
+
+def test_tray_light_surface_env_override(monkeypatch):
+    monkeypatch.setattr(theme.sys, "platform", "linux")
+    monkeypatch.setenv("HARITE_TRAY_LIGHT_SURFACE", "1")
 
     assert theme.tray_surface_is_light() is True
 
