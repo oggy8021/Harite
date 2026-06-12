@@ -21,6 +21,7 @@ from .plugins import registry as plugin_registry
 from .settings import AppSettings, SlideshowSettings
 from .settings_file import load_settings
 from .linux_xdg_launcher import install_desktop_entry as install_linux_desktop_entry
+from .last_optimize_run import default_last_optimize_search_dirs, read_last_optimize_run, write_last_optimize_run
 from .optimize_settings import normalize_canvas_scale_percent, resolve_optimize_display_settings
 from .positioning import parse_position_pair
 from .resolution import parse_resolution
@@ -407,46 +408,95 @@ def optimize(
     typer.echo(f"Saved: {saved_files}")
     for p in placements:
         typer.echo(f"Placement: {format_placement_line(p)}")
+    if saved_files:
+        try:
+            write_last_optimize_run(output_dir=output, composite_path=Path(saved_files[-1]))
+        except OSError as exc:
+            typer.echo(f"Warning: failed to record last optimize run: {exc}")
 
 
 @app.command()
 def apply(
-    plugin: str = typer.Option(_default_plugin_name(), "--plugin", "-p", help="Plugin name to apply wallpaper with"),
-    file: Path = typer.Option(..., "--file", "-f", help="Path to wallpaper image file"),
-    per_monitor: bool = typer.Option(False, "--per-monitor", "-m", help="Apply per-monitor files (requires --left-file/--right-file or --auto-split)"),
-    left_file: Optional[Path] = typer.Option(None, "--left-file", help="File to apply to left monitor"),
-    right_file: Optional[Path] = typer.Option(None, "--right-file", help="File to apply to right monitor"),
-    auto_split: bool = typer.Option(False, "--auto-split", help="Auto-split the composite file per detected displays"),
+    ctx: typer.Context,
+    settings_file: Optional[Path] = typer.Option(
+        None,
+        "--settings-file",
+        "-c",
+        help="Optional path to harite-settings.json (apply_mode, plugin, windows_apply_span)",
+    ),
+    output: Optional[Path] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output directory from the prior optimize run (optional tracking hint)",
+    ),
+    file: Optional[Path] = typer.Option(
+        None,
+        "--file",
+        "-f",
+        help="Optional composite image path (default: last optimize output)",
+    ),
+    plugin: str = typer.Option(
+        _default_plugin_name(),
+        "--plugin",
+        "-p",
+        help="Plugin name to apply wallpaper with",
+    ),
 ) -> None:
-    """Apply a wallpaper using a registered plugin.
-    """
-    try:
-        plugin_impl = plugin_registry.get(plugin)
-    except KeyError:
-        typer.echo(f"Unknown plugin: {plugin}")
-        typer.echo(f"Available plugins: {', '.join(plugin_registry.list())}")
-        raise typer.Exit(code=2)
+    """Apply the latest optimized wallpaper using settings apply_mode.
 
-    apply_mode = "single-file"
-    if auto_split:
-        apply_mode = "per-monitor-auto-split"
-    elif left_file or right_file:
-        apply_mode = "per-monitor-explicit"
-    elif per_monitor:
-        typer.echo("--per-monitor requires --left-file/--right-file or --auto-split")
+    Run ``harite optimize`` first. When ``--file`` is omitted, the CLI reads
+    ``.harite-last-optimize.json`` written by the prior optimize command.
+    """
+    cfg: dict = {}
+    if settings_file is not None:
+        try:
+            cfg = load_settings(settings_file)
+        except Exception as exc:
+            typer.echo(f"Failed to load settings: {exc}")
+            raise typer.Exit(code=2)
+
+    default_plugin = _default_plugin_name()
+    app_settings = AppSettings.from_settings_dict(cfg, default_plugin=default_plugin)
+    eff_plugin = str(resolve_option_value("plugin", plugin, cfg, ctx) or default_plugin)
+    apply_mode = app_settings.apply.apply_mode
+    windows_apply_span = app_settings.apply.windows_apply_span
+
+    if file is not None:
+        composite_path = Path(file)
+    else:
+        try:
+            last_run = read_last_optimize_run(
+                search_dirs=default_last_optimize_search_dirs(
+                    output_hint=output,
+                ),
+            )
+            composite_path = last_run.composite_path
+        except ValueError as exc:
+            typer.echo(str(exc))
+            raise typer.Exit(code=2)
+
+    try:
+        plugin_impl = plugin_registry.get(eff_plugin)
+    except KeyError:
+        typer.echo(f"Unknown plugin: {eff_plugin}")
+        typer.echo(f"Available plugins: {', '.join(plugin_registry.list())}")
         raise typer.Exit(code=2)
 
     try:
         effective_apply = resolve_apply_settings(
-            file=file,
+            file=composite_path,
             apply_mode=apply_mode,
-            left_file=left_file,
-            right_file=right_file,
-            output_dir=Path("."),
+            output_dir=composite_path.parent,
         )
     except ValueError as exc:
         typer.echo(str(exc))
         raise typer.Exit(code=2)
+
+    if effective_apply.windows_span and windows_apply_span:
+        from harite.windows_wallpaper import ensure_span_style
+
+        ensure_span_style()
 
     path_or_map = effective_apply.target
 
@@ -461,9 +511,9 @@ def apply(
         path_str = str(path_or_map)
 
     if success:
-        typer.echo(f"Plugin '{plugin}' applied wallpaper: {path_str}")
+        typer.echo(f"Plugin '{eff_plugin}' applied wallpaper: {path_str}")
     else:
-        typer.echo(f"Plugin '{plugin}' failed to apply wallpaper: {path_str}")
+        typer.echo(f"Plugin '{eff_plugin}' failed to apply wallpaper: {path_str}")
         raise typer.Exit(code=3)
 
 
