@@ -10,7 +10,7 @@
 
 ```text
 (1) requirements 点検・ドキュメント整備  ← **完了**（GTK 停止後の XFCE 環境再構成）
-(2) トレイ 2 アイコン + Windows タスクバー配色検出
+(2) トレイ 2 アイコン + Windows タスクバー配色検出  ← **実装済み**（PR 待ち）
 (3) MAT-20（embed-info 整理・重畳・文字色自動）
 (4) 回帰テスト（オーナー実施: CLI → GUI → Windows → XFCE）
 (5) 正本から MAT-xx 除去（回帰後・bump 直前）
@@ -54,27 +54,28 @@
 
 ---
 
-## (2) システムトレイ — 2 アイコン + 配色検出 — **未着手**
+## (2) システムトレイ — 2 アイコン + 配色検出 — **実装済み**（2026-06-12）
+
+**ブランチ:** `feature/tray-icon-theme-20260612`（PR 待ち）
 
 ### 目的
 
 Windows ライトテーマのタスクバーで現行 `#F5F7FA` ストロークアイコンが埋もれないこと。
 
-### 方針（オーナー OK）
+### 実装
 
 | 項目 | 内容 |
 | --- | --- |
-| アセット | 明背景用（暗ストローク）/ 暗背景用（現行明ストローク）の 2 種 |
-| Windows | レジストリ `SystemUsesLightTheme` でタスクバー明暗を判定 |
-| フォールバック | `QStyleHints.colorScheme()`、不明時は明背景用（暗アイコン） |
-| XFCE | 統一 API 弱い → フォールバック優先 |
-| 共有 | embed 文字色（MAT-20 C2）と輝度ユーティリティ共有を検討 |
+| アセット | `harite_light_bg.svg` / `harite_off_light_bg.svg`（暗ストローク `#2B2F36`）。既存 `harite.svg` / `harite_off.svg` は暗トレイ面向け |
+| 検出 | `tray_icon_theme.py` — Windows `SystemUsesLightTheme` → Qt `colorScheme()` → 既定は明トレイ面 |
+| 配線 | `qt_tray_adapter._make_icon` が `tray_product_icon_basename` を使用 |
+| 正本 | [gui-spec §tray icon](../specs/gui/harite-gui-spec.md) |
 
-### 触るコード（予定）
+### 手動確認（残）
 
-- `src/harite/gui/adapters_qt/qt_tray_adapter.py` — `_make_icon`
-- `src/harite/gui/resources/icons/product/` — 新 SVG
-- 新規: `resolve_tray_icon_variant()` 等（Windows registry + Qt hints）
+- [ ] Windows ライトタスクバーでトレイ可視
+- [ ] Windows ダークタスクバーでトレイ可視
+- [ ] XFCE パネル（Qt colorScheme フォールバック）
 
 ---
 
@@ -116,3 +117,4 @@ CHANGELOG、`pyproject.toml` bump、パッケージング、ビルド、リリ�
 | --- | --- |
 | 2026-06-12 | 初版。順序確定、(1) requirements 着手 |
 | 2026-06-12 | (1) 完了。XFCE 実機で verify 通過（GTK 停止後の環境再構成） |
+| 2026-06-12 | (2) 実装。トレイ 4 種 + `tray_icon_theme.py` |
