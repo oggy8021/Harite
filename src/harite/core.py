@@ -446,7 +446,7 @@ def _build_embed_lines(
         l_display: 左画面解像度。
         r_display: 右画面解像度。
         free_text: フリーテキスト。
-        canvas_scale_percent: 検出 desktop に対する合成キャンバス縮小率。
+        canvas_scale_percent: 作業解像度で配置した後の出力 JPEG 縮小率（保存ファイルサイズのみ）。
 
     Returns:
         表示用の行リスト。
@@ -503,6 +503,17 @@ def _aabb_overlap(
     if ay1 <= by0 or by1 <= ay0:
         return False
     return True
+
+
+def _scale_placement_results(placements: List[PlacementResult], ratio: float) -> None:
+    """Scale placement rectangles to match a post-downscaled composite."""
+    if abs(ratio - 1.0) < 1e-9:
+        return
+    for placement in placements:
+        placement.x = int(round(placement.x * ratio))
+        placement.y = int(round(placement.y * ratio))
+        placement.width = max(1, int(round(placement.width * ratio)))
+        placement.height = max(1, int(round(placement.height * ratio)))
 
 
 def placement_to_aabb(placement: PlacementResult) -> Tuple[int, int, int, int]:
@@ -984,12 +995,13 @@ def optimize_wallpapers(
         placements.append(pr)
 
     # Save result
-    from .optimize_settings import normalize_canvas_scale_percent
+    from .optimize_settings import compute_output_resolution, normalize_canvas_scale_percent
 
     canvas_scale_percent = normalize_canvas_scale_percent(kwargs.get("canvas_scale_percent", 100))
+    output_resolution = compute_output_resolution(target_resolution, canvas_scale_percent)
     embed_lines = _build_embed_lines(
         embed_info,
-        target_resolution=target_resolution,
+        target_resolution=output_resolution,
         margins=(ml, mr, mt, mb),
         align=format_position_pair(kwargs.get("align", "center"), axis="align"),
         valign=format_position_pair(kwargs.get("valign", "center"), axis="valign"),
@@ -1020,6 +1032,12 @@ def optimize_wallpapers(
     )
     if isinstance(embed_status_out, list):
         embed_status_out.append(embed_status)
+
+    if canvas_scale_percent != 100:
+        out_w, out_h = output_resolution
+        ratio = canvas_scale_percent / 100.0
+        bg = bg.resize((out_w, out_h), Image.LANCZOS)
+        _scale_placement_results(placements, ratio)
 
     if output_path is not None:
         out_path = Path(output_path)

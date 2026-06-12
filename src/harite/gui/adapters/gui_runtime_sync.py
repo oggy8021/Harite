@@ -4,7 +4,7 @@ from typing import Any
 
 from harite.core import EMBED_POSITION_VALUES, _build_embed_settings_lines
 from harite.apply_surface import apply_mode_help_text
-from harite.optimize_settings import resolve_optimize_display_settings
+from harite.optimize_settings import compute_output_resolution, resolve_optimize_display_settings
 from harite.positioning import format_position_pair, parse_position_pair
 from harite.resolution import parse_resolution
 
@@ -209,7 +209,10 @@ def build_margin_settings_preview(backend: Any, owner: Any | None = None) -> str
             input_values=inputs,
             canvas_scale_percent=canvas_scale_percent,
         )
-        target_resolution = parse_resolution(display_settings.resolution)
+        target_resolution = compute_output_resolution(
+            parse_resolution(display_settings.resolution),
+            display_settings.canvas_scale_percent,
+        )
         l_display = None if not display_settings.l_display else parse_resolution(display_settings.l_display)
         r_display = None if not display_settings.r_display else parse_resolution(display_settings.r_display)
     except ValueError:
