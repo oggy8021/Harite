@@ -446,23 +446,10 @@ class WindowsPlugin:
         if isinstance(path, dict):
             logger.error("Per-monitor mapping is not supported by the windows plugin")
             return False
-        p = Path(path)
-        if not p.exists():
-            logger.error("Wallpaper file does not exist: %s", path)
-            return False
 
-        try:
-            import ctypes
+        from harite.windows_wallpaper import apply_windows_wallpaper_file
 
-            SPI_SETDESKWALLPAPER = 20
-            r = ctypes.windll.user32.SystemParametersInfoW(SPI_SETDESKWALLPAPER, 0, str(p), 3)
-            success = bool(r)
-            if not success:
-                logger.error("SystemParametersInfoW failed for %s", path)
-            return success
-        except Exception as exc:  # pragma: no cover - platform specific
-            logger.exception("Failed to apply wallpaper: %s", exc)
-            return False
+        return apply_windows_wallpaper_file(path)
 
 
 

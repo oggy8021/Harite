@@ -507,6 +507,13 @@ def apply(
         typer.echo(str(exc))
         raise typer.Exit(code=2)
 
+    if effective_apply.windows_span and not windows_apply_span:
+        typer.echo(
+            "Warning: Windows dual-display apply expects a wide composite; "
+            "enable windows_apply_span in settings (-c) so Span display is configured.",
+            err=True,
+        )
+
     if effective_apply.windows_span and windows_apply_span:
         from harite.windows_wallpaper import ensure_span_style
 
