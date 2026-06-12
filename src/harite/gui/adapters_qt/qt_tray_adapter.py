@@ -248,7 +248,12 @@ class QtTaskTrayAdapter:
     def _make_icon(self, *, slideshow_running: bool) -> Any:
         from PyQt6.QtGui import QIcon
 
-        resource_name = "harite.svg" if slideshow_running else "harite_off.svg"
+        from harite.gui.tray_icon_theme import tray_product_icon_basename, tray_surface_is_light
+
+        resource_name = tray_product_icon_basename(
+            slideshow_running=slideshow_running,
+            light_surface=tray_surface_is_light(),
+        )
         try:
             from harite.gui.resource_access import gui_resource_path
 
