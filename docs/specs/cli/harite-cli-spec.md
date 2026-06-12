@@ -1,6 +1,6 @@
 # Harite CLI 仕様 (CLI Spec)
 
-最終更新: 2026-06-12（MAT-22 apply 経路整理）
+最終更新: 2026-06-12（MAT-23 plugin 自動判定）
 
 ## 1. CLI の責務
 
@@ -196,7 +196,7 @@ harite apply -c settings.json
 ### apply mode と plugin
 
 - `apply_mode` は `--settings-file` から `ApplySettings` として読む。未指定時は `AppSettings._default_apply_mode(default_plugin)`（GUI と同型）。
-- `plugin` は CLI `--plugin` > settings `plugin` > OS 既定 plugin の順（**MAT-23 で `--plugin` 廃止予定**）。
+- `plugin` は settings `plugin` > OS 既定 plugin の順。CLI `--plugin` は **廃止**（MAT-23）。
 - `windows_apply_span` が有効かつ Windows Span 経路のとき、`ensure_span_style()` を best-effort 実行する（GUI B-lite と同型）。
 - `resolve_apply_settings(...)` は `output_dir=composite_path.parent` を渡す（split 出力先は合成画像の親 directory）。
 - plugin が `False` を返した場合は終了コード `3`。
@@ -212,13 +212,13 @@ harite apply -c settings.json
 
 ### 短縮形オプション
 
-- `apply` で使える短縮形: `--settings-file` / `-c`、`--output` / `-o`、`--plugin` / `-p`、`--file` / `-f`
+- `apply` で使える短縮形: `--settings-file` / `-c`、`--output` / `-o`、`--file` / `-f`
 
 ## 6. `slideshow`
 
 - command 名も `slideshow` とし、public surface の機能名と揃える。
 - 入力 directory を 1 件または最大 2 件の source directory として扱う。
-- `mode`, `interval_sec`, `plugin` を扱う。
+- `mode`, `interval_sec` を CLI option で扱う。`plugin` は settings / OS 既定（§8）。
 - `--settings-file` / `-c` で `harite-settings.json` 相当の JSON を読み込める。優先順位は **CLI 引数 > settings > 既定値**。
 - settings から読む slideshow **専用**キー: `slideshow_srcdir_l`, `slideshow_srcdir_r`, `slideshow_interval_seconds`, `slideshow_mode`, `slideshow_l_auto_display_scale`, `slideshow_r_auto_display_scale`, `plugin`。
 - `--input` / `--interval-sec` は settings 未指定時は必須。`--settings-file` がある場合は settings 値で補完できる（CLI が指定されていれば CLI を優先）。
@@ -351,13 +351,16 @@ Click / Typer が自動付与する補助 option。Harite 独自の業務仕様�
 
 去就（残す / 廃止）は MAT-23 の CLI surface 整理で決める。現行は Typer 既定のまま提供する。
 
-### `--plugin` 未指定時のデフォルト決定規則
+### plugin 名の決定規則（MAT-23）
 
-- `apply` / `slideshow` の `--plugin` 未指定時は以下の順序でデフォルト plugin 名を決定する:
-  1. `sys.platform` が `win32` → `windows`、`darwin` → `macos`、それ以外 → `linux` を preferred とする。
-  2. preferred が plugin registry に登録されていれば、それをデフォルトとして使う。
-  3. registry が空でなければ registry の先頭エントリ (`available[0]`) を使う。
-  4. registry が空の場合は `windows` にフォールバックする。
+- `apply` / `slideshow` は **CLI `--plugin` を持たない**。plugin 名は次の順で決定する:
+  1. `--settings-file` の `plugin` キー（あれば）
+  2. 以下の OS 既定（`_default_plugin_name()`）:
+     - `sys.platform` が `win32` → `windows`、`darwin` → `macos`、それ以外 → `linux` を preferred とする。
+     - preferred が plugin registry に登録されていれば採用。
+     - registry が空でなければ先頭エントリ (`available[0]`)。
+     - registry が空の場合は `windows` にフォールバック。
+- GUI Settings の `plugin` キーと同じ settings 面を CLI も読む。
 
 ## 9. メッセージ方針
 

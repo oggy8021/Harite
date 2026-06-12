@@ -49,6 +49,11 @@ def _default_plugin_name() -> str:
     return "windows"
 
 
+def _resolve_plugin_name(cfg: dict) -> str:
+    """Resolve apply/slideshow plugin: settings ``plugin`` key, else OS default."""
+    return AppSettings.from_settings_dict(cfg, default_plugin=_default_plugin_name()).apply.plugin_name
+
+
 def format_placement_line(placement: PlacementResult) -> str:
     """Format one placement for CLI stdout (harite-cli-spec §4.1)."""
     name = placement.image_path.name
@@ -417,7 +422,6 @@ def optimize(
 
 @app.command()
 def apply(
-    ctx: typer.Context,
     settings_file: Optional[Path] = typer.Option(
         None,
         "--settings-file",
@@ -436,12 +440,6 @@ def apply(
         "-f",
         help="Optional composite image path (default: last optimize output)",
     ),
-    plugin: str = typer.Option(
-        _default_plugin_name(),
-        "--plugin",
-        "-p",
-        help="Plugin name to apply wallpaper with",
-    ),
 ) -> None:
     """Apply the latest optimized wallpaper using settings apply_mode.
 
@@ -456,9 +454,8 @@ def apply(
             typer.echo(f"Failed to load settings: {exc}")
             raise typer.Exit(code=2)
 
-    default_plugin = _default_plugin_name()
-    app_settings = AppSettings.from_settings_dict(cfg, default_plugin=default_plugin)
-    eff_plugin = str(resolve_option_value("plugin", plugin, cfg, ctx) or default_plugin)
+    app_settings = AppSettings.from_settings_dict(cfg, default_plugin=_default_plugin_name())
+    eff_plugin = _resolve_plugin_name(cfg)
     apply_mode = app_settings.apply.apply_mode
     windows_apply_span = app_settings.apply.windows_apply_span
 
@@ -531,7 +528,6 @@ def slideshow(
         help="Cycle interval in seconds (>=1)",
     ),
     mode: str = typer.Option("sequential", "--mode", help="Selection mode: sequential|random"),
-    plugin: str = typer.Option(_default_plugin_name(), "--plugin", "-p", help="Plugin name used to apply each selected image"),
     settings_file: Optional[Path] = typer.Option(
         None,
         "--settings-file",
@@ -586,7 +582,7 @@ def slideshow(
         typer.echo("--mode must be one of: sequential, random")
         raise typer.Exit(code=2)
 
-    eff_plugin = str(resolve_option_value("plugin", plugin, cfg, ctx))
+    eff_plugin = _resolve_plugin_name(cfg)
 
     try:
         image_counts = []

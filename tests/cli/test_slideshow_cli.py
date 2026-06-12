@@ -540,8 +540,6 @@ def test_slideshow_applies_and_continues_on_failure(tmp_path, monkeypatch) -> No
             str(img_dir),
             "--interval-sec",
             "1",
-            "--plugin",
-            "windows",
         ],
     )
     output = _normalize_cli_output(result.output)
@@ -585,8 +583,6 @@ def test_slideshow_success_does_not_emit_success_cycle_line(tmp_path, monkeypatc
             str(img_dir),
             "--interval-sec",
             "1",
-            "--plugin",
-            "windows",
         ],
     )
     output = _normalize_cli_output(result.output)
@@ -665,8 +661,6 @@ def test_slideshow_exception_is_reported_and_counted(tmp_path, monkeypatch) -> N
             str(img_dir),
             "--interval-sec",
             "1",
-            "--plugin",
-            "windows",
         ],
     )
     output = _normalize_cli_output(result.output)
@@ -694,6 +688,33 @@ def test_slideshow_help_includes_settings_file_option() -> None:
 
     assert result.exit_code == 0
     assert "--settings-file" in output
+    assert "--plugin" not in output
+
+
+def test_slideshow_rejects_legacy_plugin_option(tmp_path) -> None:
+    runner = CliRunner()
+    _require_slideshow_command(runner)
+
+    img_dir = tmp_path / "imgs"
+    img_dir.mkdir()
+    (img_dir / "a.jpg").write_bytes(b"x")
+
+    result = runner.invoke(
+        cli.app,
+        [
+            "slideshow",
+            "--input",
+            str(img_dir),
+            "--interval-sec",
+            "1",
+            "--plugin",
+            "linux",
+        ],
+    )
+    output = _normalize_cli_output(result.output)
+
+    assert result.exit_code == 2
+    assert "no such option" in output
 
 
 def test_slideshow_reads_settings_srcdir_interval_mode_and_plugin(tmp_path, monkeypatch) -> None:
@@ -798,8 +819,6 @@ def test_slideshow_cli_overrides_settings(tmp_path, monkeypatch) -> None:
             "5",
             "--mode",
             "sequential",
-            "--plugin",
-            "linux",
         ],
     )
     output = _strip_cli_output(result.output)
@@ -809,7 +828,7 @@ def test_slideshow_cli_overrides_settings(tmp_path, monkeypatch) -> None:
     assert "sources=single" in output
     assert "interval_sec=5" in output
     assert "mode=sequential" in output
-    assert "plugin=linux" in output
+    assert "plugin=windows" in output
     assert captured["input_dirs"] == [cli_dir]
     assert captured["mode"] == "sequential"
     assert captured["interval_sec"] == 5

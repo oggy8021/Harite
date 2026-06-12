@@ -35,6 +35,22 @@ def test_apply_help_excludes_legacy_do_it_option() -> None:
     assert "--left-file" not in compact_output
     assert "--right-file" not in compact_output
     assert "--per-monitor" not in compact_output
+    assert "--plugin" not in compact_output
+
+
+def test_apply_rejects_legacy_plugin_option(tmp_path) -> None:
+    runner = CliRunner()
+    image_path = tmp_path / "wall.jpg"
+    image_path.write_bytes(b"x")
+
+    result = runner.invoke(
+        cli.app,
+        ["apply", "--plugin", "windows", "--file", str(image_path)],
+    )
+    output = _strip_cli_output(result.output).lower()
+
+    assert result.exit_code == 2
+    assert "no such option" in output
 
 
 def test_apply_rejects_legacy_do_it_option(tmp_path) -> None:
@@ -46,8 +62,6 @@ def test_apply_rejects_legacy_do_it_option(tmp_path) -> None:
         cli.app,
         [
             "apply",
-            "--plugin",
-            "windows",
             "--file",
             str(image_path),
             "--do-it",
@@ -79,8 +93,6 @@ def test_apply_uses_immediate_apply_mode(tmp_path, monkeypatch) -> None:
         cli.app,
         [
             "apply",
-            "--plugin",
-            "windows",
             "--file",
             str(image_path),
         ],
@@ -161,7 +173,7 @@ def test_apply_plugin_returns_false_exits_code_3(tmp_path, monkeypatch) -> None:
 
     result = runner.invoke(
         cli.app,
-        ["apply", "--plugin", "windows", "--file", str(image_path)],
+        ["apply", "--file", str(image_path)],
     )
 
     assert result.exit_code == 3
