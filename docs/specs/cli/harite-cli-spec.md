@@ -63,9 +63,13 @@ sequenceDiagram
 ## 4. `optimize`
 
 - 入力画像、表示条件、margins、align、background_color、embed 系を受け取る。
-- `--settings-file` は optimize / slideshow で受け付ける。与えられた場合は設定ファイルを読み、CLI 引数を優先して上書きする。`apply` は `--settings-file` を受け付けない。
+- `--settings-file` / `-c` は optimize / apply / slideshow で受け付ける。与えられた場合は設定ファイルを読み、CLI 引数を優先して上書きする（`apply` は `apply_mode` / `plugin` / `windows_apply_span` 等を読む。§5）。
 - help では `--settings-file` を optimize 用 defaults を読む option だと分かる文言で説明する。規範文言は `Optional path to optimize settings JSON` を基準にする。
 - help では `--input` を、カンマ区切りまたは `--input` の繰り返しで最大 2 件まで受け付ける画像入力だと分かる文言で説明する。規範文言は `Input file(s). Use comma-separated paths or repeat --input.` を基準にする。
+- **`optimize --help` の幾何説明（MAT-15 / MAT-19）:** margins は fit / shrink の制約のみ。`align` / `valign` は display スロット全面で効く。次の誤解を誘う文言は **含めない**: 「margins の内側で align が効く」「`two-screen` は `--l-display` / `--r-display` 併用時に効きが強くなる」。規範 docstring 抜粋:
+  - `Geometry (core-spec §4.1): margins (left,right,top,bottom) constrain image fit/shrink; align / valign use the full display slot for positioning.`
+  - `--margins` option help: `Constrain fit only; align uses full slot.`
+- **廃止フラグは help に出さない:** `--resolution` / `-r`、`--two-screen` / `--no-two-screen`、`--l-display`、`--r-display`、`--scaling`。
 - `scaling` は public surface から外す。optimize の拡大縮小は内部で fit 系計算を使い、`fill` / `crop` は user-facing option として露出しない。
 - 成功時は `Saved:` と 1 行ずつの `Placement:` を出力する（§4.1）。
 
@@ -74,7 +78,7 @@ sequenceDiagram
 1. `--settings-file` があれば設定ファイル JSON を読み込む。
 2. CLI 引数と設定ファイル値から、各オプションの最終採用値を解決する。
 3. `--input` を画像ファイル列として正規化する。
-4. display 条件を解決し、最終的な `resolution` を確定する。
+4. `resolve_optimize_display_settings(...)` で workspace 検出・入力枚数・`canvas_scale_percent` から合成キャンバス寸法を確定する（内部 `resolution` は作業解像度。ユーザー向け CLI フラグは `--canvas-scale` のみ。§ display / canvas 解決）。
 5. `optimize_wallpapers(...)` を呼び、出力ファイル一覧と配置結果一覧を得る。
 6. 結果を stdout に出力する。
 
@@ -204,7 +208,7 @@ harite apply -c settings.json
 ### 廃止（v2.0.0 / MAT-22）
 
 - `--auto-split`, `--left-file`, `--right-file`, `--per-monitor`
-- `apply` の `--settings-file` 未対応（旧実装）
+- 旧実装の「`apply` は settings を読まない」経路（MAT-22 で `--settings-file` / `-c` 対応に置換）
 
 ### 未知 plugin 時の動作
 
@@ -349,7 +353,7 @@ Click / Typer が自動付与する補助 option。Harite 独自の業務仕様�
 | `--install-completion` | 現在のシェル向けに tab 補完スクリプトをインストールする（bash / zsh / fish 等。環境依存） |
 | `--show-completion` | 補完スクリプトを stdout に出力する（手動設定用） |
 
-去就（残す / 廃止）は MAT-23 の CLI surface 整理で決める。現行は Typer 既定のまま提供する。
+**MAT-19 確定:** 残す。Typer / Click がルート `harite --help` に自動付与する補助 option として提供する。`--help` には各 option の短い説明（install / show completion）が付く。
 
 ### plugin 名の決定規則（MAT-23）
 

@@ -219,13 +219,19 @@ def optimize(
     align: str = typer.Option(
         "center",
         "--align",
-        help="Horizontal align for left,right images (e.g. left,right). A single value applies to both.",
+        help=(
+            "Horizontal align for left,right images (e.g. left,right). "
+            "A single value applies to both. Uses full display slot, not margin inset."
+        ),
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     valign: str = typer.Option(
         "center",
         "--valign",
-        help="Vertical align for left,right images (e.g. top,bottom). A single value applies to both.",
+        help=(
+            "Vertical align for left,right images (e.g. top,bottom). "
+            "A single value applies to both. Uses full display slot, not margin inset."
+        ),
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     quality: int = typer.Option(

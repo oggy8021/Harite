@@ -54,7 +54,7 @@
 | MAT-10 | 江戸切絵図 source（新規） | edo-maps / IIIF を雰囲気 slideshow source に | ライセンス・indexer | **完了** #470 |
 | MAT-18 | NDL searchbytext | キーワードで図版検索（CODH 同型 UI） | op3: facet は書簡偏重 | **完了** #467–#468 |
 | MAT-14b | auto 倍率 | 短辺閾値で 1.25–2x 自動拡大（Main+Slideshow） | MAT-14 手動 % とは別軸 | **完了** #469 |
-| MAT-19〜24 | v2 前 CLI / 幾何一本化 | spec/help・embed・四重露出・Apply 経路・plugin 縮小・v2 bump | [roadmap](20260611-1200-cli-v2-roadmap.md)。従属: [gatereview](20260611-pre-bump-cli-gatereview.md)、[two-screen](20260611-two-screen-display-params-clarification.md) | **planning 中** |
+| MAT-19〜24 | v2 前 CLI / 幾何一本化 | spec/help・embed・四重露出・Apply 経路・plugin 縮小・v2 bump | [roadmap](20260611-1200-cli-v2-roadmap.md)。従属: [gatereview](20260611-pre-bump-cli-gatereview.md)、[two-screen](20260611-two-screen-display-params-clarification.md) | **進行中**（MAT-19/21/22/23 完了、残: MAT-20/24） |
 
 
 ## 2. 構想保持
