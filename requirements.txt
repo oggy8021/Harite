@@ -1,10 +1,12 @@
 # Harite runtime (pip). Install from repo root:
 #   python -m pip install -r requirements.txt
 #
-# Qt GUI on Windows / generic pip:
-#   python -m pip install -e ".[gui-qt]"
+# Linux XFCE / Mint / Ubuntu + Japanese IME (fcitx):
+#   Read requirements-linux-qt.txt FIRST (apt + venv recipe; file is comment-only by design).
+#   Do NOT pip install PyQt6 or harite[gui-qt] on Debian-family Linux.
+#   After setup: python scripts/verify_linux_qt_env.py
 #
-# Linux Mint / Ubuntu / Debian + fcitx IME:
-#   Do NOT pip-install PyQt6. Use distro packages — see requirements-linux-qt.txt
+# Windows / generic pip Qt GUI:
+#   python -m pip install -e ".[gui-qt]"
 
 -e .

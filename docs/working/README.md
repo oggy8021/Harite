@@ -20,6 +20,7 @@ docs/working/
 | --- | --- |
 | [20260609-1200-feature-overview.md](20260609-1200-feature-overview.md) | 第2期 inventory 入口（熟成運転期間）。**継続更新する唯一の planning 入口** |
 | [20260611-1200-cli-v2-roadmap.md](20260611-1200-cli-v2-roadmap.md) | v2.0.0 前 CLI / 幾何（MAT-19〜24）。従属: gatereview、two-screen 整理 |
+| [20260612-pre-release-housekeeping.md](20260612-pre-release-housekeeping.md) | MAT-20〜24 間: requirements / トレイ / 回帰 / 正本クリーンアップ |
 | [20260608-1200-feature-pending.md](20260608-1200-feature-pending.md) | 破棄候補 / 保留延長（H-xx / K-05 等） |
 
 **2026-06-09 分割:** 第1期完了記録は [finished/20260518-2047-feature-overview.md](finished/20260518-2047-feature-overview.md) へ。P-08 は #436 マージ・[3層 audit](../specs/gui/audit/p08-3layer-audit.md) 反映済み。

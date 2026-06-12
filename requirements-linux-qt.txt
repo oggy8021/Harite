@@ -1,27 +1,59 @@
-# Linux Qt backend (harite-qt) — apt packages, not pip.
+# =============================================================================
+# Harite Qt GUI on Linux (XFCE / Mint / Ubuntu / Debian) — reproducible recipe
+# =============================================================================
 #
-# pip PyQt6 cannot load the distro fcitx Qt6 plugin (Qt_6_PRIVATE_API mismatch).
-# Use distro PyQt6 with a venv that sees system site-packages.
+# This file is intentionally comment-only. It is the canonical steps document
+# for Japanese IME (fcitx) + SVG icons + harite-qt on distro PyQt6.
 #
-# One-time OS setup (Mint 22.3 / Ubuntu 24.04 noble example):
+# Do NOT: pip install PyQt6  (ABI mismatch with distro fcitx Qt6 plugin)
 #
+# Quick verify after setup:
+#   python scripts/verify_linux_qt_env.py
+#
+# Full developer notes: docs/dev/dev-environment.md
+# =============================================================================
+
+# --- Step 0: OS packages (run once per machine) --------------------------------
+#
+#   sudo apt update
 #   sudo apt install -y \
+#     git python3 python3-venv python3-pip \
 #     python3-pyqt6 \
 #     python3-pyqt6.qtsvg \
-#     fcitx5-frontend-qt6
+#     fcitx5 fcitx5-frontend-qt6
 #
-# Python venv (from repo root):
+# Session: use fcitx5 (XFCE Input Method settings). Typical env:
+#   GTK_IM_MODULE=fcitx
+#   XMODIFIERS=@im=fcitx
+# Harite sets QT_IM_MODULE from these on harite-qt startup.
+
+# --- Step 1: Clone and venv (from repo root) ---------------------------------
 #
+#   git clone <repo-url> Harite && cd Harite
 #   python3 -m venv .venv --system-site-packages
 #   source .venv/bin/activate
 #   python -m pip install -U pip
+
+# --- Step 2: Install Harite (pip runtime only) -------------------------------
+#
 #   python -m pip install -r requirements.txt
-#   # Do not run: pip install PyQt6
+#   # Optional dev tools:
+#   python -m pip install -r requirements-dev.txt
 #
-# Verify:
+# Do NOT run: pip install PyQt6
+# Do NOT run: pip install 'harite[gui-qt]'   # pulls pip PyQt6 on Linux
+
+# --- Step 3: Verify ----------------------------------------------------------
 #
+#   python scripts/verify_linux_qt_env.py
 #   python -c "import PyQt6; print(PyQt6.__file__)"
-#   # expect .../dist-packages/PyQt6/...
+#   # expect .../dist-packages/PyQt6/... not .../site-packages/PyQt6/...
 #
 #   python -c "from PyQt6.QtGui import QImageReader; print(b'svg' in QImageReader.supportedImageFormats())"
 #   # expect True after python3-pyqt6.qtsvg
+
+# --- Step 4: Run GUI ---------------------------------------------------------
+#
+#   harite-qt
+#
+# IME smoke: open Slideshow tab, focus keyword(CODH) field, toggle fcitx, type Japanese.
