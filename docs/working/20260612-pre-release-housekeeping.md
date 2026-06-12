@@ -9,7 +9,7 @@
 ## 確定順序（オーナー 2026-06-12）
 
 ```text
-(1) requirements 点検・ドキュメント整備  ← 日本語入力（fcitx）含む XFCE 再現手順
+(1) requirements 点検・ドキュメント整備  ← **完了**（GTK 停止後の XFCE 環境再構成）
 (2) トレイ 2 アイコン + Windows タスクバー配色検出
 (3) MAT-20（embed-info 整理・重畳・文字色自動）
 (4) 回帰テスト（オーナー実施: CLI → GUI → Windows → XFCE）
@@ -19,11 +19,15 @@
 
 ---
 
-## (1) requirements / XFCE 環境再現 — **進行中**
+## (1) requirements / XFCE 環境再現 — **完了**（2026-06-12）
+
+**背景:** Q-01（GTK 廃止）後、XFCE 実機の venv / apt 構成が未整備だった。IME 自体は fcitx 改修時に確認済み — 今回は **環境再構成の再現手順** を正本化した。
+
+**ブランチ:** `feature/pre-release-req-docs-20260612`（PR 待ち）
 
 ### 目的
 
-- `requirements-linux-qt.txt` が「全部コメント」に見えず、**XFCE 上で日本語入力付き `harite-qt` を再現できる手順書**として読めること。
+- `requirements-linux-qt.txt` が「全部コメント」に見えず、**XFCE 上で distro PyQt6 + fcitx 前提の `harite-qt` 環境を再現できる手順書**として読めること。
 - pip PyQt6 と distro fcitx プラグインの非互換を踏まえ、**誤インストールを防ぐ**。
 
 ### 正本ファイル
@@ -38,9 +42,9 @@
 
 ### 完了の目安
 
-- [ ] XFCE 実機または SSH 先で手順どおり venv 構築 → `verify_linux_qt_env.py` が exit 0
-- [ ] `keyword(CODH)` 等の Qt テキスト欄で fcitx 入力が効く
-- [ ] SVG アイコン（ボタン・トレイ）が null にならない
+- [x] XFCE 実機で venv 再構成 → `verify_linux_qt_env.py` exit 0（distro PyQt6 / SVG / fcitx すべて OK）
+- [x] fcitx IME — 改修時に確認済み（今回のスコープ外だが再構成後も env 整合）
+- [x] SVG アイコン — `verify_linux_qt_env` の packaged SVG probe で OK
 
 ### 技術前提（コード正本）
 
@@ -111,3 +115,4 @@ CHANGELOG、`pyproject.toml` bump、パッケージング、ビルド、リリ�
 | 日付 | 内容 |
 | --- | --- |
 | 2026-06-12 | 初版。順序確定、(1) requirements 着手 |
+| 2026-06-12 | (1) 完了。XFCE 実機で verify 通過（GTK 停止後の環境再構成） |
