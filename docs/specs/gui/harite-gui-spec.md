@@ -619,7 +619,7 @@ icon / resource surface:
 - main window と about dialog は product icon として `harite_app.svg` を優先利用する。
 - main GTK window では window icon surface に `harite_app.svg` を与え、GTK runtime がそれを採る環境では taskbar / launcher / window surface 側の application identity に使われる。
 - about dialog では window icon に加えて dialog content 内にも `harite_app.svg` を表示する。
-- task tray indicator は slideshow 状態（`harite*.svg` / `harite_off*.svg`）とトレイ周辺の明暗で 4 種を使い分ける。暗いトレイ面: `harite.svg` / `harite_off.svg`（明ストローク）。明るいトレイ面: `harite_light_bg.svg` / `harite_off_light_bg.svg`（暗ストローク）。判定は Windows で `SystemUsesLightTheme`、それ以外は Qt `colorScheme()`、不明時は明るい面扱い（暗ストロークを既定）。
+- task tray indicator は slideshow 状態（`harite*.svg` / `harite_off*.svg`）とトレイ周辺の明暗で 4 種を使い分ける。暗いトレイ面: `harite.svg` / `harite_off.svg`（明ストローク）。明るいトレイ面: `harite_light_bg.svg` / `harite_off_light_bg.svg`（暗ストローク）。判定は `HARITE_TRAY_LIGHT_SURFACE` 環境変数（任意）→ Windows `SystemUsesLightTheme` → Linux は暗いトレイ面を既定（Qt アプリテーマ Light でもパネル strip は暗いことが多い）→ その他は Qt `colorScheme()` → 不明時は明るい面扱い（Windows 等）。
 - task tray indicator の icon surface は application icon の再利用ではなく、slideshow 状態を示す専用の product icon surface として分ける。
 - product icon resource が見つからない場合、tray は system theme icon へフォールバックする。
 - tray fallback は slideshow 実行中に `applications-graphics`、停止中に `media-playback-pause` を使う。

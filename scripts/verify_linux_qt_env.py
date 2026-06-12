@@ -10,7 +10,54 @@ Exit 0 when the environment matches Harite's documented Linux Qt recipe.
 
 from __future__ import annotations
 
+import os
 import sys
+
+_XFCE_PANEL_HINT = (
+    "On XFCE, add panel item 'Status Tray Plugin' or 'Notification Area' "
+    "and enable status notifier / legacy systray support."
+)
+
+
+def _audit_qt_system_tray_fallback() -> dict[str, object]:
+    display_set = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+    audit: dict[str, object] = {
+        "display_set": display_set,
+        "system_tray_available": False,
+        "panel_hint": _XFCE_PANEL_HINT,
+    }
+    if not display_set:
+        audit["skipped"] = True
+        audit["skip_reason"] = "no DISPLAY or WAYLAND_DISPLAY"
+        return audit
+
+    try:
+        from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
+    except ImportError as exc:
+        audit["error"] = str(exc)
+        return audit
+
+    qapp = QApplication.instance()
+    created_app = False
+    if qapp is None:
+        qapp = QApplication([])
+        created_app = True
+    try:
+        audit["system_tray_available"] = bool(QSystemTrayIcon.isSystemTrayAvailable())
+    finally:
+        if created_app and qapp is not None:
+            qapp.quit()
+    return audit
+
+
+def _audit_qt_system_tray() -> dict[str, object]:
+    """Tray diagnostics; prefers harite helper when installed."""
+    try:
+        from harite.gui.adapters_qt.qt_tray_adapter import audit_qt_system_tray
+
+        return audit_qt_system_tray()
+    except ImportError:
+        return _audit_qt_system_tray_fallback()
 
 
 def _fail(messages: list[str]) -> int:
@@ -61,6 +108,21 @@ def main() -> int:
         errors.append(f"FAIL: SVG icons do not load. {svg_audit.get('package_hint')}")
     else:
         print("OK: packaged SVG icon loads")
+
+    tray_audit = _audit_qt_system_tray()
+    if tray_audit.get("skipped"):
+        notes.append(
+            "WARN: system tray check skipped ({reason}). Run from a graphical session.".format(
+                reason=tray_audit.get("skip_reason", "no display"),
+            )
+        )
+    elif not tray_audit.get("system_tray_available"):
+        errors.append(
+            "FAIL: Qt system tray is unavailable in this session. "
+            f"{tray_audit.get('panel_hint')}"
+        )
+    else:
+        print("OK: Qt system tray available")
 
     im_audit = audit_qt_fcitx_input_method()
     print(
