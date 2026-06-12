@@ -36,6 +36,7 @@ def test_apply_help_excludes_legacy_do_it_option() -> None:
     assert "--right-file" not in compact_output
     assert "--per-monitor" not in compact_output
     assert "--plugin" not in compact_output
+    assert ".harite-last-optimize.json" in compact_output
 
 
 def test_apply_rejects_legacy_plugin_option(tmp_path) -> None:

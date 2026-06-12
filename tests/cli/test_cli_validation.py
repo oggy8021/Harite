@@ -91,6 +91,10 @@ def test_optimize_help_reflects_current_surface() -> None:
     assert "その内側で" not in output
     assert "効きが強く" not in output
     assert "--canvas-scale" in output
+    assert "full display slot" in compact_output
+    assert "Constrain fit only" in compact_output
+    for removed_flag in ("--resolution", "--two-screen", "--l-display", "--r-display"):
+        assert removed_flag not in output
 
 
 def test_optimize_reports_embed_overlap_error(tmp_path, monkeypatch):
@@ -153,10 +157,13 @@ def test_root_help_lists_typer_shell_completion_options() -> None:
 
     result = runner.invoke(cli.app, ["--help"])
     output = _normalize_cli_output(result.output)
+    compact_output = " ".join(output.split()).lower()
 
     assert result.exit_code == 0
     assert "--install-completion" in output
     assert "--show-completion" in output
+    assert "install completion" in compact_output
+    assert "show completion" in compact_output
 
 
 def test_optimize_rejects_invalid_embed_info(tmp_path, monkeypatch):
