@@ -23,16 +23,18 @@ def test_apply_help_excludes_legacy_do_it_option() -> None:
     runner = CliRunner()
 
     result = runner.invoke(cli.app, ["apply", "--help"])
-    output = result.output.lower()
+    output = _strip_cli_output(result.output).lower()
+    compact_output = " ".join(output.split())
 
     assert result.exit_code == 0
-    assert "--do-it" not in output
-    assert "dry-run" not in output
-    assert "--settings-file" in output
-    assert "--auto-split" not in output
-    assert "--left-file" not in output
-    assert "--right-file" not in output
-    assert "--per-monitor" not in output
+    assert "--do-it" not in compact_output
+    assert "dry-run" not in compact_output
+    assert "settings-file" in compact_output
+    assert "-c" in compact_output
+    assert "--auto-split" not in compact_output
+    assert "--left-file" not in compact_output
+    assert "--right-file" not in compact_output
+    assert "--per-monitor" not in compact_output
 
 
 def test_apply_rejects_legacy_do_it_option(tmp_path) -> None:
