@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-12（MAT-21b Canvas scale %）
+最終更新: 2026-06-13
 
 ## 1. GUI の責務
 
@@ -128,7 +128,7 @@ Main Window:
 Main tab:
 
 - `Main` tab は縦積みの `main_col` を持ち、上から **margin cross-grid（外周 4 spin、内包 compose grid）**、**action cluster**、**Margins options Drawer トリガ**、（開時）**Margins options Drawer** の順とする（P-08）。
-- margin cross-grid は top / left / right / bottom の 4 辺 margin spin を **compose grid を内包する** 外周配置とする（上段 top、中段は left | compose | right、下段 bottom | **all margins**）。**all margins (px)**（MAT-09）は右下セルに常設し、四辺を同値に即時反映する（`0` = 既定）。四辺が不一致のときは **all margins ラベルのみ無効化**（spin は触れるまま）。all spin の `valueChanged` でラベルを復帰する。専用 Reset コントロールは置かない。**embed pattern / margin text / position は Drawer 内**（正面常設は 4 辺 + all margins spin）。
+- margin cross-grid は top / left / right / bottom の 4 辺 margin spin を **compose grid を内包する** 外周配置とする（上段 top、中段は left | compose | right、下段 bottom | **all margins**）。**all margins (px)** は右下セルに常設し、四辺を同値に即時反映する（`0` = 既定）。四辺が不一致のときは **all margins ラベルのみ無効化**（spin は触れるまま）。all spin の `valueChanged` でラベルを復帰する。専用 Reset コントロールは置かない。**embed pattern / margin text / position は Drawer 内**（正面常設は 4 辺 + all margins spin）。
 - compose grid は左・中央・右の 3 列構成で、左 panel と右 panel は display ごとの入力・方向操作面、中央 panel は pick state と swap 操作面とする。
 - 中央 panel は direction toggle 群と **同型 3 行**とし、上段に pick state label、**中段**（Left-L … Right-L / Left-R … Right-R と同高）に **`Swap L/R`** button を置く（§4.1）。
 - 左右 panel は同型で、上段に十字配置の direction toggle と `Open-L/R`、下段に選択 path 表示と `Clear-L/R` を置く。
@@ -167,7 +167,7 @@ Main tab — Margins options Drawer（P-08）:
 | `Text` page の margin text entry | 同上 |
 | `position selector` | `Rule: margins constrain image size; align/valign use the full display slot.` |
 | cross-grid、各辺 margin label | `Current behavior: margins are global to the composite canvas.` |
-| **all margins (px)** spin / label（MAT-09） | `Set left, right, top, and bottom margins to the same value. 0 restores the default margins.` |
+| **all margins (px)** spin / label | `Set left, right, top, and bottom margins to the same value. 0 restores the default margins.` |
 | center stack 全体（任意） | 上記 3 文を連結した tooltip |
 
 - **footer `Status`**（§9）: margin text preflight の成否と寸法要約（§8 `margin text preflight の現行規則`）。
@@ -201,7 +201,7 @@ Dialogs:
 - settings dialog は単一の縦積み editor box を持ち、上から `header row`、`settings rows`、`actions row`、`notice separator`、`state/notice` を並べる。
 - settings dialog の header row は左に title、右に `Save Settings` を置く。
 - settings dialog の `Save Settings` は設定ファイル保存を指し、main window の `Export Image` や image export dialog とは別の保存面である。
-- settings dialog の現行 runtime 実装で常設 row として露出するのは `Canvas scale`（% spin、1–100、既定 100）、`Scaling`、`Plugin`、`Apply` である。`Resolution` / `TwoScreen` / L-R display override row は **MAT-21b で廃止**。
+- settings dialog の現行 runtime 実装で常設 row として露出するのは `Canvas scale`（% spin、1–100、既定 100）、`Scaling`、`Plugin`、`Apply` である。`Resolution` / `TwoScreen` / L-R display override row は **廃止**。
 - settings dialog の `Apply` row は radio を横並びに持つが、main tab の apply mode help label に相当する補助説明 row は持たない。
 - settings dialog は下段に `Settings: current values` を起点とする state label と notice label を持つ。
 - optimize 結果画像の書き出しには別の image export dialog を使い、user-facing surface は dialog title に `Export Image`、状態表示に `Export path`、選択結果表示に `Export target` を使う。
@@ -212,7 +212,7 @@ Dialogs:
 
 ### 3.1 Color dialog（背景色）
 
-MAT-03（2026-06-09）で Qt の組み立てと操作契約を GTK と揃えた。本節が color dialog の正本である。
+Qt の組み立てと操作契約は GTK と揃えている。本節が color dialog の正本である。
 
 #### Window
 
@@ -240,7 +240,7 @@ MAT-03（2026-06-09）で Qt の組み立てと操作契約を GTK と揃えた�
 | GTK | 可能なら `ColorChooserWidget` を embedded。選択は entry と同期 | embedded 有効時は **非表示** |
 | Qt | caption `Current background color` + **現在色 preview**（`QLabel` + `background-color` stylesheet）。entry / `Pick Color` / `set_color` と同期。無効 hex は `Invalid color` 表示 | **常設**。native `QColorDialog.getColor` を開く |
 
-Qt は picker host へ **非 native `QColorDialog` を embedded しない**。Windows では別窓 `Select Color` が重複起動し、host が空の白枠になるため（MAT-03 調査）。
+Qt は picker host へ **非 native `QColorDialog` を embedded しない**。Windows では別窓 `Select Color` が重複起動し、host が空の白枠になるため。
 
 #### 操作フロー（2 段）
 
@@ -366,8 +366,8 @@ catalog 契約は [source-spec §7](../source/harite-source-spec.md)。
 - **Presets タブ:** remote/preset 一覧（provider グループ見出し + 名前昇順）、**keyword(CODH)**、Refresh。
   - グループ見出し: `JMA 天気図` / `NDL 図版` / `CODH 江戸` / `その他`（`harite-preset:` の preset_id 接頭辞で分類）。
   - Delete は **Local タブのみ**（preset は materialize で再出現しうる）。
-- **keyword(CODH)**: Presets タブ内に常設 `QLineEdit`（ラベル `keyword(CODH)`、初期値 `桜`、`maxLength=16`）。`codh-edo-spots-keyword` 選択時のみ enabled（MAT-04: 江戸買物 preset 削除）。編集中のドラフトは **preset 選択変更・Enter・フォーカス移動では破棄しない**（Close / Refresh 確定まで field 上の最新文字列を保持）。Refresh 前および Close 時に `harite-settings.json` の `codh_keyword` へ反映（[source-spec §15.4.2](../source/harite-source-spec.md)）。
-- **Linux IME（Qt）:** `harite-qt` 起動時に `prepare_qt_input_method_env()` が `GTK_IM_MODULE` / `XMODIFIERS` から `QT_IM_MODULE` を補完する。**fcitx + pip PyQt6:** distro の fcitx Qt6 プラグイン（`fcitx5-frontend-qt6`）は **pip 同梱 Qt6 と非互換**（`Qt_6_PRIVATE_API` 未定義シンボルでロード失敗；MAT-06 viper3 確定）。Harite は pip venv へ symlink **しない**。**回避:** distro `python3-pyqt6`（Debian/Ubuntu/Mint: apt、`--system-site-packages` venv）+ `fcitx5-frontend-qt6`。**distro PyQt6 + SVG:** Harite のボタン／トレイアイコンは package 内 `.svg` を `QIcon` / `QPixmap` で読む。distro `python3-pyqt6` のみでは SVG プラグインが無く **アイコンが null** になりうる（`python3-pyqt6.qtsvg` を追加；起動時 `warn_missing_qt_svg_support()`）。`keyword(CODH)` は `configure_text_input_widget` で IME 有効化。Windows は本節の対象外。
+- **keyword(CODH)**: Presets タブ内に常設 `QLineEdit`（ラベル `keyword(CODH)`、初期値 `桜`、`maxLength=16`）。`codh-edo-spots-keyword` 選択時のみ enabled（江戸買物 preset 削除済み）。編集中のドラフトは **preset 選択変更・Enter・フォーカス移動では破棄しない**（Close / Refresh 確定まで field 上の最新文字列を保持）。Refresh 前および Close 時に `harite-settings.json` の `codh_keyword` へ反映（[source-spec §15.4.2](../source/harite-source-spec.md)）。
+- **Linux IME（Qt）:** `harite-qt` 起動時に `prepare_qt_input_method_env()` が `GTK_IM_MODULE` / `XMODIFIERS` から `QT_IM_MODULE` を補完する。**fcitx + pip PyQt6:** distro の fcitx Qt6 プラグイン（`fcitx5-frontend-qt6`）は **pip 同梱 Qt6 と非互換**（`Qt_6_PRIVATE_API` 未定義シンボルでロード失敗）。Harite は pip venv へ symlink **しない**。**回避:** distro `python3-pyqt6`（Debian/Ubuntu/Mint: apt、`--system-site-packages` venv）+ `fcitx5-frontend-qt6`。**distro PyQt6 + SVG:** Harite のボタン／トレイアイコンは package 内 `.svg` を `QIcon` / `QPixmap` で読む。distro `python3-pyqt6` のみでは SVG プラグインが無く **アイコンが null** になりうる（`python3-pyqt6.qtsvg` を追加；起動時 `warn_missing_qt_svg_support()`）。`keyword(CODH)` は `configure_text_input_widget` で IME 有効化。Windows は本節の対象外。
 - Profiles: 一覧、L/R slot combo（source id または empty）、Add / Delete profile。
 - 保存は `harite-sources.json` へ即 write。settings dialog とは別 surface。
 - dialog Close 後、Slideshow tab の profile / saved source combo を reload する。
@@ -417,7 +417,7 @@ GTK / Qt は `harite.gui.dual_display_ui` 経由で同一 widget 名を同期す
 
 ## 6. slideshow との接続
 
-### 6.0 MAT-14b auto 倍率（Main / Slideshow の分離）
+### 6.0 auto 倍率（Main / Slideshow の分離）
 
 | 面 | UI | 設定キー | optimize 経路 |
 | --- | --- | --- | --- |
@@ -476,7 +476,7 @@ GTK / Qt 両 backend で、次の user-facing surface は **同じ省略規則**
 
 - Slideshow tab の registry UI は §4.2 の layout / handler に従う。catalog 永続化は [source-spec](../source/harite-source-spec.md) が正本。
 - startup / settings load 後、backend は catalog を load し、[source-spec §13.4](../source/harite-source-spec.md) `bootstrap_preset_sources` のち tab 上 combo を構築する（§6.5）。settings の任意 key `slideshow_source_id_l/r` / `slideshow_profile_id` があれば、対応 combo 選択を復元してよい（path は従来どおり `slideshow_srcdir_*` が実行値）。
-- Saved / Profile 選択および Srcdir ブラウズの優先関係は §4.2 の併存表が正本。**`— none —` は source id と path を両方クリア**（MAT-02b）、**Srcdir ブラウズは registry 外 path として combo を `— none —` に戻す**。
+- Saved / Profile 選択および Srcdir ブラウズの優先関係は §4.2 の併存表が正本。**`— none —` は source id と path を両方クリア**。**Srcdir ブラウズは registry 外 path として combo を `— none —` に戻す**。
 
 ### 6.4 Registry resolve at start
 

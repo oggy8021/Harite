@@ -76,12 +76,12 @@ two-screen 文脈で重要な点:
 - `build_two_screen_optimize_context(...)` は display が 2 件未満なら `None` を返す。2 件以上ある場合だけ、ordered 先頭 2 件から `l_display = (left.width, left.height)`, `r_display = (right.width, right.height)` を作る。
 - `resolve_optimize_display_settings(...)` は、空文字を除いた入力列の件数が 2 件以上のときだけ two-screen context 取得を試みる。入力が 1 件しかない場合、display 自動解決は行わない。
 - CLI / GUI の public surface では、optimize 入力が 3 件以上与えられても先頭 2 件だけを採用する。two-screen 文脈の left / right 割当は、この採用済み先頭 2 件の順序で決まる。
-- **入力 2 件（MAT-21）:** 内部 `two_screen` は **常に True**。半分キャンバス第3経路は **廃止**（前半）。
+- **入力 2 件:** 内部 `two_screen` は **常に True**。半分キャンバス第3経路は **廃止**。
 - **2 枚 + 検出 display `< 2`** → `ValueError`（`DUAL_INPUT_REQUIRES_TWO_DISPLAYS`）。1 枚目だけ適用するフォールバックは行わない。
 - **入力 1 件:** 内部 `effective_two_screen=False`。検出 1 台から virtual desktop 寸法を導き `resolution` を自動補完する。
-- **`canvas_scale_percent`（MAT-21b）:** 配置計算は検出 virtual desktop（dual 時は先頭 2 台の union、single 時は primary 1 台）の **100% 作業解像度** で行う。`optimize_wallpapers` は合成・embed 完了後に、完成 JPEG を `round(dim * percent / 100)`（最小 1px）で **ポストダウンスケール** する。`resolve_optimize_display_settings(...).resolution` は作業解像度（100%）、embed の `canvas=` 行と保存ファイル寸法は出力解像度（縮小後）。**目的はユーザーが保持するファイルサイズの削減のみ**（実行時メモリや配置キャンバスの縮小ではない）。public surface では CLI `--canvas-scale`、settings `canvas_scale_percent`、GUI Settings の Canvas scale % spin のみ。`WxH` 文字列の手動指定は **廃止**。
+- **`canvas_scale_percent`:** 配置計算は検出 virtual desktop（dual 時は先頭 2 台の union、single 時は primary 1 台）の **100% 作業解像度** で行う。`optimize_wallpapers` は合成・embed 完了後に、完成 JPEG を `round(dim * percent / 100)`（最小 1px）で **ポストダウンスケール** する。`resolve_optimize_display_settings(...).resolution` は作業解像度（100%）、embed の `canvas=` 行と保存ファイル寸法は出力解像度（縮小後）。**目的はユーザーが保持するファイルサイズの削減のみ**（実行時メモリや配置キャンバスの縮小ではない）。public surface では CLI `--canvas-scale`、settings `canvas_scale_percent`、GUI Settings の Canvas scale % spin のみ。`WxH` 文字列の手動指定は **廃止**。
 - **縮小 JPEG の apply:** `split_composite_for_displays(...)` は合成画像の実ピクセル寸法と検出 display の virtual desktop レイアウト（`x_offset` / 幅の比率）から左右を切り出し、各 display 解像度へ拡大して貼る（例: 1920×540 → 7680×2160 相当の左右比で split → 各 3840×2160 へ upscale）。Windows Span 経路は OS が合成 JPEG を span 全体へストレッチする（アスペクト一致時は 100% 配置と同型）。
-- **四重露出撤去（MAT-21b）:** `two_screen`, `resolution`, `l_display`, `r_display` は CLI 引数・settings キー・GUI form state・embed params 行から **削除**。旧 JSON に残っていても **読み捨て**（サイレント）。手動 l/r override は **廃止**。
+- **手動 display 指定の廃止（v2.0.0）:** `two_screen`, `resolution`, `l_display`, `r_display` は CLI 引数・settings キー・GUI form state・embed params 行から **削除**。旧 JSON に残っていても **読み捨て**（サイレント）。手動 l/r override は **廃止**。
 - `resolve_optimize_display_settings(...)` の返却 `EffectiveOptimizeDisplaySettings` は内部計算用に `resolution`, `two_screen`, `l_display`, `r_display`, `canvas_scale_percent` を持つ。`resolution` が最後まで確定しなければ入力不正として止める。
 - 設計の正本: [two-screen 整理メモ §6](../../working/20260611-two-screen-display-params-clarification.md#6-将来整理の方向オーナー判断確定-2026-06-12)。
 - `normalize_optimize_input_paths` はディレクトリパスを `ValueError` で拒否するが、存在しないファイルや非画像ファイルは検証しない。これらは `optimize_wallpapers` 処理中に黙ってスキップされる。
@@ -136,10 +136,10 @@ flowchart TD
 
 ### 4.1 placement 計算の現行規則
 
-母体 `wallpaperoptimizer` 準拠（MAT-01b、2026-06-09）:
+母体 `wallpaperoptimizer` 準拠（2026-06-09）:
 
 - **拡大しない（既定）。** 画像 + margins が display 矩形に収まるときは **原寸**（`scale = 1.0`）。収まらないときのみ `_downsize_to_fit_margins(...)` で **縮小のみ**（二段 proportional shrink）。
-- **意図的拡大:** Compose の source scale（100% / 125% / 150% / 200%）は **元画像サイズのみ** に掛ける。display / composite 解像度は変えない。100% は上記 MAT-01b 経路、それ以外は upscale 後に収納判定し、display 矩形（margins 込み）に収まらなければエラー（縮小フォールバックなし）。align / valign は upscale 後の `(nw, nh)` に対して適用する。
+- **意図的拡大:** Compose の source scale（100% / 125% / 150% / 200%）は **元画像サイズのみ** に掛ける。display / composite 解像度は変えない。100% は上記 down-only 経路、それ以外は upscale 後に収納判定し、display 矩形（margins 込み）に収まらなければエラー（縮小フォールバックなし）。align / valign は upscale 後の `(nw, nh)` に対して適用する。
 - **auto 倍率:** `auto` ON かつ手動 scale が 100% のとき、画像短辺と display slot 短辺（margins 控除後）を比較し、≤1/2 → 1.5x、≤1/4 → 2.0x を自動適用。手動 % は auto より優先。Main optimize は `l_auto_display_scale` / `r_auto_display_scale`、Slideshow optimize は `slideshow_l_auto_display_scale` / `slideshow_r_auto_display_scale`（別キー・別 UI）。
 - `scaling` 引数・設定キーは optimize 幾何に **影響しない**（合意済み）。Settings の `scaling` 値や `compute_placement(..., scaling=...)` の引数は **互換用シグネチャ** であり、配置計算では参照されない。
 - 各入力は **display スロット**（矩形 + 非対称 margins）に割り当てる。two-screen では L margins `(ml, 0, mt, mb)`、R margins `(0, mr, mt, mb)`。
@@ -184,7 +184,7 @@ flowchart TD
 - そのうえで左右半分は `left_slice_width = usable_width // 2`, `right_slice_width = usable_width - left_slice_width` で分ける。single-screen では `left-top` は左半分上端、`left-bottom` は左半分下端、`right-top` は右半分上端、`right-bottom` は右半分下端に対応する。
 - two-screen で display 情報がある場合も、配置面は left display / right display の上側・下側 4 位置だけを持つ。`left-top` は left display の上端、`left-bottom` は left display の下端、`right-top` は right display の上端、`right-bottom` は right display の下端に対応する。slice 内部の横範囲は `x0 = offset_x + ml`, `x1 = max(x0, offset_x + slice_w - mr)` であり、上端側は `(x0, 0, x1, mt)`、下端側は `(x0, slice_h - mb, x1, slice_h)` を基底にする。
 - 描画前には `area_w = x1 - x0`, `area_h = y1 - y0` を求め、`area_w < 40` または `area_h < 12` なら何も描かない。
-- **重畳ガード（MAT-20）:** 全画像の paste 完了後、`resolve_embed_margin_region` で得た embed 領域（AABB）と、各 `PlacementResult` の貼り付け矩形 `(x, y, x+width, y+height)` の **軸平行交差** を検査する。1 件でも交差すれば **エラー** とし、出力 JPEG は保存しない（embed 指定の意図に反する黙りスキップを避ける）。精密な字形クリッピングや画面外欠けの自動補正は行わない。
+- **重畳ガード:** 全画像の paste 完了後、`resolve_embed_margin_region` で得た embed 領域（AABB）と、各 `PlacementResult` の貼り付け矩形 `(x, y, x+width, y+height)` の **軸平行交差** を検査する。1 件でも交差すれば **エラー** とし、出力 JPEG は保存しない（embed 指定の意図に反する黙りスキップを避ける）。精密な字形クリッピングや画面外欠けの自動補正は行わない。
 - エラー文言（規範）: `Embed position overlaps pasted image. Choose another embed_position (left-top, left-bottom, right-top, right-bottom) or adjust align, valign, or margins.` CLI は終了コード `2`（[cli-spec §4](../cli/harite-cli-spec.md)）。GUI も同一メッセージで失敗扱いとする。
 - フォントサイズ候補は `preferred_size = max(12, min(24, area_h // (max_lines + 1)))` で決め、1 行高さは `line_h = max(10, bbox("Ag").height + 2)` 相当で求める。
 - 実際に描く行数は `fit_lines = area_h // line_h`, `line_limit = min(max(1, embed_max_lines), fit_lines)` で決め、超過した行は末尾に `...`（スペース+三点リーダー）を付けて切り詰める。
@@ -305,7 +305,7 @@ Windows の補足:
 
 ### 6.3 論理グループ
 
-- optimize 面: `canvas_scale_percent`, `l_display_scale`, `r_display_scale`, `l_auto_display_scale`, `r_auto_display_scale`, `margins`, `align`, `valign`, `scaling`, `quality`, `background_color`, `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`（**`resolution` / `two_screen` / `l_display` / `r_display` は MAT-21b で settings から削除。旧キーは読み捨て**）
+- optimize 面: `canvas_scale_percent`, `l_display_scale`, `r_display_scale`, `l_auto_display_scale`, `r_auto_display_scale`, `margins`, `align`, `valign`, `scaling`, `quality`, `background_color`, `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`（**`resolution` / `two_screen` / `l_display` / `r_display` は v2.0.0 で settings から削除済み。旧キーは読み捨て**）
 - apply 面: `plugin`, `apply_mode`
 - スライドショー面: `slideshow_interval_seconds`, `slideshow_mode`, `slideshow_srcdir_l`, `slideshow_srcdir_r`, `slideshow_l_auto_display_scale`, `slideshow_r_auto_display_scale`
 - スライドショー registry 追跡（任意）: `slideshow_source_id_l`, `slideshow_source_id_r`, `slideshow_profile_id` — [source-spec §6.4](../source/harite-source-spec.md)

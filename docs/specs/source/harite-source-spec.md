@@ -380,7 +380,7 @@ Refresh はいずれも `sync_remote_source` 1 回だが、**ユーザーにと�
 
 **取りづらさの整理:** 所蔵ライブラリの更新を追うための Refresh ではない。アーカイブ系では「もう一度ランダムに引く」操作に近く、**毎日の変化は再起動 + Start** で足りる設計（Start で必ず sync するため）。
 
-#### 12.4.3 Preset remote 操作ログ（開発者向け・MAT-08）
+#### 12.4.3 Preset remote 操作ログ（開発者向け）
 
 CODH / NDL の実機切り分け用に、Preset `remote-*` の **sync / tick** について JSONL 形式の操作ログを出せる。
 
@@ -389,7 +389,7 @@ CODH / NDL の実機切り分け用に、Preset `remote-*` の **sync / tick** �
 | 有効化 | 環境変数 `HARITE_SLIDESHOW_OP_LOG` が非空のときのみ記録。未設定時は **no-op**（通常利用への影響なし） |
 | 出力先 | ファイル path（追記 JSONL）、または `stderr` / `1` / `true`（logger `harite.slideshow.remote` へ INFO） |
 | タイムスタンプ | 各レコードの `ts_jst` は JST（`+09:00` 固定オフセット） |
-| 対象 | slideshow **Start 直前 sync**、Manage **Refresh**、**CODH / JMA / NDL tick**、**slideshow tick/apply**（MAT-02b）。手動 `local-dir` のみは対象外 |
+| 対象 | slideshow **Start 直前 sync**、Manage **Refresh**、**CODH / JMA / NDL tick**、**slideshow tick/apply**。手動 `local-dir` のみは対象外 |
 | 内容 | `step`（例: `REMOTE_SYNC_BEGIN`, `NDL_META_URL`, `NDL_CACHE_WRITE`, `NDL_TICK`, `CODH_IMAGE_GET`, `CODH_TICK`, `JMA_CACHE_WRITE`, `JMA_TICK`, `SLIDESHOW_TICK`, `SLIDESHOW_APPLY`）、`url`、`preset_id`、`ok`、`error` 等 |
 | 画像 outcome（provider 共通） | 要約 tick / cache 行に **`image_fetched`**（network GET 成功）、**`cache_written`**（`latest.*` 書込）、**`had_previous`**（書込前に cache あり）、**`overwritten`**（既存 `latest.*` を置換）、**`content_changed`**（bytes 変化）、**`skip_reason`**（例: `filename_unchanged`） |
 
@@ -399,14 +399,14 @@ CODH / NDL の実機切り分け用に、Preset `remote-*` の **sync / tick** �
 
 すべての `remote-*` に共通する契約。サイト別手順は §15。
 
-#### タイムスタンプ（MAT-16）
+#### タイムスタンプ
 
 | 対象 | フィールド | 形式 |
 | --- | --- | --- |
 | JMA `jma-cycle.json` | `updated_at` | ホスト **ローカル TZ** の ISO8601（オフセット付き、マイクロ秒なし） |
 | CODH `codh-cycle.json` | `updated_at` | 同上 |
 | CODH `codh-index.json` | `built_at` | 同上 |
-| Preset remote 操作ログ（§12.4.3） | `ts_jst` | **JST**（`+09:00` 固定オフセット）— MAT-08 互換 |
+| Preset remote 操作ログ（§12.4.3） | `ts_jst` | **JST**（`+09:00` 固定オフセット） |
 
 実装: cache メタデータは `harite.local_time.local_now_iso`。操作ログは `jst_now_iso`。日本環境ではいずれも JST 表記になる。
 
@@ -674,7 +674,7 @@ plain `/illustration/random`（旧 `ndl-random`）は **同梱しない**。
 
 `harite-preset:{preset_id}` で入口 API を解決し、次を行う。
 
-1. **facet preset:** `GET randomwithfacet?size=1&f-graphictags.tagname={facet}` → JSON 配列 1 件（`Illustration`）。**keyword preset (`ndl-search-keyword`):** `GET searchbytext?keyword2vec={ndl_keyword}&size=20&from={offset}` → JSON オブジェクトの `list`（`hit` / `from` 付き）。cache に `ndl-search-batch.json`（現バッチ）と `ndl-search-cycle.json`（`from` + `cursor_index`）を保持し、CODH `codh-cycle.json` と同型に **リストを順次巡回**する（MAT-18b）。
+1. **facet preset:** `GET randomwithfacet?size=1&f-graphictags.tagname={facet}` → JSON 配列 1 件（`Illustration`）。**keyword preset (`ndl-search-keyword`):** `GET searchbytext?keyword2vec={ndl_keyword}&size=20&from={offset}` → JSON オブジェクトの `list`（`hit` / `from` 付き）。cache に `ndl-search-batch.json`（現バッチ）と `ndl-search-cycle.json`（`from` + `cursor_index`）を保持し、CODH `codh-cycle.json` と同型に **リストを順次巡回**する。
 2. 返却から `pid`, `page`, `x`, `y`, `w`, `h` を読み IIIF URL を組み立てる。
 3. IIIF URL を GET し画像 bytes を取得する。
 4. §12.3 の共通ヘルパで **`latest.jpg`**（または URL に応じた `latest.png`）として cache へ上書き保存する。
@@ -692,7 +692,7 @@ slideshow running 中、当該 side が `remote-ndl-tsugidigi` を参照する�
 3. §12.3 の共通ヘルパで `latest.jpg` を上書き保存する。
 4. IIIF 404 / 400 時の再試行は §15.3.3 と同型（最大 5 回）。全試行失敗時は前回 `latest.jpg` を維持して tick を継続する（`ndl_slideshow_tick` は `False`）。
 
-op log: 要約 `NDL_TICK`（MAT-08）。詳細は `NDL_META_URL` / `NDL_IIIF_*` / `NDL_CACHE_WRITE`。
+op log: 要約 `NDL_TICK`。詳細は `NDL_META_URL` / `NDL_IIIF_*` / `NDL_CACHE_WRITE`。
 
 #### 15.3.5 候補選択と保持しないもの
 
@@ -722,7 +722,7 @@ preset `notes` および Manage 表示（`harite-preset:` 行の次行）:
 | indexer | データセット |
 | --- | --- |
 | `edo-spots` | 江戸観光案内 |
-| `edo-shops` | 江戸買物案内（**同梱 preset なし** — MAT-04。文字図版中心のため product 見送り） |
+| `edo-shops` | 江戸買物案内（**同梱 preset なし** — 文字図版中心のため製品では提供しない） |
 
 Curation JSON 全体のローカル複製は持たない。候補 URL は `codh-index.json`（§15.4.3）に集約する。
 
@@ -733,7 +733,7 @@ Curation JSON 全体のローカル複製は持たない。候補 URL は `codh-
 | `codh-edo-spots-keyword` | `edo-spots` | `where={codh_keyword}`（部分一致） |
 | `codh-edo-spots-random` | `edo-spots` | 絞り込みなし |
 
-**MAT-04:** `codh-edo-shops-keyword` / `codh-edo-shops-random` は同梱から削除。既存 catalog に残った江戸買物由来 source は sync 非対応（`unsupported CODH preset`）— 手動削除を想定。
+`codh-edo-shops-keyword` / `codh-edo-shops-random` は同梱 preset に含めない。既存 catalog に残った江戸買物由来 source は sync 非対応（`unsupported CODH preset`）— 手動削除を想定。
 
 固定 keyword preset（例: 固定 `桜`）は同梱しない。
 
@@ -788,7 +788,7 @@ running 中、各 tick 前（[slideshow-spec §6.6](../slideshow/harite-slidesho
 
 江戸マップ ID・緯度経度・GIS・Curation JSON の自前パース。
 
-### 15.8 NDL 江戸切絵図（尾張屋版・MAT-10）
+### 15.8 NDL 江戸切絵図（尾張屋版）
 
 `kind`: **`remote-ndl-kiriezu`**。NDL デジタルコレクション IIIF の **地図1枚全体**（`dl.ndl.go.jp/api/iiif/{pid}/...`）。edo-maps は **pid 索引**のみ（Canvas Indexer 経由ではない）。
 

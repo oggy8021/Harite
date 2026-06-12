@@ -43,6 +43,14 @@
 | [20260606-p03-single-display-ux-planning.md](20260606-p03-single-display-ux-planning.md) | P-03 単 display 第二スロット UX（#420 完了） |
 | [20260606-p03-3layer-audit.md](20260606-p03-3layer-audit.md) | P-03 3層 audit（#420） |
 
+## v2.0.0 CLI / 幾何 — 2026-06-13 整理
+
+| ファイル | 内容 |
+| --- | --- |
+| [20260611-1200-cli-v2-roadmap.md](20260611-1200-cli-v2-roadmap.md) | v2.0.0 前 CLI / 幾何ロードマップ（MAT-19〜24、実装完了） |
+| [20260611-pre-bump-cli-gatereview.md](20260611-pre-bump-cli-gatereview.md) | pre-bump CLI ゲートレビュー |
+| [20260611-two-screen-display-params-clarification.md](20260611-two-screen-display-params-clarification.md) | two-screen / canvas-scale 整理（正本反映済み） |
+
 ## MAT / Q-01 — 2026-06-11 整理
 
 | ファイル | 内容 |
