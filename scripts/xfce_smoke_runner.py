@@ -7,6 +7,7 @@ This helper keeps interval-based wallpaper checks outside the core CLI.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import random
 import subprocess
@@ -57,7 +58,7 @@ def collect_images(inputs: Iterable[str]) -> List[Path]:
 
 def build_apply_command(
     image: Path,
-    plugin: str,
+    settings_file: Path | None,
     do_it: bool,
     extra_args: List[str],
     python_executable: str,
@@ -67,11 +68,11 @@ def build_apply_command(
         "-m",
         "harite.cli",
         "apply",
-        "--plugin",
-        plugin,
         "--file",
         str(image),
     ]
+    if settings_file is not None:
+        cmd.extend(["-c", str(settings_file)])
     if do_it:
         cmd.append("--do-it")
     cmd.extend(extra_args)
@@ -91,7 +92,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--interval-min", type=int, default=15, help="Minimum wait seconds")
     parser.add_argument("--interval-max", type=int, default=120, help="Maximum wait seconds")
     parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducibility")
-    parser.add_argument("--plugin", default="linux", help="Harite plugin name (default: linux)")
+    parser.add_argument(
+        "--plugin",
+        default="linux",
+        help="Plugin name written to a temporary settings file for apply (default: linux)",
+    )
     parser.add_argument("--python", default=default_python_executable(), help="Python executable for child apply command")
     parser.add_argument("--do-it", action="store_true", help="Actually apply wallpaper (default: dry-run)")
     parser.add_argument("--stop-on-error", action="store_true", help="Stop loop on first non-zero exit")
@@ -135,12 +140,18 @@ def main() -> int:
     log_file = Path(args.log_file)
     log_line(log_file, f"start iterations={args.iterations} images={len(images)} do_it={args.do_it}")
 
+    settings_file = log_file.parent / "xfce-smoke-settings.json"
+    settings_file.write_text(
+        json.dumps({"plugin": args.plugin, "apply_mode": "single-file"}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
     failures = 0
     for idx in range(1, args.iterations + 1):
         image = random.choice(images)
         cmd = build_apply_command(
             image=image,
-            plugin=args.plugin,
+            settings_file=settings_file,
             do_it=args.do_it,
             extra_args=args.extra_apply_arg,
             python_executable=args.python,
