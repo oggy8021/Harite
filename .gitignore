@@ -5,6 +5,8 @@
 /out/
 /dist/
 /build/
+/packaging/windows/*.spec
+/packaging/windows/harite_app.ico
 
 logs
 logs

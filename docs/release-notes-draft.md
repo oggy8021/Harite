@@ -1,72 +1,59 @@
 # Harite リリースノート草案
 
-最終更新: 2026-05-26
-対象バージョン: v1.0.0
+最終更新: 2026-06-13  
+対象バージョン: **v2.0.0**
 
 ## 概要
 
-Harite は、マルチディスプレイ環境で壁紙画像を生成・配置・適用するためのツールです。複数の入力画像から壁紙を作成し、画面ごとの配置、余白、固定配置、単画面利用を扱えます。
+Harite v2 は **CLI v2** と **Qt 6 一本化** を軸とするメジャー版です。マルチディスプレイ壁紙の合成・適用・スライドショーを、検出ベースの幾何と settings JSON 中心の apply に整理しました。
 
-この文書は `1.0.0` リリース本文の記録です。`v1.0.0` の version 反映、build、tag、publish は完了しており、ここでは今回の版で外向けに何を出したか、利用者にとって何が変わるか、既知の制約は何かを整理します。
+## 今回の要点（Breaking）
 
-## 今回の要点
-
-- GTK ベースの GUI を通常利用向けの構成として整備しました。
-- GUI の icon / dialog / watch 周辺を見直しました。
-- release build に向けて、通常 GUI 起動時の不要な常設ノイズを削減しました。
-- 配布物へ含める license / third-party notice の前提を整理しました。
+- **`optimize`:** `--resolution` / `--two-screen` / display 手動指定を廃止。出力縮小は **`--canvas-scale`** のみ（配置は常に 100% 幾何）。
+- **`apply`:** `--plugin` 等の CLI フラグを廃止。`harite-settings.json`（`-c`）で `plugin` / `apply_mode` を指定。
+- **`embed-info`:** `params` → `settings`。`none` はオプション省略。
+- **GUI:** GTK 廃止。`harite-gui` / `harite-qt` は Qt のみ。Windows 配布は `harite.exe` + `harite-qt.exe`（PyInstaller onedir）。
 
 ## 主な内容
 
-### GUI / UX
+### CLI
 
-- GUI を通常利用向けの構成として整理しました。
-- Main / Margins / Slideshow tab の構成を見直し、日常利用で迷いにくい導線へ寄せました。
-- Settings / Color / About dialog の役割を整理し、操作上の意味づけを明確化しました。
-- application icon と header icon を含む GUI 資産を整理しました。
+- ワークスペース検出と入力枚数から作業解像度を自動決定。
+- 2 枚入力時はデュアル配置（検出失敗時はエラー、半分ずつフォールバック廃止）。
+- `Placement:` 行出力、slideshow / install-desktop-entry 継続。
 
-### Runtime / Packaging
+### GUI / トレイ
 
-- `harite-gui` を GUI の起動導線として提供します。
-- `harite optimize` / `harite apply` / `harite slideshow` を CLI 入口として継続提供します。
-- `src/harite/gui/resources/` 配下の GUI 資産を package data として配布対象に含めます。
-- [LICENSE](LICENSE) に加え、vendor した Lucide icon 用 notice を [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) として同梱する前提を整えています。
+- Qt 6 メインウィンドウ、`harite_app.svg` ウィンドウアイコン。
+- Windows タスクバー配色検出、XFCE ステータストレイ（ラスター pixmap）。
 
-### 安定化 / 整理
+### 配布
 
-- 通常 GUI 起動時の `ready` / `skipped` / skeleton 系 stdout 出力を削減しました。
-- watch 周辺の安定化を進め、一時的な display 検出崩れに対する pause / resume の扱いを改善しました。
-- dialog / feedback / icon 周辺の細部を継続的に調整しました。
-- CLI では複数入力の扱いと path 正規化の見直しを進め、help surface と実装の整合を詰めました。
+| プラットフォーム | 成果物 |
+| --- | --- |
+| **全般** | `harite-2.0.0-py3-none-any.whl`, `harite-2.0.0.tar.gz` |
+| **Windows** | `harite/` + `harite-qt/` onedir フォルダ（zip 添付） |
 
-## 既知の制約
+PyPI 公開は v2.0.0 時点では **未決**（旧 `wallpaperoptimizer` は登録削除済み）。GitHub Release 添付・git clone を想定。
 
-- Linux の壁紙設定はデスクトップ環境依存です。XFCE 以外では環境差分により挙動が異なる場合があります。
-- `harite-gui` の起動確認では、`pipx install --system-site-packages` のように host 側の `python3-gi` を参照できる install 導線が必要です。
+## 移行メモ（1.x 利用者向け）
+
+| 旧 | 新 |
+| --- | --- |
+| `harite optimize -r 3840x1080 ...` | 解像度指定なし（自動検出）。ファイル縮小は `--canvas-scale 50` 等 |
+| `harite optimize --two-screen ...` | 2 枚入力で自動。Settings の Off も縮小/廃止 |
+| `harite apply --plugin xfce ...` | `-c settings.json` の `plugin` キー |
+| `harite-gui`（GTK 前提） | Qt + `python3-pyqt6`（Linux）または `harite-qt.exe`（Windows） |
 
 ## 検証サマリー
 
-- owner 実行のテスト:
-  - `python -m pytest -q tests` 成功
-- owner 実機確認:
-  - XFCE 環境で CLI apply 系の確認を実施済み
-  - XFCE 環境で `pipx install --system-site-packages` による clean install、CLI help、`harite-gui` 起動、uninstall を確認済み
-- 公開:
-  - `v1.0.0` タグ作成と GitHub Release 公開を実施済み
-
-## 配布物
-
-- `harite-<version>-py3-none-any.whl`
-- `harite-<version>.tar.gz`
-
-## 未確定事項
-
-- release 本文で GUI 中心に寄せる範囲と、CLI 継続面をどこまで併記するか
-- build / install / 実機確認の最終証跡をどこまで release 本文へ反映するか
-- GitHub Release 本文へ checklist ベースの要約をどこまで転記するか
+- `python -m pytest -q tests`
+- `python -m build --sdist --wheel`
+- オーナー実機: CLI / GUI / Windows / XFCE 回帰（housekeeping §4）
 
 ## 参照
 
-- [docs/release-readiness-checklist.md](docs/release-readiness-checklist.md)
-- [docs/release-delivery.md](docs/release-delivery.md)
 - [CHANGELOG.md](CHANGELOG.md)
+- [docs/release-delivery.md](docs/release-delivery.md)
+- [packaging/windows/README.md](packaging/windows/README.md)
+- [docs/working/20260612-pre-release-housekeeping.md](docs/working/20260612-pre-release-housekeeping.md)

@@ -79,10 +79,10 @@ CHANGELOG、`pyproject.toml` bump（`2.0.0`）、リリースブランチ、下�
 
 ### リリースブランチでやること（チェックリスト）
 
-- [ ] `CHANGELOG`（CLI 破壊的変更を明示）
-- [ ] `pyproject.toml` version `2.0.0`
-- [ ] PyInstaller spec / ビルド手順（Windows onedir、`harite` + `harite-qt` の EXE 構成を確定）
-- [ ] `python -m build` → sdist/wheel（Linux 成果物；PyPI 公開するかは別判断）
+- [x] `CHANGELOG`（CLI 破壊的変更を明示）
+- [x] `pyproject.toml` version `2.0.0`
+- [x] PyInstaller spec / ビルド手順（Windows onedir、`harite` + `harite-qt` の EXE 構成を確定）— `packaging/windows/`, `scripts/build_windows_pyinstaller.py`
+- [x] `python -m build` → sdist/wheel（Linux 成果物；PyPI 公開するかは別判断）— `harite-2.0.0-py3-none-any.whl`, `harite-2.0.0.tar.gz` 生成確認済み（2026-06-13）
 - [ ] GitHub Release アーティファクト（Windows フォルダ zip 等）
 
 ---
@@ -94,4 +94,4 @@ CHANGELOG、`pyproject.toml` bump（`2.0.0`）、リリースブランチ、下�
 | 2026-06-12 | 初版。順序確定 |
 | 2026-06-13 | #484–#488 反映。正本 MAT 除去完了（#489）。XFCE tray 確認 OK |
 | 2026-06-13 | §6 パッケージ方針追記（Windows onedir / Linux sdist+wheel） |
-| 2026-06-13 | §6 PyPI 公開は v2.0.0 未決（wallpaperoptimizer 登録削除済み）を追記 |
+| 2026-06-13 | §6 チェックリスト: CHANGELOG / version bump / PyInstaller 手順を実装 |
