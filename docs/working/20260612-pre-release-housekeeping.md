@@ -1,7 +1,7 @@
 # v2.0.0 前 — リリース準備 housekeeping
 
 **作成:** 2026-06-12  
-**親 planning:** [20260611-1200-cli-v2-roadmap.md](20260611-1200-cli-v2-roadmap.md)（MAT-20 / MAT-24 の間）  
+**親 planning:** [finished/20260611-1200-cli-v2-roadmap.md](finished/20260611-1200-cli-v2-roadmap.md)  
 **方針:** 開発チケット番号（MAT-xx）は **正本（`docs/specs/`）に残さない**。変更経緯は本メモと `working/` / CHANGELOG に置く。
 
 ---
@@ -9,112 +9,55 @@
 ## 確定順序（オーナー 2026-06-12）
 
 ```text
-(1) requirements 点検・ドキュメント整備  ← **完了**（GTK 停止後の XFCE 環境再構成）
-(2) トレイ 2 アイコン + Windows タスクバー配色検出  ← **完了**（#483 マージ）
-(3) MAT-20（embed-info 整理・重畳・文字色自動）  ← **実装済み**（#484 PR 待ち）
-(4) 回帰テスト（オーナー実施: CLI → GUI → Windows → XFCE）
-(5) 正本から MAT-xx 除去（回帰後・bump 直前）
-(6) MAT-24（CHANGELOG・版 bump・パッケージング・ビルド・リリース）
+(1) requirements 点検・ドキュメント整備  ← **完了**（#482）
+(2) トレイ 2 アイコン + Windows タスクバー配色検出  ← **完了**（#483）
+(3) embed-info 整理・重畳・文字色自動  ← **完了**（#484, #485）
+(4) 回帰テスト（オーナー実施: CLI → GUI → Windows → XFCE）  ← **実施中・大きな齟齬なし**
+(5) 正本から MAT-xx 除去  ← **完了**（docs/pre-release-spec-cleanup ブランチ）
+(6) 版 bump・パッケージング・ビルド・リリース  ← **次**
 ```
 
 ---
 
-## (1) requirements / XFCE 環境再現 — **完了**（2026-06-12）
+## (1) requirements / XFCE 環境再現 — **完了**（#482）
 
-**背景:** Q-01（GTK 廃止）後、XFCE 実機の venv / apt 構成が未整備だった。IME 自体は fcitx 改修時に確認済み — 今回は **環境再構成の再現手順** を正本化した。
-
-**マージ:** #482
-
-### 目的
-
-- `requirements-linux-qt.txt` が「全部コメント」に見えず、**XFCE 上で distro PyQt6 + fcitx 前提の `harite-qt` 環境を再現できる手順書**として読めること。
-- pip PyQt6 と distro fcitx プラグインの非互換を踏まえ、**誤インストールを防ぐ**。
-
-### 正本ファイル
-
-| ファイル | 役割 |
-| --- | --- |
-| [requirements.txt](../../requirements.txt) | pip 入口（`-e .`）。Linux は `requirements-linux-qt.txt` へ誘導 |
-| [requirements-linux-qt.txt](../../requirements-linux-qt.txt) | XFCE / Mint / Ubuntu: apt + venv 手順（**コメントのみ＝意図的**） |
-| [requirements-dev.txt](../../requirements-dev.txt) | pytest 等の開発依存 |
-| [docs/dev/dev-environment.md](../dev/dev-environment.md) | 開発者向け統合手順 |
-| [scripts/verify_linux_qt_env.py](../../scripts/verify_linux_qt_env.py) | 構築後の一発検証 |
-
-### 完了の目安
-
-- [x] XFCE 実機で venv 再構成 → `verify_linux_qt_env.py` exit 0（distro PyQt6 / SVG / fcitx すべて OK）
-- [x] fcitx IME — 改修時に確認済み（今回のスコープ外だが再構成後も env 整合）
-- [x] SVG アイコン — `verify_linux_qt_env` の packaged SVG probe で OK
-
-### 技術前提（コード正本）
-
-- `prepare_qt_input_method_env()` — GTK/XMODIFIERS から `QT_IM_MODULE` 補完（[gui-spec §Linux IME](../specs/gui/harite-gui-spec.md)）
-- **pip PyQt6 は fcitx Qt6 プラグインと ABI 非互換** → distro `python3-pyqt6` + `--system-site-packages` venv
-- `python3-pyqt6.qtsvg` — パッケージ内 SVG アイコン用
+[requirements-linux-qt.txt](../../requirements-linux-qt.txt)、[dev-environment.md](../dev/dev-environment.md)、`scripts/verify_linux_qt_env.py`、`scripts/rinji.py`（tray 診断）。
 
 ---
 
-## (2) システムトレイ — 2 アイコン + 配色検出 — **完了**（#483 マージ）
-
-**ブランチ:** `feature/tray-icon-theme-20260612`
-
-### 目的
-
-Windows ライトテーマのタスクバーで現行 `#F5F7FA` ストロークアイコンが埋もれないこと。
-
-### 実装
+## (2) システムトレイ — **完了**（#483, #488）
 
 | 項目 | 内容 |
 | --- | --- |
-| アセット | `harite_light_bg.svg` / `harite_off_light_bg.svg`（暗ストローク `#2B2F36`）。既存 `harite.svg` / `harite_off.svg` は暗トレイ面向け |
-| 検出 | `tray_icon_theme.py` — Windows `SystemUsesLightTheme` → Qt `colorScheme()` → 既定は明トレイ面 |
-| 配線 | `qt_tray_adapter._make_icon` が `tray_product_icon_basename` を使用 |
-| 正本 | [gui-spec §tray icon](../specs/gui/harite-gui-spec.md) |
+| Windows | `harite_light_bg.svg` 系 + `SystemUsesLightTheme` 検出（#483） |
+| XFCE | ラスター pixmap + Linux 既定は明ストローク `harite.svg`（#488） |
+| 診断 | `scripts/rinji.py`、パネル **ステータストレイプラグイン** |
 
-### 手動確認
-
-- [x] Windows ライト / ダークタスクバー — オーナー確認 OK（2026-06-12）
-- [ ] XFCE パネル（Qt colorScheme フォールバック）— マージ後確認予定
+手動確認: Windows ライト/ダーク OK、XFCE 白アイコン OK（2026-06-13）。
 
 ---
 
-## (3) MAT-20 — embed-info — **実装済み**（#484 PR 待ち）
+## (3) embed-info — **完了**（#484, #485）
 
-**ブランチ:** `feature/mat-20-embed-info-20260612`
-
-| 項目 | 対応 |
-| --- | --- |
-| C1 重畳ガード | 既存（`EMBED_OVERLAP_ERROR`） |
-| C2 文字色 | `color_contrast.py` — 背景輝度で白 / 暗文字を自動選択 |
-| B3 CLI `none` | 省略＝embed なし。`--embed-info none` は拒否 |
-| B4 `params`→`settings` | CLI は `settings` のみ。settings JSON の `params` は正規化 |
-| 倍率表記 | settings 行に `L=125%` / `R=auto` トークン追加 |
+`params`→`settings`、重畳ガード、文字色自動、`canvas=` / `L=` / `R=` 行、GUI preview refresh。
 
 ---
 
-## (4) 回帰テスト — **オーナー実施予定**
+## (4) 回帰テスト — **オーナー実施中**
 
-MAT-24 チェックリスト（roadmap §6）と連動。幾何変更後の Slideshow CLI 実機再確認含む。
-
----
-
-## (5) 正本 MAT-xx 除去 — **回帰後・bump 直前**
-
-### 対象
-
-`docs/specs/` 5 ファイル、約 50 箇所の `MAT-xx` 参照。
-
-### 方針
-
-- **残す:** 挙動・制約・廃止事項（製品仕様として読める文）
-- **除く:** チケット番号・「MAT-xx で〜」の開発メモ調文言
-- **移す:** 変更理由・時系列 → `working/` / CHANGELOG
+v2 幾何・apply・canvas-scale ポストダウンスケール（#487）確認済み。Slideshow / GUI 薄い層は継続。
 
 ---
 
-## (6) MAT-24 — **未着手**
+## (5) 正本 MAT-xx 除去 — **完了**（2026-06-13）
 
-CHANGELOG、`pyproject.toml` bump、パッケージング、ビルド、リリース。
+`docs/specs/` 5 ファイルから MAT-xx 参照を除去。挙動・制約・廃止事項は維持。
+
+---
+
+## (6) 版 bump・リリース — **次**
+
+CHANGELOG、`pyproject.toml` bump、パッケージング希望の反映、リリースブランチ。
 
 ---
 
@@ -122,8 +65,5 @@ CHANGELOG、`pyproject.toml` bump、パッケージング、ビルド、リリ�
 
 | 日付 | 内容 |
 | --- | --- |
-| 2026-06-12 | 初版。順序確定、(1) requirements 着手 |
-| 2026-06-12 | (1) 完了。XFCE 実機で verify 通過（GTK 停止後の環境再構成） |
-| 2026-06-12 | (2) 実装。トレイ 4 種 + `tray_icon_theme.py` |
-| 2026-06-12 | (2) Windows 手動確認 OK。#483 マージ |
-| 2026-06-12 | (3) MAT-20 実装（#484） |
+| 2026-06-12 | 初版。順序確定 |
+| 2026-06-13 | #484–#488 反映。正本 MAT 除去完了。XFCE tray 確認 OK |

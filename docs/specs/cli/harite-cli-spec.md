@@ -1,6 +1,6 @@
 # Harite CLI 仕様 (CLI Spec)
 
-最終更新: 2026-06-12（MAT-23 plugin 自動判定）
+最終更新: 2026-06-13
 
 ## 1. CLI の責務
 
@@ -66,7 +66,7 @@ sequenceDiagram
 - `--settings-file` / `-c` は optimize / apply / slideshow で受け付ける。与えられた場合は設定ファイルを読み、CLI 引数を優先して上書きする（`apply` は `apply_mode` / `plugin` / `windows_apply_span` 等を読む。§5）。
 - help では `--settings-file` を optimize 用 defaults を読む option だと分かる文言で説明する。規範文言は `Optional path to optimize settings JSON` を基準にする。
 - help では `--input` を、カンマ区切りまたは `--input` の繰り返しで最大 2 件まで受け付ける画像入力だと分かる文言で説明する。規範文言は `Input file(s). Use comma-separated paths or repeat --input.` を基準にする。
-- **`optimize --help` の幾何説明（MAT-15 / MAT-19）:** margins は fit / shrink の制約のみ。`align` / `valign` は display スロット全面で効く。次の誤解を誘う文言は **含めない**: 「margins の内側で align が効く」「`two-screen` は `--l-display` / `--r-display` 併用時に効きが強くなる」。規範 docstring 抜粋:
+- **`optimize --help` の幾何説明:** margins は fit / shrink の制約のみ。`align` / `valign` は display スロット全面で効く。次の誤解を誘う文言は **含めない**: 「margins の内側で align が効く」「`two-screen` は `--l-display` / `--r-display` 併用時に効きが強くなる」。規範 docstring 抜粋:
   - `Geometry (core-spec §4.1): margins (left,right,top,bottom) constrain image fit/shrink; align / valign use the full display slot for positioning.`
   - `--margins` option help: `Constrain fit only; align uses full slot.`
 - **廃止フラグは help に出さない:** `--resolution` / `-r`、`--two-screen` / `--no-two-screen`、`--l-display`、`--r-display`、`--scaling`。
@@ -99,12 +99,12 @@ sequenceDiagram
 - `embed_position` が未指定のときの既定値は `right-bottom` である。
 - この 4 値制約は CLI 引数だけでなく `--settings-file` から読んだ値にも同じように適用する。4 値以外は不正として扱う。
 
-display / canvas 解決（MAT-21b）:
+display / canvas 解決:
 
 - **入力 2 枚:** dual 必須。検出 display `< 2` は **終了コード `2`**（`DUAL_INPUT_REQUIRES_TWO_DISPLAYS`）。メッセージは [core-spec §3.1](../core/harite-core-spec.md#31-表示コンテキスト解決の現行規則) の規範文言。
 - **入力 1 枚:** single。検出 1 台から virtual desktop 寸法を導き合成キャンバスを確定する。検出 0 台は **終了コード `2`**。
 - **`--canvas-scale`:** 100% 配置後の出力 JPEG 縮小率（1–100、既定 100）。配置・`Placement:` は作業解像度基準で計算し、保存直前に全体を縮小する。**作業キャンバスを先に狭める挙動ではない**（保持ファイルサイズ削減のみ）。CLI 明示 > settings `canvas_scale_percent` > 既定 100。
-- **廃止（v2.0.0 / MAT-21b）:** `--resolution` / `-r`、`--two-screen` / `--no-two-screen`、`--l-display`、`--r-display`。settings の同名キーも読み捨て。
+- **廃止（v2.0.0）:** `--resolution` / `-r`、`--two-screen` / `--no-two-screen`、`--l-display`、`--r-display`。settings の同名キーも読み捨て。
 - `--margins` は `left,right,top,bottom` の 4 要素文字列（ピクセル）として解釈し、省略時は `(0, 0, 0, 0)` を使う。
 
 margins / align / valign の関係（[core-spec §4.1](../core/harite-core-spec.md#41-placement-計算の現行規則) と同型）:
@@ -170,7 +170,7 @@ Embed position overlaps pasted image. Choose another embed_position (left-top, l
 
 - 設定ファイル内の bool 値は `true/false/1/0/yes/no/on/off`（大文字小文字不問）を受理する。Python の bool/int 型 `True`/`False`/`1`/`0` も受理する。これ以外の値は不正として終了コード `2` で止める。
 
-## 5. `apply`（MAT-22）
+## 5. `apply` — 壁紙の適用
 
 - 直前の `optimize` 結果を OS 壁紙へ適用する。GUI の **Apply** ボタン（`last_saved_files` → `resolve_apply_settings`）と同型。
 - **`apply_mode` / `plugin` / `windows_apply_span` は settings 正本**（`--settings-file` / `-c` 推奨）。CLI に `--auto-split` / `--left-file` / `--right-file` / `--per-monitor` は **持たない**（v2.0.0 で廃止）。
@@ -201,15 +201,15 @@ harite apply -c settings.json
 ### apply mode と plugin
 
 - `apply_mode` は `--settings-file` から `ApplySettings` として読む。未指定時は `AppSettings._default_apply_mode(default_plugin)`（GUI と同型）。
-- `plugin` は settings `plugin` > OS 既定 plugin の順。CLI `--plugin` は **廃止**（MAT-23）。
+- `plugin` は settings `plugin` > OS 既定 plugin の順。CLI `--plugin` は **廃止**。
 - `windows_apply_span` が有効かつ Windows Span 経路のとき、`ensure_span_style()` を best-effort 実行する（GUI B-lite と同型）。
 - `resolve_apply_settings(...)` は `output_dir=composite_path.parent` を渡す（split 出力先は合成画像の親 directory）。
 - plugin が `False` を返した場合は終了コード `3`。
 
-### 廃止（v2.0.0 / MAT-22）
+### 廃止（v2.0.0）
 
 - `--auto-split`, `--left-file`, `--right-file`, `--per-monitor`
-- 旧実装の「`apply` は settings を読まない」経路（MAT-22 で `--settings-file` / `-c` 対応に置換）
+- 旧実装の「`apply` は settings を読まない」経路は、`--settings-file` / `-c` 対応に置換済み
 
 ### 未知 plugin 時の動作
 
@@ -231,12 +231,12 @@ harite apply -c settings.json
 - help では `--input` を、カンマ区切りまたは `--input` の繰り返しで source directory を指定できる option だと分かる文言で説明する。規範文言は `Input directories. Use comma-separated paths or repeat --input.` を基準にする。
 - help では `--settings-file` を harite-settings を読む option だと分かる文言で説明する。規範文言は `Optional path to harite-settings.json` を基準にする。
 
-### settings 読込と optimize 経路（MAT-11 / MAT-17）
+### settings 読込と optimize 経路
 
 - CLI は settings の **srcdir パス** を `--input` の代替として使う。`slideshow_source_id_*` / `slideshow_profile_id` は **catalog 解決しない**（GUI が保存した `slideshow_srcdir_*` が空のときは CLI 単独では開始できない）。
 - **毎 cycle** で GUI と同型の `run_slideshow_optimize` を通す。settings の取り込みは次のとおり（[core-spec §6.3](../core/harite-core-spec.md) と同型）:
   - **optimize 面から:** `canvas_scale_percent`, `margins`, `align`, `valign`, `quality`, `background_color`, `embed_*` 等（**手動 `l/r_display_scale` は slideshow 経路では使わない**）
-  - **slideshow 面から:** `slideshow_l_auto_display_scale`, `slideshow_r_auto_display_scale`（MAT-14b auto。**optimize 面の `l_auto_display_scale` は slideshow 経路では使わない**）
+  - **slideshow 面から:** `slideshow_l_auto_display_scale`, `slideshow_r_auto_display_scale`（slideshow 用 auto 倍率。**optimize 面の `l_auto_display_scale` は slideshow 経路では使わない**）
   - **apply 面から:** `apply_mode`, `plugin`, `windows_apply_span`
 - **single**（1 directory）: 選択 1 枚 → `harite_slideshow.jpg` → plugin apply。
 - **dual**（2 directories）: L/R 各 side で独立 cycle 選択 → optimize → `per-monitor-auto-split`（Windows は Span composite）。plugin は `linux` / `windows` のみ。2 ディスプレイ検出が必須。
@@ -354,9 +354,9 @@ Click / Typer が自動付与する補助 option。Harite 独自の業務仕様�
 | `--install-completion` | 現在のシェル向けに tab 補完スクリプトをインストールする（bash / zsh / fish 等。環境依存） |
 | `--show-completion` | 補完スクリプトを stdout に出力する（手動設定用） |
 
-**MAT-19 確定:** 残す。Typer / Click がルート `harite --help` に自動付与する補助 option として提供する。`--help` には各 option の短い説明（install / show completion）が付く。
+**方針:** 残す。Typer / Click がルート `harite --help` に自動付与する補助 option として提供する。`--help` には各 option の短い説明（install / show completion）が付く。
 
-### plugin 名の決定規則（MAT-23）
+### plugin 名の決定規則
 
 - `apply` / `slideshow` は **CLI `--plugin` を持たない**。plugin 名は次の順で決定する:
   1. `--settings-file` の `plugin` キー（あれば）
