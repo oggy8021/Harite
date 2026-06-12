@@ -80,7 +80,7 @@ def test_single_display_margin_embed_settings_left_bottom(tmp_path: Path, qapp, 
     backend._objects["margin_text_mode_settings"].click()
     backend._objects["margin_position_left_bottom"].click()
 
-    assert window.form_state.embed_info == "params"
+    assert window.form_state.embed_info == "settings"
     assert window.form_state.embed_position == "left-bottom"
     assert window.form_state.margins == "100,100,200,200"
     assert backend._objects["margin_position_right_bottom"].isEnabled() is True

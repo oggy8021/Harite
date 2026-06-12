@@ -190,7 +190,7 @@ flowchart TD
 - 実際の描画開始 x 座標は左端ぴったりではなく、`quartile_offset = max(4, min(max(1, area_w // 4), max(1, longest_px // 4 or 1)))` を使って `text_x = x0 + quartile_offset` に置く。y 座標は `text_y = y0 + 2` から始める。
 - 各行の最大描画幅は `max_text_w = max(0, area_w - quartile_offset - 4)` であり、`_truncate_to_width(...)` によってこの幅に収まるよう末尾 `...`（スペース+三点リーダー）付きで再切り詰めする。
 - 行ごとの描画は `text_y + line_h > y1` になった時点で打ち切る。したがって line_limit に達していなくても、縦方向に収まらなければそれ以上は描かない。
-- 描画色は `(235, 235, 235)`（ほぼ白の薄いグレー）で固定。
+- 描画色は背景色（`background_color`）の WCAG 相対輝度から自動選択する。暗い背景では `(235, 235, 235)`、明るい背景では `(35, 35, 35)`。
 - `_load_preferred_font` のフォント探索順: まず CLI/GUI から渡された `embed_font` パスを試し、次に OS 別 CJK 対応フォント候補（Windows: `meiryo.ttc` → `msgothic.ttc` → `YuGothM.ttc`、Linux: Noto Sans CJK 各パス、macOS: ヒラギノ各パス）を存在確認して順に試す。すべて失敗した場合は `ImageFont.load_default()` にフォールバックする。
 
 ### 4.4 embed 情報行の構成規則
@@ -198,7 +198,7 @@ flowchart TD
 `optimize_wallpapers` は `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`, `embed_font` を受け取り、以下の規則で情報行を構成する。
 
 - `embed_info=none` では情報行は空である。
-- `embed_info=params|combo` では、1 行目に `res={w_target}x{h_target} margins={ml},{mr},{mt},{mb}`、2 行目に `align={align}/{valign} inputs={input_count}` を入れる。
+- `embed_info=settings|combo` では、1 行目に `res={w_target}x{h_target} margins={ml},{mr},{mt},{mb}`、2 行目に `align={align}/{valign} inputs={input_count}` を入れる。意図的拡大または auto 倍率が有効な側があるときは `inputs=` の後ろに `L=125%` / `R=auto` 形式のトークンを足す。settings JSON の legacy 値 `params` は `settings` として読む。
 - dual 時の `two_screen=1` / `l=` / `r=` 行は **MAT-21b で廃止**。params 行は `res=...` と `align=.../inputs=...` の 2 行のみ（free text は従来どおり後続）。
 - `embed_info=free|combo` では `embed_text` を改行単位で split し、各行を trim したうえで空行を捨てる。
 - 最終的な embed 行列は、params 系行の後ろに free text 行を連結した順序で構成する。

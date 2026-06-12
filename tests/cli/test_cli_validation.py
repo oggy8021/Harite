@@ -91,6 +91,8 @@ def test_optimize_help_reflects_current_surface() -> None:
     assert "その内側で" not in output
     assert "効きが強く" not in output
     assert "--canvas-scale" in output
+    assert "settings|free|combo" in compact_output
+    assert "params" not in compact_output
     assert "full display slot" in compact_output
     assert "Constrain fit only" in compact_output
     for removed_flag in ("--resolution", "--two-screen", "--l-display", "--r-display"):
@@ -122,7 +124,7 @@ def test_optimize_reports_embed_overlap_error(tmp_path, monkeypatch):
             "--margins",
             "0,0,0,40",
             "--embed-info",
-            "params",
+            "settings",
             "--embed-position",
             "right-bottom",
         ],
@@ -184,7 +186,37 @@ def test_optimize_rejects_invalid_embed_info(tmp_path, monkeypatch):
         ],
     )
     assert result.exit_code == 2
-    assert "--embed-info must be one of" in result.output
+    assert "embed_info must be one of" in result.output
+
+
+def test_optimize_rejects_embed_info_none_on_cli(tmp_path, monkeypatch):
+    _stub_single_display(monkeypatch, width=100, height=100)
+    runner = CliRunner()
+    img = tmp_path / "a.jpg"
+    from PIL import Image
+
+    Image.new("RGB", (10, 10), (100, 100, 100)).save(img)
+    result = runner.invoke(
+        cli.app,
+        ["optimize", "--input", str(img), "--embed-info", "none"],
+    )
+    assert result.exit_code == 2
+    assert "omit --embed-info" in result.output
+
+
+def test_optimize_rejects_legacy_embed_info_params_on_cli(tmp_path, monkeypatch):
+    _stub_single_display(monkeypatch, width=100, height=100)
+    runner = CliRunner()
+    img = tmp_path / "a.jpg"
+    from PIL import Image
+
+    Image.new("RGB", (10, 10), (100, 100, 100)).save(img)
+    result = runner.invoke(
+        cli.app,
+        ["optimize", "--input", str(img), "--embed-info", "params"],
+    )
+    assert result.exit_code == 2
+    assert "renamed to settings" in result.output
 
 
 def test_optimize_rejects_invalid_embed_position(tmp_path, monkeypatch):

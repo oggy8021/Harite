@@ -162,7 +162,7 @@ Embed position overlaps pasted image. Choose another embed_position (left-top, l
 | `--output` | `.`（カレントディレクトリ） |
 | `--background-color` | `1E1E1E` |
 | `--quality` | `90` |
-| `--embed-info` | `none` |
+| `--embed-info` | 省略時は embed なし（CLI で `none` は指定不可）。指定値は `settings` / `free` / `combo` |
 | `--embed-position` | `right-bottom` |
 
 ### 設定ファイル内 bool 値の解釈規則

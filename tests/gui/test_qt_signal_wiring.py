@@ -522,7 +522,7 @@ def test_on_margin_text_mode_settings_no_recursion(qapp):
     except RecursionError as exc:
         raise AssertionError("Settings embed pattern toggled into recursion") from exc
 
-    assert window.form_state.embed_info == "params"
+    assert window.form_state.embed_info == "settings"
     assert settings_btn.isChecked()
 
 

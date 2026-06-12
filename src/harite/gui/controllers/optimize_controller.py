@@ -14,6 +14,7 @@ from harite.core import (
     optimize_wallpapers,
     validate_intentional_image_scales,
 )
+from harite.embed_info import normalize_embed_info
 from harite.optimize_settings import resolve_optimize_display_settings
 from harite.positioning import parse_position_pair, position_value_for_side
 
@@ -24,7 +25,7 @@ def resolve_embed_max_lines(embed_info: str, configured: int = 3) -> int:
         return 5
     if mode == "combo":
         return 8
-    if mode == "params":
+    if mode in {"settings", "params"}:
         return max(1, int(configured or 3))
     return max(1, int(configured or 3))
 
@@ -146,8 +147,10 @@ class OptimizeController:
         margins = self._parse_margins(state.margins)
         if state.quality < 1 or state.quality > 100:
             raise ValueError("quality must be between 1 and 100")
-        if state.embed_info not in ("none", "params", "free", "combo"):
-            raise ValueError("embed_info must be one of: none, params, free, combo")
+        try:
+            state.embed_info = normalize_embed_info(state.embed_info)
+        except ValueError as exc:
+            raise ValueError(str(exc)) from exc
         l_display = None if not display_settings.l_display else parse_resolution(display_settings.l_display)
         r_display = None if not display_settings.r_display else parse_resolution(display_settings.r_display)
         from harite.display_scale import is_unity_display_scale

@@ -10,8 +10,8 @@
 
 ```text
 (1) requirements 点検・ドキュメント整備  ← **完了**（GTK 停止後の XFCE 環境再構成）
-(2) トレイ 2 アイコン + Windows タスクバー配色検出  ← **実装済み**（PR 待ち）
-(3) MAT-20（embed-info 整理・重畳・文字色自動）
+(2) トレイ 2 アイコン + Windows タスクバー配色検出  ← **完了**（#483 マージ）
+(3) MAT-20（embed-info 整理・重畳・文字色自動）  ← **実装済み**（#484 PR 待ち）
 (4) 回帰テスト（オーナー実施: CLI → GUI → Windows → XFCE）
 (5) 正本から MAT-xx 除去（回帰後・bump 直前）
 (6) MAT-24（CHANGELOG・版 bump・パッケージング・ビルド・リリース）
@@ -23,7 +23,7 @@
 
 **背景:** Q-01（GTK 廃止）後、XFCE 実機の venv / apt 構成が未整備だった。IME 自体は fcitx 改修時に確認済み — 今回は **環境再構成の再現手順** を正本化した。
 
-**ブランチ:** `feature/pre-release-req-docs-20260612`（PR 待ち）
+**マージ:** #482
 
 ### 目的
 
@@ -54,9 +54,9 @@
 
 ---
 
-## (2) システムトレイ — 2 アイコン + 配色検出 — **実装済み**（2026-06-12）
+## (2) システムトレイ — 2 アイコン + 配色検出 — **完了**（#483 マージ）
 
-**ブランチ:** `feature/tray-icon-theme-20260612`（PR 待ち）
+**ブランチ:** `feature/tray-icon-theme-20260612`
 
 ### 目的
 
@@ -71,17 +71,24 @@ Windows ライトテーマのタスクバーで現行 `#F5F7FA` ストローク�
 | 配線 | `qt_tray_adapter._make_icon` が `tray_product_icon_basename` を使用 |
 | 正本 | [gui-spec §tray icon](../specs/gui/harite-gui-spec.md) |
 
-### 手動確認（残）
+### 手動確認
 
-- [ ] Windows ライトタスクバーでトレイ可視
-- [ ] Windows ダークタスクバーでトレイ可視
-- [ ] XFCE パネル（Qt colorScheme フォールバック）
+- [x] Windows ライト / ダークタスクバー — オーナー確認 OK（2026-06-12）
+- [ ] XFCE パネル（Qt colorScheme フォールバック）— マージ後確認予定
 
 ---
 
-## (3) MAT-20 — embed-info — **未着手**
+## (3) MAT-20 — embed-info — **実装済み**（#484 PR 待ち）
 
-roadmap §MAT-20 参照。重畳ガード（一部 spec 済）、`params`→`settings`、輝度ベース文字色。
+**ブランチ:** `feature/mat-20-embed-info-20260612`
+
+| 項目 | 対応 |
+| --- | --- |
+| C1 重畳ガード | 既存（`EMBED_OVERLAP_ERROR`） |
+| C2 文字色 | `color_contrast.py` — 背景輝度で白 / 暗文字を自動選択 |
+| B3 CLI `none` | 省略＝embed なし。`--embed-info none` は拒否 |
+| B4 `params`→`settings` | CLI は `settings` のみ。settings JSON の `params` は正規化 |
+| 倍率表記 | settings 行に `L=125%` / `R=auto` トークン追加 |
 
 ---
 
@@ -118,3 +125,5 @@ CHANGELOG、`pyproject.toml` bump、パッケージング、ビルド、リリ�
 | 2026-06-12 | 初版。順序確定、(1) requirements 着手 |
 | 2026-06-12 | (1) 完了。XFCE 実機で verify 通過（GTK 停止後の環境再構成） |
 | 2026-06-12 | (2) 実装。トレイ 4 種 + `tray_icon_theme.py` |
+| 2026-06-12 | (2) Windows 手動確認 OK。#483 マージ |
+| 2026-06-12 | (3) MAT-20 実装（#484） |

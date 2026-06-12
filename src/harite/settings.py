@@ -6,8 +6,13 @@ from typing import Any
 
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, normalize_background_color
 from harite.display_scale import normalize_display_scale
+from harite.embed_info import normalize_embed_info
 from harite.optimize_settings import normalize_canvas_scale_percent
 from harite.positioning import parse_position_pair
+
+
+def _normalize_embed_info_setting(value: object) -> str:
+    return normalize_embed_info(value)
 
 
 def _decode_bool_setting(value: object, *, default: bool = False) -> bool:
@@ -56,7 +61,7 @@ class OptimizeSettings:
             valign=parse_position_pair(settings.get("valign", "center"), axis="valign"),
             quality=int(settings.get("quality", 90)),
             background_color=normalize_background_color(settings.get("background_color", DEFAULT_BACKGROUND_COLOR_HEX)),
-            embed_info=str(settings.get("embed_info", "none")),
+            embed_info=_normalize_embed_info_setting(settings.get("embed_info", "none")),
             embed_text=None if settings.get("embed_text") is None else str(settings.get("embed_text")),
             embed_position=str(settings.get("embed_position", "right-bottom")),
             embed_max_lines=int(settings.get("embed_max_lines", 3)),

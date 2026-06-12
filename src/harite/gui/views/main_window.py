@@ -772,8 +772,11 @@ class MainWindow:
         return True
 
     def on_change_margin_text_mode(self, value: str) -> bool:
-        normalized = (value or "").strip().lower()
-        if normalized not in {"none", "params", "free", "combo"}:
+        from harite.embed_info import normalize_embed_info
+
+        try:
+            normalized = normalize_embed_info(value)
+        except ValueError:
             self.last_error = f"unknown margin_text_mode: {value}"
             self._log(f"Margin text mode update failed: unknown value {value}")
             return False
