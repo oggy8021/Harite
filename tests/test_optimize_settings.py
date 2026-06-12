@@ -3,6 +3,7 @@ import pytest
 from harite.display_context import TwoScreenOptimizeContext
 from harite.optimize_settings import (
     DUAL_INPUT_REQUIRES_TWO_DISPLAYS,
+    compute_output_resolution,
     normalize_canvas_scale_percent,
     resolve_optimize_display_settings,
 )
@@ -54,7 +55,8 @@ def test_resolve_optimize_display_settings_dual_scaled(monkeypatch):
         canvas_scale_percent=50,
     )
 
-    assert resolved.resolution == "1920x540"
+    assert resolved.resolution == "3840x1080"
+    assert resolved.canvas_scale_percent == 50
     assert resolved.l_display == "1920x1080"
     assert resolved.r_display == "1920x1080"
 
@@ -117,6 +119,11 @@ def test_optimize_settings_ignores_legacy_geometry_keys():
         }
     )
     assert loaded.canvas_scale_percent == 80
+
+
+def test_compute_output_resolution_scales_final_jpeg_size():
+    assert compute_output_resolution((3840, 1080), 50) == (1920, 540)
+    assert compute_output_resolution((3840, 1080), 100) == (3840, 1080)
 
 
 def test_normalize_canvas_scale_percent_bounds():

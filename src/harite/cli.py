@@ -208,7 +208,10 @@ def optimize(
     canvas_scale: Optional[int] = typer.Option(
         None,
         "--canvas-scale",
-        help="Composite canvas size as percent of detected desktop (1-100, default 100).",
+        help=(
+            "Output JPEG size as percent of full layout (1-100, default 100). "
+            "Placement uses full desktop geometry; only the saved file is shrunk."
+        ),
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     margins: Optional[str] = typer.Option(
@@ -291,7 +294,7 @@ def optimize(
     or repeated `--input` (max 2 images).
 
     Display geometry is inferred from workspace and input count (max 2 images / 2 monitors).
-    Use `--canvas-scale` (1-100) to shrink the composite canvas below detected desktop size.
+    Use `--canvas-scale` (1-100) to save a smaller JPEG after full-size placement (file size only).
 
     Geometry (core-spec §4.1): `margins` (left,right,top,bottom) constrain image
     fit/shrink; `align` / `valign` use the full display slot for positioning.

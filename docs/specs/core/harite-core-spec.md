@@ -79,7 +79,8 @@ two-screen 文脈で重要な点:
 - **入力 2 件（MAT-21）:** 内部 `two_screen` は **常に True**。半分キャンバス第3経路は **廃止**（前半）。
 - **2 枚 + 検出 display `< 2`** → `ValueError`（`DUAL_INPUT_REQUIRES_TWO_DISPLAYS`）。1 枚目だけ適用するフォールバックは行わない。
 - **入力 1 件:** 内部 `effective_two_screen=False`。検出 1 台から virtual desktop 寸法を導き `resolution` を自動補完する。
-- **`canvas_scale_percent`（MAT-21b）:** 検出 virtual desktop（dual 時は先頭 2 台の union、single 時は primary 1 台）の幅・高さに対し、それぞれ `round(dim * percent / 100)`（最小 1px）で合成キャンバス `resolution` を縮小する。public surface では CLI `--canvas-scale`、settings `canvas_scale_percent`、GUI Settings の Canvas scale % spin のみ。`WxH` 文字列の手動指定は **廃止**。
+- **`canvas_scale_percent`（MAT-21b）:** 配置計算は検出 virtual desktop（dual 時は先頭 2 台の union、single 時は primary 1 台）の **100% 作業解像度** で行う。`optimize_wallpapers` は合成・embed 完了後に、完成 JPEG を `round(dim * percent / 100)`（最小 1px）で **ポストダウンスケール** する。`resolve_optimize_display_settings(...).resolution` は作業解像度（100%）、embed の `canvas=` 行と保存ファイル寸法は出力解像度（縮小後）。**目的はユーザーが保持するファイルサイズの削減のみ**（実行時メモリや配置キャンバスの縮小ではない）。public surface では CLI `--canvas-scale`、settings `canvas_scale_percent`、GUI Settings の Canvas scale % spin のみ。`WxH` 文字列の手動指定は **廃止**。
+- **縮小 JPEG の apply:** `split_composite_for_displays(...)` は合成画像の実ピクセル寸法と検出 display の virtual desktop レイアウト（`x_offset` / 幅の比率）から左右を切り出し、各 display 解像度へ拡大して貼る（例: 1920×540 → 7680×2160 相当の左右比で split → 各 3840×2160 へ upscale）。Windows Span 経路は OS が合成 JPEG を span 全体へストレッチする（アスペクト一致時は 100% 配置と同型）。
 - **四重露出撤去（MAT-21b）:** `two_screen`, `resolution`, `l_display`, `r_display` は CLI 引数・settings キー・GUI form state・embed params 行から **削除**。旧 JSON に残っていても **読み捨て**（サイレント）。手動 l/r override は **廃止**。
 - `resolve_optimize_display_settings(...)` の返却 `EffectiveOptimizeDisplaySettings` は内部計算用に `resolution`, `two_screen`, `l_display`, `r_display`, `canvas_scale_percent` を持つ。`resolution` が最後まで確定しなければ入力不正として止める。
 - 設計の正本: [two-screen 整理メモ §6](../../working/20260611-two-screen-display-params-clarification.md#6-将来整理の方向オーナー判断確定-2026-06-12)。
@@ -199,7 +200,7 @@ flowchart TD
 
 - `embed_info=none` では情報行は空である。
 - `embed_info=settings|combo` では settings 行を次の順で構成する（最大 `embed_max_lines` まで。`combo` 時は free text 行が後続）:
-  1. `canvas={w_target}x{h_target}@{canvas_scale_percent}%` — 合成キャンバス寸法と検出 desktop に対する縮小率
+  1. `canvas={w_target}x{h_target}@{canvas_scale_percent}%` — **出力 JPEG** 寸法と縮小率（作業解像度の配置をポストダウンスケールした結果）
   2. 検出 display 行 — single 時は `L={w}x{h}`、dual 時は `L={w}x{h} R={w}x{h}`（検出できない場合は省略）
   3. `margins={ml},{mr},{mt},{mb} align={align}/{valign} inputs={input_count}` — 意図的拡大または auto 倍率が有効な側があるときは `inputs=` の後ろに `L=125%` / `R=auto` 形式のトークンを足す
 - settings JSON の legacy 値 `params` は `settings` として読む。旧略称 `res=` / `two_screen=1` は **廃止**。

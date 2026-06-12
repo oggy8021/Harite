@@ -78,7 +78,7 @@ sequenceDiagram
 1. `--settings-file` があれば設定ファイル JSON を読み込む。
 2. CLI 引数と設定ファイル値から、各オプションの最終採用値を解決する。
 3. `--input` を画像ファイル列として正規化する。
-4. `resolve_optimize_display_settings(...)` で workspace 検出・入力枚数・`canvas_scale_percent` から合成キャンバス寸法を確定する（内部 `resolution` は作業解像度。ユーザー向け CLI フラグは `--canvas-scale` のみ。§ display / canvas 解決）。
+4. `resolve_optimize_display_settings(...)` で workspace 検出・入力枚数から **100% 作業解像度** を確定し、`canvas_scale_percent` は合成後の **ポストダウンスケール率** として `optimize_wallpapers` に渡す（ユーザー向け CLI フラグは `--canvas-scale` のみ。§ display / canvas 解決）。
 5. `optimize_wallpapers(...)` を呼び、出力ファイル一覧と配置結果一覧を得る。
 6. 結果を stdout に出力する。
 
@@ -103,7 +103,7 @@ display / canvas 解決（MAT-21b）:
 
 - **入力 2 枚:** dual 必須。検出 display `< 2` は **終了コード `2`**（`DUAL_INPUT_REQUIRES_TWO_DISPLAYS`）。メッセージは [core-spec §3.1](../core/harite-core-spec.md#31-表示コンテキスト解決の現行規則) の規範文言。
 - **入力 1 枚:** single。検出 1 台から virtual desktop 寸法を導き合成キャンバスを確定する。検出 0 台は **終了コード `2`**。
-- **`--canvas-scale`:** 検出 desktop に対する合成キャンバス縮小率（1–100、既定 100）。CLI 明示 > settings `canvas_scale_percent` > 既定 100。
+- **`--canvas-scale`:** 100% 配置後の出力 JPEG 縮小率（1–100、既定 100）。配置・`Placement:` は作業解像度基準で計算し、保存直前に全体を縮小する。**作業キャンバスを先に狭める挙動ではない**（保持ファイルサイズ削減のみ）。CLI 明示 > settings `canvas_scale_percent` > 既定 100。
 - **廃止（v2.0.0 / MAT-21b）:** `--resolution` / `-r`、`--two-screen` / `--no-two-screen`、`--l-display`、`--r-display`。settings の同名キーも読み捨て。
 - `--margins` は `left,right,top,bottom` の 4 要素文字列（ピクセル）として解釈し、省略時は `(0, 0, 0, 0)` を使う。
 
@@ -115,7 +115,8 @@ margins / align / valign の関係（[core-spec §4.1](../core/harite-core-spec.
 
 canvas scale（現行）:
 
-- 未指定時は `resolve_optimize_display_settings(...)` が workspace 検出・入力枚数・`canvas_scale_percent` から合成キャンバスを解決する（詳細は core-spec §3.1）。
+- 作業解像度は常に検出 desktop の 100%。`canvas_scale_percent` は保存 JPEG のポストダウンスケール率のみ（詳細は core-spec §3.1）。
+- `apply`（per-monitor-auto-split）は縮小済み合成の **左右比率** を virtual desktop レイアウトに合わせて切り出し、各 monitor 解像度へ拡大する（core-spec §3.1 apply 項）。
 - 方針の正本: [two-screen 整理メモ §6](../../working/20260611-two-screen-display-params-clarification.md#6-将来整理の方向オーナー判断確定-2026-06-12)。
 
 主な失敗条件:

@@ -120,6 +120,10 @@ def build_settings_dialog(parent: Any = None) -> dict[str, Any]:
     prefs_canvas_scale_spin.setSingleStep(5)
     prefs_canvas_scale_spin.setValue(100)
     prefs_canvas_scale_spin.setSuffix(" %")
+    prefs_canvas_scale_spin.setToolTip(
+        "Shrink the saved JPEG after full-size placement (1-100%, default 100). "
+        "Does not change layout or runtime memory use."
+    )
     prefs_scaling_entry = QLineEdit()
     prefs_plugin_entry = QLineEdit()
 

@@ -82,6 +82,34 @@ def test_resolve_optimize_display_settings_keeps_display_resolution_unscaled(mon
     assert resolved.r_display == "1280x1024"
 
 
+def test_optimize_wallpapers_post_downscales_composite_by_canvas_scale(tmp_path):
+    inp_dir = tmp_path / "in"
+    out_dir = tmp_path / "out"
+    inp_dir.mkdir()
+    out_dir.mkdir()
+
+    left = inp_dir / "left.jpg"
+    right = inp_dir / "right.jpg"
+    Image.new("RGB", (1920, 1080), color=(200, 0, 0)).save(left, format="JPEG")
+    Image.new("RGB", (1920, 1080), color=(0, 0, 200)).save(right, format="JPEG")
+
+    saved, placements = optimize_wallpapers(
+        [str(left), str(right)],
+        (3840, 1080),
+        out_dir,
+        two_screen=True,
+        l_display=(1920, 1080),
+        r_display=(1920, 1080),
+        canvas_scale_percent=50,
+    )
+
+    assert len(placements) == 2
+    assert placements[0].scale == 1.0
+    assert placements[1].scale == 1.0
+    composite = Image.open(saved[0])
+    assert composite.size == (1920, 540)
+
+
 def test_optimize_wallpapers_scales_source_image_not_canvas(tmp_path):
     inp_dir = tmp_path / "in"
     out_dir = tmp_path / "out"

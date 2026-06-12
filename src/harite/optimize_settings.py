@@ -36,10 +36,15 @@ def _stringify_resolution(value: tuple[int, int]) -> str:
     return f"{int(value[0])}x{int(value[1])}"
 
 
-def _apply_canvas_scale(size: tuple[int, int], percent: int) -> tuple[int, int]:
+def compute_output_resolution(size: tuple[int, int], percent: int) -> tuple[int, int]:
+    """Return final JPEG size after post-downscaling a full-size composite."""
     w, h = size
     p = normalize_canvas_scale_percent(percent)
     return (max(1, round(w * p / 100)), max(1, round(h * p / 100)))
+
+
+def _apply_canvas_scale(size: tuple[int, int], percent: int) -> tuple[int, int]:
+    return compute_output_resolution(size, percent)
 
 
 def resolve_optimize_display_settings(
@@ -57,8 +62,7 @@ def resolve_optimize_display_settings(
             raise ValueError(DUAL_INPUT_REQUIRES_TWO_DISPLAYS)
         effective_two_screen = True
         base_w, base_h = context.resolution
-        scaled_w, scaled_h = _apply_canvas_scale((base_w, base_h), scale)
-        effective_resolution = _stringify_resolution((scaled_w, scaled_h))
+        effective_resolution = _stringify_resolution((base_w, base_h))
         effective_l_display = _stringify_resolution(context.l_display)
         effective_r_display = _stringify_resolution(context.r_display)
     else:
@@ -78,8 +82,7 @@ def resolve_optimize_display_settings(
         if base_size is None:
             raise ValueError("No display detected for optimize")
         effective_l_display = _stringify_resolution(base_size)
-        scaled_w, scaled_h = _apply_canvas_scale(base_size, scale)
-        effective_resolution = _stringify_resolution((scaled_w, scaled_h))
+        effective_resolution = _stringify_resolution(base_size)
 
     return EffectiveOptimizeDisplaySettings(
         resolution=effective_resolution,

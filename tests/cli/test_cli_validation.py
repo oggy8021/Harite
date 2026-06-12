@@ -392,7 +392,8 @@ def test_optimize_cli_values_override_settings(tmp_path, monkeypatch):
 
     assert result.exit_code == 0
     assert captured["inputs"] == ["from_cli.jpg"]
-    assert captured["target_resolution"] == (960, 540)
+    assert captured["target_resolution"] == (1920, 1080)
+    assert captured["canvas_scale_percent"] == 50
 
 
 def test_optimize_uses_only_first_two_cli_inputs(tmp_path, monkeypatch):
