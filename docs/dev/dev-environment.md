@@ -27,15 +27,48 @@
 - libpng-dev
 - xvfb（GUI/ヘッドレス検証用）
 
-### Qt 版 GUI（`harite-qt`）+ fcitx IME
+### Qt 版 GUI（`harite-qt`）+ fcitx IME — XFCE 再現手順
 
-pip の `PyQt6` は distro fcitx プラグインと非互換のため、**Linux では apt の PyQt6 を使う**（詳細: [requirements-linux-qt.txt](../../requirements-linux-qt.txt)）。
+pip の `PyQt6` は distro fcitx プラグインと非互換のため、**Linux では apt の PyQt6 を使う**。正本手順は [requirements-linux-qt.txt](../../requirements-linux-qt.txt)（コメントのみの意図的設計）。
+
+**なぜ別経路か:** 日本語入力のため fcitx の Qt6 プラグインが必要だが、pip 同梱 Qt6 では `Qt_6_PRIVATE_API` 不一致でロードできない。Harite は distro `python3-pyqt6` + `--system-site-packages` venv を前提とする（[gui-spec §Linux IME](../specs/gui/harite-gui-spec.md)）。
+
+#### 一発セットアップ（Mint 22 / Ubuntu 24.04 系の例）
+
+```bash
+# 0) OS パッケージ（初回のみ）
+sudo apt update
+sudo apt install -y \
+  git python3 python3-venv python3-pip \
+  python3-pyqt6 \
+  python3-pyqt6.qtsvg \
+  fcitx5 fcitx5-frontend-qt6
+
+# 1) venv（必ず --system-site-packages）
+cd Harite
+python3 -m venv .venv --system-site-packages
+source .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -r requirements.txt
+
+# 2) 検証
+python scripts/verify_linux_qt_env.py
+
+# 3) 起動
+harite-qt
+```
+
+**してはいけないこと:** `pip install PyQt6`、`pip install 'harite[gui-qt]'`（Linux では pip PyQt6 を引く）。
+
+**XFCE セッション:** Input Method で fcitx5 を有効化。`GTK_IM_MODULE=fcitx` / `XMODIFIERS=@im=fcitx` が入っていれば、起動時 `prepare_qt_input_method_env()` が `QT_IM_MODULE` を補完する。
+
+**IME 動作確認:** Slideshow タブの `keyword(CODH)` 欄で日本語入力が切り替わること。
+
+必須 apt パッケージ（再掲）:
 
 - `python3-pyqt6`
 - `python3-pyqt6.qtsvg`（SVG アイコン表示）
-- `fcitx5-frontend-qt6`（日本語 IME）
-
-venv は `--system-site-packages` で作成し、`pip install PyQt6` は **しない**。
+- `fcitx5-frontend-qt6`（Qt6 向け fcitx IM フロントエンド）
 
 ### Preset slideshow 操作ログ（MAT-08 / CODH・NDL 観測）
 
@@ -48,6 +81,8 @@ Slideshow Start / Manage Refresh / CODH tick 時に JSONL が追記される（�
 
 ## 初期セットアップ手順（接続先で実行）
 
+**GUI + 日本語入力（XFCE）を使う場合**は上記「Qt 版 GUI + fcitx IME」節を優先する。以下は **CLI / ヘッドレス pytest 中心**の最小手順。
+
 ```
 sudo apt update
 sudo apt install -y git python3-venv python3-pip build-essential libjpeg-dev libpng-dev xvfb
@@ -56,7 +91,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -U pip
 python -m pip install -e .
-# 開発依存があれば別途インストール: pip install -r requirements-dev.txt
+# 開発依存: pip install -r requirements-dev.txt
 
 python -m pytest -q
 ```
