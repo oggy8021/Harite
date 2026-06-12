@@ -1,3 +1,5 @@
 pytest>=7.0
 pytest-mock>=3.0
 Pillow>=9.0
+# Windows release build (optional):
+# pyinstaller>=6.0

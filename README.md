@@ -1,53 +1,113 @@
 # Harite
 
-Harite — 壁紙最適化ツール（リファクタリング版）
+Harite — 壁紙最適化ツール（v2.0.0）
 
 ## 概要
 
-Harite は、マルチディスプレイ環境で壁紙画像を生成・配置・適用するためのツールです。複数の入力画像から壁紙を作成し、画面ごとの配置、余白、固定配置、単画面利用を扱えます。
+Harite は、マルチディスプレイ環境で壁紙画像を生成・配置・適用するためのツールです。複数の入力画像から壁紙を作成し、画面ごとの配置、余白、スライドショー、壁紙適用を扱えます。
 
-## CLI 例
+- **CLI:** `harite optimize` / `apply` / `slideshow`
+- **GUI:** Qt 6（`harite-qt` / `harite-gui` — 同一入口）
 
-基本的な使い方:
+## インストール
+
+### Python パッケージ（Linux / 開発環境）
 
 ```bash
-harite optimize --input left.jpg,right.jpg --resolution 3840x1080 \
- --two-screen --l-display 1920x1080 --r-display 1920x1080 \
- --margins 10,10,5,5 --fixed --output ./out
+pip install harite-2.0.0-py3-none-any.whl   # または pip install -e ".[gui-qt]"
 ```
 
-詳細オプションは `harite optimize --help` を参照してください。
+Linux で GUI を使う場合は [requirements-linux-qt.txt](requirements-linux-qt.txt) を参照（distro の `python3-pyqt6` 等）。
+
+### Windows（バイナリ zip）
+
+GitHub Release 添付の onedir フォルダを任意の場所に展開します（インストーラは付きません）。
+
+| フォルダ | EXE | 用途 |
+| --- | --- | --- |
+| `harite/` | `harite.exe` | CLI |
+| `harite-qt/` | `harite-qt.exe` | GUI |
+
+詳細は [packaging/windows/README.md](packaging/windows/README.md)。
+
+#### スタートメニュー・ショートカット
+
+**自動では何も追加されません。** PyInstaller onedir はフォルダ展開のみで、スタートメニュー登録やデスクトップショートカット作成は行いません（`install-desktop-entry` は **Linux/XDG 専用**）。
+
+GUI をスタートメニューから起動したい場合は、利用者が手動で行います。
+
+- `harite-qt.exe` をスタートメニューへピン留めする
+- または `harite-qt.exe` へのショートカット（`.lnk`）を作成し、スタートメニュー / デスクトップに置く
+
+#### CLI と PATH（任意）
+
+`harite.exe` をどのディレクトリからも `harite` コマンドで呼びたい場合は、展開先の `harite` フォルダを **ユーザー環境変数 `Path`** に追加します（必須ではありません。フルパス指定でも可）。
+
+```powershell
+# 例: C:\Apps\harite\harite.exe を Path に載せる場合
+# 設定 → システム → 詳細情報 → 環境変数 → Path に C:\Apps\harite を追加
+C:\Apps\harite\harite.exe optimize --help
+```
+
+`harite-qt` フォルダを Path に入れる必要は通常ありません（GUI は EXE を直接起動）。
+
+## CLI 例（v2）
+
+作業解像度はワークスペース検出で自動決定します。出力 JPEG の縮小のみ `--canvas-scale` で指定します。
+
+```bash
+harite optimize --input left.jpg,right.jpg \
+  --margins 10,10,5,5 --output ./out
+```
+
+2 枚入力時はデュアル配置（検出失敗時はエラー）。ファイルサイズを抑えたい場合:
+
+```bash
+harite optimize --input left.jpg,right.jpg --canvas-scale 50 -o ./out
+```
+
+`apply` のプラグインや適用モードは settings JSON（`-c`）で指定します。v1 の `--resolution` / `--two-screen` / `--plugin` は **v2 では廃止** です。
+
+詳細は `harite optimize --help` と [CHANGELOG.md](CHANGELOG.md) を参照してください。
 
 ## GUI 起動
 
 ```bash
+harite-qt
+# または
 harite-gui
 ```
 
-`harite-gui` は host 環境側の GTK 3 / PyGObject runtime を前提にします。Linux / XFCE では少なくとも `python3-gi` と GTK 3 系ライブラリが利用可能であることを確認してください。
+v2 の GUI は **Qt 6 のみ** です。GTK / `python3-gi` は不要です。
 
-`pipx install` の既定は分離 venv なので、distro 提供の `python3-gi` を見られず `harite-gui` が起動しないことがあります。GUI 起動確認を行う場合は、`pipx install --system-site-packages` を使って host 側の `python3-gi` を参照させてください。
-
-Linux / XFCE でアプリケーションメニューから起動したい場合は、user-local の launcher を生成できます。
+Linux / XFCE でアプリケーションメニューから起動したい場合:
 
 ```bash
 harite install-desktop-entry
 ```
 
+（`~/.local/share/applications/` に `.desktop` を生成。Windows では使えません。）
+
 ## 外部依存（システムツール）
 
-Harite 本体は Python パッケージですが、XFCE での壁紙設定やディスプレイ検出では外部ツールを利用することがあります。
+Harite 本体は Python パッケージ（または Windows では同梱バイナリ）ですが、壁紙設定やディスプレイ検出で外部ツールを使うことがあります。
 
-- 必須:
-  - Python 3.12+（pyproject.toml に指定）
-  - Python パッケージ: `typer`, `Pillow`（`pip install -e .` でインストール）
+- **共通（Python 配布）:**
+  - Python 3.12+（`pyproject.toml` に指定）
+  - `typer`, `Pillow`（wheel / editable install で同梱）
 
-- XFCE 利用時:
-  - `xrandr` — ディスプレイ情報の取得に使うことがあります。
-  - `xfconf-query` — 壁紙設定に使うことがあります。
-  - `python3-gi` と GTK 3 runtime — `harite-gui` の起動に必要です。
+- **GUI（Qt）:**
+  - `PyQt6` または distro の `python3-pyqt6`（[requirements-linux-qt.txt](requirements-linux-qt.txt)）
 
-XFCE では、これらが利用可能であることを前提に考えてください。
+- **XFCE 利用時:**
+  - `xrandr` — ディスプレイ情報の取得
+  - `xfconf-query` — 壁紙設定（xfce プラグイン使用時）
+
+## 配布・リリース
+
+- Linux: `harite-<version>-py3-none-any.whl` / `.tar.gz`（[docs/release-delivery.md](docs/release-delivery.md)）
+- Windows: onedir zip（CLI + GUI）
+- PyPI 公開は v2.0.0 時点では未決
 
 ## License
 
