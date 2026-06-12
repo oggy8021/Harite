@@ -276,7 +276,7 @@ def _connect_slideshow_widgets(backend: Any, widgets: dict[str, Any]) -> None:
 def _connect_margin_text_widgets(backend: Any, widgets: dict[str, Any]) -> None:
     mode_pairs = [
         ("margin_text_mode_off", "none"),
-        ("margin_text_mode_settings", "params"),
+        ("margin_text_mode_settings", "settings"),
         ("margin_text_mode_text", "free"),
         ("margin_text_mode_both", "combo"),
     ]

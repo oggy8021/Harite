@@ -206,7 +206,7 @@ def refresh_margins_controls(backend: Any, owner: Any | None = None) -> None:
     form_state = getattr(owner, "form_state", None) if owner is not None else None
     margin_text_mode = str(getattr(form_state, "embed_info", "none") or "none").strip().lower() if form_state is not None else "none"
 
-    settings_enabled = margin_text_mode in {"params", "combo"}
+    settings_enabled = margin_text_mode in {"settings", "params", "combo"}
     text_enabled = margin_text_mode in {"free", "combo"}
 
     backend._set_widget_enabled("marginSettingsPage", settings_enabled)
@@ -219,7 +219,7 @@ def refresh_margins_controls(backend: Any, owner: Any | None = None) -> None:
         elif hasattr(entry, "setReadOnly"):
             entry.setReadOnly(not bool(text_enabled))
 
-    if margin_text_mode == "params":
+    if margin_text_mode in {"settings", "params"}:
         backend._set_notebook_page("marginTextTabs", 0)
     elif margin_text_mode in {"free", "combo"}:
         backend._set_notebook_page("marginTextTabs", 1)
@@ -239,7 +239,7 @@ def sync_margins_state_from_owner(backend: Any, owner: Any) -> None:
     if margin_text_position not in EMBED_POSITION_VALUES:
         margin_text_position = "right-bottom"
     backend._set_toggle_active("radMarginTextModeOff", margin_text_mode == "none")
-    backend._set_toggle_active("radMarginTextModeSettings", margin_text_mode == "params")
+    backend._set_toggle_active("radMarginTextModeSettings", margin_text_mode in {"settings", "params"})
     backend._set_toggle_active("radMarginTextModeText", margin_text_mode == "free")
     backend._set_toggle_active("radMarginTextModeBoth", margin_text_mode == "combo")
     backend._set_entry_text("txtMarginText", getattr(form_state, "embed_text", None))

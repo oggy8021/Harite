@@ -706,7 +706,7 @@ margin text preflight の現行規則:
 - GUI の実効行数は widget 値をそのままは使わず、`_effective_margin_text_max_lines()` により `free=5`, `combo=8`, それ以外は `3` へ正規化して optimize request へ渡す。
 - free text 入力は GUI 側で先に最大 5 行へ切り詰め、空文字・空行のみなら `None` として保持する。
 - **Qt margin text（`QPlainTextEdit`）:** 編集中の Enter で新規行を挿入したあと、handler sync が同一文字列を widget へ書き戻す場合は **カーソル位置を維持**する（同値 `setPlainText` を避ける）。5 行目まで Enter で改行可、6 行目以降の Enter は GTK と同様に抑止する。
-- `embed_info` の内部値と UI ラベルのマッピングは `none`↔"Off"、`params`↔"Settings"、`free`↔"Text only"、`combo`↔"Both" である。
+- `embed_info` の内部値と UI ラベルのマッピングは `none`↔"Off"、`settings`↔"Settings"、`free`↔"Text only"、`combo`↔"Both" である。旧 settings キー `params` は読み込み時に `settings` へ正規化する。
 
 ## 9. GUI での失敗時挙動
 

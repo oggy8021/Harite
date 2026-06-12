@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 from typing import Sequence, Tuple, List, Optional
 from PIL import Image, ImageDraw, ImageFont
+from .color_contrast import choose_contrasting_embed_text_rgb
+from .embed_info import embed_info_includes_free_text, embed_info_includes_settings, normalize_embed_info
 from .positioning import format_position_pair, parse_position_pair
 from .workspace import Display
 
@@ -320,6 +322,35 @@ def _resolve_display_slots(
     return slots
 
 
+def _format_embed_inputs_scale_suffix(
+    input_count: int,
+    *,
+    l_display_scale: float = 1.0,
+    r_display_scale: float = 1.0,
+    l_auto_display_scale: bool = False,
+    r_auto_display_scale: bool = False,
+) -> str:
+    def _side_token(label: str, scale: float, auto: bool) -> str | None:
+        if auto:
+            return f"{label}=auto"
+        if abs(scale - 1.0) > 1e-6:
+            return f"{label}={int(round(scale * 100))}%"
+        return None
+
+    tokens: list[str] = []
+    if input_count >= 1:
+        token = _side_token("L", l_display_scale, l_auto_display_scale)
+        if token:
+            tokens.append(token)
+    if input_count >= 2:
+        token = _side_token("R", r_display_scale, r_auto_display_scale)
+        if token:
+            tokens.append(token)
+    if not tokens:
+        return ""
+    return " " + " ".join(tokens)
+
+
 def _build_embed_lines(
     mode: str,
     *,
@@ -332,6 +363,10 @@ def _build_embed_lines(
     l_display: Optional[Tuple[int, int]],
     r_display: Optional[Tuple[int, int]],
     free_text: Optional[str],
+    l_display_scale: float = 1.0,
+    r_display_scale: float = 1.0,
+    l_auto_display_scale: bool = False,
+    r_auto_display_scale: bool = False,
 ) -> List[str]:
     """余白に埋め込む情報行を構築する。
 
@@ -353,25 +388,32 @@ def _build_embed_lines(
     Returns:
         表示用の行リスト。
     """
-    mode_norm = str(mode or "none").lower()
+    mode_norm = normalize_embed_info(mode)
     if mode_norm == "none":
         return []
 
-    params_lines: List[str] = []
-    if mode_norm in ("params", "combo"):
+    settings_lines: List[str] = []
+    if embed_info_includes_settings(mode_norm):
         w_target, h_target = target_resolution
         ml, mr, mt, mb = margins
-        params_lines.append(f"res={w_target}x{h_target} margins={ml},{mr},{mt},{mb}")
-        params_lines.append(f"align={align}/{valign} inputs={input_count}")
+        scale_suffix = _format_embed_inputs_scale_suffix(
+            input_count,
+            l_display_scale=l_display_scale,
+            r_display_scale=r_display_scale,
+            l_auto_display_scale=l_auto_display_scale,
+            r_auto_display_scale=r_auto_display_scale,
+        )
+        settings_lines.append(f"res={w_target}x{h_target} margins={ml},{mr},{mt},{mb}")
+        settings_lines.append(f"align={align}/{valign} inputs={input_count}{scale_suffix}")
 
     free_lines: List[str] = []
-    if mode_norm in ("free", "combo") and free_text:
+    if embed_info_includes_free_text(mode_norm) and free_text:
         for line in str(free_text).splitlines():
             v = line.strip()
             if v:
                 free_lines.append(v)
 
-    return params_lines + free_lines
+    return settings_lines + free_lines
 
 
 def describe_embed_position(position: str) -> str:
@@ -595,6 +637,7 @@ def _draw_embed_text_in_margin(
     l_display: Tuple[int, int] | None = None,
     r_display: Tuple[int, int] | None = None,
     placements: Sequence[PlacementResult] | None = None,
+    background_color: str = DEFAULT_BACKGROUND_COLOR_HEX,
 ) -> str:
     """余白に埋め込みテキストを描画する。
 
@@ -640,6 +683,7 @@ def _draw_embed_text_in_margin(
         raise ValueError(EMBED_OVERLAP_ERROR)
 
     draw = ImageDraw.Draw(bg)
+    text_fill = choose_contrasting_embed_text_rgb(background_color_rgb(background_color))
     preferred_size = max(12, min(24, area_h // max(1, max_lines + 1)))
     font = _load_preferred_font(preferred_size, explicit_path=embed_font)
     line_h = max(10, font.getbbox("Ag")[3] - font.getbbox("Ag")[1] + 2)
@@ -667,7 +711,7 @@ def _draw_embed_text_in_margin(
             break
         one_line = _truncate_to_width(draw, line, max_text_w, font)
         if one_line:
-            draw.text((text_x, text_y), one_line, fill=(235, 235, 235), font=font)
+            draw.text((text_x, text_y), one_line, fill=text_fill, font=font)
         text_y += line_h
     return "drawn"
 
@@ -776,7 +820,7 @@ def optimize_wallpapers(
         ml, mr, mt, mb = (0, 0, 0, 0)
     l_display = kwargs.get("l_display")
     r_display = kwargs.get("r_display")
-    embed_info = str(kwargs.get("embed_info", "none")).lower()
+    embed_info = normalize_embed_info(kwargs.get("embed_info", "none"))
     background_color = normalize_background_color(kwargs.get("background_color", DEFAULT_BACKGROUND_COLOR_HEX))
     embed_text = kwargs.get("embed_text")
     embed_position = str(kwargs.get("embed_position", "right-bottom")).lower()
@@ -884,6 +928,10 @@ def optimize_wallpapers(
         l_display=l_display,
         r_display=r_display,
         free_text=embed_text,
+        l_display_scale=l_display_scale,
+        r_display_scale=r_display_scale,
+        l_auto_display_scale=l_auto_display_scale,
+        r_auto_display_scale=r_auto_display_scale,
     )
     embed_status_out = kwargs.get("embed_status_out")
     embed_status = _draw_embed_text_in_margin(
@@ -897,6 +945,7 @@ def optimize_wallpapers(
         l_display=l_display,
         r_display=r_display,
         placements=placements,
+        background_color=background_color,
     )
     if isinstance(embed_status_out, list):
         embed_status_out.append(embed_status)

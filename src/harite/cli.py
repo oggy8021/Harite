@@ -17,6 +17,7 @@ from .core import (
     normalize_optimize_input_paths,
     optimize_wallpapers,
 )
+from .embed_info import normalize_embed_info
 from .plugins import registry as plugin_registry
 from .settings import AppSettings, SlideshowSettings
 from .settings_file import load_settings
@@ -253,10 +254,10 @@ def optimize(
         help="Optional path to optimize settings JSON",
         rich_help_panel="詳細調整",
     ),
-    embed_info: str = typer.Option(
-        "none",
+    embed_info: Optional[str] = typer.Option(
+        None,
         "--embed-info",
-        help="Embed info text in margins: none|params|free|combo",
+        help="Embed margin text: settings|free|combo (omit for no embed)",
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     embed_text: Optional[str] = typer.Option(
@@ -295,8 +296,8 @@ def optimize(
     Geometry (core-spec §4.1): `margins` (left,right,top,bottom) constrain image
     fit/shrink; `align` / `valign` use the full display slot for positioning.
 
-    Embed: `--embed-info` is `none|params|free|combo`; use `--embed-text` with
-    `free` or `combo`. `--embed-font` is optional (auto font discovery when omitted).
+    Embed: omit `--embed-info` for no margin text, or use `settings|free|combo`.
+    Use `--embed-text` with `free` or `combo`. `--embed-font` is optional.
     """
     # Load settings if provided and merge defaults (CLI options override settings)
     cfg: dict = {}
@@ -311,9 +312,18 @@ def optimize(
     if not (1 <= quality <= 100):
         typer.echo("--quality must be between 1 and 100")
         raise typer.Exit(code=2)
-    embed_info = str(resolve_option_value("embed_info", embed_info, cfg, ctx) or "none").lower()
-    if embed_info not in ("none", "params", "free", "combo"):
-        typer.echo("--embed-info must be one of: none, params, free, combo")
+    if _parameter_source_is_commandline(ctx, "embed_info"):
+        cli_embed_raw = (embed_info or "").strip().lower()
+        if cli_embed_raw == "none":
+            typer.echo("--embed-info none is not allowed; omit --embed-info instead")
+            raise typer.Exit(code=2)
+        if cli_embed_raw == "params":
+            typer.echo("--embed-info params was renamed to settings")
+            raise typer.Exit(code=2)
+    try:
+        embed_info = normalize_embed_info(resolve_option_value("embed_info", embed_info, cfg, ctx))
+    except ValueError as exc:
+        typer.echo(str(exc))
         raise typer.Exit(code=2)
     embed_position = str(resolve_option_value("embed_position", embed_position, cfg, ctx) or "right-bottom").lower()
     if embed_position not in ("left-top", "left-bottom", "right-top", "right-bottom"):
