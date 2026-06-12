@@ -1,6 +1,6 @@
 # Harite コア仕様 (Core Spec)
 
-最終更新: 2026-06-12（MAT-21b 四重露出撤去・canvas_scale_percent）
+最終更新: 2026-05-31（embed settings 行正規化・Placement monitor=）
 
 ## 1. コア (core) の責務
 
@@ -27,7 +27,7 @@ core が直接の主責務としないもの:
 ## 2. データモデル
 
 - optimize 入力は 1 件または 2 件の画像パスである。
-- public surface の画面条件は **`canvas_scale_percent`（1–100、既定 100）** のみ。合成キャンバス寸法 `resolution` と左右 display `l_display` / `r_display`、内部 `two_screen` は `resolve_optimize_display_settings(...)` が検出 display と入力枚数から導出する（CLI/GUI/settings/embed には露出しない）。
+- public surface の画面条件は **`canvas_scale_percent`（1–100、既定 100）** のみ。合成キャンバス寸法 `resolution` と左右 display `l_display` / `r_display`、内部 `two_screen` は `resolve_optimize_display_settings(...)` が検出 display と入力枚数から導出する（CLI/GUI/settings の手動キーとしては露出しない。embed settings 焼き込みでは `canvas=` / `L=` / `R=` として参照用に出す）。
 - 設定は最適化設定モデル、適用設定モデル、スライドショー設定モデル、アプリ設定モデルとして論理分割される。
 
 主要モデルの整理:
@@ -198,8 +198,12 @@ flowchart TD
 `optimize_wallpapers` は `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`, `embed_font` を受け取り、以下の規則で情報行を構成する。
 
 - `embed_info=none` では情報行は空である。
-- `embed_info=settings|combo` では、1 行目に `res={w_target}x{h_target} margins={ml},{mr},{mt},{mb}`、2 行目に `align={align}/{valign} inputs={input_count}` を入れる。意図的拡大または auto 倍率が有効な側があるときは `inputs=` の後ろに `L=125%` / `R=auto` 形式のトークンを足す。settings JSON の legacy 値 `params` は `settings` として読む。
-- dual 時の `two_screen=1` / `l=` / `r=` 行は **MAT-21b で廃止**。params 行は `res=...` と `align=.../inputs=...` の 2 行のみ（free text は従来どおり後続）。
+- `embed_info=settings|combo` では settings 行を次の順で構成する（最大 `embed_max_lines` まで。`combo` 時は free text 行が後続）:
+  1. `canvas={w_target}x{h_target}@{canvas_scale_percent}%` — 合成キャンバス寸法と検出 desktop に対する縮小率
+  2. 検出 display 行 — single 時は `L={w}x{h}`、dual 時は `L={w}x{h} R={w}x{h}`（検出できない場合は省略）
+  3. `margins={ml},{mr},{mt},{mb} align={align}/{valign} inputs={input_count}` — 意図的拡大または auto 倍率が有効な側があるときは `inputs=` の後ろに `L=125%` / `R=auto` 形式のトークンを足す
+- settings JSON の legacy 値 `params` は `settings` として読む。旧略称 `res=` / `two_screen=1` は **廃止**。
+- GUI Margins タブの Settings プレビューは `_build_embed_settings_lines` と同一ロジックで生成する（焼き込みと一致）。
 - `embed_info=free|combo` では `embed_text` を改行単位で split し、各行を trim したうえで空行を捨てる。
 - 最終的な embed 行列は、params 系行の後ろに free text 行を連結した順序で構成する。
 

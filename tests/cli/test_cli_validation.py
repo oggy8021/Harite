@@ -148,10 +148,10 @@ def test_format_placement_line_matches_cli_spec() -> None:
             width=1920,
             height=1080,
             scale=1.0,
-            posit="left",
+            monitor="left",
         )
     )
-    assert line == "a.jpg @ (960,540) 1920x1080 scale=1.0 posit=left"
+    assert line == "a.jpg @ (960,540) 1920x1080 scale=1.0 monitor=left"
 
 
 def test_root_help_lists_typer_shell_completion_options() -> None:

@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from harite.core import EMBED_POSITION_VALUES
+from harite.core import EMBED_POSITION_VALUES, _build_embed_settings_lines
 from harite.apply_surface import apply_mode_help_text
-from harite.apply_surface import margin_settings_split_label
-from harite.positioning import parse_position_pair
+from harite.optimize_settings import resolve_optimize_display_settings
+from harite.positioning import format_position_pair, parse_position_pair
+from harite.resolution import parse_resolution
 
 
 def parse_margin_values(value: object | None) -> tuple[int, int, int, int]:
@@ -127,6 +128,7 @@ def sync_main_state_from_owner(backend: Any, owner: Any) -> None:
 
     backend._refresh_current_state_labels()
     sync_apply_mode_from_owner(backend, owner)
+    refresh_margin_settings_preview_label(backend, owner)
 
 
 def sync_apply_mode_from_owner(backend: Any, owner: Any) -> None:
@@ -171,35 +173,86 @@ def sync_input_state_from_owner(backend: Any, owner: Any) -> None:
 
     sync_action_availability_from_owner(backend, owner)
     backend._set_save_path_dialog_open_state(bool(getattr(owner, "save_path_dialog_open", False)))
+    refresh_margin_settings_preview_label(backend, owner)
+
+
+def _collect_optimize_input_values(owner: Any | None, backend: Any) -> list[str]:
+    form_state = getattr(owner, "form_state", None) if owner is not None else None
+    if form_state is not None:
+        parts = [part.strip() for part in str(getattr(form_state, "input_value", "") or "").split(",") if part.strip()]
+        if parts:
+            return parts
+    values: list[str] = []
+    path_l = str(getattr(owner, "input_path_l", "") or getattr(backend, "_input_path_l", "") or "").strip()
+    path_r = str(getattr(owner, "input_path_r", "") or getattr(backend, "_input_path_r", "") or "").strip()
+    if path_l:
+        values.append(path_l)
+    if path_r:
+        values.append(path_r)
+    return values
 
 
 def build_margin_settings_preview(backend: Any, owner: Any | None = None) -> str:
     form_state = getattr(owner, "form_state", None) if owner is not None else None
-    resolution = str(getattr(form_state, "resolution", "-") or "-")
     margins = parse_margin_values(getattr(form_state, "margins", None)) if form_state is not None else (
         backend._read_spin_int("spnLeftMargin"),
         backend._read_spin_int("spnRightMargin"),
         backend._read_spin_int("spnTopMargin"),
         backend._read_spin_int("spnBottomMargin"),
     )
-    left, right, top, bottom = margins
+    inputs = _collect_optimize_input_values(owner, backend)
+    if not inputs:
+        return "input required for settings preview"
+    try:
+        canvas_scale_percent = int(getattr(form_state, "canvas_scale_percent", 100) or 100) if form_state is not None else 100
+        display_settings = resolve_optimize_display_settings(
+            input_values=inputs,
+            canvas_scale_percent=canvas_scale_percent,
+        )
+        target_resolution = parse_resolution(display_settings.resolution)
+        l_display = None if not display_settings.l_display else parse_resolution(display_settings.l_display)
+        r_display = None if not display_settings.r_display else parse_resolution(display_settings.r_display)
+    except ValueError:
+        return "display unavailable for settings preview"
+
     if form_state is not None:
-        align_left, align_right = parse_position_pair(getattr(form_state, "align", "center"), axis="align")
-        valign_left, valign_right = parse_position_pair(getattr(form_state, "valign", "center"), axis="valign")
-        two_screen = bool(getattr(form_state, "two_screen", False))
+        align = format_position_pair(getattr(form_state, "align", "center"), axis="align")
+        valign = format_position_pair(getattr(form_state, "valign", "center"), axis="valign")
+        l_display_scale = float(getattr(form_state, "l_display_scale", 1.0) or 1.0)
+        r_display_scale = float(getattr(form_state, "r_display_scale", 1.0) or 1.0)
+        l_auto_display_scale = bool(getattr(form_state, "l_auto_display_scale", False))
+        r_auto_display_scale = bool(getattr(form_state, "r_auto_display_scale", False))
     else:
         align_left, valign_left = backend._current_side_state("L")
         align_right, valign_right = backend._current_side_state("R")
-        two_screen = False
-    split_text = margin_settings_split_label(two_screen)
-    return "\n".join(
-        (
-            f"resolution={resolution}",
-            f"margins=L{left},R{right},U{top},B{bottom}",
-            f"align={align_left},{align_right} valign={valign_left},{valign_right}",
-            split_text,
-        )
+        align = f"{align_left},{align_right}"
+        valign = f"{valign_left},{valign_right}"
+        l_display_scale = 1.0
+        r_display_scale = 1.0
+        l_auto_display_scale = False
+        r_auto_display_scale = False
+
+    lines = _build_embed_settings_lines(
+        target_resolution=target_resolution,
+        margins=margins,
+        align=align,
+        valign=valign,
+        input_count=len(inputs),
+        two_screen=display_settings.two_screen,
+        l_display=l_display,
+        r_display=r_display,
+        canvas_scale_percent=display_settings.canvas_scale_percent,
+        l_display_scale=l_display_scale,
+        r_display_scale=r_display_scale,
+        l_auto_display_scale=l_auto_display_scale,
+        r_auto_display_scale=r_auto_display_scale,
     )
+    return "\n".join(lines)
+
+
+def refresh_margin_settings_preview_label(backend: Any, owner: Any | None = None) -> None:
+    """Update the Settings embed preview label (shared with JPEG burn-in lines)."""
+    backend._set_label_text("lblMarginSettingsPreview", build_margin_settings_preview(backend, owner))
 
 
 def refresh_margins_controls(backend: Any, owner: Any | None = None) -> None:
@@ -226,7 +279,7 @@ def refresh_margins_controls(backend: Any, owner: Any | None = None) -> None:
     else:
         backend._set_notebook_page("marginTextTabs", 0)
 
-    backend._set_label_text("lblMarginSettingsPreview", build_margin_settings_preview(backend, owner))
+    refresh_margin_settings_preview_label(backend, owner)
 
 
 def sync_margins_state_from_owner(backend: Any, owner: Any) -> None:
