@@ -21,7 +21,7 @@ from .plugins import registry as plugin_registry
 from .settings import AppSettings, SlideshowSettings
 from .settings_file import load_settings
 from .linux_xdg_launcher import install_desktop_entry as install_linux_desktop_entry
-from .optimize_settings import is_auto_value, resolve_optimize_display_settings
+from .optimize_settings import normalize_canvas_scale_percent, resolve_optimize_display_settings
 from .positioning import parse_position_pair
 from .resolution import parse_resolution
 from .slideshow import collect_slideshow_input_images
@@ -168,22 +168,6 @@ def _expand_slideshow_cli_input_dirs(input: List[str] | None) -> List[Path]:
     return input_dirs[:2]
 
 
-def resolve_bool_or_auto_option(
-    name: str,
-    cli_value: bool,
-    cfg: dict,
-    ctx: typer.Context,
-) -> bool | None:
-    if _parameter_source_is_commandline(ctx, name):
-        return bool(cli_value)
-    if name in cfg:
-        raw = cfg[name]
-        if is_auto_value(raw):
-            return None
-        return parse_config_bool(name, raw)
-    return None  # neither CLI nor config specifies → treat as "auto"
-
-
 @app.callback(invoke_without_command=True)
 def _callback(
     ctx: typer.Context,
@@ -207,13 +191,6 @@ def optimize(
         help="Input file(s). Use comma-separated paths or repeat --input.",
         rich_help_panel="必須に近い入力",
     ),
-    resolution: Optional[str] = typer.Option(
-        None,
-        "--resolution",
-        "-r",
-        help="Target resolution WxH (e.g. 3840x2160)",
-        rich_help_panel="必須に近い入力",
-    ),
     output: Path = typer.Option(
         Path("."),
         "--output",
@@ -221,28 +198,16 @@ def optimize(
         help="Output directory",
         rich_help_panel="基本オプション",
     ),
-    two_screen: bool = typer.Option(
-        False,
-        "--two-screen/--no-two-screen",
-        help="Dual-monitor layout for two inputs. Omit to auto-detect from workspace.",
+    canvas_scale: Optional[int] = typer.Option(
+        None,
+        "--canvas-scale",
+        help="Composite canvas size as percent of detected desktop (1-100, default 100).",
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     margins: Optional[str] = typer.Option(
         None,
         "--margins",
         help="Margins as left,right,top,bottom in pixels (e.g. 10,10,0,0). Constrain fit only; align uses full slot.",
-        rich_help_panel="条件付きオプション（通常は省略可）",
-    ),
-    l_display: Optional[str] = typer.Option(
-        None,
-        "--l-display",
-        help="Override left monitor size WxH (e.g. 1920x1080). Usually omitted (auto-detect).",
-        rich_help_panel="条件付きオプション（通常は省略可）",
-    ),
-    r_display: Optional[str] = typer.Option(
-        None,
-        "--r-display",
-        help="Override right monitor size WxH (e.g. 1280x1024). Usually omitted (auto-detect).",
         rich_help_panel="条件付きオプション（通常は省略可）",
     ),
     align: str = typer.Option(
@@ -312,8 +277,8 @@ def optimize(
     `--input` accepts image files only (not directories), via comma-separated paths
     or repeated `--input` (max 2 images).
 
-    Display: omit `--two-screen`, `--l-display`, `--r-display`, and `--resolution`
-    to auto-detect from workspace when possible.
+    Display geometry is inferred from workspace and input count (max 2 images / 2 monitors).
+    Use `--canvas-scale` (1-100) to shrink the composite canvas below detected desktop size.
 
     Geometry (core-spec §4.1): `margins` (left,right,top,bottom) constrain image
     fit/shrink; `align` / `valign` use the full display slot for positioning.
@@ -329,9 +294,6 @@ def optimize(
         except Exception as exc:
             typer.echo(f"Failed to load settings: {exc}")
             raise typer.Exit(code=2)
-
-    # resolve effective values: CLI > settings > required check
-    eff_resolution = resolve_option_value("resolution", resolution, cfg, ctx)
 
     # validate numeric options
     if not (1 <= quality <= 100):
@@ -366,8 +328,12 @@ def optimize(
         typer.echo(str(exc))
         raise typer.Exit(code=2)
 
+    if _parameter_source_is_commandline(ctx, "canvas_scale"):
+        raw_canvas_scale = canvas_scale
+    else:
+        raw_canvas_scale = cfg.get("canvas_scale_percent", cfg.get("canvas_scale", 100))
     try:
-        eff_two_screen = resolve_bool_or_auto_option("two_screen", two_screen, cfg, ctx)
+        eff_canvas_scale = normalize_canvas_scale_percent(raw_canvas_scale)
     except ValueError as exc:
         typer.echo(str(exc))
         raise typer.Exit(code=2)
@@ -375,10 +341,7 @@ def optimize(
     try:
         resolved_display_settings = resolve_optimize_display_settings(
             input_values=expanded_inputs,
-            resolution=None if is_auto_value(eff_resolution) else str(eff_resolution or "").strip() or None,
-            two_screen=eff_two_screen,
-            l_display=None if is_auto_value(resolve_option_value("l_display", l_display, cfg, ctx)) else resolve_option_value("l_display", l_display, cfg, ctx),
-            r_display=None if is_auto_value(resolve_option_value("r_display", r_display, cfg, ctx)) else resolve_option_value("r_display", r_display, cfg, ctx),
+            canvas_scale_percent=eff_canvas_scale,
         )
         w, h = parse_resolution(resolved_display_settings.resolution)
     except ValueError as exc:

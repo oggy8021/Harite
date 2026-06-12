@@ -68,19 +68,16 @@ def build_result_preview_state(owner: Any) -> ResultPreviewState:
         return ResultPreviewState(source_file=None, apply_mode=owner.apply_mode)
 
     input_values = [part.strip() for part in owner.form_state.input_value.split(",") if part.strip()]
-    l_display = owner._parse_resolution_value(owner.form_state.l_display)
-    r_display = owner._parse_resolution_value(owner.form_state.r_display)
+    l_display = None
+    r_display = None
 
     try:
         display_settings = resolve_optimize_display_settings(
             input_values=input_values,
-            resolution=owner.form_state.resolution,
-            two_screen=owner.form_state.two_screen,
-            l_display=owner.form_state.l_display,
-            r_display=owner.form_state.r_display,
+            canvas_scale_percent=owner.form_state.canvas_scale_percent,
         )
-        l_display = owner._parse_resolution_value(display_settings.l_display) or l_display
-        r_display = owner._parse_resolution_value(display_settings.r_display) or r_display
+        l_display = owner._parse_resolution_value(display_settings.l_display)
+        r_display = owner._parse_resolution_value(display_settings.r_display)
     except ValueError:
         pass
 
@@ -103,13 +100,10 @@ def build_result_preview_state(owner: Any) -> ResultPreviewState:
 def build_optimize_cli_preview(owner: Any) -> str:
     req = OptimizeRequest(
         input_value=owner.form_state.input_value,
-        resolution=owner.form_state.resolution,
         output_dir=Path(owner.form_state.output_dir),
+        canvas_scale_percent=owner.form_state.canvas_scale_percent,
         scaling=owner.form_state.scaling,
-        two_screen=owner.form_state.two_screen,
         margins=owner.form_state.margins,
-        l_display=owner.form_state.l_display,
-        r_display=owner.form_state.r_display,
         align=owner.form_state.align,
         valign=owner.form_state.valign,
         quality=owner.form_state.quality,

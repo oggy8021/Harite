@@ -176,13 +176,13 @@ def test_run_slideshow_optimize_writes_fixed_composite_slot(monkeypatch, tmp_pat
     )
 
     controller = OptimizeController()
+    monkeypatch.setattr(
+        "harite.optimize_settings.build_two_screen_optimize_context",
+        _dual_screen_context,
+    )
     state = OptimizeFormState(
         input_value="left.jpg,right.jpg",
-        resolution="3840x1080",
         output_dir=str(work_dir),
-        two_screen=True,
-        l_display="1920x1080",
-        r_display="1920x1080",
     )
 
     saved, _placements = controller.run_slideshow_optimize(state)

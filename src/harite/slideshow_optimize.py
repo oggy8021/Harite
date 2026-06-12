@@ -14,7 +14,6 @@ from harite.apply_settings import resolve_apply_settings
 from harite.core import normalize_background_color
 from harite.display_context import build_two_screen_optimize_context
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
-from harite.optimize_settings import AUTO
 from harite.settings import AppSettings
 from harite.slideshow import SlideshowCycleState, collect_slideshow_input_images, run_slideshow_cycle
 from harite.workspace import detect_displays
@@ -91,29 +90,12 @@ def build_slideshow_optimize_config(cfg: dict, *, default_plugin: str) -> Slides
     work_dir = resolve_slideshow_work_dir()
     optimize = app.optimize
 
-    two_screen: bool | None
-    if optimize.two_screen_mode == "auto":
-        two_screen = None
-    elif optimize.two_screen_mode == "on":
-        two_screen = True
-    else:
-        two_screen = False
-
-    l_display = optimize.l_display
-    r_display = optimize.r_display
-    if two_screen is False:
-        l_display = None if l_display == AUTO else l_display
-        r_display = None if r_display == AUTO else r_display
-
     base_form_state = OptimizeFormState(
         input_value="",
-        resolution=optimize.resolution,
         output_dir=str(work_dir),
+        canvas_scale_percent=optimize.canvas_scale_percent,
         scaling=optimize.scaling,
-        two_screen=two_screen,
         margins=optimize.margins,
-        l_display=l_display,
-        r_display=r_display,
         l_display_scale=1.0,
         r_display_scale=1.0,
         l_auto_display_scale=app.slideshow.l_auto_display_scale,

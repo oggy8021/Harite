@@ -7,12 +7,19 @@ from harite.gui.controllers.optimize_controller import OptimizeController, Optim
 from harite.workspace import Display
 
 
+@pytest.fixture(autouse=True)
+def _stub_single_display(monkeypatch):
+    monkeypatch.setattr(
+        "harite.workspace.detect_displays",
+        lambda: [Display(name="", width=1920, height=1080, x_offset=0)],
+    )
+
+
 def _base_state(tmp_path) -> OptimizeFormState:
     out_dir = tmp_path / "out"
     out_dir.mkdir()
     return OptimizeFormState(
         input_value="a.jpg",
-        resolution="1920x1080",
         output_dir=str(out_dir),
     )
 
@@ -35,12 +42,10 @@ def test_validate_rejects_negative_margins(tmp_path):
         controller.validate(state)
 
 
-def test_validate_accepts_valid_margins_and_displays(tmp_path):
+def test_validate_accepts_valid_margins(tmp_path):
     controller = OptimizeController()
     state = _base_state(tmp_path)
     state.margins = "1,2,3,4"
-    state.l_display = "1920x1080"
-    state.r_display = "1280x1024"
 
     controller.validate(state)
 
@@ -156,7 +161,7 @@ def test_run_export_passes_exact_save_path(monkeypatch, tmp_path):
     assert captured["output_path"] == export_path
 
 
-def test_run_optimize_resolves_auto_display_values(monkeypatch, tmp_path):
+def test_run_optimize_resolves_dual_display_values(monkeypatch, tmp_path):
     captured = {}
 
     def fake_optimize_wallpapers(**kwargs):
@@ -183,10 +188,6 @@ def test_run_optimize_resolves_auto_display_values(monkeypatch, tmp_path):
     controller = OptimizeController()
     state = _base_state(tmp_path)
     state.input_value = "left.jpg,right.jpg"
-    state.resolution = "auto"
-    state.two_screen = True
-    state.l_display = "auto"
-    state.r_display = "auto"
 
     saved, placements = controller.run_optimize(state)
 

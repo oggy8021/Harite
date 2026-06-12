@@ -32,14 +32,11 @@ def resolve_embed_max_lines(embed_info: str, configured: int = 3) -> int:
 @dataclass
 class OptimizeFormState:
     input_value: str
-    resolution: str
     output_dir: str
+    canvas_scale_percent: int = 100
     save_path: Optional[str] = None
     scaling: str = "fit"
-    two_screen: Optional[bool] = None
     margins: Optional[str] = None
-    l_display: Optional[str] = None
-    r_display: Optional[str] = None
     l_display_scale: float = 1.0
     r_display_scale: float = 1.0
     l_auto_display_scale: bool = False
@@ -86,10 +83,7 @@ class OptimizeController:
         inputs = [p.strip() for p in state.input_value.split(",") if p.strip()]
         display_settings = resolve_optimize_display_settings(
             input_values=inputs,
-            resolution=state.resolution,
-            two_screen=state.two_screen,
-            l_display=state.l_display,
-            r_display=state.r_display,
+            canvas_scale_percent=state.canvas_scale_percent,
         )
         w, h = parse_resolution(display_settings.resolution)
         output = Path(state.output_dir)
@@ -146,10 +140,7 @@ class OptimizeController:
         normalize_optimize_input_paths(inputs)
         display_settings = resolve_optimize_display_settings(
             input_values=inputs,
-            resolution=state.resolution,
-            two_screen=state.two_screen,
-            l_display=state.l_display,
-            r_display=state.r_display,
+            canvas_scale_percent=state.canvas_scale_percent,
         )
         w, h = parse_resolution(display_settings.resolution)
         margins = self._parse_margins(state.margins)

@@ -74,10 +74,7 @@ def test_resolve_optimize_display_settings_keeps_display_resolution_unscaled(mon
 
     resolved = resolve_optimize_display_settings(
         input_values=["left.jpg", "right.jpg"],
-        resolution="auto",
-        two_screen=None,
-        l_display="auto",
-        r_display="auto",
+        canvas_scale_percent=100,
     )
 
     assert resolved.resolution == "3200x1080"

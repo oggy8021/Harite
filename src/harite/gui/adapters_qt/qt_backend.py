@@ -384,14 +384,6 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
     # Settings dialog helpers (delegate to framework-neutral free functions)
     # ------------------------------------------------------------------
 
-    def _set_settings_two_screen_mode(self, value: object) -> None:
-        from harite.gui.adapters.gui_runtime_settings_dialogs import set_settings_two_screen_mode
-        set_settings_two_screen_mode(self, value)
-
-    def _read_settings_two_screen_mode(self) -> str | bool:
-        from harite.gui.adapters.gui_runtime_settings_dialogs import read_settings_two_screen_mode
-        return read_settings_two_screen_mode(self)
-
     def _set_settings_apply_mode(self, value: object | None) -> None:
         from harite.gui.adapters.gui_runtime_settings_dialogs import set_settings_apply_mode
         set_settings_apply_mode(self, value)

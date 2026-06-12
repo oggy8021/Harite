@@ -42,16 +42,11 @@ def test_settings_dialog_required_widgets(qapp):
         "prefs_cancel_btn",
         "prefs_state_label",
         "prefs_notice_label",
-        "prefs_resolution_entry",
+        "prefs_canvas_scale_spin",
         "prefs_scaling_entry",
         "prefs_plugin_entry",
         "prefs_apply_single",
         "prefs_apply_per_monitor",
-        "prefs_two_screen_auto",
-        "prefs_two_screen_on",
-        "prefs_two_screen_off",
-        "prefs_l_display_entry",
-        "prefs_r_display_entry",
         "prefs_margins_entry",
         "prefs_align_entry",
         "prefs_valign_entry",
@@ -73,7 +68,7 @@ def test_settings_dialog_initial_state(qapp):
 
     assert w["prefs_apply_single"].isChecked()
     assert not w["prefs_apply_per_monitor"].isChecked()
-    assert w["prefs_two_screen_off"].isChecked()
+    assert w["prefs_canvas_scale_spin"].value() == 100
     assert w["prefs_quality_spin"].value() == 90
     assert w["prefs_margin_text_max_lines_spin"].value() == 3
     assert w["prefs_state_label"].text() == "Settings: current values"
@@ -112,14 +107,13 @@ def test_settings_dialog_windows_span_row_only_on_windows_host(qapp, monkeypatch
     assert w_win["prefs_windows_apply_span"].parent() is not None
 
 
-def test_settings_dialog_two_screen_is_mutually_exclusive(qapp):
+def test_settings_dialog_canvas_scale_within_bounds(qapp):
     from harite.gui.adapters_qt.qt_dialogs import build_settings_dialog
 
     w = build_settings_dialog()
 
-    w["prefs_two_screen_auto"].setChecked(True)
-    assert w["prefs_two_screen_auto"].isChecked()
-    assert not w["prefs_two_screen_off"].isChecked()
+    w["prefs_canvas_scale_spin"].setValue(50)
+    assert w["prefs_canvas_scale_spin"].value() == 50
 
 
 def test_settings_dialog_proxy_get_set_settings(qapp):

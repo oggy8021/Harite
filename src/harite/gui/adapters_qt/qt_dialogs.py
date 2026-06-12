@@ -114,7 +114,12 @@ def build_settings_dialog(parent: Any = None) -> dict[str, Any]:
             row_layout.addWidget(w, stretch=1)
         editor_layout.addWidget(row)
 
-    prefs_resolution_entry = QLineEdit()
+    prefs_canvas_scale_spin = QSpinBox()
+    prefs_canvas_scale_spin.setMinimum(1)
+    prefs_canvas_scale_spin.setMaximum(100)
+    prefs_canvas_scale_spin.setSingleStep(5)
+    prefs_canvas_scale_spin.setValue(100)
+    prefs_canvas_scale_spin.setSuffix(" %")
     prefs_scaling_entry = QLineEdit()
     prefs_plugin_entry = QLineEdit()
 
@@ -131,7 +136,7 @@ def build_settings_dialog(parent: Any = None) -> dict[str, Any]:
     apply_mode_layout.addWidget(prefs_apply_per_monitor)
     apply_mode_layout.addStretch()
 
-    _add_row("Resolution", prefs_resolution_entry)
+    _add_row("Canvas scale", prefs_canvas_scale_spin)
     _add_row("Scaling", prefs_scaling_entry)
     _add_row("Plugin", prefs_plugin_entry)
     _add_row("Apply", apply_mode_shell)
@@ -166,19 +171,6 @@ def build_settings_dialog(parent: Any = None) -> dict[str, Any]:
     editor_layout.addStretch()
 
     # -- hidden extra widgets (registered for signal wiring, not visible) --
-    prefs_two_screen_auto = QRadioButton("TwoScreen Auto")
-    prefs_two_screen_on = QRadioButton("TwoScreen On")
-    prefs_two_screen_off = QRadioButton("TwoScreen Off")
-    prefs_two_screen_off.setChecked(True)
-    two_screen_group = QButtonGroup(prefs_window)
-    two_screen_group.addButton(prefs_two_screen_auto)
-    two_screen_group.addButton(prefs_two_screen_on)
-    two_screen_group.addButton(prefs_two_screen_off)
-    for w in (prefs_two_screen_auto, prefs_two_screen_on, prefs_two_screen_off):
-        w.setVisible(False)
-
-    prefs_l_display_entry = QLineEdit()
-    prefs_r_display_entry = QLineEdit()
     prefs_margins_entry = QLineEdit()
     prefs_align_entry = QLineEdit()
     prefs_valign_entry = QLineEdit()
@@ -187,8 +179,6 @@ def build_settings_dialog(parent: Any = None) -> dict[str, Any]:
     prefs_margin_text_position_entry = QLineEdit()
 
     for w in (
-        prefs_l_display_entry,
-        prefs_r_display_entry,
         prefs_margins_entry,
         prefs_align_entry,
         prefs_valign_entry,
@@ -228,13 +218,8 @@ def build_settings_dialog(parent: Any = None) -> dict[str, Any]:
         "prefs_editor_box": prefs_editor_box,
         "prefs_header_row": header_row,
         "prefs_editor_title": prefs_editor_title,
-        "prefs_resolution_entry": prefs_resolution_entry,
+        "prefs_canvas_scale_spin": prefs_canvas_scale_spin,
         "prefs_scaling_entry": prefs_scaling_entry,
-        "prefs_two_screen_auto": prefs_two_screen_auto,
-        "prefs_two_screen_on": prefs_two_screen_on,
-        "prefs_two_screen_off": prefs_two_screen_off,
-        "prefs_l_display_entry": prefs_l_display_entry,
-        "prefs_r_display_entry": prefs_r_display_entry,
         "prefs_margins_entry": prefs_margins_entry,
         "prefs_align_entry": prefs_align_entry,
         "prefs_valign_entry": prefs_valign_entry,

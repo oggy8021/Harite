@@ -124,7 +124,7 @@ def test_build_embed_lines_without_datetime():
     )
     joined = "\n".join(lines)
     assert "res=1920x1080" in joined
-    assert "two_screen=1" in joined
+    assert "two_screen=1" not in joined
     assert "hello" in joined
     assert "pad=" not in joined
     assert "datetime" not in joined

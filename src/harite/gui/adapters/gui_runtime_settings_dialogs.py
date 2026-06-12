@@ -3,26 +3,9 @@ from __future__ import annotations
 from typing import Any
 
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, is_background_color_literal, normalize_background_color
-from harite.optimize_settings import AUTO
+from harite.optimize_settings import normalize_canvas_scale_percent
 from harite.positioning import format_position_pair, parse_position_pair
 from harite.settings_file import resolve_default_settings_path
-
-
-def set_settings_two_screen_mode(backend: Any, value: object) -> None:
-    raw = str(value).strip().lower() if value is not None else "off"
-    is_auto = raw == "auto"
-    is_on = raw in {"on", "true", "1"} or value is True
-    backend._set_toggle_active("radSettingsTwoScreenAuto", is_auto)
-    backend._set_toggle_active("radSettingsTwoScreenOn", is_on and not is_auto)
-    backend._set_toggle_active("radSettingsTwoScreenOff", not is_auto and not is_on)
-
-
-def read_settings_two_screen_mode(backend: Any) -> str | bool:
-    if backend._is_toggle_active("radSettingsTwoScreenAuto"):
-        return "auto"
-    if backend._is_toggle_active("radSettingsTwoScreenOn"):
-        return True
-    return False
 
 
 def set_settings_apply_mode(backend: Any, value: object | None) -> None:
@@ -103,14 +86,13 @@ def sync_settings_widgets_from_dialog(backend: Any) -> dict[str, object]:
     if dialog is None:
         return {}
     settings = _dialog_get_settings(dialog)
-    resolution = settings.get("resolution")
-    backend._set_entry_text("entSettingsResolution", "" if resolution in {None, AUTO} else resolution)
+    raw_scale = settings.get("canvas_scale_percent", settings.get("canvas_scale", 100))
+    try:
+        canvas_scale = normalize_canvas_scale_percent(raw_scale)
+    except ValueError:
+        canvas_scale = 100
+    backend._set_spin_value("spnSettingsCanvasScale", canvas_scale)
     backend._set_entry_text("entSettingsScaling", settings.get("scaling", "fit"))
-    set_settings_two_screen_mode(backend, settings.get("two_screen", False))
-    l_display = settings.get("l_display")
-    r_display = settings.get("r_display")
-    backend._set_entry_text("entSettingsLDisplay", "" if l_display in {None, AUTO} else l_display)
-    backend._set_entry_text("entSettingsRDisplay", "" if r_display in {None, AUTO} else r_display)
     backend._set_entry_text("entSettingsMargins", settings.get("margins"))
     backend._set_entry_text("entSettingsAlign", format_position_pair(settings.get("align", "center"), axis="align"))
     backend._set_entry_text("entSettingsValign", format_position_pair(settings.get("valign", "center"), axis="valign"))
@@ -158,7 +140,7 @@ def sync_settings_dialog_from_widgets(backend: Any) -> dict[str, object]:
     settings.update(
         {
             "scaling": backend._read_entry_text("entSettingsScaling") or "fit",
-            "two_screen": read_settings_two_screen_mode(backend),
+            "canvas_scale_percent": backend._read_spin_int("spnSettingsCanvasScale"),
             "margins": _empty_to_none(backend._read_entry_text("entSettingsMargins")),
             "align": list(parse_position_pair(backend._read_entry_text("entSettingsAlign") or "center", axis="align")),
             "valign": list(parse_position_pair(backend._read_entry_text("entSettingsValign") or "center", axis="valign")),
@@ -173,21 +155,12 @@ def sync_settings_dialog_from_widgets(backend: Any) -> dict[str, object]:
         }
     )
 
-    resolution = _empty_to_none(backend._read_entry_text("entSettingsResolution"))
-    l_display = _empty_to_none(backend._read_entry_text("entSettingsLDisplay"))
-    r_display = _empty_to_none(backend._read_entry_text("entSettingsRDisplay"))
-    if resolution is None:
-        settings.pop("resolution", None)
-    else:
-        settings["resolution"] = resolution
-    if l_display is None:
-        settings.pop("l_display", None)
-    else:
-        settings["l_display"] = l_display
-    if r_display is None:
-        settings.pop("r_display", None)
-    else:
-        settings["r_display"] = r_display
+    try:
+        settings["canvas_scale_percent"] = normalize_canvas_scale_percent(
+            backend._read_spin_int("spnSettingsCanvasScale")
+        )
+    except ValueError as exc:
+        raise ValueError(str(exc)) from exc
     if dialog is not None:
         _dialog_set_settings(dialog, settings)
     return settings

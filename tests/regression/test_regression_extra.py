@@ -29,7 +29,7 @@ def test_multi_input_without_two_screen_raises(tmp_path):
     out_dir = tmp_path / "out"
     out_dir.mkdir()
 
-    with pytest.raises(ValueError, match="two-screen mode"):
+    with pytest.raises(ValueError, match="two detected displays|Dual input"):
         optimize_wallpapers(
             inputs=[str(a), str(b), str(c)],
             target_resolution=(3000, 1000),

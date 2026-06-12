@@ -61,7 +61,10 @@ def test_single_display_margin_embed_settings_left_bottom(tmp_path: Path, qapp, 
     )
     connect_signal_dispatch(backend, dispatch)
 
-    window.form_state.resolution = "2048x1280"
+    monkeypatch.setattr(
+        "harite.workspace.detect_displays",
+        lambda: [__import__("harite.workspace", fromlist=["Display"]).Display(name="", width=2048, height=1280, x_offset=0)],
+    )
     window.form_state.output_dir = str(tmp_path / "out")
     window.input_path_l = str(input_image)
     window._apply_input_paths()
