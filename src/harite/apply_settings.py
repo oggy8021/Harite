@@ -33,14 +33,14 @@ def resolve_apply_settings(
 
     if mode == "per-monitor-explicit":
         if len(ordered_displays) < 2:
-            raise ValueError("Need at least two displays to use --left-file/--right-file")
+            raise ValueError("Need at least two displays for per-monitor-explicit apply")
         mapping = {}
         if left_file is not None:
             mapping[ordered_displays[0].name] = str(left_file)
         if right_file is not None:
             mapping[ordered_displays[1].name] = str(right_file)
         if not mapping:
-            raise ValueError("--per-monitor requires --left-file/--right-file or --auto-split")
+            raise ValueError("per-monitor-explicit apply requires left and right files")
         return EffectiveApplySettings(apply_mode=mode, target=mapping)
 
     if mode == "per-monitor-auto-split":
