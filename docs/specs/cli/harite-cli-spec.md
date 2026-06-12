@@ -1,6 +1,6 @@
 # Harite CLI 仕様 (CLI Spec)
 
-最終更新: 2026-06-12（MAT-21 dual 入力規則）
+最終更新: 2026-06-12（MAT-21b canvas_scale_percent・四重露出撤去）
 
 ## 1. CLI の責務
 
@@ -95,13 +95,12 @@ sequenceDiagram
 - `embed_position` が未指定のときの既定値は `right-bottom` である。
 - この 4 値制約は CLI 引数だけでなく `--settings-file` から読んだ値にも同じように適用する。4 値以外は不正として扱う。
 
-display / two-screen 解決:
+display / canvas 解決（MAT-21b）:
 
-- **入力 2 枚（MAT-21）:** dual 必須。`--no-two-screen` または settings の `two_screen: false` は **終了コード `2`**（半分キャンバス廃止）。
-- **2 枚 + 自動判定 + 検出 display `< 2`:** **終了コード `2`**（`DUAL_INPUT_REQUIRES_TWO_DISPLAYS`）。メッセージは [core-spec §3.1](../core/harite-core-spec.md#31-表示コンテキスト解決の現行規則) の規範文言。
-- **入力 1 枚:** 従来どおり。`two_screen` 未指定時は single。検出 1 台から `resolution` を補完しうる。
-- `resolution`, `l_display`, `r_display` は CLI 引数 > 設定ファイル値 > two-screen 用表示情報から導いた自動値 の順で解決する（**四重露出の格下げは別フェーズ**）。
-- `--l-display` / `--r-display` は個別指定できるが、未指定時は two-screen 用表示情報から導いた display size を使う。
+- **入力 2 枚:** dual 必須。検出 display `< 2` は **終了コード `2`**（`DUAL_INPUT_REQUIRES_TWO_DISPLAYS`）。メッセージは [core-spec §3.1](../core/harite-core-spec.md#31-表示コンテキスト解決の現行規則) の規範文言。
+- **入力 1 枚:** single。検出 1 台から virtual desktop 寸法を導き合成キャンバスを確定する。検出 0 台は **終了コード `2`**。
+- **`--canvas-scale`:** 検出 desktop に対する合成キャンバス縮小率（1–100、既定 100）。CLI 明示 > settings `canvas_scale_percent` > 既定 100。
+- **廃止（v2.0.0 / MAT-21b）:** `--resolution` / `-r`、`--two-screen` / `--no-two-screen`、`--l-display`、`--r-display`。settings の同名キーも読み捨て。
 - `--margins` は `left,right,top,bottom` の 4 要素文字列（ピクセル）として解釈し、省略時は `(0, 0, 0, 0)` を使う。
 
 margins / align / valign の関係（[core-spec §4.1](../core/harite-core-spec.md#41-placement-計算の現行規則) と同型）:
@@ -110,17 +109,16 @@ margins / align / valign の関係（[core-spec §4.1](../core/harite-core-spec.
 - `align` / `valign` は各 display **スロット全面**（`screen_w × screen_h`）の余白で寄せる。margins の内側セルへ align しない。
 - paste 座標に margins の `+= ml` オフセットは **付けない**。したがって help で「margins の内側で align が効く」と読んではいけない。
 
-two-screen / resolution / display override（現行）:
+canvas scale（現行）:
 
-- 未指定時は `resolve_optimize_display_settings(...)` が workspace 検出と入力枚数から解決する（詳細は core-spec §3.1）。
-- `--two-screen` / `--no-two-screen` は settings / auto より CLI 明示で上書きする。**2 枚入力時は `--no-two-screen` 不可**。
-- `resolution` / `l_display` / `r_display` / `two_screen` の CLI 露出整理（四重露出）は **MAT-21 後半** とする。方針は [two-screen 整理メモ §6](../../working/20260611-two-screen-display-params-clarification.md#6-将来整理の方向オーナー判断確定-2026-06-12)（全面撤去・上級 override 格下げ・`resolution` 名称/`xx%` 案）。本節では現行挙動のみ固定する。
+- 未指定時は `resolve_optimize_display_settings(...)` が workspace 検出・入力枚数・`canvas_scale_percent` から合成キャンバスを解決する（詳細は core-spec §3.1）。
+- 方針の正本: [two-screen 整理メモ §6](../../working/20260611-two-screen-display-params-clarification.md#6-将来整理の方向オーナー判断確定-2026-06-12)。
 
 主な失敗条件:
 
 - 設定ファイル読み込み失敗
 - 画像入力不正
-- resolution / display 条件不正
+- display 未検出 / dual 入力に対する display 不足 / `canvas_scale_percent` 不正
 - background color や embed 系 option 不正
 
 ### 4.1 `Placement:` 出力
@@ -151,7 +149,7 @@ Embed position overlaps pasted image. Choose another embed_position (left-top, l
 
 ### 短縮形オプション
 
-- `optimize` で使える短縮形: `--input` / `-i`、`--output` / `-o`、`--settings-file` / `-c`、`--resolution` / `-r`
+- `optimize` で使える短縮形: `--input` / `-i`、`--output` / `-o`、`--settings-file` / `-c`
 
 ### 主な option の既定値
 
@@ -213,7 +211,7 @@ apply mode の決定順:
 
 - CLI は settings の **srcdir パス** を `--input` の代替として使う。`slideshow_source_id_*` / `slideshow_profile_id` は **catalog 解決しない**（GUI が保存した `slideshow_srcdir_*` が空のときは CLI 単独では開始できない）。
 - **毎 cycle** で GUI と同型の `run_slideshow_optimize` を通す。settings の取り込みは次のとおり（[core-spec §6.3](../core/harite-core-spec.md) と同型）:
-  - **optimize 面から:** `resolution`, `two_screen`, `l_display`, `r_display`, `margins`, `align`, `valign`, `quality`, `background_color`, `embed_*` 等（**手動 `l/r_display_scale` は slideshow 経路では使わない**）
+  - **optimize 面から:** `canvas_scale_percent`, `margins`, `align`, `valign`, `quality`, `background_color`, `embed_*` 等（**手動 `l/r_display_scale` は slideshow 経路では使わない**）
   - **slideshow 面から:** `slideshow_l_auto_display_scale`, `slideshow_r_auto_display_scale`（MAT-14b auto。**optimize 面の `l_auto_display_scale` は slideshow 経路では使わない**）
   - **apply 面から:** `apply_mode`, `plugin`, `windows_apply_span`
 - **single**（1 directory）: 選択 1 枚 → `harite_slideshow.jpg` → plugin apply。
