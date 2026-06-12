@@ -1,6 +1,6 @@
 # Harite コア仕様 (Core Spec)
 
-最終更新: 2026-06-12
+最終更新: 2026-06-12（MAT-21b 四重露出撤去・canvas_scale_percent）
 
 ## 1. コア (core) の責務
 
@@ -27,7 +27,7 @@ core が直接の主責務としないもの:
 ## 2. データモデル
 
 - optimize 入力は 1 件または 2 件の画像パスである。
-- 画面条件は `resolution`, `two_screen`, `l_display`, `r_display` などで表現する。
+- public surface の画面条件は **`canvas_scale_percent`（1–100、既定 100）** のみ。合成キャンバス寸法 `resolution` と左右 display `l_display` / `r_display`、内部 `two_screen` は `resolve_optimize_display_settings(...)` が検出 display と入力枚数から導出する（CLI/GUI/settings/embed には露出しない）。
 - 設定は最適化設定モデル、適用設定モデル、スライドショー設定モデル、アプリ設定モデルとして論理分割される。
 
 主要モデルの整理:
@@ -76,15 +76,13 @@ two-screen 文脈で重要な点:
 - `build_two_screen_optimize_context(...)` は display が 2 件未満なら `None` を返す。2 件以上ある場合だけ、ordered 先頭 2 件から `l_display = (left.width, left.height)`, `r_display = (right.width, right.height)` を作る。
 - `resolve_optimize_display_settings(...)` は、空文字を除いた入力列の件数が 2 件以上のときだけ two-screen context 取得を試みる。入力が 1 件しかない場合、display 自動解決は行わない。
 - CLI / GUI の public surface では、optimize 入力が 3 件以上与えられても先頭 2 件だけを採用する。two-screen 文脈の left / right 割当は、この採用済み先頭 2 件の順序で決まる。
-- **入力 2 件（MAT-21）:** `two_screen` は **常に True** とする。半分キャンバス（`two_screen=OFF` + 2 枚）の第3経路は **廃止**。
-- **2 枚 + `two_screen` 明示 OFF**（`--no-two-screen` / settings `two_screen: false`）→ `ValueError`（`DUAL_INPUT_REQUIRES_TWO_SCREEN`）。
-- **2 枚 + 自動判定 + 検出 display `< 2`** → `ValueError`（`DUAL_INPUT_REQUIRES_TWO_DISPLAYS`）。1 枚目だけ適用するフォールバックは行わない。
-- **上級 override（四重露出整理前の暫定）:** 検出 `< 2` でも、`two_screen=True` かつ **明示 `resolution`** があれば dual として通す（`l_display` / `r_display` は任意）。CLI/GUI のフラグ露出整理は別フェーズ。
-- **MAT-21 後半（設計方針・未実装）:** [two-screen 整理メモ §6](../../working/20260611-two-screen-display-params-clarification.md#6-将来整理の方向オーナー判断確定-2026-06-12) — 画像:ディスプレイ＝1:1、`two_screen` は UI/CLI/設定/embed から全面撤去、`l/r-display` は上級 override または廃止、`resolution` は合成キャンバスとして名称是正（`xx%` 指定案あり）。
-- **入力 1 件:** 従来どおり。`two_screen` 未指定なら `effective_two_screen=False`。単一 display から `resolution` を自動補完しうる。
-- `resolution`, `l_display`, `r_display` は、値が `None` または `auto` のときだけ未確定扱いとなる。context が得られていて dual の場合に限って、`resolution` / `l_display` / `r_display` を自動補完する。
-- `resolution` が最後まで確定しなければ入力不正として止める。
-- `resolve_optimize_display_settings` は解像度文字列の `WxH` フォーマット自体を検証しない。`WxH` 形式の検証は CLI の `parse_resolution`、GUI の独自解析など呼び出し側レイヤーの責務である。
+- **入力 2 件（MAT-21）:** 内部 `two_screen` は **常に True**。半分キャンバス第3経路は **廃止**（前半）。
+- **2 枚 + 検出 display `< 2`** → `ValueError`（`DUAL_INPUT_REQUIRES_TWO_DISPLAYS`）。1 枚目だけ適用するフォールバックは行わない。
+- **入力 1 件:** 内部 `effective_two_screen=False`。検出 1 台から virtual desktop 寸法を導き `resolution` を自動補完する。
+- **`canvas_scale_percent`（MAT-21b）:** 検出 virtual desktop（dual 時は先頭 2 台の union、single 時は primary 1 台）の幅・高さに対し、それぞれ `round(dim * percent / 100)`（最小 1px）で合成キャンバス `resolution` を縮小する。public surface では CLI `--canvas-scale`、settings `canvas_scale_percent`、GUI Settings の Canvas scale % spin のみ。`WxH` 文字列の手動指定は **廃止**。
+- **四重露出撤去（MAT-21b）:** `two_screen`, `resolution`, `l_display`, `r_display` は CLI 引数・settings キー・GUI form state・embed params 行から **削除**。旧 JSON に残っていても **読み捨て**（サイレント）。手動 l/r override は **廃止**。
+- `resolve_optimize_display_settings(...)` の返却 `EffectiveOptimizeDisplaySettings` は内部計算用に `resolution`, `two_screen`, `l_display`, `r_display`, `canvas_scale_percent` を持つ。`resolution` が最後まで確定しなければ入力不正として止める。
+- 設計の正本: [two-screen 整理メモ §6](../../working/20260611-two-screen-display-params-clarification.md#6-将来整理の方向オーナー判断確定-2026-06-12)。
 - `normalize_optimize_input_paths` はディレクトリパスを `ValueError` で拒否するが、存在しないファイルや非画像ファイルは検証しない。これらは `optimize_wallpapers` 処理中に黙ってスキップされる。
 
 ### 3.2 `display_context.py` ヘルパー関数
@@ -201,7 +199,7 @@ flowchart TD
 
 - `embed_info=none` では情報行は空である。
 - `embed_info=params|combo` では、1 行目に `res={w_target}x{h_target} margins={ml},{mr},{mt},{mb}`、2 行目に `align={align}/{valign} inputs={input_count}` を入れる。
-- `two_screen=True` かつ `l_display`, `r_display` がある場合は、追加行として `two_screen=1 l={left_w}x{left_h} r={right_w}x{right_h}` を入れる。display 情報が欠ける場合は `two_screen=1` だけを入れる。
+- dual 時の `two_screen=1` / `l=` / `r=` 行は **MAT-21b で廃止**。params 行は `res=...` と `align=.../inputs=...` の 2 行のみ（free text は従来どおり後続）。
 - `embed_info=free|combo` では `embed_text` を改行単位で split し、各行を trim したうえで空行を捨てる。
 - 最終的な embed 行列は、params 系行の後ろに free text 行を連結した順序で構成する。
 
@@ -302,7 +300,7 @@ Windows の補足:
 
 ### 6.3 論理グループ
 
-- optimize 面: `resolution`, `two_screen`, `l_display`, `r_display`, `l_display_scale`, `r_display_scale`, `l_auto_display_scale`, `r_auto_display_scale`, `margins`, `align`, `valign`, `scaling`, `quality`, `background_color`, `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`
+- optimize 面: `canvas_scale_percent`, `l_display_scale`, `r_display_scale`, `l_auto_display_scale`, `r_auto_display_scale`, `margins`, `align`, `valign`, `scaling`, `quality`, `background_color`, `embed_info`, `embed_text`, `embed_position`, `embed_max_lines`（**`resolution` / `two_screen` / `l_display` / `r_display` は MAT-21b で settings から削除。旧キーは読み捨て**）
 - apply 面: `plugin`, `apply_mode`
 - スライドショー面: `slideshow_interval_seconds`, `slideshow_mode`, `slideshow_srcdir_l`, `slideshow_srcdir_r`, `slideshow_l_auto_display_scale`, `slideshow_r_auto_display_scale`
 - スライドショー registry 追跡（任意）: `slideshow_source_id_l`, `slideshow_source_id_r`, `slideshow_profile_id` — [source-spec §6.4](../source/harite-source-spec.md)
@@ -321,7 +319,7 @@ Windows の補足:
 主要 key の意味:
 
 - `scaling` キーは設定ファイルに保存・復元されるが、optimize 計算に影響しない。optimize の拡大縮小は内部で常に fit 相当（`_scale_to_fit`）を使用する。
-- `two_screen` は単なる bool ではなく `auto` を取りうる。
+- `canvas_scale_percent` の既定は `100`。`100` のとき settings 保存ではキーを省略してよい（GUI 実装どおり）。
 - `align` と `valign` は論理上 pair だが、保存時には list 表現になる。
 - `plugin` は platform 既定値を持つが、設定ファイルで上書きできる。
 - `apply_mode` は desktop session により既定値が変わりうる。

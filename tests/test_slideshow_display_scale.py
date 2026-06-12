@@ -21,7 +21,6 @@ def test_slideshow_optimize_state_uses_slideshow_auto_not_main_manual(tmp_path):
 
     base = OptimizeFormState(
         input_value=str(img),
-        resolution="1024x768",
         output_dir=str(out_dir),
         l_display_scale=2.0,
         r_display_scale=2.0,

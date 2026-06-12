@@ -11,7 +11,7 @@ from harite.slideshow_optimize import (
 )
 def test_build_slideshow_optimize_config_reads_optimize_keys() -> None:
     cfg = {
-        "resolution": "2560x1440",
+        "canvas_scale_percent": 80,
         "margins": "10,0,10,0",
         "align": ["left", "right"],
         "slideshow_interval_seconds": 90,
@@ -19,7 +19,7 @@ def test_build_slideshow_optimize_config_reads_optimize_keys() -> None:
     }
     config = build_slideshow_optimize_config(cfg, default_plugin="linux")
 
-    assert config.base_form_state.resolution == "2560x1440"
+    assert config.base_form_state.canvas_scale_percent == 80
     assert config.base_form_state.margins == "10,0,10,0"
     assert config.base_form_state.align == ("left", "right")
     assert config.apply_mode in {"single-file", "per-monitor-auto-split"}
@@ -64,13 +64,10 @@ def test_apply_slideshow_single_source_runs_optimize_and_apply(tmp_path, monkeyp
     config = type(config)(
         base_form_state=type(config.base_form_state)(
             input_value="",
-            resolution=config.base_form_state.resolution,
             output_dir=str(work_dir),
+            canvas_scale_percent=config.base_form_state.canvas_scale_percent,
             scaling=config.base_form_state.scaling,
-            two_screen=config.base_form_state.two_screen,
             margins=config.base_form_state.margins,
-            l_display=config.base_form_state.l_display,
-            r_display=config.base_form_state.r_display,
             l_display_scale=config.base_form_state.l_display_scale,
             r_display_scale=config.base_form_state.r_display_scale,
             align=config.base_form_state.align,

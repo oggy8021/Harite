@@ -5,7 +5,7 @@
 文脈: v2.0.0 前の整理ブランチ（`docs/pre-bump-v2.0.0-planning`）上で、CLI 総点検中にオーナー（原作者）と整理した内容。  
 正本: [harite-core-spec.md §3](../specs/core/harite-core-spec.md#3-入力解決と表示コンテキスト)、[harite-cli-spec.md §4](../specs/cli/harite-cli-spec.md)
 
-**ステータス:** §6 オーナー判断は **確定**（2026-06-12）。**MAT-21 前半**（2枚＝dual 必須・半分キャンバス廃止）は実装済み。**MAT-21 後半**（四重露出の撤去・名称是正）は §6 に従い spec 改定 → 実装へ。
+**ステータス:** §6 オーナー判断は **確定**（2026-06-12）。**MAT-21 前半**（2枚＝dual 必須・半分キャンバス廃止）は実装済み。**MAT-21 後半**（四重露出撤去・`canvas_scale_percent` 導入）は **実装済み**（`feature/mat-21b-surface-removal-20260612`、spec 改定同梱）。§6.5 embed 略称正規化は別フェーズ。
 
 ---
 
@@ -216,7 +216,7 @@ Harite は再実装時に内部で必要だった分解を、そのまま設定�
 | フェーズ | 内容 | 状態 |
 | --- | --- | --- |
 | **前半** | 2枚＝dual 必須、半分キャンバス廃止、2枚+検出1台→エラー | **実装済み**（`optimize_settings`, `core`, spec §3.1, tests） |
-| **後半** | §6.2–6.4: 四重露出撤去、Settings TwoScreen Off 廃止、`xx%` spec、用語是正 | **未着手**（v2.0.0 同梱想定） |
+| **後半** | §6.2–6.4: 四重露出撤去、Settings TwoScreen Off 廃止、`canvas_scale_percent`（`xx%`）、用語是正 | **実装済み**（v2.0.0 同梱想定） |
 | **別フェーズ** | §6.5: embed / Placement 略称正規化（`posit` 等） | **未着手**（MAT-20 後半連動可） |
 
 **横断着手の入口:** [20260611-1200-cli-v2-roadmap.md](20260611-1200-cli-v2-roadmap.md)（MAT-21）。
@@ -231,9 +231,9 @@ Harite は再実装時に内部で必要だった分解を、そのまま設定�
 | two-screen context | `src/harite/display_context.py` — `build_two_screen_optimize_context` |
 | 検出 | `src/harite/workspace.py` — `detect_displays` |
 | スロット分割 | `src/harite/core.py` — `_resolve_display_slots` |
-| CLI 入口 | `src/harite/cli.py` — `optimize` の `--two-screen`, `--l-display`, `--r-display`, `--resolution` |
-| GUI 自動同期 | `src/harite/gui/views/main_window.py` — `_sync_two_screen_state` |
-| Settings 三値 | `src/harite/settings.py` — `two_screen_mode`（auto/on/off） |
+| CLI 入口 | `src/harite/cli.py` — `optimize` の `--canvas-scale` |
+| GUI 同期 | `src/harite/gui/views/main_window.py` — `_sync_input_geometry`, `_resolved_display_settings` |
+| Settings | `src/harite/settings.py` — `OptimizeSettings.canvas_scale_percent` |
 
 ---
 
@@ -246,4 +246,5 @@ Harite は再実装時に内部で必要だった分解を、そのまま設定�
 | 2026-06-11 | 親 roadmap リンク — MAT-21 設計入力として従属化 |
 | 2026-06-12 | §6 オーナー判断確定（1:1 原則、two_screen 露出撤去、l/r 格下げ/廃止検討、resolution 名称・xx% 案） |
 | 2026-06-12 | ステータス更新 — MAT-21 前半実装済み、後半は §6 に従う |
+| 2026-06-12 | MAT-21 後半実装 — 四重露出撤去、`canvas_scale_percent`、spec 改定 |
 | 2026-06-12 | §6.1 最大2台、§6.4 非対称デュアル・margins・virtual %・split_x 整理、§6.5 embed 略称正規化（別フェーズ） |

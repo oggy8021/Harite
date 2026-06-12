@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-09
+最終更新: 2026-06-12（MAT-21b Canvas scale %）
 
 ## 1. GUI の責務
 
@@ -201,7 +201,7 @@ Dialogs:
 - settings dialog は単一の縦積み editor box を持ち、上から `header row`、`settings rows`、`actions row`、`notice separator`、`state/notice` を並べる。
 - settings dialog の header row は左に title、右に `Save Settings` を置く。
 - settings dialog の `Save Settings` は設定ファイル保存を指し、main window の `Export Image` や image export dialog とは別の保存面である。
-- settings dialog の現行 runtime 実装で常設 row として露出するのは `Resolution`、`Scaling`、`Plugin`、`Apply` である。
+- settings dialog の現行 runtime 実装で常設 row として露出するのは `Canvas scale`（% spin、1–100、既定 100）、`Scaling`、`Plugin`、`Apply` である。`Resolution` / `TwoScreen` / L-R display override row は **MAT-21b で廃止**。
 - settings dialog の `Apply` row は radio を横並びに持つが、main tab の apply mode help label に相当する補助説明 row は持たない。
 - settings dialog は下段に `Settings: current values` を起点とする state label と notice label を持つ。
 - optimize 結果画像の書き出しには別の image export dialog を使い、user-facing surface は dialog title に `Export Image`、状態表示に `Export path`、選択結果表示に `Export target` を使う。
@@ -410,7 +410,7 @@ GTK / Qt は `harite.gui.dual_display_ui` 経由で同一 widget 名を同期す
 
 設定 dialog の責務:
 
-- dialog を開く時点で form state を取り込み、必要なら two-screen 状態を同期する。
+- dialog を開く時点で form state（`canvas_scale_percent` 含む）を取り込む。入力枚数変更時は `_sync_input_geometry()` が display 検出と optimize 可否を再評価する（two-screen トグルは廃止）。
 - apply ではアプリ設定モデルを GUI state に展開し、optimize / apply / slideshow の各状態へ反映する。
 - save では現在の GUI state をアプリ設定モデルへ戻して JSON payload を作り、指定 path または既定 path へ保存する。
 - load では指定 path の JSON を読み込み、設定ファイルからアプリ設定モデルへ変換したうえで GUI state に反映する。
@@ -578,7 +578,7 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 - `slideshow_interval_seconds` をスライドショー実行中に変更した場合、モデル値のみが更新される。runtime timer（GTK / Qt）は再起動されず、新しいインターバルは次回の start 以降で有効になる（§6.2）。
 - `_apply_slideshow_selection` で L・R 両方の選択画像が `"-"`（選択なしセンチネル）の場合、apply を行わず `(True, None)` を返す（成功扱いだが壁紙は変更されない）。
 - `on_slideshow_tick()` を `slideshow_running=False` の状態で呼んだ場合、`False` を返してログのみ出力する。スライドショーの進行は行わない。
-- `on_settings_dialog_open` は L・R 両方の input path が設定されている場合のみ two-screen 設定を同期する。片側のみの場合は two-screen 同期をスキップする。
+- `on_settings_dialog_open` は settings dialog を開く。dual 入力時の display 解決は `resolve_optimize_display_settings` に委譲し、form state に `resolution` / `two_screen` / `l_display` / `r_display` は保持しない。
 
 ## 7. tray / indicator / app icon surface
 
@@ -692,7 +692,7 @@ preview 補助計算の現行規則:
 - preview widget の目標サイズは container 幅から計算し、`target_width = max(120, min(320, int((allocated_width - 6) * 0.48)))`, `target_height = max(68, round(target_width * 9 / 16))` で決める。container 幅が取れない場合は `160x90` を使う。
 - auto-split preview の crop box は、保存済み合成画像の幅 `comp_width` に対して `split_x = round((left_width / (left_width + right_width)) * comp_width)` で左右分割する。`comp_width > 1` のときは `split_x` を `1..comp_width-1` に clamp する。
 - 左 preview box は `(0, 0, split_x, comp_height)`、右 preview box は `(split_x, 0, comp_width - split_x, comp_height)` であり、現行 GUI preview も y 方向は分割せず full-height の縦スライスを使う。
-- `build_result_preview_state(...)` では、まず form state の `l_display`, `r_display` を読み、その後 `resolve_optimize_display_settings(...)` が成功した場合だけ、そこから得た display size で上書きする。したがって GUI preview の左右 display 情報は core と同じ display 解決結果へ寄せられる。
+- `build_result_preview_state(...)` は `resolve_optimize_display_settings(...)` の結果から `l_display` / `r_display` / `resolution` を読み、GUI preview の左右 display 情報を core と同じ display 解決結果へ寄せる。
 - preview assignment 表示のファイル名は、basename が 36 文字を超える場合だけ `head + "..." + tail` へ切り詰める。既定では末尾 12 文字を残し、head 側は `36 - 12 - 3` 文字を使う。
 
 margin text preflight の現行規則:

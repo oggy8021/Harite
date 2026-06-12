@@ -12,6 +12,8 @@ from harite.settings import AppSettings
 from harite.gui.views.main_window import MainWindow
 from harite.workspace import Display
 
+from tests.gui.conftest import patch_detect_displays
+
 
 def test_on_change_input_text_updates_state():
     window = MainWindow()
@@ -25,9 +27,8 @@ def test_on_change_input_text_updates_state():
     assert window.last_error == ""
 
 
-def test_can_optimize_with_auto_resolution_and_detected_display(monkeypatch):
+def test_can_optimize_with_detected_display(monkeypatch):
     window = MainWindow()
-    window.form_state.resolution = "auto"
     monkeypatch.setattr(
         "harite.workspace.detect_displays",
         lambda: [Display(name="", width=1920, height=1080, x_offset=0)],
@@ -39,19 +40,18 @@ def test_can_optimize_with_auto_resolution_and_detected_display(monkeypatch):
     assert window.status_message == "input ready"
 
 
-def test_on_change_input_text_disables_optimize_when_resolution_unresolved(monkeypatch):
+def test_on_change_input_text_disables_optimize_when_display_unresolved(monkeypatch):
+    patch_detect_displays(monkeypatch, lambda: [])
     window = MainWindow()
-    window.form_state.resolution = ""
-    monkeypatch.setattr("harite.workspace.detect_displays", lambda: [])
 
     window.on_change_input_text("a.jpg")
 
     assert window.can_optimize is False
     assert window.status_phase == "optimize"
-    assert window.status_message == "resolution is unresolved"
-    assert window.last_error == "resolution is unresolved"
+    assert window.status_message == "display context is unresolved"
+    assert window.last_error == "display context is unresolved"
     assert window.on_optimize() is False
-    assert window.status_message == "resolution is unresolved"
+    assert window.status_message == "display context is unresolved"
 
 
 def test_on_clear_input_resets_optimize_state():
@@ -300,7 +300,11 @@ def test_save_path_selected_updates_single_save_target_display():
     assert window.save_target_display == "Export target: /tmp/result.jpg"
 
 
-def test_on_optimize_runs_and_logs(tmp_path):
+def test_on_optimize_runs_and_logs(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "harite.workspace.detect_displays",
+        lambda: [Display(name="", width=320, height=180, x_offset=0)],
+    )
     window = MainWindow()
 
     img_path = tmp_path / "in.jpg"
@@ -309,7 +313,6 @@ def test_on_optimize_runs_and_logs(tmp_path):
     Image.new("RGB", (120, 80), color=(10, 20, 30)).save(img_path)
 
     window.form_state.output_dir = str(out_dir)
-    window.form_state.resolution = "320x180"
     window.on_change_input_text(str(img_path))
 
     ok = window.on_optimize()
@@ -324,8 +327,11 @@ def test_on_optimize_runs_and_logs(tmp_path):
 
 
 def test_on_optimize_propagates_unexpected_runtime_error(monkeypatch):
+    monkeypatch.setattr(
+        "harite.workspace.detect_displays",
+        lambda: [Display(name="", width=320, height=180, x_offset=0)],
+    )
     window = MainWindow()
-    window.form_state.resolution = "320x180"
     window.form_state.output_dir = "/tmp/out"
     window.on_change_input_text("a.jpg")
 
@@ -359,7 +365,21 @@ def test_build_result_preview_state_uses_latest_saved_file(tmp_path):
     assert state.r_result_note == "Result: full optimized image"
 
 
-def test_build_result_preview_state_includes_two_screen_display_sizes(tmp_path):
+def test_build_result_preview_state_includes_two_screen_display_sizes(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window_preview.resolve_optimize_display_settings",
+        lambda **_kwargs: type(
+            "S",
+            (),
+            {
+                "l_display": "200x180",
+                "r_display": "120x180",
+                "resolution": "320x180",
+                "two_screen": True,
+                "canvas_scale_percent": 100,
+            },
+        )(),
+    )
     window = MainWindow()
     saved = tmp_path / "result.jpg"
     saved.write_bytes(b"x")
@@ -367,10 +387,6 @@ def test_build_result_preview_state_includes_two_screen_display_sizes(tmp_path):
     window.last_saved_files = [saved]
     window.apply_mode = "per-monitor-auto-split"
     window.form_state.input_value = "left.jpg,right.jpg"
-    window.form_state.two_screen = True
-    window.form_state.resolution = "320x180"
-    window.form_state.l_display = "200x180"
-    window.form_state.r_display = "120x180"
 
     state = window.build_result_preview_state()
 
@@ -414,10 +430,6 @@ def test_build_result_preview_state_propagates_unexpected_display_settings_failu
 
     window.last_saved_files = [saved]
     window.form_state.input_value = "left.jpg,right.jpg"
-    window.form_state.two_screen = True
-    window.form_state.resolution = "320x180"
-    window.form_state.l_display = "200x180"
-    window.form_state.r_display = "120x180"
 
     monkeypatch.setattr(
         "harite.gui.views.main_window_preview.resolve_optimize_display_settings",
@@ -460,9 +472,9 @@ def test_on_pick_input_updates_side_specific_paths():
     assert window.can_optimize is True
 
 
-def test_two_screen_auto_configures_when_both_inputs_and_displays_exist(monkeypatch):
+def test_dual_input_enables_optimize_when_two_displays_exist(monkeypatch):
     monkeypatch.setattr(
-        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        "harite.optimize_settings.build_two_screen_optimize_context",
         lambda: TwoScreenOptimizeContext(
             displays=(
                 Display(name="L", width=1920, height=1080, x_offset=0),
@@ -478,53 +490,39 @@ def test_two_screen_auto_configures_when_both_inputs_and_displays_exist(monkeypa
     window.on_pick_input("left.jpg", "L")
     window.on_pick_input("right.jpg", "R")
 
-    assert window.form_state.two_screen is True
-    assert window.form_state.l_display == "1920x1080"
-    assert window.form_state.r_display == "1280x1024"
-    assert window.form_state.resolution == "3200x1080"
+    assert window.can_optimize is True
+    resolved = window._resolved_display_settings()
+    assert resolved.two_screen is True
+    assert resolved.resolution == "3200x1080"
 
 
-def test_two_screen_auto_restores_prior_resolution_when_second_input_removed(monkeypatch):
-    monkeypatch.setattr(
-        "harite.gui.views.main_window.build_two_screen_optimize_context",
-        lambda: TwoScreenOptimizeContext(
-            displays=(
-                Display(name="L", width=1920, height=1080, x_offset=0),
-                Display(name="R", width=1280, height=1024, x_offset=1920),
-            ),
-            resolution=(3200, 1080),
-            l_display=(1920, 1080),
-            r_display=(1280, 1024),
-        ),
+def test_dual_input_blocks_optimize_when_second_input_removed_with_one_display(monkeypatch):
+    patch_detect_displays(
+        monkeypatch,
+        lambda: [Display(name="", width=1600, height=900, x_offset=0)],
     )
 
     window = MainWindow()
-    window.form_state.resolution = "1600x900"
-
     window.on_pick_input("left.jpg", "L")
     window.on_pick_input("right.jpg", "R")
-    assert window.form_state.resolution == "3200x1080"
+    assert window.can_optimize is False
 
     window.on_change_input_text("left.jpg")
 
-    assert window.form_state.two_screen is False
-    assert window.form_state.l_display is None
-    assert window.form_state.r_display is None
-    assert window.form_state.resolution == "1600x900"
+    assert window.can_optimize is True
 
 
-def test_two_screen_auto_disables_without_two_inputs(monkeypatch):
+def test_dual_input_blocks_when_only_one_display_detected(monkeypatch):
     monkeypatch.setattr(
-        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        "harite.optimize_settings.build_two_screen_optimize_context",
         lambda: None,
     )
 
     window = MainWindow()
     window.on_pick_input("left.jpg", "L")
+    window.on_pick_input("right.jpg", "R")
 
-    assert window.form_state.two_screen is False
-    assert window.form_state.l_display is None
-    assert window.form_state.r_display is None
+    assert window.can_optimize is False
 
 
 def test_on_change_margins_updates_form_state():
@@ -739,9 +737,6 @@ def test_open_settings_dialog_tracks_state(monkeypatch):
 
     assert ok is True
     assert window.settings_dialog_open is True
-    assert window.form_state.resolution == "4096x1440"
-    assert window.form_state.l_display == "2560x1440"
-    assert window.form_state.r_display == "1536x864"
     assert "Settings dialog opened" in window.logs
 
 
@@ -749,10 +744,7 @@ def test_apply_settings_updates_runtime_state():
     window = MainWindow()
     settings = AppSettings.from_settings_dict(
         {
-            "resolution": "auto",
-            "two_screen": "auto",
-            "l_display": "auto",
-            "r_display": "auto",
+            "canvas_scale_percent": 75,
             "plugin": "linux",
             "apply_mode": "per-monitor-auto-split",
             "slideshow_interval_seconds": 120,
@@ -766,10 +758,7 @@ def test_apply_settings_updates_runtime_state():
     ok = window.on_apply_settings(settings)
 
     assert ok is True
-    assert window.form_state.resolution == "auto"
-    assert window.form_state.two_screen is None
-    assert window.form_state.l_display == "auto"
-    assert window.form_state.r_display == "auto"
+    assert window.form_state.canvas_scale_percent == 75
     assert window.plugin_name == "linux"
     assert window.apply_mode == "per-monitor-auto-split"
     assert window.slideshow_interval_seconds == 120
@@ -781,10 +770,7 @@ def test_apply_settings_updates_runtime_state():
 
 def test_export_and_reload_settings_round_trips():
     window = MainWindow()
-    window.form_state.resolution = "auto"
-    window.form_state.two_screen = None
-    window.form_state.l_display = "auto"
-    window.form_state.r_display = "auto"
+    window.form_state.canvas_scale_percent = 80
     window.plugin_name = "linux"
     window.apply_mode = "per-monitor-auto-split"
     window.slideshow_interval_seconds = 90
@@ -795,8 +781,7 @@ def test_export_and_reload_settings_round_trips():
 
     exported = window.export_settings()
 
-    assert exported["resolution"] == "auto"
-    assert exported["two_screen"] == "auto"
+    assert exported["canvas_scale_percent"] == 80
     assert exported["align"] == ["center", "center"]
     assert exported["valign"] == ["center", "center"]
     assert exported["plugin"] == "linux"
@@ -808,8 +793,7 @@ def test_export_and_reload_settings_round_trips():
 
     other = MainWindow()
     assert other.load_settings(exported) is True
-    assert other.form_state.resolution == "auto"
-    assert other.form_state.two_screen is None
+    assert other.form_state.canvas_scale_percent == 80
     assert other.form_state.align == ("center", "center")
     assert other.form_state.valign == ("center", "center")
     assert other.plugin_name == "linux"
@@ -837,9 +821,10 @@ def test_get_settings_expands_current_detected_display_values(monkeypatch):
 
     settings = window.on_get_settings()
 
-    assert settings["resolution"] == "3200x1080"
-    assert settings["l_display"] == "1920x1080"
-    assert settings["r_display"] == "1280x1024"
+    assert "resolution" not in settings
+    assert "two_screen" not in settings
+    assert "l_display" not in settings
+    assert "r_display" not in settings
 
 
 def test_get_settings_uses_auto_for_fully_unresolved_defaults(monkeypatch):
@@ -891,21 +876,20 @@ def test_settings_file_save_prefers_detected_display_context_without_inputs(monk
     assert window.on_save_settings_file(str(target)) is True
 
     saved = load_settings(target)
-    assert saved["resolution"] == "4096x1280"
-    assert saved["l_display"] == "2048x1280"
-    assert saved["r_display"] == "2048x1280"
+    assert "resolution" not in saved
+    assert "l_display" not in saved
+    assert "r_display" not in saved
 
 
-def test_settings_file_load_missing_display_settings_keeps_resolution_unresolved(tmp_path):
+def test_settings_file_load_without_canvas_scale_keeps_default(tmp_path, monkeypatch):
+    patch_detect_displays(monkeypatch, lambda: [])
     target = tmp_path / "settings-missing-display.json"
     target.write_text('{"plugin":"linux","apply_mode":"per-monitor-auto-split"}', encoding="utf-8")
 
     window = MainWindow()
 
     assert window.on_load_settings_file(str(target)) is True
-    assert window.form_state.resolution == "auto"
-    assert window.form_state.l_display is None
-    assert window.form_state.r_display is None
+    assert window.form_state.canvas_scale_percent == 100
 
 
 def test_settings_file_save_and_load_round_trip(monkeypatch, tmp_path):
@@ -914,10 +898,7 @@ def test_settings_file_save_and_load_round_trip(monkeypatch, tmp_path):
         lambda: None,
     )
     window = MainWindow()
-    window.form_state.resolution = "auto"
-    window.form_state.two_screen = None
-    window.form_state.l_display = "auto"
-    window.form_state.r_display = "auto"
+    window.form_state.canvas_scale_percent = 80
     window.plugin_name = "linux"
     window.apply_mode = "per-monitor-auto-split"
     window.slideshow_interval_seconds = 75
@@ -931,10 +912,7 @@ def test_settings_file_save_and_load_round_trip(monkeypatch, tmp_path):
 
     other = MainWindow()
     assert other.on_load_settings_file(str(target)) is True
-    assert other.form_state.resolution == "auto"
-    assert other.form_state.two_screen is None
-    assert other.form_state.l_display == "auto"
-    assert other.form_state.r_display == "auto"
+    assert other.form_state.canvas_scale_percent == 80
     assert other.form_state.align == ("center", "center")
     assert other.form_state.valign == ("center", "center")
     assert other.plugin_name == "linux"
@@ -1031,8 +1009,7 @@ def test_settings_file_save_accepts_explicit_dialog_settings(monkeypatch, tmp_pa
     assert window.on_save_settings_file(
         str(target),
         {
-            "resolution": "auto",
-            "two_screen": "auto",
+            "canvas_scale_percent": 90,
             "plugin": "linux",
             "apply_mode": "per-monitor-auto-split",
             "slideshow_interval_seconds": 33,
@@ -1043,8 +1020,7 @@ def test_settings_file_save_accepts_explicit_dialog_settings(monkeypatch, tmp_pa
     loaded = window.on_load_settings_file(str(target))
 
     assert loaded is True
-    assert window.form_state.resolution == "auto"
-    assert window.form_state.two_screen is None
+    assert window.form_state.canvas_scale_percent == 90
     assert window.plugin_name == "linux"
     assert window.apply_mode == "per-monitor-auto-split"
     assert window.slideshow_interval_seconds == 33
@@ -1871,7 +1847,11 @@ def test_slideshow_dual_source_start_rejects_unsupported_plugin(monkeypatch, tmp
     assert "not supported for plugin macos" in window.last_error
 
 
-def test_suggest_next_action_transitions(tmp_path):
+def test_suggest_next_action_transitions(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "harite.workspace.detect_displays",
+        lambda: [Display(name="", width=320, height=180, x_offset=0)],
+    )
     window = MainWindow()
     assert window.suggest_next_action() == "input"
 
@@ -1881,7 +1861,6 @@ def test_suggest_next_action_transitions(tmp_path):
     Image.new("RGB", (120, 80), color=(10, 20, 30)).save(img_path)
 
     window.form_state.output_dir = str(out_dir)
-    window.form_state.resolution = "320x180"
     window.on_change_input_text(str(img_path))
     assert window.suggest_next_action() == "optimize"
 
@@ -1900,6 +1879,10 @@ def test_run_primary_flow_step_runs_optimize_then_apply(monkeypatch, tmp_path):
 
     plugin = DummyPlugin()
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: plugin)
+    monkeypatch.setattr(
+        "harite.workspace.detect_displays",
+        lambda: [Display(name="", width=320, height=180, x_offset=0)],
+    )
 
     window = MainWindow()
     img_path = tmp_path / "in.jpg"
@@ -1908,7 +1891,6 @@ def test_run_primary_flow_step_runs_optimize_then_apply(monkeypatch, tmp_path):
     Image.new("RGB", (120, 80), color=(10, 20, 30)).save(img_path)
 
     window.form_state.output_dir = str(out_dir)
-    window.form_state.resolution = "320x180"
     window.on_change_input_text(str(img_path))
 
     # first step should run optimize
@@ -2006,20 +1988,23 @@ def test_build_optimize_cli_preview_includes_optional_flags(tmp_path):
 
     window.form_state.input_value = "a.jpg"
     window.form_state.output_dir = str(out_dir)
-    window.form_state.two_screen = True
     window.form_state.margins = "1,2,3,4"
     window.form_state.embed_text = "hello"
     preview = window.build_optimize_cli_preview()
 
-    assert "--two-screen" in preview
+    assert "--canvas-scale 100" in preview
     assert "--margins 1,2,3,4" in preview
     assert "--embed-text hello" in preview
 
 
-def test_margin_text_change_handlers_update_form_state():
+def test_margin_text_change_handlers_update_form_state(monkeypatch):
+    monkeypatch.setattr(
+        "harite.workspace.detect_displays",
+        lambda: [Display(name="", width=1920, height=1080, x_offset=0)],
+    )
     window = MainWindow()
-    window.form_state.resolution = "1920x1080"
     window.form_state.margins = "10,10,20,30"
+    window.on_change_input_text("a.jpg")
 
     assert window.on_change_margin_text_mode("combo") is True
     assert window.on_change_margin_text("hello") is True
@@ -2058,10 +2043,14 @@ def test_margin_text_preserves_trailing_newline_during_edit():
     assert window.form_state.embed_text == "1\n"
 
 
-def test_margin_text_preflight_reports_margin_area_too_small():
+def test_margin_text_preflight_reports_margin_area_too_small(monkeypatch):
+    monkeypatch.setattr(
+        "harite.workspace.detect_displays",
+        lambda: [Display(name="", width=1920, height=1080, x_offset=0)],
+    )
     window = MainWindow()
-    window.form_state.resolution = "1920x1080"
     window.form_state.margins = "10,10,20,10"
+    window.on_change_input_text("a.jpg")
 
     assert window.on_change_margin_text_mode("params") is True
     assert window.on_change_margin_text_position("right-bottom") is True
@@ -2071,13 +2060,22 @@ def test_margin_text_preflight_reports_margin_area_too_small():
     assert window.last_error == "selected margin area is too small for margin text"
 
 
-def test_margin_text_preflight_uses_display_slice_area_for_two_screen():
+def test_margin_text_preflight_uses_display_slice_area_for_two_screen(monkeypatch):
+    monkeypatch.setattr(
+        "harite.optimize_settings.build_two_screen_optimize_context",
+        lambda: TwoScreenOptimizeContext(
+            displays=(
+                Display(name="L", width=1920, height=1080, x_offset=0),
+                Display(name="R", width=1280, height=1024, x_offset=1920),
+            ),
+            resolution=(3200, 1080),
+            l_display=(1920, 1080),
+            r_display=(1280, 1024),
+        ),
+    )
     window = MainWindow()
-    window.form_state.two_screen = True
-    window.form_state.resolution = "3200x1080"
-    window.form_state.l_display = "1920x1080"
-    window.form_state.r_display = "1280x1024"
     window.form_state.margins = "100,150,80,90"
+    window.on_change_input_text("left.jpg,right.jpg")
 
     assert window.on_change_margin_text_mode("params") is True
     assert window.on_change_margin_text_position("right-top") is True

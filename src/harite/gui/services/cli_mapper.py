@@ -13,13 +13,10 @@ from harite.positioning import format_position_pair, parse_position_pair
 @dataclass
 class OptimizeRequest:
     input_value: str
-    resolution: str
     output_dir: Path
+    canvas_scale_percent: int = 100
     scaling: str = "fit"
-    two_screen: bool | None = False
     margins: Optional[str] = None
-    l_display: Optional[str] = None
-    r_display: Optional[str] = None
     align: tuple[str, str] = ("center", "center")
     valign: tuple[str, str] = ("center", "center")
     quality: int = 90
@@ -41,10 +38,10 @@ def to_cli_args(req: OptimizeRequest) -> list[str]:
         "optimize",
         "--input",
         req.input_value,
-        "--resolution",
-        req.resolution,
         "--output",
         str(req.output_dir),
+        "--canvas-scale",
+        str(req.canvas_scale_percent),
         "--align",
         format_position_pair(req.align, axis="align"),
         "--valign",
@@ -58,14 +55,8 @@ def to_cli_args(req: OptimizeRequest) -> list[str]:
         "--embed-position",
         req.embed_position,
     ]
-    if req.two_screen:
-        args.append("--two-screen")
     if req.margins:
         args.extend(["--margins", req.margins])
-    if req.l_display:
-        args.extend(["--l-display", req.l_display])
-    if req.r_display:
-        args.extend(["--r-display", req.r_display])
     if req.embed_text:
         args.extend(["--embed-text", req.embed_text])
     return args

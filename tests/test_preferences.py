@@ -1,13 +1,10 @@
 from harite.settings import AppSettings
 
 
-def test_app_settings_round_trip_settings_with_auto_values():
+def test_app_settings_round_trip_canvas_scale_and_slideshow():
     settings = AppSettings.from_settings_dict(
         {
-            "resolution": "auto",
-            "two_screen": "auto",
-            "l_display": "auto",
-            "r_display": "auto",
+            "canvas_scale_percent": 80,
             "plugin": "linux",
             "apply_mode": "per-monitor-auto-split",
             "slideshow_interval_seconds": 120,
@@ -22,10 +19,9 @@ def test_app_settings_round_trip_settings_with_auto_values():
 
     exported = settings.to_settings_dict()
 
-    assert exported["resolution"] == "auto"
-    assert exported["two_screen"] == "auto"
-    assert exported["l_display"] == "auto"
-    assert exported["r_display"] == "auto"
+    assert exported["canvas_scale_percent"] == 80
+    assert "resolution" not in exported
+    assert "two_screen" not in exported
     assert exported["align"] == ["center", "center"]
     assert exported["valign"] == ["center", "center"]
     assert exported["background_color"] == "#1E1E1E"

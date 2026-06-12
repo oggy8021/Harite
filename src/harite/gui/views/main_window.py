@@ -23,6 +23,7 @@ from harite.apply_settings import resolve_apply_settings
 from harite.apply_surface import dual_display_detected
 from harite.settings_file import load_settings, resolve_default_settings_path, save_settings
 from harite.display_context import build_two_screen_optimize_context
+from harite.optimize_settings import resolve_optimize_display_settings
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
 from harite.gui.views.main_window_preview import build_optimize_cli_preview
 from harite.gui.views.main_window_preview import build_preview_assignments
@@ -70,7 +71,6 @@ class MainWindow:
         self.save_target_display = "Export target: not-selected"
         self.preferences = AppSettings.defaults(default_plugin=self.plugin_name)
         self.apply_mode = self.preferences.apply.apply_mode
-        self._pre_two_screen_resolution: str | None = None
         self.slideshow_interval_seconds = 60
         self.slideshow_mode = "random"
         self._slideshow_active_mode = "random"
@@ -112,8 +112,8 @@ class MainWindow:
         default_output_dir = self._default_output_dir()
         self.form_state = OptimizeFormState(
             input_value="",
-            resolution="1920x1080",
             output_dir=default_output_dir,
+            canvas_scale_percent=100,
             background_color=DEFAULT_BACKGROUND_COLOR_HEX,
             embed_position="right-bottom",
         )
@@ -178,19 +178,29 @@ class MainWindow:
     def _default_output_dir(self) -> str:
         return str(self._resolve_default_output_dir())
 
+    def _optimize_input_values(self) -> list[str]:
+        parts = [part.strip() for part in self.form_state.input_value.split(",") if part.strip()]
+        if parts:
+            return parts
+        values: list[str] = []
+        if self.input_path_l:
+            values.append(self.input_path_l)
+        if self.input_path_r:
+            values.append(self.input_path_r)
+        return values
+
+    def _resolved_display_settings(self):
+        return resolve_optimize_display_settings(
+            input_values=self._optimize_input_values(),
+            canvas_scale_percent=self.form_state.canvas_scale_percent,
+        )
+
     def _current_resolution_value(self) -> tuple[int, int] | None:
-        value = (self.form_state.resolution or "").strip()
-        if not value:
-            return None
         try:
-            width_text, height_text = value.lower().split("x", 1)
-            width = int(width_text)
-            height = int(height_text)
-        except (ValueError, TypeError):
+            settings = self._resolved_display_settings()
+        except ValueError:
             return None
-        if width <= 0 or height <= 0:
-            return None
-        return width, height
+        return self._parse_resolution_value(settings.resolution)
 
     def _normalize_margin_text_position(self, value: object | None) -> str:
         normalized = str(value or "").strip().lower()
@@ -350,13 +360,17 @@ class MainWindow:
 
         target_width, target_height = resolution
         left, right, top, bottom = self._current_margin_values()
+        try:
+            display_settings = self._resolved_display_settings()
+        except ValueError:
+            return None
         region = resolve_margin_text_region(
             (target_width, target_height),
             (left, right, top, bottom),
             normalized,
-            two_screen=bool(self.form_state.two_screen),
-            l_display=self._parse_resolution_value(self.form_state.l_display),
-            r_display=self._parse_resolution_value(self.form_state.r_display),
+            two_screen=display_settings.two_screen,
+            l_display=self._parse_resolution_value(display_settings.l_display),
+            r_display=self._parse_resolution_value(display_settings.r_display),
         )
         if region is None:
             return None
@@ -597,18 +611,10 @@ class MainWindow:
         if self._current_resolution_value() is not None:
             return True
         try:
-            from harite.optimize_settings import resolve_optimize_display_settings
-
-            parts = [part.strip() for part in self.form_state.input_value.split(",") if part.strip()]
             from harite.core import validate_intentional_image_scales
 
-            display_settings = resolve_optimize_display_settings(
-                input_values=parts,
-                resolution=self.form_state.resolution,
-                two_screen=self.form_state.two_screen,
-                l_display=self.form_state.l_display,
-                r_display=self.form_state.r_display,
-            )
+            parts = self._optimize_input_values()
+            display_settings = self._resolved_display_settings()
             from harite.display_scale import is_unity_display_scale
 
             needs_scale_check = (
@@ -699,40 +705,10 @@ class MainWindow:
             return False
         return str(exc) == "per-monitor apply requires at least two detected displays"
 
-    def _sync_two_screen_state(self) -> None:
-        if not (self.input_path_l and self.input_path_r):
-            if self.form_state.two_screen and self._pre_two_screen_resolution:
-                self.form_state.resolution = self._pre_two_screen_resolution
-                self._pre_two_screen_resolution = None
-            self.form_state.two_screen = False
-            self.form_state.l_display = None
-            self.form_state.r_display = None
-            self._refresh_action_availability()
-            return
-
-        context = build_two_screen_optimize_context()
-        if context is None:
-            if self.form_state.two_screen and self._pre_two_screen_resolution:
-                self.form_state.resolution = self._pre_two_screen_resolution
-                self._pre_two_screen_resolution = None
-            self.form_state.two_screen = False
-            self.form_state.l_display = None
-            self.form_state.r_display = None
-            self._log("Two-screen unavailable: detected displays < 2")
-            self._refresh_action_availability()
-            return
-
-        if not self.form_state.two_screen:
-            self._pre_two_screen_resolution = self.form_state.resolution
-        self.form_state.two_screen = True
-        self.form_state.l_display = f"{context.l_display[0]}x{context.l_display[1]}"
-        self.form_state.r_display = f"{context.r_display[0]}x{context.r_display[1]}"
-        self.form_state.resolution = f"{context.resolution[0]}x{context.resolution[1]}"
+    def _sync_input_geometry(self) -> None:
+        if self.input_path_l and self.input_path_r and build_two_screen_optimize_context() is None:
+            self._log("Dual input unavailable: detected displays < 2")
         self._refresh_action_availability()
-        self._log(
-            "Two-screen auto-configured: "
-            f"L={self.form_state.l_display} R={self.form_state.r_display} resolution={self.form_state.resolution}"
-        )
 
     def _parse_resolution_value(self, value: str | None) -> tuple[int, int] | None:
         raw = str(value or "").strip().lower()
@@ -848,8 +824,7 @@ class MainWindow:
 
     def _apply_input_paths(self) -> None:
         self.form_state.input_value = ",".join(path for path in (self.input_path_l, self.input_path_r) if path)
-        self._sync_two_screen_state()
-        self._refresh_action_availability()
+        self._sync_input_geometry()
         if not self.can_optimize:
             # Input changed to empty; reset apply readiness to avoid stale flow.
             if not self.form_state.input_value:
@@ -861,8 +836,8 @@ class MainWindow:
                 self._set_status("error", "input", "input is required", error="input is required")
                 self._log("Save path dialog closed by input reset")
             else:
-                self._set_status("error", "optimize", "resolution is unresolved", error="resolution is unresolved")
-                self._log("Optimize blocked: resolution is unresolved")
+                self._set_status("error", "optimize", "display context is unresolved", error="display context is unresolved")
+                self._log("Optimize blocked: display context is unresolved")
         else:
             self._set_status("idle", "input", "input ready")
             self._log("Input updated")
@@ -888,7 +863,7 @@ class MainWindow:
             if not self.form_state.input_value:
                 message = "input is required"
             else:
-                message = "resolution is unresolved"
+                message = "display context is unresolved"
             self._set_status("error", "optimize", message, error=message)
             self._log(f"Optimize blocked: {message}")
             return False
@@ -988,8 +963,7 @@ class MainWindow:
 
     def on_open_settings_dialog(self) -> bool:
         self._restore_input_paths_from_form_state()
-        if self.input_path_l and self.input_path_r:
-            self._sync_two_screen_state()
+        self._sync_input_geometry()
         self.settings_dialog_open = True
         self._set_status("idle", "settings", "settings dialog opened")
         self._log("Settings dialog opened")
@@ -1005,7 +979,7 @@ class MainWindow:
 
         self.preferences = settings_value
         optimize = settings_value.optimize
-        self.form_state.resolution = optimize.resolution
+        self.form_state.canvas_scale_percent = optimize.canvas_scale_percent
         self.form_state.scaling = optimize.scaling
         self.form_state.margins = optimize.margins
         self.form_state.align = optimize.align
@@ -1016,22 +990,11 @@ class MainWindow:
         self.form_state.embed_text = optimize.embed_text
         self.form_state.embed_position = self._normalize_margin_text_position(optimize.embed_position)
         self.form_state.embed_max_lines = optimize.embed_max_lines
-        self.form_state.l_display = optimize.l_display
-        self.form_state.r_display = optimize.r_display
         self.form_state.l_display_scale = optimize.l_display_scale
         self.form_state.r_display_scale = optimize.r_display_scale
         self.form_state.l_auto_display_scale = optimize.l_auto_display_scale
         self.form_state.r_auto_display_scale = optimize.r_auto_display_scale
-        if optimize.two_screen_mode == "auto":
-            self.form_state.two_screen = None
-            if self.input_path_l and self.input_path_r:
-                self._sync_two_screen_state()
-        elif optimize.two_screen_mode == "on":
-            self.form_state.two_screen = True
-        else:
-            self.form_state.two_screen = False
-            self.form_state.l_display = None if optimize.l_display == "auto" else optimize.l_display
-            self.form_state.r_display = None if optimize.r_display == "auto" else optimize.r_display
+        self._sync_input_geometry()
 
         self.plugin_name = settings_value.apply.plugin_name
         self.apply_mode = settings_value.apply.apply_mode
@@ -1055,7 +1018,7 @@ class MainWindow:
         return True
 
     def export_settings(self) -> dict[str, object]:
-        self.preferences.optimize.resolution = self.form_state.resolution
+        self.preferences.optimize.canvas_scale_percent = self.form_state.canvas_scale_percent
         self.preferences.optimize.scaling = self.form_state.scaling
         self.preferences.optimize.margins = self.form_state.margins
         self.preferences.optimize.align = self.form_state.align
@@ -1077,12 +1040,6 @@ class MainWindow:
         self.preferences.slideshow.profile_id = self.slideshow_profile_id or None
         self.preferences.slideshow.l_auto_display_scale = self.slideshow_l_auto_display_scale
         self.preferences.slideshow.r_auto_display_scale = self.slideshow_r_auto_display_scale
-        if self.form_state.two_screen is None:
-            self.preferences.optimize.two_screen_mode = "auto"
-        else:
-            self.preferences.optimize.two_screen_mode = "on" if self.form_state.two_screen else "off"
-        self.preferences.optimize.l_display = self.form_state.l_display
-        self.preferences.optimize.r_display = self.form_state.r_display
         self.preferences.optimize.l_display_scale = self.form_state.l_display_scale
         self.preferences.optimize.r_display_scale = self.form_state.r_display_scale
         self.preferences.optimize.l_auto_display_scale = self.form_state.l_auto_display_scale
@@ -1091,27 +1048,10 @@ class MainWindow:
 
     def _normalize_settings_display_payload(self, config: dict[str, object]) -> dict[str, object]:
         normalized = dict(config)
-        context = build_two_screen_optimize_context()
-        if context is not None:
-            normalized["resolution"] = f"{context.resolution[0]}x{context.resolution[1]}"
-            normalized["l_display"] = f"{context.l_display[0]}x{context.l_display[1]}"
-            normalized["r_display"] = f"{context.r_display[0]}x{context.r_display[1]}"
-            return normalized
-
-        resolution = str(normalized.get("resolution") or "").strip()
-        left_display = normalized.get("l_display")
-        right_display = normalized.get("r_display")
-        if (
-            resolution == "1920x1080"
-            and left_display in {None, "", "auto"}
-            and right_display in {None, "", "auto"}
-            and str(self.form_state.resolution or "").strip() == "1920x1080"
-            and self.form_state.l_display in {None, "", "auto"}
-            and self.form_state.r_display in {None, "", "auto"}
-        ):
-            normalized.pop("resolution", None)
-            normalized.pop("l_display", None)
-            normalized.pop("r_display", None)
+        for legacy_key in ("resolution", "two_screen", "l_display", "r_display"):
+            normalized.pop(legacy_key, None)
+        if normalized.get("canvas_scale_percent") == 100:
+            normalized.pop("canvas_scale_percent", None)
         return normalized
 
     def _build_settings_dialog_settings(self) -> dict[str, object]:
@@ -1746,12 +1686,6 @@ class MainWindow:
 
     def _build_slideshow_two_screen_state(self, left: str, right: str) -> OptimizeFormState:
         slideshow_state = replace(self.form_state, input_value=f"{left},{right}")
-        context = build_two_screen_optimize_context()
-        if context is not None:
-            slideshow_state.two_screen = True
-            slideshow_state.l_display = f"{context.l_display[0]}x{context.l_display[1]}"
-            slideshow_state.r_display = f"{context.r_display[0]}x{context.r_display[1]}"
-            slideshow_state.resolution = f"{context.resolution[0]}x{context.resolution[1]}"
         return self._prepare_slideshow_optimize_state(slideshow_state)
 
     def _ensure_slideshow_output_dir(self) -> None:

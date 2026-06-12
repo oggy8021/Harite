@@ -11,7 +11,6 @@ def _prepare_input(window: MainWindow, tmp_path: Path) -> Path:
     out_dir.mkdir()
     Image.new("RGB", (120, 80), color=(10, 20, 30)).save(img_path)
     window.form_state.output_dir = str(out_dir)
-    window.form_state.resolution = "320x180"
     window.on_change_input_text(str(img_path))
     return img_path
 

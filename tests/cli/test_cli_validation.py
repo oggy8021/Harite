@@ -23,6 +23,13 @@ def _stub_dual_display_context() -> TwoScreenOptimizeContext:
         r_display=(1920, 1080),
     )
 
+def _stub_single_display(monkeypatch, *, width: int = 1600, height: int = 900) -> None:
+    monkeypatch.setattr(
+        "harite.workspace.detect_displays",
+        lambda: [Display(name="", width=width, height=height, x_offset=0)],
+    )
+
+
 
 @pytest.fixture(autouse=True)
 def _block_real_optimize_side_effects(monkeypatch):
@@ -83,13 +90,14 @@ def test_optimize_help_reflects_current_surface() -> None:
     assert "left,right,top,bottom" in compact_output
     assert "その内側で" not in output
     assert "効きが強く" not in output
-    assert "auto-detect" in compact_output
+    assert "--canvas-scale" in output
 
 
 def test_optimize_reports_embed_overlap_error(tmp_path, monkeypatch):
     from harite.core import optimize_wallpapers as real_optimize_wallpapers
 
     monkeypatch.setattr(cli, "optimize_wallpapers", real_optimize_wallpapers)
+    _stub_single_display(monkeypatch, width=500, height=400)
 
     runner = CliRunner()
     img = tmp_path / "wide.jpg"
@@ -103,8 +111,6 @@ def test_optimize_reports_embed_overlap_error(tmp_path, monkeypatch):
             "optimize",
             "--input",
             str(img),
-            "--resolution",
-            "500x400",
             "--align",
             "right",
             "--valign",
@@ -153,7 +159,8 @@ def test_root_help_lists_typer_shell_completion_options() -> None:
     assert "--show-completion" in output
 
 
-def test_optimize_rejects_invalid_embed_info(tmp_path):
+def test_optimize_rejects_invalid_embed_info(tmp_path, monkeypatch):
+    _stub_single_display(monkeypatch, width=100, height=100)
     runner = CliRunner()
     img = tmp_path / "a.jpg"
     from PIL import Image
@@ -165,8 +172,6 @@ def test_optimize_rejects_invalid_embed_info(tmp_path):
             "optimize",
             "--input",
             str(img),
-            "--resolution",
-            "100x100",
             "--embed-info",
             "datetime",
         ],
@@ -175,7 +180,8 @@ def test_optimize_rejects_invalid_embed_info(tmp_path):
     assert "--embed-info must be one of" in result.output
 
 
-def test_optimize_rejects_invalid_embed_position(tmp_path):
+def test_optimize_rejects_invalid_embed_position(tmp_path, monkeypatch):
+    _stub_single_display(monkeypatch, width=100, height=100)
     runner = CliRunner()
     img = tmp_path / "a.jpg"
     from PIL import Image
@@ -187,8 +193,6 @@ def test_optimize_rejects_invalid_embed_position(tmp_path):
             "optimize",
             "--input",
             str(img),
-            "--resolution",
-            "100x100",
             "--embed-position",
             "middle",
         ],
@@ -197,7 +201,8 @@ def test_optimize_rejects_invalid_embed_position(tmp_path):
     assert "--embed-position must be one of" in result.output
 
 
-def test_optimize_rejects_invalid_embed_position_value_from_settings(tmp_path):
+def test_optimize_rejects_invalid_embed_position_value_from_settings(tmp_path, monkeypatch):
+    _stub_single_display(monkeypatch)
     runner = CliRunner()
 
     settings_file = tmp_path / "settings.json"
@@ -205,7 +210,6 @@ def test_optimize_rejects_invalid_embed_position_value_from_settings(tmp_path):
         json.dumps(
             {
                 "input": ["from_config.jpg"],
-                "resolution": "1600x900",
                 "embed_position": "middle",
             }
         ),
@@ -220,7 +224,8 @@ def test_optimize_rejects_invalid_embed_position_value_from_settings(tmp_path):
     assert "right-bottom" in result.output
 
 
-def test_optimize_rejects_invalid_background_color(tmp_path):
+def test_optimize_rejects_invalid_background_color(tmp_path, monkeypatch):
+    _stub_single_display(monkeypatch, width=100, height=100)
     runner = CliRunner()
     img = tmp_path / "a.jpg"
     from PIL import Image
@@ -232,8 +237,6 @@ def test_optimize_rejects_invalid_background_color(tmp_path):
             "optimize",
             "--input",
             str(img),
-            "--resolution",
-            "100x100",
             "--background-color",
             "blue",
         ],
@@ -242,7 +245,8 @@ def test_optimize_rejects_invalid_background_color(tmp_path):
     assert "--background-color must be a hex RGB value" in result.output
 
 
-def test_optimize_rejects_legacy_random_seed_option(tmp_path):
+def test_optimize_rejects_legacy_random_seed_option(tmp_path, monkeypatch):
+    _stub_single_display(monkeypatch, width=100, height=100)
     runner = CliRunner()
     img = tmp_path / "a.jpg"
     from PIL import Image
@@ -254,8 +258,6 @@ def test_optimize_rejects_legacy_random_seed_option(tmp_path):
             "optimize",
             "--input",
             str(img),
-            "--resolution",
-            "100x100",
             "--random-seed",
             "42",
         ],
@@ -267,7 +269,8 @@ def test_optimize_rejects_legacy_random_seed_option(tmp_path):
     assert "random-seed" in output
 
 
-def test_optimize_rejects_directory_input(tmp_path):
+def test_optimize_rejects_directory_input(tmp_path, monkeypatch):
+    _stub_single_display(monkeypatch, width=100, height=100)
     runner = CliRunner()
     input_dir = tmp_path / "images"
     input_dir.mkdir()
@@ -278,8 +281,6 @@ def test_optimize_rejects_directory_input(tmp_path):
             "optimize",
             "--input",
             str(input_dir),
-            "--resolution",
-            "100x100",
         ],
     )
 
@@ -300,13 +301,13 @@ def test_optimize_uses_settings_for_required_values(tmp_path, monkeypatch):
         json.dumps(
             {
                 "input": ["from_config.jpg"],
-                "resolution": "1600x900",
             }
         ),
         encoding="utf-8",
     )
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    _stub_single_display(monkeypatch)
 
     result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
 
@@ -328,13 +329,14 @@ def test_optimize_cli_values_override_settings(tmp_path, monkeypatch):
         json.dumps(
             {
                 "input": ["from_config.jpg"],
-                "resolution": "1600x900",
+                "canvas_scale_percent": 100,
             }
         ),
         encoding="utf-8",
     )
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    _stub_single_display(monkeypatch, width=1920, height=1080)
 
     result = runner.invoke(
         cli.app,
@@ -344,14 +346,14 @@ def test_optimize_cli_values_override_settings(tmp_path, monkeypatch):
             str(settings_file),
             "--input",
             "from_cli.jpg",
-            "--resolution",
-            "1920x1080",
+            "--canvas-scale",
+            "50",
         ],
     )
 
     assert result.exit_code == 0
     assert captured["inputs"] == ["from_cli.jpg"]
-    assert captured["target_resolution"] == (1920, 1080)
+    assert captured["target_resolution"] == (960, 540)
 
 
 def test_optimize_uses_only_first_two_cli_inputs(tmp_path, monkeypatch):
@@ -382,8 +384,6 @@ def test_optimize_uses_only_first_two_cli_inputs(tmp_path, monkeypatch):
             f"{first},{second}",
             "--input",
             str(third),
-            "--resolution",
-            "1920x1080",
         ],
     )
 
@@ -422,8 +422,6 @@ def test_optimize_ignores_invalid_third_input_after_first_two(tmp_path, monkeypa
             str(second),
             "--input",
             str(invalid_third),
-            "--resolution",
-            "1920x1080",
         ],
     )
 
@@ -458,8 +456,6 @@ def test_optimize_expands_tilde_for_each_comma_separated_input(tmp_path, monkeyp
             "optimize",
             "--input",
             f"~/{left.name},~/{right.name}",
-            "--resolution",
-            "1920x1080",
         ],
     )
 
@@ -467,7 +463,7 @@ def test_optimize_expands_tilde_for_each_comma_separated_input(tmp_path, monkeyp
     assert captured["inputs"] == [str(left), str(right)]
 
 
-def test_optimize_uses_settings_for_margins_and_displays(tmp_path, monkeypatch):
+def test_optimize_uses_settings_for_margins(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -480,26 +476,23 @@ def test_optimize_uses_settings_for_margins_and_displays(tmp_path, monkeypatch):
         json.dumps(
             {
                 "input": ["from_config.jpg"],
-                "resolution": "1600x900",
                 "margins": "1,2,3,4",
-                "l_display": "1920x1080",
-                "r_display": "1280x1024",
+                "canvas_scale_percent": 100,
             }
         ),
         encoding="utf-8",
     )
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    _stub_single_display(monkeypatch)
 
     result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
 
     assert result.exit_code == 0
     assert captured["margins"] == (1, 2, 3, 4)
-    assert captured["l_display"] == (1920, 1080)
-    assert captured["r_display"] == (1280, 1024)
 
 
-def test_optimize_cli_values_override_settings_for_margins_and_displays(tmp_path, monkeypatch):
+def test_optimize_cli_values_override_settings_for_margins(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -512,16 +505,14 @@ def test_optimize_cli_values_override_settings_for_margins_and_displays(tmp_path
         json.dumps(
             {
                 "input": ["from_config.jpg"],
-                "resolution": "1600x900",
                 "margins": "1,2,3,4",
-                "l_display": "1920x1080",
-                "r_display": "1280x1024",
             }
         ),
         encoding="utf-8",
     )
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    _stub_single_display(monkeypatch)
 
     result = runner.invoke(
         cli.app,
@@ -531,95 +522,20 @@ def test_optimize_cli_values_override_settings_for_margins_and_displays(tmp_path
             str(settings_file),
             "--margins",
             "10,20,30,40",
-            "--l-display",
-            "2560x1440",
-            "--r-display",
-            "1920x1200",
         ],
     )
 
     assert result.exit_code == 0
     assert captured["margins"] == (10, 20, 30, 40)
-    assert captured["l_display"] == (2560, 1440)
-    assert captured["r_display"] == (1920, 1200)
 
 
-def test_optimize_reads_two_screen_from_settings(tmp_path, monkeypatch):
-    runner = CliRunner()
-    captured = {}
-
-    def fake_optimize_wallpapers(**kwargs):
-        captured.update(kwargs)
-        return [], []
-
-    settings_file = tmp_path / "settings.json"
-    settings_file.write_text(
-        json.dumps(
-            {
-                "input": ["from_config.jpg"],
-                "resolution": "1600x900",
-                "two_screen": True,
-            }
-        ),
-        encoding="utf-8",
-    )
-
-    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
-
-    result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
-
-    assert result.exit_code == 0
-    assert captured["two_screen"] is True
-
-
-def test_optimize_cli_two_screen_overrides_settings_false(tmp_path, monkeypatch):
-    runner = CliRunner()
-    captured = {}
-
-    def fake_optimize_wallpapers(**kwargs):
-        captured.update(kwargs)
-        return [], []
-
-    settings_file = tmp_path / "settings.json"
-    settings_file.write_text(
-        json.dumps(
-            {
-                "input": ["from_config.jpg"],
-                "resolution": "1600x900",
-                "two_screen": False,
-            }
-        ),
-        encoding="utf-8",
-    )
-
-    monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
-
-    result = runner.invoke(
-        cli.app,
-        [
-            "optimize",
-            "--settings-file",
-            str(settings_file),
-            "--two-screen",
-        ],
-    )
-
-    assert result.exit_code == 0
-    assert captured["two_screen"] is True
-
-
-def test_optimize_cli_no_two_screen_rejects_dual_input(tmp_path, monkeypatch):
+def test_optimize_rejects_removed_two_screen_flag(tmp_path, monkeypatch):
     runner = CliRunner()
     left = tmp_path / "left.jpg"
     right = tmp_path / "right.jpg"
     left.write_bytes(b"x")
     right.write_bytes(b"x")
-
-    monkeypatch.setattr(cli, "optimize_wallpapers", lambda **_kwargs: ([], []))
-    monkeypatch.setattr(
-        "harite.optimize_settings.build_two_screen_optimize_context",
-        lambda: None,
-    )
+    _stub_single_display(monkeypatch)
 
     result = runner.invoke(
         cli.app,
@@ -627,17 +543,33 @@ def test_optimize_cli_no_two_screen_rejects_dual_input(tmp_path, monkeypatch):
             "optimize",
             "--input",
             f"{left},{right}",
-            "--resolution",
-            "1600x900",
-            "--no-two-screen",
+            "--two-screen",
         ],
     )
 
+    output = _normalize_cli_output(result.output)
     assert result.exit_code == 2
-    assert "two-screen mode" in result.output
+    assert "no such option" in output.lower()
 
 
-def test_optimize_rejects_removed_fixed_flag(tmp_path):
+def test_optimize_rejects_removed_resolution_flag(tmp_path, monkeypatch):
+    runner = CliRunner()
+    img = tmp_path / "a.jpg"
+    img.write_bytes(b"x")
+    _stub_single_display(monkeypatch)
+
+    result = runner.invoke(
+        cli.app,
+        ["optimize", "--input", str(img), "--resolution", "1920x1080"],
+    )
+
+    output = _normalize_cli_output(result.output)
+    assert result.exit_code == 2
+    assert "no such option" in output.lower()
+
+
+def test_optimize_rejects_removed_fixed_flag(tmp_path, monkeypatch):
+    _stub_single_display(monkeypatch)
     runner = CliRunner()
 
     img = tmp_path / "from_cli.jpg"
@@ -649,8 +581,6 @@ def test_optimize_rejects_removed_fixed_flag(tmp_path):
             "optimize",
             "--input",
             str(img),
-            "--resolution",
-            "1600x900",
             "--fixed",
         ],
     )
@@ -661,7 +591,7 @@ def test_optimize_rejects_removed_fixed_flag(tmp_path):
     assert "--fixed" in output
 
 
-def test_optimize_rejects_invalid_bool_in_settings(tmp_path, monkeypatch):
+def test_optimize_rejects_invalid_canvas_scale_in_settings(tmp_path, monkeypatch):
     runner = CliRunner()
 
     def fake_optimize_wallpapers(**kwargs):
@@ -672,22 +602,22 @@ def test_optimize_rejects_invalid_bool_in_settings(tmp_path, monkeypatch):
         json.dumps(
             {
                 "input": ["from_config.jpg"],
-                "resolution": "1600x900",
-                "two_screen": "maybe",
+                "canvas_scale_percent": 0,
             }
         ),
         encoding="utf-8",
     )
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    _stub_single_display(monkeypatch)
 
     result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
 
     assert result.exit_code == 2
-    assert "invalid settings bool for two_screen" in result.output
+    assert "canvas_scale_percent" in result.output
 
 
-def test_optimize_combined_two_screen_margins_displays(tmp_path, monkeypatch):
+def test_optimize_dual_input_uses_detected_displays(tmp_path, monkeypatch):
     runner = CliRunner()
     captured = {}
 
@@ -695,32 +625,27 @@ def test_optimize_combined_two_screen_margins_displays(tmp_path, monkeypatch):
         captured.update(kwargs)
         return [], []
 
-    settings_file = tmp_path / "settings.json"
-    settings_file.write_text(
-        json.dumps(
-            {
-                "input": ["from_config.jpg"],
-                "resolution": "1600x900",
-            }
-        ),
-        encoding="utf-8",
-    )
+    left = tmp_path / "left.jpg"
+    right = tmp_path / "right.jpg"
+    left.write_bytes(b"x")
+    right.write_bytes(b"x")
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    monkeypatch.setattr(
+        "harite.optimize_settings.build_two_screen_optimize_context",
+        _stub_dual_display_context,
+    )
 
     result = runner.invoke(
         cli.app,
         [
             "optimize",
-            "--settings-file",
-            str(settings_file),
-            "--two-screen",
+            "--input",
+            str(left),
+            "--input",
+            str(right),
             "--margins",
             "10,20,30,40",
-            "--l-display",
-            "1920x1080",
-            "--r-display",
-            "1280x1024",
         ],
     )
 
@@ -728,7 +653,7 @@ def test_optimize_combined_two_screen_margins_displays(tmp_path, monkeypatch):
     assert captured["two_screen"] is True
     assert captured["margins"] == (10, 20, 30, 40)
     assert captured["l_display"] == (1920, 1080)
-    assert captured["r_display"] == (1280, 1024)
+    assert captured["r_display"] == (1920, 1080)
 
 
 def test_optimize_passes_embed_font_to_core(tmp_path, monkeypatch):
@@ -747,6 +672,7 @@ def test_optimize_passes_embed_font_to_core(tmp_path, monkeypatch):
     font.write_bytes(b"dummy")
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    _stub_single_display(monkeypatch, width=100, height=100)
 
     result = runner.invoke(
         cli.app,
@@ -754,8 +680,6 @@ def test_optimize_passes_embed_font_to_core(tmp_path, monkeypatch):
             "optimize",
             "--input",
             str(img),
-            "--resolution",
-            "100x100",
             "--embed-info",
             "free",
             "--embed-text",
@@ -782,7 +706,6 @@ def test_optimize_uses_settings_for_align_and_valign_and_ignores_scaling(tmp_pat
         json.dumps(
             {
                 "input": ["from_config.jpg"],
-                "resolution": "1600x900",
                 "scaling": "fill",
                 "align": "right",
                 "valign": "bottom",
@@ -792,6 +715,7 @@ def test_optimize_uses_settings_for_align_and_valign_and_ignores_scaling(tmp_pat
     )
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    _stub_single_display(monkeypatch)
 
     result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
 
@@ -815,6 +739,7 @@ def test_optimize_defaults_embed_position_to_right_bottom(tmp_path, monkeypatch)
     Image.new("RGB", (10, 10), (100, 100, 100)).save(img)
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    _stub_single_display(monkeypatch, width=100, height=100)
 
     result = runner.invoke(
         cli.app,
@@ -822,8 +747,6 @@ def test_optimize_defaults_embed_position_to_right_bottom(tmp_path, monkeypatch)
             "optimize",
             "--input",
             str(img),
-            "--resolution",
-            "100x100",
         ],
     )
 
@@ -844,7 +767,6 @@ def test_optimize_mat14_scale_keys_can_come_from_settings(tmp_path, monkeypatch)
         json.dumps(
             {
                 "input": ["a.jpg"],
-                "resolution": "100x100",
                 "l_display_scale": 1.5,
                 "r_display_scale": 2.0,
                 "l_auto_display_scale": True,
@@ -863,6 +785,7 @@ def test_optimize_mat14_scale_keys_can_come_from_settings(tmp_path, monkeypatch)
     settings_file.write_text(json.dumps(settings_payload), encoding="utf-8")
 
     monkeypatch.setattr(cli, "optimize_wallpapers", fake_optimize_wallpapers)
+    _stub_single_display(monkeypatch, width=100, height=100)
 
     result = runner.invoke(cli.app, ["optimize", "--settings-file", str(settings_file)])
 
@@ -886,10 +809,6 @@ def test_optimize_auto_display_values_can_come_from_settings(tmp_path, monkeypat
         json.dumps(
             {
                 "input": ["left.jpg", "right.jpg"],
-                "resolution": "auto",
-                "two_screen": "auto",
-                "l_display": "auto",
-                "r_display": "auto",
             }
         ),
         encoding="utf-8",
@@ -973,7 +892,7 @@ def test_optimize_dual_input_errors_when_only_one_display_detected(tmp_path, mon
 
     result = runner.invoke(
         cli.app,
-        ["optimize", "--input", str(left), "--input", str(right), "--resolution", "1920x1080"],
+        ["optimize", "--input", str(left), "--input", str(right)],
     )
 
     assert result.exit_code == 2, result.output

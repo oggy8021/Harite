@@ -6,19 +6,8 @@ from typing import Any
 
 from harite.core import DEFAULT_BACKGROUND_COLOR_HEX, normalize_background_color
 from harite.display_scale import normalize_display_scale
-from harite.optimize_settings import AUTO
+from harite.optimize_settings import normalize_canvas_scale_percent
 from harite.positioning import parse_position_pair
-
-
-def _decode_optional_auto_string(value: object | None, *, default: str | None = None) -> str | None:
-    if value is None:
-        return default
-    raw = str(value).strip()
-    if not raw:
-        return default
-    if raw.lower() == AUTO:
-        return AUTO
-    return raw
 
 
 def _decode_bool_setting(value: object, *, default: bool = False) -> bool:
@@ -34,28 +23,10 @@ def _decode_bool_setting(value: object, *, default: bool = False) -> bool:
     return default
 
 
-def _decode_two_screen_mode(value: object) -> str:
-    if value is None:
-        return "off"
-    if isinstance(value, bool):
-        return "on" if value else "off"
-    raw = str(value).strip().lower()
-    if raw in {"on", "off", AUTO}:
-        return raw
-    if raw in {"1", "true", "yes"}:
-        return "on"
-    if raw in {"0", "false", "no"}:
-        return "off"
-    raise ValueError(f"invalid two_screen settings: {value}")
-
-
 @dataclass
 class OptimizeSettings:
-    resolution: str = "1920x1080"
+    canvas_scale_percent: int = 100
     scaling: str = "fit"
-    two_screen_mode: str = "off"
-    l_display: str | None = None
-    r_display: str | None = None
     l_display_scale: float = 1.0
     r_display_scale: float = 1.0
     l_auto_display_scale: bool = False
@@ -72,12 +43,10 @@ class OptimizeSettings:
 
     @classmethod
     def from_settings_dict(cls, settings: dict[str, Any]) -> "OptimizeSettings":
+        raw_scale = settings.get("canvas_scale_percent", settings.get("canvas_scale", 100))
         return cls(
-            resolution=_decode_optional_auto_string(settings.get("resolution"), default=AUTO) or AUTO,
+            canvas_scale_percent=normalize_canvas_scale_percent(raw_scale),
             scaling=str(settings.get("scaling", "fit")),
-            two_screen_mode=_decode_two_screen_mode(settings.get("two_screen", False)),
-            l_display=_decode_optional_auto_string(settings.get("l_display")),
-            r_display=_decode_optional_auto_string(settings.get("r_display")),
             l_display_scale=normalize_display_scale(settings.get("l_display_scale", 1)),
             r_display_scale=normalize_display_scale(settings.get("r_display_scale", 1)),
             l_auto_display_scale=_decode_bool_setting(settings.get("l_auto_display_scale"), default=False),
@@ -95,8 +64,6 @@ class OptimizeSettings:
 
     def to_settings_dict(self) -> dict[str, Any]:
         data = asdict(self)
-        data["two_screen"] = AUTO if self.two_screen_mode == AUTO else (self.two_screen_mode == "on")
-        del data["two_screen_mode"]
         data["align"] = list(self.align)
         data["valign"] = list(self.valign)
         return data

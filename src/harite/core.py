@@ -363,13 +363,6 @@ def _build_embed_lines(
         ml, mr, mt, mb = margins
         params_lines.append(f"res={w_target}x{h_target} margins={ml},{mr},{mt},{mb}")
         params_lines.append(f"align={align}/{valign} inputs={input_count}")
-        if two_screen:
-            if l_display and r_display:
-                params_lines.append(
-                    f"two_screen=1 l={l_display[0]}x{l_display[1]} r={r_display[0]}x{r_display[1]}"
-                )
-            else:
-                params_lines.append("two_screen=1")
 
     free_lines: List[str] = []
     if mode_norm in ("free", "combo") and free_text:
@@ -775,9 +768,7 @@ def optimize_wallpapers(
     # Compatibility: accept upstream-style kwargs
     two_screen = bool(kwargs.get("two_screen", False))
     if len(items) >= 2 and not two_screen:
-        from harite.optimize_settings import DUAL_INPUT_REQUIRES_TWO_SCREEN
-
-        raise ValueError(DUAL_INPUT_REQUIRES_TWO_SCREEN)
+        raise ValueError("Dual input requires two detected displays")
     margins = kwargs.get("margins", (0, 0, 0, 0))
     try:
         ml, mr, mt, mb = tuple(int(x) for x in margins)

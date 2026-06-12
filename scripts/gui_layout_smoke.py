@@ -15,6 +15,27 @@ from pathlib import Path
 from typing import Any
 
 from harite.gui.views.main_window import MainWindow
+from harite.workspace import Display
+
+
+def _ensure_headless_display_stub() -> None:
+    """CI runners often have no detected displays; optimize requires at least one."""
+    import harite.apply_surface as apply_surface
+    import harite.display_context as display_context
+    import harite.slideshow_optimize as slideshow_optimize
+    import harite.workspace as workspace
+
+    if workspace.detect_displays():
+        return
+
+    def _stub() -> list[Display]:
+        return [
+            Display(name="stub-L", width=1920, height=1080, x_offset=0, y_offset=0),
+            Display(name="stub-R", width=1920, height=1080, x_offset=1920, y_offset=0),
+        ]
+
+    for module in (workspace, display_context, slideshow_optimize, apply_surface):
+        module.detect_displays = _stub
 
 
 VALID_MANUAL_RESULTS = {"pass", "fail", "not-available"}
@@ -354,6 +375,7 @@ def main(argv: list[str] | None = None) -> int:
             if path is not None:
                 path.parent.mkdir(parents=True, exist_ok=True)
 
+    _ensure_headless_display_stub()
     win = MainWindow()
 
     try:
