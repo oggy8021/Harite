@@ -59,5 +59,5 @@ def test_dual_monitor_smoke():
 
     assert len(placements) == 2
     left, right = placements
-    assert getattr(left, "posit", None) in ("left", "right")
-    assert getattr(right, "posit", None) in ("left", "right")
+    assert getattr(left, "monitor", None) in ("left", "right")
+    assert getattr(right, "monitor", None) in ("left", "right")

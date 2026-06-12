@@ -23,6 +23,10 @@ def sync_preview_state_from_owner(
 ) -> None:
     if include_input:
         backend._sync_input_state_from_owner(owner)
+    else:
+        from harite.gui.adapters.gui_runtime_sync import refresh_margin_settings_preview_label
+
+        refresh_margin_settings_preview_label(backend, owner)
     backend._sync_result_preview_from_owner(owner)
     if include_feedback:
         backend._sync_feedback_from_owner(owner)

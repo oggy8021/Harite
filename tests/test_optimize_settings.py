@@ -73,6 +73,8 @@ def test_resolve_optimize_display_settings_single_display_auto(monkeypatch):
 
     assert resolved.two_screen is False
     assert resolved.resolution == "2560x1440"
+    assert resolved.l_display == "2560x1440"
+    assert resolved.r_display is None
 
 
 def test_resolve_optimize_display_settings_rejects_dual_input_without_two_displays(monkeypatch):

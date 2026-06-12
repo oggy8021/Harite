@@ -26,8 +26,8 @@ def test_two_screen_basic_parity(tmp_path):
 
     w_target, h_target = 3840, 1080
 
-    assert placements[0].posit == "left"
-    assert placements[1].posit == "right"
+    assert placements[0].monitor == "left"
+    assert placements[1].monitor == "right"
 
     for p in placements:
         assert 0 <= p.x < w_target

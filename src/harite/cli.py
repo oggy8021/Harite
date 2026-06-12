@@ -62,8 +62,8 @@ def format_placement_line(placement: PlacementResult) -> str:
         f"{name} @ ({placement.x},{placement.y}) "
         f"{placement.width}x{placement.height} scale={placement.scale}"
     )
-    if placement.posit:
-        line = f"{line} posit={placement.posit}"
+    if placement.monitor:
+        line = f"{line} monitor={placement.monitor}"
     return line
 
 
@@ -422,6 +422,7 @@ def optimize(
             embed_position=embed_position,
             embed_max_lines=eff_embed_max_lines,
             embed_font=(str(eff_embed_font) if eff_embed_font is not None else None),
+            canvas_scale_percent=resolved_display_settings.canvas_scale_percent,
         )
     except ValueError as exc:
         typer.echo(str(exc))

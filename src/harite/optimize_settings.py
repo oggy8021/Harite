@@ -63,7 +63,6 @@ def resolve_optimize_display_settings(
         effective_r_display = _stringify_resolution(context.r_display)
     else:
         effective_two_screen = False
-        effective_l_display = None
         effective_r_display = None
         base_size: tuple[int, int] | None = None
         if context is not None:
@@ -78,6 +77,7 @@ def resolve_optimize_display_settings(
                 base_size = (int(primary.width), int(primary.height))
         if base_size is None:
             raise ValueError("No display detected for optimize")
+        effective_l_display = _stringify_resolution(base_size)
         scaled_w, scaled_h = _apply_canvas_scale(base_size, scale)
         effective_resolution = _stringify_resolution((scaled_w, scaled_h))
 
