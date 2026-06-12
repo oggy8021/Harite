@@ -20,7 +20,11 @@
 #     git python3 python3-venv python3-pip \
 #     python3-pyqt6 \
 #     python3-pyqt6.qtsvg \
-#     fcitx5 fcitx5-frontend-qt6
+#     fcitx5 fcitx5-frontend-qt6 \
+#     dbus-x11
+#
+# XFCE panel: add "Status Tray Plugin" or "Notification Area" to the panel.
+# Qt tray icons need a status notifier / legacy systray host (see verify script).
 #
 # Session: use fcitx5 (XFCE Input Method settings). Typical env:
 #   GTK_IM_MODULE=fcitx
@@ -55,5 +59,9 @@
 # --- Step 4: Run GUI ---------------------------------------------------------
 #
 #   harite-qt
+#   # or after: harite install-desktop-entry
+#
+# If the tray icon is missing, check XFCE panel plugins (Status Tray / Notification Area)
+# and re-run: python scripts/verify_linux_qt_env.py
 #
 # IME smoke: open Slideshow tab, focus keyword(CODH) field, toggle fcitx, type Japanese.

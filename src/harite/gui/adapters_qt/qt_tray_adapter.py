@@ -20,7 +20,58 @@ Menu structure (matches GTK adapter):
 
 from __future__ import annotations
 
+import os
+import sys
 from typing import Any
+
+
+_XFCE_TRAY_PANEL_HINT = (
+    "On XFCE, add a panel item such as 'Status Tray Plugin' or 'Notification Area' "
+    "and enable status notifier / legacy systray support."
+)
+
+
+def audit_qt_system_tray() -> dict[str, object]:
+    """Return environment diagnostics for Qt system tray availability."""
+    display_set = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+    audit: dict[str, object] = {
+        "display_set": display_set,
+        "system_tray_available": False,
+        "panel_hint": _XFCE_TRAY_PANEL_HINT,
+    }
+    if not display_set:
+        audit["skipped"] = True
+        audit["skip_reason"] = "no DISPLAY or WAYLAND_DISPLAY"
+        return audit
+
+    try:
+        from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
+    except ImportError as exc:
+        audit["error"] = str(exc)
+        return audit
+
+    qapp = QApplication.instance()
+    created_app = False
+    if qapp is None:
+        qapp = QApplication([])
+        created_app = True
+    try:
+        audit["system_tray_available"] = bool(QSystemTrayIcon.isSystemTrayAvailable())
+    finally:
+        if created_app and qapp is not None:
+            qapp.quit()
+    return audit
+
+
+def system_tray_unavailable_message() -> str:
+    """User-facing hint when QSystemTrayIcon cannot be installed."""
+    if sys.platform.startswith("linux"):
+        return (
+            "System tray is unavailable; slideshow tray controls were not installed. "
+            f"{_XFCE_TRAY_PANEL_HINT} "
+            "Run: python scripts/verify_linux_qt_env.py"
+        )
+    return "System tray is unavailable; slideshow tray controls were not installed."
 
 
 # ---------------------------------------------------------------------------
@@ -108,7 +159,8 @@ class QtTaskTrayAdapter:
         qapp = QApplication.instance()
 
         icon = self._make_icon(slideshow_running=False)
-        tray = QSystemTrayIcon(icon, qapp)
+        tray = QSystemTrayIcon(qapp)
+        tray.setIcon(icon)
         tray.setToolTip("Harite")
 
         menu = self._build_menu()
@@ -116,6 +168,14 @@ class QtTaskTrayAdapter:
 
         tray.activated.connect(self._on_tray_activated)
         tray.show()
+        if icon.isNull():
+            import sys
+
+            print(
+                "WARN: system tray icon is empty; check SVG/tray pixmap support "
+                "(python scripts/rinji.py).",
+                file=sys.stderr,
+            )
 
         self._tray = tray
         self._menu = menu
@@ -248,27 +308,56 @@ class QtTaskTrayAdapter:
     def _make_icon(self, *, slideshow_running: bool) -> Any:
         from PyQt6.QtGui import QIcon
 
+        from harite.gui.adapters_qt.qt_tray_icon import build_tray_qicon_from_path
         from harite.gui.tray_icon_theme import tray_product_icon_basename, tray_surface_is_light
 
-        resource_name = tray_product_icon_basename(
-            slideshow_running=slideshow_running,
-            light_surface=tray_surface_is_light(),
-        )
+        resource_names = [
+            tray_product_icon_basename(
+                slideshow_running=slideshow_running,
+                light_surface=tray_surface_is_light(),
+            ),
+            "harite.svg" if slideshow_running else "harite_off.svg",
+            "harite_light_bg.svg" if slideshow_running else "harite_off_light_bg.svg",
+            "harite_app.svg",
+        ]
         try:
             from harite.gui.resource_access import gui_resource_path
 
-            with gui_resource_path("icons", "product", resource_name) as p:
-                if p.exists():
-                    return QIcon(str(p))
+            seen: set[str] = set()
+            for resource_name in resource_names:
+                if resource_name in seen:
+                    continue
+                seen.add(resource_name)
+                with gui_resource_path("icons", "product", resource_name) as p:
+                    if not p.exists():
+                        continue
+                    icon = build_tray_qicon_from_path(p)
+                    if icon is not None and not icon.isNull():
+                        return icon
         except Exception:
             pass
 
-        # Fallback to a built-in theme icon
-        fallback = "media-playback-start" if slideshow_running else "media-playback-pause"
-        icon = QIcon.fromTheme(fallback)
-        if icon.isNull():
-            icon = QIcon()
-        return icon
+        for fallback in (
+            "media-playback-start" if slideshow_running else "media-playback-pause",
+            "applications-graphics",
+        ):
+            icon = QIcon.fromTheme(fallback)
+            if icon.isNull():
+                continue
+            try:
+                from PyQt6.QtCore import QSize
+
+                themed = QIcon()
+                for size_px in (16, 22, 24, 32):
+                    pixmap = icon.pixmap(QSize(size_px, size_px))
+                    if not pixmap.isNull():
+                        themed.addPixmap(pixmap)
+                if not themed.isNull():
+                    return themed
+            except Exception:
+                pass
+            return icon
+        return QIcon()
 
     # ------------------------------------------------------------------
     # Action handlers

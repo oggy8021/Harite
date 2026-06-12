@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 from typing import Any
 
 from .views.main_window import MainWindow
@@ -90,6 +91,10 @@ def run(
         if tasktray_adapter is not None:
             setattr(signal_backend, "_tasktray_adapter", tasktray_adapter)
             setattr(window, "_tasktray_adapter", tasktray_adapter)
+        elif sys.platform.startswith("linux"):
+            from harite.gui.adapters_qt.qt_tray_adapter import system_tray_unavailable_message
+
+            print(system_tray_unavailable_message(), file=sys.stderr)
     except RuntimeError:
         pass
 

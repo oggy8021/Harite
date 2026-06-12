@@ -20,6 +20,24 @@ def test_qt_tray_adapter_importable():
 
     assert callable(qt_tray_adapter.initialize_qt_tasktray)
     assert hasattr(qt_tray_adapter, "QtTaskTrayAdapter")
+    assert callable(qt_tray_adapter.audit_qt_system_tray)
+
+
+def test_system_tray_unavailable_message_mentions_xfce_on_linux(monkeypatch):
+    from harite.gui.adapters_qt.qt_tray_adapter import system_tray_unavailable_message
+
+    monkeypatch.setattr("harite.gui.adapters_qt.qt_tray_adapter.sys.platform", "linux")
+    message = system_tray_unavailable_message()
+    assert "Status Tray Plugin" in message
+
+
+def test_audit_qt_system_tray_skips_without_display(monkeypatch):
+    from harite.gui.adapters_qt.qt_tray_adapter import audit_qt_system_tray
+
+    monkeypatch.delenv("DISPLAY", raising=False)
+    monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
+    audit = audit_qt_system_tray()
+    assert audit.get("skipped") is True
 
 
 # ---------------------------------------------------------------------------

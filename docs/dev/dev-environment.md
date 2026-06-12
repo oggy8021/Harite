@@ -62,6 +62,8 @@ harite-qt
 
 **XFCE セッション:** Input Method で fcitx5 を有効化。`GTK_IM_MODULE=fcitx` / `XMODIFIERS=@im=fcitx` が入っていれば、起動時 `prepare_qt_input_method_env()` が `QT_IM_MODULE` を補完する。
 
+**XFCE システムトレイ:** Qt の `QSystemTrayIcon` はパネル項目 **「ステータストレイプラグイン」**（Status Tray Plugin）が必要（「デスクトップ通知プラグイン」は通知用で tray 本体ではない。「インジケータープラグイン」「XAppの状態プラグイン」とも別）。`python scripts/rinji.py` で `OK: Qt system tray available` と tray pixmap 行を確認する。アイコンが見えない場合はステータストレイの **隠しアイコン／許可リスト** も確認する。
+
 **IME 動作確認:** Slideshow タブの `keyword(CODH)` 欄で日本語入力が切り替わること。
 
 必須 apt パッケージ（再掲）:
