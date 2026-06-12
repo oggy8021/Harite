@@ -43,6 +43,6 @@ def test_two_screen_allocation_keeps_input_order(tmp_path):
     )
 
     assert len(placements) >= 2
-    # Two-screen allocation follows input order: first input -> left posit
-    assert placements[0].posit == "left"
-    assert placements[1].posit == "right"
+    # Two-screen allocation follows input order: first input -> left monitor
+    assert placements[0].monitor == "left"
+    assert placements[1].monitor == "right"

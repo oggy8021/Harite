@@ -114,6 +114,7 @@ class OptimizeController:
             embed_text=state.embed_text,
             embed_position=state.embed_position,
             embed_max_lines=resolve_embed_max_lines(state.embed_info, state.embed_max_lines),
+            canvas_scale_percent=display_settings.canvas_scale_percent,
         )
 
     def _parse_margins(self, margins: Optional[str]) -> tuple[int, int, int, int]:

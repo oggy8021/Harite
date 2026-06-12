@@ -184,6 +184,12 @@ def _set_drawer_expanded(backend: Any, *, expanded: bool) -> None:
     drawer.setVisible(expanded)
     apply_margins_options_drawer_open_state(backend, expanded=expanded)
     _sync_margins_drawer_window_frame(backend, expanded=expanded)
+    if expanded:
+        owner = backend._get_connected_owner() if hasattr(backend, "_get_connected_owner") else None
+        if owner is not None:
+            from harite.gui.adapters.gui_runtime_sync import refresh_margin_settings_preview_label
+
+            refresh_margin_settings_preview_label(backend, owner)
 
 
 def _is_drawer_expanded(backend: Any) -> bool:

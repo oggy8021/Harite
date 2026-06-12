@@ -130,7 +130,7 @@ canvas scale（現行）:
 各入力画像ごとに 1 行を stdout へ出す。形式:
 
 ```text
-Placement: {image_name} @ ({x},{y}) {width}x{height} scale={scale} posit={left|right}
+Placement: {image_name} @ ({x},{y}) {width}x{height} scale={scale} monitor={left|right}
 ```
 
 | フィールド | 意味 |
@@ -139,7 +139,7 @@ Placement: {image_name} @ ({x},{y}) {width}x{height} scale={scale} posit={left|r
 | `x`, `y` | **合成キャンバス**上の貼り付け左上座標（ピクセル、原点は左上） |
 | `width`, `height` | 配置後の画像ピクセルサイズ（scale 適用後） |
 | `scale` | 適用した拡大縮小倍率（原寸なら `1.0`） |
-| `posit` | two-screen / 複数入力時のスロット: `left` / `right`。単一入力で左右の区別が無いときは行末から省略可 |
+| `monitor` | two-screen / 複数入力時の貼り付け先モニタ: `left` / `right`。単一入力で左右の区別が無いときは行末から省略可 |
 
 `rotation` / `score` は内部互換フィールドであり、CLI 一行出力には含めない。
 

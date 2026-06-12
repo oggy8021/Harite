@@ -27,5 +27,5 @@ def test_two_screen_basic(tmp_path):
     assert len(saved) == 1
     # two placements (left/right)
     assert len(placements) >= 2
-    pos = [p.posit for p in placements]
+    pos = [p.monitor for p in placements]
     assert "left" in pos and "right" in pos

@@ -88,7 +88,7 @@ class PlacementResult:
     rotation: float = 0.0
     scale: float = 1.0
     score: float = 1.0
-    posit: Optional[str] = None
+    monitor: Optional[str] = None
 
     def to_dict(self) -> dict:
         """Convert placement result to serializable dictionary.
@@ -108,7 +108,7 @@ class PlacementResult:
             "rotation": float(self.rotation),
             "scale": float(self.scale),
             "score": float(self.score),
-            "posit": self.posit,
+            "monitor": self.monitor,
         }
 
 
@@ -351,6 +351,67 @@ def _format_embed_inputs_scale_suffix(
     return " " + " ".join(tokens)
 
 
+def _format_resolution_token(value: Tuple[int, int]) -> str:
+    w, h = value
+    return f"{int(w)}x{int(h)}"
+
+
+def _format_embed_displays_line(
+    *,
+    l_display: Optional[Tuple[int, int]],
+    r_display: Optional[Tuple[int, int]],
+    two_screen: bool,
+) -> str | None:
+    tokens: list[str] = []
+    if l_display is not None:
+        tokens.append(f"L={_format_resolution_token(l_display)}")
+    if two_screen and r_display is not None:
+        tokens.append(f"R={_format_resolution_token(r_display)}")
+    if not tokens:
+        return None
+    return " ".join(tokens)
+
+
+def _build_embed_settings_lines(
+    *,
+    target_resolution: Tuple[int, int],
+    margins: Tuple[int, int, int, int],
+    align: str,
+    valign: str,
+    input_count: int,
+    two_screen: bool,
+    l_display: Optional[Tuple[int, int]],
+    r_display: Optional[Tuple[int, int]],
+    canvas_scale_percent: int = 100,
+    l_display_scale: float = 1.0,
+    r_display_scale: float = 1.0,
+    l_auto_display_scale: bool = False,
+    r_auto_display_scale: bool = False,
+) -> List[str]:
+    from .optimize_settings import normalize_canvas_scale_percent
+
+    w_target, h_target = target_resolution
+    ml, mr, mt, mb = margins
+    scale = normalize_canvas_scale_percent(canvas_scale_percent)
+    lines: List[str] = [f"canvas={w_target}x{h_target}@{scale}%"]
+    displays_line = _format_embed_displays_line(
+        l_display=l_display,
+        r_display=r_display,
+        two_screen=two_screen,
+    )
+    if displays_line:
+        lines.append(displays_line)
+    scale_suffix = _format_embed_inputs_scale_suffix(
+        input_count,
+        l_display_scale=l_display_scale,
+        r_display_scale=r_display_scale,
+        l_auto_display_scale=l_auto_display_scale,
+        r_auto_display_scale=r_auto_display_scale,
+    )
+    lines.append(f"margins={ml},{mr},{mt},{mb} align={align}/{valign} inputs={input_count}{scale_suffix}")
+    return lines
+
+
 def _build_embed_lines(
     mode: str,
     *,
@@ -363,6 +424,7 @@ def _build_embed_lines(
     l_display: Optional[Tuple[int, int]],
     r_display: Optional[Tuple[int, int]],
     free_text: Optional[str],
+    canvas_scale_percent: int = 100,
     l_display_scale: float = 1.0,
     r_display_scale: float = 1.0,
     l_auto_display_scale: bool = False,
@@ -384,6 +446,7 @@ def _build_embed_lines(
         l_display: 左画面解像度。
         r_display: 右画面解像度。
         free_text: フリーテキスト。
+        canvas_scale_percent: 検出 desktop に対する合成キャンバス縮小率。
 
     Returns:
         表示用の行リスト。
@@ -394,17 +457,21 @@ def _build_embed_lines(
 
     settings_lines: List[str] = []
     if embed_info_includes_settings(mode_norm):
-        w_target, h_target = target_resolution
-        ml, mr, mt, mb = margins
-        scale_suffix = _format_embed_inputs_scale_suffix(
-            input_count,
+        settings_lines = _build_embed_settings_lines(
+            target_resolution=target_resolution,
+            margins=margins,
+            align=align,
+            valign=valign,
+            input_count=input_count,
+            two_screen=two_screen,
+            l_display=l_display,
+            r_display=r_display,
+            canvas_scale_percent=canvas_scale_percent,
             l_display_scale=l_display_scale,
             r_display_scale=r_display_scale,
             l_auto_display_scale=l_auto_display_scale,
             r_auto_display_scale=r_auto_display_scale,
         )
-        settings_lines.append(f"res={w_target}x{h_target} margins={ml},{mr},{mt},{mb}")
-        settings_lines.append(f"align={align}/{valign} inputs={input_count}{scale_suffix}")
 
     free_lines: List[str] = []
     if embed_info_includes_free_text(mode_norm) and free_text:
@@ -912,11 +979,14 @@ def optimize_wallpapers(
             rotation=0.0,
             scale=float(scale),
             score=1.0,
-            posit=("left" if i == 0 else ("right" if i == 1 else None)),
+            monitor=("left" if i == 0 else ("right" if i == 1 else None)),
         )
         placements.append(pr)
 
     # Save result
+    from .optimize_settings import normalize_canvas_scale_percent
+
+    canvas_scale_percent = normalize_canvas_scale_percent(kwargs.get("canvas_scale_percent", 100))
     embed_lines = _build_embed_lines(
         embed_info,
         target_resolution=target_resolution,
@@ -928,6 +998,7 @@ def optimize_wallpapers(
         l_display=l_display,
         r_display=r_display,
         free_text=embed_text,
+        canvas_scale_percent=canvas_scale_percent,
         l_display_scale=l_display_scale,
         r_display_scale=r_display_scale,
         l_auto_display_scale=l_auto_display_scale,

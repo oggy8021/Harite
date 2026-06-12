@@ -1,0 +1,137 @@
+Date : 2026-06-12 18:23:57
+Directory : c:\Users\oggy_\Develop\Repos\Harite
+Total : 80 files,  1723 codes, -1 comments, 603 blanks, all 2325 lines
+
+Languages
++------------------+------------+------------+------------+------------+------------+
+| language         | files      | code       | comment    | blank      | total      |
++------------------+------------+------------+------------+------------+------------+
+| Python           |         51 |        914 |         -3 |        299 |      1,210 |
+| Markdown         |         26 |        752 |          0 |        302 |      1,054 |
+| XML              |          2 |         57 |          0 |          2 |         59 |
+| pip requirements |          1 |          0 |          2 |          0 |          2 |
++------------------+------------+------------+------------+------------+------------+
+
+Directories
++---------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                          | files      | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                             |         80 |      1,723 |         -1 |        603 |      2,325 |
+| . (Files)                                                                                                     |          1 |          0 |          2 |          0 |          2 |
+| docs                                                                                                          |         26 |        752 |          0 |        302 |      1,054 |
+| docs\dev                                                                                                      |          1 |         25 |          0 |         10 |         35 |
+| docs\specs                                                                                                    |          2 |         60 |          0 |         23 |         83 |
+| docs\specs\cli                                                                                                |          1 |         45 |          0 |         21 |         66 |
+| docs\specs\core                                                                                               |          1 |         15 |          0 |          2 |         17 |
+| docs\working                                                                                                  |         23 |        667 |          0 |        269 |        936 |
+| docs\working (Files)                                                                                          |         14 |       -252 |          0 |        -54 |       -306 |
+| docs\working\finished                                                                                         |          9 |        919 |          0 |        323 |      1,242 |
+| scripts                                                                                                       |          3 |        108 |          1 |         29 |        138 |
+| src                                                                                                           |         23 |        346 |         -1 |         84 |        429 |
+| src\harite                                                                                                    |         23 |        346 |         -1 |         84 |        429 |
+| src\harite (Files)                                                                                            |          8 |        302 |         -1 |         64 |        365 |
+| src\harite\gui                                                                                                |         15 |         44 |          0 |         20 |         64 |
+| src\harite\gui (Files)                                                                                        |          1 |         58 |          0 |         17 |         75 |
+| src\harite\gui\adapters                                                                                       |          3 |         27 |          0 |          3 |         30 |
+| src\harite\gui\adapters_qt                                                                                    |          4 |        -21 |          0 |         -2 |        -23 |
+| src\harite\gui\controllers                                                                                    |          1 |         -5 |          0 |          0 |         -5 |
+| src\harite\gui\resources                                                                                      |          2 |         57 |          0 |          2 |         59 |
+| src\harite\gui\resources\icons                                                                                |          2 |         57 |          0 |          2 |         59 |
+| src\harite\gui\resources\icons\product                                                                        |          2 |         57 |          0 |          2 |         59 |
+| src\harite\gui\services                                                                                       |          1 |         -9 |          0 |          0 |         -9 |
+| src\harite\gui\views                                                                                          |          3 |        -63 |          0 |          0 |        -63 |
+| tests                                                                                                         |         27 |        517 |         -3 |        188 |        702 |
+| tests (Files)                                                                                                 |          7 |         62 |          0 |         32 |         94 |
+| tests\cli                                                                                                     |          3 |         99 |          0 |         33 |        132 |
+| tests\core                                                                                                    |          4 |        155 |          1 |         44 |        200 |
+| tests\gui                                                                                                     |          9 |        184 |          0 |         74 |        258 |
+| tests\regression                                                                                              |          3 |         -1 |         -4 |          0 |         -5 |
+| tests\scripts                                                                                                 |          1 |         18 |          0 |          5 |         23 |
++---------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++---------------------------------------------------------------------------------------------------------------+------------------+------------+------------+------------+------------+
+| filename                                                                                                      | language         | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------------------------------------------+------------------+------------+------------+------------+------------+
+| c:\Users\oggy_\Develop\Repos\Harite\docs\dev\dev-environment.md                                               | Markdown         |         25 |          0 |         10 |         35 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\specs\cli\harite-cli-spec.md                                         | Markdown         |         45 |          0 |         21 |         66 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\specs\core\harite-core-spec.md                                       | Markdown         |         15 |          0 |          2 |         17 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\20260531-mat-10-kiriezu-source-planning.md                   | Markdown         |       -225 |          0 |        -71 |       -296 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\20260609-1200-feature-overview.md                            | Markdown         |          2 |          0 |          0 |          2 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\20260609-mat-02b-slideshow-remote-stability.md               | Markdown         |        -42 |          0 |        -20 |        -62 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\20260609-mat-08-viper3-slideshow-op-observation.md           | Markdown         |        -83 |          0 |        -35 |       -118 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\20260609-mat-15-core-geometry-audit.md                       | Markdown         |        -78 |          0 |        -35 |       -113 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\20260610-mat-08-viper3-slideshow-op2-observation.md          | Markdown         |        -73 |          0 |        -27 |       -100 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\20260610-mat-08-viper3-slideshow-op3-observation.md          | Markdown         |        -65 |          0 |        -25 |        -90 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\20260610-q01-gtk-deprecation-planning.md                     | Markdown         |       -254 |          0 |        -68 |       -322 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\20260610-v2-roadmap-op3-planning.md                          | Markdown         |        -86 |          0 |        -39 |       -125 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\20260611-1200-cli-v2-roadmap.md                              | Markdown         |        220 |          0 |         80 |        300 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\20260611-pre-bump-cli-gatereview.md                          | Markdown         |        174 |          0 |         61 |        235 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\20260611-two-screen-display-params-clarification.md          | Markdown         |        171 |          0 |         80 |        251 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\20260612-pre-release-housekeeping.md                         | Markdown         |         85 |          0 |         45 |        130 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\README.md                                                    | Markdown         |          2 |          0 |          0 |          2 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\finished\20260531-mat-10-kiriezu-source-planning.md          | Markdown         |        225 |          0 |         71 |        296 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\finished\20260609-mat-02b-slideshow-remote-stability.md      | Markdown         |         42 |          0 |         20 |         62 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\finished\20260609-mat-08-viper3-slideshow-op-observation.md  | Markdown         |         83 |          0 |         35 |        118 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\finished\20260609-mat-15-core-geometry-audit.md              | Markdown         |         78 |          0 |         35 |        113 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\finished\20260610-mat-08-viper3-slideshow-op2-observation.md | Markdown         |         73 |          0 |         27 |        100 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\finished\20260610-mat-08-viper3-slideshow-op3-observation.md | Markdown         |         65 |          0 |         25 |         90 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\finished\20260610-q01-gtk-deprecation-planning.md            | Markdown         |        254 |          0 |         68 |        322 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\finished\20260610-v2-roadmap-op3-planning.md                 | Markdown         |         88 |          0 |         40 |        128 |
+| c:\Users\oggy_\Develop\Repos\Harite\docs\working\finished\README.md                                           | Markdown         |         11 |          0 |          2 |         13 |
+| c:\Users\oggy_\Develop\Repos\Harite\requirements.txt                                                          | pip requirements |          0 |          2 |          0 |          2 |
+| c:\Users\oggy_\Develop\Repos\Harite\scripts\gui_layout_smoke.py                                               | Python           |         17 |          0 |          5 |         22 |
+| c:\Users\oggy_\Develop\Repos\Harite\scripts\verify_linux_qt_env.py                                            | Python           |         81 |          1 |         23 |        105 |
+| c:\Users\oggy_\Develop\Repos\Harite\scripts\xfce_smoke_runner.py                                              | Python           |         10 |          0 |          1 |         11 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\cli.py                                                         | Python           |         41 |         -1 |          6 |         46 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\color_contrast.py                                              | Python           |         20 |          0 |          8 |         28 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\core.py                                                        | Python           |        149 |          0 |         20 |        169 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\embed_info.py                                                  | Python           |         36 |          0 |         13 |         49 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\adapters\gui_runtime_owner_sync.py                         | Python           |          3 |          0 |          1 |          4 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\adapters\gui_runtime_settings_dialogs.py                   | Python           |        -23 |          0 |         -4 |        -27 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\adapters\gui_runtime_sync.py                               | Python           |         47 |          0 |          6 |         53 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\adapters_qt\qt_backend.py                                  | Python           |         -6 |          0 |         -2 |         -8 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\adapters_qt\qt_dialogs.py                                  | Python           |        -14 |          0 |         -1 |        -15 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\adapters_qt\qt_object_registry.py                          | Python           |         -5 |          0 |          0 |         -5 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\adapters_qt\qt_tray_adapter.py                             | Python           |          4 |          0 |          1 |          5 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\controllers\optimize_controller.py                         | Python           |         -5 |          0 |          0 |         -5 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\resources\icons\product\harite_light_bg.svg                | XML              |         28 |          0 |          1 |         29 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\resources\icons\product\harite_off_light_bg.svg            | XML              |         29 |          0 |          1 |         30 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\services\cli_mapper.py                                     | Python           |         -9 |          0 |          0 |         -9 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\tray_icon_theme.py                                         | Python           |         58 |          0 |         17 |         75 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\views\main_window.py                                       | Python           |        -62 |          0 |         -1 |        -63 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\views\main_window_preview.py                               | Python           |         -6 |          0 |          0 |         -6 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\gui\views\margins_options_drawer.py                            | Python           |          5 |          0 |          1 |          6 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\last_optimize_run.py                                           | Python           |         81 |          0 |         23 |        104 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\optimize_settings.py                                           | Python           |         17 |          0 |         -2 |         15 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\settings.py                                                    | Python           |        -26 |          0 |         -2 |        -28 |
+| c:\Users\oggy_\Develop\Repos\Harite\src\harite\slideshow_optimize.py                                          | Python           |        -16 |          0 |         -2 |        -18 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\cli\test_apply_cli.py                                               | Python           |         58 |          0 |         17 |         75 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\cli\test_cli_validation.py                                          | Python           |         27 |          0 |         11 |         38 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\cli\test_slideshow_cli.py                                           | Python           |         14 |          0 |          5 |         19 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\core\test_color_contrast.py                                         | Python           |         11 |          0 |         10 |         21 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\core\test_core.py                                                   | Python           |          3 |          0 |          0 |          3 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\core\test_core_features.py                                          | Python           |         80 |          1 |         16 |         97 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\core\test_embed_info.py                                             | Python           |         61 |          0 |         18 |         79 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\gui\conftest.py                                                     | Python           |         22 |          0 |          6 |         28 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\gui\test_cli_mapper.py                                              | Python           |         -8 |          0 |          0 |         -8 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\gui\test_main_window_signals.py                                     | Python           |         -2 |          0 |          0 |         -2 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\gui\test_margin_settings_preview.py                                 | Python           |        102 |          0 |         22 |        124 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\gui\test_optimize_controller.py                                     | Python           |         -1 |          0 |          2 |          1 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\gui\test_p03_margin_embed.py                                        | Python           |          3 |          0 |          0 |          3 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\gui\test_phase4_regression.py                                       | Python           |         -1 |          0 |          0 |         -1 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\gui\test_qt_dialogs.py                                              | Python           |         -6 |          0 |          0 |         -6 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\gui\test_tray_icon_theme.py                                         | Python           |         75 |          0 |         44 |        119 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\regression\test_regression_extra.py                                 | Python           |         -2 |         -1 |          0 |         -3 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\regression\test_regression_more.py                                  | Python           |          0 |         -1 |          0 |         -1 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\regression\test_regression_parity.py                                | Python           |          1 |         -2 |          0 |         -1 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\scripts\test_verify_linux_qt_env.py                                 | Python           |         18 |          0 |          5 |         23 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\test_cli_plugin_resolve.py                                          | Python           |          7 |          0 |          7 |         14 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\test_display_scale.py                                               | Python           |         -3 |          0 |          0 |         -3 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\test_last_optimize_run.py                                           | Python           |         30 |          0 |         13 |         43 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\test_optimize_settings.py                                           | Python           |         36 |          0 |         11 |         47 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\test_preferences.py                                                 | Python           |         -4 |          0 |          1 |         -3 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\test_slideshow_display_scale.py                                     | Python           |         -1 |          0 |          0 |         -1 |
+| c:\Users\oggy_\Develop\Repos\Harite\tests\test_slideshow_optimize.py                                          | Python           |         -3 |          0 |          0 |         -3 |
+| Total                                                                                                         |                  |      1,723 |         -1 |        603 |      2,325 |
++---------------------------------------------------------------------------------------------------------------+------------------+------------+------------+------------+------------+

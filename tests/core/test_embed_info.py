@@ -36,7 +36,7 @@ def test_build_embed_lines_appends_scale_tokens():
 
     lines = _build_embed_lines(
         "settings",
-        target_resolution=(1920, 1080),
+        target_resolution=(1440, 810),
         margins=(10, 10, 0, 0),
         align="center",
         valign="center",
@@ -45,10 +45,34 @@ def test_build_embed_lines_appends_scale_tokens():
         l_display=(1920, 1080),
         r_display=(1920, 1080),
         free_text=None,
+        canvas_scale_percent=75,
         l_display_scale=1.25,
         r_display_scale=1.0,
         l_auto_display_scale=False,
         r_auto_display_scale=True,
     )
-    assert len(lines) == 2
-    assert "inputs=2 L=125% R=auto" in lines[1]
+    assert len(lines) == 3
+    assert lines[0] == "canvas=1440x810@75%"
+    assert lines[1] == "L=1920x1080 R=1920x1080"
+    assert "inputs=2 L=125% R=auto" in lines[2]
+
+
+def test_build_embed_settings_lines_single_includes_detected_display():
+    from harite.core import _build_embed_settings_lines
+
+    lines = _build_embed_settings_lines(
+        target_resolution=(1920, 1080),
+        margins=(0, 0, 0, 0),
+        align="center",
+        valign="center",
+        input_count=1,
+        two_screen=False,
+        l_display=(1920, 1080),
+        r_display=None,
+        canvas_scale_percent=100,
+    )
+    assert lines == [
+        "canvas=1920x1080@100%",
+        "L=1920x1080",
+        "margins=0,0,0,0 align=center/center inputs=1",
+    ]
