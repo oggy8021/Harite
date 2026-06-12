@@ -1,6 +1,6 @@
 # Harite CLI 仕様 (CLI Spec)
 
-最終更新: 2026-06-12（MAT-21b canvas_scale_percent・四重露出撤去）
+最終更新: 2026-06-12（MAT-22 apply 経路整理）
 
 ## 1. CLI の責務
 
@@ -165,27 +165,46 @@ Embed position overlaps pasted image. Choose another embed_position (left-top, l
 
 - 設定ファイル内の bool 値は `true/false/1/0/yes/no/on/off`（大文字小文字不問）を受理する。Python の bool/int 型 `True`/`False`/`1`/`0` も受理する。これ以外の値は不正として終了コード `2` で止める。
 
-## 5. `apply`
+## 5. `apply`（MAT-22）
 
-- plugin を解決し、`single-file` または per-monitor target を適用する。
-- CLI `apply` は直接作用 command として扱う。
+- 直前の `optimize` 結果を OS 壁紙へ適用する。GUI の **Apply** ボタン（`last_saved_files` → `resolve_apply_settings`）と同型。
+- **`apply_mode` / `plugin` / `windows_apply_span` は settings 正本**（`--settings-file` / `-c` 推奨）。CLI に `--auto-split` / `--left-file` / `--right-file` / `--per-monitor` は **持たない**（v2.0.0 で廃止）。
 
-apply mode の決定順:
+### 典型フロー
 
-1. `--auto-split` があれば `per-monitor-auto-split`
-2. `--left-file` または `--right-file` があれば `per-monitor-explicit`
-3. それ以外は `single-file`
+```text
+harite optimize -i "left.jpg,right.jpg" -c settings.json -o ./out
+harite apply -c settings.json
+```
 
-補足:
+シェル 1 行化: `harite optimize ...; harite apply -c settings.json`
 
-- `--per-monitor` 単独では実行できず、`--left-file` / `--right-file` か `--auto-split` を伴う必要がある。
-- plugin 解決は command 先頭で行い、未知 plugin は終了コード `2` で止める。
-- `resolve_apply_settings(...)` により最終適用対象を構成してから plugin へ渡す。
-- apply target の解決自体は `apply_mode` と file / display 条件に基づく core 規則であり、選択済み plugin がその target を受け付けるかは CLI / plugin 側で扱う。
-- `--file`, `--left-file`, `--right-file` は画像 file path を受け取る。CLI は file 名の推測補完を行わず、最終的な存在確認と `~` 展開・絶対 path 化は plugin 側の正規化に委ねる。
-- plugin が `False` を返した場合は終了コード `3` で扱う。
-- CLI 実装は `resolve_apply_settings(...)` に `output_dir=Path(".")` を渡しているため、`--auto-split` 時の split 出力先既定値は current working directory である。
-- `--auto-split` と `--left-file` / `--right-file` を同時に指定した場合、`--auto-split` が優先され、明示ファイルは無視される。
+### 合成ファイルの解決（`--file`）
+
+| 条件 | 採用する composite |
+| --- | --- |
+| `--file` 指定あり | その path（上級・既存 JPEG 用。非推奨） |
+| `--file` 省略 | `.harite-last-optimize.json` から `composite_path` を読む |
+
+追跡ファイル（`last_optimize_run.py`）:
+
+- **書き込み:** `optimize` 成功時。`Saved:` 出力と同タイミング。
+- **配置:** `{output_dir}/.harite-last-optimize.json` および設定ディレクトリ（`resolve_default_settings_path().parent`）の同名ファイル（最新 run のコピー）。
+- **内容:** `composite_path`（絶対 path）、`output_dir`（絶対 path）。
+- **読み込み:** `apply` で `--file` 未指定時。探索順は `--output` ヒント → 設定ディレクトリ → カレントディレクトリ。欠落・不正・参照ファイル不存在は終了コード `2`。
+
+### apply mode と plugin
+
+- `apply_mode` は `--settings-file` から `ApplySettings` として読む。未指定時は `AppSettings._default_apply_mode(default_plugin)`（GUI と同型）。
+- `plugin` は CLI `--plugin` > settings `plugin` > OS 既定 plugin の順（**MAT-23 で `--plugin` 廃止予定**）。
+- `windows_apply_span` が有効かつ Windows Span 経路のとき、`ensure_span_style()` を best-effort 実行する（GUI B-lite と同型）。
+- `resolve_apply_settings(...)` は `output_dir=composite_path.parent` を渡す（split 出力先は合成画像の親 directory）。
+- plugin が `False` を返した場合は終了コード `3`。
+
+### 廃止（v2.0.0 / MAT-22）
+
+- `--auto-split`, `--left-file`, `--right-file`, `--per-monitor`
+- `apply` の `--settings-file` 未対応（旧実装）
 
 ### 未知 plugin 時の動作
 
@@ -193,7 +212,7 @@ apply mode の決定順:
 
 ### 短縮形オプション
 
-- `apply` で使える短縮形: `--plugin` / `-p`、`--file` / `-f`、`--per-monitor` / `-m`
+- `apply` で使える短縮形: `--settings-file` / `-c`、`--output` / `-o`、`--plugin` / `-p`、`--file` / `-f`
 
 ## 6. `slideshow`
 
