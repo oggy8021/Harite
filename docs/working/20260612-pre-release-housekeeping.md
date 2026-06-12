@@ -13,7 +13,7 @@
 (2) トレイ 2 アイコン + Windows タスクバー配色検出  ← **完了**（#483）
 (3) embed-info 整理・重畳・文字色自動  ← **完了**（#484, #485）
 (4) 回帰テスト（オーナー実施: CLI → GUI → Windows → XFCE）  ← **実施中・大きな齟齬なし**
-(5) 正本から MAT-xx 除去  ← **完了**（docs/pre-release-spec-cleanup ブランチ）
+(5) 正本から MAT-xx 除去  ← **完了**（#489）
 (6) 版 bump・パッケージング・ビルド・リリース  ← **次**
 ```
 
@@ -57,7 +57,33 @@ v2 幾何・apply・canvas-scale ポストダウンスケール（#487）確認�
 
 ## (6) 版 bump・リリース — **次**
 
-CHANGELOG、`pyproject.toml` bump、パッケージング希望の反映、リリースブランチ。
+CHANGELOG、`pyproject.toml` bump（`2.0.0`）、リリースブランチ、下記パッケージ方針の実装。
+
+### パッケージ方針（オーナー 2026-06-13 確定）
+
+| プラットフォーム | 配布形態 | 備考 |
+| --- | --- | --- |
+| **Windows** | **PyInstaller `onedir`** | 母体は onefile ではなく onedir を推奨（起動・デバッグ・同梱のバランス）。**Python ロゴ（`python.ico`）の露出は避ける** |
+| **Linux** | **sdist + wheel**（ビルド成果物） | バイナリ化・AppImage は **訴求があれば検討**。**PyPI 公開（v2.0.0 で復活するか）は未決** — 母体 `wallpaperoptimizer` は PyPI **登録削除済み**で現状残っていない |
+
+### Windows アイコン
+
+- ウィンドウ左上・タスクバーグループ等の product identity に **`harite_app.svg`** を用いる（GUI 実装は `setWindowIcon` で同 SVG を既に参照）。
+- PyInstaller の EXE/ショートカット用には、ビルド時に **SVG → `.ico` 変換** が必要になる想定（`--icon` は `.ico` 前提）。
+- トレイは slideshow 用 product icon（`harite.svg` / `harite_light_bg.svg` 等）— #483 / #488 済み。Windows バイナリ同梱時も package resources を PyInstaller datas で含める。
+
+### Linux 配布
+
+- 開発・実機: `pip install -e .` または wheel からのローカル install + [requirements-linux-qt.txt](../../requirements-linux-qt.txt)（distro `python3-pyqt6`、`--system-site-packages` venv）。
+- リリース時: `python -m build` で **sdist/wheel を生成**（CI `build-check` 再確認）。配布先は **GitHub Release 添付・git clone 等**を想定し、**PyPI upload は v2.0.0 時点ではオプション**（要判断）。
+
+### リリースブランチでやること（チェックリスト）
+
+- [ ] `CHANGELOG`（CLI 破壊的変更を明示）
+- [ ] `pyproject.toml` version `2.0.0`
+- [ ] PyInstaller spec / ビルド手順（Windows onedir、`harite` + `harite-qt` の EXE 構成を確定）
+- [ ] `python -m build` → sdist/wheel（Linux 成果物；PyPI 公開するかは別判断）
+- [ ] GitHub Release アーティファクト（Windows フォルダ zip 等）
 
 ---
 
@@ -66,4 +92,6 @@ CHANGELOG、`pyproject.toml` bump、パッケージング希望の反映、リ�
 | 日付 | 内容 |
 | --- | --- |
 | 2026-06-12 | 初版。順序確定 |
-| 2026-06-13 | #484–#488 反映。正本 MAT 除去完了。XFCE tray 確認 OK |
+| 2026-06-13 | #484–#488 反映。正本 MAT 除去完了（#489）。XFCE tray 確認 OK |
+| 2026-06-13 | §6 パッケージ方針追記（Windows onedir / Linux sdist+wheel） |
+| 2026-06-13 | §6 PyPI 公開は v2.0.0 未決（wallpaperoptimizer 登録削除済み）を追記 |
