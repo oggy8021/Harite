@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import sys
+import types
+
 import pytest
 
 from harite.gui import tray_icon_theme as theme
@@ -79,11 +82,11 @@ def test_windows_system_uses_light_taskbar_reads_registry(monkeypatch):
         assert name == "SystemUsesLightTheme"
         return (1, None)
 
-    import winreg
-
-    monkeypatch.setattr(winreg, "OpenKey", fake_open_key)
-    monkeypatch.setattr(winreg, "QueryValueEx", fake_query_value)
-    monkeypatch.setattr(winreg, "HKEY_CURRENT_USER", object())
+    fake_winreg = types.ModuleType("winreg")
+    fake_winreg.HKEY_CURRENT_USER = object()
+    fake_winreg.OpenKey = fake_open_key
+    fake_winreg.QueryValueEx = fake_query_value
+    monkeypatch.setitem(sys.modules, "winreg", fake_winreg)
 
     assert theme.windows_system_uses_light_taskbar() is True
 
