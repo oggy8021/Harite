@@ -42,14 +42,11 @@ def test_registry_contains_windows():
 
 def test_windows_plugin_apply_success(monkeypatch):
     plugin = plugins.registry.get("windows")
-    # use existing test asset
     p = Path("tests/data/left.jpg")
     assert p.exists()
     monkeypatch.setattr(
-        ctypes,
-        "windll",
-        SimpleNamespace(user32=SimpleNamespace(SystemParametersInfoW=lambda *_args: 1)),
-        raising=False,
+        "harite.windows_wallpaper.apply_windows_wallpaper_file",
+        lambda path: str(path).endswith("left.jpg"),
     )
     assert plugin.apply(str(p)) is True
 

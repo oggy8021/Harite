@@ -67,10 +67,10 @@ monitor map interface:
 - OS 背景の **Span 表示**（HKCU `WallpaperStyle=22`）は plugin 責務外。Settings の `windows_apply_span` が有効なとき、GUI / core が Apply 前に best-effort で設定する（[gui-spec](../gui/harite-gui-spec.md) 参照）。
 - OS デスクトップ **背景色**（Windows「背景」設定等）は Harite **管轄外**。壁紙 file path の差し替えのみ行い、背景色との重畳はユーザー / OS 設定に委ねる。
 - Fit / Fill / Stretch / Tile / Center を Harite が全面制御する案（B-full）は **不採用**。Span opt-in（B-lite）のみ。
-- 実適用では `SystemParametersInfoW` を使う。
-- 実適用の戻り値は `SystemParametersInfoW(...)` の真偽値をそのまま成功判定に使う。
-- `SystemParametersInfoW(20, 0, str(p), 3)` の第4引数 `3` は `SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE` を意味し、設定を永続化して他アプリへ変更を通知する。
-- `path` は `Path(path)` のみで処理し、`expanduser()` / `resolve()` による正規化は行わない。`~` や相対パスはそのまま OS API（`SystemParametersInfoW`）に渡される。
+- 実適用は `windows_wallpaper.apply_windows_wallpaper_file(...)` に委譲する。
+- 適用前に `Path(path).expanduser().resolve()` で絶対パスへ正規化し、HKCU `Wallpaper` と `SystemParametersInfoW(SPI_SETDESKWALLPAPER, ...)` を更新する。
+- 成功後は `refresh_windows_wallpaper_shell()` で `UpdatePerUserSystemParameters` を best-effort 呼び出し、Explorer へ即時反映させる。
+- 戻り値は `SystemParametersInfoW(...)` の真偽値を成功判定に使う。
 
 ### 4.2 macOS plugin
 
