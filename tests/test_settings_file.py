@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from harite.settings_file import resolve_default_settings_path
+from harite.settings_file import merge_patch_only_settings_keys, resolve_default_settings_path
 
 
 def test_resolve_default_settings_path_linux_with_xdg_config_home(
@@ -52,3 +52,26 @@ def test_resolve_default_settings_path_windows_falls_back_when_appdata_unset(
     monkeypatch.setattr("harite.settings_file.Path.home", lambda: home)
 
     assert resolve_default_settings_path() == home / "AppData" / "Roaming" / "harite" / "harite-settings.json"
+
+
+def test_merge_patch_only_settings_keys_preserves_missing_keywords() -> None:
+    payload = {"plugin": "linux", "apply_mode": "per-monitor-auto-split"}
+    existing = {"plugin": "windows", "codh_keyword": "富士", "ndl_keyword": "浮世絵"}
+
+    merged = merge_patch_only_settings_keys(payload, existing)
+
+    assert merged == {
+        "plugin": "linux",
+        "apply_mode": "per-monitor-auto-split",
+        "codh_keyword": "富士",
+        "ndl_keyword": "浮世絵",
+    }
+
+
+def test_merge_patch_only_settings_keys_keeps_payload_keywords() -> None:
+    payload = {"codh_keyword": "桜", "ndl_keyword": "妖怪"}
+    existing = {"codh_keyword": "富士", "ndl_keyword": "浮世絵"}
+
+    merged = merge_patch_only_settings_keys(payload, existing)
+
+    assert merged == {"codh_keyword": "桜", "ndl_keyword": "妖怪"}

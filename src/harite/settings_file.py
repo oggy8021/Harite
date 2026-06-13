@@ -44,3 +44,17 @@ def patch_settings_value(path: Path, key: str, value: Any) -> Path:
     data: dict[str, Any] = load_settings(p) if p.exists() else {}
     data[key] = value
     return save_settings(p, data)
+
+
+def merge_patch_only_settings_keys(
+    payload: dict[str, Any],
+    existing: dict[str, Any],
+) -> dict[str, Any]:
+    """Keep Manage-only keys when GUI settings save overwrites the file."""
+    from harite.sources_remote import CODH_KEYWORD_SETTINGS_KEY, NDL_KEYWORD_SETTINGS_KEY
+
+    merged = dict(payload)
+    for key in (CODH_KEYWORD_SETTINGS_KEY, NDL_KEYWORD_SETTINGS_KEY):
+        if key not in merged and key in existing:
+            merged[key] = existing[key]
+    return merged

@@ -699,7 +699,7 @@ op log: 要約 `NDL_TICK`。詳細は `NDL_META_URL` / `NDL_IIIF_*` / `NDL_CACHE
 | 項目 | 契約 |
 | --- | --- |
 | 候補の主体 | **facet:** サーバー側ランダム（毎 API 呼び出し）。**keyword:** `searchbytext` の **検索結果リスト**（バッチ取得 + cursor） |
-| キーワード設定 | `ndl_keyword`（settings、Manage Presets `keyword(NDL)`、最大 16 文字）— CODH `codh_keyword` と並列 |
+| キーワード設定 | `ndl_keyword`（settings、Manage Presets `keyword(NDL)`、最大 16 文字）— CODH `codh_keyword` と並列。**Settings ダイアログの Save** は optimize / apply / slideshow キーを上書きするが、既存の `codh_keyword` / `ndl_keyword` は **落とさない**（Manage 経由の値を保持） |
 | ローカルリスト巡回 | **keyword のみ** — `ndl-search-batch.json` + `ndl-search-cycle.json` で現バッチを順次巡回（画像は常に `latest.*` 1 枚） |
 | Manage Refresh | `codh_sync_pick=refresh` と同型 — keyword の `from` / cursor を 0 に戻しバッチ再取得 |
 | Illustration メタデータ | IIIF URL 生成に使ったら **永続化しない**（`pid` / 切り出し矩形 / 書誌情報等は cache に残さない） |
@@ -737,7 +737,7 @@ Curation JSON 全体のローカル複製は持たない。候補 URL は `codh-
 
 固定 keyword preset（例: 固定 `桜`）は同梱しない。
 
-**`codh_keyword`:** `harite-settings.json` トップレベル。`codh-edo-spots-keyword` 用。最大 16 文字。初期値 `桜`。source `notes` / preset JSON には書かない。
+**`codh_keyword`:** `harite-settings.json` トップレベル。`codh-edo-spots-keyword` 用。最大 16 文字。初期値 `桜`。source `notes` / preset JSON には書かない。Settings ダイアログの Save でも既存値を保持する（§15.3.5 と同型）。
 
 #### 15.4.3 候補リスト（`codh-index.json`）
 

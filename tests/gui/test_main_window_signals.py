@@ -1027,6 +1027,43 @@ def test_settings_file_save_accepts_explicit_dialog_settings(monkeypatch, tmp_pa
     assert window.slideshow_srcdir_l == "/slideshow/left"
 
 
+def test_settings_file_save_preserves_manage_keyword_keys(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "harite.gui.views.main_window.build_two_screen_optimize_context",
+        lambda: None,
+    )
+    window = MainWindow()
+    target = tmp_path / "settings-with-keywords.json"
+    save_settings(
+        target,
+        {
+            "plugin": "linux",
+            "codh_keyword": "富士",
+            "ndl_keyword": "浮世絵",
+        },
+    )
+
+    assert window.on_save_settings_file(
+        str(target),
+        {
+            "canvas_scale_percent": 90,
+            "plugin": "linux",
+            "apply_mode": "per-monitor-auto-split",
+            "slideshow_interval_seconds": 33,
+            "slideshow_srcdir_l": "/slideshow/left",
+        },
+    ) is True
+
+    saved = load_settings(target)
+    assert saved["canvas_scale_percent"] == 90
+    assert saved["plugin"] == "linux"
+    assert saved["apply_mode"] == "per-monitor-auto-split"
+    assert saved["slideshow_interval_seconds"] == 33
+    assert saved["slideshow_srcdir_l"] == "/slideshow/left"
+    assert saved["codh_keyword"] == "富士"
+    assert saved["ndl_keyword"] == "浮世絵"
+
+
 def test_settings_file_save_propagates_unexpected_payload_build_failure(monkeypatch, tmp_path):
     window = MainWindow()
     target = tmp_path / "settings-dialog.json"

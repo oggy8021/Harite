@@ -21,7 +21,12 @@ from harite.core import normalize_background_color
 from harite.core import resolve_embed_margin_region as resolve_margin_text_region
 from harite.apply_settings import resolve_apply_settings
 from harite.apply_surface import dual_display_detected
-from harite.settings_file import load_settings, resolve_default_settings_path, save_settings
+from harite.settings_file import (
+    load_settings,
+    merge_patch_only_settings_keys,
+    resolve_default_settings_path,
+    save_settings,
+)
 from harite.display_context import build_two_screen_optimize_context
 from harite.optimize_settings import DUAL_INPUT_REQUIRES_TWO_DISPLAYS, resolve_optimize_display_settings
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
@@ -1122,6 +1127,14 @@ class MainWindow:
     ) -> bool:
         target_path = self._resolve_settings_save_path(path)
         payload = self._normalize_settings_display_payload(config) if config is not None else self._build_settings_dialog_config()
+        if target_path.exists():
+            try:
+                existing = load_settings(target_path)
+            except (OSError, ValueError):
+                existing = {}
+        else:
+            existing = {}
+        payload = merge_patch_only_settings_keys(payload, existing)
         try:
             save_settings(target_path, payload)
         except (OSError, TypeError, ValueError) as exc:
