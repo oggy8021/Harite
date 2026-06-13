@@ -494,6 +494,42 @@ def test_start_stop_slideshow_timer(qapp):
     assert backend._slideshow_timer is None
 
 
+def test_slideshow_timer_tick_failure_syncs_backend_state(qapp, monkeypatch):
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+    from harite.gui.adapters.ui_adapter import (
+        RUNTIME_HANDLER_MAP,
+        connect_signal_dispatch,
+        create_mainwindow_signal_dispatch,
+    )
+
+    def failing_tick(self) -> bool:
+        self.slideshow_running = False
+        self._set_status("error", "slideshow", "tick boom", error="tick boom")
+        return False
+
+    monkeypatch.setattr(MainWindow, "on_slideshow_tick", failing_tick)
+
+    window = MainWindow()
+    window.slideshow_running = True
+
+    backend = load_qt_runtime_signal_backend()
+    dispatch = create_mainwindow_signal_dispatch(
+        window, tuple(RUNTIME_HANDLER_MAP.keys()), handler_map=RUNTIME_HANDLER_MAP
+    )
+    connect_signal_dispatch(backend, dispatch)
+    backend._slideshow_running = True
+
+    backend._on_slideshow_timer_event()
+
+    assert window.slideshow_running is False
+    assert backend._slideshow_running is False
+    assert backend._slideshow_timer is None
+    error_lbl = backend._objects.get("lblError")
+    assert error_lbl is not None
+    assert "tick boom" in error_lbl.text()
+
+
 # ---------------------------------------------------------------------------
 # 3-layer audit: on_pick_input argument order (path, side)
 # ---------------------------------------------------------------------------

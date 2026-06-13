@@ -493,6 +493,9 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             result = callback()
             if result is False:
                 self._stop_slideshow_timer()
+                owner = self._get_handler_owner("on_slideshow_tick")
+                if owner is not None:
+                    self._sync_slideshow_state_with_feedback_from_owner(owner)
         except Exception:
             pass
 

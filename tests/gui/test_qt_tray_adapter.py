@@ -237,6 +237,18 @@ def test_on_settings_calls_backend(qapp):
     assert "_on_settings_clicked" in backend.called
 
 
+def test_on_settings_does_not_present_main_window(qapp):
+    from harite.gui.adapters_qt.qt_tray_adapter import QtTaskTrayAdapter
+
+    window = _StubWindow(visible=False)
+    adapter = QtTaskTrayAdapter(signal_backend=_StubBackend(), window=window)
+    adapter._build_menu()
+
+    adapter._on_open_settings()
+
+    assert not window.shown
+
+
 def test_on_color_calls_backend(qapp):
     from harite.gui.adapters_qt.qt_tray_adapter import QtTaskTrayAdapter
 
@@ -249,6 +261,18 @@ def test_on_color_calls_backend(qapp):
     assert "_on_color_clicked" in backend.called
 
 
+def test_on_color_does_not_present_main_window(qapp):
+    from harite.gui.adapters_qt.qt_tray_adapter import QtTaskTrayAdapter
+
+    window = _StubWindow(visible=False)
+    adapter = QtTaskTrayAdapter(signal_backend=_StubBackend(), window=window)
+    adapter._build_menu()
+
+    adapter._on_open_color()
+
+    assert not window.shown
+
+
 def test_on_about_calls_backend(qapp):
     from harite.gui.adapters_qt.qt_tray_adapter import QtTaskTrayAdapter
 
@@ -259,6 +283,18 @@ def test_on_about_calls_backend(qapp):
     adapter._on_open_about()
 
     assert "_on_about_clicked" in backend.called
+
+
+def test_on_about_does_not_present_main_window(qapp):
+    from harite.gui.adapters_qt.qt_tray_adapter import QtTaskTrayAdapter
+
+    window = _StubWindow(visible=False)
+    adapter = QtTaskTrayAdapter(signal_backend=_StubBackend(), window=window)
+    adapter._build_menu()
+
+    adapter._on_open_about()
+
+    assert not window.shown
 
 
 # ---------------------------------------------------------------------------

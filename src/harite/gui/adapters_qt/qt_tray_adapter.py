@@ -407,13 +407,13 @@ class QtTaskTrayAdapter:
         self._invoke_backend("_on_slideshow_stop_clicked")
 
     def _on_open_settings(self, *_args: Any) -> None:
-        self._invoke_backend("_on_settings_clicked", present_main_window=True)
+        self._invoke_backend("_on_settings_clicked")
 
     def _on_open_color(self, *_args: Any) -> None:
-        self._invoke_backend("_on_color_clicked", present_main_window=True)
+        self._invoke_backend("_on_color_clicked")
 
     def _on_open_about(self, *_args: Any) -> None:
-        self._invoke_backend("_on_about_clicked", present_main_window=True)
+        self._invoke_backend("_on_about_clicked")
 
     def _on_quit(self, *_args: Any) -> None:
         try:
