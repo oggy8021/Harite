@@ -645,6 +645,7 @@ tray menu の現行項目:
 - tray menu は `Visible/Invisible`, `Start Slideshow`, `Stop Slideshow`, `Settings`, `BaseColor`, `About`, `Quit` を持つ。
 - `Visible/Invisible` は main window の show/hide を切り替える。
 - `Settings`, `BaseColor`, `About` は dialog open request の補助導線である。
+- tray から `Settings` / `BaseColor` / `About` を選んだとき、**main window を show / raise しない**（該当 dialog のみ）。`Visible/Invisible` および tray アイコン double-click は従来どおり window の show/hide を切り替える。
 
 ## 8. GUI の層構造
 
