@@ -209,7 +209,9 @@ def test_jma_tick_logs_filename_unchanged_without_fetch(
     sync_remote_source(catalog, entry.id, cache_root=cache_root)
     log_path.write_text("", encoding="utf-8")
 
-    assert jma_slideshow_tick(catalog, entry.id, side="R") is True
+    result = jma_slideshow_tick(catalog, entry.id, side="R")
+    assert result.ok is True
+    assert result.no_update is True
 
     tick = _read_jsonl(log_path)[-1]
     assert tick["step"] == "JMA_TICK"

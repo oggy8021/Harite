@@ -14,6 +14,7 @@ from harite.sources_remote import (
     JMA_PNG_URL,
     KIND_JMA_WEATHER_MAP,
     CacheWriteResult,
+    RemoteSlideshowTickOutcome,
     _JMA_PRESET_FILENAME_TAG,
     _JMA_PRESET_LIST_KEYS,
     _http_get_bytes,
@@ -182,10 +183,10 @@ def jma_slideshow_tick(
     source_id: str,
     *,
     side: str | None = None,
-) -> bool:
+) -> RemoteSlideshowTickOutcome:
     entry = get_source(catalog, source_id)
     if entry is None or entry.kind != KIND_JMA_WEATHER_MAP:
-        return False
+        return RemoteSlideshowTickOutcome(ok=False)
 
     ctx = resolve_jma_sync_context(entry)
     try:
@@ -200,7 +201,7 @@ def jma_slideshow_tick(
             cache_written=False,
             skip_reason="list_json_failed",
         )
-        return False
+        return RemoteSlideshowTickOutcome(ok=False)
 
     cycle = load_jma_cycle(ctx.cache_dir)
     if (
@@ -218,7 +219,7 @@ def jma_slideshow_tick(
             skip_reason="filename_unchanged",
             had_previous=_jma_latest_had_previous(ctx),
         )
-        return True
+        return RemoteSlideshowTickOutcome(ok=True, no_update=True)
 
     fetched, write_result = jma_fetch_png_to_latest(ctx, filename)
     if not fetched:
@@ -232,7 +233,7 @@ def jma_slideshow_tick(
             skip_reason="png_fetch_failed",
             had_previous=_jma_latest_had_previous(ctx),
         )
-        return False
+        return RemoteSlideshowTickOutcome(ok=False)
     save_jma_cycle(ctx.cache_dir, preset_id=ctx.preset_id, filename=filename)
     _log_jma_tick(
         ok=True,
@@ -244,7 +245,7 @@ def jma_slideshow_tick(
         write=write_result,
         url=JMA_PNG_URL.format(filename=filename),
     )
-    return True
+    return RemoteSlideshowTickOutcome(ok=True, no_update=False)
 
 
 def resolve_jma_source_id_for_path(catalog: Catalog, source_dir: Path) -> str | None:
