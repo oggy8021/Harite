@@ -104,6 +104,15 @@ working メモも完了なら docs/working/finished/ へ移動
 
 | Issue | タイトル要約 | 分類 | overview ID |
 | --- | --- | --- | --- |
+| [#492](issue-492.md) | トレイから Settings/Color で Main Window も表示 | bug（tray 回帰） | v2.0.0 post-release |
+| [#493](issue-493.md) | JMA tick: 更新なし時に slideshow 停止 | bug / investigation | v2.0.0 post-release |
+| [#494](issue-494.md) | Tray と Main の slideshow 状態不一致 | bug（#493 後の desync） | v2.0.0 post-release |
+| [#495](issue-495.md) | running 中の設定を次 tick に適用 | enhancement | v2.0.0 post-release |
+| [#496](issue-496.md) | Settings Save で keyword が消える | bug（settings 上書き） | v2.0.0 post-release |
+| [#497](issue-497.md) | 縦長 NDL + display scale で tick 停止 | bug（optimize fit） | v2.0.0 post-release |
+
+**修正 planning（着手順・PR 分割）:** [20260613-v2-post-release-fix-planning.md](../working/20260613-v2-post-release-fix-planning.md)
+
 | [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜18 + Q-01（`v2.0.0` 目標） | bug / investigation / planning | **Q-01**（[棚卸](../working/finished/20260610-q01-gtk-deprecation-planning.md)） |
 
 ### maturation-20260609-qt-common — 棚卸（2026-06-10 · #470 後）
