@@ -485,17 +485,31 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
             self._slideshow_timer.stop()
             self._slideshow_timer = None
 
+    def _apply_deferred_slideshow_timer_from_owner(self, owner: Any) -> None:
+        consume = getattr(owner, "consume_slideshow_deferred_timer_interval", None)
+        if consume is None:
+            return
+        new_interval = consume()
+        if new_interval is not None:
+            self._start_slideshow_timer(int(new_interval))
+        log_deferred = getattr(owner, "log_slideshow_deferred_apply_after_tick", None)
+        if log_deferred is not None:
+            log_deferred(timer_interval_applied=new_interval)
+
     def _on_slideshow_timer_event(self) -> None:
         callback = self._signal_handlers.get("on_slideshow_tick")
         if callback is None:
             return
         try:
             result = callback()
+            owner = self._get_handler_owner("on_slideshow_tick")
             if result is False:
                 self._stop_slideshow_timer()
-                owner = self._get_handler_owner("on_slideshow_tick")
                 if owner is not None:
                     self._sync_slideshow_state_with_feedback_from_owner(owner)
+                return
+            if owner is not None and bool(getattr(owner, "slideshow_running", False)):
+                self._apply_deferred_slideshow_timer_from_owner(owner)
         except Exception:
             pass
 

@@ -107,6 +107,8 @@ class MainWindow:
         self._slideshow_active_generated_files: tuple[Path, ...] = ()
         self._slideshow_tick_generated_files: tuple[Path, ...] = ()
         self._slideshow_run_snapshot: dict[str, object] | None = None
+        self._slideshow_timer_interval_seconds: int | None = None
+        self._slideshow_pending_auto_scale = False
         self.open_image_dialog_open = False
         self.open_image_dialog_side: str | None = None
         self._save_path_dialog_open = False
@@ -502,7 +504,47 @@ class MainWindow:
 
         state = "on" if enabled else "off"
         self._log(f"Slideshow auto display scale updated ({normalized_side}={state})")
-        self._reapply_slideshow_if_running()
+        if self.slideshow_running:
+            self._slideshow_pending_auto_scale = True
+            self._set_status(
+                "idle",
+                "slideshow",
+                f"slideshow auto display scale updated ({normalized_side}={state}, next tick)",
+            )
+            return
+        self._set_status("idle", "slideshow", f"slideshow auto display scale updated ({normalized_side}={state})")
+
+    def _clear_slideshow_deferred_apply_state(self) -> None:
+        self._slideshow_timer_interval_seconds = None
+        self._slideshow_pending_auto_scale = False
+
+    def consume_slideshow_deferred_timer_interval(self) -> int | None:
+        """Apply a running-session interval change to the runtime timer after a tick."""
+        if not self.slideshow_running:
+            return None
+        active = self._slideshow_timer_interval_seconds
+        if active is None:
+            return None
+        desired = int(self.slideshow_interval_seconds)
+        if desired == active:
+            return None
+        self._slideshow_timer_interval_seconds = desired
+        return desired
+
+    def log_slideshow_deferred_apply_after_tick(self, *, timer_interval_applied: int | None) -> None:
+        if not self.slideshow_running:
+            return
+        fields: dict[str, object] = {}
+        if timer_interval_applied is not None:
+            fields["interval_seconds"] = timer_interval_applied
+        if self._slideshow_pending_auto_scale:
+            fields["slideshow_auto_display_scale"] = True
+            self._slideshow_pending_auto_scale = False
+        if not fields:
+            return
+        from harite.slideshow_op_log import log_slideshow_op
+
+        log_slideshow_op("SLIDESHOW_DEFERRED_APPLY", ok=True, phase="tick", **fields)
 
     def _prepare_slideshow_optimize_state(self, state: OptimizeFormState) -> OptimizeFormState:
         """Slideshow optimize: manual scale is always 100%; auto comes from Slideshow tab only."""
@@ -1616,6 +1658,7 @@ class MainWindow:
         self._slideshow_active_generated_files = ()
         self._slideshow_tick_generated_files = ()
         self._clear_slideshow_run_snapshot()
+        self._clear_slideshow_deferred_apply_state()
         self._refresh_action_availability()
         self._update_slideshow_summary_display()
         message = "slideshow stopped: source catalog changed"
@@ -1988,6 +2031,7 @@ class MainWindow:
         if not applied:
             self.slideshow_running = False
             self._clear_slideshow_run_snapshot()
+            self._clear_slideshow_deferred_apply_state()
             self._refresh_action_availability()
             self._update_slideshow_summary_display()
             self._set_status("error", "slideshow", error_message or "slideshow start apply failed", error=error_message or "slideshow start apply failed")
@@ -2009,6 +2053,7 @@ class MainWindow:
             source_id_l=self.slideshow_source_id_l or "",
             source_id_r=self.slideshow_source_id_r or "",
         )
+        self._slideshow_timer_interval_seconds = int(self.slideshow_interval_seconds)
         return True
 
     def on_slideshow_tick(self) -> bool:
@@ -2074,6 +2119,7 @@ class MainWindow:
         if not applied:
             self.slideshow_running = False
             self._clear_slideshow_run_snapshot()
+            self._clear_slideshow_deferred_apply_state()
             self._clear_slideshow_pause()
             self._refresh_action_availability()
             self._update_slideshow_summary_display()
@@ -2113,6 +2159,7 @@ class MainWindow:
         self._clear_slideshow_pause()
         self._slideshow_plugin_impl = None
         self._clear_slideshow_run_snapshot()
+        self._clear_slideshow_deferred_apply_state()
         # R4: clear tracking state; slot files are intentionally kept on disk
         self._slideshow_active_generated_files = ()
         self._slideshow_tick_generated_files = ()
@@ -2134,6 +2181,10 @@ class MainWindow:
             return False
         self.slideshow_interval_seconds = value
         self._refresh_action_availability()
+        if self.slideshow_running and self._slideshow_timer_interval_seconds is not None and value != self._slideshow_timer_interval_seconds:
+            self._set_status("idle", "slideshow", f"slideshow interval updated: {value}s (next tick)")
+            self._log(f"Slideshow interval updated: {value}s (deferred to next tick)")
+            return True
         self._set_status("idle", "slideshow", f"slideshow interval updated: {value}s")
         self._log(f"Slideshow interval updated: {value}s")
         return True
