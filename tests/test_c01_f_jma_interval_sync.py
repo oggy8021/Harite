@@ -109,7 +109,9 @@ def test_jma_tick_skips_png_when_filename_unchanged(
     counts["list"] = 0
     counts["png"] = 0
 
-    assert jma_slideshow_tick(catalog, entry.id) is True
+    result = jma_slideshow_tick(catalog, entry.id)
+    assert result.ok is True
+    assert result.no_update is True
     assert counts["list"] == 1
     assert counts["png"] == 0
 
@@ -124,7 +126,9 @@ def test_jma_tick_fetches_png_when_filename_changes(
     entry = import_preset_source(catalog, "jma-near-color", cache_root=cache_root)
     sync_remote_source(catalog, entry.id, cache_root=cache_root)
 
-    assert jma_slideshow_tick(catalog, entry.id) is True
+    result = jma_slideshow_tick(catalog, entry.id)
+    assert result.ok is True
+    assert result.no_update is False
     assert counts["list"] == 2
     assert counts["png"] == 2
 
@@ -151,7 +155,8 @@ def test_jma_tick_png_failure_keeps_latest_and_cycle(
     cycle_before = load_jma_cycle(Path(entry.path))
     png_before = counts["png"]
 
-    assert jma_slideshow_tick(catalog, entry.id) is False
+    result = jma_slideshow_tick(catalog, entry.id)
+    assert result.ok is False
     assert latest.read_bytes() == before
     assert load_jma_cycle(Path(entry.path)) == cycle_before
     assert counts["png"] == png_before + 1

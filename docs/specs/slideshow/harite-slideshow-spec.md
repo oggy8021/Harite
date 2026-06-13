@@ -149,7 +149,7 @@ slideshow helper の最小構成:
 
 GUI pause / resume の現行条件:
 
-- dual-source auto-split の `tick` 中に `per-monitor apply requires at least two detected displays` が返った場合、GUI は stop せず pause へ遷移する。
+- dual-source auto-split の `tick` 中に `per-monitor apply requires at least two detected displays` または `Two input images require two detected displays. Use one input only.`（optimize 前の display 検出失敗）が返った場合、GUI は stop せず pause へ遷移する。
 - この pause は `slideshow paused: waiting for two detected displays for auto-split` を status message に入れ、状態表示を `paused` に切り替える。
 - pause 中に次 tick が成功すると GUI は `slideshow resumed` を出して running へ戻る。
 - 同じ `ValueError` でも `start` 時は transient 扱いせず、start failure として止める。
@@ -290,7 +290,7 @@ auto 倍率だけは **Slideshow 専用設定**（`slideshow_l_auto_display_scal
 2. R: `codh_slideshow_tick` 等 → R cache 更新 → R cycle
 3. `run_slideshow_optimize`（L/R 選択 path を入力）→ 作業ディレクトリへ書き込み → apply
 
-network は step 1–2、optimize は step 3。**「tick で network する」と「optimize しない」は両立しない（dual 構成では optimize もする）。**
+network は step 1–2、optimize は step 3。ただし **全 side が remote かついずれの tick も cache 更新なし**（例: JMA 両 side で `filename_unchanged`）のときは step 3 を省略し `SLIDESHOW_TICK ok=true skip_reason=no_remote_update` を記録する。
 
 **Preset 種別ごとの remote sync（ソース構成に依存しない。当該 side が remote のとき）:**
 

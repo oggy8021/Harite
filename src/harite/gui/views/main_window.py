@@ -23,7 +23,7 @@ from harite.apply_settings import resolve_apply_settings
 from harite.apply_surface import dual_display_detected
 from harite.settings_file import load_settings, resolve_default_settings_path, save_settings
 from harite.display_context import build_two_screen_optimize_context
-from harite.optimize_settings import resolve_optimize_display_settings
+from harite.optimize_settings import DUAL_INPUT_REQUIRES_TWO_DISPLAYS, resolve_optimize_display_settings
 from harite.gui.controllers.optimize_controller import OptimizeController, OptimizeFormState
 from harite.gui.views.main_window_preview import build_optimize_cli_preview
 from harite.gui.views.main_window_preview import build_preview_assignments
@@ -703,7 +703,47 @@ class MainWindow:
     def _is_transient_slideshow_cycle_error(self, exc: ValueError, *, cycle_phase: str) -> bool:
         if cycle_phase != "tick":
             return False
-        return str(exc) == "per-monitor apply requires at least two detected displays"
+        return str(exc) in {
+            "per-monitor apply requires at least two detected displays",
+            DUAL_INPUT_REQUIRES_TWO_DISPLAYS,
+        }
+
+    def _slideshow_op_log_display_fields(self) -> dict[str, object]:
+        from harite.workspace import detect_displays
+
+        displays = detect_displays()
+        return {
+            "detected_display_count": len(displays),
+            "detected_displays": [
+                {"name": display.name, "width": display.width, "height": display.height}
+                for display in displays
+            ],
+        }
+
+    def _should_skip_slideshow_apply_for_remote_ticks(
+        self,
+        catalog: Catalog,
+        sources: list[tuple[str, Path]],
+        tick_outcomes: list[object],
+    ) -> bool:
+        from harite.sources_remote import REMOTE_SLIDESHOW_KINDS, RemoteSlideshowTickOutcome
+
+        if len(sources) != len(tick_outcomes):
+            return False
+        saw_remote = False
+        for (side, source_dir), outcome in zip(sources, tick_outcomes, strict=True):
+            source_id = self._resolve_slideshow_source_id_for_side(catalog, side, source_dir)
+            if not source_id:
+                return False
+            entry = get_source(catalog, source_id)
+            if entry is None or entry.kind not in REMOTE_SLIDESHOW_KINDS:
+                return False
+            saw_remote = True
+            if outcome is None or not isinstance(outcome, RemoteSlideshowTickOutcome):
+                return False
+            if not outcome.ok or not outcome.no_update:
+                return False
+        return saw_remote
 
     def _sync_input_geometry(self) -> None:
         if self.input_path_l and self.input_path_r and build_two_screen_optimize_context() is None:
@@ -1404,12 +1444,18 @@ class MainWindow:
                 continue
         return ""
 
-    def _remote_slideshow_tick_for_side(self, catalog: Catalog, side: str, source_dir: Path) -> None:
+    def _remote_slideshow_tick_for_side(
+        self,
+        catalog: Catalog,
+        side: str,
+        source_dir: Path,
+    ) -> object | None:
         from harite.sources_remote import (
             KIND_CODH_EDO,
             KIND_JMA_WEATHER_MAP,
             KIND_NDL_KIRIEZU,
             KIND_NDL_TSUGIDIGI,
+            RemoteSlideshowTickOutcome,
             kiriezu_slideshow_tick,
             ndl_slideshow_tick,
         )
@@ -1418,19 +1464,23 @@ class MainWindow:
 
         source_id = self._resolve_slideshow_source_id_for_side(catalog, side, source_dir)
         if not source_id:
-            return
+            return None
         entry = get_source(catalog, source_id)
         if entry is None:
-            return
+            return None
         if entry.kind == KIND_CODH_EDO:
             mode = self._slideshow_active_mode if self._slideshow_active_mode else self.slideshow_mode
-            codh_slideshow_tick(catalog, source_id, mode)
-        elif entry.kind == KIND_JMA_WEATHER_MAP:
-            jma_slideshow_tick(catalog, source_id, side=side)
-        elif entry.kind == KIND_NDL_KIRIEZU:
-            kiriezu_slideshow_tick(catalog, source_id, side=side)
-        elif entry.kind == KIND_NDL_TSUGIDIGI:
-            ndl_slideshow_tick(catalog, source_id, side=side)
+            ok = codh_slideshow_tick(catalog, source_id, mode)
+            return RemoteSlideshowTickOutcome(ok=ok)
+        if entry.kind == KIND_JMA_WEATHER_MAP:
+            return jma_slideshow_tick(catalog, source_id, side=side)
+        if entry.kind == KIND_NDL_KIRIEZU:
+            ok = kiriezu_slideshow_tick(catalog, source_id, side=side)
+            return RemoteSlideshowTickOutcome(ok=ok)
+        if entry.kind == KIND_NDL_TSUGIDIGI:
+            ok = ndl_slideshow_tick(catalog, source_id, side=side)
+            return RemoteSlideshowTickOutcome(ok=ok)
+        return None
 
     def _resolve_slideshow_srcdirs_for_start(self) -> bool:
         catalog = self.load_source_catalog()
@@ -1934,6 +1984,18 @@ class MainWindow:
         self._log(
             f"Slideshow started: interval={self.slideshow_interval_seconds}s L={selected_left} R={selected_right}"
         )
+        from harite.slideshow_op_log import log_slideshow_op
+
+        log_slideshow_op(
+            "SLIDESHOW_START",
+            ok=True,
+            phase="start",
+            interval_seconds=self.slideshow_interval_seconds,
+            srcdir_l=self.slideshow_srcdir_l or "",
+            srcdir_r=self.slideshow_srcdir_r or "",
+            source_id_l=self.slideshow_source_id_l or "",
+            source_id_r=self.slideshow_source_id_r or "",
+        )
         return True
 
     def on_slideshow_tick(self) -> bool:
@@ -1961,9 +2023,10 @@ class MainWindow:
             sources.append(("R", Path(self.slideshow_srcdir_r.strip())))
 
         catalog = self.load_source_catalog()
+        tick_outcomes: list[object] = []
         for side, source_dir in sources:
             try:
-                self._remote_slideshow_tick_for_side(catalog, side, source_dir)
+                tick_outcomes.append(self._remote_slideshow_tick_for_side(catalog, side, source_dir))
                 selected = self._run_slideshow_cycle_for_side(side, source_dir)
             except ValueError as exc:
                 self._set_status("error", "slideshow", f"slideshow srcdir {side} invalid", error=str(exc))
@@ -1974,6 +2037,18 @@ class MainWindow:
                 selected_left = selected
             else:
                 selected_right = selected
+
+        if self._should_skip_slideshow_apply_for_remote_ticks(catalog, sources, tick_outcomes):
+            self._log("Slideshow tick skipped: no remote update")
+            log_slideshow_op(
+                "SLIDESHOW_TICK",
+                ok=True,
+                phase="tick",
+                skip_reason="no_remote_update",
+                selected_l=selected_left,
+                selected_r=selected_right,
+            )
+            return True
 
         self._update_slideshow_current_display(selected_left, selected_right)
         was_paused = self.slideshow_paused
@@ -1996,6 +2071,7 @@ class MainWindow:
                 ok=False,
                 phase="tick",
                 error=error_message or "slideshow cycle apply failed",
+                **self._slideshow_op_log_display_fields(),
             )
             return False
         if was_paused:
@@ -2032,6 +2108,9 @@ class MainWindow:
         self._update_slideshow_current_display()
         self._set_status("idle", "slideshow", "slideshow stopped")
         self._log("Slideshow stopped")
+        from harite.slideshow_op_log import log_slideshow_op
+
+        log_slideshow_op("SLIDESHOW_STOP", ok=True, phase="stop")
         return True
 
     def on_slideshow_interval_change(self, seconds: int) -> bool:

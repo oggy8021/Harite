@@ -229,13 +229,7 @@ def _resolve_intentional_image_dimensions(
     nw, nh = scale_image_dimensions(orig_w, orig_h, factor)
     validate_scaled_image_edge(nw, nh, label=f"source image ({side_label})")
     if not _image_fits_with_margins(nw, nh, screen_w, screen_h, margins):
-        ml, mr, mt, mb = margins
-        max_w = max(1, screen_w - ml - mr)
-        max_h = max(1, screen_h - mt - mb)
-        raise ValueError(
-            f"scaled source image exceeds {side_label} area: {nw}x{nh} does not fit in {max_w}x{max_h} "
-            f"(display {screen_w}x{screen_h} with margins L{ml},R{mr},U{mt},B{mb})"
-        )
+        return _resolve_native_dimensions(img, screen_w, screen_h, margins)
     return nw, nh, float(factor)
 
 

@@ -136,18 +136,34 @@ def test_optimize_wallpapers_scales_source_image_not_canvas(tmp_path):
     assert composite.size == (1920, 1080)
 
 
-def test_validate_intentional_image_scales_rejects_overflow(tmp_path):
+def test_validate_intentional_image_scales_falls_back_to_down_only_on_overflow(tmp_path):
     inp_dir = tmp_path / "in"
     inp_dir.mkdir()
     img = inp_dir / "large.jpg"
     Image.new("RGB", (1200, 900), color=(10, 20, 30)).save(img, format="JPEG")
 
-    with pytest.raises(ValueError, match="scaled source image exceeds"):
-        validate_intentional_image_scales(
-            [str(img)],
-            (1920, 1080),
-            l_display_scale=2.0,
-        )
+    validate_intentional_image_scales(
+        [str(img)],
+        (1920, 1080),
+        l_display_scale=2.0,
+    )
+
+
+def test_intentional_upscale_falls_back_for_tall_narrow_image():
+    from harite.core import _resolve_intentional_image_dimensions
+
+    img = Image.new("RGB", (439, 1524), color=(1, 2, 3))
+    width, height, scale = _resolve_intentional_image_dimensions(
+        img,
+        2048,
+        1280,
+        (0, 0, 0, 0),
+        2.0,
+        side_label="L",
+    )
+    assert width <= 2048
+    assert height <= 1280
+    assert scale <= 1.0
 
 
 def test_display_scale_presets_are_fixed_steps():

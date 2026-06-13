@@ -33,6 +33,19 @@ KIND_NDL_TSUGIDIGI = "remote-ndl-tsugidigi"
 KIND_NDL_KIRIEZU = "remote-ndl-kiriezu"
 KIND_CODH_EDO = "remote-codh-edo"
 
+REMOTE_SLIDESHOW_KINDS = frozenset({
+    KIND_JMA_WEATHER_MAP,
+    KIND_NDL_TSUGIDIGI,
+    KIND_NDL_KIRIEZU,
+    KIND_CODH_EDO,
+})
+
+
+@dataclass(frozen=True)
+class RemoteSlideshowTickOutcome:
+    ok: bool
+    no_update: bool = False
+
 JMA_LIST_URL = "https://www.jma.go.jp/bosai/weather_map/data/list.json"
 NDL_RANDOM_FACET_URL = "https://lab.ndl.go.jp/dl/api/illustration/randomwithfacet"
 NDL_SEARCHBYTEXT_URL = "https://lab.ndl.go.jp/dl/api/illustration/searchbytext"
