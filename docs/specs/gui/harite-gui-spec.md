@@ -466,11 +466,26 @@ GTK / Qt 両 backend で、次の user-facing surface は **同じ省略規則**
 | spin 変更（`value-changed`） | `on_slideshow_interval_change` で owner を即更新する（Save 前でもセッション中有効） |
 | **Start 直前** | spin の現値を owner へ **必ず commit** する（`value-changed` 未発火でも可）。GTK / Qt 共通 |
 | Start 成功後 | runtime timer は commit 後の `slideshow_interval_seconds` で起動する |
-| 実行中の spin 変更 | owner のみ更新。timer は再起動せず、新 interval は **次回 Start 以降** で有効 |
+| 実行中の spin 変更 | owner を即更新する。runtime timer は **再起動しない** — いま走っている待ちはそのまま。新 interval は **次 tick 完了後** に timer へ反映される（§6.2.1） |
 
 したがって、ユーザーが spin を 3 秒に変えて Start した場合、保存済み settings が 60 秒でも **3 秒がその Start の timer に使われる**。tray の Start も同じ backend 経路のため同規則が適用される。
 
-実装参照: `commit_slideshow_interval_from_spin(...)`（`gtk_runtime_slideshow_ui.py`）、各 backend の `_on_slideshow_start_clicked(...)`。
+#### 6.2.1 実行中の変更 — 次 tick 適用（#495）
+
+Slideshow **running** 中に Main Window / Settings 等で変えた値のうち、次の段階では **interval** と **Slideshow タブの auto display scale（L/R）** を次 tick から載せる。Stop → Start を挟まない（cursor 巡回を切らない）。
+
+| 変更 | running 中の UI / owner | 即時 optimize+apply | 次 tick |
+| --- | --- | --- | --- |
+| **Interval spin** | owner `slideshow_interval_seconds` を即更新 | **しない** | timer を新 interval で再設定（**現 tick の待ちは維持** — 例: 3600s 待ちの途中で 5s に変えても、次 tick まで最大 3600s） |
+| **Slideshow auto scale L/R** | owner / preferences を即更新 | **しない**（即時 `_reapply_slideshow_if_running` は行わない） | 次 tick の optimize+apply に反映 |
+| **Main タブ auto scale** | owner 更新のみ（従来どおり） | slideshow 経路には未反映 | 対象外（本節の段階導入外） |
+| **srcdir / profile 変更** | §4.2 / §6.4 の既存契約 | — | 対象外（副作用大のため後回し） |
+
+**timer 再設定のタイミング:** Qt backend は `on_slideshow_tick` が `True` を返した直後（remote skip を含む）に、owner の deferred interval を消化して `QTimer` を再設定する。`False`（停止）時は timer を止める（従来どおり）。
+
+**OP_LOG（任意）:** `HARITE_SLIDESHOW_OP_LOG` 有効時、次 tick で消化した deferred 変更は `SLIDESHOW_DEFERRED_APPLY` に記録してよい（`interval_seconds` / `slideshow_auto_display_scale` 等）。
+
+実装参照: `commit_slideshow_interval_from_spin(...)`（`gtk_runtime_slideshow_ui.py`）、各 backend の `_on_slideshow_start_clicked(...)`、`MainWindow.consume_slideshow_deferred_timer_interval`、`qt_backend._on_slideshow_timer_event`。
 
 ### 6.3 source registry 接続
 
@@ -575,7 +590,7 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 
 - `SlideshowCycleState`（L・R）は `on_slideshow_stop` / `on_slideshow_start` でリセットされない。`mode=sequential` の場合、再起動後も前回の画像インデックスから継続する。
 - `slideshow_output_display` の初期値は `"Slideshow output: ."` であり、`_update_slideshow_output_display()` 呼び出し前は一時的にドット表示になりうる。
-- `slideshow_interval_seconds` をスライドショー実行中に変更した場合、モデル値のみが更新される。runtime timer（GTK / Qt）は再起動されず、新しいインターバルは次回の start 以降で有効になる（§6.2）。
+- `slideshow_interval_seconds` をスライドショー実行中に変更した場合、owner は即更新される。runtime timer（Qt）は再起動せず、新 interval は **次 tick 完了後** に有効になる（§6.2 / §6.2.1）。実行中の Slideshow auto scale 変更も即時 re-apply せず次 tick に載せる。
 - `_apply_slideshow_selection` で L・R 両方の選択画像が `"-"`（選択なしセンチネル）の場合、apply を行わず `(True, None)` を返す（成功扱いだが壁紙は変更されない）。
 - `on_slideshow_tick()` を `slideshow_running=False` の状態で呼んだ場合、`False` を返してログのみ出力する。スライドショーの進行は行わない。
 - `on_settings_dialog_open` は settings dialog を開く。dual 入力時の display 解決は `resolve_optimize_display_settings` に委譲し、form state に `resolution` / `two_screen` / `l_display` / `r_display` は保持しない。
