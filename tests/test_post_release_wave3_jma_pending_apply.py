@@ -27,6 +27,7 @@ def _setup_dual_jma_window(monkeypatch, tmp_path):
             return True
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+    monkeypatch.setattr("harite.gui.views.main_window.dual_display_detected", lambda: True)
     monkeypatch.setattr(
         "harite.gui.views.main_window.build_two_screen_optimize_context",
         lambda: TwoScreenOptimizeContext(
@@ -128,10 +129,8 @@ def test_slideshow_tick_pause_logs_display_paused_with_pending(monkeypatch, tmp_
     (left_dir / "left-1.jpg").write_bytes(b"left")
     (right_dir / "right-1.png").write_bytes(b"right")
 
-    window.slideshow_srcdir_l = str(left_dir)
-    window.slideshow_srcdir_r = str(right_dir)
-    window.slideshow_source_id_l = ""
-    window.slideshow_source_id_r = ""
+    assert window.on_pick_slideshow_srcdir(str(left_dir), "L") is True
+    assert window.on_pick_slideshow_srcdir(str(right_dir), "R") is True
 
     assert window.on_slideshow_start() is True
     log_path.write_text("", encoding="utf-8")
