@@ -100,6 +100,7 @@ def test_slideshow_tick_pauses_on_dual_input_display_loss(monkeypatch, tmp_path)
             return True
 
     monkeypatch.setattr("harite.gui.views.main_window.plugin_registry.get", lambda _name: DummyPlugin())
+    monkeypatch.setattr("harite.gui.views.main_window.dual_display_detected", lambda: True)
     monkeypatch.setattr(
         "harite.gui.views.main_window.build_two_screen_optimize_context",
         lambda: TwoScreenOptimizeContext(
