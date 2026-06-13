@@ -1,7 +1,7 @@
 # Harite - Feature Overview（active）
 
-最終更新: 2026-06-11  
-ステータス: **現行 planning 入口**（`v1.9.0` 熟成運転 **一区切り** → **`v2.0.0` 目標**）
+最終更新: 2026-06-13  
+ステータス: **現行 planning 入口**（`v2.0.0` リリース済み → **post-release #492–#497** 修正波）
 
 ## 位置づけ
 
@@ -19,7 +19,7 @@
 
 - **熟成運転:** 2026-06-09 宣言 → 同日 **打ち切り**（未改修のままでは継続不可のため）。
 - **製品線:** `pyproject.toml` の `1.9.0` は熟成運転の中間マイルストーン。**本 stream の営みは `v2.0.0` を目指す**（Qt 一本化・remote source の確かさ）。
-- **現フェーズ:** MAT-01〜18・MAT-10・MAT-14b・MAT-02b・**Q-01 コード** 完了（#442〜#472）。**次:** v2.0.0 前 CLI / 幾何一本化（[CLI v2 roadmap](20260611-1200-cli-v2-roadmap.md) — MAT-19〜24）。
+- **現フェーズ:** v2.0.0 リリース済み（#491）。**次:** post-release 6件 — [fix planning](20260613-v2-post-release-fix-planning.md)（#492–#497）。
 - 第1期 inventory は完了（上記 finished 参照）。
 - **再棚卸の入口:** [maturation §v2.0.0 への再整理](../online-issues/maturation-20260609-qt-common.md#v200-への再整理オーナー方針-2026-06-09)。
 
