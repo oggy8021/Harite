@@ -492,9 +492,9 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         new_interval = consume()
         if new_interval is not None:
             self._start_slideshow_timer(int(new_interval))
-        log_deferred = getattr(owner, "log_slideshow_deferred_apply_after_tick", None)
-        if log_deferred is not None:
-            log_deferred(timer_interval_applied=new_interval)
+        log_interval = getattr(owner, "log_slideshow_deferred_interval_after_tick", None)
+        if log_interval is not None:
+            log_interval(timer_interval_applied=new_interval)
 
     def _on_slideshow_timer_event(self) -> None:
         callback = self._signal_handlers.get("on_slideshow_tick")

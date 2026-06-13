@@ -533,20 +533,30 @@ class MainWindow:
         self._slideshow_timer_interval_seconds = desired
         return desired
 
-    def log_slideshow_deferred_apply_after_tick(self, *, timer_interval_applied: int | None) -> None:
-        if not self.slideshow_running:
-            return
-        fields: dict[str, object] = {}
-        if timer_interval_applied is not None:
-            fields["interval_seconds"] = timer_interval_applied
-        if self._slideshow_pending_auto_scale:
-            fields["slideshow_auto_display_scale"] = True
-            self._slideshow_pending_auto_scale = False
-        if not fields:
+    def log_slideshow_deferred_interval_after_tick(self, *, timer_interval_applied: int | None) -> None:
+        if not self.slideshow_running or timer_interval_applied is None:
             return
         from harite.slideshow_op_log import log_slideshow_op
 
-        log_slideshow_op("SLIDESHOW_DEFERRED_APPLY", ok=True, phase="tick", **fields)
+        log_slideshow_op(
+            "SLIDESHOW_DEFERRED_APPLY",
+            ok=True,
+            phase="tick",
+            interval_seconds=timer_interval_applied,
+        )
+
+    def log_slideshow_deferred_auto_scale_after_apply(self) -> None:
+        if not self.slideshow_running or not self._slideshow_pending_auto_scale:
+            return
+        self._slideshow_pending_auto_scale = False
+        from harite.slideshow_op_log import log_slideshow_op
+
+        log_slideshow_op(
+            "SLIDESHOW_DEFERRED_APPLY",
+            ok=True,
+            phase="tick",
+            slideshow_auto_display_scale=True,
+        )
 
     def _prepare_slideshow_optimize_state(self, state: OptimizeFormState) -> OptimizeFormState:
         """Slideshow optimize: manual scale is always 100%; auto comes from Slideshow tab only."""
@@ -557,15 +567,6 @@ class MainWindow:
             l_auto_display_scale=self.slideshow_l_auto_display_scale,
             r_auto_display_scale=self.slideshow_r_auto_display_scale,
         )
-
-    def _reapply_slideshow_if_running(self) -> None:
-        if not self.slideshow_running:
-            return
-        left = str(self._slideshow_previous_l) if self._slideshow_previous_l else "-"
-        right = str(self._slideshow_previous_r) if self._slideshow_previous_r else "-"
-        if left == "-" and right == "-":
-            return
-        self._apply_slideshow_selection(left, right, cycle_phase="tick")
 
     def on_change_margins(self, widget_name: str, value: int | float) -> None:
         if "AllMargins" in widget_name:
@@ -2106,9 +2107,6 @@ class MainWindow:
             else:
                 selected_right = selected
 
-        if self._any_remote_tick_updated(tick_outcomes):
-            self._slideshow_pending_remote_apply = True
-
         if (
             self._should_skip_slideshow_apply_for_remote_ticks(catalog, sources, tick_outcomes)
             and not self._slideshow_pending_remote_apply
@@ -2130,6 +2128,8 @@ class MainWindow:
             self._clear_slideshow_pause()
         applied, error_message = self._apply_slideshow_selection(selected_left, selected_right, cycle_phase="tick")
         if self.slideshow_paused:
+            if self._any_remote_tick_updated(tick_outcomes):
+                self._slideshow_pending_remote_apply = True
             self._log(f"Slideshow cycle paused: {self.slideshow_pause_reason}")
             log_slideshow_op(
                 "SLIDESHOW_TICK",
@@ -2161,11 +2161,11 @@ class MainWindow:
             )
             return False
         if was_paused:
-            self._clear_slideshow_pause()
             self._update_slideshow_summary_display()
             self._set_status("success", "slideshow", "slideshow resumed")
             self._slideshow_feedback_dirty = True
             self._log("Slideshow resumed")
+        self.log_slideshow_deferred_auto_scale_after_apply()
         recovered_pending_remote_apply = self._slideshow_pending_remote_apply
         self._slideshow_pending_remote_apply = False
         self._log(f"Slideshow tick: L={selected_left} R={selected_right}")
