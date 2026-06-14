@@ -477,7 +477,7 @@ Slideshow **running** 中に Main Window / Settings 等で変えた値のうち�
 | 変更 | running 中の UI / owner | 即時 optimize+apply | 次 tick |
 | --- | --- | --- | --- |
 | **Interval spin** | owner `slideshow_interval_seconds` を即更新 | **しない** | timer を新 interval で再設定（**現 tick の待ちは維持** — 例: 3600s 待ちの途中で 5s に変えても、次 tick まで最大 3600s） |
-| **Slideshow auto scale L/R** | owner / preferences を即更新 | **しない**（即時 `_reapply_slideshow_if_running` は行わない） | 次 tick の optimize+apply に反映 |
+| **Slideshow auto scale L/R** | owner / preferences を即更新 | **しない**（即時 re-apply は行わない） | 次 tick の optimize+apply に反映 |
 | **Main タブ auto scale** | owner 更新のみ（従来どおり） | slideshow 経路には未反映 | 対象外（本節の段階導入外） |
 | **srcdir / profile 変更** | §4.2 / §6.4 の既存契約 | — | 対象外（副作用大のため後回し） |
 

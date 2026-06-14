@@ -109,6 +109,7 @@ class MainWindow:
         self._slideshow_run_snapshot: dict[str, object] | None = None
         self._slideshow_timer_interval_seconds: int | None = None
         self._slideshow_pending_auto_scale = False
+        self._slideshow_pending_remote_apply = False
         self.open_image_dialog_open = False
         self.open_image_dialog_side: str | None = None
         self._save_path_dialog_open = False
@@ -517,6 +518,7 @@ class MainWindow:
     def _clear_slideshow_deferred_apply_state(self) -> None:
         self._slideshow_timer_interval_seconds = None
         self._slideshow_pending_auto_scale = False
+        self._slideshow_pending_remote_apply = False
 
     def consume_slideshow_deferred_timer_interval(self) -> int | None:
         """Apply a running-session interval change to the runtime timer after a tick."""
@@ -531,20 +533,30 @@ class MainWindow:
         self._slideshow_timer_interval_seconds = desired
         return desired
 
-    def log_slideshow_deferred_apply_after_tick(self, *, timer_interval_applied: int | None) -> None:
-        if not self.slideshow_running:
-            return
-        fields: dict[str, object] = {}
-        if timer_interval_applied is not None:
-            fields["interval_seconds"] = timer_interval_applied
-        if self._slideshow_pending_auto_scale:
-            fields["slideshow_auto_display_scale"] = True
-            self._slideshow_pending_auto_scale = False
-        if not fields:
+    def log_slideshow_deferred_interval_after_tick(self, *, timer_interval_applied: int | None) -> None:
+        if not self.slideshow_running or timer_interval_applied is None:
             return
         from harite.slideshow_op_log import log_slideshow_op
 
-        log_slideshow_op("SLIDESHOW_DEFERRED_APPLY", ok=True, phase="tick", **fields)
+        log_slideshow_op(
+            "SLIDESHOW_DEFERRED_APPLY",
+            ok=True,
+            phase="tick",
+            interval_seconds=timer_interval_applied,
+        )
+
+    def log_slideshow_deferred_auto_scale_after_apply(self) -> None:
+        if not self.slideshow_running or not self._slideshow_pending_auto_scale:
+            return
+        self._slideshow_pending_auto_scale = False
+        from harite.slideshow_op_log import log_slideshow_op
+
+        log_slideshow_op(
+            "SLIDESHOW_DEFERRED_APPLY",
+            ok=True,
+            phase="tick",
+            slideshow_auto_display_scale=True,
+        )
 
     def _prepare_slideshow_optimize_state(self, state: OptimizeFormState) -> OptimizeFormState:
         """Slideshow optimize: manual scale is always 100%; auto comes from Slideshow tab only."""
@@ -555,15 +567,6 @@ class MainWindow:
             l_auto_display_scale=self.slideshow_l_auto_display_scale,
             r_auto_display_scale=self.slideshow_r_auto_display_scale,
         )
-
-    def _reapply_slideshow_if_running(self) -> None:
-        if not self.slideshow_running:
-            return
-        left = str(self._slideshow_previous_l) if self._slideshow_previous_l else "-"
-        right = str(self._slideshow_previous_r) if self._slideshow_previous_r else "-"
-        if left == "-" and right == "-":
-            return
-        self._apply_slideshow_selection(left, right, cycle_phase="tick")
 
     def on_change_margins(self, widget_name: str, value: int | float) -> None:
         if "AllMargins" in widget_name:
@@ -766,6 +769,14 @@ class MainWindow:
                 for display in displays
             ],
         }
+
+    def _any_remote_tick_updated(self, tick_outcomes: list[object]) -> bool:
+        from harite.sources_remote import RemoteSlideshowTickOutcome
+
+        for outcome in tick_outcomes:
+            if isinstance(outcome, RemoteSlideshowTickOutcome) and outcome.ok and not outcome.no_update:
+                return True
+        return False
 
     def _should_skip_slideshow_apply_for_remote_ticks(
         self,
@@ -2096,7 +2107,10 @@ class MainWindow:
             else:
                 selected_right = selected
 
-        if self._should_skip_slideshow_apply_for_remote_ticks(catalog, sources, tick_outcomes):
+        if (
+            self._should_skip_slideshow_apply_for_remote_ticks(catalog, sources, tick_outcomes)
+            and not self._slideshow_pending_remote_apply
+        ):
             self._log("Slideshow tick skipped: no remote update")
             log_slideshow_op(
                 "SLIDESHOW_TICK",
@@ -2114,7 +2128,20 @@ class MainWindow:
             self._clear_slideshow_pause()
         applied, error_message = self._apply_slideshow_selection(selected_left, selected_right, cycle_phase="tick")
         if self.slideshow_paused:
+            if self._any_remote_tick_updated(tick_outcomes):
+                self._slideshow_pending_remote_apply = True
             self._log(f"Slideshow cycle paused: {self.slideshow_pause_reason}")
+            log_slideshow_op(
+                "SLIDESHOW_TICK",
+                ok=True,
+                phase="tick",
+                skip_reason="display_paused",
+                pause_reason=self.slideshow_pause_reason,
+                pending_remote_apply=self._slideshow_pending_remote_apply,
+                selected_l=selected_left,
+                selected_r=selected_right,
+                **self._slideshow_op_log_display_fields(),
+            )
             return True
         if not applied:
             self.slideshow_running = False
@@ -2134,18 +2161,25 @@ class MainWindow:
             )
             return False
         if was_paused:
-            self._clear_slideshow_pause()
             self._update_slideshow_summary_display()
             self._set_status("success", "slideshow", "slideshow resumed")
             self._slideshow_feedback_dirty = True
             self._log("Slideshow resumed")
+        self.log_slideshow_deferred_auto_scale_after_apply()
+        recovered_pending_remote_apply = self._slideshow_pending_remote_apply
+        self._slideshow_pending_remote_apply = False
         self._log(f"Slideshow tick: L={selected_left} R={selected_right}")
+        tick_fields: dict[str, object] = {
+            "selected_l": selected_left,
+            "selected_r": selected_right,
+        }
+        if recovered_pending_remote_apply:
+            tick_fields["recovered_pending_remote_apply"] = True
         log_slideshow_op(
             "SLIDESHOW_TICK",
             ok=True,
             phase="tick",
-            selected_l=selected_left,
-            selected_r=selected_right,
+            **tick_fields,
         )
         return True
 

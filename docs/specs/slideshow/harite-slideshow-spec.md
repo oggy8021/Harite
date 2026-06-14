@@ -292,6 +292,8 @@ auto 倍率だけは **Slideshow 専用設定**（`slideshow_l_auto_display_scal
 
 network は step 1–2、optimize は step 3。ただし **全 side が remote かついずれの tick も cache 更新なし**（例: JMA 両 side で `filename_unchanged`）のときは step 3 を省略し `SLIDESHOW_TICK ok=true skip_reason=no_remote_update` を記録する。
 
+**未 apply cache の回収（#503）:** いずれかの side で remote cache が更新された tick について optimize+apply が完了しなかった場合（例: ディスプレイ検出失敗で **pause**）、owner は `pending_remote_apply` を立てる。以降の tick では filename 不変でも step 3 を省略せず、cache 上の `latest.*` を載せる。成功した tick で `pending_remote_apply` を下ろす。pause 時は `SLIDESHOW_TICK skip_reason=display_paused` と `detected_display_count` 等を OP_LOG に残す。
+
 **Preset 種別ごとの remote sync（ソース構成に依存しない。当該 side が remote のとき）:**
 
 | Preset / source | Start 前 sync | Tick 前 sync（当該 side） | Slideshow Mode（cache 1 枚時） |

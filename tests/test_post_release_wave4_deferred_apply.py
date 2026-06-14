@@ -35,18 +35,15 @@ def test_idle_interval_change_has_no_active_timer_interval():
     assert window.consume_slideshow_deferred_timer_interval() is None
 
 
-def test_running_auto_display_scale_defers_reapply(monkeypatch):
+def test_running_auto_display_scale_defers_immediate_apply():
     from harite.gui.views.main_window import MainWindow
 
     window = MainWindow()
     window.slideshow_running = True
-    reapply_calls: list[int] = []
-    monkeypatch.setattr(window, "_reapply_slideshow_if_running", lambda: reapply_calls.append(1))
 
     window.on_change_slideshow_auto_display_scale("L", True)
 
     assert window.slideshow_l_auto_display_scale is True
-    assert reapply_calls == []
     assert window._slideshow_pending_auto_scale is True
     assert "next tick" in window.status_message
 
@@ -65,7 +62,7 @@ def test_slideshow_stop_clears_deferred_apply_state():
     assert window._slideshow_pending_auto_scale is False
 
 
-def test_deferred_apply_op_log_after_tick(monkeypatch, tmp_path):
+def test_deferred_interval_op_log_after_tick(monkeypatch, tmp_path):
     from harite.gui.views.main_window import MainWindow
 
     log_path = tmp_path / "slideshow-op.jsonl"
@@ -73,20 +70,33 @@ def test_deferred_apply_op_log_after_tick(monkeypatch, tmp_path):
 
     window = MainWindow()
     window.slideshow_running = True
-    window._slideshow_timer_interval_seconds = 60
-    window.slideshow_interval_seconds = 12
-    window._slideshow_pending_auto_scale = True
 
-    window.log_slideshow_deferred_apply_after_tick(timer_interval_applied=12)
+    window.log_slideshow_deferred_interval_after_tick(timer_interval_applied=12)
 
     records = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines() if line.strip()]
     assert len(records) == 1
-    record = records[0]
-    assert record["step"] == "SLIDESHOW_DEFERRED_APPLY"
-    assert record["ok"] is True
-    assert record["interval_seconds"] == 12
-    assert record["slideshow_auto_display_scale"] is True
+    assert records[0]["step"] == "SLIDESHOW_DEFERRED_APPLY"
+    assert records[0]["interval_seconds"] == 12
+    assert "slideshow_auto_display_scale" not in records[0]
+
+
+def test_deferred_auto_scale_op_log_only_after_apply(monkeypatch, tmp_path):
+    from harite.gui.views.main_window import MainWindow
+
+    log_path = tmp_path / "slideshow-op.jsonl"
+    monkeypatch.setenv("HARITE_SLIDESHOW_OP_LOG", str(log_path))
+
+    window = MainWindow()
+    window.slideshow_running = True
+    window._slideshow_pending_auto_scale = True
+
+    window.log_slideshow_deferred_auto_scale_after_apply()
+
+    records = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    assert len(records) == 1
+    assert records[0]["slideshow_auto_display_scale"] is True
     assert window._slideshow_pending_auto_scale is False
+    assert "interval_seconds" not in records[0]
 
 
 def test_qt_timer_event_applies_deferred_interval_after_tick(monkeypatch):
