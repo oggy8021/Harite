@@ -3,6 +3,10 @@ name: Coverage
 on:
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   coverage:
     name: Coverage (manual)

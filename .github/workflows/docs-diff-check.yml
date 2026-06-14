@@ -6,6 +6,9 @@ on:
       - 'docs/**'
       - 'scripts/**'
 
+permissions:
+  contents: read
+
 jobs:
   check_diff:
     name: Check docs replacement diff size

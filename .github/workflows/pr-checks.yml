@@ -7,6 +7,9 @@ on:
     # ignore pushes to main to avoid blocking merges
     branches-ignore: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   validate-branch-name:
     name: Validate branch name
