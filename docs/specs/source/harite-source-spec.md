@@ -139,6 +139,7 @@ profile は **L/R 固定 2 スロットのみ**を持つ。list 型 `members` �
 
 - 初回 save 時に親ディレクトリを作成する（`mkdir(parents=True)`）。
 - ファイル不存在時の load は **空 catalog**（`schema_version: 1`, `sources: []`, `profiles: []`）として扱ってよい。
+- **0 バイトまたは空白のみ**のファイルも不存在と同型の空 catalog として扱ってよい（手動リセット後、起動時 bootstrap で preset を再 materialize する）。**不正 JSON**（中身ありで parse 不能）は従来どおり `ValueError`。
 
 ### 6.2 物理形式
 
@@ -195,7 +196,7 @@ tick 毎の catalog 再 load は **行わない**。catalog の読み込みは�
 
 | 操作 | 契約 |
 | --- | --- |
-| `load_catalog(path?)` | JSON → catalog model。不存在は空 catalog |
+| `load_catalog(path?)` | JSON → catalog model。不存在は空 catalog。0 バイト / 空白のみも空 catalog（§6.1） |
 | `save_catalog(catalog, path?)` | catalog → JSON。検証済み catalog のみ |
 
 ### 7.2 Source CRUD
