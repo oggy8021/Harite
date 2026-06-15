@@ -207,6 +207,8 @@ def _tab_aliases(w: dict[str, Any]) -> dict[str, Any]:
         "lblSlideshowSourceR": _get("slideshow_source_label_r"),
         "lblSlideshowCodhKeyword": _get("slideshow_codh_keyword_chip"),
         "lblSlideshowNdlKeyword": _get("slideshow_ndl_keyword_chip"),
+        "lblSlideshowCursorL": _get("slideshow_cursor_l"),
+        "lblSlideshowCursorR": _get("slideshow_cursor_r"),
         "lblSlideshowCurrent": _get("slideshow_current_label"),
         "lblSlideshowOutput": _get("slideshow_output_label"),
     }

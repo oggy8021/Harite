@@ -621,6 +621,45 @@ def refresh_slideshow_keyword_chips(backend: Any, owner: Any) -> None:
     refresh_slideshow_ndl_keyword_chip(backend, owner)
 
 
+def refresh_slideshow_cursor_position_chips(backend: Any, owner: Any) -> None:
+    from harite.gui.adapters_qt.qt_source_catalog import prepare_owner_source_catalog
+    from harite.gui.views.slideshow_cursor_position import (
+        format_slideshow_side_cursor_chip,
+        resolve_slideshow_cursor_displays,
+    )
+
+    left_widget = _get(backend, "lblSlideshowCursorL")
+    right_widget = _get(backend, "lblSlideshowCursorR")
+    if left_widget is None and right_widget is None:
+        return
+
+    try:
+        catalog = prepare_owner_source_catalog(owner)
+    except Exception:
+        for widget in (left_widget, right_widget):
+            if widget is not None:
+                widget.setVisible(False)
+                widget.setText("")
+        return
+
+    left_display, right_display = resolve_slideshow_cursor_displays(catalog, owner)
+    for side, widget, display in (
+        ("L", left_widget, left_display),
+        ("R", right_widget, right_display),
+    ):
+        if widget is None:
+            continue
+        text = format_slideshow_side_cursor_chip(side, display)
+        if not text:
+            widget.setVisible(False)
+            widget.setText("")
+            widget.setToolTip("")
+            continue
+        widget.setText(text)
+        widget.setToolTip(display.tooltip if display is not None else "")
+        widget.setVisible(True)
+
+
 def refresh_slideshow_registry_combos(backend: Any, owner: Any) -> None:
     from harite.gui.adapters_qt.qt_source_catalog import (
         prepare_owner_source_catalog,
