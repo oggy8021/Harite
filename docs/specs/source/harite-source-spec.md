@@ -344,7 +344,7 @@ slideshow **running** 中に `harite-sources.json` が保存されたとき、GU
 | **Catalog materialize** | GUI 起動・combo 更新時 — preset 追加・修復、**孤児 cache directory 削除**（§12.3）。**ネットワーク sync は行わない**（UI ブロック防止） |
 | **Refresh** | Manage dialog の Refresh — 選択中 remote に `sync_remote_source` |
 | **slideshow Start 直前** | 実行予定の L/R が参照する **すべての `remote-*`** source に `sync_remote_source`（[gui-spec §6.5](../gui/harite-gui-spec.md)） |
-| **slideshow tick** | **provider 別**。**JMA**: §15.1.3（`list.json` で filename 比較、変化時のみ PNG GET）。**CODH**: §15.4.5（index + cursor、画像 GET のみ）。**NDL**: §15.3.4（毎 tick `randomwithfacet` → IIIF GET → `latest.jpg` 上書き）。各 tick は cache を再スキャンし `latest.*` を apply |
+| **slideshow tick** | **provider 別**。**JMA**: §15.1.3（`list.json` で filename 比較、変化時のみ PNG GET）。**CODH**: §15.4.5（index + cursor、画像 GET のみ）。**NDL**: §15.3.4（毎 tick `randomwithfacet` → IIIF GET → `latest.jpg` 上書き）。各 tick は cache を再スキャンし `latest.*` を apply。**GUI display pause 中も tick 前 sync は省略しない**（apply のみ止まる — [slideshow-spec §5.3](../slideshow/harite-slideshow-spec.md)） |
 | **resolve** | `remote-*` は cache directory が無ければ **作成してから** §4 と同型の `normalize_directory_path` を満たす。`local-dir` は既存 directory 必須。空 directory や画像 0 件は **resolve 時には成功しうる**が、slideshow start の画像収集は [slideshow-spec](../slideshow/harite-slideshow-spec.md) で失敗しうる |
 | **実行中** | cache 削除・Sync による参照不能 → §7.5 / §7.6 と同型（stop / start failure） |
 
@@ -599,7 +599,7 @@ Sync 完了後、`{cache_root}/{source_id}/jma-cycle.json` に `preset_id` と�
 
 #### 15.1.3 Slideshow tick sync
 
-slideshow running 中、当該 side が `remote-jma-weather-map` を参照するとき、各 tick 前に次を行う（[slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md)）。
+slideshow running 中、当該 side が `remote-jma-weather-map` を参照するとき、各 tick 前に次を行う（[slideshow-spec §6.6](../slideshow/harite-slideshow-spec.md)）。**GUI display pause 中も省略しない**（cache は進み、壁紙 apply だけが止まる — [slideshow-spec §5.3–§5.4](../slideshow/harite-slideshow-spec.md)）。
 
 1. §15.1.2 手順 1–3 と同型で `list.json` から現行 `{filename}` を得る。
 2. `jma-cycle.json` の `filename` と同一なら PNG GET を **skip** する。
