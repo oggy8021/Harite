@@ -22,11 +22,17 @@ def load_settings(path: Path) -> dict[str, Any]:
     p = Path(path)
     if not p.exists():
         raise FileNotFoundError(f"Config file not found: {p}")
+    with p.open("r", encoding="utf-8") as fh:
+        raw = fh.read()
+    if not raw.strip():
+        return {}
     try:
-        with p.open("r", encoding="utf-8") as fh:
-            return json.load(fh)
+        data = json.loads(raw)
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON config: {e}") from e
+    if not isinstance(data, dict):
+        raise ValueError("settings root must be an object")
+    return data
 
 
 def save_settings(path: Path, settings: dict[str, Any]) -> Path:

@@ -24,13 +24,20 @@ def resolve_default_sources_path() -> Path:
     return _harite_config_dir() / SOURCES_CATALOG_FILENAME
 
 
+def empty_sources_json_payload() -> dict[str, Any]:
+    return {"schema_version": 1, "sources": [], "profiles": []}
+
+
 def load_sources_json(path: Path) -> dict[str, Any]:
     p = Path(path)
     if not p.exists():
         raise FileNotFoundError(f"Sources catalog not found: {p}")
+    with p.open("r", encoding="utf-8") as fh:
+        raw = fh.read()
+    if not raw.strip():
+        return empty_sources_json_payload()
     try:
-        with p.open("r", encoding="utf-8") as fh:
-            data = json.load(fh)
+        data = json.loads(raw)
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON sources catalog: {e}") from e
     if not isinstance(data, dict):
