@@ -75,3 +75,37 @@ def test_merge_patch_only_settings_keys_keeps_payload_keywords() -> None:
     merged = merge_patch_only_settings_keys(payload, existing)
 
     assert merged == {"codh_keyword": "桜", "ndl_keyword": "妖怪"}
+
+
+def test_load_settings_empty_file_returns_empty_dict(tmp_path: Path) -> None:
+    from harite.settings_file import load_settings
+
+    target = tmp_path / "harite-settings.json"
+    target.write_bytes(b"")
+    assert load_settings(target) == {}
+
+
+def test_load_settings_whitespace_only_returns_empty_dict(tmp_path: Path) -> None:
+    from harite.settings_file import load_settings
+
+    target = tmp_path / "harite-settings.json"
+    target.write_text("  \n", encoding="utf-8")
+    assert load_settings(target) == {}
+
+
+def test_load_settings_invalid_non_empty_still_raises(tmp_path: Path) -> None:
+    from harite.settings_file import load_settings
+
+    target = tmp_path / "harite-settings.json"
+    target.write_text("{bad", encoding="utf-8")
+    with pytest.raises(ValueError, match="Invalid JSON config"):
+        load_settings(target)
+
+
+def test_patch_settings_value_on_empty_file_writes_key(tmp_path: Path) -> None:
+    from harite.settings_file import load_settings, patch_settings_value
+
+    target = tmp_path / "harite-settings.json"
+    target.write_bytes(b"")
+    patch_settings_value(target, "codh_keyword", "桜")
+    assert load_settings(target) == {"codh_keyword": "桜"}

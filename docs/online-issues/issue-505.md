@@ -33,5 +33,6 @@
 ## 取り込み方針
 
 - `load_sources_json`: `raw.strip()` が空なら `empty_sources_json_payload()` を返す。
+- **水平展開:** `load_settings` も同型 — 空ファイルは `{}`（[core-spec §6.4](../specs/core/harite-core-spec.md)）。
 - spec §6.1 / API 表に 0 バイト契約を追記。
-- テスト: `tests/test_sources_file.py`
+- テスト: `tests/test_sources_file.py`, `tests/test_settings_file.py`
