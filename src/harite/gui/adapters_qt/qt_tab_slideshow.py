@@ -146,6 +146,41 @@ def _build_srcdir_row() -> dict[str, Any]:
     }
 
 
+def _build_slideshow_cursor_row() -> dict[str, Any]:
+    """Read-only L/R list cursor chips — bottom-left of Slideshow tab (#507)."""
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtGui import QPalette
+    from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
+
+    row = QWidget()
+    layout = QHBoxLayout(row)
+    layout.setContentsMargins(0, 4, 0, 0)
+    layout.setSpacing(16)
+
+    muted = QLabel("").palette().color(QPalette.ColorRole.PlaceholderText)
+    muted_style = f"color: {muted.name()};"
+
+    cursor_l = QLabel("")
+    cursor_l.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+    cursor_l.setVisible(False)
+    cursor_l.setStyleSheet(muted_style)
+
+    cursor_r = QLabel("")
+    cursor_r.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+    cursor_r.setVisible(False)
+    cursor_r.setStyleSheet(muted_style)
+
+    layout.addWidget(cursor_l)
+    layout.addWidget(cursor_r)
+    layout.addStretch()
+
+    return {
+        "slideshow_cursor_row": row,
+        "slideshow_cursor_l": cursor_l,
+        "slideshow_cursor_r": cursor_r,
+    }
+
+
 def _build_slideshow_keyword_chip_row() -> dict[str, Any]:
     """Read-only CODH/NDL keyword chips — top-right of Slideshow tab."""
     from PyQt6.QtCore import Qt
@@ -490,6 +525,7 @@ def build_slideshow_tab() -> dict[str, Any]:
         profile_row
         srcdir_row          (L/R source grid + Swap)
         controls_shell      (Interval + Start/Stop centred)
+        cursor_row          (bottom-left L/R list cursor chips)
         options trigger     ("More slideshow options…")
         options drawer      (Mode, Manage, current/output — hidden by default)
 
@@ -514,6 +550,7 @@ def build_slideshow_tab() -> dict[str, Any]:
     profile_widgets = _build_profile_row()
     srcdir_widgets = _build_srcdir_row()
     controls_widgets = _build_interval_controls_section()
+    cursor_widgets = _build_slideshow_cursor_row()
     trigger_widgets = _build_options_drawer_trigger()
     drawer_widgets = _build_options_drawer()
 
@@ -523,6 +560,7 @@ def build_slideshow_tab() -> dict[str, Any]:
     tab_layout.addWidget(srcdir_widgets["srcdir_row"], stretch=0)
     tab_layout.addSpacing(12)
     tab_layout.addWidget(controls_widgets["slideshow_controls_shell"], stretch=0)
+    tab_layout.addWidget(cursor_widgets["slideshow_cursor_row"], stretch=0)
     tab_layout.addSpacing(8)
     tab_layout.addWidget(trigger_widgets["slideshow_options_trigger_row"], stretch=0)
     tab_layout.addWidget(drawer_widgets["slideshow_options_drawer"], stretch=0)
@@ -535,6 +573,7 @@ def build_slideshow_tab() -> dict[str, Any]:
         **profile_widgets,
         **srcdir_widgets,
         **controls_widgets,
+        **cursor_widgets,
         **trigger_widgets,
         **drawer_widgets,
     }
