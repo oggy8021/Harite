@@ -618,8 +618,8 @@ catalog / cache / provider の契約は [source-spec §12–16](../source/harite
 - start 時点では slideshow tab 上の mode 選択値を採用する。
 - start 時点で各 source から初回選択を行い、現在表示を更新してから apply を試みる。
 - tick では次画像を選び直し、現在表示を更新したうえで apply を行う。
-- apply に失敗した場合はスライドショー実行を停止し、status と message history に failure を残す。
-- monitor 検出欠落のような一部条件では stop ではなく pause として扱い、状態表示を `paused` へ更新する。
+- apply に失敗した場合はスライドショー実行を停止し、status と message history に failure を残す（**display 条件不足による pause は除く** — 正本 [slideshow-spec §5](../slideshow/harite-slideshow-spec.md)）。
+- monitor 検出欠落のような一部条件では stop ではなく pause として扱い、状態表示を `paused` へ更新する（§5.1–§5.2）。pause 中も remote tick と cycle は継続する（§5.3）。
 - 実行中に mode 選択値を変えても進行中の run には反映しない。新しい mode を使うには stop 後に start し直す。
 - dual-source auto-split 実行中の optimize 出力管理（差し替え・純増ギャップ）は [slideshow-spec §6.2–6.3](../slideshow/harite-slideshow-spec.md) を参照する。
 
@@ -806,7 +806,7 @@ status 更新の原則:
 - `idle`: 待機
 - `running`: 実行中
 - `success`: 完了
-- `paused`: 一時停止
+- `paused`: 一時停止（optimize+apply のみ停止。remote cache 更新は継続しうる — [slideshow-spec §5](../slideshow/harite-slideshow-spec.md)）
 - `error`: 失敗
 
 ## 11. CLI / core / slideshow との境界
@@ -818,5 +818,5 @@ status 更新の原則:
 境界整理:
 
 - GUI は widget と状態表示の面を持つが、設定ファイルの物理仕様や apply target 解決規則そのものは core に依存する。
-- GUI のスライドショー機能は slideshow helper を利用するが、pause / resume 的な扱い、状態表示、message history は GUI 側の責務である。
+- GUI のスライドショー機能は slideshow helper を利用するが、pause / resume 的な扱い、状態表示、message history は GUI 側の責務である（pause の契約正本は [slideshow-spec §5](../slideshow/harite-slideshow-spec.md)）。
 - tray は GUI の補助導線であり、独立した業務規則の一次置き場にはしない。

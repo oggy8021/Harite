@@ -1,6 +1,6 @@
 # Harite スライドショー仕様 (Slideshow Spec)
 
-最終更新: 2026-06-07
+最終更新: 2026-06-14
 
 ## 1. スライドショー機能の責務
 
@@ -13,7 +13,7 @@ public surface では、この機能を `スライドショー` と呼ぶ。画�
 
 | 層 | 節 | 内容 |
 | --- | --- | --- |
-| **本編** | §2–5 | 起動条件、cycle、pause/stop |
+| **本編** | §2–5 | 起動条件、cycle、**pause/stop（§5 が pause 正本）** |
 | **本編** | §6 | GUI 連動（作業ディレクトリ・registry・remote tick） |
 | **付録** | §7 以降 | CLI command、失敗分類 |
 
@@ -147,11 +147,25 @@ slideshow helper の最小構成:
 
 整理すると、明示的な pause / resume API を slideshow helper 自体は持たない。pause / resume 的な制御は主に GUI 側の状態管理として現れ、CLI 側は開始から終了まで 1 本のループを実行するモデルである。
 
-GUI pause / resume の現行条件:
+### 5.1 pause の意味と範囲
+
+GUI の **pause** は **optimize + apply（壁紙への反映）だけ**が一時停止した状態である。次を混同しない。
+
+| 状態 | `slideshow_running` | timer | remote tick / cache 更新 | optimize + apply |
+| --- | --- | --- | --- | --- |
+| **running** | true | 動く | 動く | 動く |
+| **paused** | true | **動く** | **動く** | **止まる** |
+| **stopped** | false | 止まる | 動かない | 動かない |
+
+- pause は **stop ではない**。`on_slideshow_tick` が pause 経路で `True` を返す限り、interval timer は継続する（§6.2 R3「timer は継続可」）。
+- pause の典型原因は **ディスプレイ検出不足**（ディスプレイ電源 OFF、ケーブル抜け、検出 1 枚以下で dual auto-split 不可など）。
+- 外の世界（JMA `list.json`、CODH index、NDL API）と cache の鮮度は **pause 中も進んでよい**。問題は「cache だけ進み壁紙が追従しない」隙間であり、§5.4 の `pending_remote_apply` で回収する。
+
+### 5.2 GUI pause / resume の発火条件
 
 - dual-source auto-split の `tick` 中に `per-monitor apply requires at least two detected displays` または `Two input images require two detected displays. Use one input only.`（optimize 前の display 検出失敗）が返った場合、GUI は stop せず pause へ遷移する。
 - この pause は `slideshow paused: waiting for two detected displays for auto-split` を status message に入れ、状態表示を `paused` に切り替える。
-- pause 中に次 tick が成功すると GUI は `slideshow resumed` を出して running へ戻る。
+- pause 中に次 tick で apply が成功すると GUI は `slideshow resumed` を出して running 表示へ戻る。
 - 同じ `ValueError` でも `start` 時は transient 扱いせず、start failure として止める。
 
 pause / stop 判定の境界:
@@ -160,6 +174,58 @@ pause / stop 判定の境界:
 - tick 中に起きる一時的な display 条件不足だけを GUI は paused として吸収してよい。
 - plugin が `False` を返した場合や plugin exception は、GUI / CLI の owner が failure として分類するが、その失敗理由の生成自体は plugin 側の契約に属する。
 - auto-split target 解決失敗と plugin 実 apply failure は同じ `apply failed` に潰さず、owner 側の status / history では別理由として保持する。
+- directory  inaccessible・画像 0 件・catalog 破損など **source 側の恒久 failure** は pause ではなく **stop**（§9、source-spec §7.5 / §7.6）。
+
+### 5.3 tick 各段階と pause の関係（正本）
+
+各 `on_slideshow_tick` は、pause かどうかにかかわらず **同じ順序**で前段を実行する。pause が止めるのは **最後の apply 段階のみ**である。
+
+| 順序 | 段階 | pause 中 | 備考 |
+| --- | --- | --- | --- |
+| 1 | remote tick sync（当該 side が `remote-*` のとき） | **実行する** | [source-spec §12.4](../source/harite-source-spec.md)。network は optimize とは別軸（§6.2.1） |
+| 2 | `collect_slideshow_input_images` | **実行する** | cache directory を入力列として再スキャン |
+| 3 | `select_next_image` / `run_slideshow_cycle` | **実行する** | L/R 独立 `SlideshowCycleState`（§4） |
+| 4 | `no_remote_update` skip 判定 | **実行する** | §5.4 の `pending_remote_apply` が立っていれば skip しない |
+| 5 | `run_slideshow_optimize` → apply | **失敗時 pause** | 成功時は running 継続または resume |
+
+実装入口: `on_slideshow_tick` は step 1–3 を pause 判定より前に行い、step 5 の `_apply_slideshow_selection` で pause が確定する。
+
+### 5.4 Preset / remote source 別 — pause 中のデータ取得と「カーソル」
+
+provider 別の tick 手順の正本は [source-spec §12.4 / §15](../source/harite-source-spec.md)。pause 中も **step 1（remote tick sync）は省略しない**。
+
+「カーソル」は provider で意味が異なる。混同しない。
+
+| Preset / source | pause 中の network / cache | pause 中に進む「カーソル」 | Slideshow Mode（`sequential` / `random`） |
+| --- | --- | --- | --- |
+| **JMA**（List 事前取得型） | `list.json` 照合。filename 変化時に PNG GET → `latest.png` / `jma-cycle.json` 更新 | **実質カーソル** = `jma-cycle.json` の `filename`（list 上の現行図）。pause 中も進みうる | **作用しない**（cache は `latest.png` 1 枚。`SlideshowCycleState` は呼ばれるが選択は実質同じ） |
+| **NDL** | 毎 tick `randomwithfacet` → IIIF GET → `latest.jpg` 上書きしうる | 候補抽選は毎 tick。cache は 1 枚 | **作用しない**（cache 1 枚） |
+| **CODH** | cursor で次 URL を選び画像 GET → `latest.*` 上書き | **URL cursor**（`codh-cycle.json`）は pause 中も進みうる | **有効**（cache 1 枚だが cursor で中身が変わる） |
+| **`local-dir`（複数枚）** | なし | **`SlideshowCycleState`**（index / random）は pause 中も進む | **有効** |
+
+**日常運用の読み方（JMA デュアル + ディスプレイ OFF）:** 外出中は cache だけ進み、壁紙は古いままでよい。帰宅してディスプレイ ON 後の tick で、だいたいその時間帯の天気図が載れば成功（§5.4 回収）。
+
+### 5.5 未 apply cache の回収（`pending_remote_apply`）
+
+いずれかの side で remote tick が **cache 更新あり**（`no_update=False`）なのに、同 tick の optimize+apply が完了しなかった場合（典型: §5.2 の display pause）、owner は `pending_remote_apply` を立てる。
+
+| 条件 | 挙動 |
+| --- | --- |
+| 通常 tick、全 remote side が `filename_unchanged` 等 | step 5 を省略。`SLIDESHOW_TICK skip_reason=no_remote_update`（#493） |
+| `pending_remote_apply=true` | **filename 不変でも** step 5（optimize+apply）を省略しない。cache 上の `latest.*` を載せる |
+| apply 成功 | `pending_remote_apply` を下ろす。OP_LOG に `recovered_pending_remote_apply=true` を記録してよい |
+
+典型シナリオ（#503）: 05:51 に JMA cache 更新 + display pause → 06:51 / 07:51 は `filename_unchanged` だが `pending_remote_apply` により 07:51（ディスプレイ ON）で回収 apply する。
+
+### 5.6 観測（status / OP_LOG）
+
+pause 経路を観測可能にするため、GUI は次を記録する（`HARITE_SLIDESHOW_OP_LOG` 有効時。詳細は source-spec §12.4.3）。
+
+| イベント | 主なフィールド |
+| --- | --- |
+| display pause | `SLIDESHOW_TICK` `ok=true` `skip_reason=display_paused`、`pause_reason`、`detected_display_count`、`pending_remote_apply` |
+| 回収 apply 成功 | `SLIDESHOW_APPLY` + 締め `SLIDESHOW_TICK`（`recovered_pending_remote_apply=true` 任意） |
+| remote のみ更新・apply なし | `JMA_TICK` 等で `content_changed` のあと `display_paused` — **05:51 型の「ログが途切れる」状態は不可**（#503） |
 
 GUI timer / side state の現行規則:
 
@@ -290,9 +356,9 @@ auto 倍率だけは **Slideshow 専用設定**（`slideshow_l_auto_display_scal
 2. R: `codh_slideshow_tick` 等 → R cache 更新 → R cycle
 3. `run_slideshow_optimize`（L/R 選択 path を入力）→ 作業ディレクトリへ書き込み → apply
 
-network は step 1–2、optimize は step 3。ただし **全 side が remote かついずれの tick も cache 更新なし**（例: JMA 両 side で `filename_unchanged`）のときは step 3 を省略し `SLIDESHOW_TICK ok=true skip_reason=no_remote_update` を記録する。
+network は step 1–2、optimize は step 3。ただし **全 side が remote かついずれの tick も cache 更新なし**（例: JMA 両 side で `filename_unchanged`）のときは step 3 を省略し `SLIDESHOW_TICK ok=true skip_reason=no_remote_update` を記録する。**display pause 中の remote tick・cycle の継続**および **`pending_remote_apply` 回収**の正本は **§5**（特に §5.3–§5.5）。
 
-**未 apply cache の回収（#503）:** いずれかの side で remote cache が更新された tick について optimize+apply が完了しなかった場合（例: ディスプレイ検出失敗で **pause**）、owner は `pending_remote_apply` を立てる。以降の tick では filename 不変でも step 3 を省略せず、cache 上の `latest.*` を載せる。成功した tick で `pending_remote_apply` を下ろす。pause 時は `SLIDESHOW_TICK skip_reason=display_paused` と `detected_display_count` 等を OP_LOG に残す。
+**未 apply cache の回収（#503）:** §5.5 を参照。要約: remote cache 更新後に apply が pause で落ちたら `pending_remote_apply` を立て、次 tick は filename 不変でも optimize+apply する。
 
 **Preset 種別ごとの remote sync（ソース構成に依存しない。当該 side が remote のとき）:**
 
