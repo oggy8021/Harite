@@ -162,11 +162,13 @@ def _build_slideshow_cursor_row() -> dict[str, Any]:
 
     cursor_l = QLabel("")
     cursor_l.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+    cursor_l.setMaximumWidth(176)
     cursor_l.setVisible(False)
     cursor_l.setStyleSheet(muted_style)
 
     cursor_r = QLabel("")
     cursor_r.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+    cursor_r.setMaximumWidth(176)
     cursor_r.setVisible(False)
     cursor_r.setStyleSheet(muted_style)
 

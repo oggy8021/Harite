@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 pytest.importorskip("PyQt6.QtWidgets")
@@ -528,6 +530,54 @@ def test_slideshow_timer_tick_failure_syncs_backend_state(qapp, monkeypatch):
     error_lbl = backend._objects.get("lblError")
     assert error_lbl is not None
     assert "tick boom" in error_lbl.text()
+
+
+def test_slideshow_timer_tick_success_syncs_backend_state(qapp, monkeypatch):
+    from harite.gui.adapters_qt.qt_backend import load_qt_runtime_signal_backend
+    from harite.gui.views.main_window import MainWindow
+    from harite.gui.adapters.ui_adapter import (
+        RUNTIME_HANDLER_MAP,
+        connect_signal_dispatch,
+        create_mainwindow_signal_dispatch,
+    )
+
+    sync_calls: list[str] = []
+
+    def successful_tick(self) -> bool:
+        self.slideshow_running = True
+        self.slideshow_paused = False
+        self._update_slideshow_summary_display()
+        self._set_status("success", "slideshow", "slideshow resumed")
+        return True
+
+    monkeypatch.setattr(MainWindow, "on_slideshow_tick", successful_tick)
+
+    window = MainWindow()
+    window.slideshow_running = True
+    window.slideshow_paused = False
+
+    backend = load_qt_runtime_signal_backend()
+    dispatch = create_mainwindow_signal_dispatch(
+        window, tuple(RUNTIME_HANDLER_MAP.keys()), handler_map=RUNTIME_HANDLER_MAP
+    )
+    connect_signal_dispatch(backend, dispatch)
+    backend._slideshow_running = True
+    backend._slideshow_paused = True
+
+    def _sync(owner: Any) -> None:
+        sync_calls.append("sync")
+        backend._slideshow_paused = bool(getattr(owner, "slideshow_paused", False))
+        backend._refresh_slideshow_summary_label()
+
+    monkeypatch.setattr(backend, "_sync_slideshow_state_with_feedback_from_owner", _sync)
+
+    backend._on_slideshow_timer_event()
+
+    assert sync_calls == ["sync"]
+    assert backend._slideshow_paused is False
+    summary = backend._objects.get("lblSlideshowSummary")
+    assert summary is not None
+    assert summary.text() == "Slideshow: running"
 
 
 # ---------------------------------------------------------------------------

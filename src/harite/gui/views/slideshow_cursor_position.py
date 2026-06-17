@@ -120,7 +120,21 @@ def _format_local_dir_cursor(owner: Any, side: str, source_dir: Path) -> Slidesh
     return SlideshowSideCursorDisplay(f"1/{len(images)}")
 
 
-def _format_codh_cursor(cache_dir: Path) -> SlideshowSideCursorDisplay | None:
+CODH_RANDOM_CURSOR_POSITION = "-"
+
+
+def _resolve_codh_slideshow_mode(cycle: dict[str, Any], owner: Any) -> str:
+    mode = str(cycle.get("mode") or "").strip().lower()
+    if mode in {"sequential", "random"}:
+        return mode
+    active = str(getattr(owner, "_slideshow_active_mode", "") or "").strip().lower()
+    if active in {"sequential", "random"}:
+        return active
+    fallback = str(getattr(owner, "slideshow_mode", "random") or "random").strip().lower()
+    return fallback if fallback in {"sequential", "random"} else "random"
+
+
+def _format_codh_cursor(cache_dir: Path, owner: Any) -> SlideshowSideCursorDisplay | None:
     index = load_codh_index(cache_dir)
     if index is None:
         return None
@@ -129,12 +143,26 @@ def _format_codh_cursor(cache_dir: Path) -> SlideshowSideCursorDisplay | None:
     if total < 1:
         return None
     cycle = reconcile_codh_cycle(load_codh_cycle(cache_dir), index)
+    mode = _resolve_codh_slideshow_mode(cycle, owner)
+    if mode == "random":
+        return SlideshowSideCursorDisplay(f"{CODH_RANDOM_CURSOR_POSITION}/{total}")
     try:
         cursor_index = int(cycle.get("index") or 0)
     except (TypeError, ValueError):
         cursor_index = 0
     cursor_index %= total
     return SlideshowSideCursorDisplay(f"{cursor_index + 1}/{total}")
+
+
+JMA_CURSOR_CHIP_FILENAME_MAX = 14
+
+
+def format_jma_filename_for_chip(filename: str, *, max_len: int = JMA_CURSOR_CHIP_FILENAME_MAX) -> str:
+    """Compact JMA filename for the Slideshow cursor chip (#512)."""
+    name = str(filename or "").strip()
+    if not name or len(name) <= max_len:
+        return name
+    return f"…{name[-(max_len - 1):]}"
 
 
 def _format_jma_cursor(cache_dir: Path) -> SlideshowSideCursorDisplay | None:
@@ -144,7 +172,8 @@ def _format_jma_cursor(cache_dir: Path) -> SlideshowSideCursorDisplay | None:
     filename = str(cycle.get("filename") or "").strip()
     if not filename:
         return None
-    return SlideshowSideCursorDisplay(filename)
+    label = format_jma_filename_for_chip(filename)
+    return SlideshowSideCursorDisplay(label, tooltip=filename)
 
 
 def _format_kiriezu_cursor(entry: SourceEntry, cache_dir: Path) -> SlideshowSideCursorDisplay | None:
@@ -218,7 +247,7 @@ def format_side_cursor_display(
         return _format_local_dir_cursor(owner, side, source_dir)
 
     if kind == KIND_CODH_EDO:
-        return _format_codh_cursor(cache_dir)
+        return _format_codh_cursor(cache_dir, owner)
 
     if kind == KIND_JMA_WEATHER_MAP:
         return _format_jma_cursor(cache_dir)

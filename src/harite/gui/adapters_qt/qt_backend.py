@@ -512,8 +512,10 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
                 if owner is not None:
                     self._sync_slideshow_state_with_feedback_from_owner(owner)
                 return
-            if owner is not None and bool(getattr(owner, "slideshow_running", False)):
-                self._apply_deferred_slideshow_timer_from_owner(owner)
+            if owner is not None:
+                if bool(getattr(owner, "slideshow_running", False)):
+                    self._apply_deferred_slideshow_timer_from_owner(owner)
+                self._sync_slideshow_state_with_feedback_from_owner(owner)
         except Exception:
             pass
 
