@@ -14,6 +14,7 @@ from harite.sources import Catalog, SourceEntry, get_source
 from harite.sources_remote import (
     CODH_SEARCH_URL_TEMPLATE,
     KIND_CODH_EDO,
+    NDL_IIIF_FETCH_MAX_ATTEMPTS,
     CacheWriteResult,
     _CODH_PRESET_SEARCH,
     _CodhSearchSpec,
@@ -368,6 +369,85 @@ def fetch_codh_image(
     return True, write_result
 
 
+def _fetch_codh_image_with_retries(
+    cache_dir: Path,
+    index: dict[str, Any],
+    cycle: dict[str, Any],
+    mode: str,
+    *,
+    source_id: str | None,
+    phase: str,
+    start_index: int | None = None,
+    advance_index_on_success: bool = False,
+) -> tuple[bool, CacheWriteResult | None, dict[str, Any]]:
+    from harite.slideshow_op_log import log_slideshow_op
+
+    urls = _entry_urls(index)
+    normalized_mode = mode.lower().strip()
+    if normalized_mode not in {"sequential", "random"}:
+        raise ValueError("mode must be one of: sequential, random")
+
+    original_index = int(cycle.get("index") or 0)
+    total = len(urls)
+    last_error_url: str | None = None
+    working_cycle = dict(cycle)
+
+    for attempt in range(1, NDL_IIIF_FETCH_MAX_ATTEMPTS + 1):
+        if normalized_mode == "sequential":
+            base_index = (
+                int(start_index if start_index is not None else (cycle.get("index") or 0))
+                % total
+            )
+            selected_index = (base_index + attempt - 1) % total
+            url = urls[selected_index]
+            try_cycle = dict(working_cycle)
+            try_cycle["previous_image_url"] = url
+        else:
+            url, try_cycle = advance_codh_cursor(index, working_cycle, mode)
+            working_cycle = try_cycle
+
+        log_step = "CODH_TICK_CURSOR" if phase == "tick" else "CODH_IMAGE_URL"
+        log_fields: dict[str, Any] = {
+            "source_id": source_id,
+            "mode": mode,
+            "url": url,
+            "attempt": attempt,
+        }
+        if log_step == "CODH_TICK_CURSOR":
+            log_fields["cursor_index"] = (
+                selected_index if normalized_mode == "sequential" else try_cycle.get("index")
+            )
+        else:
+            log_fields["cursor_index"] = try_cycle.get("index")
+        log_slideshow_op(log_step, **log_fields)
+
+        fetched, write_result = fetch_codh_image(
+            cache_dir,
+            url,
+            source_id=source_id,
+            phase=phase,
+        )
+        if fetched:
+            final_cycle = dict(try_cycle)
+            if normalized_mode == "sequential":
+                if advance_index_on_success:
+                    final_cycle["index"] = selected_index + 1
+                else:
+                    final_cycle["index"] = original_index
+            final_cycle["mode"] = normalized_mode
+            return True, write_result, final_cycle
+
+        last_error_url = url
+        if normalized_mode == "random":
+            working_cycle = try_cycle
+
+    suffix = f" (last error url: {last_error_url})" if last_error_url else ""
+    raise ValueError(
+        "remote fetch failed: CODH image unavailable after "
+        f"{NDL_IIIF_FETCH_MAX_ATTEMPTS} attempts{suffix}"
+    )
+
+
 def codh_sync_with_pick(
     ctx: CodhSyncContext,
     pick: CodhSyncPick,
@@ -389,26 +469,25 @@ def codh_sync_with_pick(
 
     if pick == CODH_SYNC_REFRESH:
         cycle = codh_random_refresh_cycle(index, cycle)
-        image_url = str(cycle["previous_image_url"])
+        start_index = int(cycle.get("index") or 0)
+        mode = str(cycle.get("mode") or "sequential")
     else:
         cycle = reconcile_codh_cycle(cycle, index)
-        image_url, cycle = pick_codh_url_at_cursor(index, cycle)
+        start_index = int(cycle.get("index") or 0)
+        mode = str(cycle.get("mode") or "sequential")
 
-    log_slideshow_op(
-        "CODH_IMAGE_URL",
-        source_id=source_id,
-        pick=pick,
-        url=image_url,
-        cursor_index=cycle.get("index"),
-    )
-    fetched, _write_result = fetch_codh_image(
-        ctx.cache_dir,
-        image_url,
-        source_id=source_id,
-        phase="sync",
-    )
-    if not fetched:
-        raise ValueError(f"remote fetch failed for CODH image: {image_url}")
+    try:
+        _fetched, _write_result, cycle = _fetch_codh_image_with_retries(
+            ctx.cache_dir,
+            index,
+            cycle,
+            mode,
+            source_id=source_id,
+            phase="sync",
+            start_index=start_index,
+        )
+    except ValueError:
+        raise
     save_codh_cycle(ctx.cache_dir, cycle)
 
 
@@ -440,32 +519,27 @@ def codh_slideshow_tick(catalog: Catalog, source_id: str, mode: str) -> bool:
         return False
 
     cycle = reconcile_codh_cycle(load_codh_cycle(ctx.cache_dir), index)
-    image_url, cycle = advance_codh_cursor(index, cycle, mode)
-    log_slideshow_op(
-        "CODH_TICK_CURSOR",
-        source_id=source_id,
-        mode=mode,
-        url=image_url,
-        cursor_index=cycle.get("index"),
-    )
-    fetched, write_result = fetch_codh_image(
-        ctx.cache_dir,
-        image_url,
-        source_id=source_id,
-        phase="tick",
-    )
-    if not fetched:
+    try:
+        fetched, write_result, cycle = _fetch_codh_image_with_retries(
+            ctx.cache_dir,
+            index,
+            cycle,
+            mode,
+            source_id=source_id,
+            phase="tick",
+            advance_index_on_success=True,
+        )
+    except ValueError as exc:
         log_slideshow_op(
             "CODH_TICK",
             ok=False,
             source_id=source_id,
             mode=mode,
-            reason="image fetch failed",
+            reason=str(exc),
             **remote_image_outcome_fields(
                 image_fetched=False,
                 cache_written=False,
-                url=image_url,
-                skip_reason="image_fetch_failed",
+                skip_reason=str(exc),
             ),
         )
         return False
@@ -480,7 +554,7 @@ def codh_slideshow_tick(catalog: Catalog, source_id: str, mode: str) -> bool:
             image_fetched=True,
             cache_written=True,
             write=write_result,
-            url=image_url,
+            url=str(cycle.get("previous_image_url") or ""),
         ),
     )
     return True

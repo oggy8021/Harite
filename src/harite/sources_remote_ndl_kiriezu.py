@@ -321,7 +321,24 @@ def _fetch_kiriezu_image_with_retries(
     for offset in range(min(total, NDL_IIIF_FETCH_MAX_ATTEMPTS)):
         selected_index = (start_index + offset) % total
         entry = spec.maps[selected_index]
-        iiif_url = kiriezu_iiif_url(cache_dir, entry)
+        manifest_url = NDL_KIRIEZU_MANIFEST_URL_TEMPLATE.format(pid=entry.pid)
+        try:
+            iiif_url = kiriezu_iiif_url(cache_dir, entry)
+        except ValueError as exc:
+            log_slideshow_op(
+                "NDL_KIRIEZU_MANIFEST_GET",
+                ok=False,
+                source_id=source_id,
+                preset_id=preset_id,
+                attempt=offset + 1,
+                url=manifest_url,
+                pid=entry.pid,
+                map_label=entry.label,
+                cursor_index=selected_index,
+                reason=str(exc),
+            )
+            last_error_url = manifest_url
+            continue
         log_slideshow_op(
             "NDL_KIRIEZU_IIIF_URL",
             source_id=source_id,
@@ -377,9 +394,9 @@ def _fetch_kiriezu_image_with_retries(
         updated_cycle["cursor_index"] = selected_index
         return write_result, updated_cycle, entry, selected_index
 
-    suffix = f" (last url: {last_error_url})" if last_error_url else ""
+    suffix = f" (last error url: {last_error_url})" if last_error_url else ""
     raise ValueError(
-        "remote fetch failed: NDL kiriezu IIIF unavailable after "
+        "remote fetch failed: NDL kiriezu unavailable after "
         f"{NDL_IIIF_FETCH_MAX_ATTEMPTS} attempts{suffix}"
     )
 
