@@ -621,6 +621,18 @@ def refresh_slideshow_keyword_chips(backend: Any, owner: Any) -> None:
     refresh_slideshow_ndl_keyword_chip(backend, owner)
 
 
+def _set_cursor_chip_label_text(widget: Any, text: str) -> None:
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtGui import QFontMetrics
+
+    max_width = int(getattr(widget, "maximumWidth", lambda: 0)() or 0)
+    rendered = text
+    if max_width > 0 and hasattr(widget, "font"):
+        metrics = QFontMetrics(widget.font())
+        rendered = metrics.elidedText(text, Qt.TextElideMode.ElideRight, max_width)
+    widget.setText(rendered)
+
+
 def refresh_slideshow_cursor_position_chips(backend: Any, owner: Any) -> None:
     from harite.gui.adapters_qt.qt_source_catalog import prepare_owner_source_catalog
     from harite.gui.views.slideshow_cursor_position import (
@@ -655,8 +667,9 @@ def refresh_slideshow_cursor_position_chips(backend: Any, owner: Any) -> None:
             widget.setText("")
             widget.setToolTip("")
             continue
-        widget.setText(text)
-        widget.setToolTip(display.tooltip if display is not None else "")
+        _set_cursor_chip_label_text(widget, text)
+        tooltip = display.tooltip if display is not None and display.tooltip else text
+        widget.setToolTip(tooltip)
         widget.setVisible(True)
 
 

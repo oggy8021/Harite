@@ -137,6 +137,17 @@ def _format_codh_cursor(cache_dir: Path) -> SlideshowSideCursorDisplay | None:
     return SlideshowSideCursorDisplay(f"{cursor_index + 1}/{total}")
 
 
+JMA_CURSOR_CHIP_FILENAME_MAX = 14
+
+
+def format_jma_filename_for_chip(filename: str, *, max_len: int = JMA_CURSOR_CHIP_FILENAME_MAX) -> str:
+    """Compact JMA filename for the Slideshow cursor chip (#512)."""
+    name = str(filename or "").strip()
+    if not name or len(name) <= max_len:
+        return name
+    return f"…{name[-(max_len - 1):]}"
+
+
 def _format_jma_cursor(cache_dir: Path) -> SlideshowSideCursorDisplay | None:
     cycle = load_jma_cycle(cache_dir)
     if cycle is None:
@@ -144,7 +155,8 @@ def _format_jma_cursor(cache_dir: Path) -> SlideshowSideCursorDisplay | None:
     filename = str(cycle.get("filename") or "").strip()
     if not filename:
         return None
-    return SlideshowSideCursorDisplay(filename)
+    label = format_jma_filename_for_chip(filename)
+    return SlideshowSideCursorDisplay(label, tooltip=filename)
 
 
 def _format_kiriezu_cursor(entry: SourceEntry, cache_dir: Path) -> SlideshowSideCursorDisplay | None:

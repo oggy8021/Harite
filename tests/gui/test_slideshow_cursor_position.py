@@ -73,6 +73,8 @@ def test_format_codh_cursor(tmp_path: Path) -> None:
 
 
 def test_format_jma_cursor_shows_filename(tmp_path: Path) -> None:
+    from harite.gui.views.slideshow_cursor_position import format_jma_filename_for_chip
+
     catalog = empty_catalog()
     cache = tmp_path / "cache"
     entry = import_preset_source(catalog, "jma-near-color", cache_root=cache)
@@ -85,6 +87,18 @@ def test_format_jma_cursor_shows_filename(tmp_path: Path) -> None:
     display = format_side_cursor_display(entry=entry, source_dir=cache_dir, owner=object(), side="R")
     assert display is not None
     assert display.label == "2026053112.png"
+    assert display.tooltip == "2026053112.png"
+
+    long_name = "20260531120000.png"
+    assert format_jma_filename_for_chip(long_name) == "…531120000.png"
+    _write_json(
+        cache_dir / JMA_CYCLE_FILENAME,
+        {"preset_id": "jma-near-color", "filename": long_name},
+    )
+    display = format_side_cursor_display(entry=entry, source_dir=cache_dir, owner=object(), side="R")
+    assert display is not None
+    assert display.label == "…531120000.png"
+    assert display.tooltip == long_name
 
 
 def test_format_kiriezu_cursor(tmp_path: Path) -> None:
