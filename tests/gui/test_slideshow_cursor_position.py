@@ -63,13 +63,53 @@ def test_format_codh_cursor(tmp_path: Path) -> None:
     cache_dir = Path(entry.path)
     _write_json(
         cache_dir / CODH_INDEX_FILENAME,
-        {"version": 1, "entries": [{"id": "a"}, {"id": "b"}, {"id": "c"}]},
+        {"version": 1, "query_key": "edo-spots", "entries": [{"id": "a"}, {"id": "b"}, {"id": "c"}]},
     )
-    _write_json(cache_dir / CODH_CYCLE_FILENAME, {"index": 1})
+    _write_json(cache_dir / CODH_CYCLE_FILENAME, {"query_key": "edo-spots", "index": 1, "mode": "sequential"})
 
     display = format_side_cursor_display(entry=entry, source_dir=cache_dir, owner=object(), side="L")
     assert display is not None
     assert display.label == "2/3"
+
+
+def test_format_codh_cursor_random_shows_dash_position(tmp_path: Path) -> None:
+    catalog = empty_catalog()
+    cache = tmp_path / "cache"
+    entry = import_preset_source(catalog, "codh-edo-spots-random", cache_root=cache)
+    cache_dir = Path(entry.path)
+    entries = [{"id": f"item-{index}"} for index in range(1309)]
+    _write_json(
+        cache_dir / CODH_INDEX_FILENAME,
+        {"version": 1, "query_key": "edo-spots", "entries": entries},
+    )
+    _write_json(
+        cache_dir / CODH_CYCLE_FILENAME,
+        {"query_key": "edo-spots", "index": 0, "mode": "random", "previous_image_url": "https://example/a.jpg"},
+    )
+
+    display = format_side_cursor_display(entry=entry, source_dir=cache_dir, owner=object(), side="R")
+    assert display is not None
+    assert display.label == "-/1309"
+
+
+def test_format_codh_cursor_random_from_owner_mode_when_cycle_omits_mode(tmp_path: Path) -> None:
+    catalog = empty_catalog()
+    cache = tmp_path / "cache"
+    entry = import_preset_source(catalog, "codh-edo-spots-random", cache_root=cache)
+    cache_dir = Path(entry.path)
+    _write_json(
+        cache_dir / CODH_INDEX_FILENAME,
+        {"version": 1, "query_key": "edo-spots", "entries": [{"id": "a"}, {"id": "b"}]},
+    )
+    _write_json(cache_dir / CODH_CYCLE_FILENAME, {"query_key": "edo-spots", "index": 1})
+
+    class Owner:
+        slideshow_mode = "random"
+        _slideshow_active_mode = "random"
+
+    display = format_side_cursor_display(entry=entry, source_dir=cache_dir, owner=Owner(), side="L")
+    assert display is not None
+    assert display.label == "-/2"
 
 
 def test_format_jma_cursor_shows_filename(tmp_path: Path) -> None:
@@ -158,9 +198,9 @@ def test_refresh_slideshow_cursor_position_chips(qapp, tmp_path: Path) -> None:
     cache_dir = Path(entry.path)
     _write_json(
         cache_dir / CODH_INDEX_FILENAME,
-        {"version": 1, "entries": [{"id": "a"}, {"id": "b"}]},
+        {"version": 1, "query_key": "edo-spots", "entries": [{"id": "a"}, {"id": "b"}]},
     )
-    _write_json(cache_dir / CODH_CYCLE_FILENAME, {"index": 0})
+    _write_json(cache_dir / CODH_CYCLE_FILENAME, {"query_key": "edo-spots", "index": 0, "mode": "sequential"})
     catalog_path = tmp_path / "harite-sources.json"
     save_catalog(catalog, catalog_path)
 
@@ -200,9 +240,9 @@ def test_resolve_slideshow_cursor_displays_profile_members(tmp_path: Path) -> No
     codh_dir = Path(codh.path)
     _write_json(
         codh_dir / CODH_INDEX_FILENAME,
-        {"version": 1, "entries": [{"id": "a"}, {"id": "b"}, {"id": "c"}]},
+        {"version": 1, "query_key": "edo-spots", "entries": [{"id": "a"}, {"id": "b"}, {"id": "c"}]},
     )
-    _write_json(codh_dir / CODH_CYCLE_FILENAME, {"index": 2})
+    _write_json(codh_dir / CODH_CYCLE_FILENAME, {"query_key": "edo-spots", "index": 2, "mode": "sequential"})
 
     local_dir = tmp_path / "local"
     local_dir.mkdir()
