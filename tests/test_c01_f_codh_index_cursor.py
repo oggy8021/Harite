@@ -190,6 +190,29 @@ def test_codh_tick_image_failure_keeps_latest(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    fail_urls = {_MAX_TEMPLATE.format(idx=i) for i in range(3)}
+    _install_codh_paging_mock(monkeypatch, total=3, image_fail_urls=fail_urls)
+    cache_root = tmp_path / "remote-cache"
+    catalog = empty_catalog()
+    entry = import_preset_source(catalog, "codh-edo-spots-random", cache_root=cache_root)
+    ctx = resolve_codh_sync_context(entry)
+    build_codh_index(ctx)
+    from harite.sources_remote_codh import save_codh_cycle
+
+    save_codh_cycle(ctx.cache_dir, reconcile_codh_cycle({"index": 0}, load_codh_index(ctx.cache_dir) or {}))
+    latest = Path(entry.path) / "latest.jpg"
+    latest.write_bytes(_JPEG_BYTES)
+    cycle_before = load_codh_cycle(Path(entry.path))
+
+    assert codh_slideshow_tick(catalog, entry.id, "sequential") is False
+    assert latest.read_bytes() == _JPEG_BYTES
+    assert load_codh_cycle(Path(entry.path)) == cycle_before
+
+
+def test_codh_tick_skips_failed_image_within_attempts(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     fail_url = _MAX_TEMPLATE.format(idx=1)
     _install_codh_paging_mock(monkeypatch, total=3, image_fail_urls={fail_url})
     monkeypatch.setattr("harite.sources_remote_codh.random.randint", lambda _a, _b: 0)
@@ -197,17 +220,17 @@ def test_codh_tick_image_failure_keeps_latest(
     catalog = empty_catalog()
     entry = import_preset_source(catalog, "codh-edo-spots-random", cache_root=cache_root)
     sync_remote_source(catalog, entry.id, cache_root=cache_root, codh_sync_pick="refresh")
-    latest = Path(entry.path) / "latest.jpg"
-    before = latest.read_bytes()
-    cycle_before = load_codh_cycle(Path(entry.path))
 
-    def _force_fail_url(index: dict[str, Any], cycle: dict[str, Any], mode: str, rng=None) -> tuple[str, dict[str, Any]]:
-        return fail_url, {**cycle, "index": 1}
+    assert codh_slideshow_tick(catalog, entry.id, "sequential") is True
+    cycle = load_codh_cycle(Path(entry.path))
+    assert cycle is not None
+    assert cycle["index"] == 1
 
-    monkeypatch.setattr("harite.sources_remote_codh.advance_codh_cursor", _force_fail_url)
-    assert codh_slideshow_tick(catalog, entry.id, "sequential") is False
-    assert latest.read_bytes() == before
-    assert load_codh_cycle(Path(entry.path)) == cycle_before
+    assert codh_slideshow_tick(catalog, entry.id, "sequential") is True
+    cycle = load_codh_cycle(Path(entry.path))
+    assert cycle is not None
+    assert cycle["index"] == 3
+    assert cycle["previous_image_url"] == _MAX_TEMPLATE.format(idx=2)
 
 
 def test_reconcile_resets_cursor_on_query_key_mismatch() -> None:
