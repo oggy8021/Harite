@@ -206,3 +206,28 @@ def test_kiriezu_sync_skips_failed_iiif_within_attempts(
     entry = import_preset_source(catalog, "ndl-kiriezu-asakusa", cache_root=tmp_path / "cache")
     sync_remote_source(catalog, entry.id, codh_sync_pick="refresh")
     assert (Path(entry.path) / "latest.jpg").is_file()
+
+
+def test_kiriezu_sync_skips_failed_manifest_within_attempts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_urlopen(url: str | Request, *args: Any, **kwargs: Any) -> Any:
+        target = url if isinstance(url, str) else url.full_url
+        if target.endswith("/manifest.json"):
+            pid = target.split("/iiif/")[1].split("/")[0]
+            if pid == "1286208":
+                raise HTTPError(target, 404, "missing", hdrs=None, fp=BytesIO())
+            return _json_response(_manifest_for_pid(pid))
+        if "/full/1200,/0/default.jpg" in target:
+            return _image_response()
+        raise AssertionError(f"unexpected url: {target}")
+
+    monkeypatch.setattr("harite.sources_remote.urlopen", fake_urlopen)
+    catalog = empty_catalog()
+    entry = import_preset_source(catalog, "ndl-kiriezu-asakusa", cache_root=tmp_path / "cache")
+    sync_remote_source(catalog, entry.id, codh_sync_pick="refresh")
+    cycle = load_kiriezu_cycle(Path(entry.path))
+    assert cycle is not None
+    assert cycle["cursor_index"] == 1
+    assert (Path(entry.path) / "latest.jpg").is_file()
