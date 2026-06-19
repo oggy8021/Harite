@@ -51,6 +51,12 @@
 | [20260611-pre-bump-cli-gatereview.md](20260611-pre-bump-cli-gatereview.md) | pre-bump CLI ゲートレビュー |
 | [20260611-two-screen-display-params-clarification.md](20260611-two-screen-display-params-clarification.md) | two-screen / canvas-scale 整理（正本反映済み） |
 
+## v2.0.1 post-release — 2026-06-19 整理
+
+| ファイル | 内容 |
+| --- | --- |
+| [20260613-v2-post-release-fix-planning.md](20260613-v2-post-release-fix-planning.md) | v2.0.0 直後 #492–#497 修正 planning（v2.0.1 同梱完了） |
+
 ## MAT / Q-01 — 2026-06-11 整理
 
 | ファイル | 内容 |

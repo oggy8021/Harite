@@ -23,7 +23,7 @@
 
 ## 関連
 
-- 正本: [harite-gui-spec.md §7](../specs/gui/harite-gui-spec.md) — tray menu 項目（Settings / BaseColor / About は dialog open 補助導線）。**main window 同時表示の可否は未記載** → 修正時に spec 追記候補。
+- 正本: [harite-gui-spec.md §7](../../specs/gui/harite-gui-spec.md) — tray menu 項目（Settings / BaseColor / About は dialog open 補助導線）。**main window 同時表示の可否は未記載** → 修正時に spec 追記候補。
 - 実装:
   - `src/harite/gui/adapters_qt/qt_tray_adapter.py` — `_on_open_settings`, `_on_open_color`, `_present_main_window`, `_invoke_backend`
   - `src/harite/gui/adapters_qt/qt_dialogs.py` — Color ダイアログ
@@ -80,4 +80,6 @@
 
 ## resolution
 
-（未解決）
+- **2026-06-19 — v2.0.1（PR #499）**
+- `qt_tray_adapter.py`: Settings / Color / About の `present_main_window=False`。
+- 正本: [harite-gui-spec.md §7](../../specs/gui/harite-gui-spec.md)。

@@ -29,9 +29,9 @@
 ## 関連
 
 - 正本:
-  - [harite-source-spec.md §15](../specs/source/harite-source-spec.md) — `codh_keyword` / `ndl_keyword` は `harite-settings.json` トップレベル
-  - [harite-gui-spec.md §Manage Presets](../specs/gui/harite-gui-spec.md) — keyword フィールドは Manage 経由で settings へ反映
-- [MAT-05](../online-issues/maturation-20260609-qt-common.md) — CODH キーワード Close 確定（別角度だが同一 `codh_keyword` キー）
+  - [harite-source-spec.md §15](../../specs/source/harite-source-spec.md) — `codh_keyword` / `ndl_keyword` は `harite-settings.json` トップレベル
+  - [harite-gui-spec.md §Manage Presets](../../specs/gui/harite-gui-spec.md) — keyword フィールドは Manage 経由で settings へ反映
+- [MAT-05](../maturation-20260609-qt-common.md) — CODH キーワード Close 確定（別角度だが同一 `codh_keyword` キー）
 - 実装:
   - `src/harite/gui/views/main_window.py` — `on_save_settings_file`, `export_settings`, `_build_settings_dialog_settings`
   - `src/harite/settings.py` — `AppSettings.to_settings_dict`（**keyword 非含有**）
@@ -109,4 +109,5 @@ NDL も同型（`NDL_KEYWORD_DEFAULT = "妖怪"`）。
 
 ## resolution
 
-（未解決）
+- **2026-06-19 — v2.0.1（PR #501）**
+- Settings Save 時に既存 JSON から keyword キーをマージして保持。

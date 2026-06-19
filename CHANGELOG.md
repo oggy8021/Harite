@@ -4,6 +4,32 @@
 
 - なし
 
+## 2.0.1 (2026-06-19)
+
+**パッチ版。** v2.0.0 直後の post-release 修正（slideshow tick / tray / settings）と list source UX 改善。
+
+### Added
+
+- Slideshow タブに list 型ソース向け **cursor position chip**（例: `L: 2/29`）（#507）。
+- running 中の interval / slideshow auto scale 変更を **次 tick へ延期**（#495、gui-spec §6.2.2）。
+
+### Changed
+
+- CODH random ソースの cursor 表示を `-/total`（単一ハイフン）に統一。
+- slideshow pause 挙動を [harite-slideshow-spec.md](docs/specs/slideshow/harite-slideshow-spec.md) 正本へ拡充。
+
+### Fixed
+
+- トレイ → Settings / Color / About で **main window が一緒に表示**される回帰（#492）。
+- slideshow tick 失敗後の **tray / main / footer 状態不一致**とエラー非表示（#494）。
+- JMA 更新なし tick の不要 optimize と、display 一時失敗時の **hard stop**（#493）。
+- 縦長 NDL + auto display scale 時の intentional upscale **fit 失敗** — down-only フォールバック（#497）。
+- Settings Save で **Manage keyword キー**（`codh_keyword` / `ndl_keyword`）が消える問題（#496）。
+- display pause 後に JMA cache だけ進み **壁紙未 apply が回収されない**問題（#503）。
+- 0 バイト **`harite-sources.json` / `harite-settings.json`** による起動クラッシュ（#505）。
+- pause 状態の **tick UI sync**、JMA cursor chip のコンパクト表示、pause 回復後の cursor 更新（#512–#514）。
+- CODH kiriezu で **利用不可 IIIF manifest** を retry ループ内で skip（#516）。
+
 ## 2.0.0 (2026-06-13)
 
 **メジャー版。** CLI v2・Qt 一本化・canvas-scale 意味論の確定。`v1.9.0` 熟成運転からの製品線再定義。

@@ -20,10 +20,10 @@ docs/working/
 | --- | --- |
 | [20260609-1200-feature-overview.md](20260609-1200-feature-overview.md) | 第2期 inventory 入口（熟成運転期間）。**継続更新する唯一の planning 入口** |
 | [20260612-pre-release-housekeeping.md](20260612-pre-release-housekeeping.md) | v2.0.0 前: 回帰状況・正本クリーンアップ記録・リリース手順の入口 |
-| [20260613-v2-post-release-fix-planning.md](20260613-v2-post-release-fix-planning.md) | **v2.0.0 直後:** online-issues #492–#497 修正の着手順・PR 分割 |
+| [20260619-v2.0.1-release-housekeeping.md](20260619-v2.0.1-release-housekeeping.md) | **v2.0.1:** post-release 棚卸・版 bump・リリース checklist |
 | [20260608-1200-feature-pending.md](20260608-1200-feature-pending.md) | 破棄候補 / 保留延長（H-xx / K-05 等） |
 
-**2026-06-13 整理:** v2 CLI/幾何 planning（gatereview、two-screen 整理、cli-v2-roadmap）は [finished/](finished/) へ移動。正本 `docs/specs/` から MAT-xx 除去済み。
+**2026-06-19 整理:** v2.0.0 post-release planning（#492–#497）は [finished/20260613-v2-post-release-fix-planning.md](finished/20260613-v2-post-release-fix-planning.md) へ移動。
 
 ## design（GUI 合意 artifact）
 

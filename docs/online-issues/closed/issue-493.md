@@ -48,10 +48,10 @@
 
 ## 関連
 
-- 正本: [harite-source-spec.md §op log](../specs/source/harite-source-spec.md) — `JMA_TICK`, `SLIDESHOW_TICK`, `SLIDESHOW_APPLY`
+- 正本: [harite-source-spec.md §op log](../../specs/source/harite-source-spec.md) — `JMA_TICK`, `SLIDESHOW_TICK`, `SLIDESHOW_APPLY`
 - 観測先例:
-  - [op2](../working/finished/20260610-mat-08-viper3-slideshow-op2-observation.md) — filename 未変化時の apply 欠落を「skip かログ欠落か」と記載
-  - [op3](../working/finished/20260610-mat-08-viper3-slideshow-op3-observation.md) — `filename_unchanged` + tick 後 `SLIDESHOW_APPLY` は「outcome どおり」と記載（**本 Issue は apply 前に optimize で失敗し停止** — op3 と異なる）
+  - [op2](../../working/finished/20260610-mat-08-viper3-slideshow-op2-observation.md) — filename 未変化時の apply 欠落を「skip かログ欠落か」と記載
+  - [op3](../../working/finished/20260610-mat-08-viper3-slideshow-op3-observation.md) — `filename_unchanged` + tick 後 `SLIDESHOW_APPLY` は「outcome どおり」と記載（**本 Issue は apply 前に optimize で失敗し停止** — op3 と異なる）
 - 実装:
   - `src/harite/sources_remote_jma.py` — `jma_slideshow_tick`, `skip_reason=filename_unchanged`
   - `src/harite/gui/views/main_window.py` — `on_slideshow_tick`, `_apply_slideshow_selection`, `_is_transient_slideshow_cycle_error`
@@ -68,7 +68,7 @@
   2. **表示検出失敗:** tick 時の `DUAL_INPUT_REQUIRES_TWO_DISPLAYS` を `_is_transient_slideshow_cycle_error` に含め pause 扱い（現状は **slideshow 完全停止**）
   3. **OP_LOG:** エラー時に `detected_display_count` / display 名一覧；`SLIDESHOW_START` / `SLIDESHOW_STOP` ステップ追加
 - 次: オーナー追加観測 → spec / gui-spec に tick skip 期待を1段落 → impl
-- **判断確定（2026-06-13）:** モニター検知由来の display 失敗は **pause** — [planning Wave 2](../working/20260613-v2-post-release-fix-planning.md)
+- **判断確定（2026-06-13）:** モニター検知由来の display 失敗は **pause** — [planning Wave 2](../../working/finished/20260613-v2-post-release-fix-planning.md)
 
 ## 調査メモ
 
@@ -138,4 +138,7 @@ on_slideshow_tick
 
 ## resolution
 
-（未解決）
+- **2026-06-19 — v2.0.1（PR #500）**
+- JMA 更新なし tick は `no_remote_update` で apply skip。
+- 一時 display 失敗は pause（`DUAL_INPUT_REQUIRES_TWO_DISPLAYS` 等）。
+- 正本: [harite-slideshow-spec.md §6](../../specs/slideshow/harite-slideshow-spec.md)、[harite-source-spec.md §15.1.3](../../specs/source/harite-source-spec.md)。

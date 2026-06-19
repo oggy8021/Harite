@@ -60,13 +60,13 @@ Preset Slideshow 実行中、**remote 取得（NDL / CODH）は成功**するが
 
 - [#494](issue-494.md) — tick 失敗後の Tray vs Main desync（**先に直すと調査しやすい**）
 - [#493](issue-493.md) — 別経路の tick 失敗（JMA / ディスプレイ検出）— エラーメッセージは異なる
-- [MAT-14](../online-issues/maturation-20260609-qt-common.md#mat-14--2x--4x-display-scale意図的拡大) — intentional display scale
-- [MAT-14b](../online-issues/maturation-20260609-qt-common.md) — auto upscale（短辺閾値 1.5x / 2x）
-- [MAT-13](../online-issues/maturation-20260609-qt-common.md) — footer 赤文字（#458 完了だが **timer tick 失敗経路は未同期**）
-- [MAT-08](../online-issues/maturation-20260609-qt-common.md#mat-08--preset-系-slideshow-の動作ログcodh--ndl-観測用) — 本ログ採取
+- [MAT-14](../maturation-20260609-qt-common.md#mat-14--2x--4x-display-scale意図的拡大) — intentional display scale
+- [MAT-14b](../maturation-20260609-qt-common.md) — auto upscale（短辺閾値 1.5x / 2x）
+- [MAT-13](../maturation-20260609-qt-common.md) — footer 赤文字（#458 完了だが **timer tick 失敗経路は未同期**）
+- [MAT-08](../maturation-20260609-qt-common.md#mat-08--preset-系-slideshow-の動作ログcodh--ndl-観測用) — 本ログ採取
 - 正本:
-  - [harite-source-spec.md §15.3](../specs/source/harite-source-spec.md) — NDL facet tick
-  - [harite-slideshow-spec.md](../specs/slideshow/harite-slideshow-spec.md) — tick → optimize → apply
+  - [harite-source-spec.md §15.3](../../specs/source/harite-source-spec.md) — NDL facet tick
+  - [harite-slideshow-spec.md](../../specs/slideshow/harite-slideshow-spec.md) — tick → optimize → apply
 - 実装:
   - `src/harite/core.py` — `_resolve_intentional_image_dimensions`（`scaled source image exceeds`）
   - `src/harite/auto_display_scale.py` — `compute_auto_display_scale_factor`
@@ -82,7 +82,7 @@ Preset Slideshow 実行中、**remote 取得（NDL / CODH）は成功**するが
 継続調査・再現確認のしやすさのため、**#494（状態同期 + エラー表示）を先**にした方がよい。
 
 1. **#494** — `_on_slideshow_timer_event` で `result is False` のとき `sync_slideshow_state_with_feedback_from_owner` → footer 赤文字・Tray 一致
-2. **本件（optimize）** — **確定: 案 A（down-only フォールバック）** — [planning](../working/20260613-v2-post-release-fix-planning.md)
+2. **本件（optimize）** — **確定: 案 A（down-only フォールバック）** — [planning](../../working/finished/20260613-v2-post-release-fix-planning.md)
 3. 回帰テスト: 縦長 NDL mock + L auto display scale on → tick が止まらない／エラーが footer に出る
 
 ## 調査メモ
@@ -160,4 +160,5 @@ owner は `_set_status("error", ...)` + `last_error` を設定するが、**Qt b
 
 ## resolution
 
-（未解決）
+- **2026-06-19 — v2.0.1（PR #500）**
+- intentional upscale 後 fit 不能時は down-only フォールバック（`display_scale_fallback: down_only`）。

@@ -1,6 +1,6 @@
 # Harite
 
-Harite — wallpaper optimization tool (v2.0.0)
+Harite — wallpaper optimization tool (v2.0.1)
 
 ## Overview
 
@@ -14,7 +14,7 @@ Harite generates, arranges, and applies wallpapers in multi-display environments
 ### Python package (Linux / development)
 
 ```bash
-pip install harite-2.0.0-py3-none-any.whl   # or: pip install -e ".[gui-qt]"
+pip install harite-2.0.1-py3-none-any.whl   # or: pip install -e ".[gui-qt]"
 ```
 
 For the GUI on Linux, see [requirements-linux-qt.txt](requirements-linux-qt.txt) (distro `python3-pyqt6`, etc.).
@@ -49,6 +49,47 @@ C:\Apps\harite\harite.exe optimize --help
 ```
 
 You normally do not need `harite-qt` on `Path` (launch the GUI EXE directly).
+
+## Updating (existing users)
+
+From v2.0.0 to v2.0.1, **no settings or CLI migration is required**. Replace the package binaries and restart `harite-qt` / `harite.exe`.
+
+**User data is not overwritten.** Default locations (see [core-spec §6.1](docs/specs/core/harite-core-spec.md)):
+
+| Platform | settings / sources |
+| --- | --- |
+| Linux / XFCE | `~/.config/harite/harite-settings.json`, `harite-sources.json` |
+| Windows | `%APPDATA%\harite\harite-settings.json`, `harite-sources.json` |
+
+### Linux / XFCE (wheel)
+
+1. Quit running `harite-qt` / `harite-gui`.
+2. Download `harite-2.0.1-py3-none-any.whl` from GitHub Releases.
+3. Reinstall over the existing install using the same method as the first install:
+
+```bash
+# pipx (recommended)
+pipx install --force /abs/path/to/harite-2.0.1-py3-none-any.whl
+# If you use distro python3-pyqt6, same as first install:
+# pipx install --system-site-packages --force /abs/path/to/harite-2.0.1-py3-none-any.whl
+
+# pip --user
+python3 -m pip install --user --upgrade /abs/path/to/harite-2.0.1-py3-none-any.whl
+```
+
+4. Verify: `harite --version` → `2.0.1`
+5. **No need** to run `harite install-desktop-entry` again.
+
+### Windows (onedir zip)
+
+1. Quit running `harite-qt.exe` / `harite.exe`.
+2. Download the CLI / GUI onedir zips from GitHub Releases and **overwrite** the existing `harite/` and `harite-qt/` folders.
+3. If the extract path is unchanged, shortcuts and `Path` entries **stay as they are**.
+4. Verify:
+
+```powershell
+C:\Apps\harite\harite.exe --version
+```
 
 ## CLI examples (v2)
 
@@ -106,7 +147,7 @@ Harite is a Python package (or a self-contained binary on Windows). Wallpaper ap
 
 - Linux: `harite-<version>-py3-none-any.whl` / `.tar.gz` ([docs/release-delivery.md](docs/release-delivery.md))
 - Windows: onedir zip (CLI + GUI)
-- PyPI publish for v2.0.0 is TBD
+- PyPI publish is TBD (GitHub Release attachments / git clone)
 
 ## License
 
