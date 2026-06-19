@@ -99,21 +99,22 @@ working メモも完了なら docs/working/finished/ へ移動
 | [#353](closed/issue-353.md) | L/R path・srcdir swap | **解決済** → P-01 | [P-01](../working/finished/20260518-2047-feature-overview.md) |
 | [#358](closed/issue-358.md) | Slideshow srcdir 個別 clear | **解決済** → P-02 | [P-02](../working/finished/20260518-2047-feature-overview.md) |
 | [#359](closed/issue-359.md) | 単 display / monitor まわり UX（-R 無効化等） | **解決済** → P-03 | [P-03](../working/finished/20260518-2047-feature-overview.md) |
+| [#492](closed/issue-492.md) | トレイから Settings/Color で Main Window も表示 | **解決済** → v2.0.1 | [planning](../working/finished/20260613-v2-post-release-fix-planning.md) |
+| [#493](closed/issue-493.md) | JMA tick: 更新なし時に slideshow 停止 | **解決済** → v2.0.1 | 同上 |
+| [#494](closed/issue-494.md) | Tray と Main の slideshow 状態不一致 | **解決済** → v2.0.1 | 同上 |
+| [#495](closed/issue-495.md) | running 中の設定を次 tick に適用 | **解決済** → v2.0.1 | 同上 |
+| [#496](closed/issue-496.md) | Settings Save で keyword が消える | **解決済** → v2.0.1 | 同上 |
+| [#497](closed/issue-497.md) | 縦長 NDL + display scale で tick 停止 | **解決済** → v2.0.1 | 同上 |
+| [#503](closed/issue-503.md) | JMA 更新後に apply されない（pause + skip 隙間） | **解決済** → v2.0.1 | 同上 |
+| [#505](closed/issue-505.md) | 空 `harite-sources.json` で起動クラッシュ | **解決済** → v2.0.1 | 同上 |
 
 ## 索引（進行中）
 
 | Issue | タイトル要約 | 分類 | overview ID |
 | --- | --- | --- | --- |
-| [#492](issue-492.md) | トレイから Settings/Color で Main Window も表示 | bug（tray 回帰） | v2.0.0 post-release |
-| [#493](issue-493.md) | JMA tick: 更新なし時に slideshow 停止 | bug / investigation | v2.0.0 post-release |
-| [#494](issue-494.md) | Tray と Main の slideshow 状態不一致 | bug（#493 後の desync） | v2.0.0 post-release |
-| [#495](issue-495.md) | running 中の設定を次 tick に適用 | enhancement | v2.0.0 post-release |
-| [#496](issue-496.md) | Settings Save で keyword が消える | bug（settings 上書き） | v2.0.0 post-release |
-| [#497](issue-497.md) | 縦長 NDL + display scale で tick 停止 | bug（optimize fit） | v2.0.0 post-release |
-| [#503](issue-503.md) | JMA 更新後に apply されない（pause + skip 隙間） | bug | v2.0.1 候補 |
-| [#505](issue-505.md) | 空 `harite-sources.json` で起動クラッシュ | bug / enhancement | v2.0.1 候補 |
+| （なし — v2.0.1 同梱分は closed へ移動済み） |
 
-**修正 planning（着手順・PR 分割）:** [20260613-v2-post-release-fix-planning.md](../working/20260613-v2-post-release-fix-planning.md)
+**修正 planning（完了）:** [20260613-v2-post-release-fix-planning.md](../working/finished/20260613-v2-post-release-fix-planning.md)
 
 | [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜18 + Q-01（`v2.0.0` 目標） | bug / investigation / planning | **Q-01**（[棚卸](../working/finished/20260610-q01-gtk-deprecation-planning.md)） |
 

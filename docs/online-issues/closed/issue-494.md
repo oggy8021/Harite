@@ -35,7 +35,7 @@
 ## 関連
 
 - [#493](issue-493.md) — tick 失敗で `main_window.slideshow_running = False` になるが backend 未同期
-- [MAT-02](../online-issues/maturation-20260609-qt-common.md#mat-02--slideshow-タブ-stopped-と-footer-running-の不一致) — タブ vs footer 不一致（#445 で表示整合修正済みだが **別経路の desync**）
+- [MAT-02](../maturation-20260609-qt-common.md#mat-02--slideshow-タブ-stopped-と-footer-running-の不一致) — タブ vs footer 不一致（#445 で表示整合修正済みだが **別経路の desync**）
 - 実装:
   - `src/harite/gui/adapters_qt/qt_tray_adapter.py` — `refresh`, `_slideshow_running`（**owner 参照**）
   - `src/harite/gui/adapters_qt/qt_widget_helpers.py` — `_slideshow_display_state`（**backend._slideshow_running 参照**）
@@ -106,4 +106,5 @@ if owner is not None:
 
 ## resolution
 
-（未解決）
+- **2026-06-19 — v2.0.1（PR #499）**
+- tick 失敗時に `owner` から `_sync_slideshow_state_with_feedback_from_owner` を呼び tray / main / footer を同期。

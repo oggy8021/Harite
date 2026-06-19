@@ -1,6 +1,6 @@
 # Harite
 
-Harite — 壁紙最適化ツール（v2.0.0）
+Harite — 壁紙最適化ツール（v2.0.1）
 
 ## 概要
 
@@ -14,7 +14,7 @@ Harite は、マルチディスプレイ環境で壁紙画像を生成・配置�
 ### Python パッケージ（Linux / 開発環境）
 
 ```bash
-pip install harite-2.0.0-py3-none-any.whl   # または pip install -e ".[gui-qt]"
+pip install harite-2.0.1-py3-none-any.whl   # または pip install -e ".[gui-qt]"
 ```
 
 Linux で GUI を使う場合は [requirements-linux-qt.txt](requirements-linux-qt.txt) を参照（distro の `python3-pyqt6` 等）。
@@ -50,6 +50,47 @@ C:\Apps\harite\harite.exe optimize --help
 ```
 
 `harite-qt` フォルダを Path に入れる必要は通常ありません（GUI は EXE を直接起動）。
+
+## アップデート（既存利用者向け）
+
+v2.0.0 から v2.0.1 へは **設定・CLI の変更は不要**です。パッケージ本体だけ差し替え、`harite-qt` / `harite.exe` を再起動してください。
+
+**設定ファイルは上書きしません。** 既定の保存場所は次のとおりです（詳細は [core-spec §6.1](docs/specs/core/harite-core-spec.md)）。
+
+| プラットフォーム | settings / sources |
+| --- | --- |
+| Linux / XFCE | `~/.config/harite/harite-settings.json`, `harite-sources.json` |
+| Windows | `%APPDATA%\harite\harite-settings.json`, `harite-sources.json` |
+
+### Linux / XFCE（wheel）
+
+1. 実行中の `harite-qt` / `harite-gui` を終了する。
+2. GitHub Release から `harite-2.0.1-py3-none-any.whl` を取得する。
+3. 初回インストールと同じ経路で上書きする。
+
+```bash
+# pipx（推奨）
+pipx install --force /abs/path/to/harite-2.0.1-py3-none-any.whl
+# distro の python3-pyqt6 を使っている場合は初回と同様に:
+# pipx install --system-site-packages --force /abs/path/to/harite-2.0.1-py3-none-any.whl
+
+# pip --user
+python3 -m pip install --user --upgrade /abs/path/to/harite-2.0.1-py3-none-any.whl
+```
+
+4. 版確認: `harite --version` → `2.0.1`
+5. `harite install-desktop-entry` の再実行は **不要**（`.desktop` はそのまま利用可）。
+
+### Windows（onedir zip）
+
+1. 実行中の `harite-qt.exe` / `harite.exe` を終了する。
+2. GitHub Release から CLI / GUI の onedir zip を取得し、**既存の展開先フォルダを上書き**する（`harite/` と `harite-qt/` をそれぞれ差し替え）。
+3. 展開先パスを変えない限り、スタートメニューのショートカットや `Path` の変更は **不要**。
+4. 版確認:
+
+```powershell
+C:\Apps\harite\harite.exe --version
+```
 
 ## CLI 例（v2）
 
@@ -107,7 +148,7 @@ Harite 本体は Python パッケージ（または Windows では同梱バイ�
 
 - Linux: `harite-<version>-py3-none-any.whl` / `.tar.gz`（[docs/release-delivery.md](docs/release-delivery.md)）
 - Windows: onedir zip（CLI + GUI）
-- PyPI 公開は v2.0.0 時点では未決
+- PyPI 公開は未決（GitHub Release 添付・git clone を想定）
 
 ## License
 

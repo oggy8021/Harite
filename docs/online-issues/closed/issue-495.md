@@ -29,7 +29,7 @@ Slideshow **実行中**に Main Window や Settings 等でパラメータを変�
 
 ## 関連
 
-- 正本: [harite-gui-spec.md §6.2](../specs/gui/harite-gui-spec.md) — 実行中の interval 変更は **owner のみ更新、timer 再起動なし、次回 Start 以降で有効**（現行仕様）
+- 正本: [harite-gui-spec.md §6.2](../../specs/gui/harite-gui-spec.md) — 実行中の interval 変更は **owner のみ更新、timer 再起動なし、次回 Start 以降で有効**（現行仕様）
 - 実装:
   - `src/harite/gui/views/main_window.py` — `on_slideshow_interval_change`, `on_change_slideshow_auto_display_scale`, `_reapply_slideshow_if_running`
   - `src/harite/gui/adapters_qt/qt_backend.py` — `_on_slideshow_interval_changed`, `_start_slideshow_timer` / `_stop_slideshow_timer`
@@ -38,7 +38,7 @@ Slideshow **実行中**に Main Window や Settings 等でパラメータを変�
 
 ## 取り込み方針
 
-- 現時点の判断: **v2.0.1 同梱** — 現仕様の延長（enhancement だが大規模機能ではない）— [planning](../working/20260613-v2-post-release-fix-planning.md)
+- 現時点の判断: **v2.0.1 同梱** — 現仕様の延長（enhancement だが大規模機能ではない）— [planning](../../working/finished/20260613-v2-post-release-fix-planning.md)
 - スコープ案:
   1. **Deferred tick queue** — running 中の変更を「次 tick 用 pending」に積み、tick 開始時に commit + timer 再設定
   2. **対象の段階導入** — まず interval + slideshow auto scale。srcdir / profile 変更は副作用大のため後回し
@@ -86,4 +86,6 @@ auto scale 変更は **次 tick ではなくその場で optimize+apply** する
 
 ## resolution
 
-（未解決）
+- **2026-06-19 — v2.0.1（PR #502）**
+- running 中の interval / slideshow auto scale を次 tick へ延期。
+- 正本: [harite-gui-spec.md §6.2.2](../../specs/gui/harite-gui-spec.md)。

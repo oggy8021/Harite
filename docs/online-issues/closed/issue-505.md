@@ -26,13 +26,19 @@
 
 ## 関連
 
-- 正本: [harite-source-spec.md §6.1](../specs/source/harite-source-spec.md)
+- 正本: [harite-source-spec.md §6.1](../../specs/source/harite-source-spec.md)
 - 実装: `harite.sources_file.load_sources_json`, `harite.sources.load_catalog`
 - 起動経路: `qt_source_catalog.materialize_source_catalog_at_path`
 
 ## 取り込み方針
 
 - `load_sources_json`: `raw.strip()` が空なら `empty_sources_json_payload()` を返す。
-- **水平展開:** `load_settings` も同型 — 空ファイルは `{}`（[core-spec §6.4](../specs/core/harite-core-spec.md)）。
+- **水平展開:** `load_settings` も同型 — 空ファイルは `{}`（[core-spec §6.4](../../specs/core/harite-core-spec.md)）。
 - spec §6.1 / API 表に 0 バイト契約を追記。
 - テスト: `tests/test_sources_file.py`, `tests/test_settings_file.py`
+
+## resolution
+
+- **2026-06-19 — v2.0.1（PR #510）**
+- `load_sources_json` / `load_settings`: 空ファイルは空 catalog / `{}` として load。
+- 正本: [harite-source-spec.md §6.1](../../specs/source/harite-source-spec.md)、[harite-core-spec.md §6.4](../../specs/core/harite-core-spec.md)。

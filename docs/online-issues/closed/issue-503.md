@@ -46,7 +46,7 @@
 
 ## 関連
 
-- 正本: [harite-source-spec.md §15.1.3](../specs/source/harite-source-spec.md) — JMA tick は filename 変化時のみ PNG GET
+- 正本: [harite-source-spec.md §15.1.3](../../specs/source/harite-source-spec.md) — JMA tick は filename 変化時のみ PNG GET
 - 先行修正:
   - [#493](issue-493.md) — `no_remote_update` skip（**解決済** PR #500）
   - [#493](issue-493.md) — display 失敗時 **pause**（`DUAL_INPUT_REQUIRES_TWO_DISPLAYS`）
@@ -132,4 +132,6 @@
 
 ## resolution
 
-（未解決）
+- **2026-06-19 — v2.0.1（PR #504）**
+- `pending_remote_apply` — remote 更新後 pause で apply 未完なら次 tick で回収（`filename_unchanged` でも apply）。
+- pause 時 OP_LOG: `skip_reason=display_paused` + `pending_remote_apply`。
