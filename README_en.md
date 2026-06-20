@@ -128,6 +128,30 @@ harite install-desktop-entry
 
 (Writes `~/.local/share/applications/*.desktop`. Not available on Windows.)
 
+### Session autostart (resume slideshow)
+
+Enable **“Resume slideshow on session startup”** on the Slideshow tab to auto-start slideshow after an OS login launch **only when slideshow was running at the last exit** (not after a manual Stop or exit while stopped).
+
+The launch command must include **`--startup-launch`** (or `HARITE_STARTUP_LAUNCH=1`). For tray-only startup, also use **`--no-present-ui-window`**.
+
+**Linux (XFCE, etc.)** — example `~/.config/autostart/harite.desktop`:
+
+```ini
+[Desktop Entry]
+Type=Application
+Name=Harite
+Exec=harite-qt --no-present-ui-window --startup-launch
+X-GNOME-Autostart-enabled=true
+```
+
+**Windows** — place a shortcut in the Startup folder with a target like:
+
+```text
+harite-qt.exe --no-present-ui-window --startup-launch
+```
+
+The main window **×** button **hides to the tray**; use tray **Quit** to exit completely.
+
 ## Dependencies
 
 Harite is a Python package (or a self-contained binary on Windows). Wallpaper apply and display detection may use external tools.

@@ -115,6 +115,8 @@ class SlideshowSettings:
     profile_id: str | None = None
     l_auto_display_scale: bool = False
     r_auto_display_scale: bool = False
+    startup_slideshow: bool = False
+    was_running_at_exit: bool = False
 
     @classmethod
     def from_settings_dict(cls, settings: dict[str, Any]) -> "SlideshowSettings":
@@ -134,6 +136,14 @@ class SlideshowSettings:
                 settings.get("slideshow_r_auto_display_scale"),
                 default=False,
             ),
+            startup_slideshow=_decode_bool_setting(
+                settings.get("startup_slideshow"),
+                default=False,
+            ),
+            was_running_at_exit=_decode_bool_setting(
+                settings.get("slideshow_was_running_at_exit"),
+                default=False,
+            ),
         )
 
     def to_settings_dict(self) -> dict[str, Any]:
@@ -145,6 +155,8 @@ class SlideshowSettings:
             "slideshow_l_auto_display_scale": bool(self.l_auto_display_scale),
             "slideshow_r_auto_display_scale": bool(self.r_auto_display_scale),
         }
+        if self.startup_slideshow:
+            payload["startup_slideshow"] = True
         if self.source_id_l:
             payload["slideshow_source_id_l"] = self.source_id_l
         if self.source_id_r:

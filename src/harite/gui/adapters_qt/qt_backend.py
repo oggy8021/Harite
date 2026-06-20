@@ -13,6 +13,25 @@ _WINDOW_WIDTH = 900
 _WINDOW_HEIGHT = 640
 
 
+class HariteQtMainWindow:
+    """QMainWindow subclass factory — close hides to tray instead of quitting."""
+
+    @staticmethod
+    def create() -> Any:
+        from PyQt6.QtWidgets import QMainWindow
+
+        class _MainWindow(QMainWindow):
+            def closeEvent(self, event: Any) -> None:  # noqa: N802
+                bound = getattr(self, "_harite_backend", None)
+                if bound is not None:
+                    bound.handle_main_window_close_event(event)
+                    return
+                event.ignore()
+                self.hide()
+
+        return _MainWindow()
+
+
 class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
     """Qt runtime backend wrapping QApplication + QMainWindow.
 
@@ -124,12 +143,27 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
 
     def present(self) -> None:
         """Show the window and start the Qt event loop."""
+        self.show_main_window()
+        self.run_event_loop()
+
+    def show_main_window(self) -> None:
+        """Show the main window and sync owner state to widgets."""
         owner = self._get_connected_owner()
         if owner is not None:
             self._sync_action_availability_from_owner(owner)
             self._sync_feedback_from_owner(owner)
         self._qwindow.show()
+
+    def run_event_loop(self) -> None:
+        """Run until the application exits."""
         self._qapp.exec()
+
+    def handle_main_window_close_event(self, event: Any) -> None:
+        """Hide main window on title-bar close; do not quit the application."""
+        event.ignore()
+        self._qwindow.hide()
+        if self._tray_adapter is not None and hasattr(self._tray_adapter, "refresh"):
+            self._tray_adapter.refresh()
 
     # ------------------------------------------------------------------
     # Object access (GTK interface compatibility)
@@ -677,6 +711,24 @@ class QtSignalBackend:  # noqa: PLR0904 – mirrors GTK backend surface
         except Exception as exc:
             self._set_feedback(phase="Slideshow", state="error", error=str(exc))
 
+    def _on_startup_slideshow_toggled(self, enabled: bool) -> None:
+        callback = self._signal_handlers.get("on_change_startup_slideshow")
+        if callback is None:
+            return
+        try:
+            callback(bool(enabled))
+            owner = self._get_handler_owner("on_change_startup_slideshow")
+            if owner is not None:
+                widget = self._objects.get("chk_startup_slideshow")
+                if widget is not None and hasattr(widget, "setChecked"):
+                    widget.blockSignals(True)
+                    try:
+                        widget.setChecked(bool(getattr(owner, "startup_slideshow", False)))
+                    finally:
+                        widget.blockSignals(False)
+        except Exception as exc:
+            self._set_feedback(phase="Slideshow", state="error", error=str(exc))
+
     def _on_clear_input_clicked(self, side: str) -> None:
         callback = self._signal_handlers.get("on_clear_input")
         if callback is None:
@@ -1197,7 +1249,7 @@ def load_qt_runtime_signal_backend() -> QtSignalBackend:
     try:
         import sys
 
-        from PyQt6.QtWidgets import QApplication, QMainWindow
+        from PyQt6.QtWidgets import QApplication
     except ImportError as exc:
         raise RuntimeError(
             "Harite Qt backend requires PyQt6. "
@@ -1213,15 +1265,17 @@ def load_qt_runtime_signal_backend() -> QtSignalBackend:
 
     prepare_qt_input_method_env()
     qapp = QApplication.instance() or QApplication(sys.argv)
+    qapp.setQuitOnLastWindowClosed(False)
     log_qt_input_method_diagnostics(qapp)
     warn_missing_qt_svg_support()
     apply_qt_stylesheet(qapp)
 
-    qwindow = QMainWindow()
+    qwindow = HariteQtMainWindow.create()
+    backend = QtSignalBackend(qapp, qwindow)
+    qwindow._harite_backend = backend  # type: ignore[attr-defined]
     qwindow.setWindowTitle(_WINDOW_TITLE)
     qwindow.resize(_WINDOW_WIDTH, _WINDOW_HEIGHT)
     _make_window_icon(qwindow)
 
-    backend = QtSignalBackend(qapp, qwindow)
     backend.build_layout()
     return backend

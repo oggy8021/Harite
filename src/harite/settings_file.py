@@ -57,10 +57,21 @@ def merge_patch_only_settings_keys(
     existing: dict[str, Any],
 ) -> dict[str, Any]:
     """Keep Manage-only keys when GUI settings save overwrites the file."""
+    from harite.gui.startup_slideshow import SLIDESHOW_WAS_RUNNING_AT_EXIT_KEY
     from harite.sources_remote import CODH_KEYWORD_SETTINGS_KEY, NDL_KEYWORD_SETTINGS_KEY
 
     merged = dict(payload)
-    for key in (CODH_KEYWORD_SETTINGS_KEY, NDL_KEYWORD_SETTINGS_KEY):
+    for key in (
+        CODH_KEYWORD_SETTINGS_KEY,
+        NDL_KEYWORD_SETTINGS_KEY,
+        SLIDESHOW_WAS_RUNNING_AT_EXIT_KEY,
+    ):
         if key not in merged and key in existing:
             merged[key] = existing[key]
     return merged
+
+
+def persist_slideshow_was_running_at_exit(running: bool, path: Path | None = None) -> Path:
+    """Record whether slideshow was running at application exit (#518)."""
+    target = Path(path) if path is not None else resolve_default_settings_path()
+    return patch_settings_value(target, "slideshow_was_running_at_exit", bool(running))

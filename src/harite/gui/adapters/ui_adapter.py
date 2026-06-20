@@ -43,6 +43,7 @@ RUNTIME_HANDLER_MAP: dict[str, str] = {
     "on_change_display_scale": "on_change_display_scale",
     "on_change_auto_display_scale": "on_change_auto_display_scale",
     "on_change_slideshow_auto_display_scale": "on_change_slideshow_auto_display_scale",
+    "on_change_startup_slideshow": "on_change_startup_slideshow",
     "on_save_path_selection_canceled": "on_save_path_selection_canceled",
     "on_save_path_selected": "on_save_path_selected",
     "on_close_save_path_dialog": "on_close_save_path_dialog",

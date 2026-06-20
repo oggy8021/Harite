@@ -50,13 +50,57 @@ def _initialize_tasktray(signal_backend: Any) -> Any | None:
     return getattr(signal_backend, "tray_adapter", None)
 
 
+def _register_application_quit_persistence(window: MainWindow, signal_backend: Any) -> None:
+    qapp = getattr(signal_backend, "qapp", None)
+    if qapp is None:
+        return
+
+    def _on_about_to_quit() -> None:
+        window.on_prepare_application_quit()
+
+    try:
+        qapp.aboutToQuit.connect(_on_about_to_quit)
+    except Exception:
+        pass
+
+
+def _schedule_startup_slideshow_if_needed(
+    window: MainWindow,
+    signal_backend: Any,
+    *,
+    startup_launch: bool,
+) -> None:
+    from harite.gui.startup_slideshow import should_auto_start_from_owner
+
+    if not should_auto_start_from_owner(window, is_startup_launch=startup_launch):
+        return
+
+    try:
+        from PyQt6.QtCore import QTimer
+    except ImportError:
+        return
+
+    def _attempt() -> None:
+        if not should_auto_start_from_owner(window, is_startup_launch=startup_launch):
+            return
+        start = getattr(signal_backend, "_on_slideshow_start_clicked", None)
+        if start is not None:
+            start()
+
+    QTimer.singleShot(0, _attempt)
+
+
 def run(
     *,
     present_ui_window: bool | None = None,
+    startup_launch: bool | None = None,
 ) -> None:
     """Run the Qt backend GUI entrypoint."""
+    from harite.gui.startup_slideshow import resolve_startup_launch
+
     window = MainWindow()
     should_present = _should_present_ui_window(present_ui_window)
+    is_startup_launch = resolve_startup_launch(cli_flag=startup_launch)
 
     try:
         signal_backend = _load_qt_signal_backend()
@@ -98,10 +142,16 @@ def run(
     except RuntimeError:
         pass
 
+    _register_application_quit_persistence(window, signal_backend)
+    _schedule_startup_slideshow_if_needed(
+        window,
+        signal_backend,
+        startup_launch=is_startup_launch,
+    )
+
     if should_present:
-        signal_backend.present()
-    else:
-        window.show()
+        signal_backend.show_main_window()
+    signal_backend.run_event_loop()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -113,9 +163,19 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="override Qt window presentation for development or troubleshooting",
     )
+    parser.add_argument(
+        "--startup-launch",
+        dest="startup_launch",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="mark this process as a session autostart launch (#518)",
+    )
     args = parser.parse_args(argv)
 
-    run(present_ui_window=args.present_ui_window)
+    run(
+        present_ui_window=args.present_ui_window,
+        startup_launch=args.startup_launch,
+    )
     return 0
 
 

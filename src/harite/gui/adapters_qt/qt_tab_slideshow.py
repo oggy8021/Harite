@@ -414,6 +414,29 @@ def _build_interval_controls_section() -> dict[str, Any]:
     }
 
 
+def _build_startup_slideshow_row() -> dict[str, Any]:
+    """Session autostart resume checkbox (#518)."""
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QCheckBox, QHBoxLayout, QWidget
+
+    row = QWidget()
+    layout = QHBoxLayout(row)
+    layout.setContentsMargins(0, 4, 0, 0)
+    layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+    chk_startup_slideshow = QCheckBox("Resume slideshow on session startup")
+    chk_startup_slideshow.setToolTip(
+        "When enabled, a --startup-launch session restart resumes slideshow "
+        "if it was running when Harite last exited."
+    )
+    layout.addWidget(chk_startup_slideshow)
+
+    return {
+        "slideshow_startup_row": row,
+        "chk_startup_slideshow": chk_startup_slideshow,
+    }
+
+
 def _build_options_drawer_trigger() -> dict[str, Any]:
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
@@ -552,6 +575,7 @@ def build_slideshow_tab() -> dict[str, Any]:
     profile_widgets = _build_profile_row()
     srcdir_widgets = _build_srcdir_row()
     controls_widgets = _build_interval_controls_section()
+    startup_widgets = _build_startup_slideshow_row()
     cursor_widgets = _build_slideshow_cursor_row()
     trigger_widgets = _build_options_drawer_trigger()
     drawer_widgets = _build_options_drawer()
@@ -562,6 +586,7 @@ def build_slideshow_tab() -> dict[str, Any]:
     tab_layout.addWidget(srcdir_widgets["srcdir_row"], stretch=0)
     tab_layout.addSpacing(12)
     tab_layout.addWidget(controls_widgets["slideshow_controls_shell"], stretch=0)
+    tab_layout.addWidget(startup_widgets["slideshow_startup_row"], stretch=0)
     tab_layout.addWidget(cursor_widgets["slideshow_cursor_row"], stretch=0)
     tab_layout.addSpacing(8)
     tab_layout.addWidget(trigger_widgets["slideshow_options_trigger_row"], stretch=0)
@@ -575,6 +600,7 @@ def build_slideshow_tab() -> dict[str, Any]:
         **profile_widgets,
         **srcdir_widgets,
         **controls_widgets,
+        **startup_widgets,
         **cursor_widgets,
         **trigger_widgets,
         **drawer_widgets,
