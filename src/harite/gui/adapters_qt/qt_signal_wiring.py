@@ -213,6 +213,11 @@ def _connect_slideshow_widgets(backend: Any, widgets: dict[str, Any]) -> None:
         lambda checked: backend._on_slideshow_auto_display_scale_toggled("R", checked),
     )
     _safe_connect(
+        widgets.get("chk_startup_slideshow"),
+        "toggled",
+        lambda checked: backend._on_startup_slideshow_toggled(checked),
+    )
+    _safe_connect(
         widgets.get("combo_slideshow_source_l"),
         "currentIndexChanged",
         lambda _index: backend._on_slideshow_source_combo_changed("L"),

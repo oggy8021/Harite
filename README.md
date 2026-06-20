@@ -129,6 +129,30 @@ harite install-desktop-entry
 
 （`~/.local/share/applications/` に `.desktop` を生成。Windows では使えません。）
 
+### セッション自動起動（Slideshow 再開）
+
+Slideshow タブの **「Resume slideshow on session startup」** を ON にすると、OS のログイン自動起動から Harite を起動したとき、**前回終了時に Slideshow が動作中だった場合のみ** 自動で Start します（手動 Stop 後や、停止中に終了した場合は再開しません）。
+
+起動コマンドには **`--startup-launch`**（または環境変数 `HARITE_STARTUP_LAUNCH=1`）が必要です。tray 常駐のみにする場合は **`--no-present-ui-window`** も併用します。
+
+**Linux（XFCE 等）** — `~/.config/autostart/harite.desktop` の例:
+
+```ini
+[Desktop Entry]
+Type=Application
+Name=Harite
+Exec=harite-qt --no-present-ui-window --startup-launch
+X-GNOME-Autostart-enabled=true
+```
+
+**Windows** — スタートアップフォルダにショートカットを置き、リンク先を次のようにします:
+
+```text
+harite-qt.exe --no-present-ui-window --startup-launch
+```
+
+メインウィンドウの **×** は終了ではなく **トレイへ格納** します。完全終了は tray メニューの **Quit** から行ってください。
+
 ## 外部依存（システムツール）
 
 Harite 本体は Python パッケージ（または Windows では同梱バイナリ）ですが、壁紙設定やディスプレイ検出で外部ツールを使うことがあります。

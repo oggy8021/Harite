@@ -57,12 +57,12 @@ def test_run_exits_with_message_when_qt_missing_and_present_requested(monkeypatc
         app_qt.run(present_ui_window=True)
 
 
-def test_run_calls_present_when_backend_available(monkeypatch):
-    called = {"present": 0, "show": 0, "install_tray": 0}
+def test_run_calls_show_main_window_and_event_loop_when_backend_available(monkeypatch):
+    called = {"show_main_window": 0, "run_event_loop": 0, "install_tray": 0}
 
     class DummyWindow:
         def show(self) -> None:
-            called["show"] += 1
+            raise AssertionError("legacy show() should not be called")
 
     class DummyBackend:
         def connect_signals(self, dispatch) -> None:
@@ -72,8 +72,11 @@ def test_run_calls_present_when_backend_available(monkeypatch):
             called["install_tray"] += 1
             return False
 
-        def present(self) -> None:
-            called["present"] += 1
+        def show_main_window(self) -> None:
+            called["show_main_window"] += 1
+
+        def run_event_loop(self) -> None:
+            called["run_event_loop"] += 1
 
     monkeypatch.setattr(app_qt, "MainWindow", DummyWindow)
     monkeypatch.setattr(app_qt, "_load_qt_signal_backend", lambda: DummyBackend())
@@ -81,16 +84,16 @@ def test_run_calls_present_when_backend_available(monkeypatch):
     app_qt.run(present_ui_window=True)
 
     assert called["install_tray"] == 1
-    assert called["present"] == 1
-    assert called["show"] == 0
+    assert called["show_main_window"] == 1
+    assert called["run_event_loop"] == 1
 
 
-def test_run_skips_present_when_disabled(monkeypatch):
-    called = {"present": 0, "show": 0, "install_tray": 0}
+def test_run_skips_show_main_window_but_still_runs_event_loop(monkeypatch):
+    called = {"show_main_window": 0, "run_event_loop": 0, "install_tray": 0}
 
     class DummyWindow:
         def show(self) -> None:
-            called["show"] += 1
+            raise AssertionError("legacy show() should not be called")
 
     class DummyBackend:
         def connect_signals(self, dispatch) -> None:
@@ -100,8 +103,11 @@ def test_run_skips_present_when_disabled(monkeypatch):
             called["install_tray"] += 1
             return False
 
-        def present(self) -> None:
-            called["present"] += 1
+        def show_main_window(self) -> None:
+            called["show_main_window"] += 1
+
+        def run_event_loop(self) -> None:
+            called["run_event_loop"] += 1
 
     monkeypatch.setattr(app_qt, "MainWindow", DummyWindow)
     monkeypatch.setattr(app_qt, "_load_qt_signal_backend", lambda: DummyBackend())
@@ -109,8 +115,8 @@ def test_run_skips_present_when_disabled(monkeypatch):
     app_qt.run(present_ui_window=False)
 
     assert called["install_tray"] == 1
-    assert called["present"] == 0
-    assert called["show"] == 1
+    assert called["show_main_window"] == 0
+    assert called["run_event_loop"] == 1
 
 
 def test_run_attaches_tasktray_adapter_when_installed(monkeypatch):
@@ -134,7 +140,10 @@ def test_run_attaches_tasktray_adapter_when_installed(monkeypatch):
         def install_tray(self) -> bool:
             return True
 
-        def present(self) -> None:
+        def show_main_window(self) -> None:
+            pass
+
+        def run_event_loop(self) -> None:
             pass
 
     window = DummyWindow()
@@ -151,27 +160,124 @@ def test_run_attaches_tasktray_adapter_when_installed(monkeypatch):
 def test_main_parses_no_flags(monkeypatch):
     called = {}
 
-    def fake_run(*, present_ui_window=None):
+    def fake_run(*, present_ui_window=None, startup_launch=None):
         called["present_ui_window"] = present_ui_window
+        called["startup_launch"] = startup_launch
 
     monkeypatch.setattr(app_qt, "run", fake_run)
     exit_code = app_qt.main([])
 
     assert exit_code == 0
-    assert called == {"present_ui_window": None}
+    assert called == {"present_ui_window": None, "startup_launch": None}
 
 
 def test_main_parses_no_present_flag(monkeypatch):
     called = {}
 
-    def fake_run(*, present_ui_window=None):
+    def fake_run(*, present_ui_window=None, startup_launch=None):
         called["present_ui_window"] = present_ui_window
+        called["startup_launch"] = startup_launch
 
     monkeypatch.setattr(app_qt, "run", fake_run)
     exit_code = app_qt.main(["--no-present-ui-window"])
 
     assert exit_code == 0
-    assert called == {"present_ui_window": False}
+    assert called == {"present_ui_window": False, "startup_launch": None}
+
+
+def test_main_parses_startup_launch_flag(monkeypatch):
+    called = {}
+
+    def fake_run(*, present_ui_window=None, startup_launch=None):
+        called["present_ui_window"] = present_ui_window
+        called["startup_launch"] = startup_launch
+
+    monkeypatch.setattr(app_qt, "run", fake_run)
+    exit_code = app_qt.main(["--no-present-ui-window", "--startup-launch"])
+
+    assert exit_code == 0
+    assert called == {"present_ui_window": False, "startup_launch": True}
+
+
+def test_schedule_startup_slideshow_invokes_start_when_eligible(monkeypatch):
+    called = {"start": 0}
+
+    class DummyWindow:
+        pass
+
+    class DummyBackend:
+        def _on_slideshow_start_clicked(self) -> None:
+            called["start"] += 1
+
+    monkeypatch.setattr(
+        "harite.gui.startup_slideshow.should_auto_start_from_owner",
+        lambda owner, is_startup_launch: True,
+    )
+
+    class DummyTimer:
+        @staticmethod
+        def singleShot(_delay: int, callback) -> None:
+            callback()
+
+    import sys
+    from types import SimpleNamespace
+
+    monkeypatch.setitem(sys.modules, "PyQt6.QtCore", SimpleNamespace(QTimer=DummyTimer))
+
+    app_qt._schedule_startup_slideshow_if_needed(
+        DummyWindow(),
+        DummyBackend(),
+        startup_launch=True,
+    )
+
+    assert called["start"] == 1
+
+
+def test_schedule_startup_slideshow_skips_when_not_eligible(monkeypatch):
+    called = {"start": 0}
+
+    class DummyBackend:
+        def _on_slideshow_start_clicked(self) -> None:
+            called["start"] += 1
+
+    monkeypatch.setattr(
+        "harite.gui.startup_slideshow.should_auto_start_from_owner",
+        lambda owner, is_startup_launch: False,
+    )
+
+    app_qt._schedule_startup_slideshow_if_needed(
+        object(),
+        DummyBackend(),
+        startup_launch=True,
+    )
+
+    assert called["start"] == 0
+
+
+def test_register_application_quit_persistence_connects_about_to_quit():
+    called = {"quit": 0}
+
+    class DummyWindow:
+        def on_prepare_application_quit(self) -> None:
+            called["quit"] += 1
+
+    handlers: list = []
+
+    class DummySignal:
+        def connect(self, handler) -> None:
+            handlers.append(handler)
+
+    class DummyQApp:
+        aboutToQuit = DummySignal()
+
+    class DummyBackend:
+        qapp = DummyQApp()
+
+    app_qt._register_application_quit_persistence(DummyWindow(), DummyBackend())
+
+    assert len(handlers) == 1
+    handlers[0]()
+    assert called["quit"] == 1
 
 
 # ---------------------------------------------------------------------------

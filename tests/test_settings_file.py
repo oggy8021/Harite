@@ -77,6 +77,28 @@ def test_merge_patch_only_settings_keys_keeps_payload_keywords() -> None:
     assert merged == {"codh_keyword": "桜", "ndl_keyword": "妖怪"}
 
 
+def test_merge_patch_only_settings_keys_preserves_slideshow_was_running_at_exit() -> None:
+    payload = {"plugin": "linux"}
+    existing = {"slideshow_was_running_at_exit": True, "plugin": "windows"}
+
+    merged = merge_patch_only_settings_keys(payload, existing)
+
+    assert merged["slideshow_was_running_at_exit"] is True
+    assert merged["plugin"] == "linux"
+
+
+def test_persist_slideshow_was_running_at_exit_writes_key(tmp_path: Path) -> None:
+    from harite.settings_file import load_settings, persist_slideshow_was_running_at_exit
+
+    target = tmp_path / "harite-settings.json"
+    path = persist_slideshow_was_running_at_exit(True, target)
+    assert path == target
+    assert load_settings(target) == {"slideshow_was_running_at_exit": True}
+
+    persist_slideshow_was_running_at_exit(False, target)
+    assert load_settings(target) == {"slideshow_was_running_at_exit": False}
+
+
 def test_load_settings_empty_file_returns_empty_dict(tmp_path: Path) -> None:
     from harite.settings_file import load_settings
 

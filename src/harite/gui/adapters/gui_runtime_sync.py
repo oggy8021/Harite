@@ -49,6 +49,13 @@ def sync_slideshow_state_from_owner(backend: Any, owner: Any) -> None:
                 widget.setChecked(bool(getattr(owner, attr, False)))
             finally:
                 widget.blockSignals(False)
+    startup_widget = backend._objects.get("chk_startup_slideshow")
+    if startup_widget is not None and hasattr(startup_widget, "setChecked"):
+        startup_widget.blockSignals(True)
+        try:
+            startup_widget.setChecked(bool(getattr(owner, "startup_slideshow", False)))
+        finally:
+            startup_widget.blockSignals(False)
     interval_seconds = int(getattr(owner, "slideshow_interval_seconds", 0) or 0)
     backend._set_spin_value("spnInterval", interval_seconds if interval_seconds > 0 else 60)
     backend._set_toggle_active("radSlideshowModeSequential", backend.slideshow_mode == "sequential")

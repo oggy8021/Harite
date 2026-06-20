@@ -86,6 +86,7 @@ class MainWindow:
         self.slideshow_profile_id = ""
         self.slideshow_l_auto_display_scale = False
         self.slideshow_r_auto_display_scale = False
+        self.startup_slideshow = False
         self._source_catalog_path: Path | None = None
         self._source_catalog_cache: Catalog | None = None
         self._source_catalog_cache_mtime: float | None = None
@@ -514,6 +515,45 @@ class MainWindow:
             )
             return
         self._set_status("idle", "slideshow", f"slideshow auto display scale updated ({normalized_side}={state})")
+
+    def on_change_startup_slideshow(self, enabled: bool) -> None:
+        value = bool(enabled)
+        self.startup_slideshow = value
+        self.preferences.slideshow.startup_slideshow = value
+        from harite.settings_file import patch_settings_value
+
+        try:
+            patch_settings_value(self._resolve_settings_file_path(), "startup_slideshow", value)
+        except (OSError, ValueError) as exc:
+            self._set_status("error", "settings", "startup slideshow setting save failed", error=str(exc))
+            self._log(f"Startup slideshow setting save failed: {exc}")
+            return
+        self._set_status("idle", "slideshow", f"session startup slideshow {'enabled' if value else 'disabled'}")
+        self._log(f"Startup slideshow setting updated: {value}")
+
+    def on_prepare_application_quit(self) -> None:
+        from harite.settings_file import persist_slideshow_was_running_at_exit
+
+        try:
+            path = persist_slideshow_was_running_at_exit(
+                self.slideshow_running,
+                self._resolve_settings_file_path(),
+            )
+            self.preferences.slideshow.was_running_at_exit = self.slideshow_running
+            self._log(
+                f"Slideshow exit state persisted: running={self.slideshow_running} ({path})"
+            )
+        except (OSError, ValueError) as exc:
+            self._log(f"Slideshow exit state persist skipped: {exc}")
+
+    def _persist_slideshow_was_running_at_exit(self, running: bool) -> None:
+        from harite.settings_file import persist_slideshow_was_running_at_exit
+
+        try:
+            persist_slideshow_was_running_at_exit(running, self._resolve_settings_file_path())
+            self.preferences.slideshow.was_running_at_exit = running
+        except (OSError, ValueError) as exc:
+            self._log(f"Slideshow exit state persist skipped: {exc}")
 
     def _clear_slideshow_deferred_apply_state(self) -> None:
         self._slideshow_timer_interval_seconds = None
@@ -1110,6 +1150,8 @@ class MainWindow:
         self.slideshow_profile_id = settings_value.slideshow.profile_id or ""
         self.slideshow_l_auto_display_scale = settings_value.slideshow.l_auto_display_scale
         self.slideshow_r_auto_display_scale = settings_value.slideshow.r_auto_display_scale
+        self.startup_slideshow = settings_value.slideshow.startup_slideshow
+        self.preferences.slideshow.was_running_at_exit = settings_value.slideshow.was_running_at_exit
         self._update_slideshow_source_display()
         self._update_slideshow_output_display()
         self._refresh_action_availability()
@@ -1141,6 +1183,7 @@ class MainWindow:
         self.preferences.slideshow.profile_id = self.slideshow_profile_id or None
         self.preferences.slideshow.l_auto_display_scale = self.slideshow_l_auto_display_scale
         self.preferences.slideshow.r_auto_display_scale = self.slideshow_r_auto_display_scale
+        self.preferences.slideshow.startup_slideshow = self.startup_slideshow
         self.preferences.optimize.l_display_scale = self.form_state.l_display_scale
         self.preferences.optimize.r_display_scale = self.form_state.r_display_scale
         self.preferences.optimize.l_auto_display_scale = self.form_state.l_auto_display_scale
@@ -2205,6 +2248,7 @@ class MainWindow:
         from harite.slideshow_op_log import log_slideshow_op
 
         log_slideshow_op("SLIDESHOW_STOP", ok=True, phase="stop")
+        self._persist_slideshow_was_running_at_exit(False)
         return True
 
     def on_slideshow_interval_change(self, seconds: int) -> bool:

@@ -1,6 +1,6 @@
 # Harite GUI 仕様 (GUI Spec)
 
-最終更新: 2026-06-13
+最終更新: 2026-06-19
 
 ## 1. GUI の責務
 
@@ -723,6 +723,13 @@ tray menu の現行項目:
 - `Visible/Invisible` は main window の show/hide を切り替える。
 - `Settings`, `BaseColor`, `About` は dialog open request の補助導線である。
 - tray から `Settings` / `BaseColor` / `About` を選んだとき、**main window を show / raise しない**（該当 dialog のみ）。`Visible/Invisible` および tray アイコン double-click は従来どおり window の show/hide を切り替える。
+
+main window 閉じる操作（Qt）:
+
+- タイトルバー **×**（`closeEvent`）は **アプリ終了にしない**。`event.ignore()` のうえ **main window を hide** する（tray **Invisible** と同型）。
+- `QApplication.setQuitOnLastWindowClosed(False)` とし、window 非表示でもプロセスは存続する。
+- **アプリ終了**は tray menu **Quit**（および将来の明示終了導線）のみ。Quit 時に slideshow timer は停止し、プロセスが終了する。
+- × で hide しても `slideshow_running` は **維持**する（#518 / 常駐運用）。
 
 ## 8. GUI の層構造
 
