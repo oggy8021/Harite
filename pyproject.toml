@@ -19,8 +19,8 @@ gui-qt = ["PyQt6>=6.4"]
 
 [project.scripts]
 harite = "harite.cli:run"
-harite-gui = "harite.gui.app_qt:run"
-harite-qt = "harite.gui.app_qt:run"
+harite-gui = "harite.gui.app_qt:main"
+harite-qt = "harite.gui.app_qt:main"
 
 [tool.setuptools]
 license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]

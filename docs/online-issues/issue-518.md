@@ -71,4 +71,4 @@ Exec=harite-qt --no-present-ui-window --startup-launch
 
 ## resolution
 
-（未解決）
+**根本原因（2026-06-19 追記）:** `harite-qt` / `harite-gui` の console script および Windows `entry_qt.py` が `app_qt.run()` を直接呼んでおり、`--startup-launch` / `--no-present-ui-window` が **argparse を経由しない**ため無視されていた。対処: 入口を `app_qt.main()` に統一（#519 フォローアップ）。

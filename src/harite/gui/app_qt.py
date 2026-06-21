@@ -72,20 +72,39 @@ def _schedule_startup_slideshow_if_needed(
 ) -> None:
     from harite.gui.startup_slideshow import should_auto_start_from_owner
 
+    def _log_skip(reason: str) -> None:
+        log = getattr(window, "_log", None)
+        if callable(log):
+            log(f"Startup slideshow auto-start skipped: {reason}")
+
+    if not startup_launch:
+        _log_skip("not a --startup-launch session")
+        return
     if not should_auto_start_from_owner(window, is_startup_launch=startup_launch):
+        _log_skip(
+            "startup_slideshow, was_running_at_exit, or slideshow_running "
+            "does not satisfy auto-start conditions"
+        )
         return
 
     try:
         from PyQt6.QtCore import QTimer
     except ImportError:
+        _log_skip("PyQt6 QTimer unavailable")
         return
 
     def _attempt() -> None:
         if not should_auto_start_from_owner(window, is_startup_launch=startup_launch):
+            _log_skip("conditions changed before deferred auto-start")
             return
         start = getattr(signal_backend, "_on_slideshow_start_clicked", None)
-        if start is not None:
-            start()
+        if start is None:
+            _log_skip("Qt backend slideshow start handler unavailable")
+            return
+        log = getattr(window, "_log", None)
+        if callable(log):
+            log("Startup slideshow auto-start: invoking slideshow start")
+        start()
 
     QTimer.singleShot(0, _attempt)
 
