@@ -22,6 +22,30 @@ def test_app_qt_module_importable():
     assert callable(app_qt.main)
 
 
+def test_console_script_entrypoints_use_main():
+    from importlib.metadata import entry_points
+
+    scripts = entry_points(group="console_scripts")
+    for name in ("harite-qt", "harite-gui"):
+        matches = [ep for ep in scripts if ep.name == name]
+        assert len(matches) == 1
+        ep = matches[0]
+        assert ep.value == "harite.gui.app_qt:main"
+
+
+def test_windows_entry_qt_source_calls_main():
+    from pathlib import Path
+
+    text = (
+        Path(__file__).resolve().parents[2]
+        / "packaging"
+        / "windows"
+        / "entry_qt.py"
+    ).read_text(encoding="utf-8")
+    assert "from harite.gui.app_qt import main" in text
+    assert "SystemExit(main())" in text
+
+
 def test_run_falls_back_to_show_when_qt_missing(monkeypatch):
     called = {"show": 0}
 
@@ -249,6 +273,22 @@ def test_schedule_startup_slideshow_skips_when_not_eligible(monkeypatch):
         object(),
         DummyBackend(),
         startup_launch=True,
+    )
+
+    assert called["start"] == 0
+
+
+def test_schedule_startup_slideshow_skips_without_startup_launch_flag():
+    called = {"start": 0}
+
+    class DummyBackend:
+        def _on_slideshow_start_clicked(self) -> None:
+            called["start"] += 1
+
+    app_qt._schedule_startup_slideshow_if_needed(
+        object(),
+        DummyBackend(),
+        startup_launch=False,
     )
 
     assert called["start"] == 0
