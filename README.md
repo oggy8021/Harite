@@ -1,6 +1,6 @@
 # Harite
 
-Harite — 壁紙最適化ツール（v2.0.1）
+Harite — 壁紙最適化ツール（v2.0.2）
 
 ## 概要
 
@@ -14,7 +14,7 @@ Harite は、マルチディスプレイ環境で壁紙画像を生成・配置�
 ### Python パッケージ（Linux / 開発環境）
 
 ```bash
-pip install harite-2.0.1-py3-none-any.whl   # または pip install -e ".[gui-qt]"
+pip install harite-2.0.2-py3-none-any.whl   # または pip install -e ".[gui-qt]"
 ```
 
 Linux で GUI を使う場合は [requirements-linux-qt.txt](requirements-linux-qt.txt) を参照（distro の `python3-pyqt6` 等）。
@@ -53,7 +53,9 @@ C:\Apps\harite\harite.exe optimize --help
 
 ## アップデート（既存利用者向け）
 
-v2.0.0 から v2.0.1 へは **設定・CLI の変更は不要**です。パッケージ本体だけ差し替え、`harite-qt` / `harite.exe` を再起動してください。
+v2.0.1 から v2.0.2 へは **設定・CLI の移行作業は不要**です（`startup_slideshow` は既定 `false`）。パッケージ本体だけ差し替え、`harite-qt` / `harite.exe` を再起動してください。
+
+**v2.0.2 の挙動変更:** main window の **×** は終了ではなく **tray へ格納**します。終了は tray **Quit** から。autostart で Slideshow 再開を使う場合は [§セッション自動起動](#セッション自動起動slideshow-再開) を参照してください。
 
 **設定ファイルは上書きしません。** 既定の保存場所は次のとおりです（詳細は [core-spec §6.1](docs/specs/core/harite-core-spec.md)）。
 
@@ -65,20 +67,20 @@ v2.0.0 から v2.0.1 へは **設定・CLI の変更は不要**です。パッ�
 ### Linux / XFCE（wheel）
 
 1. 実行中の `harite-qt` / `harite-gui` を終了する。
-2. GitHub Release から `harite-2.0.1-py3-none-any.whl` を取得する。
+2. GitHub Release から `harite-2.0.2-py3-none-any.whl` を取得する。
 3. 初回インストールと同じ経路で上書きする。
 
 ```bash
 # pipx（推奨）
-pipx install --force /abs/path/to/harite-2.0.1-py3-none-any.whl
+pipx install --force /abs/path/to/harite-2.0.2-py3-none-any.whl
 # distro の python3-pyqt6 を使っている場合は初回と同様に:
-# pipx install --system-site-packages --force /abs/path/to/harite-2.0.1-py3-none-any.whl
+# pipx install --system-site-packages --force /abs/path/to/harite-2.0.2-py3-none-any.whl
 
 # pip --user
-python3 -m pip install --user --upgrade /abs/path/to/harite-2.0.1-py3-none-any.whl
+python3 -m pip install --user --upgrade /abs/path/to/harite-2.0.2-py3-none-any.whl
 ```
 
-4. 版確認: `harite --version` → `2.0.1`
+4. 版確認: `harite --version` → `2.0.2`
 5. `harite install-desktop-entry` の再実行は **不要**（`.desktop` はそのまま利用可）。
 
 ### Windows（onedir zip）

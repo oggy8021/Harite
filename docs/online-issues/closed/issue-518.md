@@ -28,30 +28,20 @@
 ## 関連
 
 - planning: [20260619-1430-startup-slideshow-resume-planning.md](../working/20260619-1430-startup-slideshow-resume-planning.md)
-- 正本（改定候補）: core-spec §6.3、gui-spec §5–§7
-- 実装: `MainWindow.on_slideshow_start/stop`、`app_qt.run`、`settings.py`
-- 関連 UX（判断待ち）: main window × → hide vs quit（§5 planning）
+- 正本: core-spec §6.3、gui-spec §5–§7
+- 実装: `MainWindow.on_slideshow_start/stop`、`app_qt.main`、`settings.py`
+- 関連 UX: main window × → hide（S1）
 
 ## 取り込み方針
 
-- **planning 確定（2026-06-19）** → design slice → spec → テスト → impl
 - v2.0.2 スコープ:
   - `startup_slideshow` + `slideshow_was_running_at_exit`（永続化）
   - `--startup-launch` + deferred auto-start
   - Slideshow タブ checkbox
   - README autostart 手順（Windows / XFCE）
-  - （**確定**）× ボタン → hide（S1）。Quit のみ終了
+  - × ボタン → hide（S1）。Quit のみ終了
 
 ## 調査メモ
-
-### 現状（コード）
-
-| 項目 | 状態 |
-| --- | --- |
-| `slideshow_running` | メモリのみ |
-| × ボタン | `QMainWindow` クローズ → `QApplication` 終了（`QuitOnLastWindowClosed` 既定 true） |
-| tray Invisible | `hide()` — slideshow 継続 |
-| tray Quit | `qapp.quit()` |
 
 ### autostart Exec 例
 
@@ -71,4 +61,7 @@ Exec=harite-qt --no-present-ui-window --startup-launch
 
 ## resolution
 
-**根本原因（2026-06-19 追記）:** `harite-qt` / `harite-gui` の console script および Windows `entry_qt.py` が `app_qt.run()` を直接呼んでおり、`--startup-launch` / `--no-present-ui-window` が **argparse を経由しない**ため無視されていた。対処: 入口を `app_qt.main()` に統一（#519 フォローアップ）。
+- **2026-06-21 — v2.0.2（PR #519, #521）**
+- `startup_slideshow` / `slideshow_was_running_at_exit`、`--startup-launch`、Slideshow タブ checkbox、README autostart 手順。
+- main window × → hide（S1）、tray Quit のみ終了。
+- フォローアップ: console script / Windows `entry_qt.py` を `app_qt.main()` 経由に修正（CLI フラグ無視の根本原因）。
