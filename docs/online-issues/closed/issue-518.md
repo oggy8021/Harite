@@ -27,7 +27,7 @@
 
 ## 関連
 
-- planning: [20260619-1430-startup-slideshow-resume-planning.md](../working/20260619-1430-startup-slideshow-resume-planning.md)
+- planning: [20260619-1430-startup-slideshow-resume-planning.md](../working/finished/20260619-1430-startup-slideshow-resume-planning.md)
 - 正本: core-spec §6.3、gui-spec §5–§7
 - 実装: `MainWindow.on_slideshow_start/stop`、`app_qt.main`、`settings.py`
 - 関連 UX: main window × → hide（S1）

@@ -20,12 +20,9 @@ docs/working/
 | --- | --- |
 | [20260609-1200-feature-overview.md](20260609-1200-feature-overview.md) | 第2期 inventory 入口（熟成運転期間）。**継続更新する唯一の planning 入口** |
 | [20260612-pre-release-housekeeping.md](20260612-pre-release-housekeeping.md) | v2.0.0 前: 回帰状況・正本クリーンアップ記録・リリース手順の入口 |
-| [20260619-v2.0.1-release-housekeeping.md](20260619-v2.0.1-release-housekeeping.md) | **v2.0.1:** post-release 棚卸・版 bump・リリース checklist |
-| [20260621-v2.0.2-release-housekeeping.md](20260621-v2.0.2-release-housekeeping.md) | **v2.0.2:** #518 リリース checklist |
-| [20260619-1430-startup-slideshow-resume-planning.md](20260619-1430-startup-slideshow-resume-planning.md) | **#518:** スタートアップ時 Slideshow 自動開始 planning（**v2.0.2 同梱**） |
 | [20260608-1200-feature-pending.md](20260608-1200-feature-pending.md) | 破棄候補 / 保留延長（H-xx / K-05 等） |
 
-**2026-06-19 整理:** v2.0.0 post-release planning（#492–#497）は [finished/20260613-v2-post-release-fix-planning.md](finished/20260613-v2-post-release-fix-planning.md) へ移動。
+**2026-06-21 整理:** #518 planning / v2.0.1・v2.0.2 release housekeeping → [finished/](finished/README.md)。v2.0.0 post-release planning（#492–#497）は [finished/20260613-v2-post-release-fix-planning.md](finished/20260613-v2-post-release-fix-planning.md) へ移動済み（2026-06-19）。
 
 ## design（GUI 合意 artifact）
 
@@ -33,4 +30,4 @@ icon board / widget slice 等は [design/README.md](design/README.md) を参照�
 
 ## finished アーカイブ
 
-[finished/README.md](finished/README.md) — Qt 移行、Windows backlog、第4波 planning、**v2.0.0 CLI/幾何**（2026-06-13 追加）。
+[finished/README.md](finished/README.md) — Qt 移行、Windows backlog、第4波 planning、**v2.0.0 CLI/幾何**、**v2.0.1 / v2.0.2 リリース**（2026-06-21 追加）。

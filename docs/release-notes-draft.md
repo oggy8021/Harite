@@ -61,5 +61,5 @@ v2.0.1 から v2.0.2 へは **設定・CLI の移行作業は不要**です（�
 
 - [CHANGELOG.md](CHANGELOG.md)
 - [docs/release-delivery.md](docs/release-delivery.md)
-- [docs/working/20260621-v2.0.2-release-housekeeping.md](docs/working/20260621-v2.0.2-release-housekeeping.md)
-- [docs/working/20260619-1430-startup-slideshow-resume-planning.md](docs/working/20260619-1430-startup-slideshow-resume-planning.md)
+- [docs/working/finished/20260621-v2.0.2-release-housekeeping.md](docs/working/finished/20260621-v2.0.2-release-housekeeping.md)
+- [docs/working/finished/20260619-1430-startup-slideshow-resume-planning.md](docs/working/finished/20260619-1430-startup-slideshow-resume-planning.md)
