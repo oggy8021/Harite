@@ -231,7 +231,7 @@ Exec=harite-qt --no-present-ui-window --startup-launch
 
 ## 9. 関連リンク
 
-- [#518](../online-issues/issue-518.md)
+- [#518](../online-issues/closed/issue-518.md)
 - gui-spec §7 tray（Invisible / Quit）
 - `MainWindow.on_slideshow_start` / `on_slideshow_stop`
 - `qt_tray_adapter._on_toggle_visibility` / `_on_quit`
@@ -244,3 +244,4 @@ Exec=harite-qt --no-present-ui-window --startup-launch
 | --- | --- |
 | 2026-06-19 | 初版 |
 | 2026-06-19 | オーナー判断反映（B / v2.0.2 / CLI 登録取り下げ）。× ボタン §5 追加 |
+| 2026-06-21 | v2.0.2 リリース完了（PR #519, #521, #522）。`finished/` へ移動 |

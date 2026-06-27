@@ -56,6 +56,14 @@
 | ファイル | 内容 |
 | --- | --- |
 | [20260613-v2-post-release-fix-planning.md](20260613-v2-post-release-fix-planning.md) | v2.0.0 直後 #492–#497 修正 planning（v2.0.1 同梱完了） |
+| [20260619-v2.0.1-release-housekeeping.md](20260619-v2.0.1-release-housekeeping.md) | v2.0.1 リリース checklist |
+
+## v2.0.2 — 2026-06-21 整理
+
+| ファイル | 内容 |
+| --- | --- |
+| [20260619-1430-startup-slideshow-resume-planning.md](20260619-1430-startup-slideshow-resume-planning.md) | #518 スタートアップ Slideshow 再開 planning（v2.0.2 同梱完了） |
+| [20260621-v2.0.2-release-housekeeping.md](20260621-v2.0.2-release-housekeeping.md) | v2.0.2 リリース checklist |
 
 ## MAT / Q-01 — 2026-06-11 整理
 
