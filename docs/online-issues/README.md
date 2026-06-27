@@ -107,16 +107,16 @@ working メモも完了なら docs/working/finished/ へ移動
 | [#497](closed/issue-497.md) | 縦長 NDL + display scale で tick 停止 | **解決済** → v2.0.1 | 同上 |
 | [#503](closed/issue-503.md) | JMA 更新後に apply されない（pause + skip 隙間） | **解決済** → v2.0.1 | 同上 |
 | [#505](closed/issue-505.md) | 空 `harite-sources.json` で起動クラッシュ | **解決済** → v2.0.1 | 同上 |
+| [#518](closed/issue-518.md) | スタートアップ起動時に Slideshow 再開 | **解決済** → v2.0.2 | [planning](../working/20260619-1430-startup-slideshow-resume-planning.md) |
 
 ## 索引（進行中）
 
 | Issue | タイトル要約 | 分類 | overview ID |
 | --- | --- | --- | --- |
-| [#518](issue-518.md) | スタートアップ起動時に Slideshow 自動開始 | enhancement | v2.0.2 候補 |
 
 **修正 planning（完了）:** [20260613-v2-post-release-fix-planning.md](../working/finished/20260613-v2-post-release-fix-planning.md)
 
-**planning（進行中）:** [20260619-1430-startup-slideshow-resume-planning.md](../working/20260619-1430-startup-slideshow-resume-planning.md) — #518
+**planning（完了）:** [20260619-1430-startup-slideshow-resume-planning.md](../working/20260619-1430-startup-slideshow-resume-planning.md) — #518 → v2.0.2
 
 | [maturation-20260609-qt-common](maturation-20260609-qt-common.md) | Qt/共通 MAT-01〜18 + Q-01（`v2.0.0` 目標） | bug / investigation / planning | **Q-01**（[棚卸](../working/finished/20260610-q01-gtk-deprecation-planning.md)） |
 

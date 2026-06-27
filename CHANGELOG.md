@@ -4,6 +4,26 @@
 
 - なし
 
+## 2.0.2 (2026-06-21)
+
+**パッチ版。** セッション autostart 時の Slideshow 再開（#518）と tray 常駐 UX（× = hide）。CLI 入口の修正を同梱。
+
+### Added
+
+- Slideshow タブ **「Resume slideshow on session startup」** checkbox と `startup_slideshow` 設定（#518）。
+- `slideshow_was_running_at_exit` 永続化 — 前回 **Quit 時に running** だった場合のみ、`--startup-launch` 付き autostart で Slideshow を自動 Start（解釈 B）。
+- `harite-qt` / `harite-gui` の **`--startup-launch`**（および `HARITE_STARTUP_LAUNCH=1`）、tray 常駐向け **`--no-present-ui-window`**。
+- README 日英 — Windows Startup / XFCE autostart `.desktop` 手順（登録 CLI は提供しない）。
+
+### Changed
+
+- main window **×** は終了せず **tray へ hide**（S1）。`QApplication.setQuitOnLastWindowClosed(False)`。終了は tray **Quit** のみ（#518）。
+- `harite-gui` / `harite-qt` console script 入口を `app_qt.main()` に変更（#521）。
+
+### Fixed
+
+- console script / Windows PyInstaller 入口が `app_qt.run()` を直接呼び、`--startup-launch` と `--no-present-ui-window` が **無視**されていた問題（#521）。
+
 ## 2.0.1 (2026-06-19)
 
 **パッチ版。** v2.0.0 直後の post-release 修正（slideshow tick / tray / settings）と list source UX 改善。

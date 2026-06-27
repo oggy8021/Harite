@@ -1,6 +1,6 @@
 # Harite
 
-Harite — wallpaper optimization tool (v2.0.1)
+Harite — wallpaper optimization tool (v2.0.2)
 
 ## Overview
 
@@ -14,7 +14,7 @@ Harite generates, arranges, and applies wallpapers in multi-display environments
 ### Python package (Linux / development)
 
 ```bash
-pip install harite-2.0.1-py3-none-any.whl   # or: pip install -e ".[gui-qt]"
+pip install harite-2.0.2-py3-none-any.whl   # or: pip install -e ".[gui-qt]"
 ```
 
 For the GUI on Linux, see [requirements-linux-qt.txt](requirements-linux-qt.txt) (distro `python3-pyqt6`, etc.).
@@ -52,7 +52,9 @@ You normally do not need `harite-qt` on `Path` (launch the GUI EXE directly).
 
 ## Updating (existing users)
 
-From v2.0.0 to v2.0.1, **no settings or CLI migration is required**. Replace the package binaries and restart `harite-qt` / `harite.exe`.
+From v2.0.1 to v2.0.2, **no settings or CLI migration is required** (`startup_slideshow` defaults to `false`). Replace the package binaries and restart `harite-qt` / `harite.exe`.
+
+**v2.0.2 behavior:** the main window **×** button **hides to the tray**; use tray **Quit** to exit. For session autostart slideshow resume, see [Session autostart](#session-autostart-resume-slideshow).
 
 **User data is not overwritten.** Default locations (see [core-spec §6.1](docs/specs/core/harite-core-spec.md)):
 
@@ -64,20 +66,20 @@ From v2.0.0 to v2.0.1, **no settings or CLI migration is required**. Replace the
 ### Linux / XFCE (wheel)
 
 1. Quit running `harite-qt` / `harite-gui`.
-2. Download `harite-2.0.1-py3-none-any.whl` from GitHub Releases.
+2. Download `harite-2.0.2-py3-none-any.whl` from GitHub Releases.
 3. Reinstall over the existing install using the same method as the first install:
 
 ```bash
 # pipx (recommended)
-pipx install --force /abs/path/to/harite-2.0.1-py3-none-any.whl
+pipx install --force /abs/path/to/harite-2.0.2-py3-none-any.whl
 # If you use distro python3-pyqt6, same as first install:
-# pipx install --system-site-packages --force /abs/path/to/harite-2.0.1-py3-none-any.whl
+# pipx install --system-site-packages --force /abs/path/to/harite-2.0.2-py3-none-any.whl
 
 # pip --user
-python3 -m pip install --user --upgrade /abs/path/to/harite-2.0.1-py3-none-any.whl
+python3 -m pip install --user --upgrade /abs/path/to/harite-2.0.2-py3-none-any.whl
 ```
 
-4. Verify: `harite --version` → `2.0.1`
+4. Verify: `harite --version` → `2.0.2`
 5. **No need** to run `harite install-desktop-entry` again.
 
 ### Windows (onedir zip)
