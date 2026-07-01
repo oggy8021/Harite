@@ -2,6 +2,8 @@
 
 Harite — wallpaper optimization tool (v2.0.2)
 
+![concept_art](./harite_concept_art_with_chatgpt.png)
+
 ## Overview
 
 Harite generates, arranges, and applies wallpapers in multi-display environments. It supports per-display placement, margins, slideshow rotation, and wallpaper apply plugins.
@@ -79,8 +81,8 @@ pipx install --force /abs/path/to/harite-2.0.2-py3-none-any.whl
 python3 -m pip install --user --upgrade /abs/path/to/harite-2.0.2-py3-none-any.whl
 ```
 
-4. Verify: `harite --version` → `2.0.2`
-5. **No need** to run `harite install-desktop-entry` again.
+1. Verify: `harite --version` → `2.0.2`
+2. **No need** to run `harite install-desktop-entry` again.
 
 ### Windows (onedir zip)
 

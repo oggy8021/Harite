@@ -2,6 +2,8 @@
 
 Harite — 壁紙最適化ツール（v2.0.2）
 
+![concept_art](./harite_concept_art_with_chatgpt.png)
+
 ## 概要
 
 Harite は、マルチディスプレイ環境で壁紙画像を生成・配置・適用するためのツールです。複数の入力画像から壁紙を作成し、画面ごとの配置、余白、スライドショー、壁紙適用を扱えます。
@@ -80,8 +82,8 @@ pipx install --force /abs/path/to/harite-2.0.2-py3-none-any.whl
 python3 -m pip install --user --upgrade /abs/path/to/harite-2.0.2-py3-none-any.whl
 ```
 
-4. 版確認: `harite --version` → `2.0.2`
-5. `harite install-desktop-entry` の再実行は **不要**（`.desktop` はそのまま利用可）。
+1. 版確認: `harite --version` → `2.0.2`
+2. `harite install-desktop-entry` の再実行は **不要**（`.desktop` はそのまま利用可）。
 
 ### Windows（onedir zip）
 
